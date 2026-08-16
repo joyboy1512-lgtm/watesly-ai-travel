@@ -40,6 +40,21 @@ type Provider = {
   enabled: boolean;
 };
 
+type Airport = {
+  iataCode?: string | null;
+  city?: string | null;
+  name?: string | null;
+  country?: string | null;
+};
+
+type CityRow = {
+  city?: string | null;
+  country?: string | null;
+  iataCode?: string | null;
+};
+
+type Option = { value: string; label: string };
+
 const SERVICE_LABEL: Record<string, string> = {
   flight: "طيران",
   hotel: "فنادق",
@@ -53,19 +68,54 @@ const RULE_LABEL: Record<string, string> = {
   fixed: "مبلغ ثابت",
 };
 
-const CABIN_OPTIONS = [
+const CABIN_OPTIONS: Option[] = [
   { value: "ECONOMY", label: "اقتصادي" },
   { value: "PREMIUM_ECONOMY", label: "اقتصادي مميز" },
   { value: "BUSINESS", label: "رجال أعمال" },
   { value: "FIRST", label: "أولى" },
 ];
 
-const STAR_OPTIONS = [
+const STAR_OPTIONS: Option[] = [
   { value: "1", label: "★ 1" },
   { value: "2", label: "★★ 2" },
   { value: "3", label: "★★★ 3" },
   { value: "4", label: "★★★★ 4" },
   { value: "5", label: "★★★★★ 5" },
+];
+
+const FALLBACK_AIRPORTS: Option[] = [
+  { value: "KWI", label: "KWI · الكويت" },
+  { value: "DXB", label: "DXB · دبي" },
+  { value: "AUH", label: "AUH · أبوظبي" },
+  { value: "DOH", label: "DOH · الدوحة" },
+  { value: "BAH", label: "BAH · البحرين" },
+  { value: "RUH", label: "RUH · الرياض" },
+  { value: "JED", label: "JED · جدة" },
+  { value: "CAI", label: "CAI · القاهرة" },
+  { value: "IST", label: "IST · إسطنبول" },
+  { value: "LHR", label: "LHR · لندن" },
+  { value: "CDG", label: "CDG · باريس" },
+  { value: "FRA", label: "FRA · فرانكفورت" },
+  { value: "AMM", label: "AMM · عمّان" },
+  { value: "BEY", label: "BEY · بيروت" },
+  { value: "MCT", label: "MCT · مسقط" },
+];
+
+const FALLBACK_CITIES: Option[] = [
+  { value: "KUWAIT", label: "الكويت" },
+  { value: "DUBAI", label: "دبي" },
+  { value: "ABU DHABI", label: "أبوظبي" },
+  { value: "DOHA", label: "الدوحة" },
+  { value: "MANAMA", label: "المنامة" },
+  { value: "RIYADH", label: "الرياض" },
+  { value: "JEDDAH", label: "جدة" },
+  { value: "CAIRO", label: "القاهرة" },
+  { value: "ISTANBUL", label: "إسطنبول" },
+  { value: "LONDON", label: "لندن" },
+  { value: "PARIS", label: "باريس" },
+  { value: "AMMAN", label: "عمّان" },
+  { value: "BEIRUT", label: "بيروت" },
+  { value: "MUSCAT", label: "مسقط" },
 ];
 
 const emptyForm = {
@@ -76,8 +126,8 @@ const emptyForm = {
   minProfitMajor: 1.5,
   currency: "KWD",
   priority: 50,
-  origins: "",
-  destinations: "",
+  origins: [] as string[],
+  destinations: [] as string[],
   cabinClasses: [] as string[],
   hotelStars: [] as string[],
   providers: [] as string[],
@@ -87,29 +137,41 @@ const emptyForm = {
   dateTo: "",
 };
 
-function csvToList(value: string): string[] {
-  return value
-    .split(/[,،\s]+/)
-    .map((v) => v.trim().toUpperCase())
-    .filter(Boolean);
-}
-
 function toggleInList(list: string[], value: string): string[] {
   return list.includes(value)
     ? list.filter((v) => v !== value)
     : [...list, value];
 }
 
-function conditionsSummary(c?: Conditions | null): string {
+function optionLabel(options: Option[], value: string) {
+  return options.find((o) => o.value === value)?.label || value;
+}
+
+function conditionsSummary(
+  c: Conditions | null | undefined,
+  airportOpts: Option[],
+  cityOpts: Option[],
+): string {
   if (!c) return "—";
   const parts: string[] = [];
-  if (c.origins?.length) parts.push(`من ${c.origins.join("/")}`);
-  if (c.destinations?.length) parts.push(`إلى ${c.destinations.join("/")}`);
-  if (c.cabinClasses?.length) {
-    const labels = c.cabinClasses.map(
-      (v) => CABIN_OPTIONS.find((o) => o.value === v)?.label || v,
+  if (c.origins?.length) {
+    parts.push(
+      `من ${c.origins.map((v) => optionLabel(airportOpts, v)).join(" / ")}`,
     );
-    parts.push(labels.join("/"));
+  }
+  if (c.destinations?.length) {
+    parts.push(
+      `إلى ${c.destinations
+        .map((v) => optionLabel([...airportOpts, ...cityOpts], v))
+        .join(" / ")}`,
+    );
+  }
+  if (c.cabinClasses?.length) {
+    parts.push(
+      c.cabinClasses
+        .map((v) => CABIN_OPTIONS.find((o) => o.value === v)?.label || v)
+        .join("/"),
+    );
   }
   if (c.hotelStars?.length) {
     parts.push(c.hotelStars.map((s) => `${s}★`).join("/"));
@@ -123,9 +185,66 @@ function conditionsSummary(c?: Conditions | null): string {
   return parts.length ? parts.join(" · ") : "—";
 }
 
+function SelectChips({
+  label,
+  placeholder,
+  options,
+  selected,
+  onAdd,
+  onRemove,
+}: {
+  label: string;
+  placeholder: string;
+  options: Option[];
+  selected: string[];
+  onAdd: (value: string) => void;
+  onRemove: (value: string) => void;
+}) {
+  return (
+    <label className="prc-field">
+      <span>{label}</span>
+      <select
+        value=""
+        onChange={(e) => {
+          const v = e.target.value;
+          if (!v) return;
+          onAdd(v);
+        }}
+      >
+        <option value="">{placeholder}</option>
+        {options.map((o) => (
+          <option
+            key={o.value}
+            value={o.value}
+            disabled={selected.includes(o.value)}
+          >
+            {o.label}
+          </option>
+        ))}
+      </select>
+      {selected.length ? (
+        <div className="prc-chips">
+          {selected.map((v) => (
+            <button
+              key={v}
+              type="button"
+              className="prc-chip"
+              onClick={() => onRemove(v)}
+            >
+              {optionLabel(options, v)} ×
+            </button>
+          ))}
+        </div>
+      ) : null}
+    </label>
+  );
+}
+
 export default function PricingPage() {
   const [rows, setRows] = useState<Rule[]>([]);
   const [providers, setProviders] = useState<Provider[]>([]);
+  const [airports, setAirports] = useState<Option[]>(FALLBACK_AIRPORTS);
+  const [cities, setCities] = useState<Option[]>(FALLBACK_CITIES);
   const [form, setForm] = useState({
     ...emptyForm,
     currency: getPreferredCurrency(),
@@ -134,6 +253,47 @@ export default function PricingPage() {
   const [error, setError] = useState("");
   const [ok, setOk] = useState("");
   const [loading, setLoading] = useState(false);
+
+  async function loadMeta() {
+    const [airportRows, cityRows] = await Promise.all([
+      apiFetch<Airport[]>("/travel-meta/airports?limit=60").catch(() => []),
+      apiFetch<CityRow[]>("/travel-meta/cities").catch(() => []),
+    ]);
+
+    if (airportRows.length) {
+      const opts = airportRows
+        .filter((a) => a.iataCode)
+        .map((a) => ({
+          value: String(a.iataCode).toUpperCase(),
+          label: `${String(a.iataCode).toUpperCase()} · ${a.city || a.name || a.iataCode}`,
+        }));
+      const seen = new Set<string>();
+      setAirports(
+        opts.filter((o) => {
+          if (seen.has(o.value)) return false;
+          seen.add(o.value);
+          return true;
+        }),
+      );
+    }
+
+    if (cityRows.length) {
+      const opts = cityRows
+        .filter((c) => c.city)
+        .map((c) => ({
+          value: String(c.city).trim().toUpperCase(),
+          label: c.country ? `${c.city} · ${c.country}` : String(c.city),
+        }));
+      const seen = new Set<string>();
+      setCities(
+        opts.filter((o) => {
+          if (seen.has(o.value)) return false;
+          seen.add(o.value);
+          return true;
+        }),
+      );
+    }
+  }
 
   async function load() {
     const [rules, providerRows] = await Promise.all([
@@ -146,6 +306,7 @@ export default function PricingPage() {
 
   useEffect(() => {
     load().catch((err: Error) => setError(err.message));
+    loadMeta().catch(() => undefined);
   }, []);
 
   const stats = useMemo(() => {
@@ -169,8 +330,21 @@ export default function PricingPage() {
     ];
   }, [providers]);
 
-  const showCabin = form.serviceType === "flight" || form.serviceType === "all";
-  const showStars = form.serviceType === "hotel" || form.serviceType === "all";
+  const isFlight = form.serviceType === "flight";
+  const isHotel = form.serviceType === "hotel";
+  const isAll = form.serviceType === "all";
+  const showOrigins = isFlight || isAll;
+  const showCabin = isFlight || isAll;
+  const showStars = isHotel || isAll;
+  const destinationOptions = isHotel ? cities : airports;
+  const destinationLabel = isHotel
+    ? "وجهة الفندق (مدينة)"
+    : isAll
+      ? "الوجهات (مطارات)"
+      : "مطارات الوصول";
+  const destinationPlaceholder = isHotel
+    ? "اختر مدينة..."
+    : "اختر مطار وصول...";
 
   function minorFromMajor(major: number, currency: string) {
     const exp =
@@ -185,10 +359,8 @@ export default function PricingPage() {
 
   function buildConditions(): Conditions | null {
     const conditions: Conditions = {};
-    const origins = csvToList(form.origins);
-    const destinations = csvToList(form.destinations);
-    if (origins.length) conditions.origins = origins;
-    if (destinations.length) conditions.destinations = destinations;
+    if (showOrigins && form.origins.length) conditions.origins = form.origins;
+    if (form.destinations.length) conditions.destinations = form.destinations;
     if (showCabin && form.cabinClasses.length) {
       conditions.cabinClasses = form.cabinClasses;
     }
@@ -272,8 +444,9 @@ export default function PricingPage() {
     setForm((prev) => ({
       ...prev,
       serviceType,
-      cabinClasses:
-        serviceType === "hotel" ? [] : prev.cabinClasses,
+      origins: serviceType === "hotel" ? [] : prev.origins,
+      destinations: [],
+      cabinClasses: serviceType === "hotel" ? [] : prev.cabinClasses,
       hotelStars: serviceType === "flight" ? [] : prev.hotelStars,
     }));
   }
@@ -441,173 +614,106 @@ export default function PricingPage() {
           {showConditions ? (
             <div className="prc-conditions">
               <div className="prc-row prc-row-4">
-                <label className="prc-field">
-                  <span>مطارات المغادرة</span>
-                  <input
-                    placeholder="KWI, DXB"
-                    value={form.origins}
-                    onChange={(e) =>
-                      setForm({ ...form, origins: e.target.value })
+                {showOrigins ? (
+                  <SelectChips
+                    label="مطارات المغادرة"
+                    placeholder="اختر مطار مغادرة..."
+                    options={airports}
+                    selected={form.origins}
+                    onAdd={(v) =>
+                      setForm({
+                        ...form,
+                        origins: toggleInList(form.origins, v),
+                      })
+                    }
+                    onRemove={(v) =>
+                      setForm({
+                        ...form,
+                        origins: form.origins.filter((x) => x !== v),
+                      })
                     }
                   />
-                </label>
-                <label className="prc-field">
-                  <span>الوجهات</span>
-                  <input
-                    placeholder="IST, CAI"
-                    value={form.destinations}
-                    onChange={(e) =>
-                      setForm({ ...form, destinations: e.target.value })
-                    }
-                  />
-                </label>
+                ) : null}
+
+                <SelectChips
+                  label={destinationLabel}
+                  placeholder={destinationPlaceholder}
+                  options={destinationOptions}
+                  selected={form.destinations}
+                  onAdd={(v) =>
+                    setForm({
+                      ...form,
+                      destinations: toggleInList(form.destinations, v),
+                    })
+                  }
+                  onRemove={(v) =>
+                    setForm({
+                      ...form,
+                      destinations: form.destinations.filter((x) => x !== v),
+                    })
+                  }
+                />
 
                 {showCabin ? (
-                  <label className="prc-field">
-                    <span>درجات السفر</span>
-                    <select
-                      value=""
-                      onChange={(e) => {
-                        const v = e.target.value;
-                        if (!v) return;
-                        setForm({
-                          ...form,
-                          cabinClasses: toggleInList(form.cabinClasses, v),
-                        });
-                      }}
-                    >
-                      <option value="">اختر درجة...</option>
-                      {CABIN_OPTIONS.map((o) => (
-                        <option
-                          key={o.value}
-                          value={o.value}
-                          disabled={form.cabinClasses.includes(o.value)}
-                        >
-                          {o.label}
-                        </option>
-                      ))}
-                    </select>
-                    {form.cabinClasses.length ? (
-                      <div className="prc-chips">
-                        {form.cabinClasses.map((v) => (
-                          <button
-                            key={v}
-                            type="button"
-                            className="prc-chip"
-                            onClick={() =>
-                              setForm({
-                                ...form,
-                                cabinClasses: form.cabinClasses.filter(
-                                  (x) => x !== v,
-                                ),
-                              })
-                            }
-                          >
-                            {CABIN_OPTIONS.find((o) => o.value === v)?.label ||
-                              v}{" "}
-                            ×
-                          </button>
-                        ))}
-                      </div>
-                    ) : null}
-                  </label>
+                  <SelectChips
+                    label="درجات السفر"
+                    placeholder="اختر درجة..."
+                    options={CABIN_OPTIONS}
+                    selected={form.cabinClasses}
+                    onAdd={(v) =>
+                      setForm({
+                        ...form,
+                        cabinClasses: toggleInList(form.cabinClasses, v),
+                      })
+                    }
+                    onRemove={(v) =>
+                      setForm({
+                        ...form,
+                        cabinClasses: form.cabinClasses.filter((x) => x !== v),
+                      })
+                    }
+                  />
                 ) : null}
 
                 {showStars ? (
-                  <label className="prc-field">
-                    <span>تقييم الفندق (نجوم)</span>
-                    <select
-                      value=""
-                      onChange={(e) => {
-                        const v = e.target.value;
-                        if (!v) return;
-                        setForm({
-                          ...form,
-                          hotelStars: toggleInList(form.hotelStars, v),
-                        });
-                      }}
-                    >
-                      <option value="">اختر النجوم...</option>
-                      {STAR_OPTIONS.map((o) => (
-                        <option
-                          key={o.value}
-                          value={o.value}
-                          disabled={form.hotelStars.includes(o.value)}
-                        >
-                          {o.label}
-                        </option>
-                      ))}
-                    </select>
-                    {form.hotelStars.length ? (
-                      <div className="prc-chips">
-                        {form.hotelStars.map((v) => (
-                          <button
-                            key={v}
-                            type="button"
-                            className="prc-chip"
-                            onClick={() =>
-                              setForm({
-                                ...form,
-                                hotelStars: form.hotelStars.filter(
-                                  (x) => x !== v,
-                                ),
-                              })
-                            }
-                          >
-                            {v}★ ×
-                          </button>
-                        ))}
-                      </div>
-                    ) : null}
-                  </label>
-                ) : null}
-
-                <label className="prc-field">
-                  <span>المزودون</span>
-                  <select
-                    value=""
-                    onChange={(e) => {
-                      const v = e.target.value;
-                      if (!v) return;
+                  <SelectChips
+                    label="تقييم الفندق (نجوم)"
+                    placeholder="اختر النجوم..."
+                    options={STAR_OPTIONS}
+                    selected={form.hotelStars}
+                    onAdd={(v) =>
                       setForm({
                         ...form,
-                        providers: toggleInList(form.providers, v),
-                      });
-                    }}
-                  >
-                    <option value="">اختر مزودًا...</option>
-                    {providerOptions.map((o) => (
-                      <option
-                        key={o.value}
-                        value={o.value}
-                        disabled={form.providers.includes(o.value)}
-                      >
-                        {o.label}
-                      </option>
-                    ))}
-                  </select>
-                  {form.providers.length ? (
-                    <div className="prc-chips">
-                      {form.providers.map((v) => (
-                        <button
-                          key={v}
-                          type="button"
-                          className="prc-chip"
-                          onClick={() =>
-                            setForm({
-                              ...form,
-                              providers: form.providers.filter((x) => x !== v),
-                            })
-                          }
-                        >
-                          {providerOptions.find((o) => o.value === v)?.label ||
-                            v}{" "}
-                          ×
-                        </button>
-                      ))}
-                    </div>
-                  ) : null}
-                </label>
+                        hotelStars: toggleInList(form.hotelStars, v),
+                      })
+                    }
+                    onRemove={(v) =>
+                      setForm({
+                        ...form,
+                        hotelStars: form.hotelStars.filter((x) => x !== v),
+                      })
+                    }
+                  />
+                ) : null}
+
+                <SelectChips
+                  label="المزودون"
+                  placeholder="اختر مزودًا..."
+                  options={providerOptions}
+                  selected={form.providers}
+                  onAdd={(v) =>
+                    setForm({
+                      ...form,
+                      providers: toggleInList(form.providers, v),
+                    })
+                  }
+                  onRemove={(v) =>
+                    setForm({
+                      ...form,
+                      providers: form.providers.filter((x) => x !== v),
+                    })
+                  }
+                />
               </div>
 
               <div className="prc-row prc-row-4">
@@ -687,7 +793,10 @@ export default function PricingPage() {
                 </thead>
                 <tbody>
                   {rows.map((row) => (
-                    <tr key={row.id} className={row.isActive ? "" : "prc-row-off"}>
+                    <tr
+                      key={row.id}
+                      className={row.isActive ? "" : "prc-row-off"}
+                    >
                       <td>
                         <strong>{row.name}</strong>
                       </td>
@@ -709,7 +818,7 @@ export default function PricingPage() {
                           : "—"}
                       </td>
                       <td className="prc-cond-cell">
-                        {conditionsSummary(row.conditions)}
+                        {conditionsSummary(row.conditions, airports, cities)}
                       </td>
                       <td>{row.priority}</td>
                       <td>

@@ -109,10 +109,44 @@ function windowOpen(messages: ConversationDetail["messages"]) {
 function formatMsgTime(value: string) {
   try {
     return new Intl.DateTimeFormat("ar", {
-      hour: "2-digit",
+      hour: "numeric",
       minute: "2-digit",
       hour12: true,
     }).format(new Date(value));
+  } catch {
+    return "";
+  }
+}
+
+function formatListTime(value?: string) {
+  if (!value) return "";
+  try {
+    const d = new Date(value);
+    const now = new Date();
+    const sameDay =
+      d.getFullYear() === now.getFullYear() &&
+      d.getMonth() === now.getMonth() &&
+      d.getDate() === now.getDate();
+    if (sameDay) {
+      return new Intl.DateTimeFormat("ar", {
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true,
+      }).format(d);
+    }
+    const yesterday = new Date(now);
+    yesterday.setDate(now.getDate() - 1);
+    if (
+      d.getFullYear() === yesterday.getFullYear() &&
+      d.getMonth() === yesterday.getMonth() &&
+      d.getDate() === yesterday.getDate()
+    ) {
+      return "أمس";
+    }
+    return new Intl.DateTimeFormat("ar", {
+      day: "numeric",
+      month: "short",
+    }).format(d);
   } catch {
     return "";
   }
@@ -389,7 +423,7 @@ export default function InboxClient() {
 
   return (
     <AppShell title="المحادثات" dense>
-      <div className="watesly-inbox">
+      <div className="watesly-inbox wa-like">
         {/* قائمة المحادثات — يمين في RTL */}
         <aside className="wi-list">
           <div className="wi-list-head">
@@ -497,19 +531,18 @@ export default function InboxClient() {
                     <div className="wi-item-main">
                       <div className="wi-item-top">
                         <strong>{row.contact.name || row.contact.waId}</strong>
-                        <time>{formatDate(row.lastMessageAt)}</time>
+                        <time>{formatListTime(row.lastMessageAt)}</time>
                       </div>
-                      <p>{row.messages[0]?.body || "بدون رسائل"}</p>
+                      <p>
+                        {row.messages[0]?.direction === "outbound" ? "✓ " : ""}
+                        {row.messages[0]?.body || "بدون رسائل"}
+                      </p>
                       <div className="wi-item-tags">
-                        <span className="wi-pill wa">{channelLabel(row)}</span>
-                        {row.assigneeType === "human" ? (
-                          <span className="wi-pill">موظف</span>
-                        ) : (
-                          <span className="wi-pill">روبوت</span>
-                        )}
                         {row.unreadCount > 0 ? (
                           <span className="wi-pill count">{row.unreadCount}</span>
-                        ) : null}
+                        ) : (
+                          <span className="wi-pill wa">{channelLabel(row)}</span>
+                        )}
                       </div>
                     </div>
                   </button>
@@ -525,8 +558,8 @@ export default function InboxClient() {
 
           {!selectedId || !detail ? (
             <div className="wi-placeholder">
-              <h3>اختر محادثة</h3>
-              <p>حاكِ عميلًا أو افتح محادثة لعرض الرسائل والرد كما في واتسلي.</p>
+              <h3>WeekendGate</h3>
+              <p>اختر محادثة من القائمة لبدء المراسلة عبر واتساب.</p>
             </div>
           ) : (
             <>

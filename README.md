@@ -26,3 +26,15 @@ Dashboard: `/dashboard/providers` — catalog, encrypted credentials, enable/dis
 API: `GET /providers/catalog`, `GET|POST /providers`, `PATCH /providers/:id`.
 
 **Note:** Production source of truth remains on the droplet; this repo snapshot documents the UI work for review.
+
+
+## Conversations ↔ WhatsApp
+
+Inbox at `/dashboard/conversations` linked to WhatsApp services:
+
+- Inbound Meta webhook + delivery/read status updates
+- Free-text reply within 24h customer service window (server-enforced)
+- `POST /conversations/:id/reply-template` via Meta template API
+- Auto-resolve default WhatsApp channel when conversation has none
+- Campaigns create/open conversations when sending templates
+- UI links to channels, templates, campaigns; shows channel + window state

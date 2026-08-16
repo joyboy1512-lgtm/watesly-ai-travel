@@ -522,36 +522,51 @@ export class CampaignsController {
       }
       sent += 1;
 
-      // Best-effort: log the outbound send in the contact's existing conversation.
+      // Log outbound template into conversation (create/open if missing).
       try {
-        const conversation = await this.prisma.conversation.findFirst({
+        let conversation = await this.prisma.conversation.findFirst({
           where: {
             organizationId: user.organizationId,
             contactId: recipient.contactId,
+            status: { in: ["open", "pending"] },
           },
           orderBy: { updatedAt: "desc" },
         });
-        if (conversation) {
-          await this.prisma.message.create({
+        if (!conversation) {
+          conversation = await this.prisma.conversation.create({
             data: {
               organizationId: user.organizationId,
-              conversationId: conversation.id,
-              direction: "outbound",
-              channel: "whatsapp",
-              type: "template",
-              body: bodyText,
-              templateName: campaign.template.name,
-              providerMessageId: result.providerMessageId || null,
-              status: result.status,
-              sentByUserId: user.userId,
-              rawPayload: result.raw ? asJson(result.raw) : undefined,
+              contactId: recipient.contactId,
+              whatsappAccountId: account.id,
+              status: "open",
+              assigneeType: "bot",
+              lastMessageAt: new Date(),
+              unreadCount: 0,
             },
           });
-          await this.prisma.conversation.update({
-            where: { id: conversation.id },
-            data: { lastMessageAt: new Date() },
-          });
         }
+        await this.prisma.message.create({
+          data: {
+            organizationId: user.organizationId,
+            conversationId: conversation.id,
+            direction: "outbound",
+            channel: "whatsapp",
+            type: "template",
+            body: bodyText,
+            templateName: campaign.template.name,
+            providerMessageId: result.providerMessageId || null,
+            status: result.status,
+            sentByUserId: user.userId,
+            rawPayload: result.raw ? asJson(result.raw) : undefined,
+          },
+        });
+        await this.prisma.conversation.update({
+          where: { id: conversation.id },
+          data: {
+            lastMessageAt: new Date(),
+            whatsappAccountId: account.id,
+          },
+        });
       } catch {
         // Never fail the campaign send because of best-effort message logging.
       }

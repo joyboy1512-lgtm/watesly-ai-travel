@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { SUPPORTED_CURRENCIES } from "@watesly-travel/shared";
 import { AppShell } from "@/components/AppShell";
 import { apiFetch } from "@/lib/api";
@@ -240,11 +240,132 @@ function SelectChips({
   );
 }
 
+type SuggestItem = { id: string; value: string; title: string; subtitle?: string };
+
+function SearchChips({
+  label,
+  placeholder,
+  hint,
+  selected,
+  labels,
+  onAdd,
+  onRemove,
+  onSearch,
+}: {
+  label: string;
+  placeholder: string;
+  hint: string;
+  selected: string[];
+  labels: Record<string, string>;
+  onAdd: (item: SuggestItem) => void;
+  onRemove: (value: string) => void;
+  onSearch: (q: string) => Promise<SuggestItem[]>;
+}) {
+  const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [text, setText] = useState("");
+  const [items, setItems] = useState<SuggestItem[]>([]);
+  const boxRef = useRef<HTMLLabelElement>(null);
+  const reqRef = useRef(0);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    function onDoc(e: MouseEvent) {
+      if (!boxRef.current?.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("mousedown", onDoc);
+    return () => document.removeEventListener("mousedown", onDoc);
+  }, []);
+
+  async function runQuery(q: string) {
+    const reqId = ++reqRef.current;
+    setLoading(true);
+    setOpen(true);
+    try {
+      const rows = await onSearch(q);
+      if (reqId === reqRef.current) {
+        setItems(rows.filter((r) => !selected.includes(r.value)));
+      }
+    } catch {
+      if (reqId === reqRef.current) setItems([]);
+    } finally {
+      if (reqId === reqRef.current) setLoading(false);
+    }
+  }
+
+  function handleChange(next: string) {
+    setText(next);
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => {
+      void runQuery(next.trim());
+    }, 220);
+  }
+
+  return (
+    <label className="prc-field prc-search" ref={boxRef}>
+      <span>{label}</span>
+      <input
+        value={text}
+        placeholder={placeholder}
+        autoComplete="off"
+        spellCheck={false}
+        onFocus={() => {
+          setOpen(true);
+          void runQuery(text.trim());
+        }}
+        onChange={(e) => handleChange(e.target.value)}
+      />
+      <small className="prc-search-hint">{hint}</small>
+      {open ? (
+        <div className="prc-suggest">
+          {loading ? <div className="prc-suggest-empty">جارٍ البحث…</div> : null}
+          {!loading && items.length === 0 ? (
+            <div className="prc-suggest-empty">لا نتائج — جرّب اسمًا أو رمزًا آخر</div>
+          ) : null}
+          {!loading
+            ? items.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => {
+                    onAdd(item);
+                    setText("");
+                    setOpen(false);
+                    setItems([]);
+                  }}
+                >
+                  <strong>{item.title}</strong>
+                  {item.subtitle ? <span>{item.subtitle}</span> : null}
+                </button>
+              ))
+            : null}
+        </div>
+      ) : null}
+      {selected.length ? (
+        <div className="prc-chips">
+          {selected.map((v) => (
+            <button
+              key={v}
+              type="button"
+              className="prc-chip"
+              onClick={() => onRemove(v)}
+            >
+              {labels[v] || v} ×
+            </button>
+          ))}
+        </div>
+      ) : null}
+    </label>
+  );
+}
+
 export default function PricingPage() {
   const [rows, setRows] = useState<Rule[]>([]);
   const [providers, setProviders] = useState<Provider[]>([]);
   const [airports, setAirports] = useState<Option[]>(FALLBACK_AIRPORTS);
   const [cities, setCities] = useState<Option[]>(FALLBACK_CITIES);
+  const [locationLabels, setLocationLabels] = useState<Record<string, string>>({});
   const [form, setForm] = useState({
     ...emptyForm,
     currency: getPreferredCurrency(),
@@ -336,15 +457,11 @@ export default function PricingPage() {
   const showOrigins = isFlight || isAll;
   const showCabin = isFlight || isAll;
   const showStars = isHotel || isAll;
-  const destinationOptions = isHotel ? cities : airports;
   const destinationLabel = isHotel
     ? "وجهة الفندق (مدينة)"
     : isAll
       ? "الوجهات (مطارات)"
       : "مطارات الوصول";
-  const destinationPlaceholder = isHotel
-    ? "اختر مدينة..."
-    : "اختر مطار وصول...";
 
   function minorFromMajor(major: number, currency: string) {
     const exp =
@@ -450,6 +567,72 @@ export default function PricingPage() {
       hotelStars: serviceType === "flight" ? [] : prev.hotelStars,
     }));
   }
+
+  function rememberLabel(value: string, label: string) {
+    setLocationLabels((prev) => ({ ...prev, [value]: label }));
+  }
+
+  async function searchAirports(q: string): Promise<SuggestItem[]> {
+    const rows = await apiFetch<Airport[]>(
+      `/travel-meta/airports?q=${encodeURIComponent(q)}&limit=40`,
+    ).catch(() => [] as Airport[]);
+    const source = rows.length
+      ? rows
+      : FALLBACK_AIRPORTS.filter(
+          (o) =>
+            !q ||
+            o.value.includes(q.toUpperCase()) ||
+            o.label.toLowerCase().includes(q.toLowerCase()),
+        ).map((o) => ({ iataCode: o.value, city: o.label, name: o.label, country: undefined as string | undefined }));
+    return source
+      .filter((a) => a.iataCode)
+      .map((a) => {
+        const code = String(a.iataCode).toUpperCase();
+        const title = `${code} · ${a.city || a.name || code}`;
+        return {
+          id: code,
+          value: code,
+          title,
+          subtitle: ("country" in a ? a.country : undefined) || undefined,
+        };
+      });
+  }
+
+  async function searchCities(q: string): Promise<SuggestItem[]> {
+    const rows = await apiFetch<CityRow[]>(
+      `/travel-meta/cities?q=${encodeURIComponent(q)}`,
+    ).catch(() => [] as CityRow[]);
+    const source = rows.length
+      ? rows
+      : FALLBACK_CITIES.filter(
+          (o) =>
+            !q ||
+            o.value.includes(q.toUpperCase()) ||
+            o.label.toLowerCase().includes(q.toLowerCase()),
+        ).map((o) => ({ city: o.label, country: undefined }));
+    const seen = new Set<string>();
+    const out: SuggestItem[] = [];
+    for (const c of source) {
+      if (!c.city) continue;
+      const value = String(c.city).trim().toUpperCase();
+      if (seen.has(value)) continue;
+      seen.add(value);
+      out.push({
+        id: value,
+        value,
+        title: String(c.city),
+        subtitle: c.country || undefined,
+      });
+    }
+    return out;
+  }
+
+  const allLocationLabels = useMemo(() => {
+    const map: Record<string, string> = { ...locationLabels };
+    for (const o of airports) map[o.value] = o.label;
+    for (const o of cities) map[o.value] = o.label;
+    return map;
+  }, [locationLabels, airports, cities]);
 
   return (
     <AppShell title="قواعد التسعير">
@@ -615,17 +798,20 @@ export default function PricingPage() {
             <div className="prc-conditions">
               <div className="prc-row prc-row-4">
                 {showOrigins ? (
-                  <SelectChips
+                  <SearchChips
                     label="مطارات المغادرة"
-                    placeholder="اختر مطار مغادرة..."
-                    options={airports}
+                    placeholder="ابحث باسم المدينة أو رمز المطار..."
+                    hint="محرك بحث المطارات"
                     selected={form.origins}
-                    onAdd={(v) =>
+                    labels={allLocationLabels}
+                    onSearch={searchAirports}
+                    onAdd={(item) => {
+                      rememberLabel(item.value, item.title);
                       setForm({
                         ...form,
-                        origins: toggleInList(form.origins, v),
-                      })
-                    }
+                        origins: toggleInList(form.origins, item.value),
+                      });
+                    }}
                     onRemove={(v) =>
                       setForm({
                         ...form,
@@ -635,17 +821,24 @@ export default function PricingPage() {
                   />
                 ) : null}
 
-                <SelectChips
+                <SearchChips
                   label={destinationLabel}
-                  placeholder={destinationPlaceholder}
-                  options={destinationOptions}
+                  placeholder={
+                    isHotel
+                      ? "ابحث عن مدينة الوجهة..."
+                      : "ابحث بمطار الوصول أو المدينة..."
+                  }
+                  hint={isHotel ? "محرك بحث مدن الفنادق" : "محرك بحث مطارات الوصول"}
                   selected={form.destinations}
-                  onAdd={(v) =>
+                  labels={allLocationLabels}
+                  onSearch={isHotel ? searchCities : searchAirports}
+                  onAdd={(item) => {
+                    rememberLabel(item.value, item.title);
                     setForm({
                       ...form,
-                      destinations: toggleInList(form.destinations, v),
-                    })
-                  }
+                      destinations: toggleInList(form.destinations, item.value),
+                    });
+                  }}
                   onRemove={(v) =>
                     setForm({
                       ...form,

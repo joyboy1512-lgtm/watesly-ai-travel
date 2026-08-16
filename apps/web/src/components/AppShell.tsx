@@ -70,6 +70,7 @@ export function AppShell({
   const [ready, setReady] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [showNotes, setShowNotes] = useState(false);
+  const [navOpen, setNavOpen] = useState(false);
   const [currency, setCurrency] = useState(getPreferredCurrency);
 
   const visibleNav = useMemo(() => {
@@ -133,6 +134,20 @@ export function AppShell({
       .catch(() => undefined);
   }, [ready, pathname]);
 
+  useEffect(() => {
+    setNavOpen(false);
+    setShowNotes(false);
+  }, [pathname]);
+
+  useEffect(() => {
+    if (!navOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [navOpen]);
+
   function logout() {
     clearSession();
     router.replace("/login");
@@ -171,15 +186,35 @@ export function AppShell({
   const unread = notifications.filter((n) => !n.readAt).length;
 
   return (
-    <div className={`app-shell${dense ? " dense" : ""}`}>
-      <aside className="sidebar">
-        <p className="brand">{APP_NAME}</p>
+    <div
+      className={`app-shell${dense ? " dense" : ""}${navOpen ? " nav-open" : ""}`}
+    >
+      <button
+        type="button"
+        className="nav-backdrop"
+        aria-label="إغلاق القائمة"
+        onClick={() => setNavOpen(false)}
+      />
+
+      <aside className="sidebar" id="app-sidebar">
+        <div className="sidebar-head">
+          <p className="brand">{APP_NAME}</p>
+          <button
+            type="button"
+            className="nav-close"
+            aria-label="إغلاق القائمة"
+            onClick={() => setNavOpen(false)}
+          >
+            ✕
+          </button>
+        </div>
         <nav className="nav">
           {visibleNav.map((item) => (
             <Link
               key={item.href}
               href={item.href}
               className={isNavActive(item.href, pathname) ? "active" : undefined}
+              onClick={() => setNavOpen(false)}
             >
               {item.label}
             </Link>
@@ -191,11 +226,25 @@ export function AppShell({
         className={`main${dense ? " main-dense" : ""}${surface === "light" ? " main-light" : ""}`}
       >
         <header className={`topbar${dense ? " topbar-dense" : ""}`}>
-          <div>
-            <h2>{title}</h2>
-            <div className="meta-line">
-              {session.organization.name} · {session.user.name} ·{" "}
-              {session.role.code}
+          <div className="topbar-title-block">
+            <button
+              type="button"
+              className="nav-toggle"
+              aria-label="فتح القائمة"
+              aria-expanded={navOpen}
+              aria-controls="app-sidebar"
+              onClick={() => setNavOpen(true)}
+            >
+              <span />
+              <span />
+              <span />
+            </button>
+            <div>
+              <h2>{title}</h2>
+              <div className="meta-line">
+                {session.organization.name} · {session.user.name} ·{" "}
+                {session.role.code}
+              </div>
             </div>
           </div>
           <div className="topbar-actions">
@@ -235,7 +284,10 @@ export function AppShell({
                           void markRead(n.id);
                           if (n.linkRef?.includes("/conversations/")) {
                             const id = n.linkRef.split("/").pop();
-                            if (id) router.push(`/dashboard/conversations?id=${id}`);
+                            if (id)
+                              router.push(
+                                `/dashboard/conversations?id=${id}`,
+                              );
                           } else if (n.linkRef) {
                             router.push(n.linkRef);
                           }

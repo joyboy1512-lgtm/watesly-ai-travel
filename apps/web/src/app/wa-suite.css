@@ -1,0 +1,440 @@
+
+/* ===== WhatsApp suite (واتساب / قنوات / قوالب / حملات) ===== */
+.wa-suite {
+  display: grid;
+  gap: 1rem;
+}
+
+.wa-hero {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1.15rem 1.25rem;
+  border-radius: 16px;
+  border: 1px solid rgba(15, 51, 64, 0.08);
+  background: #fff;
+  box-shadow: 0 10px 24px rgba(7, 24, 34, 0.06);
+}
+
+.wa-kicker {
+  margin: 0 0 0.25rem;
+  color: #5f7470;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.wa-hero h3 {
+  margin: 0;
+  color: #0f3340;
+  font-size: 1.45rem;
+  font-weight: 800;
+}
+
+.wa-hero p {
+  margin: 0.4rem 0 0;
+  color: #5f7470;
+  line-height: 1.6;
+  max-width: 56ch;
+}
+
+.wa-hero-actions {
+  display: flex;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+}
+
+.wa-banner {
+  padding: 0.85rem 1.1rem;
+  border-radius: 12px;
+  border: 1px solid rgba(15, 51, 64, 0.1);
+  background: linear-gradient(90deg, rgba(15, 51, 64, 0.08), rgba(24, 74, 82, 0.06));
+  color: #0f3340;
+  font-size: 0.92rem;
+  line-height: 1.55;
+}
+
+.wa-stats {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.wa-stat {
+  display: grid;
+  gap: 0.3rem;
+  padding: 1rem 1.05rem;
+  border-radius: 14px;
+  border: 1px solid rgba(216, 163, 94, 0.22);
+  background: linear-gradient(145deg, #184a52, #0f3340 55%, #071822);
+  color: #f3f7f4;
+  box-shadow: 0 12px 28px rgba(7, 24, 34, 0.16);
+}
+
+.wa-stat span {
+  color: #b7c9c4;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.wa-stat strong {
+  color: #f0c27a;
+  font-size: 1.45rem;
+  font-weight: 800;
+}
+
+.wa-tabs {
+  display: flex;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+
+.wa-tabs button {
+  min-height: 2.4rem;
+  padding: 0.45rem 1rem;
+  border-radius: 999px;
+  border: 1px solid rgba(15, 51, 64, 0.12);
+  background: #fff;
+  color: #5f7470;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.wa-tabs button.on {
+  background: #0f3340;
+  border-color: #0f3340;
+  color: #f3f7f4;
+}
+
+.wa-ok {
+  margin: 0;
+  color: #1a6b4a;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.wa-card {
+  display: grid;
+  gap: 0.95rem;
+  padding: 1.15rem;
+  border-radius: 16px;
+  border: 1px solid rgba(15, 51, 64, 0.08);
+  background: #fff;
+  box-shadow: 0 10px 24px rgba(7, 24, 34, 0.06);
+}
+
+.wa-card-head h4 {
+  margin: 0;
+  color: #0f3340;
+  font-size: 1.05rem;
+}
+
+.wa-card-head p {
+  margin: 0.25rem 0 0;
+  color: #5f7470;
+  font-size: 0.88rem;
+}
+
+.wa-card-head.row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.wa-form-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.wa-form-grid .cust-field select,
+.wa-form-grid .cust-field textarea {
+  width: 100%;
+  min-height: 2.6rem;
+  padding: 0.65rem 0.8rem;
+  border-radius: 10px;
+  border: 1px solid rgba(15, 51, 64, 0.14);
+  background: #f7fafb;
+  color: #142028;
+  outline: none;
+  font: inherit;
+}
+
+.wa-form-grid .cust-field textarea {
+  min-height: 7rem;
+  resize: vertical;
+}
+
+.wa-form-grid .cust-field select:focus,
+.wa-form-grid .cust-field textarea:focus {
+  border-color: rgba(216, 163, 94, 0.7);
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(216, 163, 94, 0.12);
+}
+
+.wa-check {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #0f3340;
+  font-weight: 600;
+  font-size: 0.92rem;
+}
+
+.wa-toolbar {
+  display: grid;
+  grid-template-columns: 1.6fr repeat(2, minmax(140px, 0.7fr));
+  gap: 0.65rem;
+}
+
+.wa-toolbar input,
+.wa-toolbar select {
+  width: 100%;
+  min-height: 2.55rem;
+  padding: 0.55rem 0.8rem;
+  border-radius: 10px;
+  border: 1px solid rgba(15, 51, 64, 0.14);
+  background: #f7fafb;
+  color: #142028;
+  outline: none;
+  font: inherit;
+}
+
+.wa-toolbar input:focus,
+.wa-toolbar select:focus {
+  border-color: rgba(216, 163, 94, 0.7);
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(216, 163, 94, 0.12);
+}
+
+.wa-pill {
+  display: inline-flex;
+  align-items: center;
+  margin-inline-start: 0.4rem;
+  padding: 0.12rem 0.5rem;
+  border-radius: 999px;
+  background: rgba(15, 51, 64, 0.1);
+  color: #0f3340;
+  font-size: 0.72rem;
+  font-weight: 700;
+  vertical-align: middle;
+}
+
+.wa-pill.soft {
+  background: rgba(26, 107, 74, 0.12);
+  color: #1a6b4a;
+}
+
+.wa-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.18rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  background: rgba(15, 51, 64, 0.08);
+  color: #0f3340;
+}
+
+.wa-badge.ok {
+  background: rgba(26, 107, 74, 0.12);
+  color: #1a6b4a;
+}
+
+.wa-badge.warn {
+  background: rgba(180, 120, 40, 0.14);
+  color: #8a5a12;
+}
+
+.wa-badge.bad {
+  background: rgba(196, 75, 75, 0.12);
+  color: #b43b3b;
+}
+
+.wa-meta-ids {
+  display: grid;
+  gap: 0.15rem;
+  margin-top: 0.25rem;
+  color: #5f7470;
+  font-size: 0.78rem;
+}
+
+.wa-row-actions {
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.wa-mini-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2rem;
+  padding: 0.25rem 0.65rem;
+  border-radius: 8px;
+  border: 1px solid rgba(15, 51, 64, 0.14);
+  background: #fff;
+  color: #0f3340;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.wa-mini-btn:hover {
+  background: #f7fafb;
+}
+
+.wa-mini-btn.danger {
+  color: #b43b3b;
+  border-color: rgba(180, 59, 59, 0.28);
+}
+
+.wa-clip {
+  max-width: 28ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #5f7470;
+  font-size: 0.86rem;
+}
+
+.wa-preview {
+  display: grid;
+  gap: 0.5rem;
+  padding: 0.9rem;
+  border-radius: 12px;
+  background: #f0f4f3;
+  border: 1px solid rgba(15, 51, 64, 0.08);
+}
+
+.wa-preview strong {
+  color: #0f3340;
+  font-size: 0.88rem;
+}
+
+.wa-preview .wa-bubble {
+  justify-self: start;
+  max-width: 90%;
+  padding: 0.75rem 0.9rem;
+  border-radius: 12px 12px 4px 12px;
+  background: #dff7c8;
+  color: #142028;
+  line-height: 1.55;
+  white-space: pre-wrap;
+}
+
+.wa-type-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.wa-type-card {
+  display: grid;
+  gap: 0.55rem;
+  padding: 1rem;
+  border-radius: 14px;
+  border: 1px solid rgba(216, 163, 94, 0.22);
+  background: linear-gradient(145deg, #184a52, #0f3340 55%, #071822);
+  color: #f3f7f4;
+  box-shadow: 0 10px 24px rgba(7, 24, 34, 0.14);
+}
+
+.wa-type-card.soon {
+  opacity: 0.72;
+  background: linear-gradient(145deg, #2a4a4f, #1a333a 55%, #0d1c22);
+}
+
+.wa-type-card strong {
+  font-size: 1.05rem;
+  color: #f0c27a;
+}
+
+.wa-tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.wa-tag-list span {
+  padding: 0.15rem 0.45rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #d7e4df;
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.wa-type-card small {
+  color: #b7c9c4;
+  font-size: 0.78rem;
+}
+
+.camp-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.camp-stat {
+  display: inline-flex;
+  padding: 0.12rem 0.45rem;
+  border-radius: 999px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  background: rgba(15, 51, 64, 0.08);
+  color: #0f3340;
+}
+
+.camp-stat.sent {
+  background: rgba(26, 107, 74, 0.12);
+  color: #1a6b4a;
+}
+
+.camp-stat.failed {
+  background: rgba(196, 75, 75, 0.12);
+  color: #b43b3b;
+}
+
+.camp-stat.pending,
+.camp-stat.rate {
+  background: rgba(180, 120, 40, 0.14);
+  color: #8a5a12;
+}
+
+@media (max-width: 1100px) {
+  .wa-stats {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .wa-type-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .wa-form-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .wa-toolbar {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .wa-hero {
+    flex-direction: column;
+  }
+
+  .wa-stats,
+  .wa-type-grid,
+  .wa-form-grid,
+  .wa-toolbar {
+    grid-template-columns: 1fr;
+  }
+}
+/* ===== End WhatsApp suite ===== */

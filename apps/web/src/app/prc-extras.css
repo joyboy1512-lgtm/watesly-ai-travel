@@ -1,0 +1,46 @@
+
+.prc-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin-top: 0.35rem;
+}
+
+.prc-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  border: 1px solid rgba(15, 51, 64, 0.14);
+  background: #eef4f3;
+  color: #0f3340;
+  font-size: 0.74rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.prc-chip:hover {
+  background: #e2ecea;
+}
+
+.prc-table td,
+.prc-table th {
+  white-space: nowrap;
+}
+
+.prc-cond-cell {
+  white-space: normal !important;
+  max-width: 28ch;
+  font-size: 0.82rem;
+  color: #5f7470;
+  line-height: 1.4;
+}
+
+.prc-row-off td {
+  opacity: 0.72;
+}
+
+.prc-row-4 {
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}

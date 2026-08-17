@@ -5,19 +5,17 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AppShell } from "@/components/AppShell";
-import { HotelRateMatrix } from "@/components/hotels/HotelRateMatrix";
+import { HotelSearchCard } from "@/components/hotels/HotelSearchCard";
 import { apiFetch } from "@/lib/api";
-import { saveFlightDraft, saveHotelDraft } from "@/lib/booking-draft";
+import { saveFlightDraft } from "@/lib/booking-draft";
 import { getPreferredCurrency } from "@/lib/currency";
 import { formatDate, formatMoneyMinor, formatMoneyMinorCompact } from "@/lib/format";
 import {
   BOARD_LABELS_AR,
   collectFilterFacets,
   filterHotelOffers,
-  rateDisplayMinor,
-  type HotelRateOption,
-  type HotelRoomOption,
 } from "@/lib/hotel-search";
+import { saveHotelSearchSession } from "@/lib/hotel-search-session";
 
 type Inquiry = {
   id: string;
@@ -396,10 +394,6 @@ export default function InquiriesPage() {
   const [currentInquiryId, setCurrentInquiryId] = useState<string | null>(null);
   const [sortKey, setSortKey] = useState<SortKey>("best");
   const [detailFlightId, setDetailFlightId] = useState<string | null>(null);
-  const [detailHotelId, setDetailHotelId] = useState<string | null>(null);
-  const [selectedHotelRateKey, setSelectedHotelRateKey] = useState<string | null>(
-    null,
-  );
   const [filters, setFilters] = useState({
     maxPrice: "",
     stops: "any" as "any" | "0" | "1",
@@ -474,19 +468,6 @@ export default function InquiriesPage() {
       document.body.style.overflow = "";
     };
   }, [detailFlightId]);
-
-  useEffect(() => {
-    if (!detailHotelId) return;
-    function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") setDetailHotelId(null);
-    }
-    document.addEventListener("keydown", onKey);
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.removeEventListener("keydown", onKey);
-      document.body.style.overflow = "";
-    };
-  }, [detailHotelId]);
 
   async function load() {
     setRows(await apiFetch<Inquiry[]>("/inquiries"));
@@ -716,19 +697,77 @@ export default function InquiriesPage() {
     [search?.hotels],
   );
 
-  const detailHotel = useMemo(
-    () => filteredHotels.find((h) => h.id === detailHotelId) || null,
-    [filteredHotels, detailHotelId],
+  const hotelSortKey = useMemo(
+    () =>
+      sortKey === "price_desc"
+        ? "price_desc"
+        : sortKey === "rating_desc"
+          ? "rating_desc"
+          : "price_asc",
+    [sortKey],
   );
 
   useEffect(() => {
-    if (!detailHotelId) {
-      setSelectedHotelRateKey(null);
-      return;
+    if (mode !== "stays" || !search?.hotels?.length) return;
+    saveHotelSearchSession({
+      hotels: search.hotels,
+      filters,
+      sortKey: hotelSortKey,
+      meta: {
+        stayQuery: form.stayQuery,
+        departDate: form.departDate,
+        returnDate: form.returnDate,
+        rooms: form.rooms,
+        adults: form.adults,
+        children: form.children,
+        destination: form.destination || form.stayQuery,
+        nights,
+      },
+      inquiryId: currentInquiryId || undefined,
+      quote: search.quote || undefined,
+      providerName: search.hotelProviderName || search.providerName,
+      liveMode: search.liveMode,
+    });
+  }, [
+    search,
+    filters,
+    hotelSortKey,
+    mode,
+    form.stayQuery,
+    form.departDate,
+    form.returnDate,
+    form.rooms,
+    form.adults,
+    form.children,
+    form.destination,
+    nights,
+    currentInquiryId,
+  ]);
+
+  function openHotelDetail(offerId: string) {
+    if (search?.hotels?.length) {
+      saveHotelSearchSession({
+        hotels: search.hotels,
+        filters,
+        sortKey: hotelSortKey,
+        meta: {
+          stayQuery: form.stayQuery,
+          departDate: form.departDate,
+          returnDate: form.returnDate,
+          rooms: form.rooms,
+          adults: form.adults,
+          children: form.children,
+          destination: form.destination || form.stayQuery,
+          nights,
+        },
+        inquiryId: currentInquiryId || undefined,
+        quote: search.quote || undefined,
+        providerName: search.hotelProviderName || search.providerName,
+        liveMode: search.liveMode,
+      });
     }
-    if (!detailHotel) return;
-    setSelectedHotelRateKey(detailHotel.matchingRates[0]?.rateKey || null);
-  }, [detailHotelId, detailHotel]);
+    router.push(`/dashboard/inquiries/hotel/${encodeURIComponent(offerId)}`);
+  }
 
   const [carResults, setCarResults] = useState<AncillaryResult[]>([]);
 
@@ -1592,183 +1631,15 @@ export default function InquiriesPage() {
                     </button>
                   </div>
                 </div>
-                <div className="hotel-bcom-list">
-                  {filteredHotels.map((h) => {
-                    const name = String(h.details.name || "فندق");
-                    const stars = Number(h.details.stars || 0);
-                    const ratingRaw = Number(h.details.rating || 0);
-                    const ratingText = formatHotelRating(h.details.rating);
-                    const reviewCount = Number(h.details.reviewCount || 0);
-                    const cheapestRate = h.matchingRates[0];
-                    const board = cheapestRate?.boardName || String(h.details.board || "");
-                    const roomType =
-                      cheapestRate?.roomName ||
-                      String(h.details.roomType || "غرفة قياسية");
-                    const location = String(
-                      h.details.neighborhood ||
-                        h.details.zoneName ||
-                        h.details.location ||
-                        h.details.address ||
-                        form.stayQuery ||
-                        "—",
-                    );
-                    const hotelNights = Number(h.details.nights || 0) || nights;
-                    const hasBreakfast = cheapestRate
-                      ? ["BB", "HB", "FB", "AI"].includes(cheapestRate.boardCode)
-                      : board.includes("إفطار");
-                    const hasFreeCancel =
-                      cheapestRate?.freeCancellation ??
-                      Boolean(h.details.freeCancellation);
-                    const noPrepay =
-                      cheapestRate?.paymentType === "AT_HOTEL" ||
-                      Boolean(h.details.noPrepayment);
-                    const displayMinor = h.displayFromMinor;
-                    const perNightMinor =
-                      hotelNights > 0
-                        ? Math.round(displayMinor / hotelNights)
-                        : 0;
-                    const totalRates = Array.isArray(h.details.rateOptions)
-                      ? (h.details.rateOptions as HotelRateOption[]).length
-                      : h.matchingRates.length;
-                    const guestsLabel = [
-                      form.adults ? `${form.adults} بالغ` : null,
-                      form.children ? `${form.children} طفل` : null,
-                    ]
-                      .filter(Boolean)
-                      .join(" · ");
-
-                    return (
-                      <article key={h.id} className="hotel-bcom-card">
-                        <div className="hotel-bcom-visual" aria-hidden="true">
-                          {typeof h.details.imageUrl === "string" &&
-                          h.details.imageUrl ? (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img
-                              className="hotel-bcom-photo"
-                              src={String(h.details.imageUrl)}
-                              alt=""
-                            />
-                          ) : (
-                            <div
-                              className={`hotel-bcom-visual-bg tone-${(stars % 3) + 1}`}
-                            />
-                          )}
-                          <button
-                            type="button"
-                            className="hotel-bcom-heart"
-                            aria-label="حفظ"
-                            tabIndex={-1}
-                          >
-                            ♡
-                          </button>
-                          {Number(h.details.roomsAvailable) === 0 ||
-                          h.details.scenario === "sold_out" ||
-                          h.details.scenario === "unavailable" ? (
-                            <span className="hotel-bcom-soldout">نفدت الغرف</span>
-                          ) : null}
-                        </div>
-
-                        <div className="hotel-bcom-body">
-                          <div className="hotel-bcom-title-row">
-                            <h4 className="hotel-bcom-name">{name}</h4>
-                            {stars > 0 ? (
-                              <div className="hotel-bcom-stars-inline">
-                                {Array.from({ length: Math.min(5, stars) }, (_, i) => (
-                                  <span key={i}>★</span>
-                                ))}
-                              </div>
-                            ) : null}
-                          </div>
-                          <p className="hotel-bcom-location">
-                            <button type="button" className="hotel-bcom-map-link">
-                              عرض على الخريطة
-                            </button>
-                            <span>· {location}</span>
-                          </p>
-                          <p className="hotel-bcom-room">
-                            <strong>{roomType}</strong>
-                            {board ? ` · ${board}` : ""}
-                            {totalRates > 1 ? (
-                              <span className="hotel-bcom-rate-count">
-                                {h.matchingRates.length < totalRates
-                                  ? `${h.matchingRates.length} من ${totalRates} تعرفة مطابقة`
-                                  : `${totalRates} تعرفة متاحة`}
-                              </span>
-                            ) : null}
-                          </p>
-                          <ul className="hotel-bcom-bullets">
-                            {hasFreeCancel ? (
-                              <li className="hotel-bcom-bullet good">
-                                إلغاء مجاني
-                              </li>
-                            ) : null}
-                            {noPrepay ? (
-                              <li className="hotel-bcom-bullet good">
-                                بدون دفع مسبق — ادفع في العقار
-                              </li>
-                            ) : null}
-                            {hasBreakfast ? (
-                              <li className="hotel-bcom-bullet good">
-                                يشمل الإفطار
-                              </li>
-                            ) : null}
-                          </ul>
-                        </div>
-
-                        <div className="hotel-bcom-side">
-                          {ratingText ? (
-                            <div className="hotel-bcom-score">
-                              <div className="hotel-bcom-score-text">
-                                <strong>{hotelRatingLabel(ratingRaw)}</strong>
-                                {reviewCount > 0 ? (
-                                  <span>{reviewCount.toLocaleString("ar")} مراجعة</span>
-                                ) : null}
-                              </div>
-                              <span className="hotel-bcom-score-num">
-                                {ratingText}
-                              </span>
-                            </div>
-                          ) : null}
-                          <div className="hotel-bcom-price-block">
-                            <span className="hotel-bcom-nights">
-                              {hotelNights
-                                ? `${hotelNights} ${hotelNights === 1 ? "ليلة" : "ليالي"}`
-                                : "—"}
-                              {guestsLabel ? ` · ${guestsLabel}` : ""}
-                            </span>
-                            <strong className="hotel-bcom-price">
-                              {formatMoneyMinor(displayMinor, h.currency)}
-                            </strong>
-                            {hotelNights > 0 ? (
-                              <small className="hotel-bcom-per-night">
-                                {formatMoneyMinor(perNightMinor, h.currency)} / ليلة
-                              </small>
-                            ) : null}
-                            <small className="hotel-bcom-tax-note">
-                              يشمل الضرائب والرسوم
-                              {h.pricingRuleName
-                                ? ` · ${h.pricingRuleName}`
-                                : ""}
-                            </small>
-                          </div>
-                          <button
-                            type="button"
-                            className="btn hotel-bcom-book-btn"
-                            onClick={() => setDetailHotelId(h.id)}
-                          >
-                            عرض الأسعار ›
-                          </button>
-                          <button
-                            type="button"
-                            className="ticket-details-btn"
-                            onClick={() => setDetailHotelId(h.id)}
-                          >
-                            عرض التفاصيل
-                          </button>
-                        </div>
-                      </article>
-                    );
-                  })}
+                <div className="hotel-search-list">
+                  {filteredHotels.map((h) => (
+                    <HotelSearchCard
+                      key={h.id}
+                      hotel={h}
+                      nights={Number(h.details.nights || 0) || nights}
+                      onOpen={() => openHotelDetail(h.id)}
+                    />
+                  ))}
                   {filteredHotels.length === 0 ? (
                     <p className="hint">
                       لا توجد فنادق مطابقة للفلاتر الحالية.
@@ -2707,291 +2578,6 @@ export default function InquiriesPage() {
         </div>
       ) : null}
 
-      {detailHotel ? (
-        <div
-          className="flight-modal-backdrop"
-          onClick={() => setDetailHotelId(null)}
-          role="presentation"
-        >
-          <div
-            className="flight-modal hotel-modal"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="hotel-modal-title"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {(() => {
-              const h = detailHotel;
-              const name = String(h.details.name || "فندق");
-              const stars = h.details.stars ? Number(h.details.stars) : 0;
-              const rating = h.details.rating ? String(h.details.rating) : "";
-              const address = h.details.address
-                ? String(h.details.address)
-                : form.stayQuery;
-              const nightsLabel = h.details.nights
-                ? String(h.details.nights)
-                : String(nights || 1);
-              const hotelNights = Number(h.details.nights || 0) || nights || 1;
-              const rooms = Array.isArray(h.details.rooms)
-                ? (h.details.rooms as HotelRoomOption[])
-                : [];
-              const rateOptions = h.matchingRates;
-              const selectedRate =
-                rateOptions.find((r) => r.rateKey === selectedHotelRateKey) ||
-                rateOptions[0];
-              const footerMinor = selectedRate
-                ? rateDisplayMinor(selectedRate, h, hotelNights)
-                : h.displayFromMinor;
-              const minRate = h.details.minRate ? Number(h.details.minRate) : null;
-              const maxRate = h.details.maxRate ? Number(h.details.maxRate) : null;
-              const zones = Array.isArray(h.details.zones)
-                ? (h.details.zones as string[])
-                : h.details.zoneName
-                  ? [String(h.details.zoneName)]
-                  : [];
-              const promotions = Array.isArray(h.details.promotions)
-                ? (h.details.promotions as string[])
-                : [];
-
-              function persistHotelDraft() {
-                const rate = selectedRate;
-                const sellMinor = rate
-                  ? rateDisplayMinor(rate, h, hotelNights)
-                  : h.displayFromMinor;
-                saveHotelDraft({
-                  hotel: {
-                    id: h.id,
-                    description: [
-                      name,
-                      rate?.roomName,
-                      rate?.boardName,
-                      `${hotelNights} ليلة`,
-                    ]
-                      .filter(Boolean)
-                      .join(" · "),
-                    sellAmountMinor: sellMinor,
-                    currency: h.currency,
-                    details: {
-                      ...h.details,
-                      roomType: rate?.roomName || h.details.roomType,
-                      board: rate?.boardName || h.details.board,
-                      boardCode: rate?.boardCode || h.details.boardCode,
-                      selectedRateKey: rate?.rateKey,
-                    },
-                  },
-                  selectedRate: rate
-                    ? {
-                        rateKey: rate.rateKey,
-                        rateType: rate.rateType,
-                        roomCode: rate.roomCode,
-                        roomName: rate.roomName,
-                        boardCode: rate.boardCode,
-                        boardName: rate.boardName,
-                        net: rate.net,
-                        currency: rate.currency,
-                        paymentType: rate.paymentType,
-                        freeCancellation: rate.freeCancellation,
-                      }
-                    : undefined,
-                  checkIn: form.departDate,
-                  checkOut: form.returnDate,
-                  rooms: form.rooms,
-                  adults: form.adults,
-                  children: form.children,
-                  location: form.destination || form.stayQuery,
-                  locationLabel: form.stayQuery,
-                  createdAt: new Date().toISOString(),
-                  inquiryId: currentInquiryId || undefined,
-                  quoteId: search?.quote?.id,
-                  quoteItemId: resolveQuoteItemId(h.id, "hotel"),
-                });
-              }
-
-              return (
-                <>
-                  <header className="flight-modal-head">
-                    <div>
-                      <h2 id="hotel-modal-title">{name}</h2>
-                      <button type="button" className="flight-modal-share">
-                        مشاركة هذا الفندق
-                      </button>
-                    </div>
-                    <button
-                      type="button"
-                      className="flight-modal-close"
-                      aria-label="إغلاق"
-                      onClick={() => setDetailHotelId(null)}
-                    >
-                      ×
-                    </button>
-                  </header>
-
-                  <section className="flight-modal-section">
-                    <h3>
-                      إقامتك في {form.stayQuery || "الوجهة"}
-                      <span>
-                        {stars ? `${stars} نجوم` : "—"}
-                        {rating ? ` · تقييم ${rating}` : ""}
-                      </span>
-                    </h3>
-                    <div className="flight-modal-itinerary">
-                      <div className="flight-timeline">
-                        <div className="flight-timeline-point">
-                          <i />
-                          <div>
-                            <strong>{formatDay(form.departDate)}</strong>
-                            <p>تسجيل الوصول · {address}</p>
-                          </div>
-                        </div>
-                        <div className="flight-timeline-line" />
-                        <div className="flight-timeline-point">
-                          <i />
-                          <div>
-                            <strong>{formatDay(form.returnDate)}</strong>
-                            <p>تسجيل المغادرة · {nightsLabel} ليالي</p>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flight-modal-carrier">
-                        <div className="ticket-logo-fallback">🏨</div>
-                        <strong>{name}</strong>
-                        <span>
-                          {selectedRate?.boardName ||
-                            String(h.details.board || "بدون وجبات محددة")}
-                        </span>
-                        <span>
-                          {selectedRate?.roomName || h.details.roomType || "غرفة"}
-                        </span>
-                        <span>
-                          {form.rooms} غرفة · {form.adults} بالغين
-                          {form.children ? ` · ${form.children} أطفال` : ""}
-                        </span>
-                      </div>
-                    </div>
-                  </section>
-
-                  <section className="flight-modal-section">
-                    <h3>ملخص الأسعار والتعرفات</h3>
-                    <div className="hotel-meta-grid">
-                      <div>
-                        <strong>
-                          {formatMoneyMinor(footerMinor, h.currency)}
-                        </strong>
-                        <span>السعر المختار</span>
-                      </div>
-                      {minRate != null && maxRate != null ? (
-                        <div>
-                          <strong>
-                            {minRate.toLocaleString("ar")} –{" "}
-                            {maxRate.toLocaleString("ar")} {h.currency}
-                          </strong>
-                          <span>نطاق السعر (ليلة)</span>
-                        </div>
-                      ) : null}
-                      <div>
-                        <strong>{rateOptions.length}</strong>
-                        <span>تعرفة مطابقة للفلاتر</span>
-                      </div>
-                      <div>
-                        <strong>{rooms.length || "—"}</strong>
-                        <span>أنواع غرف</span>
-                      </div>
-                      {zones.length ? (
-                        <div>
-                          <strong>{zones.slice(0, 2).join(" · ")}</strong>
-                          <span>المنطقة</span>
-                        </div>
-                      ) : null}
-                    </div>
-                    {promotions.length ? (
-                      <ul className="flight-modal-list soft">
-                        {promotions.slice(0, 5).map((p) => (
-                          <li key={p}>
-                            <span>{p}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    ) : null}
-                    <HotelRateMatrix
-                      rooms={
-                        rooms.length
-                          ? rooms.map((room) => ({
-                              ...room,
-                              rates: room.rates.filter((r) =>
-                                rateOptions.some((m) => m.rateKey === r.rateKey),
-                              ),
-                            })).filter((room) => room.rates.length)
-                          : [
-                              {
-                                code: "all",
-                                name: selectedRate?.roomName || "الغرف المتاحة",
-                                rates: rateOptions,
-                              },
-                            ]
-                      }
-                      rateOptions={rateOptions}
-                      currency={h.currency}
-                      nights={hotelNights}
-                      selectedRateKey={selectedHotelRateKey || undefined}
-                      onSelectRate={(rate) => setSelectedHotelRateKey(rate.rateKey)}
-                    />
-                  </section>
-
-                  <section className="flight-modal-section split">
-                    <div>
-                      <h3>معلومات الفندق</h3>
-                      <p>{h.description}</p>
-                      {h.details.destinationName ? (
-                        <p className="hint">
-                          {String(h.details.destinationName)}
-                          {h.details.categoryName
-                            ? ` · ${String(h.details.categoryName)}`
-                            : ""}
-                        </p>
-                      ) : null}
-                    </div>
-                    <ul className="flight-modal-list soft">
-                      <li>
-                        <span>
-                          {selectedRate?.freeCancellation
-                            ? "التعرفة المختارة تشمل إلغاء مجاني*"
-                            : "التعرفة المختارة غير قابلة للاسترداد"}
-                        </span>
-                      </li>
-                      <li>
-                        <span>
-                          {selectedRate?.paymentType === "AT_HOTEL"
-                            ? "الدفع في الفندق عند الوصول"
-                            : "الدفع أونلاين حسب التعرفة"}
-                        </span>
-                      </li>
-                      <li>
-                        <span>تسجيل الوصول والمغادرة حسب سياسة الفندق المحلية</span>
-                      </li>
-                    </ul>
-                  </section>
-
-                  <footer className="flight-modal-foot">
-                    <strong>{formatMoneyMinor(footerMinor, h.currency)}</strong>
-                    <button
-                      type="button"
-                      className="btn"
-                      disabled={!selectedRate}
-                      onClick={() => {
-                        persistHotelDraft();
-                        setDetailHotelId(null);
-                        router.push("/dashboard/inquiries/book/hotel");
-                      }}
-                    >
-                      متابعة للحجز
-                    </button>
-                  </footer>
-                </>
-              );
-            })()}
-          </div>
-        </div>
-      ) : null}
     </AppShell>
   );
 }

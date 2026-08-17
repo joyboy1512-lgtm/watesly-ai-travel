@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { AppShell } from "@/components/AppShell";
-import { HotelRateMatrix } from "@/components/hotels/HotelRateMatrix";
 import { apiFetch } from "@/lib/api";
 import {
   clearBookingDraft,
@@ -13,7 +12,6 @@ import {
   type HotelBookingDraft,
 } from "@/lib/booking-draft";
 import { formatMoneyMinor } from "@/lib/format";
-import type { HotelRoomOption } from "@/lib/hotel-search";
 
 const STEPS = ["بيانات النزلاء", "خيارات الغرفة", "إضافات", "المراجعة والدفع"] as const;
 
@@ -136,12 +134,6 @@ export default function HotelBookPage() {
     if (extras.earlyCheckin) amount += 2000;
     return amount;
   }, [draft, roomOption, extras, nights]);
-
-  const hotelRooms = useMemo(() => {
-    if (!draft) return [] as HotelRoomOption[];
-    const raw = draft.hotel.details.rooms;
-    return Array.isArray(raw) ? (raw as HotelRoomOption[]) : [];
-  }, [draft]);
 
   function updateGuest(index: number, patch: Partial<Guest>) {
     setGuests((prev) => prev.map((g, i) => (i === index ? { ...g, ...patch } : g)));
@@ -451,15 +443,6 @@ export default function HotelBookPage() {
                         </em>
                       </div>
                     </div>
-                    {hotelRooms.length ? (
-                      <HotelRateMatrix
-                        rooms={hotelRooms}
-                        currency={draft.hotel.currency}
-                        nights={nights}
-                        selectedRateKey={draft.selectedRate.rateKey}
-                        showAll={false}
-                      />
-                    ) : null}
                   </>
                 ) : (
                   <>

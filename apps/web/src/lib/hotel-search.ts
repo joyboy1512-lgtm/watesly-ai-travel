@@ -118,6 +118,29 @@ export function rateDisplayMinor(
   return Math.round(costMinor * ratio) || offer.sellAmountMinor;
 }
 
+export function groupRatesIntoRooms(rates: HotelRateOption[]): HotelRoomOption[] {
+  const map = new Map<string, HotelRoomOption>();
+  for (const rate of rates) {
+    const key = rate.roomCode || rate.roomName;
+    const existing = map.get(key);
+    if (existing) {
+      existing.rates.push(rate);
+    } else {
+      map.set(key, {
+        code: rate.roomCode || key,
+        name: rate.roomName || key,
+        rates: [rate],
+      });
+    }
+  }
+  return [...map.values()]
+    .map((room) => ({
+      ...room,
+      rates: room.rates.sort((a, b) => a.net - b.net),
+    }))
+    .sort((a, b) => (a.rates[0]?.net ?? Infinity) - (b.rates[0]?.net ?? Infinity));
+}
+
 export function filterHotelOffers(
   hotels: HotelOfferRow[],
   filters: HotelSearchFilters,

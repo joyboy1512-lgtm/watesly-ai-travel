@@ -15,6 +15,7 @@ import type {
   ProviderBookingResult,
 } from "../types";
 import { hotelsForDestination } from "./mock-hotel-catalog";
+import { buildMockHotelRateTree } from "./mock-hotel-rates";
 
 function hashSeed(input: string): number {
   let h = 0;
@@ -82,10 +83,28 @@ export class MockHotelProvider implements HotelProviderAdapter {
         ? `MOCK-HTL-${scenarioTag}-${index}`
         : `MOCK-HTL-${hotel.id.toUpperCase()}-${(seed + index).toString(16).toUpperCase()}`;
 
+      const { rooms, rateOptions } = buildMockHotelRateTree({
+        hotel,
+        providerOfferRef,
+        nightMajor,
+        currency,
+        nights,
+        seed: seed + index,
+      });
+      const cheapest = rateOptions[0];
+      const boards = [...new Set(rateOptions.map((r) => r.boardName))];
+      const boardCodes = [...new Set(rateOptions.map((r) => r.boardCode))];
+      const paymentTypes = [
+        ...new Set(rateOptions.map((r) => r.paymentType).filter(Boolean)),
+      ] as string[];
+      const rateTypes = [...new Set(rateOptions.map((r) => r.rateType))];
+      const minRate = rateOptions[0]?.net;
+      const maxRate = rateOptions[rateOptions.length - 1]?.net;
+
       return {
         providerKey: this.providerKey,
         providerOfferRef,
-        description: `${hotel.nameAr} · ${nights} ليلة · ${params.checkInDate} → ${params.checkOutDate}`,
+        description: `${hotel.nameAr} · ${rateOptions.length} تعرفة · ${rooms.length} غرفة · ${nights} ليلة`,
         costAmountMinor: cost,
         currency,
         revalidationToken: `htl_rv_${scenario}_${seed + index}`,
@@ -93,29 +112,46 @@ export class MockHotelProvider implements HotelProviderAdapter {
         raw: {
           provider: "mock",
           liveMode: false,
+          hotelCode: hotel.id,
           scenario,
           name: hotel.nameAr,
           nameEn: hotel.nameEn,
           stars: hotel.stars,
           rating: hotel.rating,
           reviewCount: hotel.reviewCount,
-          roomType: hotel.roomType,
+          roomType: cheapest?.roomName || hotel.roomType,
+          roomCode: cheapest?.roomCode,
           propertyType: hotel.propertyType,
           facilities: hotel.facilities,
-          freeCancellation: hotel.freeCancellation,
-          noPrepayment: hotel.noPrepayment,
+          freeCancellation: cheapest?.freeCancellation ?? hotel.freeCancellation,
+          noPrepayment: cheapest?.paymentType === "AT_HOTEL" || hotel.noPrepayment,
           roomsAvailable: hotel.roomsAvailable,
           imageUrl: hotel.imageUrl,
           nights,
+          minRate,
+          maxRate,
           checkInDate: params.checkInDate,
           checkOutDate: params.checkOutDate,
-          rooms: params.rooms || 1,
-          adults: params.adults,
+          board: cheapest?.boardName || hotel.board,
+          boardCode: cheapest?.boardCode,
+          rateType: cheapest?.rateType,
+          paymentType: cheapest?.paymentType,
+          rooms,
+          rateOptions,
+          boards,
+          boardCodes,
+          paymentTypes,
+          rateTypes,
+          zones: [hotel.neighborhood],
+          zoneName: hotel.neighborhood,
+          promotions: rateOptions.flatMap((r) =>
+            r.promotions.map((p) => p.name || p.remark || "").filter(Boolean),
+          ),
           location: label,
           neighborhood: hotel.neighborhood,
+          address: `${hotel.neighborhood} · ${label}`,
           latitude: geo?.latitude,
           longitude: geo?.longitude,
-          board: hotel.board,
           policies: {
             freeCancellation: hotel.freeCancellation,
             noPrepayment: hotel.noPrepayment,

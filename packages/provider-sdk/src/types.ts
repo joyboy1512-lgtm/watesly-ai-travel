@@ -17,9 +17,15 @@ export interface HotelSearchParams {
   checkInDate: string;
   checkOutDate: string;
   adults: number;
+  children?: number;
+  childrenAges?: string;
   rooms?: number;
   currency?: string;
   radiusKm?: number;
+  maxHotels?: number;
+  maxRoomsPerHotel?: number;
+  minStars?: number;
+  maxStars?: number;
 }
 
 export interface ProviderBookingResult {

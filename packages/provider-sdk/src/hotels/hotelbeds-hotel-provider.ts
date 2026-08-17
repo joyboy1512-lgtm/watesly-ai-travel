@@ -1,6 +1,5 @@
 import type { HotelOffer } from "@watesly-travel/shared";
 import { geocodeLocation } from "../locations";
-import { amountToMinor } from "../types";
 import type {
   HotelProviderAdapter,
   HotelRevalidateResult,
@@ -12,68 +11,11 @@ import {
   resolveHotelbedsCredentials,
   type HotelbedsCredentials,
 } from "./hotelbeds-auth";
-
-type HbRate = {
-  rateKey?: string;
-  rateType?: string;
-  net?: string | number;
-  sellingRate?: string | number;
-  boardName?: string;
-  boardCode?: string;
-  cancellationPolicies?: Array<{ amount?: string | number }>;
-};
-
-type HbRoom = {
-  code?: string;
-  name?: string;
-  rates?: HbRate[];
-};
-
-type HbHotel = {
-  code?: number | string;
-  name?: string;
-  categoryCode?: string;
-  categoryName?: string;
-  destinationCode?: string;
-  destinationName?: string;
-  zoneName?: string;
-  latitude?: number | string;
-  longitude?: number | string;
-  currency?: string;
-  minRate?: string | number;
-  maxRate?: string | number;
-  rooms?: HbRoom[];
-};
-
-function parseStars(categoryCode?: string): number | undefined {
-  if (!categoryCode) return undefined;
-  const match = categoryCode.match(/^(\d)/);
-  return match ? Number(match[1]) : undefined;
-}
-
-function pickBestRate(hotel: HbHotel): {
-  rate: HbRate;
-  room: HbRoom;
-} | null {
-  let best: { rate: HbRate; room: HbRoom; price: number } | null = null;
-  for (const room of hotel.rooms || []) {
-    for (const rate of room.rates || []) {
-      const raw = rate.net ?? rate.sellingRate ?? hotel.minRate;
-      const price = Number(raw);
-      if (!Number.isFinite(price) || price <= 0) continue;
-      if (!best || price < best.price) {
-        best = { rate, room, price };
-      }
-    }
-  }
-  return best ? { rate: best.rate, room: best.room } : null;
-}
-
-function nightsBetween(checkIn: string, checkOut: string): number {
-  const ms =
-    new Date(checkOut).getTime() - new Date(checkIn).getTime();
-  return Math.max(1, Math.round(ms / (24 * 60 * 60 * 1000)));
-}
+import {
+  mapCheckratesToOffer,
+  mapHotelbedsToOffer,
+} from "./hotelbeds-mapper";
+import type { HbAvailabilityResponse, HbHotel } from "./hotelbeds-types";
 
 export class HotelbedsHotelProvider implements HotelProviderAdapter {
   readonly providerKey = "hotelbeds";
@@ -120,7 +62,6 @@ export class HotelbedsHotelProvider implements HotelProviderAdapter {
     return json;
   }
 
-  /** Quick connectivity probe (used by provider test UI later). */
   async pingStatus(): Promise<{ ok: boolean; message: string }> {
     try {
       this.ensureConfigured();
@@ -158,6 +99,7 @@ export class HotelbedsHotelProvider implements HotelProviderAdapter {
     }
 
     const rooms = Math.max(1, params.rooms || 1);
+    const children = Math.max(0, params.children || 0);
     const currency = (params.currency || "EUR").toUpperCase();
     const payload: Record<string, unknown> = {
       stay: {
@@ -168,7 +110,10 @@ export class HotelbedsHotelProvider implements HotelProviderAdapter {
         {
           rooms,
           adults: Math.max(1, params.adults),
-          children: 0,
+          children,
+          ...(children > 0 && params.childrenAges
+            ? { paxes: params.childrenAges.split(",").map((age) => ({ type: "CH", age: Number(age.trim()) })) }
+            : {}),
         },
       ],
       geolocation: {
@@ -178,11 +123,17 @@ export class HotelbedsHotelProvider implements HotelProviderAdapter {
         unit: "km",
       },
       filter: {
-        maxHotels: 20,
-        maxRooms: 3,
+        maxHotels: params.maxHotels ?? 30,
+        maxRooms: params.maxRoomsPerHotel ?? 25,
+        ...(params.minStars
+          ? { minCategory: String(params.minStars), maxCategory: "5EST" }
+          : {}),
+        ...(params.maxStars
+          ? { maxCategory: `${params.maxStars}EST` }
+          : {}),
       },
       language: "ENG",
-      dailyRate: false,
+      dailyRate: true,
     };
 
     const destinationCode = params.location.trim().toUpperCase();
@@ -191,80 +142,24 @@ export class HotelbedsHotelProvider implements HotelProviderAdapter {
       delete payload.geolocation;
     }
 
-    const result = await this.request<{
-      hotels?: { hotels?: HbHotel[]; total?: number };
-    }>("/hotel-api/1.0/hotels", payload);
+    const result = await this.request<HbAvailabilityResponse>(
+      "/hotel-api/1.0/hotels",
+      payload,
+    );
 
     const hotels = result.hotels?.hotels || [];
-    const nights = nightsBetween(params.checkInDate, params.checkOutDate);
     const expiresAt = new Date(Date.now() + 25 * 60 * 1000).toISOString();
 
     const offers: HotelOffer[] = [];
     for (const hotel of hotels) {
-      const picked = pickBestRate(hotel);
-      if (!picked?.rate.rateKey) continue;
-
-      const hotelCurrency = (hotel.currency || currency).toUpperCase();
-      const costMajor = Number(
-        picked.rate.net ?? picked.rate.sellingRate ?? hotel.minRate ?? 0,
-      );
-      if (!Number.isFinite(costMajor) || costMajor <= 0) continue;
-
-      const stars = parseStars(hotel.categoryCode);
-      const board = picked.rate.boardName || picked.rate.boardCode || "";
-      const hotelCode = String(hotel.code || "");
-      const description = [
-        hotel.name,
-        stars ? `${stars}★` : hotel.categoryName,
-        picked.room.name,
-        board,
-        `${nights} ليلة`,
-      ]
-        .filter(Boolean)
-        .join(" · ");
-
-      offers.push({
-        providerKey: this.providerKey,
-        providerOfferRef: picked.rate.rateKey,
-        description,
-        costAmountMinor: amountToMinor(costMajor, hotelCurrency),
-        currency: hotelCurrency,
-        revalidationToken: JSON.stringify({
-          rateKey: picked.rate.rateKey,
-          hotelCode,
-          checkIn: params.checkInDate,
-          checkOut: params.checkOutDate,
-          rateType: picked.rate.rateType || "BOOKABLE",
-        }),
+      const offer = mapHotelbedsToOffer({
+        hotel,
+        params: { ...params, currency },
+        geoLabel: geo.label || params.location,
+        liveMode: this.liveMode,
         expiresAt,
-        raw: {
-          provider: "hotelbeds",
-          liveMode: this.liveMode,
-          hotelCode,
-          hotelName: hotel.name,
-          stars,
-          categoryName: hotel.categoryName,
-          destinationCode: hotel.destinationCode,
-          destinationName: hotel.destinationName,
-          zoneName: hotel.zoneName,
-          board,
-          roomName: picked.room.name,
-          rateType: picked.rate.rateType,
-          net: costMajor,
-          currency: hotelCurrency,
-          nights,
-          checkInDate: params.checkInDate,
-          checkOutDate: params.checkOutDate,
-          location: geo.label || params.location,
-          latitude: hotel.latitude ?? geo.latitude,
-          longitude: hotel.longitude ?? geo.longitude,
-          freeCancellation: Boolean(
-            picked.rate.cancellationPolicies?.some(
-              (p) => Number(p.amount || 0) === 0,
-            ),
-          ),
-        },
       });
+      if (offer) offers.push(offer);
     }
 
     return offers.sort((a, b) => a.costAmountMinor - b.costAmountMinor);
@@ -274,6 +169,7 @@ export class HotelbedsHotelProvider implements HotelProviderAdapter {
     let token: {
       rateKey?: string;
       rateType?: string;
+      hotelCode?: string;
     } = {};
     try {
       token = JSON.parse(offer.revalidationToken || "{}") as typeof token;
@@ -282,13 +178,19 @@ export class HotelbedsHotelProvider implements HotelProviderAdapter {
     }
 
     const rateKey = token.rateKey || offer.providerOfferRef;
-    if (!rateKey) {
-      return {
-        available: false,
-        priceChanged: false,
-        previousCostMinor: offer.costAmountMinor,
-        offer,
-      };
+    if (!rateKey || rateKey.startsWith("hb-")) {
+      const options = (offer.raw?.rateOptions as Array<{ rateKey?: string; rateType?: string }>) || [];
+      const first = options[0];
+      if (!first?.rateKey) {
+        return {
+          available: false,
+          priceChanged: false,
+          previousCostMinor: offer.costAmountMinor,
+          offer,
+        };
+      }
+      token.rateKey = first.rateKey;
+      token.rateType = first.rateType;
     }
 
     if ((token.rateType || offer.raw?.rateType) === "BOOKABLE") {
@@ -303,15 +205,13 @@ export class HotelbedsHotelProvider implements HotelProviderAdapter {
       };
     }
 
-    const checked = await this.request<{
-      hotels?: { hotels?: HbHotel[] };
-    }>("/hotel-api/1.0/checkrates", {
-      rooms: [{ rateKey }],
-    });
+    const checked = await this.request<HbAvailabilityResponse>(
+      "/hotel-api/1.0/checkrates",
+      { rooms: [{ rateKey: token.rateKey }] },
+    );
 
-    const hotel = checked.hotels?.hotels?.[0];
-    const picked = hotel ? pickBestRate(hotel) : null;
-    if (!picked) {
+    const hotel = checked.hotels?.hotels?.[0] as HbHotel | undefined;
+    if (!hotel) {
       return {
         available: false,
         priceChanged: false,
@@ -320,35 +220,14 @@ export class HotelbedsHotelProvider implements HotelProviderAdapter {
       };
     }
 
-    const hotelCurrency = (hotel?.currency || offer.currency).toUpperCase();
-    const nextMajor = Number(
-      picked.rate.net ?? picked.rate.sellingRate ?? hotel?.minRate ?? 0,
-    );
-    const nextCost = amountToMinor(nextMajor, hotelCurrency);
-    const priceChanged = nextCost !== offer.costAmountMinor;
+    const nextOffer = mapCheckratesToOffer(offer, hotel);
+    const priceChanged = nextOffer.costAmountMinor !== offer.costAmountMinor;
 
     return {
       available: true,
       priceChanged,
       previousCostMinor: offer.costAmountMinor,
-      offer: {
-        ...offer,
-        providerOfferRef: picked.rate.rateKey || rateKey,
-        costAmountMinor: nextCost,
-        currency: hotelCurrency,
-        expiresAt: new Date(Date.now() + 20 * 60 * 1000).toISOString(),
-        revalidationToken: JSON.stringify({
-          rateKey: picked.rate.rateKey || rateKey,
-          hotelCode: hotel?.code,
-          rateType: picked.rate.rateType || "BOOKABLE",
-        }),
-        raw: {
-          ...offer.raw,
-          net: nextMajor,
-          rateType: picked.rate.rateType,
-          revalidatedAt: new Date().toISOString(),
-        },
-      },
+      offer: nextOffer,
     };
   }
 

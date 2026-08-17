@@ -1,0 +1,154 @@
+/* Hotelbeds rich rate matrix + filters */
+
+.hotel-rate-matrix {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.hotel-rate-summary {
+  margin: 0;
+  color: var(--muted, #64748b);
+  font-size: 0.9rem;
+}
+
+.hotel-rate-room {
+  border: 1px solid rgba(15, 118, 110, 0.15);
+  border-radius: 12px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.hotel-rate-room-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: rgba(15, 118, 110, 0.06);
+  border-bottom: 1px solid rgba(15, 118, 110, 0.1);
+}
+
+.hotel-rate-room-head h4 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.hotel-rate-room-code {
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+.hotel-rate-table-wrap {
+  overflow-x: auto;
+}
+
+.hotel-rate-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.hotel-rate-table th,
+.hotel-rate-table td {
+  padding: 0.65rem 0.75rem;
+  vertical-align: top;
+  border-bottom: 1px solid #eef2f7;
+  text-align: start;
+}
+
+.hotel-rate-table th {
+  background: #f8fafc;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.hotel-rate-table tr.selected {
+  background: rgba(15, 118, 110, 0.08);
+}
+
+.hotel-rate-table td strong {
+  display: block;
+}
+
+.hotel-rate-table td small {
+  display: block;
+  color: #64748b;
+  margin-top: 0.15rem;
+}
+
+.hotel-rate-promos,
+.hotel-rate-policies {
+  margin: 0.35rem 0 0;
+  padding-inline-start: 1rem;
+  color: #475569;
+  font-size: 0.75rem;
+}
+
+.hotel-rate-tax {
+  color: #0f766e !important;
+}
+
+.hotel-rate-pick {
+  padding: 0.35rem 0.75rem;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+.hotel-rate-pick.on {
+  background: #0f766e;
+  color: #fff;
+}
+
+.tag {
+  display: inline-block;
+  padding: 0.15rem 0.45rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.tag.good {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.tag.warn {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.hotel-meta-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.75rem;
+  margin: 0.75rem 0 1rem;
+}
+
+.hotel-meta-grid div {
+  background: #f8fafc;
+  border-radius: 10px;
+  padding: 0.65rem 0.75rem;
+}
+
+.hotel-meta-grid strong {
+  display: block;
+  font-size: 0.95rem;
+}
+
+.hotel-meta-grid span {
+  color: #64748b;
+  font-size: 0.75rem;
+}
+
+.hotel-modal .flight-modal-section {
+  max-height: none;
+}
+
+.hotel-bcom-rate-count {
+  display: inline-block;
+  margin-top: 0.25rem;
+  font-size: 0.78rem;
+  color: #0f766e;
+  font-weight: 600;
+}

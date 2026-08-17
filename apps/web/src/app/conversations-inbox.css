@@ -776,6 +776,16 @@
   cursor: not-allowed;
 }
 
+.wi-thread {
+  background-color: var(--wa-chat-bg);
+  background-image:
+    radial-gradient(rgba(15, 51, 64, 0.045) 1.1px, transparent 1.1px),
+    radial-gradient(rgba(216, 163, 94, 0.05) 1px, transparent 1px),
+    linear-gradient(180deg, rgba(239, 234, 226, 0.97), rgba(232, 225, 214, 0.98));
+  background-size: 22px 22px, 34px 34px, auto;
+  background-position: 0 0, 11px 17px, 0 0;
+}
+
 .wi-placeholder,
 .wi-empty {
   margin: auto;
@@ -790,6 +800,13 @@
   margin: 0.5rem 0;
   color: var(--wa-ink);
   font-weight: 500;
+}
+
+.wi-placeholder {
+  background: rgba(255, 255, 255, 0.72);
+  border-radius: 10px;
+  box-shadow: 0 1px 2px rgba(11, 20, 26, 0.08);
+  max-width: 22rem;
 }
 
 .wi-empty.padded {

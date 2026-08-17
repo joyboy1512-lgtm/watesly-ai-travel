@@ -1,0 +1,699 @@
+import { BadRequestException, Injectable } from "@nestjs/common";
+import {
+  getFlightProvider,
+  getHotelProvider,
+  revalidatePricedOffer,
+} from "@watesly-travel/travel-core";
+import type { FlightOffer } from "@watesly-travel/shared";
+import { Prisma } from "@watesly-travel/database";
+import { PrismaService } from "../prisma/prisma.service";
+import { AuditService } from "../common/audit.service";
+import { formatMoneyMinor } from "../common/money";
+import { BotPipelineService } from "../pipeline/bot-pipeline.service";
+
+export type BookingDraftOfferInput = {
+  id?: string;
+  description: string;
+  sellAmountMinor: number;
+  currency: string;
+  details?: Record<string, unknown>;
+  providerKey?: string;
+  providerOfferRef?: string;
+};
+
+export type BookingDraftRouteInput = {
+  origin?: string;
+  destination?: string;
+  originLabel?: string;
+  destinationLabel?: string;
+  departDate?: string;
+  returnDate?: string;
+  tripType?: string;
+  cabinClass?: string;
+};
+
+export type BookingDraftStayInput = {
+  location?: string;
+  locationLabel?: string;
+  checkIn?: string;
+  checkOut?: string;
+  rooms?: number;
+};
+
+export type CreateFromDraftInput = {
+  organizationId: string;
+  actorUserId?: string;
+  canManagePayments: boolean;
+  serviceType: "flight" | "hotel";
+  inquiryId?: string;
+  quoteItemId?: string;
+  offer: BookingDraftOfferInput;
+  route?: BookingDraftRouteInput;
+  stay?: BookingDraftStayInput;
+  travelers?: Array<Record<string, unknown>>;
+  guests?: Array<Record<string, unknown>>;
+  adults?: number;
+  children?: number;
+  contact: { email: string; phone: string };
+  extras?: Record<string, unknown>;
+  ticketType?: string;
+  seatPref?: string;
+  payment?: { method: string; status?: string };
+};
+
+@Injectable()
+export class BookingsService {
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly audit: AuditService,
+    private readonly pipeline: BotPipelineService,
+  ) {}
+
+  async createFromQuote(input: {
+    organizationId: string;
+    quoteId: string;
+    actorUserId?: string;
+    requestedBy?: string;
+    notes?: string;
+    notifyCustomer?: boolean;
+    selectedItemIndex?: number;
+    selectedItemId?: string;
+    confirmPriceChange?: boolean;
+  }) {
+    const quote = await this.prisma.quote.findFirst({
+      where: { id: input.quoteId, organizationId: input.organizationId },
+      include: { items: { orderBy: { createdAt: "asc" } } },
+    });
+    if (!quote || !quote.items.length) {
+      throw new BadRequestException("العرض غير موجود");
+    }
+
+    const pendingPriceChange = await this.prisma.bookingRequest.findFirst({
+      where: {
+        organizationId: input.organizationId,
+        quoteId: quote.id,
+        status: "price_changed",
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    let item =
+      (input.selectedItemId
+        ? quote.items.find((row) => row.id === input.selectedItemId)
+        : undefined) ||
+      (typeof input.selectedItemIndex === "number"
+        ? quote.items[input.selectedItemIndex]
+        : undefined);
+
+    if (!item) {
+      const payload = quote.customerVisiblePayload as {
+        selectedItemIndex?: number;
+      } | null;
+      const idx =
+        typeof payload?.selectedItemIndex === "number"
+          ? payload.selectedItemIndex
+          : 0;
+      item = quote.items[idx] || quote.items[0];
+    }
+
+    if (!item) {
+      throw new BadRequestException("عنصر العرض غير موجود");
+    }
+
+    // Sync quote totals to the chosen option before booking.
+    await this.prisma.quote.update({
+      where: { id: quote.id },
+      data: {
+        totalCostAmount: item.costAmount,
+        totalSellAmount: item.sellAmount,
+        totalProfitAmount: item.profitAmount,
+        customerVisiblePayload: asJson({
+          ...((quote.customerVisiblePayload as object) || {}),
+          selectedItemIndex: quote.items.findIndex((row) => row.id === item.id),
+          selectedItemId: item.id,
+          sellAmountMinor: item.sellAmount,
+          currency: quote.currency,
+          summary: item.description,
+        }),
+      },
+    });
+
+    const rules = await this.prisma.pricingRule.findMany({
+      where: { organizationId: input.organizationId, isActive: true },
+    });
+
+    const offer: FlightOffer = {
+      providerKey: item.providerKey,
+      providerOfferRef: item.providerOfferRef,
+      description: item.description,
+      costAmountMinor: item.costAmount,
+      currency: quote.currency,
+      revalidationToken: item.revalidationToken || "",
+      expiresAt: (item.expiresAt || new Date()).toISOString(),
+      raw: (item.rawOfferSnapshot as Record<string, unknown>) || {},
+    };
+
+    const revalidated = await revalidatePricedOffer({
+      offer,
+      rules,
+      providerKey: item.providerKey,
+    });
+
+    await this.audit.log({
+      organizationId: input.organizationId,
+      actorUserId: input.actorUserId,
+      action: "quotes.revalidate",
+      entityType: "Quote",
+      entityId: quote.id,
+      after: {
+        priceChanged: revalidated.priceChanged,
+        sell: revalidated.pricing.sellAmountMinor,
+        itemId: item.id,
+      },
+    });
+
+    if (revalidated.priceChanged && !input.confirmPriceChange) {
+      const request =
+        pendingPriceChange ||
+        (await this.prisma.bookingRequest.create({
+          data: {
+            organizationId: input.organizationId,
+            quoteId: quote.id,
+            status: "price_changed",
+            requestedBy: input.requestedBy || "agent",
+            notes:
+              input.notes ||
+              `تغير السعر إلى ${revalidated.pricing.sellAmountMinor} (وحدة صغرى) للخيار ${item.description}`,
+          },
+        }));
+
+      await this.prisma.quote.update({
+        where: { id: quote.id },
+        data: {
+          status: "accepted",
+          totalCostAmount: revalidated.pricing.costAmountMinor,
+          totalSellAmount: revalidated.pricing.sellAmountMinor,
+          totalProfitAmount: revalidated.pricing.profitAmountMinor,
+          customerVisiblePayload: asJson({
+            ...((quote.customerVisiblePayload as object) || {}),
+            selectedItemId: item.id,
+            sellAmountMinor: revalidated.pricing.sellAmountMinor,
+            currency: revalidated.pricing.currency,
+            summary: item.description,
+            priceChanged: true,
+            awaitingPriceConfirm: true,
+          }),
+        },
+      });
+
+      if (input.notifyCustomer && quote.conversationId) {
+        await this.pipeline.replyToConversation({
+          organizationId: input.organizationId,
+          conversationId: quote.conversationId,
+          body: [
+            "شكرًا لاختيارك.",
+            "بعد إعادة التحقق تغيّر سعر البيع إلى:",
+            formatMoneyMinor(
+              revalidated.pricing.sellAmountMinor,
+              revalidated.pricing.currency,
+            ),
+            "للتأكيد على السعر الجديد اكتب: أؤكد السعر",
+            "لن يتم الإصدار تلقائيًا.",
+          ].join("\n"),
+        });
+      }
+
+      return {
+        status: "price_changed" as const,
+        bookingRequest: request,
+        newSellAmountMinor: revalidated.pricing.sellAmountMinor,
+        message: "تغير السعر بعد إعادة التحقق — يلزم تأكيد العميل/الموظف",
+      };
+    }
+
+    if (pendingPriceChange) {
+      await this.prisma.bookingRequest.update({
+        where: { id: pendingPriceChange.id },
+        data: { status: "ready_to_book" },
+      });
+    }
+
+    const finalCost = revalidated.priceChanged
+      ? revalidated.pricing.costAmountMinor
+      : item.costAmount;
+    const finalSell = revalidated.priceChanged
+      ? revalidated.pricing.sellAmountMinor
+      : item.sellAmount;
+    const finalProfit = revalidated.priceChanged
+      ? revalidated.pricing.profitAmountMinor
+      : item.profitAmount;
+
+    const request =
+      pendingPriceChange ||
+      (await this.prisma.bookingRequest.create({
+        data: {
+          organizationId: input.organizationId,
+          quoteId: quote.id,
+          status: "ready_to_book",
+          requestedBy: input.requestedBy || "agent",
+          notes: input.notes,
+        },
+      }));
+
+    const booking = await this.prisma.booking.create({
+      data: {
+        organizationId: input.organizationId,
+        bookingRequestId: request.id,
+        quoteId: quote.id,
+        status: "on_hold",
+        totalCostAmount: finalCost,
+        totalSellAmount: finalSell,
+        totalProfitAmount: finalProfit,
+        requiresApproval: true,
+        passengerDetails: asJson({
+          selectedQuoteItemId: item.id,
+          serviceType: item.serviceType,
+          description: item.description,
+        }),
+      },
+    });
+
+    await this.prisma.bookingRequest.update({
+      where: { id: request.id },
+      data: { status: "submitted" },
+    });
+
+    await this.prisma.quote.update({
+      where: { id: quote.id },
+      data: {
+        status: "accepted",
+        totalCostAmount: finalCost,
+        totalSellAmount: finalSell,
+        totalProfitAmount: finalProfit,
+        customerVisiblePayload: asJson({
+          ...((quote.customerVisiblePayload as object) || {}),
+          selectedItemId: item.id,
+          awaitingPriceConfirm: false,
+          priceChanged: false,
+          sellAmountMinor: finalSell,
+          summary: item.description,
+        }),
+      },
+    });
+
+    await this.audit.log({
+      organizationId: input.organizationId,
+      actorUserId: input.actorUserId,
+      action: "bookings.create",
+      entityType: "Booking",
+      entityId: booking.id,
+      after: {
+        quoteId: quote.id,
+        status: booking.status,
+        selectedItemId: item.id,
+      },
+    });
+
+    if (input.notifyCustomer && quote.conversationId) {
+      await this.pipeline.replyToConversation({
+        organizationId: input.organizationId,
+        conversationId: quote.conversationId,
+        body: [
+          "شكرًا لتأكيدك.",
+          "تم إعادة التحقق من السعر والتوافر بنجاح.",
+          `الخيار: ${item.description}`,
+          `سعر البيع المعتمد: ${formatMoneyMinor(finalSell, quote.currency)}`,
+          "طلب الحجز الآن قيد المراجعة لدى فريقنا قبل الإصدار.",
+        ].join("\n"),
+      });
+    }
+
+    return { status: "ready" as const, bookingRequest: request, booking };
+  }
+
+  async issue(input: {
+    organizationId: string;
+    bookingId: string;
+    actorUserId: string;
+  }) {
+    const booking = await this.prisma.booking.findFirst({
+      where: { id: input.bookingId, organizationId: input.organizationId },
+      include: {
+        quote: { include: { items: { orderBy: { createdAt: "asc" } } } },
+        bookingRequest: true,
+      },
+    });
+    if (!booking) throw new BadRequestException("الحجز غير موجود");
+    if (booking.bookingRequest?.status === "price_changed") {
+      throw new BadRequestException(
+        "لا يمكن الإصدار بعد تغير السعر دون تأكيد ومراجعة",
+      );
+    }
+
+    const details = booking.passengerDetails as {
+      selectedQuoteItemId?: string;
+    } | null;
+    const item =
+      booking.quote.items.find(
+        (row) => row.id === details?.selectedQuoteItemId,
+      ) || booking.quote.items[0];
+
+    let providerRef = `PNR-${Date.now()}`;
+    if (item) {
+      const isHotel = item.serviceType === "hotel";
+      const provider = isHotel
+        ? getHotelProvider(item.providerKey)
+        : getFlightProvider(item.providerKey);
+      const offer: FlightOffer = {
+        providerKey: item.providerKey,
+        providerOfferRef: item.providerOfferRef,
+        description: item.description,
+        costAmountMinor: item.costAmount,
+        currency: booking.quote.currency,
+        revalidationToken: item.revalidationToken || "",
+        expiresAt: (item.expiresAt || new Date()).toISOString(),
+        raw: (item.rawOfferSnapshot as Record<string, unknown>) || {},
+      };
+      if (provider.createBooking) {
+        try {
+          const created = await provider.createBooking(offer as never, {});
+          if (
+            created.status === "failed" ||
+            !created.providerBookingRef?.trim()
+          ) {
+            await this.prisma.booking.update({
+              where: { id: input.bookingId },
+              data: { status: "failed" },
+            });
+            throw new BadRequestException(
+              "العرض غير متاح أو نفدت المقاعد/الغرف من المزود",
+            );
+          }
+          providerRef = created.providerBookingRef;
+        } catch (error) {
+          if (error instanceof BadRequestException) throw error;
+          await this.prisma.booking.update({
+            where: { id: input.bookingId },
+            data: { status: "failed" },
+          });
+          throw new BadRequestException(
+            error instanceof Error
+              ? error.message
+              : "فشل مزود الخدمة أثناء الإصدار",
+          );
+        }
+      } else if (item.providerKey === "duffel") {
+        throw new BadRequestException(
+          "إصدار Duffel الحقيقي غير مفعّل بعد — استخدم المزود التجريبي أو فعّل createBooking",
+        );
+      }
+    }
+
+    const updated = await this.prisma.booking.update({
+      where: { id: input.bookingId },
+      data: {
+        status: "confirmed",
+        providerBookingRef: providerRef,
+        issuedByUserId: input.actorUserId,
+        issuedAt: new Date(),
+        approvedByUserId: input.actorUserId,
+        approvedAt: new Date(),
+      },
+    });
+
+    await this.audit.log({
+      organizationId: input.organizationId,
+      actorUserId: input.actorUserId,
+      action: "bookings.issue",
+      entityType: "Booking",
+      entityId: input.bookingId,
+      after: { providerBookingRef: providerRef, itemId: item?.id },
+    });
+
+    return updated;
+  }
+
+  async createFromDraft(input: CreateFromDraftInput) {
+    let bookingId: string;
+
+    if (input.quoteItemId) {
+      const item = await this.prisma.quoteItem.findFirst({
+        where: { id: input.quoteItemId, organizationId: input.organizationId },
+      });
+      if (!item) {
+        throw new BadRequestException("عنصر العرض غير موجود");
+      }
+
+      const result = await this.createFromQuote({
+        organizationId: input.organizationId,
+        quoteId: item.quoteId,
+        actorUserId: input.actorUserId,
+        requestedBy: "customer",
+        selectedItemId: item.id,
+        confirmPriceChange: true,
+        notifyCustomer: false,
+      });
+
+      if (result.status === "price_changed") {
+        throw new BadRequestException(result.message);
+      }
+      bookingId = result.booking.id;
+    } else {
+      const booking = await this.createMinimalBookingFromOffer(input);
+      bookingId = booking.id;
+    }
+
+    const existing = await this.prisma.booking.findFirst({
+      where: { id: bookingId, organizationId: input.organizationId },
+    });
+    if (!existing) throw new BadRequestException("الحجز غير موجود");
+
+    const passengerDetails = {
+      ...((existing.passengerDetails as Record<string, unknown>) || {}),
+      serviceType: input.serviceType,
+      travelers: input.travelers,
+      guests: input.guests,
+      contact: input.contact,
+      extras: input.extras,
+      ticketType: input.ticketType,
+      seatPref: input.seatPref,
+      route: input.route,
+      stay: input.stay,
+    };
+
+    const booking = await this.prisma.booking.update({
+      where: { id: bookingId },
+      data: { passengerDetails: asJson(passengerDetails) },
+      include: {
+        quote: { include: { items: true } },
+        bookingRequest: true,
+        payments: true,
+      },
+    });
+
+    // Keep CRM contact in sync (Saffat-style: bookings feed customers).
+    const phone = input.contact?.phone?.trim();
+    if (phone) {
+      const contact = await this.prisma.contact.upsert({
+        where: {
+          organizationId_waId: {
+            organizationId: input.organizationId,
+            waId: phone,
+          },
+        },
+        update: {
+          email: input.contact.email || undefined,
+          lastContactedAt: new Date(),
+        },
+        create: {
+          organizationId: input.organizationId,
+          waId: phone,
+          name:
+            (input.travelers?.[0] as { firstName?: string; lastName?: string } | undefined)
+              ? [
+                  (input.travelers?.[0] as { firstName?: string }).firstName,
+                  (input.travelers?.[0] as { lastName?: string }).lastName,
+                ]
+                  .filter(Boolean)
+                  .join(" ") || phone
+              : phone,
+          email: input.contact.email,
+          source: "booking",
+          lastContactedAt: new Date(),
+        },
+      });
+      await this.prisma.quote.update({
+        where: { id: booking.quoteId },
+        data: { contactId: contact.id },
+      });
+    }
+
+    let payment = null;
+    if (input.payment && input.canManagePayments) {
+      payment = await this.prisma.payment.create({
+        data: {
+          organizationId: input.organizationId,
+          bookingId: booking.id,
+          amount: booking.totalSellAmount,
+          currency: booking.quote?.currency || "KWD",
+          method: input.payment.method || "manual",
+          status: input.payment.status || "paid",
+          recordedByUserId: input.actorUserId,
+        },
+      });
+    }
+
+    await this.audit.log({
+      organizationId: input.organizationId,
+      actorUserId: input.actorUserId,
+      action: "bookings.create_from_draft",
+      entityType: "Booking",
+      entityId: booking.id,
+      after: {
+        serviceType: input.serviceType,
+        viaQuoteItem: Boolean(input.quoteItemId),
+        paymentRecorded: Boolean(payment),
+      },
+    });
+
+    return { booking, payment };
+  }
+
+  private async createMinimalBookingFromOffer(input: CreateFromDraftInput) {
+    const currency = input.offer.currency || "KWD";
+    const sellAmount = Math.round(input.offer.sellAmountMinor);
+    const costAmount = Math.round(sellAmount * 0.88);
+    const profitAmount = sellAmount - costAmount;
+
+    const inquiry =
+      (input.inquiryId
+        ? await this.prisma.travelInquiry.findFirst({
+            where: {
+              id: input.inquiryId,
+              organizationId: input.organizationId,
+            },
+          })
+        : null) ||
+      (await this.prisma.travelInquiry.create({
+        data: {
+          organizationId: input.organizationId,
+          source: "direct",
+          status: "quoted",
+          origin:
+            input.serviceType === "flight"
+              ? input.route?.origin || null
+              : null,
+          destination:
+            input.serviceType === "flight"
+              ? input.route?.destination || null
+              : input.stay?.location || null,
+          departDate: parseDateSafe(
+            input.serviceType === "flight"
+              ? input.route?.departDate
+              : input.stay?.checkIn,
+          ),
+          returnDate: parseDateSafe(
+            input.serviceType === "flight"
+              ? input.route?.returnDate
+              : input.stay?.checkOut,
+          ),
+          adults: input.adults ?? 1,
+          children: input.children ?? 0,
+          cabinClass: input.route?.cabinClass,
+          serviceTypes: asJson([input.serviceType]),
+          aiSummary: input.offer.description,
+        },
+      }));
+
+    const quote = await this.prisma.quote.create({
+      data: {
+        organizationId: input.organizationId,
+        inquiryId: inquiry.id,
+        status: "accepted",
+        currency,
+        totalCostAmount: costAmount,
+        totalSellAmount: sellAmount,
+        totalProfitAmount: profitAmount,
+        customerVisiblePayload: asJson({
+          summary: input.offer.description,
+          sellAmountMinor: sellAmount,
+          currency,
+        }),
+        createdByUserId: input.actorUserId,
+        items: {
+          create: [
+            {
+              organizationId: input.organizationId,
+              serviceType: input.serviceType,
+              providerKey: input.offer.providerKey || "manual",
+              providerOfferRef:
+                input.offer.providerOfferRef ||
+                input.offer.id ||
+                `manual-${Date.now()}`,
+              description: input.offer.description,
+              costAmount,
+              sellAmount,
+              profitAmount,
+              rawOfferSnapshot: asJson(input.offer.details || {}),
+              expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+            },
+          ],
+        },
+      },
+      include: { items: true },
+    });
+
+    const bookingRequest = await this.prisma.bookingRequest.create({
+      data: {
+        organizationId: input.organizationId,
+        quoteId: quote.id,
+        status: "submitted",
+        requestedBy: "customer",
+      },
+    });
+
+    const booking = await this.prisma.booking.create({
+      data: {
+        organizationId: input.organizationId,
+        bookingRequestId: bookingRequest.id,
+        quoteId: quote.id,
+        status: "on_hold",
+        totalCostAmount: costAmount,
+        totalSellAmount: sellAmount,
+        totalProfitAmount: profitAmount,
+        requiresApproval: true,
+        passengerDetails: asJson({
+          selectedQuoteItemId: quote.items[0]?.id,
+          serviceType: input.serviceType,
+          description: input.offer.description,
+        }),
+      },
+    });
+
+    await this.audit.log({
+      organizationId: input.organizationId,
+      actorUserId: input.actorUserId,
+      action: "bookings.create",
+      entityType: "Booking",
+      entityId: booking.id,
+      after: {
+        quoteId: quote.id,
+        status: booking.status,
+        serviceType: input.serviceType,
+        source: "draft",
+      },
+    });
+
+    return booking;
+  }
+}
+
+function asJson(value: unknown): Prisma.InputJsonValue {
+  return value as Prisma.InputJsonValue;
+}
+
+function parseDateSafe(value?: string): Date | undefined {
+  if (!value) return undefined;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? undefined : date;
+}

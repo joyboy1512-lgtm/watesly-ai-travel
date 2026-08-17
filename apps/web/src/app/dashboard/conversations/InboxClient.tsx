@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
-import { apiFetch, getSession } from "@/lib/api";
+import { apiFetch, apiUpload, getSession } from "@/lib/api";
 import { formatDate } from "@/lib/format";
 
 type ConversationRow = {
@@ -27,6 +27,7 @@ type ConversationRow = {
     createdAt?: string;
     type?: string;
     templateName?: string | null;
+    rawPayload?: { mediaUrl?: string; filename?: string; mediaType?: string } | null;
   }>;
 };
 
@@ -52,6 +53,7 @@ type ConversationDetail = {
     status: string;
     type?: string;
     templateName?: string | null;
+    rawPayload?: { mediaUrl?: string; filename?: string; mediaType?: string } | null;
   }>;
   inquiries: Array<{
     id: string;
@@ -179,6 +181,23 @@ function dayKey(value: string) {
   return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
 }
 
+function mediaPreview(msg?: { body?: string | null; type?: string; direction?: string }) {
+  if (!msg) return "بدون رسائل";
+  const t = (msg.type || "text").toLowerCase();
+  if (t === "image") return "📷 صورة";
+  if (t === "video") return "🎬 فيديو";
+  if (t === "document") return "📄 ملف PDF";
+  return msg.body || "بدون رسائل";
+}
+
+function mediaFromPayload(raw?: { mediaUrl?: string; filename?: string; mediaType?: string } | null) {
+  return {
+    url: raw?.mediaUrl || "",
+    filename: raw?.filename || "",
+    kind: (raw?.mediaType || "").toLowerCase(),
+  };
+}
+
 function statusTicks(status?: string) {
   const s = (status || "").toLowerCase();
   if (s === "read" || s === "seen") return "read";
@@ -204,6 +223,9 @@ export default function InboxClient() {
   const [busy, setBusy] = useState(false);
   const [showSimulator, setShowSimulator] = useState(false);
   const [priority, setPriority] = useState("عادية");
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [pendingPreview, setPendingPreview] = useState("");
+  const fileRef = useRef<HTMLInputElement>(null);
 
   const [simName, setSimName] = useState(SAMPLE_CUSTOMERS[0]!.name);
   const [simWaId, setSimWaId] = useState(SAMPLE_CUSTOMERS[0]!.waId);
@@ -342,20 +364,60 @@ export default function InboxClient() {
     }
   }
 
+  function onPickFile(file: File | null) {
+    if (!file) return;
+    const mime = file.type.toLowerCase();
+    const ok =
+      ["image/jpeg", "image/png", "image/webp", "video/mp4", "video/3gpp", "application/pdf"].includes(mime) ||
+      file.name.toLowerCase().endsWith(".pdf");
+    if (!ok) {
+      setError("يُسمح فقط بصورة أو فيديو MP4 أو ملف PDF");
+      return;
+    }
+    if (file.size > 16 * 1024 * 1024) {
+      setError("حجم الملف يتجاوز 16MB");
+      return;
+    }
+    setError("");
+    setPendingFile(file);
+    if (mime.startsWith("image/")) {
+      setPendingPreview(URL.createObjectURL(file));
+    } else {
+      setPendingPreview("");
+    }
+  }
+
+  function clearPendingFile() {
+    if (pendingPreview) URL.revokeObjectURL(pendingPreview);
+    setPendingFile(null);
+    setPendingPreview("");
+    if (fileRef.current) fileRef.current.value = "";
+  }
+
   async function sendAgentReply() {
-    if (!detail || !reply.trim()) return;
+    if (!detail) return;
     if (!isOpen) {
       setError("انتهت نافذة 24 ساعة — استخدم قالبًا معتمدًا");
       return;
     }
+    if (!pendingFile && !reply.trim()) return;
     setBusy(true);
     setError("");
     try {
-      await apiFetch(`/conversations/${detail.id}/reply`, {
-        method: "POST",
-        body: JSON.stringify({ text: reply.trim() }),
-      });
-      setReply("");
+      if (pendingFile) {
+        const form = new FormData();
+        form.append("file", pendingFile);
+        if (reply.trim()) form.append("caption", reply.trim());
+        await apiUpload(`/conversations/${detail.id}/media`, form);
+        clearPendingFile();
+        setReply("");
+      } else {
+        await apiFetch(`/conversations/${detail.id}/reply`, {
+          method: "POST",
+          body: JSON.stringify({ text: reply.trim() }),
+        });
+        setReply("");
+      }
       await Promise.all([loadList(), loadDetail(detail.id)]);
     } catch (err) {
       setError(err instanceof Error ? err.message : "فشل الرد");
@@ -537,7 +599,7 @@ export default function InboxClient() {
                       </div>
                       <p>
                         {row.messages[0]?.direction === "outbound" ? "✓ " : ""}
-                        {row.messages[0]?.body || "بدون رسائل"}
+                        {mediaPreview(row.messages[0])}
                       </p>
                       <div className="wi-item-tags">
                         {row.unreadCount > 0 ? (
@@ -624,7 +686,38 @@ export default function InboxClient() {
                             قالب: {msg.templateName || "WhatsApp"}
                           </div>
                         ) : null}
-                        <div className="wi-bubble-text">{msg.body}</div>
+                        {(() => {
+                          const media = mediaFromPayload(msg.rawPayload);
+                          const kind = (msg.type || media.kind || "").toLowerCase();
+                          if (kind === "image" && media.url) {
+                            return (
+                              <a href={media.url} target="_blank" rel="noreferrer" className="wi-media">
+                                <img src={media.url} alt={msg.body || "صورة"} />
+                              </a>
+                            );
+                          }
+                          if (kind === "video" && media.url) {
+                            return (
+                              <video className="wi-media-video" src={media.url} controls preload="metadata" />
+                            );
+                          }
+                          if (kind === "document" && media.url) {
+                            return (
+                              <a
+                                href={media.url}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="wi-file-chip"
+                              >
+                                📄 {media.filename || "ملف PDF"}
+                              </a>
+                            );
+                          }
+                          return null;
+                        })()}
+                        {msg.body ? (
+                          <div className="wi-bubble-text">{msg.body}</div>
+                        ) : null}
                         <div className="wi-bubble-meta">
                           <span>{formatMsgTime(msg.createdAt)}</span>
                           {tick ? (
@@ -679,40 +772,74 @@ export default function InboxClient() {
                   </Link>
                 </div>
                 {isOpen ? (
-                  <div className="wi-composer-row">
-                    <button
-                      type="button"
-                      className="wa-composer-tool"
-                      title="محاكاة كعميل"
-                      disabled={busy || !reply.trim()}
-                      onClick={sendAsCustomer}
-                    >
-                      ◐
-                    </button>
-                    <div className="wa-composer-input-wrap">
-                      <textarea
-                        rows={1}
-                        value={reply}
-                        onChange={(e) => setReply(e.target.value)}
-                        placeholder="اكتب رسالة عبر واتساب"
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" && !e.shiftKey) {
-                            e.preventDefault();
-                            void sendAgentReply();
-                          }
-                        }}
+                  <>
+                    {pendingFile ? (
+                      <div className="wi-pending-file">
+                        {pendingPreview ? (
+                          <img src={pendingPreview} alt="" />
+                        ) : (
+                          <span>📎 {pendingFile.name}</span>
+                        )}
+                        <button type="button" onClick={clearPendingFile} title="إزالة">
+                          ×
+                        </button>
+                      </div>
+                    ) : null}
+                    <div className="wi-composer-row">
+                      <input
+                        ref={fileRef}
+                        type="file"
+                        hidden
+                        accept="image/jpeg,image/png,image/webp,video/mp4,video/3gpp,application/pdf,.pdf"
+                        onChange={(e) => onPickFile(e.target.files?.[0] || null)}
                       />
+                      <button
+                        type="button"
+                        className="wa-composer-tool"
+                        title="إرفاق صورة أو PDF أو فيديو"
+                        disabled={busy}
+                        onClick={() => fileRef.current?.click()}
+                      >
+                        📎
+                      </button>
+                      <button
+                        type="button"
+                        className="wa-composer-tool"
+                        title="محاكاة كعميل"
+                        disabled={busy || !reply.trim()}
+                        onClick={sendAsCustomer}
+                      >
+                        ◐
+                      </button>
+                      <div className="wa-composer-input-wrap">
+                        <textarea
+                          rows={1}
+                          value={reply}
+                          onChange={(e) => setReply(e.target.value)}
+                          placeholder={
+                            pendingFile
+                              ? "تعليق على الملف (اختياري)"
+                              : "اكتب رسالة عبر واتساب"
+                          }
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" && !e.shiftKey) {
+                              e.preventDefault();
+                              void sendAgentReply();
+                            }
+                          }}
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        className="wa-send-btn"
+                        disabled={busy || (!reply.trim() && !pendingFile)}
+                        onClick={sendAgentReply}
+                        title="إرسال"
+                      >
+                        ➤
+                      </button>
                     </div>
-                    <button
-                      type="button"
-                      className="wa-send-btn"
-                      disabled={busy || !reply.trim()}
-                      onClick={sendAgentReply}
-                      title="إرسال"
-                    >
-                      ➤
-                    </button>
-                  </div>
+                  </>
                 ) : (
                   <p className="wi-composer-hint">
                     انتهت نافذة 24 ساعة — استخدم قالب واتساب معتمد أعلاه، أو انتظر

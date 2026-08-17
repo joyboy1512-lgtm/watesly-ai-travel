@@ -311,3 +311,78 @@ export async function sendWhatsAppTemplate(
     raw,
   };
 }
+
+export interface SendMediaInput {
+  phoneNumberId: string;
+  accessToken: string;
+  to: string;
+  type: "image" | "video" | "document";
+  link: string;
+  filename?: string;
+  caption?: string;
+}
+
+export async function sendWhatsAppMedia(
+  input: SendMediaInput,
+): Promise<SendResult> {
+  const graphVersion = process.env.WHATSAPP_GRAPH_API_VERSION || "v21.0";
+  const base =
+    process.env.WHATSAPP_GRAPH_API_BASE || "https://graph.facebook.com";
+
+  if (!input.accessToken || input.accessToken.startsWith("mock")) {
+    return {
+      providerMessageId: `mock_${Date.now()}`,
+      status: "sent",
+      mock: true,
+      raw: {
+        to: input.to,
+        type: input.type,
+        link: input.link,
+        filename: input.filename,
+        caption: input.caption,
+      },
+    };
+  }
+
+  const mediaBody: Record<string, unknown> = { link: input.link };
+  if (input.caption?.trim()) mediaBody.caption = input.caption.trim();
+  if (input.type === "document" && input.filename) {
+    mediaBody.filename = input.filename;
+  }
+
+  const url = `${base}/${graphVersion}/${input.phoneNumberId}/messages`;
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${input.accessToken}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      messaging_product: "whatsapp",
+      to: input.to,
+      type: input.type,
+      [input.type]: mediaBody,
+    }),
+  });
+
+  const raw = (await response.json().catch(() => ({}))) as {
+    messages?: Array<{ id?: string }>;
+    error?: { message?: string };
+  };
+
+  if (!response.ok) {
+    return {
+      providerMessageId: "",
+      status: "failed",
+      mock: false,
+      raw,
+    };
+  }
+
+  return {
+    providerMessageId: raw.messages?.[0]?.id || `wa_${Date.now()}`,
+    status: "sent",
+    mock: false,
+    raw,
+  };
+}

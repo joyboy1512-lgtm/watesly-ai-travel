@@ -7,7 +7,14 @@ import {
   Patch,
   Post,
   Query,
+  UploadedFile,
+  UseInterceptors,
 } from "@nestjs/common";
+import { FileInterceptor } from "@nestjs/platform-express";
+import { diskStorage } from "multer";
+import { extname, join } from "path";
+import { existsSync, mkdirSync } from "fs";
+import { randomUUID } from "crypto";
 import { CurrentUser, RequirePermissions } from "../auth/decorators";
 import type { AuthUser } from "../auth/auth.types";
 import { PrismaService } from "../prisma/prisma.service";
@@ -144,6 +151,82 @@ export class ConversationsController {
       entityType: "Message",
       entityId: message.id,
       after: { conversationId: id, templateId: body.templateId },
+    });
+
+    return message;
+  }
+
+  @Post(":id/media")
+  @RequirePermissions("conversations.reply")
+  @UseInterceptors(
+    FileInterceptor("file", {
+      storage: diskStorage({
+        destination: (_req, _file, cb) => {
+          const dir = join(
+            process.env.UPLOADS_DIR ||
+              join(process.cwd(), "..", "..", "uploads"),
+            "chat",
+          );
+          if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
+          cb(null, dir);
+        },
+        filename: (_req, file, cb) => {
+          const ext = extname(file.originalname || "").toLowerCase() || ".bin";
+          cb(null, `${randomUUID()}${ext}`);
+        },
+      }),
+      limits: { fileSize: 16 * 1024 * 1024 },
+    }),
+  )
+  async replyMedia(
+    @CurrentUser() user: AuthUser,
+    @Param("id") id: string,
+    @UploadedFile() file: Express.Multer.File,
+    @Body() body: { caption?: string },
+  ) {
+    if (!file) throw new BadRequestException("اختر صورة أو فيديو أو ملف PDF");
+
+    const mime = (file.mimetype || "").toLowerCase();
+    let type: "image" | "video" | "document";
+    if (["image/jpeg", "image/png", "image/webp"].includes(mime)) {
+      type = "image";
+      if (file.size > 5 * 1024 * 1024) {
+        throw new BadRequestException("حجم الصورة يتجاوز 5MB");
+      }
+    } else if (["video/mp4", "video/3gpp"].includes(mime)) {
+      type = "video";
+    } else if (mime === "application/pdf" || extname(file.originalname).toLowerCase() === ".pdf") {
+      type = "document";
+    } else {
+      throw new BadRequestException(
+        "يُسمح فقط بالصور (JPG/PNG/WEBP) أو فيديو MP4 أو ملف PDF",
+      );
+    }
+
+    const publicBase = (
+      process.env.PUBLIC_API_URL ||
+      process.env.API_URL ||
+      "https://api.weekendgate.com"
+    ).replace(/\/$/, "");
+    const link = `${publicBase}/uploads/chat/${file.filename}`;
+
+    const message = await this.pipeline.replyWithMedia({
+      organizationId: user.organizationId,
+      conversationId: id,
+      sentByUserId: user.userId,
+      type,
+      link,
+      filename: file.originalname || file.filename,
+      caption: body.caption,
+    });
+
+    await this.audit.log({
+      organizationId: user.organizationId,
+      actorUserId: user.userId,
+      action: "conversations.reply_media",
+      entityType: "Message",
+      entityId: message.id,
+      after: { conversationId: id, type, filename: file.originalname },
     });
 
     return message;

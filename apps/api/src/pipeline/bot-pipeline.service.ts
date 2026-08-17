@@ -4,6 +4,7 @@ import { createAiProvider } from "@watesly-travel/ai-core";
 import {
   sendWhatsAppText,
   sendWhatsAppTemplate,
+  sendWhatsAppMedia,
 } from "@watesly-travel/whatsapp-core";
 import { searchAndPriceTravel } from "@watesly-travel/travel-core";
 import { PrismaService } from "../prisma/prisma.service";
@@ -756,6 +757,88 @@ export class BotPipelineService {
         lastMessageAt: new Date(),
         whatsappAccountId: account.id,
         status: conversation.status === "closed" ? "open" : conversation.status,
+      },
+    });
+
+    return message;
+  }
+
+  async replyWithMedia(input: {
+    organizationId: string;
+    conversationId: string;
+    sentByUserId?: string;
+    type: "image" | "video" | "document";
+    link: string;
+    filename?: string;
+    caption?: string;
+  }) {
+    const { conversation, account } = await this.resolveWhatsAppAccount(
+      input.conversationId,
+      input.organizationId,
+    );
+    if (!account) {
+      throw new BadRequestException(
+        "اربط قناة واتساب من صفحة القنوات قبل إرسال الملفات",
+      );
+    }
+
+    const open = await this.isWithinCustomerServiceWindow(input.conversationId);
+    if (!open) {
+      throw new BadRequestException(
+        "انتهت نافذة خدمة واتساب (24 ساعة). استخدم قالبًا معتمدًا للمتابعة.",
+      );
+    }
+
+    const send = await sendWhatsAppMedia({
+      phoneNumberId: account.phoneNumberId,
+      accessToken: account.accessTokenEnc || "mock",
+      to: conversation.contact.waId,
+      type: input.type,
+      link: input.link,
+      filename: input.filename,
+      caption: input.caption,
+    });
+
+    if (send.status === "failed") {
+      const errMsg =
+        (send.raw as { error?: { message?: string } } | undefined)?.error
+          ?.message || "فشل إرسال الملف عبر واتساب";
+      throw new BadRequestException(errMsg);
+    }
+
+    const label =
+      input.type === "image"
+        ? "صورة"
+        : input.type === "video"
+          ? "فيديو"
+          : input.filename || "ملف PDF";
+    const body = input.caption?.trim() || label;
+
+    const message = await this.prisma.message.create({
+      data: {
+        organizationId: input.organizationId,
+        conversationId: input.conversationId,
+        direction: "outbound",
+        channel: "whatsapp",
+        type: input.type,
+        body,
+        providerMessageId: send.providerMessageId || null,
+        status: send.status,
+        sentByUserId: input.sentByUserId,
+        rawPayload: asJson({
+          ...(send.raw || {}),
+          mediaUrl: input.link,
+          filename: input.filename,
+          mediaType: input.type,
+        }),
+      },
+    });
+
+    await this.prisma.conversation.update({
+      where: { id: input.conversationId },
+      data: {
+        lastMessageAt: new Date(),
+        whatsappAccountId: account.id,
       },
     });
 

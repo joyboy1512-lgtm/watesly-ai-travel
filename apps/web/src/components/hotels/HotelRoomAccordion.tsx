@@ -115,7 +115,7 @@ export function HotelRoomAccordion({ hotel, nights, onBookRate }: Props) {
 
             {open ? (
               <div className="hotel-room-panel-body">
-                {room.rates.map((rate) => {
+                {room.rates.map((rate: HotelRateOption) => {
                   const totalMinor = rateDisplayMinor(rate, hotel, nights);
                   const perNightMinor =
                     nights > 0 ? Math.round(totalMinor / nights) : totalMinor;

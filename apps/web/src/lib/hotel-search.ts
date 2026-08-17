@@ -1,4 +1,4 @@
-import type { HotelRateOption } from "@watesly-travel/shared";
+import type { HotelRateOption, HotelRoomOption } from "@watesly-travel/shared";
 
 export type { HotelRateOption, HotelRoomOption, HotelPropertyDetails } from "@watesly-travel/shared";
 
@@ -110,7 +110,7 @@ export function rateDisplayMinor(
   offer: HotelOfferRow,
   nights?: number,
 ): number {
-  const n = nights ?? Number(offer.details.nights || 1) || 1;
+  const n = (nights ?? Number(offer.details.nights || 1)) || 1;
   const costMinor = Math.round(rate.net * currencyExponent(offer.currency) * n);
   const ratio =
     offer.sellAmountMinor /

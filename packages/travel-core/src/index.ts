@@ -118,6 +118,8 @@ export async function searchAndPriceTravel(input: {
   providerKey?: string;
   flightProviderKey?: string;
   hotelProviderKey?: string;
+  flightProvider?: FlightProviderAdapter;
+  hotelProvider?: HotelProviderAdapter;
   rules: PricingRuleInput[];
   searchFlights?: boolean;
   searchHotels?: boolean;
@@ -131,8 +133,8 @@ export async function searchAndPriceTravel(input: {
     input.hotelProviderKey ??
     (input.providerKey ? resolveHotelProviderKey(input.providerKey) : undefined);
 
-  const flightProvider = getFlightProvider(flightKey);
-  const hotelProvider = getHotelProvider(hotelKey);
+  const flightProvider = input.flightProvider ?? getFlightProvider(flightKey);
+  const hotelProvider = input.hotelProvider ?? getHotelProvider(hotelKey);
 
   const wantFlights = input.searchFlights !== false && Boolean(input.flightParams);
   const wantHotels = Boolean(input.searchHotels && input.hotelParams);

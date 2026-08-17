@@ -126,6 +126,38 @@ export const PROVIDER_CATALOG: ProviderCatalogEntry[] = [
     notes:
       "Travelfusion يغطي معظم شركات الطيران منخفض التكلفة والداخلي عبر XML API",
   },
+  {
+    providerKey: "hotelbeds",
+    displayName: "Hotelbeds",
+    displayNameAr: "Hotelbeds",
+    description:
+      "مزود فنادق عبر Hotelbeds APItude (Sandbox للتطوير — حد ~50 طلب/يوم)",
+    capabilities: ["hotel"],
+    status: "ready",
+    envKeys: ["HOTELBEDS_API_KEY", "HOTELBEDS_API_SECRET"],
+    credentialFields: [
+      {
+        key: "apiKey",
+        label: "API Key",
+        secret: true,
+        required: true,
+        placeholder: "مفتاح Hotelbeds من developer.hotelbeds.com",
+      },
+      {
+        key: "apiSecret",
+        label: "API Secret",
+        secret: true,
+        required: true,
+      },
+      {
+        key: "baseUrl",
+        label: "Base URL",
+        placeholder: "https://api.test.hotelbeds.com",
+      },
+    ],
+    notes:
+      "فعّل HOTEL_PROVIDER=hotelbeds بعد إدخال المفاتيح. Sandbox: api.test.hotelbeds.com — فنادق فقط (لا طيران)",
+  },
 ];
 
 export function getCatalogEntry(providerKey: string) {

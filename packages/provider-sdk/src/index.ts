@@ -18,6 +18,13 @@ export { MockFlightProvider } from "./flights/mock-flight-provider";
 export { MockHotelProvider } from "./hotels/mock-hotel-provider";
 export { DuffelFlightProvider } from "./flights/duffel-flight-provider";
 export { DuffelHotelProvider } from "./hotels/duffel-hotel-provider";
+export { HotelbedsHotelProvider } from "./hotels/hotelbeds-hotel-provider";
+export {
+  hotelbedsHeaders,
+  hotelbedsSignature,
+  resolveHotelbedsCredentials,
+} from "./hotels/hotelbeds-auth";
+export type { HotelbedsCredentials } from "./hotels/hotelbeds-auth";
 export { AmadeusFlightProvider } from "./flights/amadeus-flight-provider";
 export { TravelportFlightProvider } from "./flights/travelport-flight-provider";
 export { TravelfusionFlightProvider } from "./flights/travelfusion-flight-provider";

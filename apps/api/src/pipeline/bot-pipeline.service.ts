@@ -10,6 +10,7 @@ import {
 import { searchAndPriceTravel } from "@watesly-travel/travel-core";
 import { PrismaService } from "../prisma/prisma.service";
 import { AuditService } from "../common/audit.service";
+import { getHotelProviderForOrg } from "../common/provider-runtime";
 import { formatMoneyMinor } from "../common/money";
 
 function asJson(value: unknown): Prisma.InputJsonValue {
@@ -257,19 +258,29 @@ export class BotPipelineService {
       }
     }
 
+    const hotelProviderKey =
+      process.env.HOTEL_PROVIDER ||
+      provider?.providerKey ||
+      process.env.TRAVEL_DEFAULT_PROVIDER ||
+      "mock";
+    const hotelProvider = wantHotels
+      ? await getHotelProviderForOrg(
+          this.prisma,
+          input.organizationId,
+          hotelProviderKey,
+        )
+      : undefined;
+
     // Flight/hotel providers resolve independently via FLIGHT_PROVIDER / HOTEL_PROVIDER.
-    // DB provider config is a soft fallback only when those env vars are unset.
+    // Org-level credentials from /dashboard/providers override env when configured.
     const search = await searchAndPriceTravel({
       flightProviderKey:
         process.env.FLIGHT_PROVIDER ||
         provider?.providerKey ||
         process.env.TRAVEL_DEFAULT_PROVIDER ||
         "mock",
-      hotelProviderKey:
-        process.env.HOTEL_PROVIDER ||
-        provider?.providerKey ||
-        process.env.TRAVEL_DEFAULT_PROVIDER ||
-        "mock",
+      hotelProviderKey,
+      hotelProvider,
       rules,
       searchFlights: wantFlights,
       searchHotels: wantHotels,

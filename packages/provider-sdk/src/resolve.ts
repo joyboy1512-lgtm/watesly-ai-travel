@@ -5,6 +5,7 @@ import { MockFlightProvider } from "./flights/mock-flight-provider";
 import { TravelfusionFlightProvider } from "./flights/travelfusion-flight-provider";
 import { TravelportFlightProvider } from "./flights/travelport-flight-provider";
 import { DuffelHotelProvider } from "./hotels/duffel-hotel-provider";
+import { HotelbedsHotelProvider } from "./hotels/hotelbeds-hotel-provider";
 import { MockHotelProvider } from "./hotels/mock-hotel-provider";
 import type {
   FlightProviderAdapter,
@@ -56,6 +57,13 @@ export function resolveProviderKey(preferred?: string): string {
   const fromEnv = process.env.TRAVEL_DEFAULT_PROVIDER?.trim();
   return normalizeProviderAlias(preferred || fromEnv || "mock");
 }
+
+type HotelProviderCreds = {
+  apiKey?: string;
+  apiSecret?: string;
+  baseUrl?: string;
+  accessToken?: string;
+};
 
 function requireDuffelToken(kind: "flight" | "hotel"): string {
   const token = process.env.DUFFEL_ACCESS_TOKEN?.trim();
@@ -132,7 +140,10 @@ export function getFlightProvider(preferred?: string): FlightProviderAdapter {
   throw new Error(`مزود طيران غير معروف: ${key}`);
 }
 
-export function getHotelProvider(preferred?: string): HotelProviderAdapter {
+export function getHotelProvider(
+  preferred?: string,
+  creds?: HotelProviderCreds,
+): HotelProviderAdapter {
   const key = resolveHotelProviderKey(preferred);
 
   if (key === "mock") {
@@ -141,7 +152,28 @@ export function getHotelProvider(preferred?: string): HotelProviderAdapter {
 
   if (key === "duffel") {
     try {
-      return new DuffelHotelProvider(requireDuffelToken("hotel"));
+      const token =
+        creds?.accessToken?.trim() || requireDuffelToken("hotel");
+      return new DuffelHotelProvider(token);
+    } catch (err) {
+      if (mockFallbackAllowed()) return new MockHotelProvider();
+      throw err;
+    }
+  }
+
+  if (key === "hotelbeds") {
+    try {
+      const provider = new HotelbedsHotelProvider({
+        apiKey: creds?.apiKey,
+        apiSecret: creds?.apiSecret,
+        baseUrl: creds?.baseUrl,
+      });
+      if (!provider.liveMode) {
+        throw new Error(
+          "HOTEL_PROVIDER=hotelbeds يتطلب HOTELBEDS_API_KEY و HOTELBEDS_API_SECRET",
+        );
+      }
+      return provider;
     } catch (err) {
       if (mockFallbackAllowed()) return new MockHotelProvider();
       throw err;

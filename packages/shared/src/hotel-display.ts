@@ -50,6 +50,20 @@ export type HotelRoomOption = {
   code: string;
   name: string;
   rates: HotelRateOption[];
+  imageUrl?: string;
+  facilities?: string[];
+};
+
+export type HotelImageRef = {
+  url: string;
+  roomCode?: string;
+  type?: string;
+};
+
+export type HotelPoiDistance = {
+  nameAr: string;
+  km: number;
+  label: string;
 };
 
 export type HotelPropertyDetails = {
@@ -94,6 +108,16 @@ export type HotelPropertyDetails = {
   rateTypes: string[];
   zones: string[];
   promotions: string[];
+  /** Content API */
+  description?: string;
+  images?: HotelImageRef[];
+  roomImages?: Record<string, string>;
+  facilityLabels?: string[];
+  ranking?: number;
+  distanceToCenterKm?: number;
+  distanceToCenterLabel?: string;
+  poiDistances?: HotelPoiDistance[];
+  mapUrl?: string;
   /** Legacy/mock fields */
   rating?: number;
   reviewCount?: number;

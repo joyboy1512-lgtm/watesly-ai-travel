@@ -87,6 +87,13 @@ export function buildMockHotelRateTree(input: {
         code: room.code,
         name: room.name,
         rates: mappedRates.sort((a, b) => a.net - b.net),
+        imageUrl: `https://placehold.co/480x320/0b3d4a/e8c27a?text=${encodeURIComponent(room.name.slice(0, 20))}`,
+        facilities:
+          room.code === "STE"
+            ? ["إنترنت", "تلفزيون", "خزنة", "ميني بار"]
+            : room.code === "DLX"
+              ? ["إنترنت", "تلفزيون", "خزنة"]
+              : ["إنترنت", "تلفزيون"],
       });
     }
   }

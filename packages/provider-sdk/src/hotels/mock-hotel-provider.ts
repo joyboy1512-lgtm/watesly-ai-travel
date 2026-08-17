@@ -16,6 +16,7 @@ import type {
 } from "../types";
 import { hotelsForDestination } from "./mock-hotel-catalog";
 import { buildMockHotelRateTree } from "./mock-hotel-rates";
+import { buildDistanceInfo } from "./hotelbeds-geo";
 
 function hashSeed(input: string): number {
   let h = 0;
@@ -100,6 +101,16 @@ export class MockHotelProvider implements HotelProviderAdapter {
       const rateTypes = [...new Set(rateOptions.map((r) => r.rateType))];
       const minRate = rateOptions[0]?.net;
       const maxRate = rateOptions[rateOptions.length - 1]?.net;
+      const hotelLat = geo ? geo.latitude + ((index % 5) - 2) * 0.012 : undefined;
+      const hotelLng = geo ? geo.longitude + ((index % 4) - 2) * 0.015 : undefined;
+      const dist = geo && hotelLat != null && hotelLng != null
+        ? buildDistanceInfo({
+            hotelLat,
+            hotelLng,
+            center: geo,
+            label: label,
+          })
+        : null;
 
       return {
         providerKey: this.providerKey,
@@ -127,6 +138,19 @@ export class MockHotelProvider implements HotelProviderAdapter {
           noPrepayment: cheapest?.paymentType === "AT_HOTEL" || hotel.noPrepayment,
           roomsAvailable: hotel.roomsAvailable,
           imageUrl: hotel.imageUrl,
+          latitude: hotelLat,
+          longitude: hotelLng,
+          mapUrl:
+            hotelLat != null && hotelLng != null
+              ? `https://www.openstreetmap.org/?mlat=${hotelLat}&mlon=${hotelLng}#map=15/${hotelLat}/${hotelLng}`
+              : undefined,
+          distanceToCenterKm: dist?.distanceToCenterKm,
+          distanceToCenterLabel: dist?.distanceToCenterLabel,
+          poiDistances: dist?.poiDistances,
+          ranking: Math.round(hotel.rating * 10),
+          facilityLabels: hotel.facilities.map((f) =>
+            f === "wifi" ? "واي‑فاي" : f === "parking" ? "موقف" : f === "pool" ? "مسبح" : f === "spa" ? "سبا" : f === "gym" ? "جيم" : f,
+          ),
           nights,
           minRate,
           maxRate,
@@ -150,8 +174,6 @@ export class MockHotelProvider implements HotelProviderAdapter {
           location: label,
           neighborhood: hotel.neighborhood,
           address: `${hotel.neighborhood} · ${label}`,
-          latitude: geo?.latitude,
-          longitude: geo?.longitude,
           policies: {
             freeCancellation: hotel.freeCancellation,
             noPrepayment: hotel.noPrepayment,

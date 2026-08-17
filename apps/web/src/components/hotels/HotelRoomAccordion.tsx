@@ -96,12 +96,19 @@ export function HotelRoomAccordion({ hotel, nights, onBookRate }: Props) {
               aria-expanded={open}
               onClick={() => setOpenCode(open ? null : room.code)}
             >
+              {room.imageUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={room.imageUrl} alt="" className="hotel-room-thumb" />
+              ) : null}
               <div className="hotel-room-panel-title">
                 <strong>{room.name}</strong>
                 <span>
                   {room.rates.length}{" "}
                   {room.rates.length === 1 ? "خيار إقامة" : "خيارات إقامة"}
                 </span>
+                {room.facilities?.length ? (
+                  <em>{room.facilities.slice(0, 3).join(" · ")}</em>
+                ) : null}
               </div>
               <div className="hotel-room-panel-from">
                 <small>يبدأ من</small>
@@ -122,7 +129,7 @@ export function HotelRoomAccordion({ hotel, nights, onBookRate }: Props) {
                   const cancel = cancellationSummary(rate, hotel.currency);
 
                   return (
-                    <article key={rate.rateKey} className="hotel-rate-offer">
+                    <article key={rate.rateKey} className="hotel-rate-offer hotel-rate-offer-vertical">
                       <div className="hotel-rate-offer-main">
                         <div className="hotel-rate-offer-meal">
                           <strong>{rate.boardName}</strong>

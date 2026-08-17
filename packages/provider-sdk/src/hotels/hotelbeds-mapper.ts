@@ -7,6 +7,9 @@ import type {
 import { boardLabelAr } from "@watesly-travel/shared";
 import type { HotelSearchParams } from "../types";
 import { amountToMinor } from "../types";
+import { enrichDetailsFromContent } from "./hotelbeds-content-mapper";
+import type { HbContentHotel } from "./hotelbeds-content-types";
+import type { GeoCenter } from "./hotelbeds-geo";
 import type {
   HbCancellationPolicy,
   HbHotel,
@@ -133,8 +136,10 @@ export function mapHotelbedsToOffer(input: {
   geoLabel?: string;
   liveMode: boolean;
   expiresAt: string;
+  content?: HbContentHotel;
+  searchCenter?: GeoCenter;
 }): HotelOffer | null {
-  const { hotel, params, geoLabel, liveMode, expiresAt } = input;
+  const { hotel, params, geoLabel, liveMode, expiresAt, content, searchCenter } = input;
   const hotelCurrency = String(hotel.currency || params.currency || "EUR").toUpperCase();
   const { rooms, rateOptions } = extractHotelbedsRateOptions(hotel, hotelCurrency);
   if (!rateOptions.length) return null;
@@ -200,9 +205,14 @@ export function mapHotelbedsToOffer(input: {
     propertyType: "hotel",
   };
 
+  const enriched = enrichDetailsFromContent({ details, content, searchCenter });
+  if (enriched.latitude != null && enriched.longitude != null) {
+    enriched.mapUrl = `https://www.openstreetmap.org/?mlat=${enriched.latitude}&mlon=${enriched.longitude}#map=15/${enriched.latitude}/${enriched.longitude}`;
+  }
+
   const description = [
-    details.name,
-    stars ? `${stars}★` : details.categoryName,
+    enriched.name,
+    stars ? `${stars}★` : enriched.categoryName,
     `${rateOptions.length} تعرفة · ${rooms.length} غرفة`,
     cheapest.boardName,
     `${nights} ليلة`,
@@ -224,7 +234,7 @@ export function mapHotelbedsToOffer(input: {
       rateType: cheapest.rateType,
     }),
     expiresAt,
-    raw: details as unknown as Record<string, unknown>,
+    raw: enriched as unknown as Record<string, unknown>,
   };
 }
 

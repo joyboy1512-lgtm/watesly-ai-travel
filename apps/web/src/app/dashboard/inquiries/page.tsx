@@ -6,14 +6,18 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { HotelSearchCard } from "@/components/hotels/HotelSearchCard";
+import { HotelDetailModal } from "@/components/hotels/HotelDetailModal";
+import { HotelBookingPreviewModal } from "@/components/hotels/HotelBookingPreviewModal";
 import { apiFetch } from "@/lib/api";
-import { saveFlightDraft } from "@/lib/booking-draft";
+import { saveFlightDraft, saveHotelDraft } from "@/lib/booking-draft";
 import { getPreferredCurrency } from "@/lib/currency";
 import { formatDate, formatMoneyMinor, formatMoneyMinorCompact } from "@/lib/format";
 import {
   BOARD_LABELS_AR,
   collectFilterFacets,
   filterHotelOffers,
+  rateDisplayMinor,
+  type HotelRateOption,
 } from "@/lib/hotel-search";
 import { saveHotelSearchSession } from "@/lib/hotel-search-session";
 
@@ -394,6 +398,8 @@ export default function InquiriesPage() {
   const [currentInquiryId, setCurrentInquiryId] = useState<string | null>(null);
   const [sortKey, setSortKey] = useState<SortKey>("best");
   const [detailFlightId, setDetailFlightId] = useState<string | null>(null);
+  const [detailHotelId, setDetailHotelId] = useState<string | null>(null);
+  const [previewHotelRate, setPreviewHotelRate] = useState<HotelRateOption | null>(null);
   const [filters, setFilters] = useState({
     maxPrice: "",
     stops: "any" as "any" | "0" | "1",
@@ -468,6 +474,22 @@ export default function InquiriesPage() {
       document.body.style.overflow = "";
     };
   }, [detailFlightId]);
+
+  useEffect(() => {
+    if (!detailHotelId && !previewHotelRate) return;
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        if (previewHotelRate) setPreviewHotelRate(null);
+        else setDetailHotelId(null);
+      }
+    }
+    document.addEventListener("keydown", onKey);
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      if (!detailFlightId) document.body.style.overflow = "";
+    };
+  }, [detailHotelId, previewHotelRate, detailFlightId]);
 
   async function load() {
     setRows(await apiFetch<Inquiry[]>("/inquiries"));
@@ -692,6 +714,11 @@ export default function InquiriesPage() {
     return filterHotelOffers(search.hotels, filters, sort);
   }, [search, filters, sortKey]);
 
+  const detailHotel = useMemo(
+    () => filteredHotels.find((h) => h.id === detailHotelId) || null,
+    [filteredHotels, detailHotelId],
+  );
+
   const hotelFacets = useMemo(
     () => collectFilterFacets(search?.hotels || []),
     [search?.hotels],
@@ -766,7 +793,63 @@ export default function InquiriesPage() {
         liveMode: search.liveMode,
       });
     }
-    router.push(`/dashboard/inquiries/hotel/${encodeURIComponent(offerId)}`);
+    setDetailHotelId(offerId);
+  }
+
+  function confirmHotelBooking(rate: HotelRateOption) {
+    if (!detailHotel) return;
+    const hotelNights = Number(detailHotel.details.nights || 0) || nights || 1;
+    const sellMinor = rateDisplayMinor(rate, detailHotel, hotelNights);
+    saveHotelDraft({
+      hotel: {
+        id: detailHotel.id,
+        description: [
+          String(detailHotel.details.name || "فندق"),
+          rate.roomName,
+          rate.boardName,
+          `${hotelNights} ليلة`,
+        ]
+          .filter(Boolean)
+          .join(" · "),
+        sellAmountMinor: sellMinor,
+        currency: detailHotel.currency,
+        details: {
+          ...detailHotel.details,
+          roomType: rate.roomName,
+          board: rate.boardName,
+          boardCode: rate.boardCode,
+          selectedRateKey: rate.rateKey,
+        },
+      },
+      selectedRate: {
+        rateKey: rate.rateKey,
+        rateType: rate.rateType,
+        roomCode: rate.roomCode,
+        roomName: rate.roomName,
+        boardCode: rate.boardCode,
+        boardName: rate.boardName,
+        net: rate.net,
+        currency: rate.currency,
+        paymentType: rate.paymentType,
+        freeCancellation: rate.freeCancellation,
+      },
+      checkIn: form.departDate,
+      checkOut: form.returnDate,
+      rooms: form.rooms,
+      adults: form.adults,
+      children: form.children,
+      location: form.destination || form.stayQuery,
+      locationLabel: form.stayQuery,
+      createdAt: new Date().toISOString(),
+      inquiryId: currentInquiryId || undefined,
+      quoteId: search?.quote?.id,
+      quoteItemId: search?.quote?.items?.find(
+        (item) => item.providerOfferRef === detailHotel.id && item.serviceType === "hotel",
+      )?.id,
+    });
+    setPreviewHotelRate(null);
+    setDetailHotelId(null);
+    router.push("/dashboard/inquiries/book/hotel");
   }
 
   const [carResults, setCarResults] = useState<AncillaryResult[]>([]);
@@ -2576,6 +2659,33 @@ export default function InquiriesPage() {
             })()}
           </div>
         </div>
+      ) : null}
+
+      {detailHotel ? (
+        <HotelDetailModal
+          hotel={detailHotel}
+          nights={Number(detailHotel.details.nights || 0) || nights}
+          meta={{
+            stayQuery: form.stayQuery,
+            departDate: form.departDate,
+            returnDate: form.returnDate,
+            rooms: form.rooms,
+            adults: form.adults,
+            children: form.children,
+          }}
+          onClose={() => setDetailHotelId(null)}
+          onBookRate={(rate) => setPreviewHotelRate(rate)}
+        />
+      ) : null}
+
+      {detailHotel && previewHotelRate ? (
+        <HotelBookingPreviewModal
+          hotel={detailHotel}
+          rate={previewHotelRate}
+          nights={Number(detailHotel.details.nights || 0) || nights}
+          onClose={() => setPreviewHotelRate(null)}
+          onConfirm={() => confirmHotelBooking(previewHotelRate)}
+        />
       ) : null}
 
     </AppShell>

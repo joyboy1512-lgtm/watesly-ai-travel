@@ -15,6 +15,7 @@ import {
   mapCheckratesToOffer,
   mapHotelbedsToOffer,
 } from "./hotelbeds-mapper";
+import { fetchHotelbedsContentMap } from "./hotelbeds-content-client";
 import type { HbAvailabilityResponse, HbHotel } from "./hotelbeds-types";
 
 export class HotelbedsHotelProvider implements HotelProviderAdapter {
@@ -150,14 +151,26 @@ export class HotelbedsHotelProvider implements HotelProviderAdapter {
     const hotels = result.hotels?.hotels || [];
     const expiresAt = new Date(Date.now() + 25 * 60 * 1000).toISOString();
 
+    const codes = hotels
+      .map((h) => Number(h.code))
+      .filter((c) => Number.isFinite(c) && c > 0);
+    const contentMap = await fetchHotelbedsContentMap(this.creds, codes);
+
     const offers: HotelOffer[] = [];
     for (const hotel of hotels) {
+      const content = contentMap.get(Number(hotel.code));
       const offer = mapHotelbedsToOffer({
         hotel,
         params: { ...params, currency },
         geoLabel: geo.label || params.location,
         liveMode: this.liveMode,
         expiresAt,
+        content,
+        searchCenter: {
+          latitude: geo.latitude,
+          longitude: geo.longitude,
+          label: geo.label,
+        },
       });
       if (offer) offers.push(offer);
     }

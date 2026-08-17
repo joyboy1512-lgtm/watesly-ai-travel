@@ -29,6 +29,7 @@ export function HotelSearchCard({ hotel, nights, onOpen }: Props) {
   const stars = Number(hotel.details.stars || 0);
   const rating = formatRating(hotel.details.rating);
   const reviewCount = Number(hotel.details.reviewCount || 0);
+  const cheapest = hotel.matchingRates[0];
   const location = String(
     hotel.details.zoneName ||
       hotel.details.neighborhood ||
@@ -36,9 +37,13 @@ export function HotelSearchCard({ hotel, nights, onOpen }: Props) {
       hotel.details.address ||
       "—",
   );
-  const roomTypes = Array.isArray(hotel.details.rooms)
-    ? (hotel.details.rooms as unknown[]).length
-    : new Set(hotel.matchingRates.map((r) => r.roomCode || r.roomName)).size;
+  const mapUrl = typeof hotel.details.mapUrl === "string" ? hotel.details.mapUrl : "";
+  const distanceLabel = hotel.details.distanceToCenterLabel
+    ? String(hotel.details.distanceToCenterLabel)
+    : "";
+  const poiDistances = Array.isArray(hotel.details.poiDistances)
+    ? (hotel.details.poiDistances as Array<{ nameAr: string; label: string }>)
+    : [];
   const soldOut =
     Number(hotel.details.roomsAvailable) === 0 ||
     hotel.details.scenario === "sold_out" ||
@@ -47,6 +52,9 @@ export function HotelSearchCard({ hotel, nights, onOpen }: Props) {
 
   const perNightMinor =
     nights > 0 ? Math.round(hotel.displayFromMinor / nights) : hotel.displayFromMinor;
+  const roomsLeft =
+    cheapest?.allotment ??
+    (hotel.details.roomsAvailable != null ? Number(hotel.details.roomsAvailable) : null);
 
   return (
     <article className="hotel-search-card">
@@ -82,13 +90,36 @@ export function HotelSearchCard({ hotel, nights, onOpen }: Props) {
           ) : null}
         </div>
 
-        <p className="hotel-search-card-location">{location}</p>
+        <p className="hotel-search-card-location">
+          {location}
+          {distanceLabel ? ` · ${distanceLabel} من المركز` : ""}
+        </p>
 
-        {!soldOut && roomTypes > 0 ? (
-          <p className="hotel-search-card-meta">
-            {roomTypes} {roomTypes === 1 ? "نوع غرفة" : "أنواع غرف"} ·{" "}
-            {hotel.matchingRates.length}{" "}
-            {hotel.matchingRates.length === 1 ? "خيار سعر" : "خيارات سعر"}
+        {poiDistances.length ? (
+          <ul className="hotel-search-card-poi">
+            {poiDistances.slice(0, 3).map((poi) => (
+              <li key={poi.nameAr}>
+                {poi.label} · {poi.nameAr}
+              </li>
+            ))}
+          </ul>
+        ) : null}
+
+        {mapUrl ? (
+          <a
+            href={mapUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hotel-map-link inline"
+            onClick={(e) => e.stopPropagation()}
+          >
+            الخريطة ↗
+          </a>
+        ) : null}
+
+        {!soldOut && cheapest ? (
+          <p className="hotel-search-card-offer-line">
+            <strong>{cheapest.roomName}</strong> · {cheapest.boardName}
           </p>
         ) : null}
       </div>
@@ -97,9 +128,14 @@ export function HotelSearchCard({ hotel, nights, onOpen }: Props) {
         {!soldOut ? (
           <>
             <div className="hotel-search-card-price">
-              <small>{nights} {nights === 1 ? "ليلة" : "ليالي"} · يبدأ من</small>
-              <strong>{formatMoneyMinor(perNightMinor, hotel.currency)}</strong>
-              <em>/ ليلة</em>
+              <small>
+                {nights} {nights === 1 ? "ليلة" : "ليالي"} · {cheapest?.roomName || "غرفة"}
+              </small>
+              <strong>{formatMoneyMinor(hotel.displayFromMinor, hotel.currency)}</strong>
+              <em>{formatMoneyMinor(perNightMinor, hotel.currency)} / ليلة</em>
+              {roomsLeft != null && roomsLeft > 0 ? (
+                <span className="hotel-rooms-left">متبقي {roomsLeft} غرفة</span>
+              ) : null}
             </div>
             <button type="button" className="btn hotel-search-card-cta" onClick={onOpen}>
               عرض الغرف والأسعار

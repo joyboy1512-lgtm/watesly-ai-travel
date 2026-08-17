@@ -1,3 +1,42 @@
+import {
+  channelPeerId as peerIdOf,
+  normalizeChannelType as channelOf,
+  sendInstagramText as sendIgText,
+  sendMessengerText as sendFbText,
+  sendMetaMessagingMedia as sendMetaMedia,
+  sendTelegramMedia as sendTgMedia,
+  sendTelegramText as sendTgText,
+} from "./channels";
+import type { ChannelMediaInput, ChannelSendInput } from "./channels";
+
+export {
+  CHANNEL_TYPES,
+  channelPeerId,
+  formatPeerId,
+  isMessagingChannelType,
+  metaWebhookObject,
+  normalizeChannelType,
+  parseMetaMessagingWebhook,
+  parseTelegramUpdate,
+  prefixChannelId,
+  probeChannel,
+  sendInstagramText,
+  sendMessengerText,
+  sendMetaMessagingMedia,
+  sendTelegramMedia,
+  sendTelegramText,
+  setTelegramWebhook,
+  stripChannelId,
+  telegramGetMe,
+  usesCustomerServiceWindow,
+} from "./channels";
+export type {
+  ChannelMediaInput,
+  ChannelProbeResult,
+  ChannelSendInput,
+  MessagingChannelType,
+} from "./channels";
+
 export interface WhatsAppInboundMessage {
   phoneNumberId: string;
   from: string;
@@ -6,6 +45,7 @@ export interface WhatsAppInboundMessage {
   timestamp?: string;
   type: string;
   text?: string;
+  channelType?: string;
   raw: Record<string, unknown>;
 }
 
@@ -385,4 +425,74 @@ export async function sendWhatsAppMedia(
     mock: false,
     raw,
   };
+}
+
+export async function sendChannelText(
+  input: ChannelSendInput,
+): Promise<SendResult> {
+  const type = channelOf(input.channelType);
+  if (type === "telegram") {
+    return sendTgText({
+      accessToken: input.accessToken,
+      to: input.to,
+      body: input.body,
+    });
+  }
+  if (type === "messenger") {
+    return sendFbText({
+      pageId: input.phoneNumberId,
+      accessToken: input.accessToken,
+      to: input.to,
+      body: input.body,
+    });
+  }
+  if (type === "instagram") {
+    return sendIgText({
+      igUserId: input.phoneNumberId,
+      accessToken: input.accessToken,
+      to: input.to,
+      body: input.body,
+    });
+  }
+  return sendWhatsAppText({
+    phoneNumberId: input.phoneNumberId,
+    accessToken: input.accessToken,
+    to: peerIdOf(input.to),
+    body: input.body,
+  });
+}
+
+export async function sendChannelMedia(
+  input: ChannelMediaInput,
+): Promise<SendResult> {
+  const type = channelOf(input.channelType);
+  if (type === "telegram") {
+    return sendTgMedia({
+      accessToken: input.accessToken,
+      to: input.to,
+      type: input.type,
+      link: input.link,
+      filename: input.filename,
+      caption: input.caption,
+    });
+  }
+  if (type === "messenger" || type === "instagram") {
+    return sendMetaMedia({
+      channelType: type,
+      phoneNumberId: input.phoneNumberId,
+      accessToken: input.accessToken,
+      to: input.to,
+      type: input.type,
+      link: input.link,
+    });
+  }
+  return sendWhatsAppMedia({
+    phoneNumberId: input.phoneNumberId,
+    accessToken: input.accessToken,
+    to: peerIdOf(input.to),
+    type: input.type,
+    link: input.link,
+    filename: input.filename,
+    caption: input.caption,
+  });
 }

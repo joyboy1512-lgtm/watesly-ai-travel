@@ -444,6 +444,7 @@ export class CampaignsController {
       where: {
         organizationId: user.organizationId,
         status: { in: ["connected", "pending"] },
+        channelType: "whatsapp",
       },
       orderBy: [{ isDefault: "desc" }, { updatedAt: "desc" }],
     });

@@ -55,6 +55,7 @@ export class ConversationsController {
             id: true,
             displayPhone: true,
             channelName: true,
+            channelType: true,
             phoneNumberId: true,
             isDefault: true,
             status: true,
@@ -79,6 +80,7 @@ export class ConversationsController {
             id: true,
             displayPhone: true,
             channelName: true,
+            channelType: true,
             phoneNumberId: true,
             isDefault: true,
             status: true,
@@ -97,8 +99,11 @@ export class ConversationsController {
       data: { unreadCount: 0 },
     });
 
+    const channelType = conversation.whatsappAccount?.channelType || "whatsapp";
     const withinWindow =
-      await this.pipeline.isWithinCustomerServiceWindow(id);
+      channelType === "telegram"
+        ? true
+        : await this.pipeline.isWithinCustomerServiceWindow(id);
 
     return {
       ...conversation,

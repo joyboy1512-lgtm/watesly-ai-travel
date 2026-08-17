@@ -6,9 +6,19 @@ import {
 import { Prisma } from "@watesly-travel/database";
 import {
   parseInboundWebhook,
+  parseMetaMessagingWebhook,
   parseStatusWebhook,
+  parseTelegramUpdate,
+  prefixChannelId,
+  probeChannel,
+  formatPeerId,
+  metaWebhookObject,
+  normalizeChannelType,
+  setTelegramWebhook,
+  telegramGetMe,
   verifyWebhookChallenge,
 } from "@watesly-travel/whatsapp-core";
+import type { WhatsAppInboundMessage } from "@watesly-travel/whatsapp-core";
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { PrismaService } from "../prisma/prisma.service";
 import { BotPipelineService } from "../pipeline/bot-pipeline.service";
@@ -86,7 +96,7 @@ export class WhatsappService {
   async upsertAccount(
     organizationId: string,
     dto: {
-      phoneNumberId: string;
+      phoneNumberId?: string;
       businessAccountId?: string;
       displayPhone?: string;
       accessToken?: string;
@@ -97,9 +107,8 @@ export class WhatsappService {
     },
     actorUserId: string,
   ) {
-    if (!dto.phoneNumberId?.trim()) {
-      throw new BadRequestException("phoneNumberId مطلوب");
-    }
+    const channelType = normalizeChannelType(dto.channelType);
+    const resolved = await this.resolveChannelIdentity(channelType, dto);
 
     const existingCount = await this.prisma.whatsAppAccount.count({
       where: { organizationId },
@@ -111,31 +120,33 @@ export class WhatsappService {
         where: {
           organizationId_phoneNumberId: {
             organizationId,
-            phoneNumberId: dto.phoneNumberId.trim(),
+            phoneNumberId: resolved.phoneNumberId,
           },
         },
         update: {
           businessAccountId: dto.businessAccountId || null,
-          displayPhone: dto.displayPhone || null,
+          displayPhone: resolved.displayPhone || dto.displayPhone || null,
           ...(dto.accessToken?.trim()
             ? { accessTokenEnc: dto.accessToken.trim() }
             : {}),
           status: dto.status || "connected",
-          channelName: dto.channelName?.trim() || null,
-          channelType: dto.channelType?.trim() || "whatsapp",
+          channelName: resolved.channelName || dto.channelName?.trim() || null,
+          channelType,
+          ...(resolved.meta ? { meta: asJson(resolved.meta) } : {}),
           ...(dto.isDefault === true ? { isDefault: true } : {}),
         },
         create: {
           organizationId,
-          phoneNumberId: dto.phoneNumberId.trim(),
+          phoneNumberId: resolved.phoneNumberId,
           businessAccountId: dto.businessAccountId || null,
-          displayPhone: dto.displayPhone || null,
+          displayPhone: resolved.displayPhone || dto.displayPhone || null,
           accessTokenEnc: dto.accessToken?.trim() || "mock",
           status: dto.status || "connected",
-          channelName: dto.channelName?.trim() || null,
-          channelType: dto.channelType?.trim() || "whatsapp",
+          channelName: resolved.channelName || dto.channelName?.trim() || null,
+          channelType,
           isDefault: shouldBeDefault,
           webhookVerifiedAt: new Date(),
+          ...(resolved.meta ? { meta: asJson(resolved.meta) } : {}),
         },
       });
 
@@ -238,74 +249,78 @@ export class WhatsappService {
       where: { id: accountId, organizationId },
     });
     if (!account) {
-      throw new NotFoundException("حساب واتساب غير موجود");
+      throw new NotFoundException("القناة غير موجودة");
     }
 
+    const channelType = normalizeChannelType(account.channelType);
     const token = account.accessTokenEnc || "";
-    if (!token || token.startsWith("mock")) {
-      return {
-        ok: true,
-        mode: "mock",
-        message:
-          "الحساب يعمل بوضع تجريبي (mock). الإرسال المحلي ناجح دون Graph API.",
-        phoneNumberId: account.phoneNumberId,
-        status: account.status,
-      };
+    const probed = await probeChannel({
+      channelType,
+      phoneNumberId: account.phoneNumberId,
+      accessToken: token,
+    });
+
+    const patch: {
+      displayPhone?: string;
+      channelName?: string;
+      webhookVerifiedAt?: Date;
+      meta?: Prisma.InputJsonValue;
+    } = {};
+    if (probed.ok) {
+      patch.webhookVerifiedAt = new Date();
+      if (probed.displayPhone && !account.displayPhone) {
+        patch.displayPhone = probed.displayPhone;
+      }
+      if (probed.channelName && !account.channelName) {
+        patch.channelName = probed.channelName;
+      }
     }
 
-    const graphVersion = process.env.WHATSAPP_GRAPH_API_VERSION || "v21.0";
-    const base =
-      process.env.WHATSAPP_GRAPH_API_BASE || "https://graph.facebook.com";
-    const url = `${base}/${graphVersion}/${account.phoneNumberId}?fields=display_phone_number,verified_name`;
-
-    try {
-      const response = await fetch(url, {
-        headers: { Authorization: `Bearer ${token}` },
+    let webhookUrl: string | undefined;
+    if (probed.ok && channelType === "telegram" && probed.mode === "live") {
+      webhookUrl = this.telegramWebhookUrl(account.id);
+      const secret = this.telegramWebhookSecret(account.id);
+      const hooked = await setTelegramWebhook(token, webhookUrl, secret);
+      const prevMeta =
+        account.meta && typeof account.meta === "object"
+          ? (account.meta as Record<string, unknown>)
+          : {};
+      patch.meta = asJson({
+        ...prevMeta,
+        webhookUrl,
+        webhookSecret: secret,
+        webhookSet: hooked.ok,
       });
-      const raw = (await response.json().catch(() => ({}))) as {
-        display_phone_number?: string;
-        verified_name?: string;
-        error?: { message?: string };
-      };
-
-      if (!response.ok) {
-        return {
-          ok: false,
-          mode: "live",
-          message: raw.error?.message || "فشل التحقق من التوكن عبر Meta",
-          phoneNumberId: account.phoneNumberId,
-          status: account.status,
-        };
+      if (!hooked.ok) {
+        probed.message = `${probed.message} — ${hooked.message}`;
       }
-
-      if (raw.display_phone_number && !account.displayPhone) {
-        await this.prisma.whatsAppAccount.update({
-          where: { id: account.id },
-          data: { displayPhone: raw.display_phone_number },
-        });
-      }
-
-      return {
-        ok: true,
-        mode: "live",
-        message: `الاتصال ناجح${raw.verified_name ? ` · ${raw.verified_name}` : ""}`,
-        phoneNumberId: account.phoneNumberId,
-        displayPhone: raw.display_phone_number || account.displayPhone,
-        status: account.status,
-      };
-    } catch (error) {
-      return {
-        ok: false,
-        mode: "live",
-        message:
-          error instanceof Error ? error.message : "تعذر الاتصال بـ Meta API",
-        phoneNumberId: account.phoneNumberId,
-        status: account.status,
-      };
     }
+
+    if (Object.keys(patch).length) {
+      await this.prisma.whatsAppAccount.update({
+        where: { id: account.id },
+        data: patch,
+      });
+    }
+
+    return {
+      ok: probed.ok,
+      mode: probed.mode,
+      message: probed.message,
+      phoneNumberId: account.phoneNumberId,
+      displayPhone: probed.displayPhone || account.displayPhone,
+      status: account.status,
+      channelType,
+      webhookUrl,
+    };
   }
 
   async handleWebhook(payload: unknown) {
+    const objectType = metaWebhookObject(payload);
+    if (objectType === "page" || objectType === "instagram") {
+      return this.handleMetaMessagingWebhook(payload);
+    }
+
     const statusUpdates = parseStatusWebhook(payload);
     let statusesUpdated = 0;
     for (const st of statusUpdates) {
@@ -325,119 +340,16 @@ export class WhatsappService {
     const processed = [];
 
     for (const msg of messages) {
-      const account = await this.prisma.whatsAppAccount.findFirst({
-        where: { phoneNumberId: msg.phoneNumberId, status: "connected" },
-      });
+      const account = await this.findConnectedAccount(
+        "whatsapp",
+        msg.phoneNumberId,
+      );
       if (!account) continue;
-
-      const contact = await this.prisma.contact.upsert({
-        where: {
-          organizationId_waId: {
-            organizationId: account.organizationId,
-            waId: msg.from,
-          },
-        },
-        update: {
-          lastContactedAt: new Date(),
-          source: "whatsapp",
-          name: msg.contactName || undefined,
-        },
-        create: {
-          organizationId: account.organizationId,
-          waId: msg.from,
-          name: msg.contactName || msg.from,
-          source: "whatsapp",
-          lastContactedAt: new Date(),
-        },
+      const item = await this.ingestInboundMessage(account, {
+        ...msg,
+        channelType: "whatsapp",
       });
-
-      let conversation = await this.prisma.conversation.findFirst({
-        where: {
-          organizationId: account.organizationId,
-          contactId: contact.id,
-          status: { in: ["open", "pending"] },
-          OR: [
-            { whatsappAccountId: account.id },
-            { whatsappAccountId: null },
-          ],
-        },
-        orderBy: { updatedAt: "desc" },
-      });
-
-      if (!conversation) {
-        conversation = await this.prisma.conversation.create({
-          data: {
-            organizationId: account.organizationId,
-            contactId: contact.id,
-            whatsappAccountId: account.id,
-            status: "open",
-            assigneeType: "bot",
-            lastMessageAt: new Date(),
-            unreadCount: 1,
-          },
-        });
-      } else {
-        conversation = await this.prisma.conversation.update({
-          where: { id: conversation.id },
-          data: {
-            lastMessageAt: new Date(),
-            unreadCount: { increment: 1 },
-            whatsappAccountId: account.id,
-          },
-        });
-      }
-
-      const existing = await this.prisma.message.findFirst({
-        where: {
-          organizationId: account.organizationId,
-          providerMessageId: msg.messageId,
-        },
-      });
-      if (existing) {
-        processed.push({ skipped: true, messageId: existing.id });
-        continue;
-      }
-
-      const message = await this.prisma.message.create({
-        data: {
-          organizationId: account.organizationId,
-          conversationId: conversation.id,
-          direction: "inbound",
-          channel: "whatsapp",
-          type: msg.type,
-          body: msg.text || "",
-          providerMessageId: msg.messageId,
-          status: "delivered",
-          rawPayload: asJson(msg.raw),
-        },
-      });
-
-      if (msg.text) {
-        try {
-          await this.routeInboundText({
-            organizationId: account.organizationId,
-            conversationId: conversation.id,
-            contactId: contact.id,
-            messageId: message.id,
-            text: msg.text,
-          });
-        } catch (error) {
-          // Never fail Meta webhook delivery because of bot/search errors.
-          // eslint-disable-next-line no-console
-          console.error("[whatsapp] inbound pipeline error", error);
-          try {
-            await this.pipeline.replyToConversation({
-              organizationId: account.organizationId,
-              conversationId: conversation.id,
-              body: "حدث خطأ مؤقت أثناء معالجة طلبك. جرّب مجددًا أو اكتب «موظف» للتحويل البشري.",
-            });
-          } catch {
-            // ignore secondary failures
-          }
-        }
-      }
-
-      processed.push({ messageId: message.id, conversationId: conversation.id });
+      if (item) processed.push(item);
     }
 
     return { processed: processed.length, statusesUpdated, items: processed };
@@ -634,11 +546,293 @@ export class WhatsappService {
     return result;
   }
 
+  async handleTelegramWebhook(
+    accountId: string,
+    payload: unknown,
+    secretHeader?: string,
+  ) {
+    const account = await this.prisma.whatsAppAccount.findFirst({
+      where: { id: accountId, channelType: "telegram" },
+    });
+    if (!account || account.status !== "connected") {
+      return { ok: true, ignored: true };
+    }
+
+    const expected = this.telegramWebhookSecret(account.id);
+    const meta =
+      account.meta && typeof account.meta === "object"
+        ? (account.meta as Record<string, unknown>)
+        : {};
+    const storedSecret =
+      typeof meta.webhookSecret === "string" ? meta.webhookSecret : expected;
+    if (secretHeader && storedSecret && secretHeader !== storedSecret) {
+      return { ok: false, error: "invalid telegram secret" };
+    }
+
+    const messages = parseTelegramUpdate(payload);
+    const processed = [];
+    for (const msg of messages) {
+      const item = await this.ingestInboundMessage(account, {
+        ...msg,
+        phoneNumberId: account.phoneNumberId,
+        channelType: "telegram",
+      });
+      if (item) processed.push(item);
+    }
+    return { ok: true, processed: processed.length, items: processed };
+  }
+
+  async handleMetaMessagingWebhook(payload: unknown) {
+    const messages = parseMetaMessagingWebhook(payload);
+    const processed = [];
+    for (const msg of messages) {
+      const channelType = normalizeChannelType(msg.channelType);
+      const account = await this.findConnectedAccount(
+        channelType,
+        msg.phoneNumberId,
+      );
+      if (!account) continue;
+      const item = await this.ingestInboundMessage(account, {
+        ...msg,
+        channelType,
+      });
+      if (item) processed.push(item);
+    }
+    return { ok: true, processed: processed.length, items: processed };
+  }
+
   async getAccountOrThrow(organizationId: string, id: string) {
     const account = await this.prisma.whatsAppAccount.findFirst({
       where: { id, organizationId },
     });
-    if (!account) throw new NotFoundException("حساب واتساب غير موجود");
+    if (!account) throw new NotFoundException("القناة غير موجودة");
     return account;
+  }
+
+  private publicApiBase() {
+    return (
+      process.env.PUBLIC_API_URL ||
+      process.env.API_PUBLIC_URL ||
+      "https://api.weekendgate.com"
+    ).replace(/\/$/, "");
+  }
+
+  private telegramWebhookUrl(accountId: string) {
+    return `${this.publicApiBase()}/whatsapp/telegram/webhook/${accountId}`;
+  }
+
+  private telegramWebhookSecret(accountId: string) {
+    const seed =
+      process.env.TELEGRAM_WEBHOOK_SECRET ||
+      process.env.WHATSAPP_APP_SECRET ||
+      "weekendgate";
+    return createHmac("sha256", seed).update(accountId).digest("hex").slice(0, 32);
+  }
+
+  private async resolveChannelIdentity(
+    channelType: ReturnType<typeof normalizeChannelType>,
+    dto: {
+      phoneNumberId?: string;
+      accessToken?: string;
+      displayPhone?: string;
+      channelName?: string;
+    },
+  ) {
+    const token = dto.accessToken?.trim() || "";
+    let phoneNumberId = dto.phoneNumberId?.trim() || "";
+    let displayPhone = dto.displayPhone?.trim() || "";
+    let channelName = dto.channelName?.trim() || "";
+    let meta: Record<string, unknown> | undefined;
+
+    if (channelType === "telegram") {
+      if (!token && !phoneNumberId) {
+        throw new BadRequestException("توكن بوت تلجرام مطلوب");
+      }
+      if (token && !token.startsWith("mock")) {
+        const me = await telegramGetMe(token);
+        if (!me.ok || !me.id) {
+          throw new BadRequestException(me.message || "توكن تلجرام غير صالح");
+        }
+        phoneNumberId = prefixChannelId("telegram", String(me.id));
+        displayPhone = displayPhone || (me.username ? `@${me.username}` : "");
+        channelName = channelName || me.firstName || "Telegram";
+        meta = { botId: me.id, username: me.username };
+      } else {
+        const rawId =
+          phoneNumberId.replace(/^tg_/, "") || `mock_${Date.now()}`;
+        phoneNumberId = prefixChannelId("telegram", rawId);
+        channelName = channelName || "Telegram (تجريبي)";
+      }
+      return { phoneNumberId, displayPhone, channelName, meta };
+    }
+
+    if (channelType === "messenger") {
+      if (!phoneNumberId) {
+        throw new BadRequestException("معرّف صفحة فيسبوك (Page ID) مطلوب");
+      }
+      phoneNumberId = prefixChannelId(
+        "messenger",
+        phoneNumberId.replace(/^ms_/, ""),
+      );
+      channelName = channelName || "Messenger";
+      return { phoneNumberId, displayPhone, channelName, meta };
+    }
+
+    if (channelType === "instagram") {
+      if (!phoneNumberId) {
+        throw new BadRequestException("معرّف حساب إنستغرام (IG User ID) مطلوب");
+      }
+      phoneNumberId = prefixChannelId(
+        "instagram",
+        phoneNumberId.replace(/^ig_/, ""),
+      );
+      channelName = channelName || "Instagram";
+      return { phoneNumberId, displayPhone, channelName, meta };
+    }
+
+    if (!phoneNumberId) {
+      throw new BadRequestException("phoneNumberId مطلوب");
+    }
+    return { phoneNumberId, displayPhone, channelName, meta };
+  }
+
+  private async findConnectedAccount(channelType: string, rawId: string) {
+    const type = normalizeChannelType(channelType);
+    const prefixed = prefixChannelId(type, rawId);
+    return this.prisma.whatsAppAccount.findFirst({
+      where: {
+        status: "connected",
+        ...(type === "whatsapp"
+          ? {
+              OR: [
+                { phoneNumberId: rawId },
+                { phoneNumberId: prefixed, channelType: "whatsapp" },
+              ],
+            }
+          : {
+              channelType: type,
+              OR: [{ phoneNumberId: prefixed }, { phoneNumberId: rawId }],
+            }),
+      },
+    });
+  }
+
+  private async ingestInboundMessage(
+    account: {
+      id: string;
+      organizationId: string;
+      channelType: string;
+    },
+    msg: WhatsAppInboundMessage,
+  ) {
+    const channel = normalizeChannelType(
+      msg.channelType || account.channelType,
+    );
+    const waId = formatPeerId(channel, msg.from);
+
+    const contact = await this.prisma.contact.upsert({
+      where: {
+        organizationId_waId: {
+          organizationId: account.organizationId,
+          waId,
+        },
+      },
+      update: {
+        lastContactedAt: new Date(),
+        source: channel,
+        name: msg.contactName || undefined,
+      },
+      create: {
+        organizationId: account.organizationId,
+        waId,
+        name: msg.contactName || waId,
+        source: channel,
+        lastContactedAt: new Date(),
+      },
+    });
+
+    let conversation = await this.prisma.conversation.findFirst({
+      where: {
+        organizationId: account.organizationId,
+        contactId: contact.id,
+        status: { in: ["open", "pending"] },
+        OR: [{ whatsappAccountId: account.id }, { whatsappAccountId: null }],
+      },
+      orderBy: { updatedAt: "desc" },
+    });
+
+    if (!conversation) {
+      conversation = await this.prisma.conversation.create({
+        data: {
+          organizationId: account.organizationId,
+          contactId: contact.id,
+          whatsappAccountId: account.id,
+          status: "open",
+          assigneeType: "bot",
+          lastMessageAt: new Date(),
+          unreadCount: 1,
+        },
+      });
+    } else {
+      conversation = await this.prisma.conversation.update({
+        where: { id: conversation.id },
+        data: {
+          lastMessageAt: new Date(),
+          unreadCount: { increment: 1 },
+          whatsappAccountId: account.id,
+        },
+      });
+    }
+
+    const existing = await this.prisma.message.findFirst({
+      where: {
+        organizationId: account.organizationId,
+        providerMessageId: msg.messageId,
+      },
+    });
+    if (existing) {
+      return { skipped: true, messageId: existing.id };
+    }
+
+    const message = await this.prisma.message.create({
+      data: {
+        organizationId: account.organizationId,
+        conversationId: conversation.id,
+        direction: "inbound",
+        channel,
+        type: msg.type,
+        body: msg.text || "",
+        providerMessageId: msg.messageId,
+        status: "delivered",
+        rawPayload: asJson(msg.raw),
+      },
+    });
+
+    if (msg.text) {
+      try {
+        await this.routeInboundText({
+          organizationId: account.organizationId,
+          conversationId: conversation.id,
+          contactId: contact.id,
+          messageId: message.id,
+          text: msg.text,
+        });
+      } catch (error) {
+        // Never fail webhook delivery because of bot/search errors.
+        // eslint-disable-next-line no-console
+        console.error("[channel] inbound pipeline error", error);
+        try {
+          await this.pipeline.replyToConversation({
+            organizationId: account.organizationId,
+            conversationId: conversation.id,
+            body: "حدث خطأ مؤقت أثناء معالجة طلبك. جرّب مجددًا أو اكتب «موظف» للتحويل البشري.",
+          });
+        } catch {
+          // ignore secondary failures
+        }
+      }
+    }
+
+    return { messageId: message.id, conversationId: conversation.id };
   }
 }

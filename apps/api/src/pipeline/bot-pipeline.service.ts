@@ -2,9 +2,10 @@ import { BadRequestException, Injectable } from "@nestjs/common";
 import { Prisma } from "@watesly-travel/database";
 import { createAiProvider } from "@watesly-travel/ai-core";
 import {
-  sendWhatsAppText,
+  sendChannelMedia,
+  sendChannelText,
   sendWhatsAppTemplate,
-  sendWhatsAppMedia,
+  usesCustomerServiceWindow,
 } from "@watesly-travel/whatsapp-core";
 import { searchAndPriceTravel } from "@watesly-travel/travel-core";
 import { PrismaService } from "../prisma/prisma.service";
@@ -569,10 +570,21 @@ export class BotPipelineService {
 
     let account = conversation.whatsappAccount;
     if (!account || account.status !== "connected") {
+      const preferredType = account?.channelType || "whatsapp";
       account = await this.prisma.whatsAppAccount.findFirst({
-        where: { organizationId, status: "connected" },
+        where: {
+          organizationId,
+          status: "connected",
+          channelType: preferredType,
+        },
         orderBy: [{ isDefault: "desc" }, { updatedAt: "desc" }],
       });
+      if (!account) {
+        account = await this.prisma.whatsAppAccount.findFirst({
+          where: { organizationId, status: "connected" },
+          orderBy: [{ isDefault: "desc" }, { updatedAt: "desc" }],
+        });
+      }
       if (account && conversation.whatsappAccountId !== account.id) {
         await this.prisma.conversation.update({
           where: { id: conversationId },
@@ -608,14 +620,19 @@ export class BotPipelineService {
       input.organizationId,
     );
 
-    // Enforce 24h window only when caller opts in (agent free-text reply).
-    if (input.skipWindowCheck === false) {
+    const channel = account?.channelType || "whatsapp";
+
+    // Enforce 24h window only for WhatsApp / Messenger / Instagram agent replies.
+    if (
+      input.skipWindowCheck === false &&
+      usesCustomerServiceWindow(channel)
+    ) {
       const open = await this.isWithinCustomerServiceWindow(
         input.conversationId,
       );
       if (!open) {
         throw new BadRequestException(
-          "انتهت نافذة خدمة واتساب (24 ساعة). استخدم قالبًا معتمدًا للمتابعة.",
+          "انتهت نافذة خدمة المراسلة (24 ساعة). استخدم قالبًا معتمدًا للمتابعة.",
         );
       }
     }
@@ -623,7 +640,8 @@ export class BotPipelineService {
     const token = account?.accessTokenEnc || "mock";
     const phoneNumberId = account?.phoneNumberId || "mock_phone";
 
-    const send = await sendWhatsAppText({
+    const send = await sendChannelText({
+      channelType: channel,
       phoneNumberId,
       accessToken: token,
       to: conversation.contact.waId,
@@ -633,7 +651,7 @@ export class BotPipelineService {
     if (send.status === "failed") {
       const errMsg =
         (send.raw as { error?: { message?: string } } | undefined)?.error
-          ?.message || "فشل إرسال رسالة واتساب";
+          ?.message || "فشل إرسال الرسالة";
       throw new BadRequestException(errMsg);
     }
 
@@ -642,7 +660,7 @@ export class BotPipelineService {
         organizationId: input.organizationId,
         conversationId: input.conversationId,
         direction: "outbound",
-        channel: "whatsapp",
+        channel,
         type: "text",
         body: input.body,
         providerMessageId: send.providerMessageId || null,
@@ -676,10 +694,11 @@ export class BotPipelineService {
     );
     if (!account) {
       throw new BadRequestException(
-        "اربط قناة واتساب من صفحة القنوات قبل إرسال القوالب",
+        "اربط قناة من صفحة القنوات قبل إرسال القوالب",
       );
     }
 
+    const channel = account.channelType || "whatsapp";
     const template = await this.prisma.template.findFirst({
       where: {
         id: input.templateId,
@@ -701,25 +720,34 @@ export class BotPipelineService {
       );
     });
 
-    const send = await sendWhatsAppTemplate({
-      phoneNumberId: account.phoneNumberId,
-      accessToken: account.accessTokenEnc || "mock",
-      to: conversation.contact.waId,
-      templateName: template.name,
-      language: template.language,
-      components: [
-        {
-          type: "body",
-          parameters: vars.map((text) => ({ type: "text", text })),
-        },
-      ],
-    });
+    const send =
+      channel === "whatsapp"
+        ? await sendWhatsAppTemplate({
+            phoneNumberId: account.phoneNumberId,
+            accessToken: account.accessTokenEnc || "mock",
+            to: conversation.contact.waId,
+            templateName: template.name,
+            language: template.language,
+            components: [
+              {
+                type: "body",
+                parameters: vars.map((text) => ({ type: "text", text })),
+              },
+            ],
+          })
+        : await sendChannelText({
+            channelType: channel,
+            phoneNumberId: account.phoneNumberId,
+            accessToken: account.accessTokenEnc || "mock",
+            to: conversation.contact.waId,
+            body: bodyText,
+          });
 
     if (send.status === "failed") {
       // Fallback to free text only in mock / when still inside window
-      const open = await this.isWithinCustomerServiceWindow(
-        input.conversationId,
-      );
+      const open =
+        !usesCustomerServiceWindow(channel) ||
+        (await this.isWithinCustomerServiceWindow(input.conversationId));
       if (open || (account.accessTokenEnc || "").startsWith("mock")) {
         return this.replyToConversation({
           organizationId: input.organizationId,
@@ -731,7 +759,7 @@ export class BotPipelineService {
       }
       const errMsg =
         (send.raw as { error?: { message?: string } } | undefined)?.error
-          ?.message || "فشل إرسال قالب واتساب";
+          ?.message || "فشل إرسال القالب";
       throw new BadRequestException(errMsg);
     }
 
@@ -740,8 +768,8 @@ export class BotPipelineService {
         organizationId: input.organizationId,
         conversationId: input.conversationId,
         direction: "outbound",
-        channel: "whatsapp",
-        type: "template",
+        channel,
+        type: channel === "whatsapp" ? "template" : "text",
         body: bodyText,
         templateName: template.name,
         providerMessageId: send.providerMessageId || null,
@@ -778,18 +806,24 @@ export class BotPipelineService {
     );
     if (!account) {
       throw new BadRequestException(
-        "اربط قناة واتساب من صفحة القنوات قبل إرسال الملفات",
+        "اربط قناة من صفحة القنوات قبل إرسال الملفات",
       );
     }
 
-    const open = await this.isWithinCustomerServiceWindow(input.conversationId);
-    if (!open) {
-      throw new BadRequestException(
-        "انتهت نافذة خدمة واتساب (24 ساعة). استخدم قالبًا معتمدًا للمتابعة.",
+    const channel = account.channelType || "whatsapp";
+    if (usesCustomerServiceWindow(channel)) {
+      const open = await this.isWithinCustomerServiceWindow(
+        input.conversationId,
       );
+      if (!open) {
+        throw new BadRequestException(
+          "انتهت نافذة خدمة المراسلة (24 ساعة). استخدم قالبًا معتمدًا للمتابعة.",
+        );
+      }
     }
 
-    const send = await sendWhatsAppMedia({
+    const send = await sendChannelMedia({
+      channelType: channel,
       phoneNumberId: account.phoneNumberId,
       accessToken: account.accessTokenEnc || "mock",
       to: conversation.contact.waId,
@@ -802,7 +836,7 @@ export class BotPipelineService {
     if (send.status === "failed") {
       const errMsg =
         (send.raw as { error?: { message?: string } } | undefined)?.error
-          ?.message || "فشل إرسال الملف عبر واتساب";
+          ?.message || "فشل إرسال الملف";
       throw new BadRequestException(errMsg);
     }
 
@@ -819,7 +853,7 @@ export class BotPipelineService {
         organizationId: input.organizationId,
         conversationId: input.conversationId,
         direction: "outbound",
-        channel: "whatsapp",
+        channel,
         type: input.type,
         body,
         providerMessageId: send.providerMessageId || null,

@@ -343,11 +343,43 @@
   background: linear-gradient(145deg, #184a52, #0f3340 55%, #071822);
   color: #f3f7f4;
   box-shadow: 0 10px 24px rgba(7, 24, 34, 0.14);
+  cursor: pointer;
+  text-align: inherit;
+  font: inherit;
+  width: 100%;
+}
+
+.wa-type-card:hover,
+.wa-type-card.active {
+  outline: 2px solid #f0c27a;
+  opacity: 1;
 }
 
 .wa-type-card.soon {
   opacity: 0.72;
   background: linear-gradient(145deg, #2a4a4f, #1a333a 55%, #0d1c22);
+}
+
+.wa-type-cta {
+  color: #f0c27a;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.wa-hook {
+  margin: 0 0 0.85rem;
+  padding: 0.7rem 0.85rem;
+  border-radius: 10px;
+  background: #f4f7f6;
+  color: #5f7470;
+  font-size: 0.82rem;
+  line-height: 1.55;
+  word-break: break-word;
+}
+
+.wa-hook code {
+  font-size: 0.78rem;
+  color: #0f3340;
 }
 
 .wa-type-card strong {

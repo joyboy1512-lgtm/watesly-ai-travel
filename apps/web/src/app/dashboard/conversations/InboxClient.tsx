@@ -19,6 +19,7 @@ type ConversationRow = {
     id: string;
     displayPhone?: string | null;
     channelName?: string | null;
+    channelType?: string | null;
     phoneNumberId: string;
   } | null;
   messages: Array<{
@@ -42,6 +43,7 @@ type ConversationDetail = {
     id: string;
     displayPhone?: string | null;
     channelName?: string | null;
+    channelType?: string | null;
     phoneNumberId: string;
     status?: string;
   } | null;
@@ -106,6 +108,19 @@ function windowOpen(messages: ConversationDetail["messages"]) {
   if (!lastInbound) return false;
   const age = Date.now() - new Date(lastInbound.createdAt).getTime();
   return age <= 24 * 60 * 60 * 1000;
+}
+
+const CHANNEL_KIND: Record<string, string> = {
+  whatsapp: "واتساب",
+  telegram: "تلجرام",
+  instagram: "إنستغرام",
+  messenger: "ماسنجر",
+};
+
+function channelKindOf(row?: {
+  whatsappAccount?: { channelType?: string | null } | null;
+}) {
+  return row?.whatsappAccount?.channelType || "whatsapp";
 }
 
 function formatMsgTime(value: string) {
@@ -237,10 +252,16 @@ export default function InboxClient() {
     : true;
   const channelLabel = (row: {
     whatsappAccount?: ConversationRow["whatsappAccount"];
-  }) =>
-    row.whatsappAccount?.channelName ||
-    row.whatsappAccount?.displayPhone ||
-    "واتساب";
+  }) => {
+    const kind = CHANNEL_KIND[channelKindOf(row)] || "قناة";
+    return (
+      row.whatsappAccount?.channelName ||
+      row.whatsappAccount?.displayPhone ||
+      kind
+    );
+  };
+  const activeKind = channelKindOf(detail || undefined);
+  const needsWindow = activeKind !== "telegram";
 
   const filtered = useMemo(() => {
     return rows.filter((row) => {
@@ -623,7 +644,7 @@ export default function InboxClient() {
           {!selectedId || !detail ? (
             <div className="wi-placeholder">
               <h3>WeekendGate</h3>
-              <p>اختر محادثة من القائمة لبدء المراسلة عبر واتساب.</p>
+              <p>اختر محادثة من القائمة للمراسلة عبر واتساب أو تلجرام أو إنستغرام أو ماسنجر.</p>
             </div>
           ) : (
             <>
@@ -638,7 +659,11 @@ export default function InboxClient() {
                     <p className="wi-thread-sub">
                       {detail.contact.waId} · {statusLabel} ·{" "}
                       {channelLabel(detail)}
-                      {!isOpen ? " · يتطلب قالب" : " · نافذة 24س مفتوحة"}
+                      {needsWindow
+                        ? !isOpen
+                          ? " · يتطلب قالب"
+                          : " · نافذة 24س مفتوحة"
+                        : " · تلجرام"}
                     </p>
                   </div>
                 </div>
@@ -819,7 +844,7 @@ export default function InboxClient() {
                           placeholder={
                             pendingFile
                               ? "تعليق على الملف (اختياري)"
-                              : "اكتب رسالة عبر واتساب"
+                              : `اكتب رسالة عبر ${CHANNEL_KIND[activeKind] || "القناة"}`
                           }
                           onKeyDown={(e) => {
                             if (e.key === "Enter" && !e.shiftKey) {
@@ -867,7 +892,7 @@ export default function InboxClient() {
                     className="wi-btn ghost"
                     onClick={() => router.push("/dashboard/whatsapp")}
                   >
-                    حساب واتساب
+                    حساب القناة
                   </button>
                   <button
                     type="button"
@@ -975,10 +1000,14 @@ export default function InboxClient() {
               </div>
 
               <div className="wi-details-section">
-                <h4>خدمات واتساب</h4>
+                <h4>خدمات القناة</h4>
                 <div className="wi-item-tags">
                   <span className="wi-pill wa">
-                    {isOpen ? "نافذة مفتوحة" : "يتطلب قالب"}
+                    {needsWindow
+                      ? isOpen
+                        ? "نافذة مفتوحة"
+                        : "يتطلب قالب"
+                      : CHANNEL_KIND[activeKind] || "قناة"}
                   </span>
                   <span className="wi-pill">
                     {detail.assigneeType === "human" ? "موظف" : "روبوت"}

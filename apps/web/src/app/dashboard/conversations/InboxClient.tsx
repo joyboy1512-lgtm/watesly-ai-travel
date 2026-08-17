@@ -254,6 +254,7 @@ export default function InboxClient() {
   }
 
   useEffect(() => {
+    if (!getSession()?.accessToken) return;
     loadList().catch((err: Error) => setError(err.message));
     apiFetch<Template[]>("/campaigns/templates")
       .then((list) => {
@@ -263,6 +264,7 @@ export default function InboxClient() {
       .catch(() => undefined);
 
     const timer = setInterval(() => {
+      if (!getSession()?.accessToken) return;
       loadList().catch(() => undefined);
       if (selectedId) loadDetail(selectedId).catch(() => undefined);
     }, 4000);

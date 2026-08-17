@@ -1,4 +1,4 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+const API_URL = (process.env.NEXT_PUBLIC_API_URL || "/api").replace(/\/$/, "");
 
 export type AuthSession = {
   accessToken: string;
@@ -49,10 +49,27 @@ export async function apiFetch<T>(
     headers.set("Authorization", `Bearer ${token}`);
   }
 
-  const response = await fetch(`${API_URL}${path}`, {
-    ...init,
-    headers,
-  });
+  const controller = new AbortController();
+  const timeoutMs = 20000;
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  let response: Response;
+  try {
+    response = await fetch(`${API_URL}${path}`, {
+      ...init,
+      headers,
+      signal: init.signal || controller.signal,
+    });
+  } catch (err) {
+    const aborted =
+      (err instanceof DOMException && err.name === "AbortError") ||
+      (err instanceof Error && err.name === "AbortError");
+    if (aborted) {
+      throw new Error("انتهت مهلة الاتصال بالخادم. حدّث الصفحة وحاول مجددًا.");
+    }
+    throw new Error("تعذر الاتصال بالخادم. تحقق من الشبكة وحاول مجددًا.");
+  } finally {
+    clearTimeout(timer);
+  }
 
   const data = (await response.json().catch(() => ({}))) as {
     message?: string | string[];

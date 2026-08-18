@@ -129,6 +129,14 @@ export class MockAiProvider implements AiProvider {
       }
       if (!fields.origin && found[0]) fields.origin = found[0];
       if (!fields.destination && found[1]) fields.destination = found[1];
+      if (
+        /(فندق|فنادق|إقامة|hotel)/i.test(text) &&
+        !fields.destination &&
+        found[0]
+      ) {
+        fields.destination = found[0];
+        if (fields.origin === fields.destination) fields.origin = undefined;
+      }
     }
 
     const date = parseDateToken(text);
@@ -164,7 +172,13 @@ export class MockAiProvider implements AiProvider {
     }
 
     if (!fields.adults) fields.adults = 1;
-    fields.serviceTypes = fields.serviceTypes ?? ["flight"];
+    if (/(فندق|فنادق|إقامة|hotel)/i.test(text)) {
+      fields.serviceTypes = ["hotel"];
+    } else if (/(نقل|مواصلات|transfer)/i.test(text)) {
+      fields.serviceTypes = ["transfer"];
+    } else {
+      fields.serviceTypes = fields.serviceTypes ?? ["flight"];
+    }
 
     // If user replies with a bare city while a field is missing
     if (
@@ -256,7 +270,6 @@ function mockSearchCalls(
   extraction: AiExtractResult,
   tools: AiChatTurnInput["tools"],
 ): AiFunctionCall[] {
-  if (!extraction.readyToSearch) return [];
   const allowed = new Set(
     tools.filter((tool) => tool.type === "function").map((tool) => tool.name),
   );
@@ -265,6 +278,7 @@ function mockSearchCalls(
     : ["flight"];
   const calls: AiFunctionCall[] = [];
   if (
+    extraction.readyToSearch &&
     allowed.has("search_flights") &&
     (services.includes("flight") || services.includes("package")) &&
     extraction.fields.origin &&

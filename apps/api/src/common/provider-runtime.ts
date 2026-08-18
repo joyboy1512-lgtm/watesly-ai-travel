@@ -101,9 +101,9 @@ export async function getTransferProviderForOrg(
         decryptProviderConfig<Record<string, string>>(legacy.configEncrypted) ||
         {};
       creds = {
-        apiKey: legacyCreds.transferApiKey,
-        apiSecret: legacyCreds.transferApiSecret,
-        baseUrl: legacyCreds.transferBaseUrl,
+        apiKey: legacyCreds.transferApiKey || "",
+        apiSecret: legacyCreds.transferApiSecret || "",
+        baseUrl: legacyCreds.transferBaseUrl || "",
       };
     }
   }

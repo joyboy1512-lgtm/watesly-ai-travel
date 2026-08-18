@@ -770,6 +770,14 @@ export class TravelAiService {
     });
   }
 
+  private async orgCurrency(organizationId: string): Promise<string> {
+    const org = await this.prisma.organization.findUnique({
+      where: { id: organizationId },
+      select: { defaultCurrency: true },
+    });
+    return (org?.defaultCurrency || process.env.DEFAULT_CURRENCY || "KWD").toUpperCase();
+  }
+
   private async orgAiSettings(organizationId: string): Promise<OrgAiSettings> {
     const org = await this.prisma.organization.findUnique({
       where: { id: organizationId },
@@ -1070,6 +1078,7 @@ export class TravelAiService {
         reason: "بحث الفنادق غير مفعّل — ينقص HOTELBEDS_API_KEY أو DUFFEL_ACCESS_TOKEN",
       });
     }
+    const currency = await this.orgCurrency(organizationId);
     const rows = await provider.searchHotels({
       location,
       checkInDate,
@@ -1077,6 +1086,7 @@ export class TravelAiService {
       adults: Math.max(1, int(args.adults, 1)),
       children: Math.max(0, int(args.children, 0)),
       rooms: Math.max(1, int(args.rooms, 1)),
+      currency,
     });
 
     const sliceArgs = toolSliceArgs(args);
@@ -1194,6 +1204,7 @@ export class TravelAiService {
       });
     }
 
+    const currency = await this.orgCurrency(organizationId);
     const rows = await provider.searchHotels({
       location,
       checkInDate,
@@ -1203,6 +1214,7 @@ export class TravelAiService {
       rooms: Math.max(1, int(args.rooms, saved.rooms ?? 1)),
       hotelCode: hotelId,
       maxRoomsPerHotel: 50,
+      currency,
     });
 
     const match =
@@ -1252,6 +1264,7 @@ export class TravelAiService {
     }
     const fromKind = str(args.fromKind) as "IATA" | "ATLAS" | "GPS" | "";
     const toKind = str(args.toKind) as "IATA" | "ATLAS" | "GPS" | "";
+    const currency = await this.orgCurrency(organizationId);
     const rows = await provider.searchTransfers({
       city,
       from,
@@ -1263,6 +1276,7 @@ export class TravelAiService {
       inboundDate: str(args.inboundDate) || undefined,
       adults: Math.max(1, int(args.adults, 1)),
       children: Math.max(0, int(args.children, 0)),
+      currency,
     });
     return serializeSearchResult({
       liveMode: provider.liveMode,

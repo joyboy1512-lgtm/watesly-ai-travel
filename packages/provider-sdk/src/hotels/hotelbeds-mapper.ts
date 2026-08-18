@@ -10,6 +10,11 @@ import { amountToMinor } from "../types";
 import { enrichDetailsFromContent } from "./hotelbeds-content-mapper";
 import type { HbContentHotel } from "./hotelbeds-content-types";
 import type { GeoCenter } from "./hotelbeds-geo";
+import {
+  canConvertHotelbedsCurrency,
+  convertHotelbedsAmount,
+  hotelbedsDisplayCurrency,
+} from "./hotelbeds-currency";
 import type {
   HbCancellationPolicy,
   HbHotel,
@@ -40,14 +45,22 @@ function hasFreeCancellation(policies?: HbCancellationPolicy[]): boolean {
   return policies.some((p) => Number(p.amount || 0) === 0);
 }
 
-function mapTaxes(taxes?: HbTaxes, currency = "EUR") {
+function mapTaxes(
+  taxes?: HbTaxes,
+  providerCurrency = "EUR",
+  displayCurrency = "KWD",
+) {
   if (!taxes?.taxes?.length) return undefined;
   return {
     allIncluded: taxes.allIncluded,
     items: taxes.taxes.map((t) => ({
       type: t.type,
-      amount: Number(t.amount ?? t.clientAmount ?? 0),
-      currency: String(t.currency ?? t.clientCurrency ?? currency),
+      amount: convertHotelbedsAmount(
+        Number(t.amount ?? t.clientAmount ?? 0),
+        String(t.currency ?? t.clientCurrency ?? providerCurrency),
+        displayCurrency,
+      ),
+      currency: displayCurrency,
       included: Boolean(t.included),
     })),
   };
@@ -61,15 +74,16 @@ function addDaysIso(iso: string, offset: number): string | undefined {
   return d.toISOString().slice(0, 10);
 }
 
-function mapDailyRates(rate: HbRate, checkIn?: string) {
+function mapDailyRates(rate: HbRate, checkIn?: string, convert?: (value: number) => number) {
   if (!rate.dailyRates?.length) return undefined;
   return rate.dailyRates.map((d) => {
     const offset = Number(d.offset ?? 0);
     const net = Number(d.dailyNet ?? 0);
+    const value = Number.isFinite(net) ? net : undefined;
     return {
       offset: Number.isFinite(offset) ? offset : 0,
       date: addDaysIso(checkIn || "", Number.isFinite(offset) ? offset : 0),
-      net: Number.isFinite(net) ? net : undefined,
+      net: value == null ? undefined : convert ? convert(value) : value,
     };
   });
 }
@@ -99,12 +113,15 @@ function mapRate(
   rate: HbRate,
   room: HbRoom,
   hotel: HbHotel,
-  currency: string,
+  providerCurrency: string,
+  displayCurrency: string,
   checkIn?: string,
 ): HotelRateOption | null {
   if (!rate.rateKey) return null;
-  const net = rateMajor(rate, hotel);
-  if (net <= 0) return null;
+  const netRaw = rateMajor(rate, hotel);
+  if (netRaw <= 0) return null;
+  const convert = (value: number, from = providerCurrency) =>
+    convertHotelbedsAmount(value, from, displayCurrency);
   const boardCode = String(rate.boardCode || "RO");
   const boardName = boardLabelAr(boardCode, rate.boardName);
   const selling = rate.sellingRate ? Number(rate.sellingRate) : undefined;
@@ -116,32 +133,33 @@ function mapRate(
     roomName: String(room.name || room.code || "غرفة"),
     boardCode,
     boardName,
-    net,
-    sellingRate: Number.isFinite(selling) ? selling : undefined,
-    currency,
+    net: convert(netRaw),
+    sellingRate: Number.isFinite(selling) ? convert(selling as number) : undefined,
+    currency: displayCurrency,
     paymentType: rate.paymentType,
     packaging: rate.packaging,
     allotment: rate.allotment,
     freeCancellation: hasFreeCancellation(rate.cancellationPolicies),
     cancellationPolicies: (rate.cancellationPolicies || []).map((p) => ({
-      amount: Number(p.amount ?? p.hotelAmount ?? 0),
-      currency: String(p.hotelCurrency ?? currency),
+      amount: convert(Number(p.amount ?? p.hotelAmount ?? 0), String(p.hotelCurrency ?? providerCurrency)),
+      currency: displayCurrency,
       from: String(p.from || ""),
     })),
-    taxes: mapTaxes(rate.taxes, currency),
+    taxes: mapTaxes(rate.taxes, providerCurrency, displayCurrency),
     promotions: mapPromotions(rate),
     adults: rate.adults,
     children: rate.children,
     rooms: rate.rooms,
     rateCommentsId: rate.rateCommentsId,
     rateComments: commentsText(rate.rateComments),
-    dailyRates: mapDailyRates(rate, checkIn),
+    dailyRates: mapDailyRates(rate, checkIn, convert),
   };
 }
 
 export function extractHotelbedsRateOptions(
   hotel: HbHotel,
-  currency: string,
+  providerCurrency: string,
+  displayCurrency: string,
   checkIn?: string,
 ): { rooms: HotelRoomOption[]; rateOptions: HotelRateOption[] } {
   const rooms: HotelRoomOption[] = [];
@@ -150,7 +168,14 @@ export function extractHotelbedsRateOptions(
   for (const room of hotel.rooms || []) {
     const mappedRates: HotelRateOption[] = [];
     for (const rate of room.rates || []) {
-      const mapped = mapRate(rate, room, hotel, currency, checkIn);
+      const mapped = mapRate(
+        rate,
+        room,
+        hotel,
+        providerCurrency,
+        displayCurrency,
+        checkIn,
+      );
       if (mapped) {
         mappedRates.push(mapped);
         rateOptions.push(mapped);
@@ -195,12 +220,17 @@ export function mapHotelbedsToOffer(input: {
 }): HotelOffer | null {
   const { hotel, params, geoLabel, liveMode, expiresAt, content, searchCenter, facilityCatalog } =
     input;
-  const hotelCurrency = String(hotel.currency || params.currency || "EUR").toUpperCase();
+  const providerCurrency = String(hotel.currency || "EUR").toUpperCase();
+  const requested = hotelbedsDisplayCurrency(params.currency);
+  const displayCurrency = canConvertHotelbedsCurrency(providerCurrency, requested)
+    ? requested
+    : providerCurrency;
   const checkIn = hotel.checkIn || params.checkInDate;
   const checkOut = hotel.checkOut || params.checkOutDate;
   const { rooms, rateOptions } = extractHotelbedsRateOptions(
     hotel,
-    hotelCurrency,
+    providerCurrency,
+    displayCurrency,
     checkIn,
   );
   if (!rateOptions.length) return null;
@@ -245,7 +275,8 @@ export function mapHotelbedsToOffer(input: {
     address: [hotel.zoneName, hotel.destinationName].filter(Boolean).join(" · "),
     latitude: hotel.latitude,
     longitude: hotel.longitude,
-    currency: hotelCurrency,
+    currency: displayCurrency,
+    providerCurrency,
     minRate,
     maxRate,
     nights,
@@ -293,8 +324,8 @@ export function mapHotelbedsToOffer(input: {
     providerKey: "hotelbeds",
     providerOfferRef: `hb-${hotelCode}`,
     description,
-    costAmountMinor: amountToMinor(cheapest.net, hotelCurrency),
-    currency: hotelCurrency,
+    costAmountMinor: amountToMinor(cheapest.net, displayCurrency),
+    currency: displayCurrency,
     revalidationToken: JSON.stringify({
       hotelCode,
       rateKey: cheapest.rateKey,

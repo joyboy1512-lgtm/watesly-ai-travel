@@ -27,6 +27,10 @@ import {
 } from "./hotelbeds-rate-comments";
 import type { HbAvailabilityResponse, HbHotel, HbRate } from "./hotelbeds-types";
 import { hotelsFromHotelbedsPayload } from "./hotelbeds-types";
+import {
+  hotelbedsDisplayCurrency,
+  hotelbedsSourceMarket,
+} from "./hotelbeds-currency";
 
 function normalizeChildrenAges(children: number, raw?: string): number[] {
   const count = Math.max(0, children);
@@ -140,7 +144,8 @@ export class HotelbedsHotelProvider implements HotelProviderAdapter {
     const rooms = Math.max(1, params.rooms || 1);
     const children = Math.max(0, params.children || 0);
     const ages = normalizeChildrenAges(children, params.childrenAges);
-    const currency = (params.currency || "EUR").toUpperCase();
+    const currency = hotelbedsDisplayCurrency(params.currency);
+    const sourceMarket = hotelbedsSourceMarket(currency);
     const shiftDays = Math.max(0, Math.min(5, Number(params.shiftDays || 0) || 0));
     const filter: Record<string, unknown> = {
       maxHotels: singleHotel ? 1 : (params.maxHotels ?? 30),
@@ -175,6 +180,7 @@ export class HotelbedsHotelProvider implements HotelProviderAdapter {
       ],
       filter,
       language: "ENG",
+      sourceMarket,
       dailyRate: true,
     };
 

@@ -12,6 +12,10 @@ import type {
 } from "../types";
 import { amountToMinor } from "../types";
 import {
+  convertHotelbedsAmount,
+  hotelbedsDisplayCurrency,
+} from "../hotels/hotelbeds-currency";
+import {
   hotelbedsHeaders,
   resolveHotelbedsTransferCredentials,
   type HotelbedsCredentials,
@@ -158,13 +162,16 @@ function mapService(
     outboundAt: string;
     inboundAt?: string;
     city?: string;
+    currency?: string;
   },
 ): TransferOffer | null {
   const rateKey = String(service.rateKey || "").trim();
-  const amount = Number(service.price?.totalAmount ?? service.price?.netAmount ?? 0);
-  if (!rateKey || !Number.isFinite(amount) || amount <= 0) return null;
-
-  const currency = String(service.price?.currencyId || "EUR").toUpperCase();
+  const providerCurrency = String(service.price?.currencyId || "EUR").toUpperCase();
+  const displayCurrency = hotelbedsDisplayCurrency(input.currency);
+  const amountRaw = Number(service.price?.totalAmount ?? service.price?.netAmount ?? 0);
+  if (!rateKey || !Number.isFinite(amountRaw) || amountRaw <= 0) return null;
+  const amount = convertHotelbedsAmount(amountRaw, providerCurrency, displayCurrency);
+  const currency = displayCurrency;
   const transferType = String(service.transferType || "PRIVATE").toUpperCase();
   const vehicleName =
     textOf(service.vehicle?.name) || String(service.vehicle?.code || "مركبة");
@@ -174,7 +181,11 @@ function mapService(
   const toLabel =
     textOf(service.pickupInformation?.to?.description) || input.to.label;
   const cancel = service.cancellationPolicies?.[0];
-  const cancelAmount = Number(cancel?.amount ?? 0);
+  const cancelAmount = convertHotelbedsAmount(
+    Number(cancel?.amount ?? 0),
+    providerCurrency,
+    displayCurrency,
+  );
   const imageUrl = service.content?.images?.find((img) => img.url)?.url;
   const detail = service.content?.transferDetailInfo?.[0]?.description;
   const sourceLabel = input.liveMode ? "Hotelbeds Transfers" : "تجريبي";
@@ -259,6 +270,7 @@ export class HotelbedsTransferProvider implements TransferProviderAdapter {
         checkOutDate: dates.checkOut,
         adults: 1,
         maxHotels: 8,
+        currency: hotelbedsDisplayCurrency(),
       });
       const best =
         offers.find((row) =>
@@ -340,6 +352,7 @@ export class HotelbedsTransferProvider implements TransferProviderAdapter {
           outboundAt,
           inboundAt,
           city,
+          currency: params.currency,
         }),
       )
       .filter((row): row is TransferOffer => Boolean(row));

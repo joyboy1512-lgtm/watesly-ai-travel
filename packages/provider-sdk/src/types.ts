@@ -54,6 +54,7 @@ export interface TransferSearchParams {
   adults: number;
   children?: number;
   infants?: number;
+  currency?: string;
 }
 
 export interface ProviderBookingResult {

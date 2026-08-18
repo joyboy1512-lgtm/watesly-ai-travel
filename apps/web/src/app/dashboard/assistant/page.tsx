@@ -602,12 +602,14 @@ function AssistantPageInner() {
               <section>
                 <h4>استهلاك الذكاء الاصطناعي</h4>
                 <div className="ta-filters">
-                  {[
-                    ["today", "اليوم"],
-                    ["7d", "7 أيام"],
-                    ["30d", "30 يوماً"],
-                    ["custom", "مخصص"],
-                  ].map(([key, label]) => (
+                  {(
+                    [
+                      ["today", "اليوم"],
+                      ["7d", "7 أيام"],
+                      ["30d", "30 يوماً"],
+                      ["custom", "مخصص"],
+                    ] as const
+                  ).map(([key, label]) => (
                     <button
                       key={key}
                       type="button"

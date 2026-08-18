@@ -4,7 +4,6 @@ import { FormEvent, useEffect, useRef, useState } from "react";
 import { APP_NAME } from "@watesly-travel/shared";
 import { apiFetch } from "@/lib/api";
 import "../assistant.css";
-import "../prc-suite.css";
 
 const SESSION_KEY = "watesly_web_chat_session";
 

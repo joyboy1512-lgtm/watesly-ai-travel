@@ -4,7 +4,6 @@ import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { apiFetch } from "@/lib/api";
 import "../../assistant.css";
-import "../../prc-suite.css";
 
 type ToolRow = {
   name: string;

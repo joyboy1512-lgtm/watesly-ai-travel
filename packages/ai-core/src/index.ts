@@ -245,7 +245,9 @@ function mockSearchCalls(
   const allowed = new Set(
     tools.filter((tool) => tool.type === "function").map((tool) => tool.name),
   );
-  const services = extraction.fields.serviceTypes || ["flight"];
+  const services: string[] = extraction.fields.serviceTypes?.length
+    ? [...extraction.fields.serviceTypes]
+    : ["flight"];
   const calls: AiFunctionCall[] = [];
   if (
     allowed.has("search_flights") &&

@@ -24,7 +24,23 @@ import {
   getHotelProviderForOrg,
   getTransferProviderForOrg,
 } from "../common/provider-runtime";
-import { serializeSearchResult } from "./tool-result-serializers";
+import { serializeHotelDetailsForAi, serializeSearchResult } from "./tool-result-serializers";
+
+type HotelSearchContext = {
+  location?: string;
+  checkInDate?: string;
+  checkOutDate?: string;
+  adults?: number;
+  children?: number;
+  rooms?: number;
+  hotelIds?: string[];
+};
+
+function readHotelSearchContext(metadata: unknown): HotelSearchContext {
+  if (!metadata || typeof metadata !== "object") return {};
+  const row = metadata as { lastHotelSearch?: HotelSearchContext };
+  return row.lastHotelSearch || {};
+}
 
 export type TravelAiTurnInput = {
   organizationId: string;
@@ -131,7 +147,12 @@ export class TravelAiService {
           handoff = true;
           handoffReason = str(parseArgs(call.arguments).reason) || handoffReason;
         }
-        const output = await this.executeTool(call.name, call.arguments, input).catch(
+        const output = await this.executeTool(
+          call.name,
+          call.arguments,
+          input,
+          thread,
+        ).catch(
           (err: unknown) =>
             JSON.stringify({
               error: err instanceof Error ? err.message : "فشل تنفيذ الأداة",
@@ -363,6 +384,7 @@ export class TravelAiService {
     name: string,
     rawArgs: string,
     ctx: TravelAiTurnInput,
+    thread: { id: string; metadata: unknown },
   ): Promise<string> {
     const args = parseArgs(rawArgs);
     try {
@@ -383,7 +405,10 @@ export class TravelAiService {
         return this.toolSearchFlights(ctx.organizationId, args);
       }
       if (name === "search_hotels") {
-        return this.toolSearchHotels(ctx.organizationId, args);
+        return this.toolSearchHotels(ctx.organizationId, args, thread.id);
+      }
+      if (name === "get_hotel_details") {
+        return this.toolGetHotelDetails(ctx.organizationId, args, thread);
       }
       if (name === "search_transfers") {
         return this.toolSearchTransfers(ctx.organizationId, args);
@@ -502,6 +527,7 @@ export class TravelAiService {
   private async toolSearchHotels(
     organizationId: string,
     args: Record<string, unknown>,
+    threadId?: string,
   ): Promise<string> {
     const location = str(args.location);
     const checkInDate = str(args.checkInDate);
@@ -528,6 +554,32 @@ export class TravelAiService {
       children: Math.max(0, int(args.children, 0)),
       rooms: Math.max(1, int(args.rooms, 1)),
     });
+
+    if (threadId) {
+      const hotelIds = rows.map((row) => row.providerOfferRef).slice(0, 30);
+      const existing = await this.prisma.aiThread.findUnique({
+        where: { id: threadId },
+        select: { metadata: true },
+      });
+      const meta =
+        existing?.metadata && typeof existing.metadata === "object"
+          ? { ...(existing.metadata as Record<string, unknown>) }
+          : {};
+      meta.lastHotelSearch = {
+        location,
+        checkInDate,
+        checkOutDate,
+        adults: Math.max(1, int(args.adults, 1)),
+        children: Math.max(0, int(args.children, 0)),
+        rooms: Math.max(1, int(args.rooms, 1)),
+        hotelIds,
+      };
+      await this.prisma.aiThread.update({
+        where: { id: threadId },
+        data: { metadata: asJson(meta) },
+      });
+    }
+
     return serializeSearchResult({
       liveMode: provider.liveMode,
       provider: provider.displayName,
@@ -535,6 +587,74 @@ export class TravelAiService {
       kind: "hotel",
       ...toolSliceArgs(args),
     });
+  }
+
+  private async toolGetHotelDetails(
+    organizationId: string,
+    args: Record<string, unknown>,
+    thread: { id: string; metadata: unknown },
+  ): Promise<string> {
+    const hotelId = str(args.hotelId);
+    if (!hotelId) {
+      return JSON.stringify({ error: "معرف الفندق hotelId مطلوب (مثل hb-12345)" });
+    }
+
+    const saved = readHotelSearchContext(thread.metadata);
+    const location = str(args.location) || saved.location || "";
+    const checkInDate = str(args.checkInDate) || saved.checkInDate || "";
+    const checkOutDate = addDayIfNeeded(
+      checkInDate,
+      str(args.checkOutDate) || saved.checkOutDate || "",
+    );
+
+    if (!location || !checkInDate || !checkOutDate) {
+      return JSON.stringify({
+        error:
+          "لجلب تفاصيل الفندق نحتاج المدينة وتاريخي الدخول والخروج — أعد search_hotels أو مرّرها مع get_hotel_details",
+      });
+    }
+
+    const provider = await getHotelProviderForOrg(
+      this.prisma,
+      organizationId,
+      process.env.HOTEL_PROVIDER || "hotelbeds",
+    );
+    if (!provider.liveMode) {
+      return JSON.stringify({
+        disabled: true,
+        reason: "تفاصيل الفنادق غير مفعّلة — ينقص HOTELBEDS_API_KEY",
+      });
+    }
+
+    const rows = await provider.searchHotels({
+      location,
+      checkInDate,
+      checkOutDate,
+      adults: Math.max(1, int(args.adults, saved.adults ?? 1)),
+      children: Math.max(0, int(args.children, saved.children ?? 0)),
+      rooms: Math.max(1, int(args.rooms, saved.rooms ?? 1)),
+      hotelCode: hotelId,
+      maxRoomsPerHotel: 50,
+    });
+
+    const match =
+      rows.find((row) => row.providerOfferRef === hotelId) ||
+      rows.find((row) =>
+        row.providerOfferRef.endsWith(hotelId.replace(/^hb-/i, "")),
+      ) ||
+      rows[0];
+
+    if (!match) {
+      return JSON.stringify({
+        error: "لم يُعثر على الفندق أو لا يتوفر للتواريخ المحددة",
+        hotelId,
+        location,
+        checkInDate,
+        checkOutDate,
+      });
+    }
+
+    return serializeHotelDetailsForAi(match);
   }
 
   private async toolSearchTransfers(

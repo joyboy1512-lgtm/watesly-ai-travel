@@ -123,8 +123,15 @@ export class HotelbedsHotelProvider implements HotelProviderAdapter {
   }
 
   async searchHotels(params: HotelSearchParams): Promise<HotelOffer[]> {
+    const hotelCodeRaw = String(params.hotelCode || "").trim();
+    const hotelCodeNum = hotelCodeRaw
+      ? Number(hotelCodeRaw.replace(/^hb-/i, ""))
+      : NaN;
+    const singleHotel =
+      Number.isFinite(hotelCodeNum) && hotelCodeNum > 0 ? hotelCodeNum : undefined;
+
     const geo = await geocodeLocation(params.location);
-    if (!geo) {
+    if (!geo && !singleHotel) {
       throw new Error(
         `تعذر تحديد موقع «${params.location}» لبحث Hotelbeds. استخدم مدينة معروفة مثل دبي أو الكويت.`,
       );
@@ -136,8 +143,8 @@ export class HotelbedsHotelProvider implements HotelProviderAdapter {
     const currency = (params.currency || "EUR").toUpperCase();
     const shiftDays = Math.max(0, Math.min(5, Number(params.shiftDays || 0) || 0));
     const filter: Record<string, unknown> = {
-      maxHotels: params.maxHotels ?? 30,
-      maxRooms: params.maxRoomsPerHotel ?? 25,
+      maxHotels: singleHotel ? 1 : (params.maxHotels ?? 30),
+      maxRooms: params.maxRoomsPerHotel ?? (singleHotel ? 50 : 25),
     };
     if (params.minStars) {
       filter.minCategory = String(params.minStars);
@@ -166,23 +173,28 @@ export class HotelbedsHotelProvider implements HotelProviderAdapter {
             : {}),
         },
       ],
-      geolocation: {
-        latitude: geo.latitude,
-        longitude: geo.longitude,
-        radius: params.radiusKm || 25,
-        unit: "km",
-      },
       filter,
       language: "ENG",
       dailyRate: true,
     };
+
+    if (singleHotel) {
+      payload.hotels = { hotel: [singleHotel] };
+    } else if (geo) {
+      payload.geolocation = {
+        latitude: geo.latitude,
+        longitude: geo.longitude,
+        radius: params.radiusKm || 25,
+        unit: "km",
+      };
+    }
 
     if (params.boardCode) {
       payload.boards = { included: true, board: [params.boardCode] };
     }
 
     const destinationCode = params.location.trim().toUpperCase();
-    if (/^[A-Z]{3}$/.test(destinationCode)) {
+    if (!singleHotel && /^[A-Z]{3}$/.test(destinationCode)) {
       payload.destination = { code: destinationCode };
       delete payload.geolocation;
     }
@@ -209,16 +221,18 @@ export class HotelbedsHotelProvider implements HotelProviderAdapter {
       const offer = mapHotelbedsToOffer({
         hotel,
         params: { ...params, currency },
-        geoLabel: geo.label || params.location,
+        geoLabel: geo?.label || params.location,
         liveMode: this.liveMode,
         expiresAt,
         content,
         facilityCatalog,
-        searchCenter: {
-          latitude: geo.latitude,
-          longitude: geo.longitude,
-          label: geo.label,
-        },
+        searchCenter: geo
+          ? {
+              latitude: geo.latitude,
+              longitude: geo.longitude,
+              label: geo.label,
+            }
+          : undefined,
       });
       if (offer) offers.push(offer);
     }

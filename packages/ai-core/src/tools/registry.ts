@@ -5,6 +5,7 @@ export type TravelToolName =
   | "file_search"
   | "search_flights"
   | "search_hotels"
+  | "get_hotel_details"
   | "search_transfers"
   | "search_flights_travelport"
   | "search_flights_travelfusion"
@@ -57,6 +58,31 @@ const FUNCTION_TOOLS: Extract<AiToolDefinition, { type: "function" }>[] = [
         offset: { type: "integer", minimum: 0 },
       },
       required: ["location", "checkInDate", "checkOutDate"],
+    },
+  },
+  {
+    type: "function",
+    name: "get_hotel_details",
+    description:
+      "Fetch full details for one selected hotel: description, all room types and rates, facilities/services, address, and distances to city center and landmarks. Use when the customer picks a hotel or asks about rooms, amenities, location, or distances. Requires hotelId from search_hotels (e.g. hb-12345) plus the same stay dates.",
+    parameters: {
+      type: "object",
+      properties: {
+        hotelId: {
+          type: "string",
+          description: "Provider ref from search results, e.g. hb-12345",
+        },
+        location: {
+          type: "string",
+          description: "City/destination for distance context (reuse from search)",
+        },
+        checkInDate: { type: "string" },
+        checkOutDate: { type: "string" },
+        adults: { type: "integer", minimum: 1 },
+        children: { type: "integer", minimum: 0 },
+        rooms: { type: "integer", minimum: 1 },
+      },
+      required: ["hotelId"],
     },
   },
   {
@@ -200,6 +226,13 @@ export function listToolAvailability(): ToolAvailability[] {
         : "يتطلب HOTELBEDS_API_KEY أو DUFFEL_ACCESS_TOKEN",
     },
     {
+      name: "get_hotel_details",
+      enabled: hotelsLive,
+      reason: hotelsLive
+        ? undefined
+        : "يتطلب HOTELBEDS_API_KEY أو DUFFEL_ACCESS_TOKEN",
+    },
+    {
       name: "search_transfers",
       enabled: transfersLive,
       reason: transfersLive ? undefined : "يتطلب HOTELBEDS_TRANSFER_API_KEY",
@@ -250,6 +283,7 @@ export const TRAVEL_SYSTEM_INSTRUCTIONS = `أنت Travel AI لشركة سياح�
 - لا تخترع أسعاراً أو توفّراً أو أرقام رحلات أو أسماء فنادق غير قادمة من أداة.
 - استخدم الأدوات عندما يحتاج العميل أسعاراً أو توفّراً أو معلومات حديثة (طقس، تأشيرة، أخبار، أحداث).
 - search_flights / search_hotels / search_transfers فقط عند توفر التواريخ والمدن اللازمة. إن نقص حقل، اسأل عنه.
+- عندما يختار العميل فندقاً أو يسأل عن أنواع الغرف أو الخدمات أو موقع الفندق أو المسافة عن المناطق المهمة، استخدم get_hotel_details بمعرف الفندق (مثل hb-12345) من نتائج search_hotels مع نفس تواريخ الإقامة.
 - نتائج الأدوات تحتوي تعرفات/غرف/سياسات إلغاء — استخدمها كما هي ولا تختلق تفاصيلاً إضافية. إن ظهر hasMore=true يمكنك إعادة الاستدعاء مع offset.
 - إن كانت الأداة معطّلة، اعتذر واطلب بيانات الاعتماد أو حوّل لموظف. لا تختلق بديلاً على أنه عرض حقيقي.
 - handoff_to_human عندما يطلب العميل موظفاً، أو يغضب، أو تعجز الأدوات.

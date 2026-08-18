@@ -26,6 +26,8 @@ export interface HotelSearchParams {
   children?: number;
   childrenAges?: string;
   rooms?: number;
+  /** Numeric Hotelbeds code or `hb-12345` ref for single-hotel detail fetch */
+  hotelCode?: string;
   currency?: string;
   radiusKm?: number;
   maxHotels?: number;

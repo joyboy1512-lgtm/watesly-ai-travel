@@ -1,9 +1,11 @@
 import type {
   FlightOffer,
   HotelOffer,
+  TransferOffer,
+} from "@watesly-travel/shared";
+import type {
   HotelPropertyDetails,
   HotelRateOption,
-  TransferOffer,
 } from "@watesly-travel/shared";
 import type { TransferServiceDetails } from "@watesly-travel/shared";
 
@@ -17,6 +19,8 @@ export function toolResultLimits() {
     maxItems: intEnv("AI_TOOL_MAX_ITEMS", 10),
     maxRatesPerHotel: intEnv("AI_TOOL_MAX_RATES_PER_HOTEL", 12),
     maxJsonChars: intEnv("AI_TOOL_MAX_JSON_CHARS", 32000),
+    detailMaxRates: intEnv("AI_TOOL_HOTEL_DETAIL_MAX_RATES", 40),
+    detailMaxJsonChars: intEnv("AI_TOOL_HOTEL_DETAIL_MAX_JSON_CHARS", 64000),
   };
 }
 
@@ -79,8 +83,101 @@ function serializeHotel(row: HotelOffer, maxRates: number) {
       name: room.name,
       rateCount: room.rates?.length || 0,
     })),
+    detailTool: "get_hotel_details",
     expiresAt: row.expiresAt,
   };
+}
+
+function serializeRateDetail(rate: HotelRateOption) {
+  return {
+    roomName: rate.roomName,
+    roomCode: rate.roomCode,
+    boardCode: rate.boardCode,
+    boardName: rate.boardName,
+    net: rate.net,
+    sellingRate: rate.sellingRate,
+    currency: rate.currency,
+    rateType: rate.rateType,
+    paymentType: rate.paymentType,
+    freeCancellation: rate.freeCancellation,
+    allotment: rate.allotment,
+    promotions: (rate.promotions || [])
+      .map((p) => p.name || p.remark)
+      .filter(Boolean),
+    cancellationPolicies: slicePolicies(rate),
+    rateComments: rate.rateComments?.slice(0, 800),
+  };
+}
+
+export function serializeHotelDetailsForAi(row: HotelOffer): string {
+  const limits = toolResultLimits();
+  const raw = row.raw as HotelPropertyDetails | undefined;
+  const rates = (raw?.rateOptions || [])
+    .slice(0, limits.detailMaxRates)
+    .map(serializeRateDetail);
+
+  const rooms = (raw?.rooms || []).map((room) => ({
+    code: room.code,
+    name: room.name,
+    facilities: room.facilities?.slice(0, 16),
+    rateCount: room.rates?.length || 0,
+    rates: (room.rates || []).slice(0, limits.detailMaxRates).map((rate) => ({
+      rateKey: rate.rateKey,
+      boardCode: rate.boardCode,
+      boardName: rate.boardName,
+      net: rate.net,
+      sellingRate: rate.sellingRate,
+      currency: rate.currency,
+      rateType: rate.rateType,
+      paymentType: rate.paymentType,
+      freeCancellation: rate.freeCancellation,
+      rateComments: rate.rateComments?.slice(0, 400),
+    })),
+  }));
+
+  const payload = {
+    liveMode: true,
+    kind: "hotel_detail",
+    id: row.providerOfferRef,
+    provider: row.providerKey,
+    name: raw?.name,
+    nameEn: raw?.nameEn,
+    stars: raw?.stars,
+    category: raw?.categoryName,
+    destination: raw?.destinationName,
+    zone: raw?.zoneName,
+    neighborhood: raw?.neighborhood,
+    location: raw?.location,
+    address: raw?.address,
+    latitude: raw?.latitude,
+    longitude: raw?.longitude,
+    description: raw?.description || row.description,
+    checkInDate: raw?.checkInDate,
+    checkOutDate: raw?.checkOutDate,
+    nights: raw?.nights,
+    currency: row.currency,
+    minRate: raw?.minRate,
+    maxRate: raw?.maxRate,
+    cheapestAmountMinor: row.costAmountMinor,
+    boards: raw?.boards,
+    boardCodes: raw?.boardCodes,
+    paymentTypes: raw?.paymentTypes,
+    freeCancellation: raw?.freeCancellation,
+    facilities: raw?.facilityLabels || raw?.facilities || [],
+    facilityCount: (raw?.facilityLabels || raw?.facilities || []).length,
+    distanceToCenterKm: raw?.distanceToCenterKm,
+    distanceToCenterLabel: raw?.distanceToCenterLabel,
+    poiDistances: raw?.poiDistances || [],
+    mapUrl: raw?.mapUrl,
+    rateCountTotal: raw?.rateOptions?.length || rates.length,
+    ratesShown: rates.length,
+    rates,
+    rooms,
+    promotions: raw?.promotions,
+    expiresAt: row.expiresAt,
+  };
+
+  return boundedJson(payload, limits.detailMaxJsonChars);
 }
 
 function serializeFlight(row: FlightOffer) {

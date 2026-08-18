@@ -346,7 +346,16 @@ function summarizeMockToolOutputs(
         ok?: boolean;
         count?: number;
         provider?: string;
-        items?: Array<{ description?: string; currency?: string }>;
+        items?: Array<{
+          description?: string;
+          currency?: string;
+          name?: string;
+          priceFromLabel?: string;
+          stars?: number;
+        }>;
+        presentAs?: string;
+        hasMore?: boolean;
+        nextOffset?: number;
       };
       if (parsed.ok && parsed.reason) {
         lines.push(`تم تسجيل التحويل إلى موظف: ${parsed.reason}`);
@@ -357,6 +366,23 @@ function summarizeMockToolOutputs(
         continue;
       }
       if (parsed.items?.length) {
+        if (parsed.presentAs === "short_list") {
+          lines.push("هذه بعض الفنادق المتاحة:");
+          parsed.items.slice(0, 5).forEach((item, index) => {
+            const stars = item.stars ? ` ★${item.stars}` : "";
+            lines.push(
+              `${index + 1}. ${item.name || item.description || "فندق"}${stars}`,
+            );
+            if (item.priceFromLabel) {
+              lines.push(`   السعر ${item.priceFromLabel}`);
+            }
+          });
+          if (parsed.hasMore) {
+            lines.push("إذا أردت خيارات أكثر اكتب: المزيد");
+          }
+          lines.push("اختر اسم الفندق لعرض الغرف والخدمات والموقع.");
+          continue;
+        }
         lines.push(
           `${parsed.provider || "نتائج"} (${parsed.count ?? parsed.items.length}):`,
         );

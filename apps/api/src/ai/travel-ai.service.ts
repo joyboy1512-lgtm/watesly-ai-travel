@@ -24,7 +24,16 @@ import {
   getHotelProviderForOrg,
   getTransferProviderForOrg,
 } from "../common/provider-runtime";
-import { serializeHotelDetailsForAi, serializeSearchResult } from "./tool-result-serializers";
+import { hotelCatalogEntry, serializeHotelDetailsForAi, serializeSearchResult } from "./tool-result-serializers";
+import type { HotelOffer } from "@watesly-travel/shared";
+
+type HotelCatalogEntry = {
+  id: string;
+  name?: string;
+  stars?: number;
+  priceFrom?: number;
+  currency?: string;
+};
 
 type HotelSearchContext = {
   location?: string;
@@ -34,12 +43,41 @@ type HotelSearchContext = {
   children?: number;
   rooms?: number;
   hotelIds?: string[];
+  hotels?: HotelCatalogEntry[];
+  lastShownOffset?: number;
 };
 
 function readHotelSearchContext(metadata: unknown): HotelSearchContext {
   if (!metadata || typeof metadata !== "object") return {};
   const row = metadata as { lastHotelSearch?: HotelSearchContext };
   return row.lastHotelSearch || {};
+}
+
+function normalizeHotelName(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9\u0600-\u06ff]+/gi, " ")
+    .trim();
+}
+
+function looksLikeHotelId(value: string): boolean {
+  return /^hb-\d+$/i.test(value) || /^\d{3,}$/.test(value);
+}
+
+function matchHotelFromCatalog(
+  catalog: HotelCatalogEntry[],
+  query: string,
+): { id?: string; matches: HotelCatalogEntry[] } {
+  const q = normalizeHotelName(query);
+  if (!q) return { matches: [] };
+  const exact = catalog.filter((h) => normalizeHotelName(h.name || "") === q);
+  if (exact.length === 1) return { id: exact[0]!.id, matches: exact };
+  const partial = catalog.filter((h) => {
+    const n = normalizeHotelName(h.name || "");
+    return n.includes(q) || q.includes(n);
+  });
+  if (partial.length === 1) return { id: partial[0]!.id, matches: partial };
+  return { matches: partial.length ? partial : exact };
 }
 
 export type TravelAiTurnInput = {
@@ -96,8 +134,8 @@ function int(v: unknown, fallback: number): number {
   return Number.isFinite(n) ? n : fallback;
 }
 
-function toolSliceArgs(args: Record<string, unknown>) {
-  const limit = Math.min(20, Math.max(1, int(args.limit, 10)));
+function toolSliceArgs(args: Record<string, unknown>, defaultLimit = 5) {
+  const limit = Math.min(10, Math.max(1, int(args.limit, defaultLimit)));
   const offset = Math.max(0, int(args.offset, 0));
   return { limit, offset };
 }
@@ -555,8 +593,9 @@ export class TravelAiService {
       rooms: Math.max(1, int(args.rooms, 1)),
     });
 
+    const sliceArgs = toolSliceArgs(args);
     if (threadId) {
-      const hotelIds = rows.map((row) => row.providerOfferRef).slice(0, 30);
+      const catalog = rows.map((row) => hotelCatalogEntry(row as HotelOffer));
       const existing = await this.prisma.aiThread.findUnique({
         where: { id: threadId },
         select: { metadata: true },
@@ -572,7 +611,9 @@ export class TravelAiService {
         adults: Math.max(1, int(args.adults, 1)),
         children: Math.max(0, int(args.children, 0)),
         rooms: Math.max(1, int(args.rooms, 1)),
-        hotelIds,
+        hotelIds: catalog.map((h) => h.id),
+        hotels: catalog,
+        lastShownOffset: sliceArgs.offset,
       };
       await this.prisma.aiThread.update({
         where: { id: threadId },
@@ -585,7 +626,7 @@ export class TravelAiService {
       provider: provider.displayName,
       rows,
       kind: "hotel",
-      ...toolSliceArgs(args),
+      ...sliceArgs,
     });
   }
 
@@ -594,12 +635,53 @@ export class TravelAiService {
     args: Record<string, unknown>,
     thread: { id: string; metadata: unknown },
   ): Promise<string> {
-    const hotelId = str(args.hotelId);
-    if (!hotelId) {
-      return JSON.stringify({ error: "معرف الفندق hotelId مطلوب (مثل hb-12345)" });
+    const fresh = await this.prisma.aiThread.findUnique({
+      where: { id: thread.id },
+      select: { metadata: true },
+    });
+    const saved = readHotelSearchContext(fresh?.metadata ?? thread.metadata);
+    const hotelName = str(args.hotelName);
+    let hotelId = str(args.hotelId);
+    const pickText = hotelName || (!looksLikeHotelId(hotelId) ? hotelId : "");
+
+    if (pickText && /^\d{1,2}$/.test(pickText)) {
+      const n = Number(pickText);
+      const idx = (saved.lastShownOffset || 0) + n - 1;
+      const byNumber = saved.hotels?.[idx];
+      if (byNumber?.id) hotelId = byNumber.id;
+    }
+    if (hotelId && !looksLikeHotelId(hotelId) && !hotelName) {
+      const byIdAsName = matchHotelFromCatalog(saved.hotels || [], hotelId);
+      if (byIdAsName.id) hotelId = byIdAsName.id;
+    }
+    if (!hotelId && hotelName) {
+      const matched = matchHotelFromCatalog(saved.hotels || [], hotelName);
+      if (matched.id) {
+        hotelId = matched.id;
+      } else if (matched.matches.length > 1) {
+        return JSON.stringify({
+          error: "وجد أكثر من فندق بهذا الاسم — اطلب من العميل التحديد",
+          matches: matched.matches.map((h) => ({
+            id: h.id,
+            name: h.name,
+            stars: h.stars,
+            priceFrom: h.priceFrom,
+            currency: h.currency,
+          })),
+        });
+      }
     }
 
-    const saved = readHotelSearchContext(thread.metadata);
+    if (!hotelId) {
+      return JSON.stringify({
+        error: "حدد الفندق بـ hotelId (مثل hb-12345) أو hotelName من قائمة البحث",
+        availableHotels: (saved.hotels || []).slice(0, 10).map((h) => ({
+          id: h.id,
+          name: h.name,
+        })),
+      });
+    }
+
     const location = str(args.location) || saved.location || "";
     const checkInDate = str(args.checkInDate) || saved.checkInDate || "";
     const checkOutDate = addDayIfNeeded(
@@ -648,6 +730,7 @@ export class TravelAiService {
       return JSON.stringify({
         error: "لم يُعثر على الفندق أو لا يتوفر للتواريخ المحددة",
         hotelId,
+        hotelName: hotelName || undefined,
         location,
         checkInDate,
         checkOutDate,

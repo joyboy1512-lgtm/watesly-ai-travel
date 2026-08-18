@@ -44,7 +44,7 @@ const FUNCTION_TOOLS: Extract<AiToolDefinition, { type: "function" }>[] = [
     type: "function",
     name: "search_hotels",
     description:
-      "Search hotel availability for a city or hotel name. Never invent prices.",
+      "Search hotel availability. Returns a SHORT list only: hotel name, stars, and starting price (default 5). Never invent prices. Do not dump rooms/facilities here. Use offset when the customer asks for more hotels. After they pick a hotel, call get_hotel_details.",
     parameters: {
       type: "object",
       properties: {
@@ -54,8 +54,17 @@ const FUNCTION_TOOLS: Extract<AiToolDefinition, { type: "function" }>[] = [
         adults: { type: "integer", minimum: 1 },
         children: { type: "integer", minimum: 0 },
         rooms: { type: "integer", minimum: 1 },
-        limit: { type: "integer", minimum: 1, maximum: 20 },
-        offset: { type: "integer", minimum: 0 },
+        limit: {
+          type: "integer",
+          minimum: 1,
+          maximum: 10,
+          description: "How many hotels to show. Default 5.",
+        },
+        offset: {
+          type: "integer",
+          minimum: 0,
+          description: "Skip this many hotels when the customer asks for more.",
+        },
       },
       required: ["location", "checkInDate", "checkOutDate"],
     },
@@ -64,13 +73,17 @@ const FUNCTION_TOOLS: Extract<AiToolDefinition, { type: "function" }>[] = [
     type: "function",
     name: "get_hotel_details",
     description:
-      "Fetch full details for one selected hotel: description, all room types and rates, facilities/services, address, and distances to city center and landmarks. Use when the customer picks a hotel or asks about rooms, amenities, location, or distances. Requires hotelId from search_hotels (e.g. hb-12345) plus the same stay dates.",
+      "Fetch full details for ONE hotel the customer selected (by hotelId or hotelName): description, rooms and rates, facilities, address, and distances. Call this only after they pick a hotel. Never invent details.",
     parameters: {
       type: "object",
       properties: {
         hotelId: {
           type: "string",
           description: "Provider ref from search results, e.g. hb-12345",
+        },
+        hotelName: {
+          type: "string",
+          description: "Hotel name as the customer said it, if hotelId is unknown",
         },
         location: {
           type: "string",
@@ -82,7 +95,6 @@ const FUNCTION_TOOLS: Extract<AiToolDefinition, { type: "function" }>[] = [
         children: { type: "integer", minimum: 0 },
         rooms: { type: "integer", minimum: 1 },
       },
-      required: ["hotelId"],
     },
   },
   {
@@ -283,9 +295,39 @@ export const TRAVEL_SYSTEM_INSTRUCTIONS = `أنت Travel AI لشركة سياح�
 - لا تخترع أسعاراً أو توفّراً أو أرقام رحلات أو أسماء فنادق غير قادمة من أداة.
 - استخدم الأدوات عندما يحتاج العميل أسعاراً أو توفّراً أو معلومات حديثة (طقس، تأشيرة، أخبار، أحداث).
 - search_flights / search_hotels / search_transfers فقط عند توفر التواريخ والمدن اللازمة. إن نقص حقل، اسأل عنه.
-- عندما يختار العميل فندقاً أو يسأل عن أنواع الغرف أو الخدمات أو موقع الفندق أو المسافة عن المناطق المهمة، استخدم get_hotel_details بمعرف الفندق (مثل hb-12345) من نتائج search_hotels مع نفس تواريخ الإقامة.
-- نتائج الأدوات تحتوي تعرفات/غرف/سياسات إلغاء — استخدمها كما هي ولا تختلق تفاصيلاً إضافية. إن ظهر hasMore=true يمكنك إعادة الاستدعاء مع offset.
 - إن كانت الأداة معطّلة، اعتذر واطلب بيانات الاعتماد أو حوّل لموظف. لا تختلق بديلاً على أنه عرض حقيقي.
 - handoff_to_human عندما يطلب العميل موظفاً، أو يغضب، أو تعجز الأدوات.
 - معرفة النموذج العامة مسموحة للنصائح السياحية العامة (موسم، أحياء، نصائح حقيبة) دون أسعار.
-- كن موجزاً وواضحاً، وقدّم خيارات مرقّمة عند وجود نتائج أدوات.`;
+
+عرض الفنادق — خطوتان إلزاميتان:
+
+1) بعد search_hotels اعرض قائمة قصيرة فقط (افتراضياً 5 فنادق). لكل فندق سطران:
+   «N. اسم الفندق ★النجوم
+      السعر يبدأ من {priceFrom} {currency}»
+   ممنوع ذكر الغرف أو الخدمات أو الوصف أو المسافات في هذه الخطوة.
+   إن كان hasMore=true أضف في النهاية: «إذا أردت خيارات أكثر اكتب: المزيد»
+   ثم اطلب اختيار اسم الفندق.
+
+2) عندما يختار العميل فندقاً بالاسم أو الرقم، استدعِ get_hotel_details ثم اعرض بطاقة منسّقة بهذا الشكل بالضبط:
+
+🏨 *{name}*
+⭐ {stars} نجوم · {zone or location}
+📍 {address}
+
+{description — فقرة قصيرة}
+
+🗺 المسافات:
+• {poi.nameAr}: {poi.label}
+
+✨ الخدمات:
+{facilities مفصولة بفاصلة، أهم 12 خدمة}
+
+🛏 الغرف والأسعار:
+لكل نوع غرفة:
+• *{roomName}*
+  – {boardName}: {net} {currency}{إن وجد إلغاء مجاني أضف « · إلغاء مجاني»}
+
+اختم بسؤال: هل تريد حجز إحدى هذه الغرف؟
+
+- لعرض المزيد من الفنادق: أعد search_hotels بنفس التواريخ مع offset=nextOffset وlimit=5.
+- لا تختلق تفاصيل غرف أو خدمات. استخدم فقط ناتج الأدوات.`;

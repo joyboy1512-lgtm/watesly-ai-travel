@@ -16,12 +16,18 @@ function intEnv(name: string, fallback: number): number {
 
 export function toolResultLimits() {
   return {
-    maxItems: intEnv("AI_TOOL_MAX_ITEMS", 10),
+    maxItems: intEnv("AI_TOOL_MAX_ITEMS", 5),
     maxRatesPerHotel: intEnv("AI_TOOL_MAX_RATES_PER_HOTEL", 12),
     maxJsonChars: intEnv("AI_TOOL_MAX_JSON_CHARS", 32000),
     detailMaxRates: intEnv("AI_TOOL_HOTEL_DETAIL_MAX_RATES", 40),
     detailMaxJsonChars: intEnv("AI_TOOL_HOTEL_DETAIL_MAX_JSON_CHARS", 64000),
+    detailMaxFacilities: intEnv("AI_TOOL_HOTEL_DETAIL_MAX_FACILITIES", 20),
   };
+}
+
+function formatMoney(value?: number): string | undefined {
+  if (value == null || !Number.isFinite(value)) return undefined;
+  return Number.isInteger(value) ? String(value) : value.toFixed(2);
 }
 
 function slicePolicies(rate: HotelRateOption) {
@@ -32,59 +38,37 @@ function slicePolicies(rate: HotelRateOption) {
   }));
 }
 
-function serializeHotel(row: HotelOffer, maxRates: number) {
+/** Short list row: name + starting price only. Full rooms/services come from get_hotel_details. */
+function serializeHotelListItem(row: HotelOffer) {
   const raw = row.raw as HotelPropertyDetails | undefined;
-  const rates = (raw?.rateOptions || []).slice(0, maxRates).map((rate) => ({
-    roomName: rate.roomName,
-    roomCode: rate.roomCode,
-    boardCode: rate.boardCode,
-    boardName: rate.boardName,
-    net: rate.net,
-    sellingRate: rate.sellingRate,
-    currency: rate.currency,
-    rateType: rate.rateType,
-    paymentType: rate.paymentType,
-    freeCancellation: rate.freeCancellation,
-    allotment: rate.allotment,
-    promotions: (rate.promotions || [])
-      .slice(0, 2)
-      .map((p) => p.name || p.remark)
-      .filter(Boolean),
-    cancellationPolicies: slicePolicies(rate),
-    rateComments: rate.rateComments?.slice(0, 400),
-  }));
-
+  const currency = row.currency || raw?.currency || "";
+  const priceFrom =
+    raw?.minRate ??
+    (Number.isFinite(row.costAmountMinor)
+      ? row.costAmountMinor / 100
+      : undefined);
+  const priceLabel = formatMoney(priceFrom);
   return {
     id: row.providerOfferRef,
-    provider: row.providerKey,
-    name: raw?.name,
+    name: raw?.name || row.description,
     stars: raw?.stars,
-    category: raw?.categoryName,
-    location: raw?.location,
-    zone: raw?.zoneName,
-    address: raw?.address,
-    checkInDate: raw?.checkInDate,
-    checkOutDate: raw?.checkOutDate,
+    priceFrom,
+    currency,
     nights: raw?.nights,
-    currency: row.currency,
-    minRate: raw?.minRate,
-    maxRate: raw?.maxRate,
-    cheapestAmountMinor: row.costAmountMinor,
-    boards: raw?.boards,
-    paymentTypes: raw?.paymentTypes,
-    freeCancellation: raw?.freeCancellation,
-    facilities: (raw?.facilityLabels || raw?.facilities || []).slice(0, 12),
-    description: row.description,
-    rateCountTotal: raw?.rateOptions?.length || rates.length,
-    ratesShown: rates.length,
-    rates,
-    roomsSummary: (raw?.rooms || []).slice(0, 6).map((room) => ({
-      code: room.code,
-      name: room.name,
-      rateCount: room.rates?.length || 0,
-    })),
-    detailTool: "get_hotel_details",
-    expiresAt: row.expiresAt,
+    priceFromLabel: priceLabel
+      ? `يبدأ من ${priceLabel} ${currency}`.trim()
+      : undefined,
+  };
+}
+
+export function hotelCatalogEntry(row: HotelOffer) {
+  const item = serializeHotelListItem(row);
+  return {
+    id: item.id,
+    name: item.name,
+    stars: item.stars,
+    priceFrom: item.priceFrom,
+    currency: item.currency,
   };
 }
 
@@ -163,7 +147,10 @@ export function serializeHotelDetailsForAi(row: HotelOffer): string {
     boardCodes: raw?.boardCodes,
     paymentTypes: raw?.paymentTypes,
     freeCancellation: raw?.freeCancellation,
-    facilities: raw?.facilityLabels || raw?.facilities || [],
+    facilities: (raw?.facilityLabels || raw?.facilities || []).slice(
+      0,
+      limits.detailMaxFacilities,
+    ),
     facilityCount: (raw?.facilityLabels || raw?.facilities || []).length,
     distanceToCenterKm: raw?.distanceToCenterKm,
     distanceToCenterLabel: raw?.distanceToCenterLabel,
@@ -175,6 +162,9 @@ export function serializeHotelDetailsForAi(row: HotelOffer): string {
     rooms,
     promotions: raw?.promotions,
     expiresAt: row.expiresAt,
+    presentAs: "hotel_card",
+    formatHint:
+      "اعرض بطاقة منسّقة: الاسم، النجوم، العنوان، وصف قصير، المسافات، أهم الخدمات، ثم الغرف والأسعار. لا تسرد كل الحقول الخام.",
   };
 
   return boundedJson(payload, limits.detailMaxJsonChars);
@@ -266,19 +256,31 @@ export function serializeSearchResult(input: {
   const limits = toolResultLimits();
   const offset = Math.max(0, input.offset || 0);
   const limit = Math.min(
-    20,
+    10,
     Math.max(1, input.limit || limits.maxItems),
   );
   const slice = input.rows.slice(offset, offset + limit);
 
   const items =
     input.kind === "hotel"
-      ? slice.map((row) =>
-          serializeHotel(row as HotelOffer, limits.maxRatesPerHotel),
-        )
+      ? slice.map((row) => serializeHotelListItem(row as HotelOffer))
       : input.kind === "transfer"
         ? slice.map((row) => serializeTransfer(row as TransferOffer))
         : slice.map((row) => serializeFlight(row as FlightOffer));
+
+  const hotelHint =
+    input.kind === "hotel"
+      ? {
+          presentAs: "short_list",
+          formatHint:
+            "اعرض فقط الاسم والنجوم والسعر يبدأ من. لا تذكر الغرف أو الخدمات.",
+          selectHint: "اختر اسم الفندق لعرض الغرف والخدمات والموقع.",
+          moreHint:
+            offset + items.length < input.rows.length
+              ? "إذا أردت خيارات أكثر اكتب: المزيد"
+              : undefined,
+        }
+      : {};
 
   return boundedJson(
     {
@@ -292,6 +294,7 @@ export function serializeSearchResult(input: {
         offset + items.length < input.rows.length
           ? offset + items.length
           : undefined,
+      ...hotelHint,
       items,
     },
     limits.maxJsonChars,

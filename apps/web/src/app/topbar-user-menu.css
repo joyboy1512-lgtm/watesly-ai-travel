@@ -257,10 +257,10 @@ html[dir="ltr"] .user-logout {
   }
 }
 
-/* Conversation list: readable customer names on a light surface */
+/* Conversation list: light rows so customer names stay readable; dark header only */
 .watesly-inbox .wi-list {
-  background: #ffffff;
-  color: #111b21;
+  background: #f4f7f6;
+  color: #12262c;
 }
 
 .watesly-inbox .wi-list-head {
@@ -269,11 +269,11 @@ html[dir="ltr"] .user-logout {
 }
 
 .watesly-inbox .wi-conversations {
-  background: #f6f8f7;
+  background: #ffffff;
 }
 
 .watesly-inbox .wi-item {
-  color: #111b21;
+  color: #12262c;
   background: #ffffff;
   border-bottom-color: #eef2f1;
 }
@@ -283,8 +283,8 @@ html[dir="ltr"] .user-logout {
 }
 
 .watesly-inbox .wi-item.active {
-  background: #e7f0ee;
-  box-shadow: inset -3px 0 0 #184a52;
+  background: #e8f1ef;
+  box-shadow: inset -3px 0 0 #d8a35e;
 }
 
 .watesly-inbox .wi-item-top strong,
@@ -295,7 +295,7 @@ html[dir="ltr"] .user-logout {
 
 .watesly-inbox .wi-item-top time,
 .watesly-inbox .wi-item-main > p {
-  color: #5f7470;
+  color: #5d7270;
 }
 
 .watesly-inbox .wi-item.unread .wi-item-top time {
@@ -303,7 +303,7 @@ html[dir="ltr"] .user-logout {
 }
 
 .watesly-inbox .wi-empty {
-  color: #5f7470;
+  color: #5d7270;
 }
 
 .watesly-inbox .wi-simulator {

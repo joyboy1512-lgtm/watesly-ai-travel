@@ -82,14 +82,15 @@
 }
 
 .watesly-inbox .wi-list {
-  background: #143c48;
-  border-left-color: rgba(216, 163, 94, 0.18);
-  color: #f3f7f4;
+  background: #f4f7f6;
+  border-left-color: #e4ecea;
+  color: #12262c;
 }
 
 .watesly-inbox .wi-list-head {
   background: #0f3340;
   border-bottom: 1px solid rgba(216, 163, 94, 0.22);
+  color: #f3f7f4;
 }
 
 .watesly-inbox .wi-list-title-row h3 {
@@ -102,68 +103,72 @@
 }
 
 .watesly-inbox .wi-search {
-  background: #eef4f2;
+  background: #ffffff;
   color: #0f3340;
 }
 
-.watesly-inbox .wi-filter {
-  color: rgba(243, 247, 244, 0.7);
+.watesly-inbox .wi-list-head .wi-filter {
+  color: rgba(243, 247, 244, 0.78);
 }
 
-.watesly-inbox .wi-filter.active {
-  background: rgba(216, 163, 94, 0.22);
+.watesly-inbox .wi-list-head .wi-filter.active {
+  background: rgba(216, 163, 94, 0.24);
   color: #f0c27a;
+  font-weight: 700;
 }
 
 .watesly-inbox .wi-conversations {
-  background: #16424e;
+  background: #ffffff;
 }
 
 .watesly-inbox .wi-item {
-  color: #f3f7f4;
-  border-bottom-color: rgba(243, 247, 244, 0.08);
+  color: #12262c;
+  background: #ffffff;
+  border-bottom-color: #eef2f1;
 }
 
 .watesly-inbox .wi-item:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: #f3f7f4;
 }
 
 .watesly-inbox .wi-item.active {
-  background: rgba(216, 163, 94, 0.14);
+  background: #e8f1ef;
   box-shadow: inset -3px 0 0 #d8a35e;
 }
 
 .watesly-inbox .wi-item-top strong,
 .watesly-inbox .wi-item.unread .wi-item-top strong {
-  color: #f3f7f4;
+  color: #0f3340;
+  font-weight: 700;
+  font-size: 1.06rem;
 }
 
 .watesly-inbox .wi-item-top time,
 .watesly-inbox .wi-item-main > p {
-  color: rgba(243, 247, 244, 0.62);
+  color: #5d7270;
 }
 
 .watesly-inbox .wi-item.unread .wi-item-top time {
-  color: #f0c27a;
+  color: #184a52;
 }
 
 .watesly-inbox .wi-empty {
-  color: rgba(243, 247, 244, 0.7);
+  color: #5d7270;
 }
 
 .watesly-inbox .wi-simulator {
-  background: #123844;
-  color: #f3f7f4;
-  border-bottom-color: rgba(216, 163, 94, 0.18);
+  background: #f7faf9;
+  color: #0f3340;
+  border-bottom-color: #e4ecea;
 }
 
 .watesly-inbox .wi-simulator strong {
-  color: #f0c27a;
+  color: #0f3340;
 }
 
 .watesly-inbox .wi-simulator input,
 .watesly-inbox .wi-simulator textarea {
-  background: #eef4f2;
+  background: #ffffff;
   color: #0f3340;
 }
 

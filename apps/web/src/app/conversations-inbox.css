@@ -294,10 +294,10 @@
 }
 
 .wi-item-top strong {
-  font-size: 1.05rem;
-  font-weight: 500;
-  color: var(--wa-ink);
-  line-height: 1.25;
+  font-size: 1.06rem;
+  font-weight: 700;
+  color: #0f3340;
+  line-height: 1.35;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

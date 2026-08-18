@@ -1,8 +1,19 @@
-import { BadRequestException, Body, Controller, Get, Post, Query } from "@nestjs/common";
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Get,
+  NotFoundException,
+  Param,
+  Patch,
+  Post,
+  Query,
+} from "@nestjs/common";
 import { CurrentUser, Public, RequirePermissions } from "../auth/decorators";
 import type { AuthUser } from "../auth/auth.types";
 import { PrismaService } from "../prisma/prisma.service";
 import { AssistantService } from "./assistant.service";
+import type { AiChannel } from "@watesly-travel/ai-core";
 
 @Controller("assistant")
 export class AssistantController {
@@ -10,6 +21,53 @@ export class AssistantController {
     private readonly assistant: AssistantService,
     private readonly prisma: PrismaService,
   ) {}
+
+  @Get("threads")
+  @RequirePermissions("conversations.read")
+  threads(
+    @CurrentUser() user: AuthUser,
+    @Query("channel") channel?: string,
+  ) {
+    return this.assistant.listThreads(user.organizationId, channel);
+  }
+
+  @Post("threads")
+  @RequirePermissions("conversations.read")
+  createThread(
+    @CurrentUser() user: AuthUser,
+    @Body() body: { title?: string; creditLimitUsd?: number | null },
+  ) {
+    return this.assistant.createThread({
+      organizationId: user.organizationId,
+      userId: user.userId,
+      channel: "dashboard",
+      title: body.title,
+      creditLimitUsd: body.creditLimitUsd,
+    });
+  }
+
+  @Patch("threads/:id")
+  @RequirePermissions("conversations.read")
+  async patchThread(
+    @CurrentUser() user: AuthUser,
+    @Param("id") id: string,
+    @Body()
+    body: {
+      title?: string;
+      creditLimitUsd?: number | null;
+      status?: "open" | "handed_off";
+    },
+  ) {
+    const row = await this.assistant.patchThread({
+      organizationId: user.organizationId,
+      threadId: id,
+      title: body.title,
+      creditLimitUsd: body.creditLimitUsd,
+      status: body.status,
+    });
+    if (!row) throw new NotFoundException("المحادثة غير موجودة");
+    return row;
+  }
 
   @Get("thread")
   @RequirePermissions("conversations.read")
@@ -31,10 +89,38 @@ export class AssistantController {
     return this.assistant.status();
   }
 
+  @Get("usage/report")
+  @RequirePermissions("conversations.read")
+  usageReport(
+    @CurrentUser() user: AuthUser,
+    @Query("period") period?: string,
+    @Query("from") from?: string,
+    @Query("to") to?: string,
+  ) {
+    return this.assistant.usageReport(user.organizationId, { period, from, to });
+  }
+
   @Get("usage")
   @RequirePermissions("conversations.read")
   usage(@CurrentUser() user: AuthUser) {
     return this.assistant.usage(user.organizationId);
+  }
+
+  @Get("settings")
+  @RequirePermissions("conversations.read")
+  settings(@CurrentUser() user: AuthUser) {
+    return this.assistant.getAiSettings(user.organizationId);
+  }
+
+  @Patch("settings")
+  @RequirePermissions("conversations.read")
+  patchSettings(
+    @CurrentUser() user: AuthUser,
+    @Body() body: { defaultThreadCreditUsd?: number | null },
+  ) {
+    return this.assistant.setAiSettings(user.organizationId, {
+      defaultThreadCreditUsd: body.defaultThreadCreditUsd,
+    });
   }
 
   @Post("chat")
@@ -48,7 +134,7 @@ export class AssistantController {
     return this.assistant.chat({
       organizationId: user.organizationId,
       userId: user.userId,
-      channel: "dashboard",
+      channel: "dashboard" as AiChannel,
       text,
       threadId: body.threadId,
     });

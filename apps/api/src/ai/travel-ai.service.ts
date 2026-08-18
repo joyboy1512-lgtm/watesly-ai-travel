@@ -100,7 +100,107 @@ export type TravelAiTurnResult = {
   estimatedCostUsd: number;
   handoff: boolean;
   toolsUsed: string[];
+  spentUsd?: number;
+  creditLimitUsd?: number | null;
+  remainingUsd?: number | null;
 };
+
+type OrgAiSettings = {
+  defaultThreadCreditUsd?: number | null;
+};
+
+function money(value: unknown): number {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : 0;
+}
+
+function roundUsd(value: number): number {
+  return Math.round(value * 1e6) / 1e6;
+}
+
+type ThreadBudget = {
+  spent: number;
+  limit: number | null;
+  remaining: number | null;
+  exhausted: boolean;
+};
+
+function computeBudget(thread: {
+  spentUsd?: unknown;
+  creditLimitUsd?: unknown;
+}): ThreadBudget {
+  const spent = roundUsd(money(thread.spentUsd));
+  if (thread.creditLimitUsd == null || thread.creditLimitUsd === "") {
+    return { spent, limit: null, remaining: null, exhausted: false };
+  }
+  const limit = roundUsd(money(thread.creditLimitUsd));
+  const remaining = roundUsd(Math.max(0, limit - spent));
+  return { spent, limit, remaining, exhausted: remaining <= 0 };
+}
+
+function readOrgAiSettings(settings: unknown): OrgAiSettings {
+  if (!settings || typeof settings !== "object") return {};
+  const ai = (settings as { ai?: unknown }).ai;
+  if (!ai || typeof ai !== "object") return {};
+  const raw = (ai as { defaultThreadCreditUsd?: unknown }).defaultThreadCreditUsd;
+  if (raw == null || raw === "") return { defaultThreadCreditUsd: null };
+  const n = Number(raw);
+  return {
+    defaultThreadCreditUsd: Number.isFinite(n) && n >= 0 ? roundUsd(n) : null,
+  };
+}
+
+function mergeOrgAiSettings(
+  existing: unknown,
+  ai: OrgAiSettings,
+): Prisma.InputJsonValue {
+  const base =
+    existing && typeof existing === "object" && !Array.isArray(existing)
+      ? { ...(existing as Record<string, unknown>) }
+      : {};
+  const prevAi =
+    base.ai && typeof base.ai === "object" && !Array.isArray(base.ai)
+      ? { ...(base.ai as Record<string, unknown>) }
+      : {};
+  if (ai.defaultThreadCreditUsd === undefined) {
+    base.ai = prevAi;
+  } else if (ai.defaultThreadCreditUsd == null) {
+    delete prevAi.defaultThreadCreditUsd;
+    base.ai = prevAi;
+  } else {
+    prevAi.defaultThreadCreditUsd = ai.defaultThreadCreditUsd;
+    base.ai = prevAi;
+  }
+  return asJson(base);
+}
+
+function reportWindow(period?: string, from?: string, to?: string) {
+  const now = new Date();
+  const p = (period || "7d").trim() || "7d";
+  let end = now;
+  if (to) {
+    const parsed = new Date(to);
+    if (!Number.isNaN(parsed.getTime())) {
+      end = parsed;
+      if (to.length <= 10) end.setHours(23, 59, 59, 999);
+    }
+  }
+  let start: Date;
+  if (p === "today") {
+    start = new Date(now);
+    start.setHours(0, 0, 0, 0);
+  } else if (p === "30d") {
+    start = new Date(now.getTime() - 30 * 86_400_000);
+  } else if (p === "custom" && from) {
+    start = new Date(from);
+  } else {
+    start = new Date(now.getTime() - 7 * 86_400_000);
+  }
+  if (Number.isNaN(start.getTime())) {
+    start = new Date(now.getTime() - 7 * 86_400_000);
+  }
+  return { start, end, period: p };
+}
 
 function addDayIfNeeded(checkIn: string, checkOut: string): string {
   if (!checkIn) return checkOut;
@@ -153,6 +253,37 @@ export class TravelAiService {
         content: input.text,
       },
     });
+    if (!thread.title) {
+      await this.prisma.aiThread.update({
+        where: { id: thread.id },
+        data: { title: input.text.replace(/\s+/g, " ").slice(0, 48) },
+      });
+    }
+
+    const budget = await this.threadBudget(thread);
+    if (thread.status === "handed_off" || budget.exhausted) {
+      if (thread.status !== "handed_off") {
+        await this.performHandoff(thread, input, "نفد رصيد المحادثة");
+      }
+      const notice =
+        "نفد رصيد هذه المحادثة، لذلك حُوّل الرد إلى موظف. سيصلك رد بشري قريباً.";
+      await this.prisma.aiMessage.create({
+        data: { threadId: thread.id, role: "assistant", content: notice },
+      });
+      return {
+        threadId: thread.id,
+        message: notice,
+        model: "budget-limit",
+        provider: "system",
+        usage: EMPTY_USAGE,
+        estimatedCostUsd: 0,
+        handoff: true,
+        toolsUsed: [],
+        spentUsd: budget.spent,
+        creditLimitUsd: budget.limit,
+        remainingUsd: budget.remaining,
+      };
+    }
 
     const provider = createAiProvider();
     const tools =
@@ -232,7 +363,10 @@ export class TravelAiService {
     });
     await this.prisma.aiThread.update({
       where: { id: thread.id },
-      data: { previousResponseId: lastId },
+      data: {
+        previousResponseId: lastId,
+        spentUsd: { increment: estimatedCostUsd },
+      },
     });
     await this.prisma.aiUsageLog.create({
       data: {
@@ -254,58 +388,20 @@ export class TravelAiService {
       },
     });
 
-    if (handoff && input.conversationId) {
-      await this.prisma.conversation.updateMany({
-        where: {
-          id: input.conversationId,
-          organizationId: input.organizationId,
-        },
-        data: { assigneeType: "human", status: "pending" },
+    const spentAfter = budget.spent + estimatedCostUsd;
+    if (!handoff && budget.limit != null && spentAfter >= budget.limit) {
+      handoff = true;
+      handoffReason = handoffReason || "نفد رصيد المحادثة";
+      const notice =
+        "نفد رصيد هذه المحادثة. حُوّلت الرسائل التالية إلى موظف.";
+      await this.prisma.aiMessage.create({
+        data: { threadId: thread.id, role: "assistant", content: notice },
       });
-      const inquiry = await this.prisma.travelInquiry.findFirst({
-        where: {
-          organizationId: input.organizationId,
-          conversationId: input.conversationId,
-        },
-        orderBy: { createdAt: "desc" },
-      });
-      await this.prisma.handoff.create({
-        data: {
-          organizationId: input.organizationId,
-          conversationId: input.conversationId,
-          inquiryId: inquiry?.id,
-          reason: handoffReason || "ai_handoff",
-          status: "open",
-          contextSummary: text.slice(0, 500) || input.text.slice(0, 500),
-        },
-      });
-      if (inquiry) {
-        await this.prisma.travelInquiry.update({
-          where: { id: inquiry.id },
-          data: { status: "handed_off" },
-        });
-      }
-      const agents = await this.prisma.membership.findMany({
-        where: {
-          organizationId: input.organizationId,
-          status: "active",
-          role: { code: { in: ["owner", "admin", "agent"] } },
-        },
-        select: { userId: true },
-        take: 20,
-      });
-      if (agents.length) {
-        await this.prisma.notification.createMany({
-          data: agents.map((agent) => ({
-            organizationId: input.organizationId,
-            userId: agent.userId,
-            type: "handoff",
-            title: "تحويل من Travel AI إلى موظف",
-            body: handoffReason || "حوّل المساعد المحادثة إلى موظف",
-            linkRef: `/dashboard/conversations?id=${input.conversationId}`,
-          })),
-        });
-      }
+      text = `${text}\n\n—\n${notice}`;
+    }
+
+    if (handoff) {
+      await this.performHandoff(thread, input, handoffReason || "ai_handoff");
     }
 
     return {
@@ -317,6 +413,10 @@ export class TravelAiService {
       estimatedCostUsd,
       handoff,
       toolsUsed,
+      spentUsd: spentAfter,
+      creditLimitUsd: budget.limit,
+      remainingUsd:
+        budget.limit == null ? null : Math.max(0, budget.limit - spentAfter),
     };
   }
 
@@ -339,7 +439,13 @@ export class TravelAiService {
       orderBy: { createdAt: "asc" },
       take: 200,
     });
-    return { thread, messages, tools: listToolAvailability() };
+    const budget = computeBudget(thread);
+    return {
+      thread: this.serializeThread(thread, budget),
+      messages,
+      tools: listToolAvailability(),
+      budget,
+    };
   }
 
   async listUsage(organizationId: string, take = 50) {
@@ -348,6 +454,250 @@ export class TravelAiService {
       orderBy: { createdAt: "desc" },
       take,
     });
+  }
+
+  async listThreads(organizationId: string, channel?: string) {
+    const threads = await this.prisma.aiThread.findMany({
+      where: {
+        organizationId,
+        ...(channel ? { channel } : {}),
+      },
+      orderBy: { updatedAt: "desc" },
+      take: 80,
+      include: {
+        messages: {
+          orderBy: { createdAt: "desc" },
+          take: 1,
+          select: { content: true, role: true, createdAt: true },
+        },
+      },
+    });
+    return threads.map((row) => {
+      const budget = computeBudget(row);
+      const preview = row.messages[0];
+      return {
+        ...this.serializeThread(row, budget),
+        preview: (preview?.content || "").replace(/\s+/g, " ").slice(0, 90),
+        previewRole: preview?.role || null,
+      };
+    });
+  }
+
+  async createThread(input: {
+    organizationId: string;
+    userId?: string;
+    channel?: AiChannel;
+    title?: string;
+    creditLimitUsd?: number | null;
+  }) {
+    const settings = await this.orgAiSettings(input.organizationId);
+    const creditLimitUsd =
+      input.creditLimitUsd === undefined
+        ? settings.defaultThreadCreditUsd
+        : input.creditLimitUsd;
+    const thread = await this.prisma.aiThread.create({
+      data: {
+        organizationId: input.organizationId,
+        channel: input.channel || "dashboard",
+        userId: input.userId,
+        title: input.title?.trim() || null,
+        creditLimitUsd: creditLimitUsd ?? null,
+        metadata: asJson({ source: input.channel || "dashboard" }),
+      },
+    });
+    return this.serializeThread(thread, computeBudget(thread));
+  }
+
+  async patchThread(input: {
+    organizationId: string;
+    threadId: string;
+    title?: string;
+    creditLimitUsd?: number | null;
+    status?: "open" | "handed_off";
+  }) {
+    const existing = await this.prisma.aiThread.findFirst({
+      where: { id: input.threadId, organizationId: input.organizationId },
+    });
+    if (!existing) return null;
+
+    const data: Prisma.AiThreadUpdateInput = {};
+    if (input.title !== undefined) data.title = input.title.trim() || null;
+    if (input.creditLimitUsd !== undefined) {
+      data.creditLimitUsd =
+        input.creditLimitUsd == null ? null : roundUsd(money(input.creditLimitUsd));
+    }
+    if (input.status === "open" || input.status === "handed_off") {
+      data.status = input.status;
+    }
+
+    let thread = await this.prisma.aiThread.update({
+      where: { id: existing.id },
+      data,
+    });
+    const budget = computeBudget(thread);
+    if (
+      thread.status === "handed_off" &&
+      !budget.exhausted &&
+      input.creditLimitUsd !== undefined
+    ) {
+      thread = await this.prisma.aiThread.update({
+        where: { id: thread.id },
+        data: { status: "open" },
+      });
+      if (thread.conversationId) {
+        await this.prisma.conversation.updateMany({
+          where: { id: thread.conversationId, organizationId: input.organizationId },
+          data: { assigneeType: "bot", status: "open" },
+        });
+      }
+    }
+    return this.serializeThread(thread, computeBudget(thread));
+  }
+
+  async usageReport(
+    organizationId: string,
+    query?: { period?: string; from?: string; to?: string },
+  ) {
+    const window = reportWindow(query?.period, query?.from, query?.to);
+    const logs = await this.prisma.aiUsageLog.findMany({
+      where: {
+        organizationId,
+        createdAt: { gte: window.start, lte: window.end },
+      },
+      include: {
+        thread: {
+          select: {
+            id: true,
+            title: true,
+            channel: true,
+            status: true,
+            spentUsd: true,
+            creditLimitUsd: true,
+          },
+        },
+      },
+      orderBy: { createdAt: "asc" },
+    });
+
+    const totals = {
+      costUsd: 0,
+      inputTokens: 0,
+      outputTokens: 0,
+      cachedInputTokens: 0,
+      turns: logs.length,
+    };
+    const byChannel = new Map<
+      string,
+      { channel: string; costUsd: number; turns: number; tokens: number }
+    >();
+    const byThread = new Map<
+      string,
+      {
+        threadId: string;
+        title: string;
+        channel: string;
+        status: string;
+        costUsd: number;
+        turns: number;
+        spentUsd: number;
+        creditLimitUsd: number | null;
+      }
+    >();
+    const byDay = new Map<string, { date: string; costUsd: number; turns: number }>();
+
+    for (const log of logs) {
+      const cost = money(log.estimatedCostUsd);
+      totals.costUsd += cost;
+      totals.inputTokens += log.inputTokens || 0;
+      totals.outputTokens += log.outputTokens || 0;
+      totals.cachedInputTokens += log.cachedInputTokens || 0;
+
+      const channel = log.channel || "unknown";
+      const ch = byChannel.get(channel) || {
+        channel,
+        costUsd: 0,
+        turns: 0,
+        tokens: 0,
+      };
+      ch.costUsd += cost;
+      ch.turns += 1;
+      ch.tokens += log.totalTokens || 0;
+      byChannel.set(channel, ch);
+
+      const threadId = log.threadId || "none";
+      const th = byThread.get(threadId) || {
+        threadId,
+        title: log.thread?.title || "بدون عنوان",
+        channel: log.thread?.channel || channel,
+        status: log.thread?.status || "open",
+        costUsd: 0,
+        turns: 0,
+        spentUsd: money(log.thread?.spentUsd),
+        creditLimitUsd:
+          log.thread?.creditLimitUsd == null ? null : money(log.thread.creditLimitUsd),
+      };
+      th.costUsd += cost;
+      th.turns += 1;
+      byThread.set(threadId, th);
+
+      const date = log.createdAt.toISOString().slice(0, 10);
+      const day = byDay.get(date) || { date, costUsd: 0, turns: 0 };
+      day.costUsd += cost;
+      day.turns += 1;
+      byDay.set(date, day);
+    }
+
+    return {
+      period: {
+        key: window.period,
+        from: window.start.toISOString(),
+        to: window.end.toISOString(),
+      },
+      totals: {
+        ...totals,
+        costUsd: roundUsd(totals.costUsd),
+      },
+      byChannel: [...byChannel.values()]
+        .map((row) => ({ ...row, costUsd: roundUsd(row.costUsd) }))
+        .sort((a, b) => b.costUsd - a.costUsd),
+      byThread: [...byThread.values()]
+        .map((row) => ({ ...row, costUsd: roundUsd(row.costUsd) }))
+        .sort((a, b) => b.costUsd - a.costUsd)
+        .slice(0, 40),
+      byDay: [...byDay.values()].map((row) => ({
+        ...row,
+        costUsd: roundUsd(row.costUsd),
+      })),
+    };
+  }
+
+  async getAiSettings(organizationId: string) {
+    const org = await this.prisma.organization.findUnique({
+      where: { id: organizationId },
+      select: { settings: true },
+    });
+    return {
+      defaultThreadCreditUsd:
+        readOrgAiSettings(org?.settings).defaultThreadCreditUsd ?? null,
+    };
+  }
+
+  async setAiSettings(
+    organizationId: string,
+    input: { defaultThreadCreditUsd?: number | null },
+  ) {
+    const org = await this.prisma.organization.findUnique({
+      where: { id: organizationId },
+      select: { settings: true },
+    });
+    const next = mergeOrgAiSettings(org?.settings, {
+      defaultThreadCreditUsd: input.defaultThreadCreditUsd,
+    });
+    await this.prisma.organization.update({
+      where: { id: organizationId },
+      data: { settings: next },
+    });
+    return this.getAiSettings(organizationId);
   }
 
   private async findThread(input: {
@@ -405,6 +755,7 @@ export class TravelAiService {
   private async resolveThread(input: TravelAiTurnInput) {
     const existing = await this.findThread(input);
     if (existing) return existing;
+    const settings = await this.orgAiSettings(input.organizationId);
     return this.prisma.aiThread.create({
       data: {
         organizationId: input.organizationId,
@@ -413,8 +764,143 @@ export class TravelAiService {
         contactId: input.contactId,
         conversationId: input.conversationId,
         externalRef: input.externalRef,
+        creditLimitUsd: settings.defaultThreadCreditUsd ?? null,
         metadata: asJson({ source: input.channel }),
       },
+    });
+  }
+
+  private async orgAiSettings(organizationId: string): Promise<OrgAiSettings> {
+    const org = await this.prisma.organization.findUnique({
+      where: { id: organizationId },
+      select: { settings: true },
+    });
+    return readOrgAiSettings(org?.settings);
+  }
+
+  private threadBudget(thread: {
+    spentUsd?: unknown;
+    creditLimitUsd?: unknown;
+  }): ThreadBudget {
+    return computeBudget(thread);
+  }
+
+  private serializeThread(
+    thread: {
+      id: string;
+      organizationId: string;
+      channel: string;
+      status: string;
+      title?: string | null;
+      creditLimitUsd?: unknown;
+      spentUsd?: unknown;
+      userId?: string | null;
+      contactId?: string | null;
+      conversationId?: string | null;
+      externalRef?: string | null;
+      createdAt: Date;
+      updatedAt: Date;
+    },
+    budget = computeBudget(thread),
+  ) {
+    return {
+      id: thread.id,
+      organizationId: thread.organizationId,
+      channel: thread.channel,
+      status: thread.status,
+      title: thread.title || null,
+      userId: thread.userId || null,
+      contactId: thread.contactId || null,
+      conversationId: thread.conversationId || null,
+      externalRef: thread.externalRef || null,
+      createdAt: thread.createdAt,
+      updatedAt: thread.updatedAt,
+      spentUsd: budget.spent,
+      creditLimitUsd: budget.limit,
+      remainingUsd: budget.remaining,
+      exhausted: budget.exhausted,
+    };
+  }
+
+  private async performHandoff(
+    thread: {
+      id: string;
+      organizationId: string;
+      conversationId?: string | null;
+      status: string;
+    },
+    input: TravelAiTurnInput,
+    reason: string,
+  ) {
+    if (thread.status !== "handed_off") {
+      await this.prisma.aiThread.update({
+        where: { id: thread.id },
+        data: { status: "handed_off" },
+      });
+    }
+
+    const conversationId = input.conversationId || thread.conversationId || undefined;
+    if (conversationId) {
+      const conversation = await this.prisma.conversation.findFirst({
+        where: { id: conversationId, organizationId: thread.organizationId },
+        include: { inquiries: { orderBy: { createdAt: "desc" }, take: 1 } },
+      });
+      if (conversation) {
+        if (conversation.assigneeType !== "human") {
+          await this.prisma.conversation.update({
+            where: { id: conversation.id },
+            data: { assigneeType: "human", status: "pending" },
+          });
+        }
+        const openHandoff = await this.prisma.handoff.findFirst({
+          where: { conversationId: conversation.id, status: "open" },
+        });
+        if (!openHandoff) {
+          const inquiry = conversation.inquiries[0];
+          await this.prisma.handoff.create({
+            data: {
+              organizationId: thread.organizationId,
+              conversationId: conversation.id,
+              inquiryId: inquiry?.id,
+              reason,
+              status: "open",
+              contextSummary: reason,
+            },
+          });
+          if (inquiry && inquiry.status !== "handed_off") {
+            await this.prisma.travelInquiry.update({
+              where: { id: inquiry.id },
+              data: { status: "handed_off" },
+            });
+          }
+        }
+      }
+    }
+
+    if (thread.status === "handed_off") return;
+
+    const agents = await this.prisma.membership.findMany({
+      where: {
+        organizationId: thread.organizationId,
+        status: "active",
+        role: { code: { in: ["owner", "admin", "agent"] } },
+      },
+      select: { userId: true },
+      take: 20,
+    });
+    if (!agents.length) return;
+    const linkRef = conversationId
+      ? `/dashboard/conversations?id=${conversationId}`
+      : `/dashboard/assistant?threadId=${thread.id}`;
+    await this.prisma.notification.createMany({
+      data: agents.map((agent) => ({
+        organizationId: thread.organizationId,
+        userId: agent.userId,
+        type: "handoff",
+        title: "تحويل محادثة للموظف",
+        body: reason || "نفد رصيد المساعد أو طُلب موظف",
+        linkRef,
+      })),
     });
   }
 

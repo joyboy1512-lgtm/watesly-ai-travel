@@ -387,6 +387,9 @@ model AiThread {
   organizationId      String
   channel             String
   status              String    @default("open")
+  title               String?
+  creditLimitUsd      Decimal?  @db.Decimal(12, 6)
+  spentUsd            Decimal   @default(0) @db.Decimal(12, 6)
   userId              String?
   contactId           String?
   conversationId      String?

@@ -69,8 +69,9 @@ export function pickRoomImageLists(
     if (!img.roomCode || !img.path) continue;
     const url = hotelbedsImageUrl(img.path, "bigger");
     if (!url) continue;
-    if (!out[img.roomCode]) out[img.roomCode] = [];
-    if (!out[img.roomCode].includes(url)) out[img.roomCode].push(url);
+    const list = out[img.roomCode] ?? [];
+    if (!list.includes(url)) list.push(url);
+    out[img.roomCode] = list;
   }
   return out;
 }

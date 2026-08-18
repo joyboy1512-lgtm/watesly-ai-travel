@@ -275,7 +275,7 @@ export class ContactsController {
           stage: "customer",
           gender: "",
           branch: orgName,
-          channel: CHANNEL_LABEL.booking,
+          channel: "حجز",
           channelType: "booking",
           marketing: true,
           source: "booking",

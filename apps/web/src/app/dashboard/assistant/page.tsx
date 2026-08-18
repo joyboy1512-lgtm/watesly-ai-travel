@@ -404,7 +404,7 @@ function AssistantPageInner() {
               remainingUsd:
                 result.remainingUsd === undefined ? prev.remainingUsd : result.remainingUsd,
               status: result.handoff ? "handed_off" : prev.status,
-              title: prev.title || message.slice(0, 48),
+              title: prev.title || caption || pendingFile?.name || "مرفق",
             }
           : prev,
       );

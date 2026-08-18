@@ -141,6 +141,9 @@ export class MockAiProvider implements AiProvider {
 
     const date = parseDateToken(text);
     if (date) fields.departDate = date;
+    const allDates = text.match(/20\d{2}-\d{2}-\d{2}/g) || [];
+    if (allDates[0]) fields.departDate = allDates[0];
+    if (allDates[1]) fields.returnDate = allDates[1];
 
     const returnHint = text.match(
       /(?:عودة|رجوع|return)\s*(?:في|:)?\s*(\d{4}-\d{2}-\d{2}|\d{1,2}[\/.\-]\d{1,2}[\/.\-]20\d{2})/i,
@@ -306,7 +309,14 @@ function mockSearchCalls(
     extraction.fields.departDate
   ) {
     const checkOut =
-      extraction.fields.returnDate || extraction.fields.departDate;
+      extraction.fields.returnDate &&
+      extraction.fields.returnDate > extraction.fields.departDate
+        ? extraction.fields.returnDate
+        : (() => {
+            const d = new Date(`${extraction.fields.departDate}T00:00:00Z`);
+            d.setUTCDate(d.getUTCDate() + 1);
+            return d.toISOString().slice(0, 10);
+          })();
     calls.push({
       callId: "mock_search_hotels",
       name: "search_hotels",

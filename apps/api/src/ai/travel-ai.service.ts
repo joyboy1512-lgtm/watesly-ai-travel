@@ -47,6 +47,17 @@ export type TravelAiTurnResult = {
   toolsUsed: string[];
 };
 
+function addDayIfNeeded(checkIn: string, checkOut: string): string {
+  if (!checkIn) return checkOut;
+  if (!checkOut || checkOut <= checkIn) {
+    const d = new Date(`${checkIn}T00:00:00Z`);
+    if (Number.isNaN(d.getTime())) return checkOut || checkIn;
+    d.setUTCDate(d.getUTCDate() + 1);
+    return d.toISOString().slice(0, 10);
+  }
+  return checkOut;
+}
+
 function asJson(value: unknown): Prisma.InputJsonValue {
   return value as Prisma.InputJsonValue;
 }
@@ -113,7 +124,12 @@ export class TravelAiService {
           handoff = true;
           handoffReason = str(parseArgs(call.arguments).reason) || handoffReason;
         }
-        const output = await this.executeTool(call.name, call.arguments, input);
+        const output = await this.executeTool(call.name, call.arguments, input).catch(
+          (err: unknown) =>
+            JSON.stringify({
+              error: err instanceof Error ? err.message : "فشل تنفيذ الأداة",
+            }),
+        );
         outputs.push({ callId: call.callId, output });
       }
       result = await provider.respond({
@@ -490,7 +506,7 @@ export class TravelAiService {
   ): Promise<string> {
     const location = str(args.location);
     const checkInDate = str(args.checkInDate);
-    const checkOutDate = str(args.checkOutDate);
+    const checkOutDate = addDayIfNeeded(str(args.checkInDate), str(args.checkOutDate));
     if (!location || !checkInDate || !checkOutDate) {
       return JSON.stringify({ error: "الموقع وتاريخا الدخول والخروج مطلوبة" });
     }

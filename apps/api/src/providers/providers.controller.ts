@@ -25,12 +25,62 @@ function envReady(keys: string[]) {
   return required.every((k) => Boolean(process.env[k]?.trim()));
 }
 
+const DEFAULT_PRIORITY: Record<string, number> = {
+  hotelbeds: 10,
+  "hotelbeds-transfers": 11,
+  amadeus: 20,
+  travelfusion: 30,
+  travelport: 40,
+  duffel: 50,
+  mock: 90,
+};
+
 @Controller("providers")
 export class ProvidersController {
   constructor(
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,
   ) {}
+
+  private async ensureCatalogRows(organizationId: string) {
+    for (const catalog of PROVIDER_CATALOG) {
+      if (catalog.providerKey === "mock") continue;
+      if (!envReady(catalog.envKeys)) continue;
+      const existing = await this.prisma.travelProviderConfig.findUnique({
+        where: {
+          organizationId_providerKey: {
+            organizationId,
+            providerKey: catalog.providerKey,
+          },
+        },
+      });
+      if (!existing) {
+        await this.prisma.travelProviderConfig.create({
+          data: {
+            organizationId,
+            providerKey: catalog.providerKey,
+            displayName: catalog.displayNameAr,
+            enabled: true,
+            priority: DEFAULT_PRIORITY[catalog.providerKey] ?? 100,
+            capabilities: catalog.capabilities,
+          },
+        });
+        continue;
+      }
+      const staleName =
+        existing.displayName === "Hotelbeds" &&
+        catalog.providerKey === "hotelbeds";
+      if (staleName || !existing.capabilities) {
+        await this.prisma.travelProviderConfig.update({
+          where: { id: existing.id },
+          data: {
+            ...(staleName ? { displayName: catalog.displayNameAr } : {}),
+            capabilities: catalog.capabilities,
+          },
+        });
+      }
+    }
+  }
 
   @Get("catalog")
   @RequirePermissions("providers.manage")
@@ -44,6 +94,7 @@ export class ProvidersController {
   @Get()
   @RequirePermissions("providers.manage")
   async list(@CurrentUser() user: AuthUser) {
+    await this.ensureCatalogRows(user.organizationId);
     const rows = await this.prisma.travelProviderConfig.findMany({
       where: { organizationId: user.organizationId },
       orderBy: { priority: "asc" },

@@ -36,6 +36,12 @@ type ProviderRow = {
   credentialHints?: Record<string, string>;
 };
 
+const CAPABILITY_LABEL: Record<string, string> = {
+  flight: "طيران",
+  hotel: "فنادق",
+  transfer: "مواصلات",
+};
+
 const STATUS_LABEL: Record<string, string> = {
   live: "حي",
   ready: "جاهز للتفعيل",
@@ -48,7 +54,7 @@ export default function ProvidersPage() {
   const [error, setError] = useState("");
   const [ok, setOk] = useState("");
   const [loading, setLoading] = useState(false);
-  const [selectedKey, setSelectedKey] = useState("amadeus");
+  const [selectedKey, setSelectedKey] = useState("hotelbeds");
   const [displayName, setDisplayName] = useState("");
   const [priority, setPriority] = useState(50);
   const [credentials, setCredentials] = useState<Record<string, string>>({});
@@ -144,8 +150,61 @@ export default function ProvidersPage() {
 
         <section className="prc-card">
           <div className="prc-card-head">
-            <h4>كتالوج المزودين المتاحين</h4>
-            <p>اختر مزودًا وأدخل مفاتيح الـ API إن توفرت لديك</p>
+            <h4>كتالوج المزودين</h4>
+            <p>كل API يظهر لوحده. اضغط البطاقة لإدخال المفاتيح أو التحديث</p>
+          </div>
+          <div className="prc-row prc-row-4" style={{ alignItems: "stretch" }}>
+            {catalog.map((c) => {
+              const saved = rows.find((r) => r.providerKey === c.providerKey);
+              const active = selectedKey === c.providerKey;
+              return (
+                <button
+                  key={c.providerKey}
+                  type="button"
+                  className="prc-card"
+                  onClick={() => setSelectedKey(c.providerKey)}
+                  style={{
+                    textAlign: "start",
+                    cursor: "pointer",
+                    border: active ? "2px solid #0f3340" : undefined,
+                    margin: 0,
+                  }}
+                >
+                  <strong>{c.displayNameAr}</strong>
+                  <p className="hint" style={{ margin: "0.35rem 0 0.5rem" }}>
+                    {(c.capabilities || [])
+                      .map((cap) => CAPABILITY_LABEL[cap] || cap)
+                      .join(" · ")}
+                  </p>
+                  <span className={`wa-badge ${c.envConfigured ? "ok" : "warn"}`}>
+                    {c.envConfigured ? "مفاتيح السيرفر جاهزة" : "بانتظار المفاتيح"}
+                  </span>
+                  {saved ? (
+                    <span
+                      className={`wa-badge ${saved.enabled ? "ok" : "warn"}`}
+                      style={{ marginInlineStart: 6 }}
+                    >
+                      {saved.enabled ? "مفعّل" : "متوقف"}
+                    </span>
+                  ) : (
+                    <span className="wa-badge warn" style={{ marginInlineStart: 6 }}>
+                      غير مضاف
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </section>
+
+        <section className="prc-card">
+          <div className="prc-card-head">
+            <h4>حفظ مفاتيح المزود المحدد</h4>
+            <p>
+              {selected
+                ? `${selected.displayNameAr} — ${selected.description}`
+                : "اختر مزودًا من البطاقات أعلاه"}
+            </p>
           </div>
           <div className="prc-row prc-row-core">
             <label className="prc-field">

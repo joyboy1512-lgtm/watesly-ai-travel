@@ -390,13 +390,15 @@ function AssistantPageInner() {
               onChange={(e) => setQuery(e.target.value)}
             />
             <div className="ta-filters">
-              {[
-                ["", "الكل"],
-                ["dashboard", "لوحة التحكم"],
-                ["whatsapp", "واتساب"],
-                ["web_chat", "ويب"],
-                ["telegram", "تلجرام"],
-              ].map(([key, label]) => (
+              {(
+                [
+                  ["", "الكل"],
+                  ["dashboard", "لوحة التحكم"],
+                  ["whatsapp", "واتساب"],
+                  ["web_chat", "ويب"],
+                  ["telegram", "تلجرام"],
+                ] as const
+              ).map(([key, label]) => (
                 <button
                   key={key || "all"}
                   type="button"

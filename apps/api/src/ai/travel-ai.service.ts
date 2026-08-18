@@ -536,6 +536,8 @@ export class TravelAiService {
       ...toolSliceArgs(args),
     });
   }
+
+  private async toolSearchTransfers(
     organizationId: string,
     args: Record<string, unknown>,
   ): Promise<string> {

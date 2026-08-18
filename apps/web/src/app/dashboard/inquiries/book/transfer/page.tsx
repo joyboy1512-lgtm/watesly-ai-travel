@@ -9,22 +9,22 @@ import { apiFetch } from "@/lib/api";
 import {
   clearBookingDraft,
   getBookingDraft,
-  type HotelBookingDraft,
+  type TransferBookingDraft,
 } from "@/lib/booking-draft";
 import { formatMoneyMinor } from "@/lib/format";
 
-const STEPS = ["بيانات النزلاء", "الدفع وتأكيد الحجز"] as const;
+const STEPS = ["بيانات الركاب", "الدفع وتأكيد الحجز"] as const;
 
 type PaymentMethod = "card" | "knet" | "transfer";
 
-type Guest = {
+type Passenger = {
   title: string;
   firstName: string;
   lastName: string;
   nationality: string;
 };
 
-function emptyGuest(): Guest {
+function emptyPassenger(): Passenger {
   return { title: "mr", firstName: "", lastName: "", nationality: "SA" };
 }
 
@@ -45,56 +45,20 @@ function formatTripDate(value?: string) {
   }
 }
 
-function nightsBetween(from: string, to: string) {
-  if (!from || !to) return 1;
-  const a = new Date(from).getTime();
-  const b = new Date(to).getTime();
-  if (!Number.isFinite(a) || !Number.isFinite(b) || b <= a) return 1;
-  return Math.max(1, Math.round((b - a) / (24 * 60 * 60 * 1000)));
+function formatTime(value?: string) {
+  const t = String(value || "").trim();
+  return t || "—";
 }
 
-const ROOM_OPTIONS = [
-  {
-    value: "standard",
-    label: "غرفة قياسية",
-    hint: "بدون وجبات — إلغاء مجاني حتى 24 ساعة",
-    extra: 0,
-  },
-  {
-    value: "breakfast",
-    label: "غرفة مع إفطار",
-    hint: "إفطار بوفيه مفتوح لكل النزلاء",
-    extra: 3500,
-  },
-  {
-    value: "flexible",
-    label: "غرفة مرنة",
-    hint: "إلغاء مجاني حتى يوم الوصول",
-    extra: 5500,
-  },
-] as const;
-
-function paymentLabel(type?: string) {
-  if (type === "AT_HOTEL") return "الدفع في الفندق";
-  if (type === "AT_WEB") return "الدفع أونلاين";
-  return type || "—";
-}
-
-export default function HotelBookPage() {
+export default function TransferBookPage() {
   const router = useRouter();
-  const [draft, setDraft] = useState<HotelBookingDraft | null>(null);
+  const [draft, setDraft] = useState<TransferBookingDraft | null>(null);
   const [step, setStep] = useState(0);
-  const [guests, setGuests] = useState<Guest[]>([emptyGuest()]);
+  const [passengers, setPassengers] = useState<Passenger[]>([emptyPassenger()]);
   const [email, setEmail] = useState("");
   const [phoneCode, setPhoneCode] = useState("+965");
   const [phone, setPhone] = useState("");
-  const [roomOption, setRoomOption] = useState<(typeof ROOM_OPTIONS)[number]["value"]>(
-    "standard",
-  );
-  const [extras, setExtras] = useState({ breakfast: false, parking: false, earlyCheckin: false });
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | null>(
-    null,
-  );
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | null>(null);
   const [card, setCard] = useState(emptyCard());
   const [submitting, setSubmitting] = useState(false);
   const [bookingId, setBookingId] = useState<string | null>(null);
@@ -106,51 +70,31 @@ export default function HotelBookPage() {
       router.replace("/dashboard/inquiries");
       return;
     }
-    if (stored.serviceType !== "hotel") {
-      if (stored.serviceType === "transfer") {
-        router.replace("/dashboard/inquiries/book/transfer");
-        return;
-      }
+    if (stored.serviceType !== "transfer") {
       router.replace("/dashboard/inquiries/book");
       return;
     }
     setDraft(stored);
     const count = Math.max(1, stored.adults + stored.children);
-    setGuests(Array.from({ length: count }, () => emptyGuest()));
+    setPassengers(Array.from({ length: count }, () => emptyPassenger()));
   }, [router]);
 
-  const nights = useMemo(
-    () => (draft ? nightsBetween(draft.checkIn, draft.checkOut) : 1),
-    [draft],
-  );
+  const total = useMemo(() => draft?.transfer.sellAmountMinor || 0, [draft]);
 
-  const total = useMemo(() => {
-    if (!draft) return 0;
-    let amount = draft.hotel.sellAmountMinor;
-    if (!draft.selectedRate) {
-      const room = ROOM_OPTIONS.find((r) => r.value === roomOption);
-      if (room) amount += room.extra * nights;
-    }
-    if (extras.breakfast && !draft.selectedRate?.boardCode?.match(/BB|HB|FB|AI/)) {
-      amount += 2500 * nights;
-    }
-    if (extras.parking) amount += 1500 * nights;
-    if (extras.earlyCheckin) amount += 2000;
-    return amount;
-  }, [draft, roomOption, extras, nights]);
-
-  function updateGuest(index: number, patch: Partial<Guest>) {
-    setGuests((prev) => prev.map((g, i) => (i === index ? { ...g, ...patch } : g)));
+  function updatePassenger(index: number, patch: Partial<Passenger>) {
+    setPassengers((prev) =>
+      prev.map((row, i) => (i === index ? { ...row, ...patch } : row)),
+    );
   }
 
-  function guestComplete(g: Guest) {
-    return Boolean(g.firstName.trim() && g.lastName.trim());
+  function passengerComplete(row: Passenger) {
+    return Boolean(row.firstName.trim() && row.lastName.trim());
   }
 
   function validateStep() {
     if (step === 0) {
-      if (!guests.every(guestComplete)) {
-        setError("أكمل أسماء جميع النزلاء قبل المتابعة");
+      if (!passengers.every(passengerComplete)) {
+        setError("أكمل أسماء جميع الركاب قبل المتابعة");
         return false;
       }
       if (!email.trim() || !phone.trim()) {
@@ -189,32 +133,37 @@ export default function HotelBookPage() {
         {
           method: "POST",
           body: JSON.stringify({
-            serviceType: "hotel",
+            serviceType: "transfer",
             inquiryId: draft.inquiryId,
             quoteItemId: draft.quoteItemId,
             offer: {
-              id: draft.hotel.id,
-              description: draft.hotel.description,
+              id: draft.transfer.id,
+              description: draft.transfer.description,
               sellAmountMinor: total,
-              currency: draft.hotel.currency,
-              details: {
-                ...draft.hotel.details,
-                selectedRate: draft.selectedRate,
-              },
-              providerOfferRef: draft.selectedRate?.rateKey || draft.hotel.id,
+              currency: draft.transfer.currency,
+              details: draft.transfer.details,
+              providerKey: String(
+                draft.transfer.details.provider || "hotelbeds",
+              ),
+              providerOfferRef: draft.transfer.id,
             },
-            stay: {
-              location: draft.location,
-              locationLabel: draft.locationLabel,
-              checkIn: draft.checkIn,
-              checkOut: draft.checkOut,
-              rooms: draft.rooms,
+            route: {
+              origin: draft.from,
+              destination: draft.to,
+              originLabel: draft.from,
+              destinationLabel: draft.to,
+              departDate: draft.outboundDate,
+              returnDate: draft.inboundDate,
             },
-            guests,
+            guests: passengers,
+            travelers: passengers,
             adults: draft.adults,
             children: draft.children,
             contact: { email, phone: `${phoneCode} ${phone}` },
-            extras: { ...extras, roomOption },
+            extras: {
+              outboundTime: draft.outboundTime,
+              inboundTime: draft.inboundTime,
+            },
             payment: {
               method: paymentMethod,
               status: paymentMethod === "transfer" ? "pending" : "paid",
@@ -251,21 +200,21 @@ export default function HotelBookPage() {
 
   if (!draft) {
     return (
-      <AppShell title="إتمام حجز الفندق">
-        <p className="lead">جارٍ تحميل بيانات الإقامة...</p>
+      <AppShell title="إتمام حجز النقل">
+        <p className="lead">جارٍ تحميل بيانات النقل...</p>
       </AppShell>
     );
   }
 
   if (bookingId) {
     return (
-      <AppShell title="إتمام حجز الفندق">
+      <AppShell title="إتمام حجز النقل">
         <div className="book-success">
           <div className="book-success-icon">✓</div>
-          <h2>تم تأكيد حجز الفندق بنجاح</h2>
+          <h2>تم تسجيل طلب النقل بنجاح</h2>
           <p>
-            سيتم مراجعة الحجز وتأكيده من فريقنا قريبًا. تم إرسال تفاصيل الإقامة
-            إلى بريدك الإلكتروني.
+            الحجز محلي حالياً وسيتولّى الفريق تأكيده. تفاصيل السيارة والمسار
+            محفوظة مع الطلب.
           </p>
           <span className="book-success-id">رقم الحجز: {bookingId}</span>
           <div className="book-success-actions">
@@ -281,10 +230,15 @@ export default function HotelBookPage() {
     );
   }
 
-  const hotelName = String(draft.hotel.details.name || "فندق");
+  const vehicle = String(
+    draft.transfer.details.vehicleName || draft.transfer.description,
+  );
+  const typeLabel = String(
+    draft.transfer.details.transferTypeLabel || "نقل",
+  );
 
   return (
-    <AppShell title="إتمام حجز الفندق">
+    <AppShell title="إتمام حجز النقل">
       <div className="book-page">
         <ol className="book-steps">
           {STEPS.map((label, idx) => (
@@ -300,14 +254,16 @@ export default function HotelBookPage() {
 
         <div className="book-route-head">
           <p>
-            {draft.rooms} غرفة · {draft.adults + draft.children} نزيل ·{" "}
-            {formatTripDate(draft.checkIn)} — {formatTripDate(draft.checkOut)} ·{" "}
-            {nights} ليلة
+            {typeLabel} · {draft.adults + draft.children} ركاب ·{" "}
+            {formatTripDate(draft.outboundDate)} {formatTime(draft.outboundTime)}
+            {draft.inboundDate
+              ? ` — ${formatTripDate(draft.inboundDate)} ${formatTime(draft.inboundTime)}`
+              : ""}
           </p>
-          <h2>{hotelName}</h2>
-          {draft.selectedRate?.rateComments ? (
-            <p className="hotel-rate-comments">{draft.selectedRate.rateComments}</p>
-          ) : null}
+          <h2>{vehicle}</h2>
+          <p>
+            {draft.from} → {draft.to}
+          </p>
         </div>
 
         <div className="book-layout">
@@ -315,10 +271,10 @@ export default function HotelBookPage() {
             {step === 0 ? (
               <>
                 <section className="book-card">
-                  <h3>بيانات النزلاء</h3>
-                  <p>أضف اسم كل نزيل كما هو في الهوية أو جواز السفر</p>
+                  <h3>بيانات الركاب</h3>
+                  <p>أضف اسم كل راكب كما هو في الهوية أو جواز السفر</p>
 
-                  {guests.map((guest, index) => {
+                  {passengers.map((row, index) => {
                     const isAdult = index < draft.adults;
                     return (
                       <div key={index} className="traveler-box">
@@ -326,9 +282,9 @@ export default function HotelBookPage() {
                           <strong>
                             {isAdult ? "بالغ" : "طفل"} {index + 1}
                           </strong>
-                          {guestComplete(guest) ? (
+                          {passengerComplete(row) ? (
                             <em className="ok">
-                              {guest.firstName} {guest.lastName}
+                              {row.firstName} {row.lastName}
                             </em>
                           ) : (
                             <em>بيانات ناقصة</em>
@@ -338,8 +294,10 @@ export default function HotelBookPage() {
                           <label className="field field-title">
                             <span>اللقب</span>
                             <select
-                              value={guest.title}
-                              onChange={(e) => updateGuest(index, { title: e.target.value })}
+                              value={row.title}
+                              onChange={(e) =>
+                                updatePassenger(index, { title: e.target.value })
+                              }
                             >
                               <option value="mr">السيد</option>
                               <option value="mrs">السيدة</option>
@@ -351,18 +309,22 @@ export default function HotelBookPage() {
                             <label className="field">
                               <span>الاسم الأول *</span>
                               <input
-                                value={guest.firstName}
+                                value={row.firstName}
                                 onChange={(e) =>
-                                  updateGuest(index, { firstName: e.target.value })
+                                  updatePassenger(index, {
+                                    firstName: e.target.value,
+                                  })
                                 }
                               />
                             </label>
                             <label className="field">
                               <span>اسم العائلة *</span>
                               <input
-                                value={guest.lastName}
+                                value={row.lastName}
                                 onChange={(e) =>
-                                  updateGuest(index, { lastName: e.target.value })
+                                  updatePassenger(index, {
+                                    lastName: e.target.value,
+                                  })
                                 }
                               />
                             </label>
@@ -370,9 +332,11 @@ export default function HotelBookPage() {
                           <label className="field">
                             <span>الجنسية</span>
                             <input
-                              value={guest.nationality}
+                              value={row.nationality}
                               onChange={(e) =>
-                                updateGuest(index, { nationality: e.target.value })
+                                updatePassenger(index, {
+                                  nationality: e.target.value,
+                                })
                               }
                               placeholder="SA"
                             />
@@ -396,12 +360,17 @@ export default function HotelBookPage() {
                         onChange={(e) => setEmail(e.target.value)}
                         placeholder="name@example.com"
                       />
-                      <small className="hint">سنرسل تأكيد الحجز إلى هذا البريد</small>
+                      <small className="hint">
+                        سنرسل تأكيد الحجز إلى هذا البريد
+                      </small>
                     </label>
                     <label className="field">
                       <span>رقم الجوال *</span>
                       <div className="phone-row">
-                        <select value={phoneCode} onChange={(e) => setPhoneCode(e.target.value)}>
+                        <select
+                          value={phoneCode}
+                          onChange={(e) => setPhoneCode(e.target.value)}
+                        >
                           <option value="+965">🇰🇼 +965</option>
                           <option value="+966">🇸🇦 +966</option>
                           <option value="+971">🇦🇪 +971</option>
@@ -414,9 +383,6 @@ export default function HotelBookPage() {
                           placeholder="5xxxxxxxx"
                         />
                       </div>
-                      <small className="hint contact-hint-spacer" aria-hidden="true">
-                        &nbsp;
-                      </small>
                     </label>
                   </div>
                 </section>
@@ -427,17 +393,16 @@ export default function HotelBookPage() {
               <>
                 <section className="book-card">
                   <h3>الدفع وتأكيد الحجز</h3>
-                  <p>راجع تفاصيل الحجز ثم أكّد الدفع</p>
+                  <p>راجع تفاصيل النقل ثم أكّد الطلب</p>
 
                   <ul className="book-checklist">
                     <li className="book-checklist-item done">
                       <span className="book-checklist-check">✓</span>
                       <div>
-                        <strong>بيانات النزلاء</strong>
+                        <strong>بيانات الركاب</strong>
                         <small>
-                          {guests.length}{" "}
-                          {guests.length === 1 ? "نزيل" : "نزلاء"} · بيانات
-                          مكتملة
+                          {passengers.length}{" "}
+                          {passengers.length === 1 ? "راكب" : "ركاب"}
                         </small>
                       </div>
                     </li>
@@ -453,11 +418,9 @@ export default function HotelBookPage() {
                     <li className="book-checklist-item done">
                       <span className="book-checklist-check">✓</span>
                       <div>
-                        <strong>باقة الغرفة</strong>
+                        <strong>المركبة</strong>
                         <small>
-                          {draft.selectedRate
-                            ? `${draft.selectedRate.roomName} · ${draft.selectedRate.boardName}`
-                            : ROOM_OPTIONS.find((r) => r.value === roomOption)?.label}
+                          {typeLabel} · {vehicle}
                         </small>
                       </div>
                     </li>
@@ -465,29 +428,38 @@ export default function HotelBookPage() {
 
                   <div className="review-grid">
                     <div>
-                      <span>الفندق</span>
-                      <strong>{hotelName}</strong>
+                      <span>من</span>
+                      <strong>{draft.from}</strong>
                     </div>
                     <div>
-                      <span>الموقع</span>
-                      <strong>{draft.locationLabel || draft.location}</strong>
+                      <span>إلى</span>
+                      <strong>{draft.to}</strong>
                     </div>
                     <div>
-                      <span>الإقامة</span>
+                      <span>الذهاب</span>
                       <strong>
-                        {formatTripDate(draft.checkIn)} — {formatTripDate(draft.checkOut)} ·{" "}
-                        {nights} ليلة
+                        {formatTripDate(draft.outboundDate)}{" "}
+                        {formatTime(draft.outboundTime)}
                       </strong>
                     </div>
+                    {draft.inboundDate ? (
+                      <div>
+                        <span>العودة</span>
+                        <strong>
+                          {formatTripDate(draft.inboundDate)}{" "}
+                          {formatTime(draft.inboundTime)}
+                        </strong>
+                      </div>
+                    ) : null}
                   </div>
 
                   <div className="review-travelers">
-                    <strong>أسماء النزلاء</strong>
+                    <strong>أسماء الركاب</strong>
                     <ul>
-                      {guests.map((g, i) => (
+                      {passengers.map((row, i) => (
                         <li key={i}>
                           <span>
-                            {g.firstName} {g.lastName}
+                            {row.firstName} {row.lastName}
                           </span>
                           <em>{i < draft.adults ? "بالغ" : "طفل"}</em>
                         </li>
@@ -498,20 +470,7 @@ export default function HotelBookPage() {
 
                 <section className="book-card">
                   <h3>طريقة الدفع</h3>
-                  <p>اختر طريقة الدفع لإتمام الحجز بأمان</p>
-
-                  <div className="pay-secure-banner">
-                    <span className="pay-secure-banner-icon" aria-hidden="true">
-                      🔒
-                    </span>
-                    <div>
-                      <strong>الدفع آمن ومشفّر بالكامل</strong>
-                      <p>
-                        بياناتك محمية بمعايير تشفير قياسية في الصناعة ولن تتم
-                        مشاركتها مع أي طرف ثالث.
-                      </p>
-                    </div>
-                  </div>
+                  <p>اختر طريقة الدفع لإتمام الطلب</p>
 
                   <div className="pay-methods" role="radiogroup" aria-label="طريقة الدفع">
                     {[
@@ -523,7 +482,9 @@ export default function HotelBookPage() {
                         key={opt.value}
                         type="button"
                         className={`pay-method${paymentMethod === opt.value ? " on" : ""}`}
-                        onClick={() => setPaymentMethod(opt.value as PaymentMethod)}
+                        onClick={() =>
+                          setPaymentMethod(opt.value as PaymentMethod)
+                        }
                       >
                         <strong>{opt.label}</strong>
                         <span>{opt.hint}</span>
@@ -531,19 +492,15 @@ export default function HotelBookPage() {
                     ))}
                   </div>
 
-                  {!paymentMethod ? (
-                    <p className="pay-select-hint">
-                      اختر إحدى طرق الدفع أعلاه لإكمال تأكيد الحجز
-                    </p>
-                  ) : null}
-
                   {paymentMethod === "card" ? (
                     <div className="pay-panel">
                       <label className="field">
                         <span>الاسم على البطاقة *</span>
                         <input
                           value={card.name}
-                          onChange={(e) => setCard({ ...card, name: e.target.value })}
+                          onChange={(e) =>
+                            setCard({ ...card, name: e.target.value })
+                          }
                           placeholder="كما هو مطبوع على البطاقة"
                         />
                       </label>
@@ -551,7 +508,9 @@ export default function HotelBookPage() {
                         <span>رقم البطاقة *</span>
                         <input
                           value={card.number}
-                          onChange={(e) => setCard({ ...card, number: e.target.value })}
+                          onChange={(e) =>
+                            setCard({ ...card, number: e.target.value })
+                          }
                           placeholder="0000 0000 0000 0000"
                           inputMode="numeric"
                         />
@@ -561,7 +520,9 @@ export default function HotelBookPage() {
                           <span>تاريخ الانتهاء *</span>
                           <input
                             value={card.expiry}
-                            onChange={(e) => setCard({ ...card, expiry: e.target.value })}
+                            onChange={(e) =>
+                              setCard({ ...card, expiry: e.target.value })
+                            }
                             placeholder="MM/YY"
                           />
                         </label>
@@ -569,42 +530,30 @@ export default function HotelBookPage() {
                           <span>CVV *</span>
                           <input
                             value={card.cvv}
-                            onChange={(e) => setCard({ ...card, cvv: e.target.value })}
+                            onChange={(e) =>
+                              setCard({ ...card, cvv: e.target.value })
+                            }
                             placeholder="123"
                             inputMode="numeric"
                           />
                         </label>
                       </div>
-                      <p className="pay-secure-note">🔒 الدفع مشفّر وآمن — لا تُحفظ بيانات بطاقتك.</p>
                     </div>
                   ) : null}
 
                   {paymentMethod === "knet" ? (
                     <div className="pay-panel">
                       <p className="pay-secure-note">
-                        سيتم تحويلك لصفحة كي نت الآمنة لإتمام الدفع بعد تأكيد الطلب.
+                        سيتم تحويلك لصفحة كي نت الآمنة بعد تأكيد الطلب.
                       </p>
                     </div>
                   ) : null}
 
                   {paymentMethod === "transfer" ? (
                     <div className="pay-panel">
-                      <ul className="pay-transfer-details">
-                        <li>
-                          <span>اسم البنك</span>
-                          <strong>بنك الكويت الوطني</strong>
-                        </li>
-                        <li>
-                          <span>رقم الحساب (IBAN)</span>
-                          <strong>KW00 NBOK 0000 0000 0000 0000 00</strong>
-                        </li>
-                        <li>
-                          <span>المستفيد</span>
-                          <strong>Watesly Travel AI</strong>
-                        </li>
-                      </ul>
                       <p className="pay-secure-note">
-                        يبقى الحجز قيد الانتظار حتى تأكيد استلام الحوالة من فريقنا.
+                        يبقى الحجز قيد الانتظار حتى تأكيد استلام الحوالة من
+                        فريقنا.
                       </p>
                     </div>
                   ) : null}
@@ -623,8 +572,7 @@ export default function HotelBookPage() {
                 className="btn"
                 onClick={next}
                 disabled={
-                  submitting ||
-                  (step === STEPS.length - 1 && !paymentMethod)
+                  submitting || (step === STEPS.length - 1 && !paymentMethod)
                 }
               >
                 {submitting
@@ -641,65 +589,23 @@ export default function HotelBookPage() {
               <h3>تفاصيل السعر</h3>
               <div className="price-row">
                 <span>
-                  {nights} ليلة · {draft.rooms} غرفة
+                  {typeLabel} · {vehicle}
                 </span>
                 <strong>
-                  {formatMoneyMinor(draft.hotel.sellAmountMinor, draft.hotel.currency)}
+                  {formatMoneyMinor(total, draft.transfer.currency)}
                 </strong>
               </div>
-              {draft.selectedRate ? (
-                <div className="price-row">
-                  <span>
-                    {draft.selectedRate.roomName} · {draft.selectedRate.boardName}
-                  </span>
-                  <strong>
-                    {formatMoneyMinor(draft.hotel.sellAmountMinor, draft.hotel.currency)}
-                  </strong>
-                </div>
-              ) : roomOption !== "standard" ? (
-                <div className="price-row">
-                  <span>{ROOM_OPTIONS.find((r) => r.value === roomOption)?.label}</span>
-                  <strong>
-                    {formatMoneyMinor(
-                      (ROOM_OPTIONS.find((r) => r.value === roomOption)?.extra || 0) * nights,
-                      draft.hotel.currency,
-                    )}
-                  </strong>
-                </div>
-              ) : null}
-              {extras.breakfast ? (
-                <div className="price-row">
-                  <span>إفطار إضافي</span>
-                  <strong>{formatMoneyMinor(2500 * nights, draft.hotel.currency)}</strong>
-                </div>
-              ) : null}
-              {extras.parking ? (
-                <div className="price-row">
-                  <span>موقف سيارات</span>
-                  <strong>{formatMoneyMinor(1500 * nights, draft.hotel.currency)}</strong>
-                </div>
-              ) : null}
-              {extras.earlyCheckin ? (
-                <div className="price-row">
-                  <span>تسجيل وصول مبكر</span>
-                  <strong>{formatMoneyMinor(2000, draft.hotel.currency)}</strong>
-                </div>
-              ) : null}
               <div className="price-row muted">
                 <span>الضرائب ورسوم الخدمة</span>
                 <strong>مشمولة</strong>
               </div>
               <div className="price-total">
                 <span>الإجمالي</span>
-                <strong>{formatMoneyMinor(total, draft.hotel.currency)}</strong>
+                <strong>
+                  {formatMoneyMinor(total, draft.transfer.currency)}
+                </strong>
               </div>
-              <p className="hint">يشمل الضرائب والرسوم · بدون رسوم مخفية</p>
-            </section>
-
-            <section className="book-card assist-card">
-              <strong>تحتاج مساعدة في حجزك؟</strong>
-              <p>يمكنك التواصل مع فريق الدعم أو مراجعة حجوزاتك في أي وقت.</p>
-              <Link href="/dashboard/bookings">عرض الحجوزات</Link>
+              <p className="hint">حجز محلي للمراجعة — بدون تأكيد Hotelbeds الحي</p>
             </section>
           </aside>
         </div>

@@ -16,9 +16,10 @@ type Props = {
   item: TransferRow;
   from: string;
   to: string;
+  onBook?: () => void;
 };
 
-export function TransferSearchCard({ item, from, to }: Props) {
+export function TransferSearchCard({ item, from, to, onBook }: Props) {
   const d = item.extra || {};
   const typeLabel = String(d.transferTypeLabel || "نقل");
   const vehicle = String(d.vehicleName || "");
@@ -66,6 +67,15 @@ export function TransferSearchCard({ item, from, to }: Props) {
       <div className="transfer-search-card-action">
         <strong>{formatMoneyMinor(item.price, item.currency)}</strong>
         <small>إجمالي النقل</small>
+        {onBook ? (
+          <button
+            type="button"
+            className="btn hotel-search-card-cta"
+            onClick={onBook}
+          >
+            احجز
+          </button>
+        ) : null}
       </div>
     </article>
   );

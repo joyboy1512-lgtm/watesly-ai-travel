@@ -157,6 +157,7 @@ export default function BookingsPage() {
                 <option value="">الكل</option>
                 <option value="flight">طيران</option>
                 <option value="hotel">فنادق</option>
+                <option value="transfer">نقل</option>
               </select>
             </label>
           </div>

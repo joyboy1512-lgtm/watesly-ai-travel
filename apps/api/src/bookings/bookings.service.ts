@@ -45,7 +45,7 @@ export type CreateFromDraftInput = {
   organizationId: string;
   actorUserId?: string;
   canManagePayments: boolean;
-  serviceType: "flight" | "hotel";
+  serviceType: "flight" | "hotel" | "transfer";
   inquiryId?: string;
   quoteItemId?: string;
   offer: BookingDraftOfferInput;
@@ -566,6 +566,20 @@ export class BookingsService {
     const costAmount = Math.round(sellAmount * 0.88);
     const profitAmount = sellAmount - costAmount;
 
+    const isFlight = input.serviceType === "flight";
+    const isTransfer = input.serviceType === "transfer";
+    const origin = isFlight || isTransfer ? input.route?.origin || null : null;
+    const destination =
+      isFlight || isTransfer
+        ? input.route?.destination || null
+        : input.stay?.location || null;
+    const departDate = parseDateSafe(
+      isFlight || isTransfer ? input.route?.departDate : input.stay?.checkIn,
+    );
+    const returnDate = parseDateSafe(
+      isFlight || isTransfer ? input.route?.returnDate : input.stay?.checkOut,
+    );
+
     const inquiry =
       (input.inquiryId
         ? await this.prisma.travelInquiry.findFirst({
@@ -580,24 +594,10 @@ export class BookingsService {
           organizationId: input.organizationId,
           source: "direct",
           status: "quoted",
-          origin:
-            input.serviceType === "flight"
-              ? input.route?.origin || null
-              : null,
-          destination:
-            input.serviceType === "flight"
-              ? input.route?.destination || null
-              : input.stay?.location || null,
-          departDate: parseDateSafe(
-            input.serviceType === "flight"
-              ? input.route?.departDate
-              : input.stay?.checkIn,
-          ),
-          returnDate: parseDateSafe(
-            input.serviceType === "flight"
-              ? input.route?.returnDate
-              : input.stay?.checkOut,
-          ),
+          origin,
+          destination,
+          departDate,
+          returnDate,
           adults: input.adults ?? 1,
           children: input.children ?? 0,
           cabinClass: input.route?.cabinClass,

@@ -204,7 +204,7 @@ function invoiceHtml(row: BookingInvoiceData, orgName: string) {
   const itemRows = items
     .map(
       (item) => `<tr>
-        <td>${esc(item.serviceType === "hotel" ? "فندق" : item.serviceType === "flight" ? "طيران" : item.serviceType)}</td>
+        <td>${esc(item.serviceType === "hotel" ? "فندق" : item.serviceType === "flight" ? "طيران" : item.serviceType === "transfer" ? "نقل" : item.serviceType)}</td>
         <td>${esc(item.description)}</td>
         <td>${esc(formatMoneyMinor(item.sellAmount ?? 0, currency))}</td>
       </tr>`,

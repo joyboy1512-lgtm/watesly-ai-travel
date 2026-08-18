@@ -29,7 +29,7 @@ const BOOKING_TRANSITIONS: Record<string, string[]> = {
 };
 
 type FromDraftBody = {
-  serviceType: "flight" | "hotel";
+  serviceType: "flight" | "hotel" | "transfer";
   inquiryId?: string;
   quoteItemId?: string;
   offer: BookingDraftOfferInput;

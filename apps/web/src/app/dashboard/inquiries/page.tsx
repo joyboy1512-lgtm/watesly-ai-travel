@@ -10,7 +10,11 @@ import { HotelDetailModal } from "@/components/hotels/HotelDetailModal";
 import { HotelLiveBadge } from "@/components/hotels/HotelLiveBadge";
 import { TransferSearchCard } from "@/components/hotels/TransferSearchCard";
 import { apiFetch } from "@/lib/api";
-import { saveFlightDraft, saveHotelDraft } from "@/lib/booking-draft";
+import {
+  saveFlightDraft,
+  saveHotelDraft,
+  saveTransferDraft,
+} from "@/lib/booking-draft";
 import { getPreferredCurrency } from "@/lib/currency";
 import { formatDate, formatMoneyMinor, formatMoneyMinorCompact } from "@/lib/format";
 import {
@@ -857,6 +861,30 @@ export default function InquiriesPage() {
     });
     setDetailHotelId(null);
     router.push("/dashboard/inquiries/book/hotel");
+  }
+
+  function confirmTransferBooking(item: AncillaryResult) {
+    const extra = item.extra || {};
+    saveTransferDraft({
+      transfer: {
+        id: item.id,
+        description: item.name,
+        sellAmountMinor: item.price,
+        currency: item.currency,
+        details: extra,
+      },
+      from: String(extra.fromLabel || form.carPickup),
+      to: String(extra.toLabel || form.carDropoff),
+      outboundDate: form.departDate,
+      outboundTime: form.pickupTime,
+      inboundDate: form.returnDate || undefined,
+      inboundTime: form.returnDate ? form.dropoffTime : undefined,
+      adults: form.adults,
+      children: form.children,
+      createdAt: new Date().toISOString(),
+      inquiryId: currentInquiryId || undefined,
+    });
+    router.push("/dashboard/inquiries/book/transfer");
   }
 
   const [carResults, setCarResults] = useState<AncillaryResult[]>([]);
@@ -1913,6 +1941,7 @@ export default function InquiriesPage() {
                       item={c}
                       from={form.carPickup}
                       to={form.carDropoff}
+                      onBook={() => confirmTransferBooking(c)}
                     />
                   ))}
                   {carResults.length === 0 ? (

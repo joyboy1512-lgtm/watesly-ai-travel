@@ -401,8 +401,26 @@ export default function ContactsPage() {
   return (
     <AppShell title="العملاء" surface="light">
       <div className="crm-page">
-        <div className="crm-layout">
-          <section className="crm-main">
+        <aside className="crm-metrics">
+          <article className="crm-metric gold">
+            <span>إجمالي العملاء</span>
+            <strong>{stats.total}</strong>
+          </article>
+          <article className="crm-metric teal">
+            <span>جديد هذا الأسبوع</span>
+            <strong>{stats.newThisWeek}</strong>
+          </article>
+          <article className="crm-metric navy">
+            <span>بدون اسم</span>
+            <strong>{stats.unnamed}</strong>
+          </article>
+          <article className="crm-metric mute">
+            <span>غير نشط 30 يوم</span>
+            <strong>{stats.inactive30}</strong>
+          </article>
+        </aside>
+
+        <section className="crm-main">
             <div className="crm-actions">
               <button
                 type="button"
@@ -523,6 +541,9 @@ export default function ContactsPage() {
                 placeholder="بحث..."
                 onBlur={() => void load()}
               />
+              <button type="button" className="crm-btn primary" onClick={() => void load()}>
+                بحث
+              </button>
             </div>
 
             {error ? <p className="crm-error">{error}</p> : null}
@@ -651,26 +672,6 @@ export default function ContactsPage() {
               </span>
             </div>
           </section>
-
-          <aside className="crm-metrics">
-            <article className="crm-metric gold">
-              <span>إجمالي العملاء</span>
-              <strong>{stats.total}</strong>
-            </article>
-            <article className="crm-metric teal">
-              <span>جديد هذا الأسبوع</span>
-              <strong>{stats.newThisWeek}</strong>
-            </article>
-            <article className="crm-metric navy">
-              <span>بدون اسم</span>
-              <strong>{stats.unnamed}</strong>
-            </article>
-            <article className="crm-metric mute">
-              <span>غير نشط 30 يوم</span>
-              <strong>{stats.inactive30}</strong>
-            </article>
-          </aside>
-        </div>
       </div>
 
       {showCreate ? (

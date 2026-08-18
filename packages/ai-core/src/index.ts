@@ -210,6 +210,21 @@ export class MockAiProvider implements AiProvider {
       };
     }
 
+    if (/(موظف|بشري|خدمة\s*عملاء|human|agent|support)/i.test(input.userText || "")) {
+      return {
+        text: "",
+        model: "mock-rules-v1",
+        usage: EMPTY_USAGE,
+        functionCalls: [
+          {
+            callId: "mock_handoff",
+            name: "handoff_to_human",
+            arguments: JSON.stringify({ reason: "طلب العميل موظفاً" }),
+          },
+        ],
+      };
+    }
+
     const extraction = await this.extractTravelIntent({
       messageText: input.userText || "",
     });
@@ -304,10 +319,15 @@ function summarizeMockToolOutputs(
         disabled?: boolean;
         reason?: string;
         error?: string;
+        ok?: boolean;
         count?: number;
         provider?: string;
         items?: Array<{ description?: string; currency?: string }>;
       };
+      if (parsed.ok && parsed.reason) {
+        lines.push(`تم تسجيل التحويل إلى موظف: ${parsed.reason}`);
+        continue;
+      }
       if (parsed.disabled || parsed.error) {
         lines.push(parsed.reason || parsed.error || "الأداة غير متاحة حالياً.");
         continue;

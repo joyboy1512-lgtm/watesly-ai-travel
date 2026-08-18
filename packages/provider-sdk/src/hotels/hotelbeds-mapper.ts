@@ -138,8 +138,9 @@ export function mapHotelbedsToOffer(input: {
   expiresAt: string;
   content?: HbContentHotel;
   searchCenter?: GeoCenter;
+  facilityCatalog?: Map<string, string>;
 }): HotelOffer | null {
-  const { hotel, params, geoLabel, liveMode, expiresAt, content, searchCenter } = input;
+  const { hotel, params, geoLabel, liveMode, expiresAt, content, searchCenter, facilityCatalog } = input;
   const hotelCurrency = String(hotel.currency || params.currency || "EUR").toUpperCase();
   const { rooms, rateOptions } = extractHotelbedsRateOptions(hotel, hotelCurrency);
   if (!rateOptions.length) return null;
@@ -205,7 +206,7 @@ export function mapHotelbedsToOffer(input: {
     propertyType: "hotel",
   };
 
-  const enriched = enrichDetailsFromContent({ details, content, searchCenter });
+  const enriched = enrichDetailsFromContent({ details, content, searchCenter, facilityCatalog });
   if (enriched.latitude != null && enriched.longitude != null) {
     enriched.mapUrl = `https://www.openstreetmap.org/?mlat=${enriched.latitude}&mlon=${enriched.longitude}#map=15/${enriched.latitude}/${enriched.longitude}`;
   }

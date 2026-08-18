@@ -21,7 +21,7 @@ export async function fetchHotelbedsContentMap(
     const qs = new URLSearchParams({
       codes: chunk.join(","),
       fields: "all",
-      language: "ENG",
+      language: "ARA",
     });
     const url = `${creds.baseUrl}/hotel-content-api/1.0/hotels?${qs}`;
     try {
@@ -55,4 +55,63 @@ export function pickRoomImages(hotel?: HbContentHotel): Record<string, string> {
     out[img.roomCode] = hotelbedsImageUrl(img.path, "medium") || "";
   }
   return out;
+}
+
+type HbFacilityType = {
+  code?: number;
+  facilityGroupCode?: number;
+  facilityTypologyCode?: number;
+  description?: { content?: string };
+};
+
+let facilityCatalogCache: Map<string, string> | null = null;
+let facilityCatalogPromise: Promise<Map<string, string>> | null = null;
+
+const NOISE_LABEL = /^(hotel|\d+|yes|no|true|false)$/i;
+const SKIP_KEYS = new Set([
+  "10:20", // year of construction
+  "10:30", // year of renovation
+  "10:40", // annexes
+  "10:50", // floors
+  "10:70", // total rooms
+  "10:80",
+  "10:100",
+]);
+
+export async function fetchHotelbedsFacilityCatalog(
+  creds: HotelbedsCredentials,
+): Promise<Map<string, string>> {
+  if (facilityCatalogCache) return facilityCatalogCache;
+  if (facilityCatalogPromise) return facilityCatalogPromise;
+
+  facilityCatalogPromise = (async () => {
+    const map = new Map<string, string>();
+    if (!creds.apiKey || !creds.apiSecret) return map;
+    try {
+      const qs = new URLSearchParams({
+        fields: "all",
+        language: "ARA",
+        from: "1",
+        to: "1000",
+      });
+      const url = `${creds.baseUrl}/hotel-content-api/1.0/types/facilities?${qs}`;
+      const response = await fetch(url, { headers: hotelbedsHeaders(creds) });
+      const json = (await response.json().catch(() => ({}))) as {
+        facilities?: HbFacilityType[];
+      };
+      if (!response.ok) return map;
+      for (const row of json.facilities || []) {
+        const key = `${row.facilityGroupCode ?? 0}:${row.code ?? 0}`;
+        const label = row.description?.content?.trim();
+        if (!label || NOISE_LABEL.test(label) || SKIP_KEYS.has(key)) continue;
+        map.set(key, label);
+      }
+    } catch {
+      // catalog is optional
+    }
+    facilityCatalogCache = map;
+    return map;
+  })();
+
+  return facilityCatalogPromise;
 }

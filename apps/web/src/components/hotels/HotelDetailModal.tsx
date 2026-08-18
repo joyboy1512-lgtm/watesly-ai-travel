@@ -65,23 +65,22 @@ export function HotelDetailModal({ hotel, nights, meta, onClose, onEnterGuestDat
         aria-labelledby="hotel-detail-title"
         onClick={(e) => e.stopPropagation()}
       >
-        <header className="hotel-name-banner">
-          <div className="hotel-name-banner-main">
-            <h2 id="hotel-detail-title" title={name}>
-              {name}
-            </h2>
-            {stars > 0 ? (
-              <div className="hotel-gold-stars" aria-label={`${stars} نجوم`}>
-                {Array.from({ length: Math.min(5, stars) }, (_, i) => (
-                  <span key={i}>★</span>
-                ))}
-              </div>
-            ) : null}
-          </div>
+        <div className="hotel-modal-toolbar">
           <button type="button" className="flight-modal-close" aria-label="إغلاق" onClick={onClose}>
             ×
           </button>
-        </header>
+        </div>
+
+        <div className="hotel-name-chip" title={name}>
+          <h2 id="hotel-detail-title">{name}</h2>
+          {stars > 0 ? (
+            <div className="hotel-gold-stars" aria-label={`${stars} نجوم`}>
+              {Array.from({ length: Math.min(5, stars) }, (_, i) => (
+                <span key={i}>★</span>
+              ))}
+            </div>
+          ) : null}
+        </div>
 
         {selectedRate ? (
           <HotelBookingSummary
@@ -135,11 +134,12 @@ export function HotelDetailModal({ hotel, nights, meta, onClose, onEnterGuestDat
                     عرض على الخريطة ↗
                   </a>
                 ) : null}
-                <div className="hotel-detail-from">
-                  <small>يبدأ من</small>
-                  <strong>{formatMoneyMinor(perNight, hotel.currency)}</strong>
-                  <em>/ ليلة · {formatMoneyMinor(hotel.displayFromMinor, hotel.currency)} إجمالي</em>
-                </div>
+              </div>
+              <div className="hotel-detail-from">
+                <small>يبدأ من</small>
+                <strong>{formatMoneyMinor(perNight, hotel.currency)}</strong>
+                <em>/ ليلة</em>
+                <span>{formatMoneyMinor(hotel.displayFromMinor, hotel.currency)} إجمالي</span>
               </div>
             </div>
 

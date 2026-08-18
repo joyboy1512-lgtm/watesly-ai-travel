@@ -6,64 +6,83 @@ import {
 } from "./hotelbeds-content-client";
 import type { HbContentFacility, HbContentHotel } from "./hotelbeds-content-types";
 
-const FACILITY_LABELS: Record<string, string> = {
-  "10:261": "واي‑فاي",
-  "10:550": "موقف سيارات",
-  "10:295": "مسبح",
-  "10:470": "صالة رياضية",
-  "10:620": "سبا",
-  "10:30": "مكيف",
-  "10:40": "مطعم",
-  "10:135": "خدمة الغرف",
-  "60:100": "إنترنت",
-  "60:80": "تلفزيون",
-  "60:55": "خزنة",
-  "60:143": "مكيف",
-  "60:120": "ميني بار",
-  "60:295": "شرفة",
+const FILTER_FACILITY_MAP: Record<string, string[]> = {
+  wifi: ["70:550", "60:261", "60:100"],
+  parking: ["70:200", "70:220", "70:230"],
+  pool: ["70:320", "73:10", "73:20"],
+  gym: ["70:470"],
+  spa: ["70:620", "70:560"],
 };
 
-const FILTER_FACILITY_MAP: Record<string, string[]> = {
-  wifi: ["10:261", "60:100"],
-  parking: ["10:550"],
-  pool: ["10:295"],
-  gym: ["10:470"],
-  spa: ["10:620"],
+const FALLBACK_LABELS: Record<string, string> = {
+  "70:550": "واي‑فاي",
+  "60:261": "واي‑فاي",
+  "60:100": "إنترنت",
+  "70:70": "مصعد",
+  "70:30": "استقبال 24 ساعة",
+  "70:40": "خزنة الفندق",
+  "70:470": "صالة رياضية",
+  "70:320": "مسبح",
+  "70:560": "ساونا",
+  "70:620": "سبا",
+  "60:120": "ميني بار",
+  "60:40": "مجفف شعر",
+  "60:30": "حوض استحمام",
+  "60:20": "دش",
 };
 
 function facilityKey(f: HbContentFacility): string {
   return `${f.facilityGroupCode ?? 0}:${f.facilityCode ?? 0}`;
 }
 
-function mapFacilityLabels(facilities?: HbContentFacility[]): string[] {
-  const labels = new Set<string>();
+function isPresent(f: HbContentFacility): boolean {
+  if (f.indYesOrNo === false || f.indLogic === false) return false;
+  return true;
+}
+
+function mapFacilityLabels(
+  facilities: HbContentFacility[] | undefined,
+  catalog?: Map<string, string>,
+): { human: string[]; filterIds: string[] } {
+  const human: string[] = [];
+  const seen = new Set<string>();
   const filterIds = new Set<string>();
+
   for (const f of facilities || []) {
+    if (!isPresent(f)) continue;
     const key = facilityKey(f);
-    const label = FACILITY_LABELS[key] || f.description?.content?.trim();
-    if (label) labels.add(label);
+    const label =
+      catalog?.get(key) ||
+      FALLBACK_LABELS[key] ||
+      f.description?.content?.trim();
+    if (label && !seen.has(label)) {
+      seen.add(label);
+      human.push(label);
+    }
     for (const [filterId, keys] of Object.entries(FILTER_FACILITY_MAP)) {
       if (keys.includes(key)) filterIds.add(filterId);
     }
   }
-  return [...labels, ...filterIds];
+
+  return { human, filterIds: [...filterIds] };
 }
 
 function mapRoomFacilities(
-  content?: HbContentHotel,
-  roomCode?: string,
+  content: HbContentHotel | undefined,
+  roomCode: string | undefined,
+  catalog?: Map<string, string>,
 ): string[] {
   const room = content?.rooms?.find((r) => r.roomCode === roomCode);
-  const labels = mapFacilityLabels(room?.roomFacilities);
-  return labels.filter((l) => !["wifi", "parking", "pool", "gym", "spa"].includes(l));
+  return mapFacilityLabels(room?.roomFacilities, catalog).human.slice(0, 10);
 }
 
 export function enrichDetailsFromContent(input: {
   details: HotelPropertyDetails;
   content?: HbContentHotel;
   searchCenter?: GeoCenter;
+  facilityCatalog?: Map<string, string>;
 }): HotelPropertyDetails {
-  const { content, searchCenter } = input;
+  const { content, searchCenter, facilityCatalog } = input;
   const details = { ...input.details };
   if (!content) return details;
 
@@ -84,15 +103,9 @@ export function enrichDetailsFromContent(input: {
       }));
   }
 
-  const facilityLabels = mapFacilityLabels(content.facilities);
-  const filterFacilities = facilityLabels.filter((l) =>
-    ["wifi", "parking", "pool", "gym", "spa"].includes(l),
-  );
-  const humanFacilities = facilityLabels.filter(
-    (l) => !["wifi", "parking", "pool", "gym", "spa"].includes(l),
-  );
-  details.facilities = [...new Set([...(details.facilities || []), ...filterFacilities])];
-  details.facilityLabels = humanFacilities.slice(0, 12);
+  const mapped = mapFacilityLabels(content.facilities, facilityCatalog);
+  details.facilities = [...new Set([...(details.facilities || []), ...mapped.filterIds])];
+  details.facilityLabels = mapped.human.slice(0, 16);
 
   if (content.description?.content) {
     details.description = content.description.content;
@@ -125,7 +138,7 @@ export function enrichDetailsFromContent(input: {
     details.rooms = details.rooms.map((room) => ({
       ...room,
       imageUrl: roomImages[room.code] || roomImages[room.code.split(".")[0] || ""],
-      facilities: mapRoomFacilities(content, room.code),
+      facilities: mapRoomFacilities(content, room.code, facilityCatalog),
     }));
   }
 

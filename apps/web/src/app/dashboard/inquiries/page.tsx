@@ -389,7 +389,7 @@ export default function InquiriesPage() {
     preferredAirlineName: "",
     stayQuery: "دبي",
     carPickup: "KWI",
-    carDropoff: "DXB",
+    carDropoff: "الكويت",
     pickupTime: "10:00",
     dropoffTime: "18:00",
     childrenAges: [] as number[],
@@ -892,7 +892,7 @@ export default function InquiriesPage() {
             outboundDate: form.departDate,
             outboundTime: form.pickupTime,
             inboundDate: form.returnDate || undefined,
-            inboundTime: form.dropoffTime,
+            inboundTime: form.returnDate ? form.dropoffTime : undefined,
             adults: form.adults,
             children: form.children,
           }),
@@ -1424,9 +1424,9 @@ export default function InquiriesPage() {
                   onChange={(e) =>
                     setForm({ ...form, carPickup: e.target.value })
                   }
-                  placeholder="KWI أو مدينة"
+                  placeholder="KWI"
                 />
-                <small>مطار / مدينة</small>
+                <small>رمز المطار IATA</small>
               </label>
               <label className="fs-cell">
                 <span>إلى</span>
@@ -1435,9 +1435,9 @@ export default function InquiriesPage() {
                   onChange={(e) =>
                     setForm({ ...form, carDropoff: e.target.value })
                   }
-                  placeholder="DXB أو مدينة"
+                  placeholder="الكويت أو مدينة"
                 />
-                <small>مطار / مدينة</small>
+                <small>مدينة أو فندق (GPS)</small>
               </label>
               <label className="fs-cell">
                 <span>الذهاب</span>
@@ -1482,6 +1482,30 @@ export default function InquiriesPage() {
                   }
                 />
                 <small>التسليم</small>
+              </label>
+              <label className="fs-cell fs-cell-center">
+                <span>بالغون</span>
+                <input
+                  type="number"
+                  min={1}
+                  value={form.adults}
+                  onChange={(e) =>
+                    setForm({ ...form, adults: Number(e.target.value) || 1 })
+                  }
+                />
+                <small>ركاب</small>
+              </label>
+              <label className="fs-cell fs-cell-center">
+                <span>أطفال</span>
+                <input
+                  type="number"
+                  min={0}
+                  value={form.children}
+                  onChange={(e) =>
+                    setForm({ ...form, children: Number(e.target.value) || 0 })
+                  }
+                />
+                <small>3–12 سنة</small>
               </label>
               <button
                 type="button"
@@ -1893,7 +1917,7 @@ export default function InquiriesPage() {
                   ))}
                   {carResults.length === 0 ? (
                     <p className="hint">
-                      لا توجد رحلات نقل مطابقة. جرّب مطاراً برمز IATA مثل KWI → DXB.
+                      لا توجد رحلات نقل مطابقة. جرّب من مطار IATA إلى مدينة، مثل KWI → الكويت أو DXB → دبي.
                     </p>
                   ) : null}
                 </div>

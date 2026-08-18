@@ -159,6 +159,17 @@ export const PROVIDER_CATALOG: ProviderCatalogEntry[] = [
         label: "Base URL",
         placeholder: "https://api.test.hotelbeds.com",
       },
+      {
+        key: "transferApiKey",
+        label: "Transfers API Key",
+        secret: true,
+        placeholder: "مفتاح Transfers منفصل عن الفنادق",
+      },
+      {
+        key: "transferApiSecret",
+        label: "Transfers API Secret",
+        secret: true,
+      },
     ],
     notes:
       "فنادق: HOTEL_PROVIDER=hotelbeds. مواصلات: TRANSFER_PROVIDER=hotelbeds مع HOTELBEDS_TRANSFER_API_KEY / SECRET. Sandbox: api.test.hotelbeds.com",

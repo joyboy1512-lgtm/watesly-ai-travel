@@ -30,13 +30,10 @@ export function resolveHotelbedsTransferCredentials(
   const apiKey =
     creds?.apiKey?.trim() ||
     process.env.HOTELBEDS_TRANSFER_API_KEY?.trim() ||
-    process.env.HOTELBEDS_API_KEY?.trim() ||
     "";
   const apiSecret =
     creds?.apiSecret?.trim() ||
     process.env.HOTELBEDS_TRANSFER_API_SECRET?.trim() ||
-    process.env.HOTELBEDS_API_SECRET?.trim() ||
-    process.env.HOTELBEDS_SECRET?.trim() ||
     "";
   const baseUrl = (
     creds?.baseUrl?.trim() ||

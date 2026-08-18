@@ -27,6 +27,9 @@ const CITY_COORDS: Record<string, GeoPoint> = {
   NYC: { latitude: 40.7128, longitude: -74.006, label: "نيويورك" },
   FRA: { latitude: 50.0379, longitude: 8.5622, label: "فرانكفورت" },
   MUC: { latitude: 48.3538, longitude: 11.7861, label: "ميونخ" },
+  BCN: { latitude: 41.3851, longitude: 2.1734, label: "برشلونة" },
+  PMI: { latitude: 39.5696, longitude: 2.6502, label: "مايوركا" },
+  MAD: { latitude: 40.4168, longitude: -3.7038, label: "مدريد" },
   BKK: { latitude: 13.69, longitude: 100.7501, label: "بانكوك" },
   KUL: { latitude: 2.7456, longitude: 101.7072, label: "كوالالمبور" },
   SIN: { latitude: 1.3644, longitude: 103.9915, label: "سنغافورة" },
@@ -49,6 +52,10 @@ const NAME_ALIASES: Record<string, string> = {
   باكو: "GYD",
   سيول: "ICN",
   الكويت: "KWI",
+  برشلونة: "BCN",
+  barcelona: "BCN",
+  مدريد: "MAD",
+  madrid: "MAD",
 };
 
 export function resolveGeoLocation(query: string): GeoPoint | null {

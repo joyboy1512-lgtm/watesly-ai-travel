@@ -129,56 +129,38 @@ export function HotelRoomAccordion({ hotel, nights, onBookRate }: Props) {
                   const cancel = cancellationSummary(rate, hotel.currency);
 
                   return (
-                    <article key={rate.rateKey} className="hotel-rate-offer hotel-rate-offer-vertical">
-                      <div className="hotel-rate-offer-main">
-                        <div className="hotel-rate-offer-meal">
-                          <strong>{rate.boardName}</strong>
-                          <span>{rate.boardCode}</span>
-                        </div>
-                        <ul className="hotel-rate-offer-terms">
-                          <li className={cancel.good ? "good" : "warn"}>
-                            <strong>{cancel.text}</strong>
-                            <span>{cancel.deadline}</span>
-                          </li>
-                          <li>
-                            <strong>{paymentLabel(rate.paymentType)}</strong>
-                            <span>
-                              {rate.rateType === "BOOKABLE"
-                                ? "جاهز للحجز"
-                                : "يتطلب تحقق سعر"}
-                            </span>
-                          </li>
-                          {rate.promotions?.length ? (
-                            <li className="promo">
-                              <strong>{rate.promotions[0]?.name || "عرض"}</strong>
-                              <span>{rate.promotions[0]?.remark || ""}</span>
-                            </li>
-                          ) : null}
-                          {rate.taxes?.items?.length ? (
-                            <li>
-                              <strong>الضرائب</strong>
-                              <span>
-                                {rate.taxes.allIncluded ? "شامل الضرائب" : "+ ضرائب إضافية"}
-                              </span>
-                            </li>
-                          ) : null}
-                        </ul>
+                    <article key={rate.rateKey} className="hotel-rate-row">
+                      <div className="hotel-rate-col meal">
+                        <strong>{rate.boardName}</strong>
+                        <small>{rate.boardCode}</small>
                       </div>
-
-                      <div className="hotel-rate-offer-price">
+                      <div className={`hotel-rate-col cancel ${cancel.good ? "good" : "warn"}`}>
+                        <strong>{cancel.text}</strong>
+                        <small>{cancel.deadline}</small>
+                      </div>
+                      <div className="hotel-rate-col pay">
+                        <strong>{paymentLabel(rate.paymentType)}</strong>
+                        <small>
+                          {rate.rateType === "BOOKABLE" ? "جاهز للحجز" : "يحتاج تحقق"}
+                        </small>
+                      </div>
+                      <div className="hotel-rate-col price">
                         <strong>{formatMoneyMinor(totalMinor, hotel.currency)}</strong>
                         <small>
-                          {formatMoneyMinor(perNightMinor, hotel.currency)} / ليلة
+                          {formatMoneyMinor(perNightMinor, hotel.currency)} / ليلة · {nights}{" "}
+                          {nights === 1 ? "ليلة" : "ليالي"}
                         </small>
-                        <span>{nights} {nights === 1 ? "ليلة" : "ليالي"} · شامل الضرائب</span>
-                        <button
-                          type="button"
-                          className="btn hotel-rate-offer-book"
-                          onClick={() => onBookRate(rate)}
-                        >
-                          احجز
-                        </button>
                       </div>
+                      <button
+                        type="button"
+                        className="btn hotel-rate-book-btn"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onBookRate(rate);
+                        }}
+                      >
+                        احجز
+                      </button>
                     </article>
                   );
                 })}

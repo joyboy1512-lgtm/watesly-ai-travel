@@ -7,7 +7,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { HotelSearchCard } from "@/components/hotels/HotelSearchCard";
 import { HotelDetailModal } from "@/components/hotels/HotelDetailModal";
-import { HotelBookingPreviewModal } from "@/components/hotels/HotelBookingPreviewModal";
 import { apiFetch } from "@/lib/api";
 import { saveFlightDraft, saveHotelDraft } from "@/lib/booking-draft";
 import { getPreferredCurrency } from "@/lib/currency";
@@ -399,7 +398,6 @@ export default function InquiriesPage() {
   const [sortKey, setSortKey] = useState<SortKey>("best");
   const [detailFlightId, setDetailFlightId] = useState<string | null>(null);
   const [detailHotelId, setDetailHotelId] = useState<string | null>(null);
-  const [previewHotelRate, setPreviewHotelRate] = useState<HotelRateOption | null>(null);
   const [filters, setFilters] = useState({
     maxPrice: "",
     stops: "any" as "any" | "0" | "1",
@@ -476,12 +474,9 @@ export default function InquiriesPage() {
   }, [detailFlightId]);
 
   useEffect(() => {
-    if (!detailHotelId && !previewHotelRate) return;
+    if (!detailHotelId) return;
     function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") {
-        if (previewHotelRate) setPreviewHotelRate(null);
-        else setDetailHotelId(null);
-      }
+      if (e.key === "Escape") setDetailHotelId(null);
     }
     document.addEventListener("keydown", onKey);
     document.body.style.overflow = "hidden";
@@ -489,7 +484,7 @@ export default function InquiriesPage() {
       document.removeEventListener("keydown", onKey);
       if (!detailFlightId) document.body.style.overflow = "";
     };
-  }, [detailHotelId, previewHotelRate, detailFlightId]);
+  }, [detailHotelId, detailFlightId]);
 
   async function load() {
     setRows(await apiFetch<Inquiry[]>("/inquiries"));
@@ -847,7 +842,6 @@ export default function InquiriesPage() {
         (item) => item.providerOfferRef === detailHotel.id && item.serviceType === "hotel",
       )?.id,
     });
-    setPreviewHotelRate(null);
     setDetailHotelId(null);
     router.push("/dashboard/inquiries/book/hotel");
   }
@@ -2674,17 +2668,7 @@ export default function InquiriesPage() {
             children: form.children,
           }}
           onClose={() => setDetailHotelId(null)}
-          onBookRate={(rate) => setPreviewHotelRate(rate)}
-        />
-      ) : null}
-
-      {detailHotel && previewHotelRate ? (
-        <HotelBookingPreviewModal
-          hotel={detailHotel}
-          rate={previewHotelRate}
-          nights={Number(detailHotel.details.nights || 0) || nights}
-          onClose={() => setPreviewHotelRate(null)}
-          onConfirm={() => confirmHotelBooking(previewHotelRate)}
+          onEnterGuestData={confirmHotelBooking}
         />
       ) : null}
 

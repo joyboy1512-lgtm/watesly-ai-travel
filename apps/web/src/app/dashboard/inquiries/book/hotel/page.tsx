@@ -13,7 +13,7 @@ import {
 } from "@/lib/booking-draft";
 import { formatMoneyMinor } from "@/lib/format";
 
-const STEPS = ["بيانات النزلاء", "خيارات الغرفة", "إضافات", "المراجعة والدفع"] as const;
+const STEPS = ["بيانات النزلاء", "الدفع وتأكيد الحجز"] as const;
 
 type PaymentMethod = "card" | "knet" | "transfer";
 
@@ -417,116 +417,10 @@ export default function HotelBookPage() {
             ) : null}
 
             {step === 1 ? (
-              <section className="book-card">
-                <h3>التعرفة المختارة</h3>
-                {draft.selectedRate ? (
-                  <>
-                    <p>راجع تفاصيل الغرفة والوجبات قبل المتابعة</p>
-                    <div className="option-stack">
-                      <div className="ticket-type on">
-                        <div>
-                          <strong>{draft.selectedRate.roomName}</strong>
-                          <span>{draft.selectedRate.boardName}</span>
-                          <span>
-                            {draft.selectedRate.freeCancellation
-                              ? "إلغاء مجاني*"
-                              : "غير قابل للاسترداد"}
-                            {" · "}
-                            {paymentLabel(draft.selectedRate.paymentType)}
-                          </span>
-                        </div>
-                        <em>
-                          {formatMoneyMinor(
-                            draft.hotel.sellAmountMinor,
-                            draft.hotel.currency,
-                          )}
-                        </em>
-                      </div>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <p>اختر الباقة المناسبة لإقامتك</p>
-                    <div className="option-stack">
-                      {ROOM_OPTIONS.map((opt) => (
-                        <label
-                          key={opt.value}
-                          className={`ticket-type${roomOption === opt.value ? " on" : ""}`}
-                        >
-                          <input
-                            type="radio"
-                            checked={roomOption === opt.value}
-                            onChange={() => setRoomOption(opt.value)}
-                          />
-                          <div>
-                            <strong>{opt.label}</strong>
-                            <span>{opt.hint}</span>
-                          </div>
-                          <em>
-                            {opt.extra
-                              ? `+ ${formatMoneyMinor(opt.extra * nights, draft.hotel.currency)}`
-                              : "مشمولة"}
-                          </em>
-                        </label>
-                      ))}
-                    </div>
-                  </>
-                )}
-              </section>
-            ) : null}
-
-            {step === 2 ? (
-              <section className="book-card">
-                <h3>إضافات</h3>
-                <p>اختياري — يمكنك تخطي هذه الخطوة</p>
-                <div className="option-stack">
-                  <label className={`extra-row${extras.breakfast ? " on" : ""}`}>
-                    <input
-                      type="checkbox"
-                      checked={extras.breakfast}
-                      onChange={(e) => setExtras({ ...extras, breakfast: e.target.checked })}
-                    />
-                    <div>
-                      <strong>إفطار إضافي</strong>
-                      <span>بوفيه مفتوح لكل نزلاء الغرفة</span>
-                    </div>
-                    <em>+ {formatMoneyMinor(2500 * nights, draft.hotel.currency)}</em>
-                  </label>
-                  <label className={`extra-row${extras.parking ? " on" : ""}`}>
-                    <input
-                      type="checkbox"
-                      checked={extras.parking}
-                      onChange={(e) => setExtras({ ...extras, parking: e.target.checked })}
-                    />
-                    <div>
-                      <strong>موقف سيارات خاص</strong>
-                      <span>موقف مضمون طوال مدة الإقامة</span>
-                    </div>
-                    <em>+ {formatMoneyMinor(1500 * nights, draft.hotel.currency)}</em>
-                  </label>
-                  <label className={`extra-row${extras.earlyCheckin ? " on" : ""}`}>
-                    <input
-                      type="checkbox"
-                      checked={extras.earlyCheckin}
-                      onChange={(e) =>
-                        setExtras({ ...extras, earlyCheckin: e.target.checked })
-                      }
-                    />
-                    <div>
-                      <strong>تسجيل وصول مبكر</strong>
-                      <span>الدخول للغرفة من الساعة 10 صباحًا</span>
-                    </div>
-                    <em>+ {formatMoneyMinor(2000, draft.hotel.currency)}</em>
-                  </label>
-                </div>
-              </section>
-            ) : null}
-
-            {step === 3 ? (
               <>
                 <section className="book-card">
-                  <h3>المراجعة والدفع</h3>
-                  <p>راجع الملخص قبل تأكيد الحجز</p>
+                  <h3>الدفع وتأكيد الحجز</h3>
+                  <p>راجع تفاصيل الحجز ثم أكّد الدفع</p>
 
                   <ul className="book-checklist">
                     <li className="book-checklist-item done">

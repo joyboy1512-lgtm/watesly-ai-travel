@@ -1,4 +1,9 @@
-import type { FlightOffer, HotelOffer, MoneyMinor } from "@watesly-travel/shared";
+import type {
+  FlightOffer,
+  HotelOffer,
+  HotelRateOption,
+  MoneyMinor,
+} from "@watesly-travel/shared";
 
 export interface FlightSearchParams {
   origin: string;
@@ -26,6 +31,11 @@ export interface HotelSearchParams {
   maxRoomsPerHotel?: number;
   minStars?: number;
   maxStars?: number;
+  minRate?: number;
+  maxRate?: number;
+  boardCode?: string;
+  paymentType?: string;
+  shiftDays?: number;
 }
 
 export interface ProviderBookingResult {
@@ -45,6 +55,8 @@ export interface HotelRevalidateResult {
   offer: HotelOffer;
   priceChanged: boolean;
   previousCostMinor?: MoneyMinor;
+  selectedRate?: HotelRateOption;
+  rateComments?: string;
 }
 
 /** @deprecated Prefer FlightRevalidateResult | HotelRevalidateResult */
@@ -75,6 +87,10 @@ export interface HotelProviderAdapter {
   readonly liveMode: boolean;
   searchHotels(params: HotelSearchParams): Promise<HotelOffer[]>;
   revalidateOffer(offer: HotelOffer): Promise<HotelRevalidateResult>;
+  fetchRateComments?(
+    ids: string[],
+    date: string,
+  ): Promise<Record<string, string>>;
   createBooking?(
     offer: HotelOffer,
     guests: unknown,

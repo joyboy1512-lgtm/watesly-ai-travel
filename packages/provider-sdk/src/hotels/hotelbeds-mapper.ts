@@ -53,17 +53,61 @@ function mapTaxes(taxes?: HbTaxes, currency = "EUR") {
   };
 }
 
+function addDaysIso(iso: string, offset: number): string | undefined {
+  if (!iso || !/^\d{4}-\d{2}-\d{2}$/.test(iso)) return undefined;
+  const d = new Date(`${iso}T00:00:00Z`);
+  if (Number.isNaN(d.getTime())) return undefined;
+  d.setUTCDate(d.getUTCDate() + offset);
+  return d.toISOString().slice(0, 10);
+}
+
+function mapDailyRates(rate: HbRate, checkIn?: string) {
+  if (!rate.dailyRates?.length) return undefined;
+  return rate.dailyRates.map((d) => {
+    const offset = Number(d.offset ?? 0);
+    const net = Number(d.dailyNet ?? 0);
+    return {
+      offset: Number.isFinite(offset) ? offset : 0,
+      date: addDaysIso(checkIn || "", Number.isFinite(offset) ? offset : 0),
+      net: Number.isFinite(net) ? net : undefined,
+    };
+  });
+}
+
+function mapPromotions(rate: HbRate) {
+  const fromPromos = (rate.promotions || []).map((p) => ({
+    code: p.code,
+    name: p.name,
+    remark: p.remark,
+  }));
+  const fromOffers = (rate.offers || []).map((o) => ({
+    code: o.code,
+    name: o.name,
+    remark:
+      o.amount != null && Number(o.amount) !== 0 ? `خصم ${o.amount}` : o.name,
+  }));
+  return [...fromPromos, ...fromOffers].filter((p) => p.name || p.remark);
+}
+
+function commentsText(value: string | string[] | undefined): string | undefined {
+  if (!value) return undefined;
+  const text = Array.isArray(value) ? value.filter(Boolean).join("\n") : value;
+  return text.trim() || undefined;
+}
+
 function mapRate(
   rate: HbRate,
   room: HbRoom,
   hotel: HbHotel,
   currency: string,
+  checkIn?: string,
 ): HotelRateOption | null {
   if (!rate.rateKey) return null;
   const net = rateMajor(rate, hotel);
   if (net <= 0) return null;
   const boardCode = String(rate.boardCode || "RO");
   const boardName = boardLabelAr(boardCode, rate.boardName);
+  const selling = rate.sellingRate ? Number(rate.sellingRate) : undefined;
   return {
     rateKey: rate.rateKey,
     rateType: String(rate.rateType || "BOOKABLE"),
@@ -73,7 +117,7 @@ function mapRate(
     boardCode,
     boardName,
     net,
-    sellingRate: rate.sellingRate ? Number(rate.sellingRate) : undefined,
+    sellingRate: Number.isFinite(selling) ? selling : undefined,
     currency,
     paymentType: rate.paymentType,
     packaging: rate.packaging,
@@ -85,21 +129,20 @@ function mapRate(
       from: String(p.from || ""),
     })),
     taxes: mapTaxes(rate.taxes, currency),
-    promotions: (rate.promotions || []).map((p) => ({
-      code: p.code,
-      name: p.name,
-      remark: p.remark,
-    })),
+    promotions: mapPromotions(rate),
     adults: rate.adults,
     children: rate.children,
     rooms: rate.rooms,
     rateCommentsId: rate.rateCommentsId,
+    rateComments: commentsText(rate.rateComments),
+    dailyRates: mapDailyRates(rate, checkIn),
   };
 }
 
 export function extractHotelbedsRateOptions(
   hotel: HbHotel,
   currency: string,
+  checkIn?: string,
 ): { rooms: HotelRoomOption[]; rateOptions: HotelRateOption[] } {
   const rooms: HotelRoomOption[] = [];
   const rateOptions: HotelRateOption[] = [];
@@ -107,7 +150,7 @@ export function extractHotelbedsRateOptions(
   for (const room of hotel.rooms || []) {
     const mappedRates: HotelRateOption[] = [];
     for (const rate of room.rates || []) {
-      const mapped = mapRate(rate, room, hotel, currency);
+      const mapped = mapRate(rate, room, hotel, currency, checkIn);
       if (mapped) {
         mappedRates.push(mapped);
         rateOptions.push(mapped);
@@ -130,6 +173,16 @@ export function extractHotelbedsRateOptions(
   return { rooms, rateOptions };
 }
 
+function sourceMeta(liveMode: boolean, baseUrl?: string) {
+  const sandbox = /test\.hotelbeds\.com/i.test(baseUrl || process.env.HOTELBEDS_BASE_URL || "");
+  if (!liveMode) {
+    return { source: "mock", sourceLabel: "تجريبي" };
+  }
+  return sandbox
+    ? { source: "hotelbeds-sandbox" as const, sourceLabel: "Hotelbeds Sandbox" }
+    : { source: "hotelbeds-live" as const, sourceLabel: "Hotelbeds Live" };
+}
+
 export function mapHotelbedsToOffer(input: {
   hotel: HbHotel;
   params: HotelSearchParams;
@@ -140,25 +193,37 @@ export function mapHotelbedsToOffer(input: {
   searchCenter?: GeoCenter;
   facilityCatalog?: Map<string, string>;
 }): HotelOffer | null {
-  const { hotel, params, geoLabel, liveMode, expiresAt, content, searchCenter, facilityCatalog } = input;
+  const { hotel, params, geoLabel, liveMode, expiresAt, content, searchCenter, facilityCatalog } =
+    input;
   const hotelCurrency = String(hotel.currency || params.currency || "EUR").toUpperCase();
-  const { rooms, rateOptions } = extractHotelbedsRateOptions(hotel, hotelCurrency);
+  const checkIn = hotel.checkIn || params.checkInDate;
+  const checkOut = hotel.checkOut || params.checkOutDate;
+  const { rooms, rateOptions } = extractHotelbedsRateOptions(
+    hotel,
+    hotelCurrency,
+    checkIn,
+  );
   if (!rateOptions.length) return null;
 
   const cheapest = rateOptions[0]!;
-  const nights = nightsBetween(params.checkInDate, params.checkOutDate);
+  const nights = nightsBetween(checkIn, checkOut);
   const stars = parseStars(hotel.categoryCode);
   const hotelCode = String(hotel.code || "");
   const boards = [...new Set(rateOptions.map((r) => r.boardName))];
   const boardCodes = [...new Set(rateOptions.map((r) => r.boardCode))];
-  const paymentTypes = [...new Set(rateOptions.map((r) => r.paymentType).filter(Boolean))] as string[];
+  const paymentTypes = [
+    ...new Set(rateOptions.map((r) => r.paymentType).filter(Boolean)),
+  ] as string[];
   const rateTypes = [...new Set(rateOptions.map((r) => r.rateType))];
   const zones = hotel.zoneName ? [String(hotel.zoneName)] : [];
   const promotions = [
     ...new Set(
-      rateOptions.flatMap((r) => r.promotions.map((p) => p.name || p.remark || "").filter(Boolean)),
+      rateOptions.flatMap((r) =>
+        r.promotions.map((p) => p.name || p.remark || "").filter(Boolean),
+      ),
     ),
   ];
+  const src = sourceMeta(liveMode);
 
   const minRate = rateOptions[0]!.net;
   const maxRate = rateOptions[rateOptions.length - 1]!.net;
@@ -184,8 +249,8 @@ export function mapHotelbedsToOffer(input: {
     minRate,
     maxRate,
     nights,
-    checkInDate: params.checkInDate,
-    checkOutDate: params.checkOutDate,
+    checkInDate: checkIn,
+    checkOutDate: checkOut,
     board: cheapest.boardName,
     boardCode: cheapest.boardCode,
     roomType: cheapest.roomName,
@@ -204,6 +269,9 @@ export function mapHotelbedsToOffer(input: {
     promotions,
     roomsAvailable: Math.max(...rateOptions.map((r) => r.allotment ?? 0), 0) || undefined,
     propertyType: "hotel",
+    fetchedAt: new Date().toISOString(),
+    source: src.source,
+    sourceLabel: src.sourceLabel,
   };
 
   const enriched = enrichDetailsFromContent({ details, content, searchCenter, facilityCatalog });
@@ -230,8 +298,8 @@ export function mapHotelbedsToOffer(input: {
     revalidationToken: JSON.stringify({
       hotelCode,
       rateKey: cheapest.rateKey,
-      checkIn: params.checkInDate,
-      checkOut: params.checkOutDate,
+      checkIn,
+      checkOut,
       rateType: cheapest.rateType,
     }),
     expiresAt,
@@ -239,32 +307,108 @@ export function mapHotelbedsToOffer(input: {
   };
 }
 
+type RoomLike = HotelRoomOption & Record<string, unknown>;
+
+function mergeRooms(
+  previous: unknown,
+  next: unknown,
+): HotelRoomOption[] {
+  const prevRooms = Array.isArray(previous) ? (previous as RoomLike[]) : [];
+  const nextRooms = Array.isArray(next) ? (next as RoomLike[]) : [];
+  return nextRooms.map((room) => {
+    const old = prevRooms.find((r) => r.code === room.code);
+    if (!old) return room;
+    return {
+      ...old,
+      ...room,
+      imageUrl: room.imageUrl || old.imageUrl,
+      images: room.images?.length ? room.images : old.images,
+      facilities: room.facilities?.length ? room.facilities : old.facilities,
+      description: room.description || old.description,
+      occupancy: room.occupancy || old.occupancy,
+    };
+  });
+}
+
 export function mapCheckratesToOffer(
   offer: HotelOffer,
   hotel: HbHotel,
+  selectedRateKey?: string,
 ): HotelOffer {
+  const prev = offer.raw || {};
   const params = {
-    checkInDate: String(offer.raw?.checkInDate || ""),
-    checkOutDate: String(offer.raw?.checkOutDate || ""),
-    location: String(offer.raw?.location || ""),
-    adults: Number(offer.raw?.adults || 2),
+    checkInDate: String(hotel.checkIn || prev.checkInDate || ""),
+    checkOutDate: String(hotel.checkOut || prev.checkOutDate || ""),
+    location: String(prev.location || ""),
+    adults: Number(prev.adults || 2),
+    currency: offer.currency,
   } as HotelSearchParams;
 
   const remapped = mapHotelbedsToOffer({
     hotel,
     params,
-    geoLabel: String(offer.raw?.location || ""),
-    liveMode: Boolean(offer.raw?.liveMode),
+    geoLabel: String(prev.location || ""),
+    liveMode: Boolean(prev.liveMode),
     expiresAt: new Date(Date.now() + 20 * 60 * 1000).toISOString(),
   });
   if (!remapped) return offer;
+
+  const nextRaw = remapped.raw || {};
+  const rates = (Array.isArray(nextRaw.rateOptions)
+    ? nextRaw.rateOptions
+    : []) as HotelRateOption[];
+  const selected =
+    rates.find((r) => r.rateKey === selectedRateKey) || rates[0];
+  const mergedRooms = mergeRooms(prev.rooms, nextRaw.rooms);
+
+  let token: Record<string, unknown> = {};
+  try {
+    token = JSON.parse(offer.revalidationToken || "{}") as Record<string, unknown>;
+  } catch {
+    token = {};
+  }
+
   return {
     ...remapped,
     providerOfferRef: offer.providerOfferRef,
-    revalidationToken: offer.revalidationToken,
+    costAmountMinor: selected
+      ? amountToMinor(selected.net, offer.currency)
+      : remapped.costAmountMinor,
+    revalidationToken: JSON.stringify({
+      ...token,
+      rateKey: selected?.rateKey || selectedRateKey,
+      rateType: selected?.rateType,
+      checkIn: params.checkInDate,
+      checkOut: params.checkOutDate,
+    }),
     raw: {
-      ...remapped.raw,
+      ...prev,
+      ...nextRaw,
+      rooms: mergedRooms,
+      images: prev.images || nextRaw.images,
+      description: prev.description || nextRaw.description,
+      facilityLabels: prev.facilityLabels || nextRaw.facilityLabels,
+      ranking: prev.ranking ?? nextRaw.ranking,
+      imageUrl: prev.imageUrl || nextRaw.imageUrl,
+      mapUrl: prev.mapUrl || nextRaw.mapUrl,
+      poiDistances: prev.poiDistances || nextRaw.poiDistances,
+      source: prev.source || nextRaw.source,
+      sourceLabel: prev.sourceLabel || nextRaw.sourceLabel,
       revalidatedAt: new Date().toISOString(),
     },
   };
+}
+
+export function findMappedRate(
+  offer: HotelOffer,
+  rateKey?: string,
+): HotelRateOption | undefined {
+  const rates = (Array.isArray(offer.raw?.rateOptions)
+    ? offer.raw?.rateOptions
+    : []) as HotelRateOption[];
+  if (rateKey) {
+    const match = rates.find((r) => r.rateKey === rateKey);
+    if (match) return match;
+  }
+  return rates[0];
 }

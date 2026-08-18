@@ -4,11 +4,12 @@ import {
   getHotelProvider,
   revalidatePricedOffer,
 } from "@watesly-travel/travel-core";
-import type { FlightOffer } from "@watesly-travel/shared";
+import type { FlightOffer, HotelOffer } from "@watesly-travel/shared";
 import { Prisma } from "@watesly-travel/database";
 import { PrismaService } from "../prisma/prisma.service";
 import { AuditService } from "../common/audit.service";
 import { formatMoneyMinor } from "../common/money";
+import { getHotelProviderForOrg } from "../common/provider-runtime";
 import { BotPipelineService } from "../pipeline/bot-pipeline.service";
 
 export type BookingDraftOfferInput = {
@@ -685,6 +686,74 @@ export class BookingsService {
     });
 
     return booking;
+  }
+
+  async checkHotelRate(input: {
+    organizationId: string;
+    rateKey: string;
+    offer: {
+      providerKey?: string;
+      providerOfferRef?: string;
+      description?: string;
+      costAmountMinor?: number;
+      currency: string;
+      revalidationToken?: string;
+      expiresAt?: string;
+      raw?: Record<string, unknown>;
+    };
+  }) {
+    const rateKey = String(input.rateKey || "").trim();
+    if (!rateKey) {
+      throw new BadRequestException("معرّف التعرفة مطلوب للتحقق من السعر");
+    }
+    const provider = await getHotelProviderForOrg(
+      this.prisma,
+      input.organizationId,
+      input.offer.providerKey || "hotelbeds",
+    );
+    let token: Record<string, unknown> = {};
+    try {
+      token = JSON.parse(input.offer.revalidationToken || "{}") as Record<
+        string,
+        unknown
+      >;
+    } catch {
+      token = {};
+    }
+    const offer: HotelOffer = {
+      providerKey: input.offer.providerKey || provider.providerKey,
+      providerOfferRef: input.offer.providerOfferRef || "",
+      description: input.offer.description || "",
+      costAmountMinor: Number(input.offer.costAmountMinor || 0),
+      currency: input.offer.currency,
+      revalidationToken: JSON.stringify({ ...token, rateKey }),
+      expiresAt: input.offer.expiresAt || new Date().toISOString(),
+      raw: input.offer.raw || {},
+    };
+    const result = await provider.revalidateOffer(offer);
+    return {
+      available: result.available,
+      priceChanged: result.priceChanged,
+      previousCostMinor: result.previousCostMinor,
+      offer: result.offer,
+      selectedRate: result.selectedRate,
+      rateComments: result.rateComments,
+    };
+  }
+
+  async hotelRateComments(input: {
+    organizationId: string;
+    ids: string[];
+    date: string;
+    providerKey?: string;
+  }) {
+    const provider = await getHotelProviderForOrg(
+      this.prisma,
+      input.organizationId,
+      input.providerKey || "hotelbeds",
+    );
+    if (!provider.fetchRateComments) return {};
+    return provider.fetchRateComments(input.ids || [], input.date);
   }
 }
 

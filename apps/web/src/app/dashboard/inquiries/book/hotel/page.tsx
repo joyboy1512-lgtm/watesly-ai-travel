@@ -301,6 +301,9 @@ export default function HotelBookPage() {
             {nights} ليلة
           </p>
           <h2>{hotelName}</h2>
+          {draft.selectedRate?.rateComments ? (
+            <p className="hotel-rate-comments">{draft.selectedRate.rateComments}</p>
+          ) : null}
         </div>
 
         <div className="book-layout">

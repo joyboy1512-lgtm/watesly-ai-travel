@@ -3,9 +3,11 @@
 import { useState } from "react";
 import type { HotelRateOption } from "@/lib/hotel-search";
 import { type HotelOfferRow } from "@/lib/hotel-search";
+import { apiFetch } from "@/lib/api";
 import { formatMoneyMinor } from "@/lib/format";
 import { HotelRoomAccordion } from "./HotelRoomAccordion";
 import { HotelBookingSummary } from "./HotelBookingSummary";
+import { HotelLiveBadge } from "./HotelLiveBadge";
 
 type StayMeta = {
   stayQuery: string;
@@ -22,6 +24,14 @@ type Props = {
   meta: StayMeta;
   onClose: () => void;
   onEnterGuestData: (rate: HotelRateOption) => void;
+};
+
+type CheckRateResponse = {
+  available: boolean;
+  priceChanged: boolean;
+  previousCostMinor?: number;
+  selectedRate?: HotelRateOption;
+  rateComments?: string;
 };
 
 function formatDay(value?: string) {
@@ -43,6 +53,11 @@ export function HotelDetailModal({ hotel, nights, meta, onClose, onEnterGuestDat
   const [tab, setTab] = useState<"rooms" | "map" | "reviews" | "facilities" | "policies">(
     "rooms",
   );
+  const [checkingRateKey, setCheckingRateKey] = useState<string | null>(null);
+  const [checkError, setCheckError] = useState("");
+  const [priceChange, setPriceChange] = useState<{ fromMinor: number; toMinor: number } | null>(
+    null,
+  );
 
   const name = String(hotel.details.name || "فندق");
   const stars = Number(hotel.details.stars || 0);
@@ -63,6 +78,69 @@ export function HotelDetailModal({ hotel, nights, meta, onClose, onEnterGuestDat
   const hasFreeCancel = hotel.matchingRates.some((r) => r.freeCancellation);
   const payHotel = hotel.matchingRates.some((r) => r.paymentType === "AT_HOTEL");
   const payWeb = hotel.matchingRates.some((r) => r.paymentType === "AT_WEB");
+  const gallery = Array.isArray(hotel.details.images)
+    ? (hotel.details.images as Array<{ url?: string }>).map((i) => i.url).filter(Boolean)
+    : [];
+
+  async function handleBookRate(rate: HotelRateOption) {
+    setCheckError("");
+    setPriceChange(null);
+    setCheckingRateKey(rate.rateKey);
+    try {
+      const result = await apiFetch<CheckRateResponse>("/bookings/checkrate-hotel", {
+        method: "POST",
+        timeoutMs: 35000,
+        body: JSON.stringify({
+          rateKey: rate.rateKey,
+          offer: {
+            providerKey: String(hotel.details.provider || "hotelbeds"),
+            providerOfferRef: hotel.id,
+            description: hotel.description,
+            costAmountMinor: hotel.costAmountMinor || hotel.sellAmountMinor,
+            currency: hotel.currency,
+            revalidationToken: JSON.stringify({
+              hotelCode: hotel.details.hotelCode,
+              rateKey: rate.rateKey,
+              rateType: rate.rateType,
+              checkIn: hotel.details.checkInDate || meta.departDate,
+              checkOut: hotel.details.checkOutDate || meta.returnDate,
+            }),
+            expiresAt: hotel.expiresAt,
+            raw: hotel.details,
+          },
+        }),
+      });
+      if (!result.available) {
+        setCheckError("هذه التعرفة لم تعد متاحة. اختر غرفة أخرى أو أعد البحث.");
+        return;
+      }
+      const nextRate: HotelRateOption = {
+        ...rate,
+        ...(result.selectedRate || {}),
+        rateComments: result.rateComments || result.selectedRate?.rateComments || rate.rateComments,
+      };
+      if (result.priceChanged) {
+        const toMinor = result.selectedRate
+          ? Math.round(
+              (result.selectedRate.net || rate.net) *
+                (hotel.currency === "KWD" || hotel.currency === "BHD" || hotel.currency === "OMR"
+                  ? 1000
+                  : 100) *
+                nights,
+            )
+          : hotel.displayFromMinor;
+        setPriceChange({
+          fromMinor: Number(result.previousCostMinor || hotel.sellAmountMinor),
+          toMinor,
+        });
+      }
+      setSelectedRate(nextRate);
+    } catch (err) {
+      setCheckError(err instanceof Error ? err.message : "تعذر التحقق من السعر الحي");
+    } finally {
+      setCheckingRateKey(null);
+    }
+  }
 
   return (
     <div className="flight-modal-backdrop" onClick={onClose} role="presentation">
@@ -90,13 +168,32 @@ export function HotelDetailModal({ hotel, nights, meta, onClose, onEnterGuestDat
           ) : null}
         </div>
 
+        <div className="hotel-modal-live">
+          <HotelLiveBadge
+            liveMode={Boolean(hotel.details.liveMode)}
+            sourceLabel={
+              typeof hotel.details.sourceLabel === "string"
+                ? hotel.details.sourceLabel
+                : undefined
+            }
+            fetchedAt={
+              typeof hotel.details.fetchedAt === "string" ? hotel.details.fetchedAt : undefined
+            }
+            expiresAt={hotel.expiresAt}
+          />
+        </div>
+
         {selectedRate ? (
           <HotelBookingSummary
             hotel={hotel}
             rate={selectedRate}
             nights={nights}
             meta={meta}
-            onBack={() => setSelectedRate(null)}
+            priceChange={priceChange}
+            onBack={() => {
+              setSelectedRate(null);
+              setPriceChange(null);
+            }}
             onEnterGuestData={() => onEnterGuestData(selectedRate)}
           />
         ) : (
@@ -151,6 +248,15 @@ export function HotelDetailModal({ hotel, nights, meta, onClose, onEnterGuestDat
               </div>
             </div>
 
+            {gallery.length > 1 ? (
+              <div className="hotel-hero-gallery">
+                {gallery.slice(0, 6).map((src) => (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img key={src} src={src} alt="" />
+                ))}
+              </div>
+            ) : null}
+
             {description ? (
               <section className="flight-modal-section hotel-desc-section">
                 <h3>عن الفندق</h3>
@@ -190,12 +296,15 @@ export function HotelDetailModal({ hotel, nights, meta, onClose, onEnterGuestDat
               ))}
             </nav>
 
+            {checkError ? <p className="hotel-check-error">{checkError}</p> : null}
+
             {tab === "rooms" ? (
               <section className="flight-modal-section hotel-detail-rooms-section">
                 <HotelRoomAccordion
                   hotel={hotel}
                   nights={nights}
-                  onBookRate={(rate) => setSelectedRate(rate)}
+                  checkingRateKey={checkingRateKey}
+                  onBookRate={(rate) => void handleBookRate(rate)}
                 />
               </section>
             ) : null}

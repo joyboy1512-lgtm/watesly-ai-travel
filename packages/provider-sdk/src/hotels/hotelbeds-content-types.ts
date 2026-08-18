@@ -26,6 +26,10 @@ export type HbContentRoom = {
   roomType?: string;
   characteristicCode?: string;
   description?: HbContentText;
+  minPax?: number;
+  maxPax?: number;
+  maxAdults?: number;
+  maxChildren?: number;
   roomFacilities?: HbContentFacility[];
 };
 

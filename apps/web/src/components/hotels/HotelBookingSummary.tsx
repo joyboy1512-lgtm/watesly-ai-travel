@@ -3,6 +3,7 @@
 import {
   formatPolicyDate,
   rateDisplayMinor,
+  taxTypeLabelAr,
   type HotelOfferRow,
   type HotelRateOption,
   type HotelRoomOption,
@@ -18,11 +19,17 @@ type StayMeta = {
   children: number;
 };
 
+type PriceChange = {
+  fromMinor: number;
+  toMinor: number;
+};
+
 type Props = {
   hotel: HotelOfferRow & { matchingRates: HotelRateOption[]; displayFromMinor: number };
   rate: HotelRateOption;
   nights: number;
   meta: StayMeta;
+  priceChange?: PriceChange | null;
   onBack: () => void;
   onEnterGuestData: () => void;
 };
@@ -51,6 +58,7 @@ export function HotelBookingSummary({
   rate,
   nights,
   meta,
+  priceChange,
   onBack,
   onEnterGuestData,
 }: Props) {
@@ -67,6 +75,7 @@ export function HotelBookingSummary({
     : [];
   const roomImage = roomMeta?.imageUrl;
   const cancelPolicy = rate.cancellationPolicies[0];
+  const taxItems = rate.taxes?.items || [];
 
   return (
     <div className="hotel-booking-summary">
@@ -76,6 +85,14 @@ export function HotelBookingSummary({
 
       <h3>تفاصيل الحجز</h3>
       <p className="hotel-summary-sub">{name}</p>
+
+      {priceChange ? (
+        <div className="hotel-price-change">
+          تغيّر السعر بعد التحقق الحي: من{" "}
+          <s>{formatMoneyMinor(priceChange.fromMinor, hotel.currency)}</s> إلى{" "}
+          <strong>{formatMoneyMinor(priceChange.toMinor, hotel.currency)}</strong>
+        </div>
+      ) : null}
 
       {roomImage ? (
         // eslint-disable-next-line @next/next/no-img-element
@@ -131,7 +148,92 @@ export function HotelBookingSummary({
             <strong>{rate.allotment}</strong>
           </div>
         ) : null}
+        {roomMeta?.occupancy?.maxAdults || roomMeta?.occupancy?.maxPax ? (
+          <div>
+            <span>سعة الغرفة</span>
+            <strong>
+              {roomMeta.occupancy.maxAdults
+                ? `${roomMeta.occupancy.maxAdults} بالغ`
+                : ""}
+              {roomMeta.occupancy.maxChildren
+                ? ` · ${roomMeta.occupancy.maxChildren} طفل`
+                : ""}
+              {roomMeta.occupancy.maxPax ? ` · حتى ${roomMeta.occupancy.maxPax}` : ""}
+            </strong>
+          </div>
+        ) : null}
       </div>
+
+      {roomMeta?.description ? (
+        <p className="hotel-room-desc">{roomMeta.description}</p>
+      ) : null}
+
+      {rate.dailyRates?.length ? (
+        <div className="hotel-price-break">
+          <h3>سعر كل ليلة</h3>
+          <ul>
+            {rate.dailyRates.map((d, i) => (
+              <li key={`${d.date || d.offset || i}`}>
+                <span>{d.date || `ليلة ${i + 1}`}</span>
+                <strong>
+                  {d.net != null ? `${d.net} ${rate.currency}` : "—"}
+                </strong>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : (
+        <div className="hotel-price-break">
+          <h3>تفصيل السعر</h3>
+          <ul>
+            <li>
+              <span>لليلة الواحدة</span>
+              <strong>{formatMoneyMinor(perNight, hotel.currency)}</strong>
+            </li>
+            <li>
+              <span>
+                الإجمالي ({nights} {nights === 1 ? "ليلة" : "ليالي"})
+              </span>
+              <strong>{formatMoneyMinor(totalMinor, hotel.currency)}</strong>
+            </li>
+          </ul>
+        </div>
+      )}
+
+      {rate.sellingRate && rate.sellingRate !== rate.net ? (
+        <p className="hint">
+          صافي المزود {rate.net} {rate.currency} · سعر البيع المقترح {rate.sellingRate}{" "}
+          {rate.currency}
+        </p>
+      ) : null}
+
+      {taxItems.length ? (
+        <div className="hotel-price-break">
+          <h3>الضرائب والرسوم</h3>
+          <ul>
+            {taxItems.map((t, i) => (
+              <li key={`${t.type || i}-${t.amount}`}>
+                <span>
+                  {taxTypeLabelAr(t.type)}
+                  {t.included ? " (مشمولة)" : " (غير مشمولة)"}
+                </span>
+                <strong>
+                  {t.amount} {t.currency}
+                </strong>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : (
+        <p className="hint">السعر المعروض يشمل الضرائب حسب رد Hotelbeds.</p>
+      )}
+
+      {rate.rateComments ? (
+        <div className="hotel-rate-comments">
+          <h3>شروط التعرفة</h3>
+          <p>{rate.rateComments}</p>
+        </div>
+      ) : null}
 
       {roomFacilities.length ? (
         <div className="hotel-booking-preview-services">
@@ -168,7 +270,8 @@ export function HotelBookingSummary({
           <strong>{formatMoneyMinor(totalMinor, hotel.currency)}</strong>
           <small>
             {formatMoneyMinor(perNight, hotel.currency)} / ليلة · {nights}{" "}
-            {nights === 1 ? "ليلة" : "ليالي"} · شامل الضرائب
+            {nights === 1 ? "ليلة" : "ليالي"}
+            {rate.taxes?.allIncluded !== false ? " · شامل الضرائب" : ""}
           </small>
         </div>
         <button type="button" className="btn" onClick={onEnterGuestData}>

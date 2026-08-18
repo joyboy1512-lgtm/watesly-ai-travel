@@ -10,6 +10,12 @@ export type HotelBoardCode =
   | "DB"
   | string;
 
+export type HotelDailyRate = {
+  offset?: number;
+  date?: string;
+  net?: number;
+};
+
 export type HotelRateOption = {
   rateKey: string;
   rateType: string;
@@ -44,6 +50,15 @@ export type HotelRateOption = {
   children?: number;
   rooms?: number;
   rateCommentsId?: string;
+  rateComments?: string;
+  dailyRates?: HotelDailyRate[];
+};
+
+export type HotelRoomOccupancy = {
+  minPax?: number;
+  maxPax?: number;
+  maxAdults?: number;
+  maxChildren?: number;
 };
 
 export type HotelRoomOption = {
@@ -51,7 +66,10 @@ export type HotelRoomOption = {
   name: string;
   rates: HotelRateOption[];
   imageUrl?: string;
+  images?: string[];
   facilities?: string[];
+  description?: string;
+  occupancy?: HotelRoomOccupancy;
 };
 
 export type HotelImageRef = {
@@ -118,6 +136,9 @@ export type HotelPropertyDetails = {
   distanceToCenterLabel?: string;
   poiDistances?: HotelPoiDistance[];
   mapUrl?: string;
+  fetchedAt?: string;
+  source?: "hotelbeds-sandbox" | "hotelbeds-live" | "mock" | string;
+  sourceLabel?: string;
   /** Legacy/mock fields */
   rating?: number;
   reviewCount?: number;
@@ -149,4 +170,13 @@ export function paymentTypeLabelAr(type?: string): string {
   if (type === "AT_HOTEL") return "الدفع في الفندق";
   if (type === "AT_WEB") return "الدفع أونلاين";
   return type || "—";
+}
+
+export function taxTypeLabelAr(type?: string): string {
+  const key = String(type || "").toUpperCase();
+  if (key === "TAX") return "ضريبة";
+  if (key === "FEE") return "رسوم";
+  if (key === "VAT" || key === "IVA") return "ضريبة قيمة مضافة";
+  if (key === "CITYTAX" || key === "CITY") return "ضريبة بلدية";
+  return type || "رسوم/ضريبة";
 }

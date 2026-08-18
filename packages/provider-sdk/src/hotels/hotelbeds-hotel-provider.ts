@@ -1,4 +1,4 @@
-import type { HotelOffer } from "@watesly-travel/shared";
+import type { HotelOffer, HotelRateOption } from "@watesly-travel/shared";
 import { geocodeLocation } from "../locations";
 import type {
   HotelProviderAdapter,
@@ -6,17 +6,48 @@ import type {
   HotelSearchParams,
   ProviderBookingResult,
 } from "../types";
+import { amountToMinor } from "../types";
 import {
   hotelbedsHeaders,
   resolveHotelbedsCredentials,
   type HotelbedsCredentials,
 } from "./hotelbeds-auth";
 import {
+  fetchHotelbedsContentMap,
+  fetchHotelbedsFacilityCatalog,
+} from "./hotelbeds-content-client";
+import {
+  findMappedRate,
   mapCheckratesToOffer,
   mapHotelbedsToOffer,
 } from "./hotelbeds-mapper";
-import { fetchHotelbedsContentMap, fetchHotelbedsFacilityCatalog } from "./hotelbeds-content-client";
-import type { HbAvailabilityResponse, HbHotel } from "./hotelbeds-types";
+import {
+  fetchHotelbedsRateComments,
+  rateCommentsFromHb,
+} from "./hotelbeds-rate-comments";
+import type { HbAvailabilityResponse, HbHotel, HbRate } from "./hotelbeds-types";
+import { hotelsFromHotelbedsPayload } from "./hotelbeds-types";
+
+function normalizeChildrenAges(children: number, raw?: string): number[] {
+  const count = Math.max(0, children);
+  if (count === 0) return [];
+  const parsed = String(raw || "")
+    .split(",")
+    .map((part) => Number(part.trim()))
+    .filter((n) => Number.isFinite(n) && n >= 0 && n <= 17);
+  const ages = [...parsed];
+  while (ages.length < count) ages.push(6);
+  return ages.slice(0, count);
+}
+
+function firstHbRate(hotel?: HbHotel): HbRate | undefined {
+  for (const room of hotel?.rooms || []) {
+    for (const rate of room.rates || []) {
+      if (rate.rateKey) return rate;
+    }
+  }
+  return undefined;
+}
 
 export class HotelbedsHotelProvider implements HotelProviderAdapter {
   readonly providerKey = "hotelbeds";
@@ -101,19 +132,37 @@ export class HotelbedsHotelProvider implements HotelProviderAdapter {
 
     const rooms = Math.max(1, params.rooms || 1);
     const children = Math.max(0, params.children || 0);
+    const ages = normalizeChildrenAges(children, params.childrenAges);
     const currency = (params.currency || "EUR").toUpperCase();
+    const shiftDays = Math.max(0, Math.min(5, Number(params.shiftDays || 0) || 0));
+    const filter: Record<string, unknown> = {
+      maxHotels: params.maxHotels ?? 30,
+      maxRooms: params.maxRoomsPerHotel ?? 25,
+    };
+    if (params.minStars) {
+      filter.minCategory = String(params.minStars);
+      filter.maxCategory = "5EST";
+    }
+    if (params.maxStars) filter.maxCategory = `${params.maxStars}EST`;
+    if (params.minRate && params.minRate > 0) filter.minRate = String(params.minRate);
+    if (params.maxRate && params.maxRate > 0) filter.maxRate = String(params.maxRate);
+    if (params.paymentType === "AT_HOTEL" || params.paymentType === "AT_WEB") {
+      filter.paymentType = params.paymentType;
+    }
+
     const payload: Record<string, unknown> = {
       stay: {
         checkIn: params.checkInDate,
         checkOut: params.checkOutDate,
+        ...(shiftDays > 0 ? { shiftDays } : {}),
       },
       occupancies: [
         {
           rooms,
           adults: Math.max(1, params.adults),
           children,
-          ...(children > 0 && params.childrenAges
-            ? { paxes: params.childrenAges.split(",").map((age) => ({ type: "CH", age: Number(age.trim()) })) }
+          ...(children > 0
+            ? { paxes: ages.map((age) => ({ type: "CH", age })) }
             : {}),
         },
       ],
@@ -123,19 +172,14 @@ export class HotelbedsHotelProvider implements HotelProviderAdapter {
         radius: params.radiusKm || 25,
         unit: "km",
       },
-      filter: {
-        maxHotels: params.maxHotels ?? 30,
-        maxRooms: params.maxRoomsPerHotel ?? 25,
-        ...(params.minStars
-          ? { minCategory: String(params.minStars), maxCategory: "5EST" }
-          : {}),
-        ...(params.maxStars
-          ? { maxCategory: `${params.maxStars}EST` }
-          : {}),
-      },
+      filter,
       language: "ENG",
       dailyRate: true,
     };
+
+    if (params.boardCode) {
+      payload.boards = { included: true, board: [params.boardCode] };
+    }
 
     const destinationCode = params.location.trim().toUpperCase();
     if (/^[A-Z]{3}$/.test(destinationCode)) {
@@ -148,7 +192,7 @@ export class HotelbedsHotelProvider implements HotelProviderAdapter {
       payload,
     );
 
-    const hotels = result.hotels?.hotels || [];
+    const hotels = hotelsFromHotelbedsPayload(result);
     const expiresAt = new Date(Date.now() + 25 * 60 * 1000).toISOString();
 
     const codes = hotels
@@ -182,6 +226,14 @@ export class HotelbedsHotelProvider implements HotelProviderAdapter {
     return offers.sort((a, b) => a.costAmountMinor - b.costAmountMinor);
   }
 
+  async fetchRateComments(
+    ids: string[],
+    date: string,
+  ): Promise<Record<string, string>> {
+    this.ensureConfigured();
+    return fetchHotelbedsRateComments(this.creds, ids, date);
+  }
+
   async revalidateOffer(offer: HotelOffer): Promise<HotelRevalidateResult> {
     let token: {
       rateKey?: string;
@@ -194,9 +246,11 @@ export class HotelbedsHotelProvider implements HotelProviderAdapter {
       token = { rateKey: offer.providerOfferRef };
     }
 
-    const rateKey = token.rateKey || offer.providerOfferRef;
+    let rateKey = token.rateKey || offer.providerOfferRef;
     if (!rateKey || rateKey.startsWith("hb-")) {
-      const options = (offer.raw?.rateOptions as Array<{ rateKey?: string; rateType?: string }>) || [];
+      const options =
+        (offer.raw?.rateOptions as Array<{ rateKey?: string; rateType?: string }>) ||
+        [];
       const first = options[0];
       if (!first?.rateKey) {
         return {
@@ -206,45 +260,66 @@ export class HotelbedsHotelProvider implements HotelProviderAdapter {
           offer,
         };
       }
+      rateKey = first.rateKey;
       token.rateKey = first.rateKey;
       token.rateType = first.rateType;
     }
 
-    if ((token.rateType || offer.raw?.rateType) === "BOOKABLE") {
-      return {
-        available: true,
-        priceChanged: false,
-        previousCostMinor: offer.costAmountMinor,
-        offer: {
-          ...offer,
-          expiresAt: new Date(Date.now() + 20 * 60 * 1000).toISOString(),
-        },
-      };
-    }
+    const previousRate = findMappedRate(offer, rateKey);
+    const previousNet = previousRate?.net;
+    const previousCostMinor = previousNet
+      ? amountToMinor(previousNet, offer.currency)
+      : offer.costAmountMinor;
 
     const checked = await this.request<HbAvailabilityResponse>(
       "/hotel-api/1.0/checkrates",
-      { rooms: [{ rateKey: token.rateKey }] },
+      { rooms: [{ rateKey }], language: "ENG" },
     );
 
-    const hotel = checked.hotels?.hotels?.[0] as HbHotel | undefined;
+    const hotel = hotelsFromHotelbedsPayload(checked)[0];
     if (!hotel) {
       return {
         available: false,
         priceChanged: false,
-        previousCostMinor: offer.costAmountMinor,
+        previousCostMinor,
         offer,
       };
     }
 
-    const nextOffer = mapCheckratesToOffer(offer, hotel);
-    const priceChanged = nextOffer.costAmountMinor !== offer.costAmountMinor;
+    const nextOffer = mapCheckratesToOffer(offer, hotel, rateKey);
+    const selectedRate = findMappedRate(nextOffer, rateKey);
+    const hbRate = firstHbRate(hotel);
+    let rateComments =
+      selectedRate?.rateComments ||
+      rateCommentsFromHb(hbRate?.rateComments);
+
+    if (!rateComments && (selectedRate?.rateCommentsId || hbRate?.rateCommentsId)) {
+      const date = String(
+        nextOffer.raw?.checkInDate || hotel.checkIn || "",
+      );
+      const comments = await this.fetchRateComments(
+        [String(selectedRate?.rateCommentsId || hbRate?.rateCommentsId)],
+        date,
+      );
+      rateComments = Object.values(comments)[0];
+      if (rateComments && selectedRate) {
+        selectedRate.rateComments = rateComments;
+      }
+    }
+
+    const nextNet = selectedRate?.net;
+    const nextCost = nextNet
+      ? amountToMinor(nextNet, offer.currency)
+      : nextOffer.costAmountMinor;
+    const priceChanged = nextCost !== previousCostMinor;
 
     return {
       available: true,
       priceChanged,
-      previousCostMinor: offer.costAmountMinor,
+      previousCostMinor,
       offer: nextOffer,
+      selectedRate: selectedRate as HotelRateOption | undefined,
+      rateComments,
     };
   }
 

@@ -7,6 +7,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { HotelSearchCard } from "@/components/hotels/HotelSearchCard";
 import { HotelDetailModal } from "@/components/hotels/HotelDetailModal";
+import { HotelLiveBadge } from "@/components/hotels/HotelLiveBadge";
 import { apiFetch } from "@/lib/api";
 import { saveFlightDraft, saveHotelDraft } from "@/lib/booking-draft";
 import { getPreferredCurrency } from "@/lib/currency";
@@ -386,6 +387,10 @@ export default function InquiriesPage() {
     stayQuery: "دبي",
     carPickup: "KWI",
     carDropoff: "DXB",
+    childrenAges: [] as number[],
+    shiftDays: false,
+    minRate: "",
+    maxRate: "",
   });
   const [airlines, setAirlines] = useState<Airline[]>([]);
   const [guestsOpen, setGuestsOpen] = useState(false);
@@ -827,6 +832,8 @@ export default function InquiriesPage() {
         currency: rate.currency,
         paymentType: rate.paymentType,
         freeCancellation: rate.freeCancellation,
+        allotment: rate.allotment,
+        rateComments: rate.rateComments,
       },
       checkIn: form.departDate,
       checkOut: form.returnDate,
@@ -921,6 +928,24 @@ export default function InquiriesPage() {
               ? JSON.stringify({
                   query: stayLocation,
                   rooms: form.rooms,
+                  childrenAges:
+                    form.children > 0
+                      ? (form.childrenAges.length
+                          ? form.childrenAges
+                          : Array.from({ length: form.children }, () => 6)
+                        )
+                          .slice(0, form.children)
+                          .join(",")
+                      : undefined,
+                  shiftDays: form.shiftDays ? 1 : undefined,
+                  minRate: form.minRate ? Number(form.minRate) : undefined,
+                  maxRate: form.maxRate
+                    ? Number(form.maxRate)
+                    : filters.maxPrice
+                      ? Number(filters.maxPrice)
+                      : undefined,
+                  boardCode: filters.boardCode || undefined,
+                  paymentType: filters.paymentType || undefined,
                 })
               : form.preferredAirline
                 ? JSON.stringify({ preferredAirline: form.preferredAirline })
@@ -932,6 +957,7 @@ export default function InquiriesPage() {
         `/inquiries/${inquiry.id}/search`,
         {
           method: "POST",
+          timeoutMs: 60000,
           body: JSON.stringify({ includeHotels: mode === "stays" }),
         },
       );
@@ -1274,12 +1300,14 @@ export default function InquiriesPage() {
                       <span>عدد الأطفال</span>
                       <select
                         value={form.children}
-                        onChange={(e) =>
-                          setForm({
-                            ...form,
-                            children: Number(e.target.value) || 0,
-                          })
-                        }
+                        onChange={(e) => {
+                          const children = Number(e.target.value) || 0;
+                          const childrenAges = [
+                            ...form.childrenAges,
+                          ].slice(0, children);
+                          while (childrenAges.length < children) childrenAges.push(6);
+                          setForm({ ...form, children, childrenAges });
+                        }}
                       >
                         {Array.from({ length: 9 }, (_, i) => i).map((n) => (
                           <option key={n} value={n}>
@@ -1288,6 +1316,30 @@ export default function InquiriesPage() {
                         ))}
                       </select>
                     </label>
+                    {form.children > 0
+                      ? Array.from({ length: form.children }, (_, i) => (
+                          <label key={i}>
+                            <span>عمر الطفل {i + 1}</span>
+                            <select
+                              value={form.childrenAges[i] ?? 6}
+                              onChange={(e) => {
+                                const childrenAges = [...form.childrenAges];
+                                while (childrenAges.length < form.children) {
+                                  childrenAges.push(6);
+                                }
+                                childrenAges[i] = Number(e.target.value) || 6;
+                                setForm({ ...form, childrenAges });
+                              }}
+                            >
+                              {Array.from({ length: 18 }, (_, age) => (
+                                <option key={age} value={age}>
+                                  {age} سنة
+                                </option>
+                              ))}
+                            </select>
+                          </label>
+                        ))
+                      : null}
                     <button
                       type="button"
                       className="btn secondary"
@@ -1298,6 +1350,39 @@ export default function InquiriesPage() {
                   </div>
                 ) : null}
               </div>
+              <label className="fs-cell fs-cell-center">
+                <span>تواريخ مرنة</span>
+                <button
+                  type="button"
+                  className={`guests-trigger${form.shiftDays ? " on" : ""}`}
+                  onClick={() => setForm({ ...form, shiftDays: !form.shiftDays })}
+                >
+                  {form.shiftDays ? "±1 يوم مفعّل" : "التواريخ كما هي"}
+                </button>
+                <small>± يوم واحد</small>
+              </label>
+              <label className="fs-cell fs-cell-center">
+                <span>سعر من</span>
+                <input
+                  type="number"
+                  min={0}
+                  value={form.minRate}
+                  onChange={(e) => setForm({ ...form, minRate: e.target.value })}
+                  placeholder="—"
+                />
+                <small>اختياري</small>
+              </label>
+              <label className="fs-cell fs-cell-center">
+                <span>سعر إلى</span>
+                <input
+                  type="number"
+                  min={0}
+                  value={form.maxRate}
+                  onChange={(e) => setForm({ ...form, maxRate: e.target.value })}
+                  placeholder="—"
+                />
+                <small>يُرسل لـ Hotelbeds</small>
+              </label>
               <button
                 type="button"
                 className="flight-explore"
@@ -1684,6 +1769,24 @@ export default function InquiriesPage() {
                     {form.stayQuery || "الإقامات"}:{" "}
                     {filteredHotels.length} عقارًا موجودًا
                   </h3>
+                  {search?.hotels?.[0] ? (
+                    <HotelLiveBadge
+                      liveMode={Boolean(
+                        search.liveMode || search.hotels[0].details.liveMode,
+                      )}
+                      sourceLabel={
+                        typeof search.hotels[0].details.sourceLabel === "string"
+                          ? search.hotels[0].details.sourceLabel
+                          : search.hotelProviderName || search.providerName
+                      }
+                      fetchedAt={
+                        typeof search.hotels[0].details.fetchedAt === "string"
+                          ? search.hotels[0].details.fetchedAt
+                          : undefined
+                      }
+                      expiresAt={search.hotels[0].expiresAt}
+                    />
+                  ) : null}
                   <div className="results-sort">
                     <button
                       type="button"

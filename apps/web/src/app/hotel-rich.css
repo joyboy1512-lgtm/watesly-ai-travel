@@ -903,6 +903,142 @@
   font-weight: 400;
 }
 
+.hotel-live-badge {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.65rem;
+  font-size: 0.75rem;
+  color: #0f766e;
+  background: #f0fdfa;
+  border: 1px solid #99f6e4;
+  border-radius: 999px;
+  padding: 0.22rem 0.7rem;
+}
+
+.hotel-live-badge strong {
+  font-size: 0.75rem;
+}
+
+.hotel-live-badge em {
+  font-style: normal;
+  font-weight: 700;
+  color: #115e59;
+}
+
+.hotel-live-badge.is-expired {
+  color: #991b1b;
+  background: #fef2f2;
+  border-color: #fecaca;
+}
+
+.hotel-live-badge.is-compact {
+  margin-top: 0.35rem;
+  width: fit-content;
+  padding: 0.12rem 0.5rem;
+}
+
+.hotel-modal-live {
+  padding: 0 1.1rem 0.65rem;
+}
+
+.hotel-price-change {
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  color: #92400e;
+  border-radius: 10px;
+  padding: 0.65rem 0.8rem;
+  margin-bottom: 0.85rem;
+  font-size: 0.88rem;
+}
+
+.hotel-price-break {
+  margin: 0.85rem 0;
+}
+
+.hotel-price-break ul {
+  list-style: none;
+  margin: 0.4rem 0 0;
+  padding: 0;
+}
+
+.hotel-price-break li {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.28rem 0;
+  border-bottom: 1px dashed #e2e8f0;
+  font-size: 0.86rem;
+}
+
+.hotel-rate-comments {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 0.75rem 0.85rem;
+  margin: 0.85rem 0;
+  white-space: pre-wrap;
+  font-size: 0.86rem;
+}
+
+.hotel-rate-comments h3,
+.hotel-price-break h3 {
+  margin: 0 0 0.35rem;
+  font-size: 0.9rem;
+}
+
+.hotel-room-desc {
+  color: #475569;
+  font-size: 0.84rem;
+  margin: 0 0 0.65rem;
+}
+
+.hotel-room-gallery,
+.hotel-hero-gallery {
+  display: flex;
+  gap: 0.4rem;
+  overflow-x: auto;
+  margin: 0 1rem 0.75rem;
+}
+
+.hotel-room-gallery {
+  margin: 0 0 0.75rem;
+}
+
+.hotel-room-gallery img,
+.hotel-hero-gallery img {
+  width: 92px;
+  height: 68px;
+  object-fit: cover;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+.hotel-room-fac-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  list-style: none;
+  margin: 0 0 0.7rem;
+  padding: 0;
+}
+
+.hotel-room-fac-chips li {
+  background: #f1f5f9;
+  border-radius: 999px;
+  padding: 0.15rem 0.5rem;
+  font-size: 0.72rem;
+  color: #334155;
+}
+
+.hotel-check-error {
+  margin: 0 1rem 0.75rem;
+  color: #991b1b;
+  background: #fef2f2;
+  border-radius: 8px;
+  padding: 0.55rem 0.75rem;
+}
+
 @media (max-width: 860px) {
   .hotel-detail-modal-hero {
     grid-template-columns: 1fr;

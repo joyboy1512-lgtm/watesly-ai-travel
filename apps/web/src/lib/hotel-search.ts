@@ -6,7 +6,9 @@ export type HotelOfferRow = {
   id: string;
   description: string;
   sellAmountMinor: number;
+  costAmountMinor?: number;
   currency: string;
+  expiresAt?: string;
   details: Record<string, unknown>;
 };
 
@@ -250,4 +252,5 @@ export function formatPolicyDate(iso?: string): string {
 
 export {
   BOARD_LABELS_AR,
+  taxTypeLabelAr,
 } from "@watesly-travel/shared";

@@ -49,10 +49,28 @@ export function pickPrimaryHotelImage(hotel?: HbContentHotel): string | undefine
 }
 
 export function pickRoomImages(hotel?: HbContentHotel): Record<string, string> {
+  const lists = pickRoomImageLists(hotel);
   const out: Record<string, string> = {};
-  for (const img of hotel?.images || []) {
-    if (!img.roomCode || !img.path || out[img.roomCode]) continue;
-    out[img.roomCode] = hotelbedsImageUrl(img.path, "medium") || "";
+  for (const [code, urls] of Object.entries(lists)) {
+    if (urls[0]) out[code] = urls[0];
+  }
+  return out;
+}
+
+export function pickRoomImageLists(
+  hotel?: HbContentHotel,
+): Record<string, string[]> {
+  const out: Record<string, string[]> = {};
+  const images = [...(hotel?.images || [])].sort(
+    (a, b) =>
+      (a.visualOrder ?? a.order ?? 999) - (b.visualOrder ?? b.order ?? 999),
+  );
+  for (const img of images) {
+    if (!img.roomCode || !img.path) continue;
+    const url = hotelbedsImageUrl(img.path, "bigger");
+    if (!url) continue;
+    if (!out[img.roomCode]) out[img.roomCode] = [];
+    if (!out[img.roomCode].includes(url)) out[img.roomCode].push(url);
   }
   return out;
 }

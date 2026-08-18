@@ -14,6 +14,7 @@ import { formatMoneyMinor } from "@/lib/format";
 type Props = {
   hotel: HotelOfferRow & { matchingRates: HotelRateOption[]; displayFromMinor: number };
   nights: number;
+  checkingRateKey?: string | null;
   onBookRate: (rate: HotelRateOption) => void;
 };
 
@@ -23,7 +24,17 @@ function paymentLabel(type?: string) {
   return type || "—";
 }
 
-function cancellationSummary(rate: HotelRateOption, currency: string) {
+function occupancyLabel(room: HotelRoomOption) {
+  const o = room.occupancy;
+  if (!o) return null;
+  const parts: string[] = [];
+  if (o.maxAdults) parts.push(`حتى ${o.maxAdults} بالغ`);
+  if (o.maxChildren) parts.push(`${o.maxChildren} طفل`);
+  if (!parts.length && o.maxPax) parts.push(`حتى ${o.maxPax} نزيل`);
+  return parts.length ? parts.join(" · ") : null;
+}
+
+function cancellationSummary(rate: HotelRateOption) {
   if (rate.freeCancellation) {
     const first = rate.cancellationPolicies.find((p) => Number(p.amount) === 0);
     if (first?.from) {
@@ -42,7 +53,28 @@ function cancellationSummary(rate: HotelRateOption, currency: string) {
   return { text: "غير قابل للاسترداد", deadline: "لا استرداد", good: false };
 }
 
-export function HotelRoomAccordion({ hotel, nights, onBookRate }: Props) {
+function nightlyHint(rate: HotelRateOption, nights: number, perNightMinor: number, currency: string) {
+  const daily = rate.dailyRates?.filter((d) => d.net != null) || [];
+  if (daily.length) {
+    const first = daily[0];
+    const label = first?.date ? `ليلة ${first.date}` : "لليلة الأولى";
+    return `${first?.net} ${rate.currency} ${label}`;
+  }
+  return `${formatMoneyMinor(perNightMinor, currency)} / ليلة · ${nights} ${nights === 1 ? "ليلة" : "ليالي"}`;
+}
+
+function taxHint(rate: HotelRateOption) {
+  const items = rate.taxes?.items || [];
+  if (!items.length) return rate.taxes?.allIncluded ? "شامل الضرائب" : null;
+  const extra = items.filter((t) => !t.included && t.amount > 0);
+  if (extra.length) {
+    const sum = extra.reduce((s, t) => s + t.amount, 0);
+    return `+ ${sum} ${extra[0]?.currency || rate.currency} ضرائب غير مشمولة`;
+  }
+  return "شامل الضرائب";
+}
+
+export function HotelRoomAccordion({ hotel, nights, checkingRateKey, onBookRate }: Props) {
   const rooms = useMemo(() => {
     const raw = hotel.details.rooms;
     const fromDetails = Array.isArray(raw) ? (raw as HotelRoomOption[]) : [];
@@ -84,6 +116,7 @@ export function HotelRoomAccordion({ hotel, nights, onBookRate }: Props) {
           ? rateDisplayMinor(cheapest, hotel, nights)
           : hotel.displayFromMinor;
         const perNight = nights > 0 ? Math.round(fromMinor / nights) : fromMinor;
+        const occ = occupancyLabel(room);
 
         return (
           <section
@@ -105,6 +138,7 @@ export function HotelRoomAccordion({ hotel, nights, onBookRate }: Props) {
                 <span>
                   {room.rates.length}{" "}
                   {room.rates.length === 1 ? "خيار إقامة" : "خيارات إقامة"}
+                  {occ ? ` · ${occ}` : ""}
                 </span>
                 {room.facilities?.length ? (
                   <em>{room.facilities.slice(0, 3).join(" · ")}</em>
@@ -122,11 +156,31 @@ export function HotelRoomAccordion({ hotel, nights, onBookRate }: Props) {
 
             {open ? (
               <div className="hotel-room-panel-body">
+                {room.description ? (
+                  <p className="hotel-room-desc">{room.description}</p>
+                ) : null}
+                {room.images && room.images.length > 1 ? (
+                  <div className="hotel-room-gallery">
+                    {room.images.slice(0, 6).map((src) => (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img key={src} src={src} alt="" />
+                    ))}
+                  </div>
+                ) : null}
+                {room.facilities?.length ? (
+                  <ul className="hotel-room-fac-chips">
+                    {room.facilities.slice(0, 8).map((f) => (
+                      <li key={f}>{f}</li>
+                    ))}
+                  </ul>
+                ) : null}
                 {room.rates.map((rate: HotelRateOption) => {
                   const totalMinor = rateDisplayMinor(rate, hotel, nights);
                   const perNightMinor =
                     nights > 0 ? Math.round(totalMinor / nights) : totalMinor;
-                  const cancel = cancellationSummary(rate, hotel.currency);
+                  const cancel = cancellationSummary(rate);
+                  const taxes = taxHint(rate);
+                  const busy = checkingRateKey === rate.rateKey;
 
                   return (
                     <article key={rate.rateKey} className="hotel-rate-row">
@@ -142,24 +196,29 @@ export function HotelRoomAccordion({ hotel, nights, onBookRate }: Props) {
                         <strong>{paymentLabel(rate.paymentType)}</strong>
                         <small>
                           {rate.rateType === "BOOKABLE" ? "جاهز للحجز" : "يحتاج تحقق"}
+                          {rate.allotment != null ? ` · متبقي ${rate.allotment}` : ""}
                         </small>
                       </div>
                       <div className="hotel-rate-col price">
                         <strong>{formatMoneyMinor(totalMinor, hotel.currency)}</strong>
-                        <small>
-                          {formatMoneyMinor(perNightMinor, hotel.currency)} / ليلة · {nights}{" "}
-                          {nights === 1 ? "ليلة" : "ليالي"}
-                        </small>
+                        <small>{nightlyHint(rate, nights, perNightMinor, hotel.currency)}</small>
+                        {taxes ? <small>{taxes}</small> : null}
+                        {rate.sellingRate && rate.sellingRate !== rate.net ? (
+                          <small>
+                            صافي {rate.net} · بيع {rate.sellingRate} {rate.currency}
+                          </small>
+                        ) : null}
                       </div>
                       <button
                         type="button"
                         className="btn hotel-rate-book-btn"
+                        disabled={Boolean(checkingRateKey)}
                         onClick={(e) => {
                           e.stopPropagation();
                           onBookRate(rate);
                         }}
                       >
-                        احجز
+                        {busy ? "جاري التحقق..." : "احجز"}
                       </button>
                     </article>
                   );

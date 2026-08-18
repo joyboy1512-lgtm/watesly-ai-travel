@@ -2,6 +2,7 @@
 
 import type { HotelRateOption } from "@/lib/hotel-search";
 import { formatMoneyMinor } from "@/lib/format";
+import { HotelLiveBadge } from "./HotelLiveBadge";
 
 type HotelRow = {
   id: string;
@@ -78,6 +79,22 @@ export function HotelSearchCard({ hotel, nights, onOpen }: Props) {
                   <span key={i}>★</span>
                 ))}
               </div>
+            ) : null}
+            {hotel.details.liveMode || hotel.details.sourceLabel ? (
+              <HotelLiveBadge
+                compact
+                liveMode={Boolean(hotel.details.liveMode)}
+                sourceLabel={
+                  typeof hotel.details.sourceLabel === "string"
+                    ? hotel.details.sourceLabel
+                    : undefined
+                }
+                fetchedAt={
+                  typeof hotel.details.fetchedAt === "string"
+                    ? hotel.details.fetchedAt
+                    : undefined
+                }
+              />
             ) : null}
           </div>
           {rating ? (

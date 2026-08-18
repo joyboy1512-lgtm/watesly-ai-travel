@@ -61,6 +61,7 @@ export type HbRate = {
   promotions?: HbPromotion[];
   offers?: HbOffer[];
   rateCommentsId?: string;
+  rateComments?: string | string[];
   dailyRates?: Array<{ offset?: number; dailyNet?: string | number }>;
 };
 
@@ -92,6 +93,7 @@ export type HbHotel = {
 
 export type HbAvailabilityResponse = {
   auditData?: Record<string, unknown>;
+  hotel?: HbHotel;
   hotels?: {
     checkIn?: string;
     checkOut?: string;
@@ -100,3 +102,25 @@ export type HbAvailabilityResponse = {
   };
   error?: { message?: string; code?: string };
 };
+
+export type HbRateCommentsResponse = {
+  auditData?: Record<string, unknown>;
+  rateComments?: Array<{
+    code?: number | string;
+    date?: string;
+    incoming?: number | string;
+    hotel?: number | string;
+    description?: string | { content?: string };
+    commentsByRate?: Array<{ rateClass?: string; comment?: string }>;
+  }>;
+  error?: { message?: string; code?: string };
+};
+
+export function hotelsFromHotelbedsPayload(
+  json: HbAvailabilityResponse,
+): HbHotel[] {
+  if (json.hotel && (json.hotel.code != null || json.hotel.rooms)) {
+    return [json.hotel];
+  }
+  return json.hotels?.hotels || [];
+}

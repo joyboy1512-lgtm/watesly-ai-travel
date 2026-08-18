@@ -39,7 +39,7 @@ export function clearSession() {
 
 export async function apiFetch<T>(
   path: string,
-  init: RequestInit = {},
+  init: RequestInit & { timeoutMs?: number } = {},
 ): Promise<T> {
   const headers = new Headers(init.headers);
   headers.set("Content-Type", "application/json");
@@ -49,15 +49,15 @@ export async function apiFetch<T>(
     headers.set("Authorization", `Bearer ${token}`);
   }
 
+  const { timeoutMs = 20000, ...rest } = init;
   const controller = new AbortController();
-  const timeoutMs = 20000;
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   let response: Response;
   try {
     response = await fetch(`${API_URL}${path}`, {
-      ...init,
+      ...rest,
       headers,
-      signal: init.signal || controller.signal,
+      signal: rest.signal || controller.signal,
     });
   } catch (err) {
     const aborted =

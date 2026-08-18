@@ -240,12 +240,24 @@ export class BotPipelineService {
 
     let hotelLocation = inquiry.destination || inquiry.origin || "";
     let hotelRooms = 1;
+    let childrenAges: string | undefined;
+    let shiftDays: number | undefined;
+    let minRate: number | undefined;
+    let maxRate: number | undefined;
+    let boardCode: string | undefined;
+    let paymentType: string | undefined;
     if (inquiry.preferences?.trim()) {
       try {
         const pref = JSON.parse(inquiry.preferences) as {
           query?: string;
           rooms?: number;
           preferredHotel?: string;
+          childrenAges?: string;
+          shiftDays?: number;
+          minRate?: number;
+          maxRate?: number;
+          boardCode?: string;
+          paymentType?: string;
         };
         hotelLocation =
           pref.query ||
@@ -253,6 +265,12 @@ export class BotPipelineService {
           inquiry.preferences ||
           hotelLocation;
         if (pref.rooms && pref.rooms > 0) hotelRooms = pref.rooms;
+        if (pref.childrenAges?.trim()) childrenAges = pref.childrenAges.trim();
+        if (pref.shiftDays && pref.shiftDays > 0) shiftDays = pref.shiftDays;
+        if (pref.minRate && pref.minRate > 0) minRate = pref.minRate;
+        if (pref.maxRate && pref.maxRate > 0) maxRate = pref.maxRate;
+        if (pref.boardCode?.trim()) boardCode = pref.boardCode.trim();
+        if (pref.paymentType?.trim()) paymentType = pref.paymentType.trim();
       } catch {
         hotelLocation = inquiry.preferences.trim();
       }
@@ -304,8 +322,15 @@ export class BotPipelineService {
             checkInDate: departDate,
             checkOutDate: hotelCheckOut,
             adults: inquiry.adults,
+            children: inquiry.children,
+            childrenAges,
             rooms: hotelRooms,
             currency: searchCurrency,
+            shiftDays,
+            minRate,
+            maxRate,
+            boardCode,
+            paymentType,
           }
         : undefined,
     });

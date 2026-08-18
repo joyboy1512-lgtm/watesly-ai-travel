@@ -323,6 +323,50 @@ export class BookingsController {
     });
   }
 
+  @Post("checkrate-hotel")
+  @RequirePermissions("conversations.read")
+  checkrateHotel(
+    @CurrentUser() user: AuthUser,
+    @Body()
+    body: {
+      rateKey: string;
+      offer: {
+        providerKey?: string;
+        providerOfferRef?: string;
+        description?: string;
+        costAmountMinor?: number;
+        currency: string;
+        revalidationToken?: string;
+        expiresAt?: string;
+        raw?: Record<string, unknown>;
+      };
+    },
+  ) {
+    if (!body?.offer?.currency || !body?.rateKey) {
+      throw new BadRequestException("بيانات التعرفة غير مكتملة");
+    }
+    return this.bookings.checkHotelRate({
+      organizationId: user.organizationId,
+      rateKey: body.rateKey,
+      offer: body.offer,
+    });
+  }
+
+  @Post("hotel-rate-comments")
+  @RequirePermissions("conversations.read")
+  hotelRateComments(
+    @CurrentUser() user: AuthUser,
+    @Body()
+    body: { ids?: string[]; date?: string; providerKey?: string },
+  ) {
+    return this.bookings.hotelRateComments({
+      organizationId: user.organizationId,
+      ids: body.ids || [],
+      date: body.date || "",
+      providerKey: body.providerKey,
+    });
+  }
+
   @Post(":id/issue")
   @RequirePermissions("bookings.issue")
   issue(@CurrentUser() user: AuthUser, @Param("id") id: string) {

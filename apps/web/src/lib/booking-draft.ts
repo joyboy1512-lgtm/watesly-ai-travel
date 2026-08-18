@@ -17,6 +17,8 @@ export type BookingDraftHotelRate = {
   currency: string;
   paymentType?: string;
   freeCancellation: boolean;
+  allotment?: number;
+  rateComments?: string;
 };
 
 export type BookingDraftHotel = {

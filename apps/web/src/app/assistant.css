@@ -1,0 +1,104 @@
+.ta-suite {
+  display: grid;
+  gap: 1rem;
+}
+
+.ta-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: minmax(0, 1.6fr) minmax(280px, 0.9fr);
+}
+
+.ta-chat {
+  display: flex;
+  flex-direction: column;
+  min-height: 62vh;
+}
+
+.ta-log {
+  flex: 1;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 0.25rem 0 1rem;
+  max-height: 52vh;
+}
+
+.ta-bubble {
+  max-width: 86%;
+  padding: 0.75rem 0.9rem;
+  border-radius: 16px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+}
+
+.ta-bubble.user {
+  margin-inline-start: auto;
+  background: #0f3340;
+  color: #fff;
+}
+
+.ta-bubble.assistant {
+  background: #f4f7f8;
+  color: #123;
+  border: 1px solid #e3ecef;
+}
+
+.ta-composer {
+  display: flex;
+  gap: 0.6rem;
+  margin-top: auto;
+}
+
+.ta-composer textarea {
+  flex: 1;
+  min-height: 72px;
+  resize: vertical;
+}
+
+.ta-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.ta-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.78rem;
+  padding: 0.25rem 0.55rem;
+  border-radius: 999px;
+  background: #eef5f3;
+  color: #174;
+}
+
+.ta-pill.off {
+  background: #f7eeee;
+  color: #812;
+}
+
+.ta-usage {
+  font-size: 0.82rem;
+  overflow: auto;
+}
+
+.ta-public {
+  max-width: 760px;
+  margin: 2rem auto;
+  padding: 0 1rem 3rem;
+}
+
+.ta-public h1 {
+  margin: 0 0 0.4rem;
+}
+
+@media (max-width: 960px) {
+  .ta-grid {
+    grid-template-columns: 1fr;
+  }
+  .ta-chat {
+    min-height: 50vh;
+  }
+}

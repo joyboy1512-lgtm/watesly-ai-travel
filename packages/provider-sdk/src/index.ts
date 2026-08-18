@@ -14,6 +14,7 @@ export {
   getTransferProvider,
   getTravelProvider,
 } from "./resolve";
+export type { FlightProviderCreds } from "./resolve";
 
 export { MockTravelProvider } from "./mock";
 export { MockFlightProvider } from "./flights/mock-flight-provider";

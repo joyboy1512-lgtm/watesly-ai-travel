@@ -39,6 +39,8 @@ model Organization {
   payments             Payment[]
   handoffs             Handoff[]
   notifications        Notification[]
+  aiThreads            AiThread[]
+  aiUsageLogs          AiUsageLog[]
 
   @@index([status])
 }
@@ -63,6 +65,8 @@ model User {
   recordedPayments     Payment[]       @relation("PaymentRecorder")
   acceptedHandoffs     Handoff[]       @relation("HandoffAcceptor")
   notifications        Notification[]
+  aiThreads            AiThread[]
+  aiUsageLogs          AiUsageLog[]
 
   @@index([status])
 }
@@ -197,6 +201,8 @@ model Contact {
   inquiries     TravelInquiry[]
   quotes        Quote[]
   campaignRecipients CampaignRecipient[]
+  aiThreads          AiThread[]
+  aiUsageLogs        AiUsageLog[]
 
   @@unique([organizationId, waId])
   @@index([organizationId, lastContactedAt])
@@ -224,6 +230,8 @@ model Conversation {
   quotes          Quote[]
   handoffs        Handoff[]
   aiLogs          AiInteractionLog[]
+  aiThreads       AiThread[]
+  aiUsageLogs     AiUsageLog[]
 
   @@index([organizationId, status, lastMessageAt])
   @@index([organizationId, contactId])
@@ -372,6 +380,81 @@ model AiInteractionLog {
   message      Message?       @relation(fields: [messageId], references: [id], onDelete: SetNull)
 
   @@index([organizationId, createdAt])
+}
+
+model AiThread {
+  id                  String    @id @default(uuid())
+  organizationId      String
+  channel             String
+  status              String    @default("open")
+  userId              String?
+  contactId           String?
+  conversationId      String?
+  externalRef         String?
+  previousResponseId  String?
+  metadata            Json?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  organization Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+  contact      Contact?      @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  conversation Conversation? @relation(fields: [conversationId], references: [id], onDelete: SetNull)
+  messages     AiMessage[]
+  usageLogs    AiUsageLog[]
+
+  @@index([organizationId, channel, status])
+  @@index([organizationId, channel, userId, status])
+  @@index([organizationId, conversationId])
+  @@index([organizationId, contactId])
+  @@index([organizationId, channel, externalRef])
+}
+
+model AiMessage {
+  id                 String   @id @default(uuid())
+  threadId           String
+  role               String
+  content            String
+  openaiResponseId   String?
+  model              String?
+  inputTokens        Int?
+  outputTokens       Int?
+  cachedInputTokens  Int?
+  createdAt          DateTime @default(now())
+
+  thread AiThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+
+  @@index([threadId, createdAt])
+}
+
+model AiUsageLog {
+  id                 String   @id @default(uuid())
+  organizationId     String
+  threadId           String?
+  conversationId     String?
+  userId             String?
+  contactId          String?
+  channel            String?
+  provider           String
+  model              String
+  purpose            String   @default("chat")
+  inputTokens        Int      @default(0)
+  cachedInputTokens  Int      @default(0)
+  outputTokens       Int      @default(0)
+  totalTokens        Int      @default(0)
+  estimatedCostUsd   Decimal  @default(0) @db.Decimal(12, 6)
+  openaiResponseId   String?
+  createdAt          DateTime @default(now())
+
+  organization Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  thread       AiThread?     @relation(fields: [threadId], references: [id], onDelete: SetNull)
+  conversation Conversation? @relation(fields: [conversationId], references: [id], onDelete: SetNull)
+  user         User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+  contact      Contact?      @relation(fields: [contactId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId, createdAt])
+  @@index([threadId, createdAt])
+  @@index([organizationId, channel, createdAt])
 }
 
 model TravelProviderConfig {

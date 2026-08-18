@@ -40,6 +40,7 @@ export const NAV_PERMISSIONS: Record<string, string | null> = {
   "/dashboard/inquiries/book": "quotes.create",
   "/dashboard/inquiries/book/hotel": "quotes.create",
   "/dashboard/conversations": "conversations.read",
+  "/dashboard/assistant": "conversations.read",
   "/dashboard/contacts": "conversations.read",
   "/dashboard/quotes": "conversations.read",
   "/dashboard/bookings": "conversations.read",

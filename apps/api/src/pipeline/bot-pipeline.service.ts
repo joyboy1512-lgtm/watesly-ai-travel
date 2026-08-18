@@ -10,6 +10,7 @@ import {
 import { searchAndPriceTravel } from "@watesly-travel/travel-core";
 import { PrismaService } from "../prisma/prisma.service";
 import { AuditService } from "../common/audit.service";
+import { TravelAiService } from "../ai/travel-ai.service";
 import { getHotelProviderForOrg } from "../common/provider-runtime";
 import { formatMoneyMinor } from "../common/money";
 
@@ -30,6 +31,7 @@ export class BotPipelineService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,
+    private readonly travelAi: TravelAiService,
   ) {}
 
   async handleInboundText(input: {
@@ -50,6 +52,37 @@ export class BotPipelineService {
 
     if (conversation.assigneeType === "human") {
       return { mode: "human" as const };
+    }
+
+    const channel =
+      conversation.whatsappAccount?.channelType === "telegram"
+        ? "telegram"
+        : "whatsapp";
+
+    try {
+      const aiResult = await this.travelAi.turn({
+        organizationId: input.organizationId,
+        channel,
+        text: input.text,
+        contactId: input.contactId,
+        conversationId: input.conversationId,
+      });
+      await this.replyToConversation({
+        organizationId: input.organizationId,
+        conversationId: input.conversationId,
+        body: aiResult.message,
+        skipWindowCheck: true,
+      });
+      await this.syncInquiryFromInbound(input).catch((err) => {
+        console.error("[pipeline] inquiry sync after AI", err);
+      });
+      return {
+        mode: aiResult.handoff ? ("handoff" as const) : ("ai" as const),
+        threadId: aiResult.threadId,
+        toolsUsed: aiResult.toolsUsed,
+      };
+    } catch (err) {
+      console.error("[pipeline] Travel AI failed, using extract fallback", err);
     }
 
     let inquiry = await this.prisma.travelInquiry.findFirst({
@@ -169,6 +202,123 @@ export class BotPipelineService {
       inquiryId: inquiry.id,
       quoteId: result.quote.id,
     };
+  }
+
+  /** Keep CRM inquiry + optional silent quote so WhatsApp accept still works. */
+  private async syncInquiryFromInbound(input: {
+    organizationId: string;
+    conversationId: string;
+    contactId: string;
+    messageId: string;
+    text: string;
+  }) {
+    let inquiry = await this.prisma.travelInquiry.findFirst({
+      where: {
+        organizationId: input.organizationId,
+        conversationId: input.conversationId,
+        status: { in: ["collecting", "ready_to_search", "searched"] },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+    if (!inquiry) {
+      inquiry = await this.prisma.travelInquiry.create({
+        data: {
+          organizationId: input.organizationId,
+          conversationId: input.conversationId,
+          contactId: input.contactId,
+          source: "whatsapp",
+          status: "collecting",
+          adults: 1,
+          serviceTypes: ["flight"],
+        },
+      });
+    }
+
+    const started = Date.now();
+    const extraction = await this.ai.extractTravelIntent({
+      messageText: input.text,
+      current: {
+        origin: inquiry.origin,
+        destination: inquiry.destination,
+        departDate: inquiry.departDate
+          ? inquiry.departDate.toISOString().slice(0, 10)
+          : null,
+        returnDate: inquiry.returnDate
+          ? inquiry.returnDate.toISOString().slice(0, 10)
+          : null,
+        adults: inquiry.adults,
+        children: inquiry.children,
+        infants: inquiry.infants,
+        cabinClass: inquiry.cabinClass,
+        budgetAmount: inquiry.budgetAmount,
+        budgetCurrency: inquiry.budgetCurrency,
+        preferences: inquiry.preferences,
+        serviceTypes: (inquiry.serviceTypes as string[] | null) as
+          | ("flight" | "hotel")[]
+          | null,
+      },
+    });
+
+    await this.prisma.aiInteractionLog.create({
+      data: {
+        organizationId: input.organizationId,
+        inquiryId: inquiry.id,
+        conversationId: input.conversationId,
+        messageId: input.messageId,
+        provider: extraction.provider,
+        model: extraction.model,
+        outputJson: asJson({
+          fields: extraction.fields,
+          missingFields: extraction.missingFields,
+          readyToSearch: extraction.readyToSearch,
+          prices: extraction.prices,
+        }),
+        latencyMs: Date.now() - started,
+        success: true,
+      },
+    });
+
+    inquiry = await this.prisma.travelInquiry.update({
+      where: { id: inquiry.id },
+      data: {
+        origin: extraction.fields.origin ?? inquiry.origin,
+        destination: extraction.fields.destination ?? inquiry.destination,
+        departDate: extraction.fields.departDate
+          ? new Date(extraction.fields.departDate)
+          : inquiry.departDate,
+        returnDate: extraction.fields.returnDate
+          ? new Date(extraction.fields.returnDate)
+          : inquiry.returnDate,
+        adults: extraction.fields.adults ?? inquiry.adults,
+        children: extraction.fields.children ?? inquiry.children,
+        infants: extraction.fields.infants ?? inquiry.infants,
+        cabinClass: extraction.fields.cabinClass ?? inquiry.cabinClass,
+        budgetAmount: extraction.fields.budgetAmount ?? inquiry.budgetAmount,
+        budgetCurrency:
+          extraction.fields.budgetCurrency ?? inquiry.budgetCurrency,
+        preferences: extraction.fields.preferences ?? inquiry.preferences,
+        serviceTypes: asJson(
+          extraction.fields.serviceTypes ?? inquiry.serviceTypes ?? ["flight"],
+        ),
+        missingFields: asJson(extraction.missingFields),
+        aiSummary: extraction.summary,
+        rawExtraction: asJson(extraction),
+        status: extraction.readyToSearch ? "ready_to_search" : "collecting",
+      },
+    });
+
+    if (!extraction.readyToSearch) return inquiry;
+    try {
+      await this.searchAndCreateQuote({
+        organizationId: input.organizationId,
+        inquiryId: inquiry.id,
+        sendToCustomer: false,
+        includeHotels: true,
+      });
+    } catch (err) {
+      console.error("[pipeline] silent quote after AI", err);
+    }
+    return inquiry;
   }
 
   async searchAndCreateQuote(input: {

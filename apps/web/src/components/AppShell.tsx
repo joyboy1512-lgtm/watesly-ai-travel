@@ -98,6 +98,7 @@ const NAV = [
   { href: "/dashboard", label: "لوحة التحكم" },
   { href: "/dashboard/inquiries", label: "الاستعلامات المباشرة" },
   { href: "/dashboard/conversations", label: "المحادثات" },
+  { href: "/dashboard/assistant", label: "مساعد السفر" },
   { href: "/dashboard/contacts", label: "العملاء" },
   { href: "/dashboard/quotes", label: "عروض الأسعار" },
   { href: "/dashboard/bookings", label: "الحجوزات" },

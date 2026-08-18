@@ -77,6 +77,18 @@ type HotelProviderCreds = {
   accessToken?: string;
 };
 
+export type FlightProviderCreds = {
+  accessToken?: string;
+  clientId?: string;
+  clientSecret?: string;
+  hostname?: string;
+  username?: string;
+  password?: string;
+  targetBranch?: string;
+  endpoint?: string;
+  loginId?: string;
+};
+
 function requireDuffelToken(kind: "flight" | "hotel"): string {
   const token = process.env.DUFFEL_ACCESS_TOKEN?.trim();
   if (token) return token;
@@ -87,7 +99,10 @@ function requireDuffelToken(kind: "flight" | "hotel"): string {
   );
 }
 
-export function getFlightProvider(preferred?: string): FlightProviderAdapter {
+export function getFlightProvider(
+  preferred?: string,
+  creds?: FlightProviderCreds,
+): FlightProviderAdapter {
   const key = resolveFlightProviderKey(preferred);
 
   if (key === "mock") {
@@ -96,7 +111,8 @@ export function getFlightProvider(preferred?: string): FlightProviderAdapter {
 
   if (key === "duffel") {
     try {
-      return new DuffelFlightProvider(requireDuffelToken("flight"));
+      const token = creds?.accessToken?.trim() || requireDuffelToken("flight");
+      return new DuffelFlightProvider(token);
     } catch (err) {
       if (mockFallbackAllowed()) return new MockFlightProvider();
       throw err;
@@ -105,7 +121,11 @@ export function getFlightProvider(preferred?: string): FlightProviderAdapter {
 
   if (key === "amadeus") {
     try {
-      const provider = new AmadeusFlightProvider();
+      const provider = new AmadeusFlightProvider({
+        clientId: creds?.clientId,
+        clientSecret: creds?.clientSecret,
+        hostname: creds?.hostname,
+      });
       if (!provider.liveMode) {
         throw new Error(
           "FLIGHT_PROVIDER=amadeus يتطلب AMADEUS_CLIENT_ID و AMADEUS_CLIENT_SECRET",
@@ -120,7 +140,12 @@ export function getFlightProvider(preferred?: string): FlightProviderAdapter {
 
   if (key === "travelport") {
     try {
-      const provider = new TravelportFlightProvider();
+      const provider = new TravelportFlightProvider({
+        username: creds?.username,
+        password: creds?.password,
+        targetBranch: creds?.targetBranch,
+        endpoint: creds?.endpoint,
+      });
       if (!provider.liveMode) {
         throw new Error(
           "FLIGHT_PROVIDER=travelport يتطلب TRAVELPORT_USER و TRAVELPORT_PASSWORD و TRAVELPORT_TARGET_BRANCH",
@@ -135,7 +160,11 @@ export function getFlightProvider(preferred?: string): FlightProviderAdapter {
 
   if (key === "travelfusion") {
     try {
-      const provider = new TravelfusionFlightProvider();
+      const provider = new TravelfusionFlightProvider({
+        username: creds?.username,
+        password: creds?.password,
+        loginId: creds?.loginId,
+      });
       if (!provider.liveMode) {
         throw new Error(
           "FLIGHT_PROVIDER=travelfusion يتطلب TRAVELFUSION_USERNAME و TRAVELFUSION_PASSWORD",

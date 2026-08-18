@@ -1,0 +1,29 @@
+{
+  "name": "@watesly-travel/provider-sdk",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Travel provider adapter interfaces and mock provider",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsc -p tsconfig.json --watch",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "echo No lint config yet for provider-sdk",
+    "clean": "rimraf dist"
+  },
+  "dependencies": {
+    "@watesly-travel/shared": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.21",
+    "rimraf": "^6.0.1",
+    "typescript": "^5.8.3"
+  }
+}

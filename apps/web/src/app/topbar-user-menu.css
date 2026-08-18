@@ -1,0 +1,316 @@
+
+/* ===== Topbar account + notifications ===== */
+.topbar {
+  align-items: center;
+}
+
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.tb-notif-btn,
+.tb-user-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  border: 0;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.tb-notif-btn {
+  height: 2.45rem;
+  padding: 0 0.85rem;
+  border-radius: 999px;
+  background: #0f3340;
+  color: #f3f7f4;
+  font-weight: 650;
+  font-size: 0.88rem;
+  position: relative;
+}
+
+.tb-notif-btn:hover {
+  background: #184a52;
+}
+
+.tb-notif-badge {
+  min-width: 1.15rem;
+  height: 1.15rem;
+  padding: 0 0.28rem;
+  border-radius: 999px;
+  background: #d8a35e;
+  color: #142028;
+  font-size: 0.68rem;
+  font-weight: 800;
+  display: inline-grid;
+  place-items: center;
+  line-height: 1;
+}
+
+.notif-panel {
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 16px 36px rgba(7, 24, 34, 0.22);
+}
+
+.notif-panel-head {
+  padding: 0.7rem 0.9rem 0.45rem;
+  font-weight: 700;
+  font-size: 0.86rem;
+  color: #f0c27a;
+}
+
+.notif-item {
+  padding: 0.7rem 0.9rem;
+}
+
+.user-menu {
+  position: relative;
+}
+
+.tb-user-btn {
+  background: transparent;
+  padding: 0.15rem 0.2rem 0.15rem 0.45rem;
+  border-radius: 999px;
+}
+
+.tb-user-btn:hover {
+  background: rgba(15, 51, 64, 0.06);
+}
+
+.tb-avatar {
+  width: 2.35rem;
+  height: 2.35rem;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(145deg, #184a52, #0f3340);
+  color: #f0c27a;
+  font-weight: 700;
+  font-size: 0.78rem;
+  letter-spacing: 0.02em;
+  flex-shrink: 0;
+}
+
+.tb-avatar.lg {
+  width: 2.7rem;
+  height: 2.7rem;
+  font-size: 0.85rem;
+}
+
+.tb-user-name {
+  max-width: 9rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 650;
+  font-size: 0.88rem;
+  color: #0f3340;
+}
+
+.user-panel {
+  position: absolute;
+  top: calc(100% + 0.45rem);
+  left: 0;
+  width: min(300px, 86vw);
+  background: #fff;
+  color: #142028;
+  border: 1px solid rgba(15, 51, 64, 0.1);
+  border-radius: 14px;
+  box-shadow: 0 18px 40px rgba(7, 24, 34, 0.16);
+  z-index: 30;
+  padding: 0.75rem;
+  display: grid;
+  gap: 0.45rem;
+}
+
+html[dir="rtl"] .user-panel,
+html[dir="rtl"] .notif-panel {
+  left: auto;
+  right: 0;
+}
+
+.user-panel-head {
+  display: flex;
+  gap: 0.65rem;
+  align-items: center;
+  padding-bottom: 0.65rem;
+  border-bottom: 1px solid #eef2f1;
+}
+
+.user-panel-head strong {
+  display: block;
+  font-size: 0.95rem;
+  color: #0f3340;
+}
+
+.user-panel-head span {
+  display: block;
+  font-size: 0.78rem;
+  color: #5f7470;
+  overflow-wrap: anywhere;
+}
+
+.user-field {
+  display: grid;
+  gap: 0.25rem;
+  font-size: 0.78rem;
+  color: #5f7470;
+}
+
+.user-field select,
+.user-edit input {
+  width: 100%;
+  border: 1px solid #e2e8e6;
+  border-radius: 9px;
+  padding: 0.5rem 0.65rem;
+  background: #f7faf9;
+  color: #142028;
+  font: inherit;
+}
+
+.user-link,
+.user-logout {
+  border: 0;
+  background: transparent;
+  text-align: right;
+  padding: 0.45rem 0.2rem;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 650;
+  color: #184a52;
+}
+
+html[dir="ltr"] .user-link,
+html[dir="ltr"] .user-logout {
+  text-align: left;
+}
+
+.user-logout {
+  color: #b3261e;
+  border-top: 1px solid #eef2f1;
+  margin-top: 0.2rem;
+  padding-top: 0.65rem;
+}
+
+.user-edit {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.user-edit button {
+  border: 0;
+  border-radius: 8px;
+  background: #0f3340;
+  color: #f3f7f4;
+  padding: 0.45rem 0.7rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.user-ok {
+  margin: 0;
+  color: #184a52;
+  font-size: 0.8rem;
+}
+
+.user-err {
+  margin: 0;
+  color: #b3261e;
+  font-size: 0.8rem;
+}
+
+.main.main-light .tb-user-name {
+  color: #0f3340;
+}
+
+.main.main-light .notif-panel {
+  background: #fff;
+  color: #142028;
+  border-color: rgba(15, 51, 64, 0.1);
+}
+
+.main.main-light .notif-panel-head {
+  color: #0f3340;
+}
+
+.main.main-light .notif-item {
+  color: #142028;
+}
+
+.main.main-light .notif-item span {
+  color: #5f7470;
+}
+
+.main.main-light .notif-item.unread {
+  background: rgba(216, 163, 94, 0.12);
+}
+
+@media (max-width: 720px) {
+  .tb-user-name {
+    display: none;
+  }
+  .tb-notif-label {
+    font-size: 0.8rem;
+  }
+}
+
+/* Conversation list: readable customer names on a light surface */
+.watesly-inbox .wi-list {
+  background: #ffffff;
+  color: #111b21;
+}
+
+.watesly-inbox .wi-list-head {
+  background: #0f3340;
+  color: #f3f7f4;
+}
+
+.watesly-inbox .wi-conversations {
+  background: #f6f8f7;
+}
+
+.watesly-inbox .wi-item {
+  color: #111b21;
+  background: #ffffff;
+  border-bottom-color: #eef2f1;
+}
+
+.watesly-inbox .wi-item:hover {
+  background: #f3f7f4;
+}
+
+.watesly-inbox .wi-item.active {
+  background: #e7f0ee;
+  box-shadow: inset -3px 0 0 #184a52;
+}
+
+.watesly-inbox .wi-item-top strong,
+.watesly-inbox .wi-item.unread .wi-item-top strong {
+  color: #0f3340;
+  font-weight: 700;
+}
+
+.watesly-inbox .wi-item-top time,
+.watesly-inbox .wi-item-main > p {
+  color: #5f7470;
+}
+
+.watesly-inbox .wi-item.unread .wi-item-top time {
+  color: #184a52;
+}
+
+.watesly-inbox .wi-empty {
+  color: #5f7470;
+}
+
+.watesly-inbox .wi-simulator {
+  background: #f7faf9;
+  color: #0f3340;
+}
+
+.watesly-inbox .wi-simulator strong {
+  color: #0f3340;
+}

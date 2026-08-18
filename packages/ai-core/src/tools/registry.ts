@@ -33,6 +33,8 @@ const FUNCTION_TOOLS: Extract<AiToolDefinition, { type: "function" }>[] = [
         adults: { type: "integer", minimum: 1 },
         children: { type: "integer", minimum: 0 },
         cabinClass: { type: "string" },
+        limit: { type: "integer", minimum: 1, maximum: 20 },
+        offset: { type: "integer", minimum: 0 },
       },
       required: ["origin", "destination", "departDate"],
     },
@@ -51,6 +53,8 @@ const FUNCTION_TOOLS: Extract<AiToolDefinition, { type: "function" }>[] = [
         adults: { type: "integer", minimum: 1 },
         children: { type: "integer", minimum: 0 },
         rooms: { type: "integer", minimum: 1 },
+        limit: { type: "integer", minimum: 1, maximum: 20 },
+        offset: { type: "integer", minimum: 0 },
       },
       required: ["location", "checkInDate", "checkOutDate"],
     },
@@ -73,6 +77,8 @@ const FUNCTION_TOOLS: Extract<AiToolDefinition, { type: "function" }>[] = [
         inboundDate: { type: "string" },
         adults: { type: "integer", minimum: 1 },
         children: { type: "integer", minimum: 0 },
+        limit: { type: "integer", minimum: 1, maximum: 20 },
+        offset: { type: "integer", minimum: 0 },
       },
       required: ["city", "from", "to", "outboundDate"],
     },
@@ -244,6 +250,7 @@ export const TRAVEL_SYSTEM_INSTRUCTIONS = `أنت Travel AI لشركة سياح�
 - لا تخترع أسعاراً أو توفّراً أو أرقام رحلات أو أسماء فنادق غير قادمة من أداة.
 - استخدم الأدوات عندما يحتاج العميل أسعاراً أو توفّراً أو معلومات حديثة (طقس، تأشيرة، أخبار، أحداث).
 - search_flights / search_hotels / search_transfers فقط عند توفر التواريخ والمدن اللازمة. إن نقص حقل، اسأل عنه.
+- نتائج الأدوات تحتوي تعرفات/غرف/سياسات إلغاء — استخدمها كما هي ولا تختلق تفاصيلاً إضافية. إن ظهر hasMore=true يمكنك إعادة الاستدعاء مع offset.
 - إن كانت الأداة معطّلة، اعتذر واطلب بيانات الاعتماد أو حوّل لموظف. لا تختلق بديلاً على أنه عرض حقيقي.
 - handoff_to_human عندما يطلب العميل موظفاً، أو يغضب، أو تعجز الأدوات.
 - معرفة النموذج العامة مسموحة للنصائح السياحية العامة (موسم، أحياء، نصائح حقيبة) دون أسعار.

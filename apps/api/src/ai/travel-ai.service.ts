@@ -24,6 +24,7 @@ import {
   getHotelProviderForOrg,
   getTransferProviderForOrg,
 } from "../common/provider-runtime";
+import { serializeSearchResult } from "./tool-result-serializers";
 
 export type TravelAiTurnInput = {
   organizationId: string;
@@ -77,6 +78,12 @@ function str(v: unknown): string {
 function int(v: unknown, fallback: number): number {
   const n = Number(v);
   return Number.isFinite(n) ? n : fallback;
+}
+
+function toolSliceArgs(args: Record<string, unknown>) {
+  const limit = Math.min(20, Math.max(1, int(args.limit, 10)));
+  const offset = Math.max(0, int(args.offset, 0));
+  return { limit, offset };
 }
 
 @Injectable()
@@ -426,16 +433,12 @@ export class TravelAiService {
       children: Math.max(0, int(args.children, 0)),
       cabinClass: str(args.cabinClass) || "economy",
     });
-    return JSON.stringify({
+    return serializeSearchResult({
       liveMode: provider.liveMode,
       provider: provider.displayName,
-      count: rows.length,
-      items: rows.slice(0, 5).map((row) => ({
-        id: row.providerOfferRef,
-        description: row.description,
-        sellAmountMinor: row.costAmountMinor,
-        currency: row.currency,
-      })),
+      rows,
+      kind: "flight",
+      ...toolSliceArgs(args),
     });
   }
 
@@ -477,16 +480,12 @@ export class TravelAiService {
         cabinClass: str(args.cabinClass) || "economy",
       })
       .then((rows) =>
-        JSON.stringify({
+        serializeSearchResult({
           liveMode: adapter.liveMode,
           provider: adapter.displayName,
-          count: rows.length,
-          items: rows.slice(0, 5).map((row) => ({
-            id: row.providerOfferRef,
-            description: row.description,
-            sellAmountMinor: row.costAmountMinor,
-            currency: row.currency,
-          })),
+          rows,
+          kind: "flight",
+          ...toolSliceArgs(args),
         }),
       )
       .catch((err: unknown) =>
@@ -529,20 +528,14 @@ export class TravelAiService {
       children: Math.max(0, int(args.children, 0)),
       rooms: Math.max(1, int(args.rooms, 1)),
     });
-    return JSON.stringify({
+    return serializeSearchResult({
       liveMode: provider.liveMode,
       provider: provider.displayName,
-      count: rows.length,
-      items: rows.slice(0, 5).map((row) => ({
-        id: row.providerOfferRef,
-        description: row.description,
-        sellAmountMinor: row.costAmountMinor,
-        currency: row.currency,
-      })),
+      rows,
+      kind: "hotel",
+      ...toolSliceArgs(args),
     });
   }
-
-  private async toolSearchTransfers(
     organizationId: string,
     args: Record<string, unknown>,
   ): Promise<string> {
@@ -580,16 +573,12 @@ export class TravelAiService {
       adults: Math.max(1, int(args.adults, 1)),
       children: Math.max(0, int(args.children, 0)),
     });
-    return JSON.stringify({
+    return serializeSearchResult({
       liveMode: provider.liveMode,
       provider: provider.displayName,
-      count: rows.length,
-      items: rows.slice(0, 5).map((row) => ({
-        id: row.providerOfferRef,
-        description: row.description,
-        sellAmountMinor: row.costAmountMinor,
-        currency: row.currency,
-      })),
+      rows,
+      kind: "transfer",
+      ...toolSliceArgs(args),
     });
   }
 }

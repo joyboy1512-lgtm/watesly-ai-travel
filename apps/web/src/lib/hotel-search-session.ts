@@ -19,6 +19,7 @@ export type HotelSearchSession = {
     rooms: number;
     adults: number;
     children: number;
+    infants?: number;
     destination: string;
     nights: number;
   };

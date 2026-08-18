@@ -16,6 +16,7 @@ type StayMeta = {
   rooms: number;
   adults: number;
   children: number;
+  infants?: number;
 };
 
 type Props = {
@@ -213,6 +214,7 @@ export function HotelDetailModal({ hotel, nights, meta, onClose, onEnterGuestDat
                 <p>
                   {meta.rooms} غرفة · {meta.adults} بالغ
                   {meta.children ? ` · ${meta.children} طفل` : ""}
+                  {meta.infants ? ` · ${meta.infants} رضيع` : ""}
                 </p>
                 {hotel.details.distanceToCenterLabel ? (
                   <p className="hotel-detail-distance">

@@ -17,6 +17,7 @@ type StayMeta = {
   rooms: number;
   adults: number;
   children: number;
+  infants?: number;
 };
 
 type PriceChange = {
@@ -119,6 +120,7 @@ export function HotelBookingSummary({
           <strong>
             {meta.rooms} غرفة · {meta.adults} بالغ
             {meta.children ? ` · ${meta.children} طفل` : ""}
+            {meta.infants ? ` · ${meta.infants} رضيع` : ""}
           </strong>
         </div>
         <div>

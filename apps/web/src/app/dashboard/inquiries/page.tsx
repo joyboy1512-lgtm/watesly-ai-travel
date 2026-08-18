@@ -391,6 +391,7 @@ export default function InquiriesPage() {
     returnDate: defaultReturnDate(),
     adults: 1,
     children: 0,
+    infants: 0,
     rooms: 1,
     cabinClass: "economy",
     directOnly: false,
@@ -768,6 +769,7 @@ export default function InquiriesPage() {
         rooms: form.rooms,
         adults: form.adults,
         children: form.children,
+        infants: form.infants,
         destination: form.destination || form.stayQuery,
         nights,
       },
@@ -787,6 +789,7 @@ export default function InquiriesPage() {
     form.rooms,
     form.adults,
     form.children,
+    form.infants,
     form.destination,
     nights,
     currentInquiryId,
@@ -805,6 +808,7 @@ export default function InquiriesPage() {
           rooms: form.rooms,
           adults: form.adults,
           children: form.children,
+          infants: form.infants,
           destination: form.destination || form.stayQuery,
           nights,
         },
@@ -861,6 +865,7 @@ export default function InquiriesPage() {
       rooms: form.rooms,
       adults: form.adults,
       children: form.children,
+      infants: form.infants,
       location: form.destination || form.stayQuery,
       locationLabel: form.stayQuery,
       createdAt: new Date().toISOString(),
@@ -895,6 +900,7 @@ export default function InquiriesPage() {
       inboundTime: form.returnDate ? form.dropoffTime : undefined,
       adults: form.adults,
       children: form.children,
+      infants: form.infants,
       createdAt: new Date().toISOString(),
       inquiryId: currentInquiryId || undefined,
     });
@@ -940,6 +946,7 @@ export default function InquiriesPage() {
             inboundTime: form.returnDate ? form.dropoffTime : undefined,
             adults: form.adults,
             children: form.children,
+            infants: form.infants,
           }),
         });
         setCarResults(
@@ -985,6 +992,7 @@ export default function InquiriesPage() {
               : undefined,
           adults: form.adults,
           children: form.children,
+          infants: form.infants,
           cabinClass: form.cabinClass,
           includeHotels,
           serviceTypes,
@@ -1234,9 +1242,14 @@ export default function InquiriesPage() {
                   type="number"
                   min={1}
                   value={form.adults}
-                  onChange={(e) =>
-                    setForm({ ...form, adults: Number(e.target.value) || 1 })
-                  }
+                  onChange={(e) => {
+                    const adults = Number(e.target.value) || 1;
+                    setForm({
+                      ...form,
+                      adults,
+                      infants: Math.min(form.infants, adults),
+                    });
+                  }}
                 />
                 <small>مسافر</small>
               </label>
@@ -1250,7 +1263,26 @@ export default function InquiriesPage() {
                     setForm({ ...form, children: Number(e.target.value) || 0 })
                   }
                 />
-                <small>اختياري</small>
+                <small>2–11 سنة</small>
+              </label>
+              <label className="fs-cell fs-cell-center">
+                <span>رضع</span>
+                <input
+                  type="number"
+                  min={0}
+                  max={form.adults}
+                  value={form.infants}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      infants: Math.min(
+                        Math.max(0, Number(e.target.value) || 0),
+                        form.adults,
+                      ),
+                    })
+                  }
+                />
+                <small>أقل من سنتين</small>
               </label>
               <button
                 type="button"
@@ -1340,6 +1372,7 @@ export default function InquiriesPage() {
                 >
                   {form.adults} كبار
                   {form.children > 0 ? ` · ${form.children} أطفال` : ""}
+                  {form.infants > 0 ? ` · ${form.infants} رضع` : ""}
                 </button>
                 <small>من القائمة</small>
                 {guestsOpen ? (
@@ -1348,12 +1381,14 @@ export default function InquiriesPage() {
                       <span>عدد الكبار</span>
                       <select
                         value={form.adults}
-                        onChange={(e) =>
+                        onChange={(e) => {
+                          const adults = Number(e.target.value) || 1;
                           setForm({
                             ...form,
-                            adults: Number(e.target.value) || 1,
-                          })
-                        }
+                            adults,
+                            infants: Math.min(form.infants, adults),
+                          });
+                        }}
                       >
                         {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => (
                           <option key={n} value={n}>
@@ -1382,6 +1417,30 @@ export default function InquiriesPage() {
                         ))}
                       </select>
                     </label>
+                    <label>
+                      <span>عدد الرضع</span>
+                      <select
+                        value={form.infants}
+                        onChange={(e) =>
+                          setForm({
+                            ...form,
+                            infants: Math.min(
+                              Number(e.target.value) || 0,
+                              form.adults,
+                            ),
+                          })
+                        }
+                      >
+                        {Array.from({ length: form.adults + 1 }, (_, i) => i).map(
+                          (n) => (
+                            <option key={n} value={n}>
+                              {n}
+                            </option>
+                          ),
+                        )}
+                      </select>
+                    </label>
+                    <p className="guests-hint">الرضيع أقل من سنتين ويجلس في حضن بالغ</p>
                     {form.children > 0
                       ? Array.from({ length: form.children }, (_, i) => (
                           <label key={i}>
@@ -1684,9 +1743,14 @@ export default function InquiriesPage() {
                   type="number"
                   min={1}
                   value={form.adults}
-                  onChange={(e) =>
-                    setForm({ ...form, adults: Number(e.target.value) || 1 })
-                  }
+                  onChange={(e) => {
+                    const adults = Number(e.target.value) || 1;
+                    setForm({
+                      ...form,
+                      adults,
+                      infants: Math.min(form.infants, adults),
+                    });
+                  }}
                 />
                 <small>ركاب</small>
               </label>
@@ -1700,7 +1764,26 @@ export default function InquiriesPage() {
                     setForm({ ...form, children: Number(e.target.value) || 0 })
                   }
                 />
-                <small>3–12 سنة</small>
+                <small>2–11 سنة</small>
+              </label>
+              <label className="fs-cell fs-cell-center">
+                <span>رضع</span>
+                <input
+                  type="number"
+                  min={0}
+                  max={form.adults}
+                  value={form.infants}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      infants: Math.min(
+                        Math.max(0, Number(e.target.value) || 0),
+                        form.adults,
+                      ),
+                    })
+                  }
+                />
+                <small>أقل من سنتين</small>
               </label>
               <button
                 type="button"
@@ -2990,6 +3073,7 @@ export default function InquiriesPage() {
                           tripType,
                           adults: form.adults,
                           children: form.children,
+                          infants: form.infants,
                           cabinClass: form.cabinClass,
                           createdAt: new Date().toISOString(),
                           inquiryId: currentInquiryId || undefined,
@@ -3021,6 +3105,7 @@ export default function InquiriesPage() {
             rooms: form.rooms,
             adults: form.adults,
             children: form.children,
+            infants: form.infants,
           }}
           onClose={() => setDetailHotelId(null)}
           onEnterGuestData={confirmHotelBooking}

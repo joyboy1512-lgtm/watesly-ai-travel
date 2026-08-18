@@ -41,6 +41,7 @@ export type FlightBookingDraft = {
   tripType: "roundtrip" | "oneway";
   adults: number;
   children: number;
+  infants?: number;
   cabinClass: string;
   createdAt: string;
   /** Present when the offer originated from a live search + created Quote. */
@@ -58,6 +59,7 @@ export type HotelBookingDraft = {
   rooms: number;
   adults: number;
   children: number;
+  infants?: number;
   location: string;
   locationLabel: string;
   createdAt: string;
@@ -88,6 +90,7 @@ export type TransferBookingDraft = {
   inboundTime?: string;
   adults: number;
   children: number;
+  infants?: number;
   createdAt: string;
   inquiryId?: string;
   quoteId?: string;

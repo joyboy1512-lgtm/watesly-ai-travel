@@ -472,8 +472,19 @@ export class BotPipelineService {
             checkInDate: departDate,
             checkOutDate: hotelCheckOut,
             adults: inquiry.adults,
-            children: inquiry.children,
-            childrenAges,
+            children: inquiry.children + Math.max(0, inquiry.infants || 0),
+            childrenAges: (() => {
+              const childCount = Math.max(0, inquiry.children || 0);
+              const infantCount = Math.max(0, inquiry.infants || 0);
+              const parsed = (childrenAges || "")
+                .split(",")
+                .map((part) => part.trim())
+                .filter(Boolean);
+              const ages = parsed.slice(0, childCount);
+              while (ages.length < childCount) ages.push("6");
+              for (let i = 0; i < infantCount; i += 1) ages.push("1");
+              return ages.length ? ages.join(",") : undefined;
+            })(),
             rooms: hotelRooms,
             currency: searchCurrency,
             shiftDays,

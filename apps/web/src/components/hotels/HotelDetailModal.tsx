@@ -40,6 +40,9 @@ function formatDay(value?: string) {
 export function HotelDetailModal({ hotel, nights, meta, onClose, onEnterGuestData }: Props) {
   const [descOpen, setDescOpen] = useState(false);
   const [selectedRate, setSelectedRate] = useState<HotelRateOption | null>(null);
+  const [tab, setTab] = useState<"rooms" | "map" | "reviews" | "facilities" | "policies">(
+    "rooms",
+  );
 
   const name = String(hotel.details.name || "فندق");
   const stars = Number(hotel.details.stars || 0);
@@ -55,6 +58,11 @@ export function HotelDetailModal({ hotel, nights, meta, onClose, onEnterGuestDat
   const description =
     typeof hotel.details.description === "string" ? hotel.details.description : "";
   const perNight = nights > 0 ? Math.round(hotel.displayFromMinor / nights) : hotel.displayFromMinor;
+  const lat = Number(hotel.details.latitude);
+  const lng = Number(hotel.details.longitude);
+  const hasFreeCancel = hotel.matchingRates.some((r) => r.freeCancellation);
+  const payHotel = hotel.matchingRates.some((r) => r.paymentType === "AT_HOTEL");
+  const payWeb = hotel.matchingRates.some((r) => r.paymentType === "AT_WEB");
 
   return (
     <div className="flight-modal-backdrop" onClick={onClose} role="presentation">
@@ -161,24 +169,151 @@ export function HotelDetailModal({ hotel, nights, meta, onClose, onEnterGuestDat
               </section>
             ) : null}
 
-            {facilityLabels.length ? (
-              <section className="flight-modal-section">
-                <h3>مرافق الفندق</h3>
-                <ul className="hotel-facility-chips">
-                  {facilityLabels.map((f) => (
-                    <li key={f}>{f}</li>
-                  ))}
-                </ul>
+            <nav className="hotel-detail-tabs" aria-label="أقسام الفندق">
+              {(
+                [
+                  ["rooms", "الغرف"],
+                  ["map", "الموقع"],
+                  ["reviews", "التقييمات"],
+                  ["facilities", "المرافق"],
+                  ["policies", "سياسات مكان الإقامة"],
+                ] as const
+              ).map(([id, label]) => (
+                <button
+                  key={id}
+                  type="button"
+                  className={tab === id ? "on" : undefined}
+                  onClick={() => setTab(id)}
+                >
+                  {label}
+                </button>
+              ))}
+            </nav>
+
+            {tab === "rooms" ? (
+              <section className="flight-modal-section hotel-detail-rooms-section">
+                <HotelRoomAccordion
+                  hotel={hotel}
+                  nights={nights}
+                  onBookRate={(rate) => setSelectedRate(rate)}
+                />
               </section>
             ) : null}
 
-            <section className="flight-modal-section hotel-detail-rooms-section">
-              <HotelRoomAccordion
-                hotel={hotel}
-                nights={nights}
-                onBookRate={(rate) => setSelectedRate(rate)}
-              />
-            </section>
+            {tab === "map" ? (
+              <section className="flight-modal-section hotel-tab-panel">
+                <h3>موقع الفندق</h3>
+                {hotel.details.address ? (
+                  <p>{String(hotel.details.address)}</p>
+                ) : null}
+                {poiDistances.length ? (
+                  <ul className="hotel-detail-poi-list">
+                    {poiDistances.map((poi) => (
+                      <li key={poi.nameAr}>
+                        {poi.label} · {poi.nameAr}
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
+                {lat != null && lng != null ? (
+                  <iframe
+                    className="hotel-map-embed"
+                    title="خريطة الفندق"
+                    src={`https://www.openstreetmap.org/export/embed.html?bbox=${lng - 0.02}%2C${lat - 0.02}%2C${lng + 0.02}%2C${lat + 0.02}&layer=mapnik&marker=${lat}%2C${lng}`}
+                  />
+                ) : null}
+                {mapUrl ? (
+                  <a href={mapUrl} target="_blank" rel="noopener noreferrer" className="hotel-map-link">
+                    فتح الخريطة بحجم أكبر ↗
+                  </a>
+                ) : (
+                  <p className="hint">إحداثيات الموقع غير متوفرة من المزود.</p>
+                )}
+              </section>
+            ) : null}
+
+            {tab === "reviews" ? (
+              <section className="flight-modal-section hotel-tab-panel">
+                <h3>التقييمات</h3>
+                {rating > 0 ? (
+                  <div className="hotel-review-score">
+                    <strong>{rating.toFixed(1)}</strong>
+                    <div>
+                      <span>تقييم Hotelbeds</span>
+                      {hotel.details.ranking != null ? (
+                        <small>الترتيب {String(hotel.details.ranking)} / 100</small>
+                      ) : null}
+                      {hotel.details.reviewCount ? (
+                        <small>
+                          {Number(hotel.details.reviewCount).toLocaleString("ar")} مؤشر تقييم
+                        </small>
+                      ) : null}
+                    </div>
+                  </div>
+                ) : (
+                  <p className="hint">
+                    لا يوفّر Hotelbeds Sandbox تقييمات نزلاء مفصّلة لهذا العقار بعد.
+                  </p>
+                )}
+              </section>
+            ) : null}
+
+            {tab === "facilities" ? (
+              <section className="flight-modal-section hotel-tab-panel">
+                <h3>المرافق</h3>
+                {facilityLabels.length ? (
+                  <ul className="hotel-facility-chips">
+                    {facilityLabels.map((f) => (
+                      <li key={f}>{f}</li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="hint">لم تُرجع Hotelbeds مرافق مفصّلة لهذا الفندق.</p>
+                )}
+              </section>
+            ) : null}
+
+            {tab === "policies" ? (
+              <section className="flight-modal-section hotel-tab-panel">
+                <h3>سياسات مكان الإقامة</h3>
+                <ul className="hotel-policy-list">
+                  <li>
+                    <strong>تسجيل الوصول</strong>
+                    <span>{formatDay(meta.departDate)} · حسب سياسة الفندق المحلية</span>
+                  </li>
+                  <li>
+                    <strong>تسجيل المغادرة</strong>
+                    <span>{formatDay(meta.returnDate)}</span>
+                  </li>
+                  <li>
+                    <strong>الإلغاء</strong>
+                    <span>
+                      {hasFreeCancel
+                        ? "توجد تعرفات بإلغاء مجاني — راجع تفاصيل كل غرفة"
+                        : "معظم التعرفات غير قابلة للاسترداد — راجع تفاصيل كل سعر"}
+                    </span>
+                  </li>
+                  <li>
+                    <strong>الدفع</strong>
+                    <span>
+                      {payHotel && payWeb
+                        ? "يتوفر الدفع أونلاين أو في الفندق حسب التعرفة"
+                        : payHotel
+                          ? "الدفع في الفندق عند الوصول"
+                          : "الدفع أونلاين عند الحجز"}
+                    </span>
+                  </li>
+                  <li>
+                    <strong>الوجبات</strong>
+                    <span>
+                      {Array.isArray(hotel.details.boards)
+                        ? (hotel.details.boards as string[]).join(" · ")
+                        : "حسب نوع الغرفة المختارة"}
+                    </span>
+                  </li>
+                </ul>
+              </section>
+            ) : null}
           </>
         )}
       </div>

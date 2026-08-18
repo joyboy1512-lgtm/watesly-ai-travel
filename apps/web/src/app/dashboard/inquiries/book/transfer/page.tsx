@@ -94,7 +94,8 @@ export default function TransferBookPage() {
 
   function validateStep() {
     if (step === 0) {
-      if (!passengerComplete(passengers[0])) {
+      const lead = passengers[0];
+      if (!lead || !passengerComplete(lead)) {
         setError("أكمل بيانات المسافر الرئيسي (الاسم الأول واسم العائلة)");
         return false;
       }
@@ -129,8 +130,10 @@ export default function TransferBookPage() {
     setSubmitting(true);
     setError("");
     try {
+      const lead = passengers[0];
+      if (!lead) return;
       const travelersForApi = [
-        passengers[0],
+        lead,
         ...passengers.slice(1).filter(passengerComplete),
       ];
       const result = await apiFetch<{ booking: { id: string } }>(

@@ -77,6 +77,9 @@ export type BookingDraftTransfer = {
 export type TransferBookingDraft = {
   serviceType: "transfer";
   transfer: BookingDraftTransfer;
+  city?: string;
+  pickupKind?: "airport" | "hotel" | "address";
+  dropoffKind?: "airport" | "hotel" | "address";
   from: string;
   to: string;
   outboundDate: string;

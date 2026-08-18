@@ -12,6 +12,7 @@ import {
   type TransferBookingDraft,
 } from "@/lib/booking-draft";
 import { formatMoneyMinor } from "@/lib/format";
+import { transferPointKindLabelAr } from "@watesly-travel/shared";
 
 const STEPS = ["بيانات الركاب", "الدفع وتأكيد الحجز"] as const;
 
@@ -93,8 +94,8 @@ export default function TransferBookPage() {
 
   function validateStep() {
     if (step === 0) {
-      if (!passengers.every(passengerComplete)) {
-        setError("أكمل أسماء جميع الركاب قبل المتابعة");
+      if (!passengerComplete(passengers[0])) {
+        setError("أكمل بيانات المسافر الرئيسي (الاسم الأول واسم العائلة)");
         return false;
       }
       if (!email.trim() || !phone.trim()) {
@@ -128,6 +129,10 @@ export default function TransferBookPage() {
     setSubmitting(true);
     setError("");
     try {
+      const travelersForApi = [
+        passengers[0],
+        ...passengers.slice(1).filter(passengerComplete),
+      ];
       const result = await apiFetch<{ booking: { id: string } }>(
         "/bookings/from-draft",
         {
@@ -155,14 +160,18 @@ export default function TransferBookPage() {
               departDate: draft.outboundDate,
               returnDate: draft.inboundDate,
             },
-            guests: passengers,
-            travelers: passengers,
+            guests: travelersForApi,
+            travelers: travelersForApi,
             adults: draft.adults,
             children: draft.children,
             contact: { email, phone: `${phoneCode} ${phone}` },
             extras: {
               outboundTime: draft.outboundTime,
               inboundTime: draft.inboundTime,
+              city: draft.city,
+              pickupKind: draft.pickupKind,
+              dropoffKind: draft.dropoffKind,
+              passengerCount: draft.adults + draft.children,
             },
             payment: {
               method: paymentMethod,
@@ -254,6 +263,7 @@ export default function TransferBookPage() {
 
         <div className="book-route-head">
           <p>
+            {draft.city ? `${draft.city} · ` : ""}
             {typeLabel} · {draft.adults + draft.children} ركاب ·{" "}
             {formatTripDate(draft.outboundDate)} {formatTime(draft.outboundTime)}
             {draft.inboundDate
@@ -262,7 +272,8 @@ export default function TransferBookPage() {
           </p>
           <h2>{vehicle}</h2>
           <p>
-            {draft.from} → {draft.to}
+            {transferPointKindLabelAr(draft.pickupKind)}: {draft.from} →{" "}
+            {transferPointKindLabelAr(draft.dropoffKind)}: {draft.to}
           </p>
         </div>
 
@@ -272,22 +283,30 @@ export default function TransferBookPage() {
               <>
                 <section className="book-card">
                   <h3>بيانات الركاب</h3>
-                  <p>أضف اسم كل راكب كما هو في الهوية أو جواز السفر</p>
+                  <p>
+                    المسافر الرئيسي مطلوب. أسماء الركاب الإضافيين اختيارية حتى
+                    تفعيل الحجز الحي مع Hotelbeds.
+                  </p>
 
                   {passengers.map((row, index) => {
                     const isAdult = index < draft.adults;
+                    const isLead = index === 0;
                     return (
                       <div key={index} className="traveler-box">
                         <div className="traveler-box-head">
                           <strong>
-                            {isAdult ? "بالغ" : "طفل"} {index + 1}
+                            {isLead
+                              ? "المسافر الرئيسي *"
+                              : `${isAdult ? "بالغ" : "طفل"} ${index + 1} (اختياري)`}
                           </strong>
                           {passengerComplete(row) ? (
                             <em className="ok">
                               {row.firstName} {row.lastName}
                             </em>
-                          ) : (
+                          ) : isLead ? (
                             <em>بيانات ناقصة</em>
+                          ) : (
+                            <em>يمكن تركه فارغاً</em>
                           )}
                         </div>
                         <div className="traveler-form">
@@ -307,7 +326,7 @@ export default function TransferBookPage() {
                           </label>
                           <div className="name-row">
                             <label className="field">
-                              <span>الاسم الأول *</span>
+                              <span>{isLead ? "الاسم الأول *" : "الاسم الأول"}</span>
                               <input
                                 value={row.firstName}
                                 onChange={(e) =>
@@ -318,7 +337,7 @@ export default function TransferBookPage() {
                               />
                             </label>
                             <label className="field">
-                              <span>اسم العائلة *</span>
+                              <span>{isLead ? "اسم العائلة *" : "اسم العائلة"}</span>
                               <input
                                 value={row.lastName}
                                 onChange={(e) =>

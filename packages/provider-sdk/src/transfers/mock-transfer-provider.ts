@@ -1,5 +1,6 @@
 import type { TransferOffer } from "@watesly-travel/shared";
 import { transferTypeLabelAr } from "@watesly-travel/shared";
+import { cityDefaultAirport } from "../locations";
 import type {
   ProviderBookingResult,
   TransferProviderAdapter,
@@ -13,8 +14,9 @@ export class MockTransferProvider implements TransferProviderAdapter {
   readonly liveMode = false;
 
   async searchTransfers(params: TransferSearchParams): Promise<TransferOffer[]> {
-    const from = params.from.trim() || "KWI";
-    const to = params.to.trim() || "DXB";
+    const city = params.city?.trim() || "";
+    const from = params.from.trim() || cityDefaultAirport(city) || "KWI";
+    const to = params.to.trim() || city || "DXB";
     const currency = "KWD";
     const fetchedAt = new Date().toISOString();
     const expiresAt = new Date(Date.now() + 20 * 60 * 1000).toISOString();
@@ -48,6 +50,9 @@ export class MockTransferProvider implements TransferProviderAdapter {
         vehicleName: row.vehicle,
         fromLabel: from,
         toLabel: to,
+        fromType: params.fromKind || "IATA",
+        toType: params.toKind || "GPS",
+        city: city || undefined,
         outboundAt: `${params.outboundDate}T${params.outboundTime || "10:00"}:00`,
         inboundAt: params.inboundDate
           ? `${params.inboundDate}T${params.inboundTime || "18:00"}:00`

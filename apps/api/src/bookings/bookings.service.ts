@@ -758,8 +758,11 @@ export class BookingsService {
 
   async searchTransfers(input: {
     organizationId: string;
+    city?: string;
     from: string;
     to: string;
+    fromKind?: "IATA" | "ATLAS" | "GPS";
+    toKind?: "IATA" | "ATLAS" | "GPS";
     outboundDate: string;
     outboundTime?: string;
     inboundDate?: string;
@@ -768,8 +771,12 @@ export class BookingsService {
     children?: number;
     infants?: number;
   }) {
+    const city = String(input.city || "").trim();
     const from = String(input.from || "").trim();
     const to = String(input.to || "").trim();
+    if (!city) {
+      throw new BadRequestException("حدد مدينة/وجهة النقل");
+    }
     if (!from || !to) {
       throw new BadRequestException("حدد نقطة الاستلام والتسليم");
     }
@@ -782,8 +789,11 @@ export class BookingsService {
       process.env.TRANSFER_PROVIDER || "hotelbeds",
     );
     const offers = await provider.searchTransfers({
+      city,
       from,
       to,
+      fromKind: input.fromKind,
+      toKind: input.toKind,
       outboundDate: input.outboundDate,
       outboundTime: input.outboundTime,
       inboundDate: input.inboundDate,

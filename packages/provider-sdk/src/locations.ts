@@ -71,6 +71,17 @@ export function resolveGeoLocation(query: string): GeoPoint | null {
   return null;
 }
 
+/** Primary airport IATA for a city label or known alias (e.g. الكويت → KWI). */
+export function cityDefaultAirport(query: string): string | null {
+  const raw = query.trim();
+  if (!raw) return null;
+  const upper = raw.toUpperCase();
+  if (/^[A-Z]{3}$/.test(upper)) return upper;
+  const alias = NAME_ALIASES[raw] || NAME_ALIASES[raw.toLowerCase()];
+  if (alias) return alias;
+  return null;
+}
+
 export async function geocodeLocation(query: string): Promise<GeoPoint | null> {
   const known = resolveGeoLocation(query);
   if (known) return known;

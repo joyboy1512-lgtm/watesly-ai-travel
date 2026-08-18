@@ -10,11 +10,8 @@ import { HotelDetailModal } from "@/components/hotels/HotelDetailModal";
 import { HotelLiveBadge } from "@/components/hotels/HotelLiveBadge";
 import { TransferSearchCard } from "@/components/hotels/TransferSearchCard";
 import { apiFetch } from "@/lib/api";
-import {
-  saveFlightDraft,
-  saveHotelDraft,
-  saveTransferDraft,
-} from "@/lib/booking-draft";
+import { saveFlightDraft, saveHotelDraft, saveTransferDraft } from "@/lib/booking-draft";
+import { transferPointKindToEndpoint } from "@watesly-travel/shared";
 import { getPreferredCurrency } from "@/lib/currency";
 import { formatDate, formatMoneyMinor, formatMoneyMinorCompact } from "@/lib/format";
 import {
@@ -25,6 +22,14 @@ import {
   type HotelRateOption,
 } from "@/lib/hotel-search";
 import { saveHotelSearchSession } from "@/lib/hotel-search-session";
+
+type TransferPointKind = "airport" | "hotel" | "address";
+
+const TRANSFER_KIND_OPTIONS: Array<{ value: TransferPointKind; label: string; hint: string }> = [
+  { value: "airport", label: "مطار", hint: "رمز IATA مثل KWI" },
+  { value: "hotel", label: "فندق", hint: "اسم الفندق (Hotelbeds ATLAS)" },
+  { value: "address", label: "عنوان", hint: "حي أو عنوان داخل المدينة" },
+];
 
 type Inquiry = {
   id: string;
@@ -392,8 +397,14 @@ export default function InquiriesPage() {
     preferredAirline: "",
     preferredAirlineName: "",
     stayQuery: "دبي",
-    carPickup: "KWI",
-    carDropoff: "الكويت",
+    transferCity: "الكويت",
+    transferCityLabel: "الكويت",
+    pickupKind: "airport" as TransferPointKind,
+    dropoffKind: "address" as TransferPointKind,
+    pickupLocation: "KWI",
+    pickupLocationLabel: "KWI · الكويت",
+    dropoffLocation: "الكويت",
+    dropoffLocationLabel: "الكويت",
     pickupTime: "10:00",
     dropoffTime: "18:00",
     childrenAges: [] as number[],
@@ -873,8 +884,11 @@ export default function InquiriesPage() {
         currency: item.currency,
         details: extra,
       },
-      from: String(extra.fromLabel || form.carPickup),
-      to: String(extra.toLabel || form.carDropoff),
+      city: form.transferCity,
+      pickupKind: form.pickupKind,
+      dropoffKind: form.dropoffKind,
+      from: String(extra.fromLabel || form.pickupLocationLabel || form.pickupLocation),
+      to: String(extra.toLabel || form.dropoffLocationLabel || form.dropoffLocation),
       outboundDate: form.departDate,
       outboundTime: form.pickupTime,
       inboundDate: form.returnDate || undefined,
@@ -915,8 +929,11 @@ export default function InquiriesPage() {
           method: "POST",
           timeoutMs: 45000,
           body: JSON.stringify({
-            from: form.carPickup,
-            to: form.carDropoff,
+            city: form.transferCity,
+            from: form.pickupLocation,
+            to: form.dropoffLocation,
+            fromKind: transferPointKindToEndpoint(form.pickupKind),
+            toKind: transferPointKindToEndpoint(form.dropoffKind),
             outboundDate: form.departDate,
             outboundTime: form.pickupTime,
             inboundDate: form.returnDate || undefined,
@@ -1444,29 +1461,179 @@ export default function InquiriesPage() {
           ) : null}
 
           {mode === "cars" ? (
-            <div className="fs-grid cars">
+            <div className="fs-grid cars transfer-search-grid">
+              <AutocompleteField
+                label="المدينة / الوجهة"
+                value={form.transferCity}
+                display={form.transferCityLabel}
+                placeholder="مثال: الكويت أو دبي"
+                onClearText={(text) =>
+                  setForm((f) => ({
+                    ...f,
+                    transferCity: text,
+                    transferCityLabel: text,
+                  }))
+                }
+                onQuery={searchCities}
+                onPick={(item) => {
+                  const iata = String(item.code || "").toUpperCase();
+                  setForm((f) => ({
+                    ...f,
+                    transferCity: item.title,
+                    transferCityLabel: item.title,
+                    ...(f.pickupKind === "airport" && iata
+                      ? {
+                          pickupLocation: iata,
+                          pickupLocationLabel: item.code
+                            ? `${iata} · ${item.title}`
+                            : item.title,
+                        }
+                      : {}),
+                    ...(f.dropoffKind === "address"
+                      ? {
+                          dropoffLocation: item.title,
+                          dropoffLocationLabel: item.title,
+                        }
+                      : {}),
+                  }));
+                }}
+              />
               <label className="fs-cell">
-                <span>من</span>
-                <input
-                  value={form.carPickup}
+                <span>نوع الاستلام</span>
+                <select
+                  value={form.pickupKind}
                   onChange={(e) =>
-                    setForm({ ...form, carPickup: e.target.value })
+                    setForm({
+                      ...form,
+                      pickupKind: e.target.value as TransferPointKind,
+                    })
                   }
-                  placeholder="KWI"
-                />
-                <small>رمز المطار IATA</small>
+                >
+                  {TRANSFER_KIND_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+                <small>
+                  {TRANSFER_KIND_OPTIONS.find((o) => o.value === form.pickupKind)?.hint}
+                </small>
               </label>
+              {form.pickupKind === "airport" ? (
+                <AutocompleteField
+                  label="مكان الاستلام"
+                  value={form.pickupLocation}
+                  display={form.pickupLocationLabel}
+                  placeholder="KWI أو اسم المطار"
+                  onClearText={(text) =>
+                    setForm((f) => ({
+                      ...f,
+                      pickupLocation: text.toUpperCase(),
+                      pickupLocationLabel: text,
+                    }))
+                  }
+                  onQuery={searchAirports}
+                  onPick={(item) =>
+                    setForm((f) => ({
+                      ...f,
+                      pickupLocation: String(item.code || item.id).toUpperCase(),
+                      pickupLocationLabel: item.title,
+                    }))
+                  }
+                />
+              ) : (
+                <label className="fs-cell">
+                  <span>مكان الاستلام</span>
+                  <input
+                    value={form.pickupLocation}
+                    onChange={(e) =>
+                      setForm({
+                        ...form,
+                        pickupLocation: e.target.value,
+                        pickupLocationLabel: e.target.value,
+                      })
+                    }
+                    placeholder={
+                      form.pickupKind === "hotel"
+                        ? "اسم الفندق"
+                        : "الحي أو العنوان"
+                    }
+                  />
+                  <small>
+                    {form.pickupKind === "hotel"
+                      ? "يُحوَّل إلى ATLAS عبر بحث الفنادق"
+                      : "GPS داخل المدينة"}
+                  </small>
+                </label>
+              )}
               <label className="fs-cell">
-                <span>إلى</span>
-                <input
-                  value={form.carDropoff}
+                <span>نوع التسليم</span>
+                <select
+                  value={form.dropoffKind}
                   onChange={(e) =>
-                    setForm({ ...form, carDropoff: e.target.value })
+                    setForm({
+                      ...form,
+                      dropoffKind: e.target.value as TransferPointKind,
+                    })
                   }
-                  placeholder="الكويت أو مدينة"
-                />
-                <small>مدينة أو فندق (GPS)</small>
+                >
+                  {TRANSFER_KIND_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+                <small>
+                  {TRANSFER_KIND_OPTIONS.find((o) => o.value === form.dropoffKind)?.hint}
+                </small>
               </label>
+              {form.dropoffKind === "airport" ? (
+                <AutocompleteField
+                  label="مكان التسليم"
+                  value={form.dropoffLocation}
+                  display={form.dropoffLocationLabel}
+                  placeholder="DXB أو اسم المطار"
+                  onClearText={(text) =>
+                    setForm((f) => ({
+                      ...f,
+                      dropoffLocation: text.toUpperCase(),
+                      dropoffLocationLabel: text,
+                    }))
+                  }
+                  onQuery={searchAirports}
+                  onPick={(item) =>
+                    setForm((f) => ({
+                      ...f,
+                      dropoffLocation: String(item.code || item.id).toUpperCase(),
+                      dropoffLocationLabel: item.title,
+                    }))
+                  }
+                />
+              ) : (
+                <label className="fs-cell">
+                  <span>مكان التسليم</span>
+                  <input
+                    value={form.dropoffLocation}
+                    onChange={(e) =>
+                      setForm({
+                        ...form,
+                        dropoffLocation: e.target.value,
+                        dropoffLocationLabel: e.target.value,
+                      })
+                    }
+                    placeholder={
+                      form.dropoffKind === "hotel"
+                        ? "اسم الفندق"
+                        : "الحي أو العنوان"
+                    }
+                  />
+                  <small>
+                    {form.dropoffKind === "hotel"
+                      ? "يُحوَّل إلى ATLAS عبر بحث الفنادق"
+                      : "GPS داخل المدينة"}
+                  </small>
+                </label>
+              )}
               <label className="fs-cell">
                 <span>الذهاب</span>
                 <input
@@ -1939,14 +2106,14 @@ export default function InquiriesPage() {
                     <TransferSearchCard
                       key={c.id}
                       item={c}
-                      from={form.carPickup}
-                      to={form.carDropoff}
+                      from={form.pickupLocationLabel || form.pickupLocation}
+                      to={form.dropoffLocationLabel || form.dropoffLocation}
                       onBook={() => confirmTransferBooking(c)}
                     />
                   ))}
                   {carResults.length === 0 ? (
                     <p className="hint">
-                      لا توجد رحلات نقل مطابقة. جرّب من مطار IATA إلى مدينة، مثل KWI → الكويت أو DXB → دبي.
+                      لا توجد رحلات نقل مطابقة. جرّب مدينة + مطار → عنوان، مثل الكويت + KWI → حي السالمية.
                     </p>
                   ) : null}
                 </div>

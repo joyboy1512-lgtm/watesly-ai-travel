@@ -40,8 +40,11 @@ export interface HotelSearchParams {
 }
 
 export interface TransferSearchParams {
+  city?: string;
   from: string;
   to: string;
+  fromKind?: "IATA" | "ATLAS" | "GPS";
+  toKind?: "IATA" | "ATLAS" | "GPS";
   outboundDate: string;
   outboundTime?: string;
   inboundDate?: string;

@@ -37,3 +37,25 @@ export function transferTypeLabelAr(type?: string): string {
   if (key === "SHUTTLE") return "باص مشترك";
   return type || "نقل";
 }
+
+/** Hotelbeds endpoint kinds used in transfer availability URLs. */
+export type TransferEndpointKind = "IATA" | "ATLAS" | "GPS";
+
+/** UI pickup/dropoff selectors on the inquiries transfer tab. */
+export type TransferPointKindUi = "airport" | "hotel" | "address";
+
+export function transferPointKindToEndpoint(
+  kind: TransferPointKindUi,
+): TransferEndpointKind {
+  if (kind === "airport") return "IATA";
+  if (kind === "hotel") return "ATLAS";
+  return "GPS";
+}
+
+export function transferPointKindLabelAr(kind?: TransferPointKindUi | string): string {
+  const key = String(kind || "").toLowerCase();
+  if (key === "airport") return "مطار";
+  if (key === "hotel") return "فندق";
+  if (key === "address") return "عنوان";
+  return key || "نقطة";
+}

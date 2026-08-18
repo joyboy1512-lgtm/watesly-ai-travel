@@ -373,8 +373,11 @@ export class BookingsController {
     @CurrentUser() user: AuthUser,
     @Body()
     body: {
+      city?: string;
       from?: string;
       to?: string;
+      fromKind?: "IATA" | "ATLAS" | "GPS";
+      toKind?: "IATA" | "ATLAS" | "GPS";
       outboundDate?: string;
       outboundTime?: string;
       inboundDate?: string;
@@ -386,8 +389,11 @@ export class BookingsController {
   ) {
     return this.bookings.searchTransfers({
       organizationId: user.organizationId,
+      city: body.city || "",
       from: body.from || "",
       to: body.to || "",
+      fromKind: body.fromKind,
+      toKind: body.toKind,
       outboundDate: body.outboundDate || "",
       outboundTime: body.outboundTime,
       inboundDate: body.inboundDate,

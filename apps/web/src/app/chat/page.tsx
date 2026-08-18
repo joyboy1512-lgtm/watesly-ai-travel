@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { APP_NAME } from "@watesly-travel/shared";
+import { ChatOfferBody } from "@/components/ChatOfferBody";
 import { apiFetch } from "@/lib/api";
 import "../assistant.css";
 
@@ -102,14 +103,13 @@ export default function PublicChatPage() {
       <section className="prc-card ta-chat">
         <div className="ta-log" ref={logRef}>
           {messages.map((row) => (
-            <div
-              key={row.id}
-              className={`ta-bubble ${row.role === "user" ? "user" : "assistant"}`}
-            >
-              {row.content}
+            <div key={row.id} className={`ta-msg ${row.role === "user" ? "out" : "in"}`}>
+              <div className={`ta-bubble ${row.role}`}>
+                <ChatOfferBody content={row.content} role={row.role} />
+              </div>
             </div>
           ))}
-          {busy ? <p className="hint">جارٍ البحث والرد...</p> : null}
+          {busy ? <p className="ta-typing">جارٍ البحث والرد...</p> : null}
         </div>
         <form className="ta-composer" onSubmit={onSubmit}>
           <textarea

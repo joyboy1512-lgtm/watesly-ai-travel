@@ -12,6 +12,7 @@ import {
 } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
+import { ChatOfferBody } from "@/components/ChatOfferBody";
 import { apiFetch } from "@/lib/api";
 import "../../assistant.css";
 
@@ -481,6 +482,25 @@ function AssistantPageInner() {
               <div className="ta-welcome">
                 <strong>مرحباً — كيف أساعدك في تخطيط الرحلة؟</strong>
                 <p>اطلب فندقاً أو رحلة أو مواصلات، أو حوّل المحادثة إلى موظف عند الحاجة.</p>
+                <div className="ta-filters" style={{ justifyContent: "center", marginTop: "0.85rem" }}>
+                  {[
+                    "أريد تذكرة من الكويت إلى أبوظبي",
+                    "أبحث عن فندق في دبي",
+                    "مواصلات من المطار إلى الفندق",
+                  ].map((prompt) => (
+                    <button
+                      key={prompt}
+                      type="button"
+                      className="ta-filter"
+                      onClick={() => {
+                        setText(prompt);
+                        composerRef.current?.focus();
+                      }}
+                    >
+                      {prompt}
+                    </button>
+                  ))}
+                </div>
               </div>
             ) : (
               messages.map((row, index) => {
@@ -491,7 +511,7 @@ function AssistantPageInner() {
                     {showDay ? <div className="ta-day">{dayKey(row.createdAt)}</div> : null}
                     <div className={`ta-msg ${row.role === "user" ? "out" : "in"}`}>
                       <div className="ta-bubble">
-                        <p>{row.content}</p>
+                        <ChatOfferBody content={row.content} role={row.role} />
                         <em>
                           {timeLabel(row.createdAt)}
                           {row.role !== "user" && row.model ? ` · ${row.model}` : ""}

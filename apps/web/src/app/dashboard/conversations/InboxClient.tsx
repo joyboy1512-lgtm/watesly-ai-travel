@@ -6,6 +6,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
 import { apiFetch, apiUpload, getSession } from "@/lib/api";
 import { formatDate } from "@/lib/format";
+import "../../conversations-inbox.css";
+import "../../inbox-brand-chrome.css";
 
 type ConversationRow = {
   id: string;
@@ -219,6 +221,186 @@ function statusTicks(status?: string) {
   if (s === "delivered" || s === "received") return "delivered";
   if (s === "failed" || s === "error") return "failed";
   return "sent";
+}
+
+function InboxIdleChat() {
+  return (
+    <>
+      <header className="wi-thread-head">
+        <div className="wi-thread-who">
+          <div className="wi-avatar lg">
+            WG
+            <span className="wi-online" />
+          </div>
+          <div>
+            <h3>WeekendGate</h3>
+            <p className="wi-thread-sub">واتساب · متصل · نافذة 24س مفتوحة</p>
+          </div>
+        </div>
+        <div className="wi-thread-actions">
+          <button type="button" className="wi-icon-btn" title="تحويل لموظف" disabled>
+            ↗
+          </button>
+          <button type="button" className="wi-icon-btn" title="إعادة للروبوت" disabled>
+            ↺
+          </button>
+        </div>
+      </header>
+
+      <div className="wi-messages wa-chat-bg wi-preview-log">
+        <div className="wi-window-banner wi-preview-banner">
+          <strong>معاينة صندوق المحادثات</strong>
+          <p>اختر عميلاً من القائمة لفتح الشات الحقيقي عبر واتساب أو تلجرام أو إنستغرام أو ماسنجر.</p>
+        </div>
+
+        <div className="wa-msg-block">
+          <div className="wa-day-chip">اليوم</div>
+          <div className="wi-bubble wa-bubble in">
+            <div className="wi-bubble-text">
+              السلام عليكم، أبي عرض رحلة من الكويت إلى دبي الأسبوع الجاي لشخصين
+            </div>
+            <div className="wi-bubble-meta">
+              <span>10:41</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="wa-msg-block">
+          <div className="wi-bubble wa-bubble out">
+            <div className="wi-offer">
+              <p className="wi-offer-greet">وعليكم السلام أحمد 👋</p>
+              <p>حياك في WeekendGate — هذا عرض سريع يناسب طلبك:</p>
+              <div className="wi-offer-card">
+                <strong>✈️ الكويت → دبي</strong>
+                <span>🗓️ الخميس 21 أغسطس · 10:40 ص</span>
+                <span>💼 سياحية · أمتعة 23 كجم</span>
+                <span className="wi-offer-price">💰 86 د.ك للشخص</span>
+              </div>
+              <p className="wi-offer-cta">هل تريد تثبيت هذا الخيار أم ترسل تواريخ أدق؟</p>
+            </div>
+            <div className="wi-bubble-meta">
+              <span>10:42</span>
+              <span className="wa-ticks read" aria-hidden>
+                ✓✓
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div className="wa-msg-block">
+          <div className="wi-bubble wa-bubble in">
+            <div className="wi-bubble-text">تمام، ثبّت هذا الخيار وأرسل لي صورة الفندق كمان</div>
+            <div className="wi-bubble-meta">
+              <span>10:43</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="wa-msg-block">
+          <div className="wi-bubble wa-bubble out">
+            <div className="wi-preview-photo" aria-hidden>
+              <span>دبي · داون تاون</span>
+            </div>
+            <div className="wi-offer">
+              <p className="wi-offer-greet">🏨 فندق وسط المدينة · 4 نجوم</p>
+              <div className="wi-offer-card">
+                <span>🛏 غرفة مزدوجة مع إفطار</span>
+                <span>📍 على بُعد 8 دقائق من برج خليفة</span>
+                <span className="wi-offer-price">💰 42 د.ك / الليلة</span>
+              </div>
+              <p className="wi-offer-cta">أرفق جواز السفر من الزر 📎 بالأسفل متى ما جهزت الحجز.</p>
+            </div>
+            <div className="wi-bubble-meta">
+              <span>10:44</span>
+              <span className="wa-ticks read" aria-hidden>
+                ✓✓
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <footer className="wi-composer wa-composer">
+        <div className="wi-template-bar">
+          <select disabled defaultValue="welcome">
+            <option value="welcome">قالب الترحيب</option>
+          </select>
+          <button type="button" className="wi-btn primary" disabled>
+            إرسال قالب واتساب
+          </button>
+          <span className="wi-btn ghost">القوالب</span>
+        </div>
+        <div className="wi-composer-row">
+          <button type="button" className="wa-composer-tool" title="إرفاق صورة أو ملف" disabled>
+            📎
+          </button>
+          <div className="wa-composer-input-wrap">
+            <textarea rows={1} disabled placeholder="اكتب رسالة عبر واتساب" />
+          </div>
+          <button type="button" className="wa-send-btn" disabled title="إرسال">
+            ➤
+          </button>
+        </div>
+      </footer>
+    </>
+  );
+}
+
+function InboxIdleDetails() {
+  return (
+    <>
+      <div className="wi-details-profile">
+        <div className="wi-avatar xl">WG</div>
+        <h3>وكالة واتسلي</h3>
+        <p className="wi-phone">+965 · قناة واتساب</p>
+        <div className="wi-details-actions">
+          <span className="wi-btn ghost">حساب القناة</span>
+          <span className="wi-btn ghost">القنوات</span>
+          <span className="wi-btn ghost">القوالب</span>
+          <span className="wi-btn ghost">الحملات</span>
+        </div>
+        <div className="wi-details-channel">
+          <strong>قناة الإرسال</strong>
+          <p>واتساب · جاهزة للرد بعد اختيار محادثة من القائمة</p>
+        </div>
+      </div>
+      <div className="wi-details-section">
+        <h4>إدارة المحادثة</h4>
+        <label>
+          <span>الموظف المسؤول</span>
+          <select disabled defaultValue="bot">
+            <option value="bot">روبوت</option>
+            <option value="human">موظف</option>
+          </select>
+        </label>
+        <label>
+          <span>الحالة</span>
+          <select disabled defaultValue="open">
+            <option value="open">مفتوحة</option>
+          </select>
+        </label>
+        <label>
+          <span>الأولوية</span>
+          <select disabled defaultValue="عادية">
+            <option value="عادية">عادية</option>
+          </select>
+        </label>
+      </div>
+      <div className="wi-details-section">
+        <h4>ملخص الطلب</h4>
+        <p className="wi-summary">كويت → دبي · شخصان · تذكرة + فندق وسط المدينة.</p>
+        <p className="wi-summary-meta">الحالة: معاينة · اختر محادثة لعرض ملف العميل الحقيقي</p>
+      </div>
+      <div className="wi-details-section">
+        <h4>خدمات القناة</h4>
+        <div className="wi-item-tags">
+          <span className="wi-pill wa">نافذة مفتوحة</span>
+          <span className="wi-pill">روبوت</span>
+          <span className="wi-pill">واتساب</span>
+        </div>
+      </div>
+    </>
+  );
 }
 
 export default function InboxClient() {
@@ -642,10 +824,7 @@ export default function InboxClient() {
           {error ? <div className="wi-error">{error}</div> : null}
 
           {!selectedId || !detail ? (
-            <div className="wi-placeholder">
-              <h3>WeekendGate</h3>
-              <p>اختر محادثة من القائمة للمراسلة عبر واتساب أو تلجرام أو إنستغرام أو ماسنجر.</p>
-            </div>
+            <InboxIdleChat />
           ) : (
             <>
               <header className="wi-thread-head">
@@ -1017,9 +1196,7 @@ export default function InboxClient() {
               </div>
             </>
           ) : (
-            <div className="wi-empty padded">
-              اختر محادثة لعرض ملف العميل وإدارة المحادثة.
-            </div>
+            <InboxIdleDetails />
           )}
         </aside>
       </div>

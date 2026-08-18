@@ -1,4 +1,24 @@
+@import url("https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap");
+
 /* ===== Conversations inbox — WhatsApp-like light UI, brand colors ===== */
+
+.app-shell.dense:has(.watesly-inbox),
+.app-shell.dense:has(.watesly-inbox) .main-dense {
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden;
+}
+
+.app-shell.dense:has(.watesly-inbox) .main-dense {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.app-shell.dense:has(.watesly-inbox) .main-dense > .topbar {
+  flex: 0 0 auto;
+}
+
 .watesly-inbox {
   --wa-panel: #ffffff;
   --wa-panel-2: #f0f2f5;
@@ -18,10 +38,12 @@
   --wa-unread: #184a52;
   --wa-tick: #8696a0;
   --wa-tick-read: #53bdeb;
-  --wa-font: "Segoe UI", "Helvetica Neue", Helvetica, "Noto Sans Arabic",
-    Arial, sans-serif;
+  --wa-font: "Cairo", "IBM Plex Sans Arabic", "Noto Sans Arabic", "Segoe UI",
+    Helvetica, Arial, sans-serif;
 
   flex: 1;
+  height: calc(100dvh - 5.6rem);
+  max-height: calc(100dvh - 5.6rem);
   min-height: 0;
   display: grid;
   grid-template-columns: minmax(280px, 360px) 1fr minmax(260px, 300px);
@@ -421,7 +443,8 @@
 /* Chat wallpaper — light WhatsApp style + brand tint */
 .wi-messages {
   flex: 1;
-  overflow: auto;
+  min-height: 0;
+  overflow-y: auto;
   padding: 0.7rem 3.5% 1rem;
   display: flex;
   flex-direction: column;
@@ -777,6 +800,8 @@
 }
 
 .wi-thread {
+  min-height: 0;
+  overflow: hidden;
   background-color: var(--wa-chat-bg);
   background-image:
     radial-gradient(rgba(15, 51, 64, 0.045) 1.1px, transparent 1.1px),
@@ -908,6 +933,90 @@
 
 .wi-summary-meta {
   margin: 0;
+}
+
+.wi-thread-head,
+.wi-composer {
+  flex-shrink: 0;
+}
+
+.wi-details {
+  overflow-y: auto;
+}
+
+.wi-icon-btn:disabled,
+.wa-send-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.wi-preview-log {
+  gap: 0.45rem;
+}
+
+.wi-preview-banner {
+  max-width: 26rem;
+}
+
+.wi-offer {
+  display: grid;
+  gap: 0.28rem;
+  font-size: 14.2px;
+  line-height: 1.5;
+  color: var(--wa-ink);
+  font-family: var(--wa-font);
+}
+
+.wi-offer p {
+  margin: 0;
+}
+
+.wi-offer-greet {
+  font-weight: 700;
+  color: #0f3340;
+}
+
+.wi-offer-card {
+  display: grid;
+  gap: 0.18rem;
+  margin: 0.15rem 0;
+  padding: 0.55rem 0.65rem;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.55);
+  box-shadow: inset 0 0 0 1px rgba(15, 51, 64, 0.08);
+}
+
+.wi-offer-card strong,
+.wi-offer-card span {
+  display: block;
+}
+
+.wi-offer-price {
+  font-weight: 700;
+  color: #184a52;
+}
+
+.wi-offer-cta {
+  color: #184a52;
+  font-weight: 600;
+}
+
+.wi-preview-photo {
+  width: min(100%, 250px);
+  height: 128px;
+  border-radius: 8px;
+  margin-bottom: 0.4rem;
+  background:
+    linear-gradient(180deg, transparent 42%, rgba(15, 51, 64, 0.78)),
+    radial-gradient(circle at 70% 20%, rgba(240, 194, 122, 0.55), transparent 42%),
+    linear-gradient(145deg, #2a7d86, #0f3340 58%, #184a52);
+  color: #f3f7f4;
+  display: flex;
+  align-items: flex-end;
+  padding: 0.55rem 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  box-shadow: 0 1px 2px rgba(11, 20, 26, 0.16);
 }
 
 @media (max-width: 1100px) {

@@ -8,6 +8,7 @@ import { AppShell } from "@/components/AppShell";
 import { HotelSearchCard } from "@/components/hotels/HotelSearchCard";
 import { HotelDetailModal } from "@/components/hotels/HotelDetailModal";
 import { HotelLiveBadge } from "@/components/hotels/HotelLiveBadge";
+import { TransferSearchCard } from "@/components/hotels/TransferSearchCard";
 import { apiFetch } from "@/lib/api";
 import { saveFlightDraft, saveHotelDraft } from "@/lib/booking-draft";
 import { getPreferredCurrency } from "@/lib/currency";
@@ -68,7 +69,9 @@ type AncillaryResult = {
   serviceType: string;
   name: string;
   price: number;
+  currency: string;
   details: string;
+  extra?: Record<string, unknown>;
 };
 
 type Airport = {
@@ -387,6 +390,8 @@ export default function InquiriesPage() {
     stayQuery: "دبي",
     carPickup: "KWI",
     carDropoff: "DXB",
+    pickupTime: "10:00",
+    dropoffTime: "18:00",
     childrenAges: [] as number[],
     shiftDays: false,
     minRate: "",
@@ -546,6 +551,7 @@ export default function InquiriesPage() {
       (mode === "stays" ? search.providerName : null);
     if (mode === "flights" && flight) return `طيران: ${flight}`;
     if (mode === "stays" && hotel) return `فنادق: ${hotel}`;
+    if (mode === "cars") return `مواصلات: ${search.providerName || search.providerKey}`;
     if (flight && hotel && flight !== hotel) {
       return `طيران: ${flight} · فنادق: ${hotel}`;
     }
@@ -864,41 +870,56 @@ export default function InquiriesPage() {
 
     try {
       if (mode === "cars") {
-        const destLabel =
-          form.destinationLabel ||
-          form.stayQuery ||
-          form.destination ||
-          form.carDropoff ||
-          "الوجهة";
-        const ancillary = await apiFetch<{
+        const result = await apiFetch<{
           providerKey: string;
+          providerName: string;
+          liveMode: boolean;
           items: Array<{
             id: string;
             serviceType: string;
             name: string;
             description: string;
             sellAmountMinor: number;
+            currency: string;
+            details?: Record<string, unknown>;
           }>;
-        }>(
-          `/travel-meta/ancillaries?destination=${encodeURIComponent(destLabel)}&adults=${form.adults}&nights=${nights || 1}`,
-        );
+        }>("/bookings/search-transfers", {
+          method: "POST",
+          timeoutMs: 45000,
+          body: JSON.stringify({
+            from: form.carPickup,
+            to: form.carDropoff,
+            outboundDate: form.departDate,
+            outboundTime: form.pickupTime,
+            inboundDate: form.returnDate || undefined,
+            inboundTime: form.dropoffTime,
+            adults: form.adults,
+            children: form.children,
+          }),
+        });
         setCarResults(
-          (ancillary.items || []).map((row) => ({
+          (result.items || []).map((row) => ({
             id: row.id,
-            serviceType: row.serviceType,
+            serviceType: row.serviceType || "transfer",
             name: row.name,
             price: row.sellAmountMinor,
+            currency: row.currency,
             details: row.description,
+            extra: row.details,
           })),
         );
         setSearch({
-          providerKey: ancillary.providerKey || "mock",
-          providerName: "خدمات إضافية (عبر API)",
-          liveMode: false,
+          providerKey: result.providerKey || "hotelbeds",
+          providerName: result.providerName || "Hotelbeds Transfers",
+          liveMode: result.liveMode,
           flights: [],
           hotels: [],
         });
-        setMessage("نتائج السيارات / النقل / الجولات / الباقات");
+        setMessage(
+          result.items?.length
+            ? `تم جلب ${result.items.length} خيار نقل عبر ${result.providerName}`
+            : "لا توجد رحلات نقل متاحة لهذا المسار والتوقيت",
+        );
         setLoading(false);
         return;
       }
@@ -999,7 +1020,7 @@ export default function InquiriesPage() {
             className={mode === "cars" ? "active" : undefined}
             onClick={() => setMode("cars")}
           >
-            سيارة
+            نقل
           </button>
         </div>
 
@@ -1008,7 +1029,7 @@ export default function InquiriesPage() {
             ? "قارن واحجز أرخص الرحلات بسهولة"
             : mode === "stays"
               ? "اكتشف أفضل الإقامات حول العالم"
-              : "استأجر سيارتك بسهولة في وجهتك"}
+              : "انقل من المطار إلى وجهتك بسهولة"}
         </h2>
         <p>محرك بحث سفر متكامل مع كتالوج المطارات وشركات الطيران</p>
 
@@ -1397,30 +1418,29 @@ export default function InquiriesPage() {
           {mode === "cars" ? (
             <div className="fs-grid cars">
               <label className="fs-cell">
-                <span>الاستلام من</span>
+                <span>من</span>
                 <input
                   value={form.carPickup}
                   onChange={(e) =>
-                    setForm({ ...form, carPickup: e.target.value.toUpperCase() })
+                    setForm({ ...form, carPickup: e.target.value })
                   }
+                  placeholder="KWI أو مدينة"
                 />
                 <small>مطار / مدينة</small>
               </label>
               <label className="fs-cell">
-                <span>التسليم في</span>
+                <span>إلى</span>
                 <input
                   value={form.carDropoff}
                   onChange={(e) =>
-                    setForm({
-                      ...form,
-                      carDropoff: e.target.value.toUpperCase(),
-                    })
+                    setForm({ ...form, carDropoff: e.target.value })
                   }
+                  placeholder="DXB أو مدينة"
                 />
-                <small>موقع التسليم</small>
+                <small>مطار / مدينة</small>
               </label>
               <label className="fs-cell">
-                <span>من</span>
+                <span>الذهاب</span>
                 <input
                   type="date"
                   value={form.departDate}
@@ -1428,10 +1448,21 @@ export default function InquiriesPage() {
                     setForm({ ...form, departDate: e.target.value })
                   }
                 />
-                <small>بداية الإيجار</small>
+                <small>تاريخ الوصول</small>
               </label>
               <label className="fs-cell">
-                <span>إلى</span>
+                <span>وقت الذهاب</span>
+                <input
+                  type="time"
+                  value={form.pickupTime}
+                  onChange={(e) =>
+                    setForm({ ...form, pickupTime: e.target.value })
+                  }
+                />
+                <small>الاستلام</small>
+              </label>
+              <label className="fs-cell">
+                <span>العودة</span>
                 <input
                   type="date"
                   value={form.returnDate}
@@ -1439,7 +1470,18 @@ export default function InquiriesPage() {
                     setForm({ ...form, returnDate: e.target.value })
                   }
                 />
-                <small>{nights ? `${nights} يوم` : "نهاية الإيجار"}</small>
+                <small>اختياري</small>
+              </label>
+              <label className="fs-cell">
+                <span>وقت العودة</span>
+                <input
+                  type="time"
+                  value={form.dropoffTime}
+                  onChange={(e) =>
+                    setForm({ ...form, dropoffTime: e.target.value })
+                  }
+                />
+                <small>التسليم</small>
               </label>
               <button
                 type="button"
@@ -1830,40 +1872,30 @@ export default function InquiriesPage() {
             ) : null}
 
             {mode === "cars" ? (
-              <div className="panel">
-                <h3>سيارات · نقل · جولات · باقات ({carResults.length})</h3>
-                <div className="search-results">
+              <div className="panel hotel-results-panel">
+                <div className="hotel-results-head">
+                  <h3>نقل: {carResults.length} خياراً</h3>
+                  {search ? (
+                    <HotelLiveBadge
+                      liveMode={Boolean(search.liveMode)}
+                      sourceLabel={search.providerName}
+                    />
+                  ) : null}
+                </div>
+                <div className="hotel-search-list">
                   {carResults.map((c) => (
-                    <article key={c.id} className="search-card">
-                      <div className="search-card-top">
-                        <strong>{c.name}</strong>
-                        <span className="search-price">
-                          {formatMoneyMinor(c.price, getPreferredCurrency())}
-                        </span>
-                      </div>
-                      <p>{c.details}</p>
-                      <div className="search-meta">
-                        <span>
-                          {c.serviceType === "car"
-                            ? `${form.carPickup} → ${form.carDropoff}`
-                            : c.serviceType === "transfer"
-                              ? "نقل"
-                              : c.serviceType === "tour"
-                                ? "جولة"
-                                : "باقة سفر"}
-                        </span>
-                        <span>
-                          {c.serviceType === "car"
-                            ? nights
-                              ? `${nights} يوم`
-                              : "—"
-                            : form.destinationLabel ||
-                              form.destination ||
-                              "—"}
-                        </span>
-                      </div>
-                    </article>
+                    <TransferSearchCard
+                      key={c.id}
+                      item={c}
+                      from={form.carPickup}
+                      to={form.carDropoff}
+                    />
                   ))}
+                  {carResults.length === 0 ? (
+                    <p className="hint">
+                      لا توجد رحلات نقل مطابقة. جرّب مطاراً برمز IATA مثل KWI → DXB.
+                    </p>
+                  ) : null}
                 </div>
               </div>
             ) : null}

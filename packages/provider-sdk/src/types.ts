@@ -3,6 +3,7 @@ import type {
   HotelOffer,
   HotelRateOption,
   MoneyMinor,
+  TransferOffer,
 } from "@watesly-travel/shared";
 
 export interface FlightSearchParams {
@@ -36,6 +37,18 @@ export interface HotelSearchParams {
   boardCode?: string;
   paymentType?: string;
   shiftDays?: number;
+}
+
+export interface TransferSearchParams {
+  from: string;
+  to: string;
+  outboundDate: string;
+  outboundTime?: string;
+  inboundDate?: string;
+  inboundTime?: string;
+  adults: number;
+  children?: number;
+  infants?: number;
 }
 
 export interface ProviderBookingResult {
@@ -93,6 +106,18 @@ export interface HotelProviderAdapter {
   ): Promise<Record<string, string>>;
   createBooking?(
     offer: HotelOffer,
+    guests: unknown,
+  ): Promise<ProviderBookingResult>;
+}
+
+/** Transfer-only provider contract (Hotelbeds Transfers, mock, …). */
+export interface TransferProviderAdapter {
+  readonly providerKey: string;
+  readonly displayName: string;
+  readonly liveMode: boolean;
+  searchTransfers(params: TransferSearchParams): Promise<TransferOffer[]>;
+  createBooking?(
+    offer: TransferOffer,
     guests: unknown,
   ): Promise<ProviderBookingResult>;
 }

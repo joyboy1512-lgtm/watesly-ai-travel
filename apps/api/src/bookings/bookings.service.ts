@@ -9,7 +9,7 @@ import { Prisma } from "@watesly-travel/database";
 import { PrismaService } from "../prisma/prisma.service";
 import { AuditService } from "../common/audit.service";
 import { formatMoneyMinor } from "../common/money";
-import { getHotelProviderForOrg } from "../common/provider-runtime";
+import { getHotelProviderForOrg, getTransferProviderForOrg } from "../common/provider-runtime";
 import { BotPipelineService } from "../pipeline/bot-pipeline.service";
 
 export type BookingDraftOfferInput = {
@@ -754,6 +754,60 @@ export class BookingsService {
     );
     if (!provider.fetchRateComments) return {};
     return provider.fetchRateComments(input.ids || [], input.date);
+  }
+
+  async searchTransfers(input: {
+    organizationId: string;
+    from: string;
+    to: string;
+    outboundDate: string;
+    outboundTime?: string;
+    inboundDate?: string;
+    inboundTime?: string;
+    adults: number;
+    children?: number;
+    infants?: number;
+  }) {
+    const from = String(input.from || "").trim();
+    const to = String(input.to || "").trim();
+    if (!from || !to) {
+      throw new BadRequestException("حدد نقطة الاستلام والتسليم");
+    }
+    if (!input.outboundDate) {
+      throw new BadRequestException("حدد تاريخ الذهاب");
+    }
+    const provider = await getTransferProviderForOrg(
+      this.prisma,
+      input.organizationId,
+      process.env.TRANSFER_PROVIDER || "hotelbeds",
+    );
+    const offers = await provider.searchTransfers({
+      from,
+      to,
+      outboundDate: input.outboundDate,
+      outboundTime: input.outboundTime,
+      inboundDate: input.inboundDate,
+      inboundTime: input.inboundTime,
+      adults: Math.max(1, input.adults || 1),
+      children: Math.max(0, input.children || 0),
+      infants: Math.max(0, input.infants || 0),
+    });
+    return {
+      providerKey: provider.providerKey,
+      providerName: provider.displayName,
+      liveMode: provider.liveMode,
+      items: offers.map((offer) => ({
+        id: offer.providerOfferRef,
+        serviceType: "transfer" as const,
+        name: offer.description,
+        description: String(offer.raw.description || offer.description),
+        sellAmountMinor: offer.costAmountMinor,
+        costAmountMinor: offer.costAmountMinor,
+        currency: offer.currency,
+        expiresAt: offer.expiresAt,
+        details: offer.raw,
+      })),
+    };
   }
 }
 

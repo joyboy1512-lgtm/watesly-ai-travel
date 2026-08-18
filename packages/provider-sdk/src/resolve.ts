@@ -7,9 +7,12 @@ import { TravelportFlightProvider } from "./flights/travelport-flight-provider";
 import { DuffelHotelProvider } from "./hotels/duffel-hotel-provider";
 import { HotelbedsHotelProvider } from "./hotels/hotelbeds-hotel-provider";
 import { MockHotelProvider } from "./hotels/mock-hotel-provider";
+import { HotelbedsTransferProvider } from "./transfers/hotelbeds-transfer-provider";
+import { MockTransferProvider } from "./transfers/mock-transfer-provider";
 import type {
   FlightProviderAdapter,
   HotelProviderAdapter,
+  TransferProviderAdapter,
   TravelProviderAdapter,
 } from "./types";
 
@@ -46,6 +49,15 @@ export function resolveFlightProviderKey(preferred?: string): string {
  */
 export function resolveHotelProviderKey(preferred?: string): string {
   const fromEnv =
+    process.env.HOTEL_PROVIDER?.trim() ||
+    process.env.TRAVEL_DEFAULT_PROVIDER?.trim() ||
+    "mock";
+  return normalizeProviderAlias(preferred || fromEnv);
+}
+
+export function resolveTransferProviderKey(preferred?: string): string {
+  const fromEnv =
+    process.env.TRANSFER_PROVIDER?.trim() ||
     process.env.HOTEL_PROVIDER?.trim() ||
     process.env.TRAVEL_DEFAULT_PROVIDER?.trim() ||
     "mock";
@@ -183,6 +195,39 @@ export function getHotelProvider(
   // Flight-only providers fall back to mock hotels unless a hotel adapter exists.
   if (mockFallbackAllowed()) return new MockHotelProvider();
   throw new Error(`مزود فنادق غير معروف: ${key}`);
+}
+
+export function getTransferProvider(
+  preferred?: string,
+  creds?: HotelProviderCreds,
+): TransferProviderAdapter {
+  const key = resolveTransferProviderKey(preferred);
+
+  if (key === "mock") {
+    return new MockTransferProvider();
+  }
+
+  if (key === "hotelbeds") {
+    try {
+      const provider = new HotelbedsTransferProvider({
+        apiKey: creds?.apiKey,
+        apiSecret: creds?.apiSecret,
+        baseUrl: creds?.baseUrl,
+      });
+      if (!provider.liveMode) {
+        throw new Error(
+          "TRANSFER_PROVIDER=hotelbeds يتطلب HOTELBEDS_TRANSFER_API_KEY و HOTELBEDS_TRANSFER_API_SECRET",
+        );
+      }
+      return provider;
+    } catch (err) {
+      if (mockFallbackAllowed()) return new MockTransferProvider();
+      throw err;
+    }
+  }
+
+  if (mockFallbackAllowed()) return new MockTransferProvider();
+  throw new Error(`مزود مواصلات غير معروف: ${key}`);
 }
 
 /**

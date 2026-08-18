@@ -24,6 +24,29 @@ export function resolveHotelbedsCredentials(
   return { apiKey, apiSecret, baseUrl };
 }
 
+export function resolveHotelbedsTransferCredentials(
+  creds?: Partial<HotelbedsCredentials>,
+): HotelbedsCredentials {
+  const apiKey =
+    creds?.apiKey?.trim() ||
+    process.env.HOTELBEDS_TRANSFER_API_KEY?.trim() ||
+    process.env.HOTELBEDS_API_KEY?.trim() ||
+    "";
+  const apiSecret =
+    creds?.apiSecret?.trim() ||
+    process.env.HOTELBEDS_TRANSFER_API_SECRET?.trim() ||
+    process.env.HOTELBEDS_API_SECRET?.trim() ||
+    process.env.HOTELBEDS_SECRET?.trim() ||
+    "";
+  const baseUrl = (
+    creds?.baseUrl?.trim() ||
+    process.env.HOTELBEDS_TRANSFER_BASE_URL?.trim() ||
+    process.env.HOTELBEDS_BASE_URL?.trim() ||
+    "https://api.test.hotelbeds.com"
+  ).replace(/\/$/, "");
+  return { apiKey, apiSecret, baseUrl };
+}
+
 export function hotelbedsSignature(apiKey: string, apiSecret: string): string {
   const timestamp = Math.floor(Date.now() / 1000);
   return createHash("sha256")

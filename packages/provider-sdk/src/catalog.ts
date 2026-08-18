@@ -1,5 +1,5 @@
 /** Known travel provider adapters available in the platform. */
-export type ProviderCapability = "flight" | "hotel";
+export type ProviderCapability = "flight" | "hotel" | "transfer";
 
 export type ProviderCredentialField = {
   key: string;
@@ -132,9 +132,14 @@ export const PROVIDER_CATALOG: ProviderCatalogEntry[] = [
     displayNameAr: "Hotelbeds",
     description:
       "مزود فنادق عبر Hotelbeds APItude (Sandbox للتطوير — حد ~50 طلب/يوم)",
-    capabilities: ["hotel"],
+    capabilities: ["hotel", "transfer"],
     status: "ready",
-    envKeys: ["HOTELBEDS_API_KEY", "HOTELBEDS_API_SECRET"],
+    envKeys: [
+      "HOTELBEDS_API_KEY",
+      "HOTELBEDS_API_SECRET",
+      "HOTELBEDS_TRANSFER_API_KEY",
+      "HOTELBEDS_TRANSFER_API_SECRET",
+    ],
     credentialFields: [
       {
         key: "apiKey",
@@ -156,7 +161,7 @@ export const PROVIDER_CATALOG: ProviderCatalogEntry[] = [
       },
     ],
     notes:
-      "فعّل HOTEL_PROVIDER=hotelbeds بعد إدخال المفاتيح. Sandbox: api.test.hotelbeds.com — فنادق فقط (لا طيران)",
+      "فنادق: HOTEL_PROVIDER=hotelbeds. مواصلات: TRANSFER_PROVIDER=hotelbeds مع HOTELBEDS_TRANSFER_API_KEY / SECRET. Sandbox: api.test.hotelbeds.com",
   },
 ];
 

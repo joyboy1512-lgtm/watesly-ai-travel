@@ -367,6 +367,37 @@ export class BookingsController {
     });
   }
 
+  @Post("search-transfers")
+  @RequirePermissions("conversations.read")
+  searchTransfers(
+    @CurrentUser() user: AuthUser,
+    @Body()
+    body: {
+      from?: string;
+      to?: string;
+      outboundDate?: string;
+      outboundTime?: string;
+      inboundDate?: string;
+      inboundTime?: string;
+      adults?: number;
+      children?: number;
+      infants?: number;
+    },
+  ) {
+    return this.bookings.searchTransfers({
+      organizationId: user.organizationId,
+      from: body.from || "",
+      to: body.to || "",
+      outboundDate: body.outboundDate || "",
+      outboundTime: body.outboundTime,
+      inboundDate: body.inboundDate,
+      inboundTime: body.inboundTime,
+      adults: body.adults || 1,
+      children: body.children || 0,
+      infants: body.infants || 0,
+    });
+  }
+
   @Post(":id/issue")
   @RequirePermissions("bookings.issue")
   issue(@CurrentUser() user: AuthUser, @Param("id") id: string) {

@@ -50,6 +50,7 @@ export type AiToolDefinition =
 export type AiChatTurnInput = {
   system: string;
   userText?: string;
+  imageUrls?: string[];
   previousResponseId?: string;
   tools: AiToolDefinition[];
   functionOutputs?: Array<{ callId: string; output: string }>;

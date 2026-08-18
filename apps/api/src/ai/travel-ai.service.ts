@@ -26,6 +26,7 @@ import {
 } from "../common/provider-runtime";
 import { hotelCatalogEntry, serializeHotelDetailsForAi, serializeSearchResult } from "./tool-result-serializers";
 import type { HotelOffer } from "@watesly-travel/shared";
+import { chatTextForAi, parseChatAttachments } from "@watesly-travel/shared";
 
 type HotelCatalogEntry = {
   id: string;
@@ -254,9 +255,11 @@ export class TravelAiService {
       },
     });
     if (!thread.title) {
+      const parsed = parseChatAttachments(input.text);
+      const titleSource = parsed.text || parsed.attachments[0]?.name || "مرفق";
       await this.prisma.aiThread.update({
         where: { id: thread.id },
-        data: { title: input.text.replace(/\s+/g, " ").slice(0, 48) },
+        data: { title: titleSource.replace(/\s+/g, " ").slice(0, 48) },
       });
     }
 
@@ -297,9 +300,16 @@ export class TravelAiService {
     let handoffReason = "";
     let text = "";
 
+    const parsedUser = parseChatAttachments(input.text);
+    const userText = chatTextForAi(input.text) || "انظر إلى المرفق";
+    const imageUrls = parsedUser.attachments
+      .filter((row) => row.kind === "image")
+      .map((row) => row.url);
+
     let result: AiChatTurnResult = await provider.respond({
       system: TRAVEL_SYSTEM_INSTRUCTIONS,
-      userText: input.text,
+      userText,
+      imageUrls: imageUrls.length ? imageUrls : undefined,
       previousResponseId,
       tools,
     });

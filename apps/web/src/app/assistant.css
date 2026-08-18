@@ -20,7 +20,9 @@
   --ta-font: "Cairo", "IBM Plex Sans Arabic", "Noto Naskh Arabic", "Segoe UI", Tahoma, sans-serif;
   --ta-offer-font: "IBM Plex Sans Arabic", "Cairo", "Noto Naskh Arabic", sans-serif;
   font-family: var(--ta-font);
-  min-height: calc(100dvh - 5.8rem);
+  height: calc(100dvh - 5.6rem);
+  max-height: calc(100dvh - 5.6rem);
+  min-height: 0;
   flex: 1;
   display: grid;
   grid-template-columns: minmax(240px, 300px) minmax(0, 1fr) minmax(270px, 330px);
@@ -30,6 +32,23 @@
   background: var(--ta-panel);
   box-shadow: 0 16px 40px rgba(7, 24, 34, 0.08);
   color: var(--ta-ink);
+}
+
+.app-shell.dense:has(.ta-workspace),
+.app-shell.dense:has(.ta-workspace) .main-dense {
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden;
+}
+
+.app-shell.dense:has(.ta-workspace) .main-dense {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.app-shell.dense:has(.ta-workspace) .main-dense > .topbar {
+  flex: 0 0 auto;
 }
 
 .ta-list,
@@ -43,20 +62,25 @@
 .ta-list {
   border-left: 1px solid var(--ta-line);
   background: #fbfcfc;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .ta-pane {
   background: var(--ta-chat);
   box-shadow: inset 0 0 0 1px rgba(15, 51, 64, 0.04);
+  min-height: 0;
+  overflow: hidden;
 }
 
 .ta-side {
   border-right: 1px solid var(--ta-line);
   background: var(--ta-panel-2);
+  min-height: 0;
+  overflow: hidden;
 }
 
-.ta-list-head,
-.ta-pane-head {
+.ta-list-head {
   padding: 0.85rem 1rem;
   border-bottom: 1px solid var(--ta-line);
   background: linear-gradient(180deg, #ffffff, #f6f8f7);
@@ -64,16 +88,25 @@
   gap: 0.55rem;
 }
 
-.ta-list-title,
 .ta-pane-head {
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid rgba(216, 163, 94, 0.35);
+  background: linear-gradient(180deg, #184a52, #0f3340);
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.7rem;
+  flex: 0 0 auto;
+}
+
+.ta-list-title {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   gap: 0.7rem;
 }
 
-.ta-list-title h3,
-.ta-pane-head h3 {
+.ta-list-title h3 {
   margin: 0;
   font-size: 1.08rem;
   font-weight: 800;
@@ -81,9 +114,17 @@
   color: var(--ta-brand);
 }
 
+.ta-pane-head h3 {
+  margin: 0;
+  font-size: 1.08rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: #fff;
+}
+
 .ta-pane-head p {
   margin: 0.2rem 0 0;
-  color: var(--ta-muted);
+  color: rgba(247, 251, 249, 0.72);
   font-size: 0.8rem;
   font-weight: 600;
 }
@@ -230,6 +271,7 @@
   padding: 0.6rem 0.8rem;
   border-radius: 12px;
   font-weight: 600;
+  flex: 0 0 auto;
 }
 
 .ta-error {
@@ -248,24 +290,24 @@
   display: grid;
   gap: 0.22rem;
   font-size: 0.78rem;
-  color: var(--ta-muted);
+  color: rgba(247, 251, 249, 0.72);
 }
 
 .ta-meter b {
-  color: var(--ta-brand);
+  color: #f0c27a;
   font-size: 0.92rem;
   font-weight: 800;
 }
 
 .ta-meter.off b {
-  color: #a15b12;
+  color: #ffd7a1;
 }
 
 .ta-meter-bar {
   display: block;
   height: 7px;
   border-radius: 99px;
-  background: #dfe8e6;
+  background: rgba(255, 255, 255, 0.18);
   overflow: hidden;
 }
 
@@ -276,8 +318,11 @@
 }
 
 .ta-log {
-  flex: 1;
-  overflow: auto;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 1.05rem 1.15rem 1.3rem;
   display: flex;
   flex-direction: column;
@@ -488,11 +533,18 @@
 
 .ta-composer {
   display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  padding: 0.7rem 0.9rem 0.85rem;
+  background: linear-gradient(180deg, #184a52, #0f3340);
+  border-top: 1px solid rgba(216, 163, 94, 0.35);
+  flex: 0 0 auto;
+}
+
+.ta-composer-row {
+  display: flex;
   gap: 0.55rem;
   align-items: flex-end;
-  padding: 0.8rem 0.9rem;
-  background: #f7f4ee;
-  border-top: 1px solid rgba(15, 51, 64, 0.1);
 }
 
 .ta-composer textarea {
@@ -514,13 +566,84 @@
   border-color: var(--ta-gold);
 }
 
+.ta-attach {
+  width: 48px;
+  height: 48px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  font-size: 1.15rem;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.ta-attach:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.ta-pending {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  color: #f7fbf9;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.ta-pending img {
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.ta-pending button {
+  border: 0;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  border-radius: 8px;
+  padding: 0.25rem 0.55rem;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+}
+
 .ta-send {
   min-width: 5rem;
   height: 48px;
   border-radius: 16px;
-  background: linear-gradient(180deg, #1c5360, var(--ta-brand));
-  color: #fff;
+  background: linear-gradient(180deg, #e4b56e, var(--ta-gold));
+  color: #0f3340;
   font-weight: 800;
+}
+
+.ta-attach-list {
+  display: grid;
+  gap: 0.4rem;
+  margin-bottom: 0.35rem;
+}
+
+.ta-attach-image {
+  display: grid;
+  gap: 0.25rem;
+  color: inherit;
+  text-decoration: none;
+}
+
+.ta-attach-image img {
+  max-width: min(240px, 100%);
+  max-height: 180px;
+  border-radius: 10px;
+  object-fit: cover;
+}
+
+.ta-attach-file {
+  color: inherit;
+  font-weight: 700;
+  text-decoration: underline;
 }
 
 .ta-side-tabs {
@@ -745,6 +868,22 @@
   border: 1px solid rgba(15, 51, 64, 0.12);
   box-shadow: 0 16px 36px rgba(7, 24, 34, 0.08);
   padding: 0;
+  max-height: 72vh;
+}
+
+.ta-public .ta-log {
+  max-height: none;
+}
+
+.ta-public .ta-composer {
+  flex-direction: row;
+  background: #f7f4ee;
+  border-top: 1px solid rgba(15, 51, 64, 0.1);
+}
+
+.ta-public .ta-send {
+  background: linear-gradient(180deg, #1c5360, var(--ta-brand));
+  color: #fff;
 }
 
 .ta-grid {
@@ -783,7 +922,8 @@
 @media (max-width: 780px) {
   .ta-workspace {
     grid-template-columns: 1fr;
-    min-height: 70vh;
+    height: calc(100dvh - 5.6rem);
+    max-height: calc(100dvh - 5.6rem);
   }
   .ta-list {
     max-height: 28vh;

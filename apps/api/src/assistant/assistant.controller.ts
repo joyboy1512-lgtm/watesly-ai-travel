@@ -8,7 +8,14 @@ import {
   Patch,
   Post,
   Query,
+  UploadedFile,
+  UseInterceptors,
 } from "@nestjs/common";
+import { FileInterceptor } from "@nestjs/platform-express";
+import { diskStorage } from "multer";
+import { extname, join } from "path";
+import { existsSync, mkdirSync } from "fs";
+import { randomUUID } from "crypto";
 import { CurrentUser, Public, RequirePermissions } from "../auth/decorators";
 import type { AuthUser } from "../auth/auth.types";
 import { PrismaService } from "../prisma/prisma.service";
@@ -44,6 +51,58 @@ export class AssistantController {
       title: body.title,
       creditLimitUsd: body.creditLimitUsd,
     });
+  }
+
+  @Post("upload")
+  @RequirePermissions("conversations.read")
+  @UseInterceptors(
+    FileInterceptor("file", {
+      storage: diskStorage({
+        destination: (_req, _file, cb) => {
+          const dir = join(
+            process.env.UPLOADS_DIR || join(process.cwd(), "..", "..", "uploads"),
+            "assistant",
+          );
+          if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
+          cb(null, dir);
+        },
+        filename: (_req, file, cb) => {
+          const ext = extname(file.originalname || "").toLowerCase() || ".bin";
+          cb(null, `${randomUUID()}${ext}`);
+        },
+      }),
+      limits: { fileSize: 12 * 1024 * 1024 },
+    }),
+  )
+  upload(
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    if (!file) throw new BadRequestException("اختر صورة أو ملفاً");
+    const mime = (file.mimetype || "").toLowerCase();
+    const ext = extname(file.originalname || "").toLowerCase();
+    const image =
+      ["image/jpeg", "image/png", "image/webp", "image/gif"].includes(mime) ||
+      [".jpg", ".jpeg", ".png", ".webp", ".gif"].includes(ext);
+    const allowed =
+      image ||
+      mime === "application/pdf" ||
+      ext === ".pdf" ||
+      mime.startsWith("text/") ||
+      [".doc", ".docx", ".xls", ".xlsx"].includes(ext);
+    if (!allowed) {
+      throw new BadRequestException("يُسمح بالصور أو PDF أو ملفات أوفيس");
+    }
+    const publicBase = (
+      process.env.PUBLIC_API_URL ||
+      process.env.API_URL ||
+      "https://api.weekendgate.com"
+    ).replace(/\/$/, "");
+    return {
+      kind: image ? "image" : "file",
+      name: file.originalname || file.filename,
+      mime: file.mimetype,
+      url: `${publicBase}/uploads/assistant/${file.filename}`,
+    };
   }
 
   @Patch("threads/:id")

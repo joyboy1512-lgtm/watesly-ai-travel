@@ -13,7 +13,8 @@ import {
 import { useRouter, useSearchParams } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
 import { ChatOfferBody } from "@/components/ChatOfferBody";
-import { apiFetch } from "@/lib/api";
+import { apiFetch, apiUpload } from "@/lib/api";
+import { encodeChatAttachment } from "@watesly-travel/shared";
 import "../../assistant.css";
 
 type ToolRow = { name: string; enabled: boolean; reason?: string };
@@ -136,6 +137,9 @@ function AssistantPageInner() {
   const [orgLimit, setOrgLimit] = useState("");
   const logRef = useRef<HTMLDivElement>(null);
   const composerRef = useRef<HTMLTextAreaElement>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [pendingPreview, setPendingPreview] = useState("");
 
   const loadThreads = useCallback(async () => {
     const rows = await apiFetch<ThreadRow[]>(
@@ -291,20 +295,69 @@ function AssistantPageInner() {
     }
   }
 
+  function clearPendingFile() {
+    if (pendingPreview) URL.revokeObjectURL(pendingPreview);
+    setPendingFile(null);
+    setPendingPreview("");
+    if (fileRef.current) fileRef.current.value = "";
+  }
+
+  function onPickFile(file: File | null) {
+    if (!file) return;
+    if (file.size > 12 * 1024 * 1024) {
+      setError("حجم الملف يتجاوز 12MB");
+      return;
+    }
+    clearPendingFile();
+    setPendingFile(file);
+    if (file.type.startsWith("image/")) {
+      setPendingPreview(URL.createObjectURL(file));
+    }
+  }
+
   async function onSubmit(e?: FormEvent) {
     e?.preventDefault();
-    const message = text.trim();
-    if (!message || busy || !threadId || handedOff) return;
+    const caption = text.trim();
+    if (busy || !threadId || handedOff) return;
+    if (!caption && !pendingFile) return;
     setBusy(true);
     setError("");
     setText("");
+    let payload = caption;
+    const localFile = pendingFile;
+    try {
+      if (localFile) {
+        const form = new FormData();
+        form.append("file", localFile);
+        const uploaded = await apiUpload<{
+          kind: "image" | "file";
+          name: string;
+          url: string;
+        }>("/assistant/upload", form);
+        payload = [
+          encodeChatAttachment({
+            kind: uploaded.kind,
+            name: uploaded.name,
+            url: uploaded.url,
+          }),
+          caption,
+        ]
+          .filter(Boolean)
+          .join("\n");
+        clearPendingFile();
+      }
+    } catch (err) {
+      setBusy(false);
+      setError(err instanceof Error ? err.message : "تعذر رفع الملف");
+      return;
+    }
     const localId = `local-${Date.now()}`;
     setMessages((prev) => [
       ...prev,
       {
         id: localId,
         role: "user",
-        content: message,
+        content: payload,
         createdAt: new Date().toISOString(),
       },
     ]);
@@ -319,7 +372,7 @@ function AssistantPageInner() {
         remainingUsd?: number | null;
       }>("/assistant/chat", {
         method: "POST",
-        body: JSON.stringify({ message, threadId }),
+        body: JSON.stringify({ message: payload, threadId }),
         timeoutMs: 90000,
       });
       setMessages((prev) => [
@@ -327,7 +380,7 @@ function AssistantPageInner() {
         {
           id: localId,
           role: "user",
-          content: message,
+          content: payload,
           createdAt: new Date().toISOString(),
         },
         {
@@ -526,22 +579,58 @@ function AssistantPageInner() {
           </div>
 
           <form className="ta-composer" onSubmit={(e) => void onSubmit(e)}>
-            <textarea
-              ref={composerRef}
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              onKeyDown={onComposerKey}
-              placeholder={
-                handedOff
-                  ? "المحادثة محوّلة لموظف — ارفع الرصيد لإعادة المساعد"
-                  : "اكتب رسالة... Enter للإرسال، Shift+Enter لسطر جديد"
-              }
-              disabled={busy || handedOff}
-              rows={1}
-            />
-            <button className="ta-send" type="submit" disabled={busy || handedOff || !text.trim()}>
-              إرسال
-            </button>
+            {pendingFile ? (
+              <div className="ta-pending">
+                {pendingPreview ? (
+                  <img src={pendingPreview} alt="" />
+                ) : (
+                  <span>📎 {pendingFile.name}</span>
+                )}
+                <button type="button" onClick={clearPendingFile} disabled={busy}>
+                  إزالة
+                </button>
+              </div>
+            ) : null}
+            <div className="ta-composer-row">
+              <input
+                ref={fileRef}
+                type="file"
+                hidden
+                accept="image/jpeg,image/png,image/webp,image/gif,application/pdf,.pdf,.doc,.docx,.xls,.xlsx,.txt"
+                onChange={(e) => onPickFile(e.target.files?.[0] || null)}
+              />
+              <button
+                type="button"
+                className="ta-attach"
+                title="إرفاق صورة أو ملف"
+                disabled={busy || handedOff}
+                onClick={() => fileRef.current?.click()}
+              >
+                📎
+              </button>
+              <textarea
+                ref={composerRef}
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                onKeyDown={onComposerKey}
+                placeholder={
+                  handedOff
+                    ? "المحادثة محوّلة لموظف — ارفع الرصيد لإعادة المساعد"
+                    : pendingFile
+                      ? "تعليق على المرفق (اختياري)"
+                      : "اكتب رسالة... Enter للإرسال، Shift+Enter لسطر جديد"
+                }
+                disabled={busy || handedOff}
+                rows={1}
+              />
+              <button
+                className="ta-send"
+                type="submit"
+                disabled={busy || handedOff || (!text.trim() && !pendingFile)}
+              >
+                إرسال
+              </button>
+            </div>
           </form>
         </section>
 

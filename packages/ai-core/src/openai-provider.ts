@@ -85,6 +85,19 @@ export class OpenAiProvider implements AiProvider {
         call_id: row.callId,
         output: row.output,
       }));
+    } else if (input.imageUrls?.length) {
+      payload.input = [
+        {
+          role: "user",
+          content: [
+            { type: "input_text", text: input.userText || "انظر إلى المرفق" },
+            ...input.imageUrls.map((url) => ({
+              type: "input_image",
+              image_url: url,
+            })),
+          ],
+        },
+      ];
     } else {
       payload.input = input.userText || "";
     }

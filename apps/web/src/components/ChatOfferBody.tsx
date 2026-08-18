@@ -1,4 +1,5 @@
 import { Fragment, type ReactNode } from "react";
+import { parseChatAttachments } from "@watesly-travel/shared";
 
 type ChatOfferBodyProps = {
   content: string;
@@ -29,15 +30,44 @@ function renderInline(text: string, keyPrefix: string): ReactNode {
 }
 
 export function ChatOfferBody({ content, role }: ChatOfferBodyProps) {
+  const parsed = parseChatAttachments(content);
+  const body = parsed.text || (parsed.attachments.length ? "" : content);
+
+  const media = parsed.attachments.length ? (
+    <div className="ta-attach-list">
+      {parsed.attachments.map((row) =>
+        row.kind === "image" ? (
+          <a key={row.url} href={row.url} target="_blank" rel="noreferrer" className="ta-attach-image">
+            <img src={row.url} alt={row.name} />
+            <span>{row.name}</span>
+          </a>
+        ) : (
+          <a key={row.url} href={row.url} target="_blank" rel="noreferrer" className="ta-attach-file">
+            📎 {row.name}
+          </a>
+        ),
+      )}
+    </div>
+  ) : null;
+
   if (role === "user") {
-    return <p className="ta-user-text">{content}</p>;
+    return (
+      <>
+        {media}
+        {body ? <p className="ta-user-text">{body}</p> : null}
+      </>
+    );
   }
 
-  const lines = content.replace(/\r/g, "").split("\n");
+  const lines = body.replace(/\r/g, "").split("\n");
+  if (!body.trim()) {
+    return <div className="ta-offer">{media}</div>;
+  }
   let sawHead = false;
 
   return (
     <div className="ta-offer">
+      {media}
       {lines.map((raw, index) => {
         const line = raw.trimEnd();
         if (!line.trim()) {

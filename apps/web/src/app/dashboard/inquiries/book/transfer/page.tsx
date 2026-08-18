@@ -151,7 +151,7 @@ export default function TransferBookPage() {
               currency: draft.transfer.currency,
               details: draft.transfer.details,
               providerKey: String(
-                draft.transfer.details.provider || "hotelbeds",
+                draft.transfer.details.provider || "hotelbeds-transfers",
               ),
               providerOfferRef: draft.transfer.id,
             },

@@ -51,7 +51,7 @@ function firstHbRate(hotel?: HbHotel): HbRate | undefined {
 
 export class HotelbedsHotelProvider implements HotelProviderAdapter {
   readonly providerKey = "hotelbeds";
-  readonly displayName = "Hotelbeds";
+  readonly displayName = "Hotelbeds Hotels";
   readonly liveMode: boolean;
   private readonly creds: HotelbedsCredentials;
 

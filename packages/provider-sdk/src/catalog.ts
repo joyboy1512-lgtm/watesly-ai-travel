@@ -128,56 +128,87 @@ export const PROVIDER_CATALOG: ProviderCatalogEntry[] = [
   },
   {
     providerKey: "hotelbeds",
-    displayName: "Hotelbeds",
-    displayNameAr: "Hotelbeds",
+    displayName: "Hotelbeds Hotels",
+    displayNameAr: "Hotelbeds فنادق",
     description:
-      "مزود فنادق عبر Hotelbeds APItude (Sandbox للتطوير — حد ~50 طلب/يوم)",
-    capabilities: ["hotel", "transfer"],
+      "API فنادق Hotelbeds APItude فقط (Availability + Content). لا يشمل المواصلات.",
+    capabilities: ["hotel"],
     status: "ready",
     envKeys: [
       "HOTELBEDS_API_KEY",
       "HOTELBEDS_API_SECRET",
-      "HOTELBEDS_TRANSFER_API_KEY",
-      "HOTELBEDS_TRANSFER_API_SECRET",
+      "HOTELBEDS_BASE_URL",
     ],
     credentialFields: [
       {
         key: "apiKey",
-        label: "API Key",
+        label: "Hotels API Key",
         secret: true,
         required: true,
-        placeholder: "مفتاح Hotelbeds من developer.hotelbeds.com",
+        placeholder: "مفتاح Hotel API من developer.hotelbeds.com",
       },
       {
         key: "apiSecret",
-        label: "API Secret",
+        label: "Hotels API Secret",
         secret: true,
         required: true,
       },
       {
         key: "baseUrl",
-        label: "Base URL",
+        label: "Hotels Base URL",
         placeholder: "https://api.test.hotelbeds.com",
-      },
-      {
-        key: "transferApiKey",
-        label: "Transfers API Key",
-        secret: true,
-        placeholder: "مفتاح Transfers منفصل عن الفنادق",
-      },
-      {
-        key: "transferApiSecret",
-        label: "Transfers API Secret",
-        secret: true,
       },
     ],
     notes:
-      "فنادق: HOTEL_PROVIDER=hotelbeds. مواصلات: TRANSFER_PROVIDER=hotelbeds مع HOTELBEDS_TRANSFER_API_KEY / SECRET. Sandbox: api.test.hotelbeds.com",
+      "فعّل HOTEL_PROVIDER=hotelbeds مع HOTELBEDS_API_KEY / HOTELBEDS_API_SECRET. مواصلات Hotelbeds مزود منفصل.",
+  },
+  {
+    providerKey: "hotelbeds-transfers",
+    displayName: "Hotelbeds Transfers",
+    displayNameAr: "Hotelbeds مواصلات",
+    description:
+      "API مواصلات Hotelbeds Transfers فقط. يعمل بمفاتيح مستقلة عن الفنادق.",
+    capabilities: ["transfer"],
+    status: "ready",
+    envKeys: [
+      "HOTELBEDS_TRANSFER_API_KEY",
+      "HOTELBEDS_TRANSFER_API_SECRET",
+      "HOTELBEDS_TRANSFER_BASE_URL",
+    ],
+    credentialFields: [
+      {
+        key: "apiKey",
+        label: "Transfers API Key",
+        secret: true,
+        required: true,
+        placeholder: "مفتاح Transfer API منفصل عن الفنادق",
+      },
+      {
+        key: "apiSecret",
+        label: "Transfers API Secret",
+        secret: true,
+        required: true,
+      },
+      {
+        key: "baseUrl",
+        label: "Transfers Base URL",
+        placeholder: "https://api.test.hotelbeds.com",
+      },
+    ],
+    notes:
+      "فعّل TRANSFER_PROVIDER=hotelbeds-transfers مع HOTELBEDS_TRANSFER_API_KEY / SECRET. لا يستخدم مفاتيح الفنادق.",
   },
 ];
 
 export function getCatalogEntry(providerKey: string) {
   const key = providerKey.trim().toLowerCase();
-  const alias = key === "real" ? "duffel" : key;
+  const alias =
+    key === "real"
+      ? "duffel"
+      : key === "hotelbeds_transfers" ||
+          key === "hotelbeds-transfer" ||
+          key === "hotelbeds_transfer"
+        ? "hotelbeds-transfers"
+        : key;
   return PROVIDER_CATALOG.find((p) => p.providerKey === alias) || null;
 }

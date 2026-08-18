@@ -20,7 +20,9 @@ import {
 
 function envReady(keys: string[]) {
   if (!keys.length) return true;
-  return keys.some((k) => Boolean(process.env[k]?.trim()));
+  const required = keys.filter((k) => !/_BASE_URL$|_HOSTNAME$/.test(k));
+  if (!required.length) return keys.some((k) => Boolean(process.env[k]?.trim()));
+  return required.every((k) => Boolean(process.env[k]?.trim()));
 }
 
 @Controller("providers")

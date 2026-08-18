@@ -104,14 +104,15 @@ export async function resolveTransferEndpoint(
         input.inboundDate && input.inboundDate > checkIn
           ? input.inboundDate
           : addDaysIso(checkIn, 1);
-      const found = await input.hotelLookup(city, raw, { checkIn, checkOut });
+      const found = await input.hotelLookup(city, raw, { checkIn, checkOut }).catch(
+        () => null,
+      );
       if (found) {
         return { type: "ATLAS", code: found.code, label: found.label };
       }
     }
-    throw new Error(
-      `تعذر العثور على فندق «${raw}» في ${city || "المدينة"}. جرّب الاسم الكامل أو رمز ATLAS الرقمي.`,
-    );
+    // Transfers API stays independent: hotel name → GPS if Hotels API is not available.
+    return resolveTransferEndpoint({ ...input, kind: "GPS" });
   }
 
   const geoQuery =
@@ -185,7 +186,7 @@ function mapService(
     .join(" · ");
 
   return {
-    providerKey: "hotelbeds",
+    providerKey: "hotelbeds-transfers",
     providerOfferRef: rateKey,
     description,
     costAmountMinor: amountToMinor(amount, currency),
@@ -193,7 +194,7 @@ function mapService(
     revalidationToken: JSON.stringify({ rateKey, transferType }),
     expiresAt: new Date(Date.now() + 20 * 60 * 1000).toISOString(),
     raw: {
-      provider: "hotelbeds",
+      provider: "hotelbeds-transfers",
       liveMode: input.liveMode,
       source: input.liveMode ? "hotelbeds-transfers" : "mock",
       sourceLabel,
@@ -225,7 +226,7 @@ function mapService(
 }
 
 export class HotelbedsTransferProvider implements TransferProviderAdapter {
-  readonly providerKey = "hotelbeds";
+  readonly providerKey = "hotelbeds-transfers";
   readonly displayName = "Hotelbeds Transfers";
   readonly liveMode: boolean;
   private readonly creds: HotelbedsCredentials;
@@ -244,7 +245,9 @@ export class HotelbedsTransferProvider implements TransferProviderAdapter {
   }
 
   private hotelLookupFactory() {
-    const hotelProvider = new HotelbedsHotelProvider(this.creds);
+    // Optional Hotels API — never reuse Transfers credentials.
+    const hotelProvider = new HotelbedsHotelProvider();
+    if (!hotelProvider.liveMode) return undefined;
     return async (
       city: string,
       hotelName: string,

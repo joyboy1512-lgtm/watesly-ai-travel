@@ -9,6 +9,7 @@ export {
   resolveHotelProviderKey,
   resolveTransferProviderKey,
   resolveProviderKey,
+  isHotelbedsTransferKey,
   getFlightProvider,
   getHotelProvider,
   getTransferProvider,

@@ -954,7 +954,7 @@ export default function InquiriesPage() {
           })),
         );
         setSearch({
-          providerKey: result.providerKey || "hotelbeds",
+          providerKey: result.providerKey || "hotelbeds-transfers",
           providerName: result.providerName || "Hotelbeds Transfers",
           liveMode: result.liveMode,
           flights: [],

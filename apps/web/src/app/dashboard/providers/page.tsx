@@ -28,6 +28,7 @@ type ProviderRow = {
   displayName: string;
   enabled: boolean;
   priority: number;
+  capabilities?: string[];
   hasCredentials?: boolean;
   catalogStatus?: string;
   envConfigured?: boolean;
@@ -131,8 +132,9 @@ export default function ProvidersPage() {
             <p className="prc-kicker">Travel Providers</p>
             <h3>مزودو السفر</h3>
             <p>
-              جهّز ربط Amadeus وTravelport وTravelfusion (منخفض التكلفة/داخلي)
-              وDuffel. الصلاحية المطلوبة: إدارة مزودي السفر.
+              جهّز ربط Amadeus وTravelport وTravelfusion وDuffel، ومزودي
+              Hotelbeds للفنادق والمواصلات بشكل منفصل. الصلاحية المطلوبة: إدارة
+              مزودي السفر.
             </p>
           </div>
         </section>
@@ -256,6 +258,11 @@ export default function ProvidersPage() {
                       <td className="cust-mono">{row.providerKey}</td>
                       <td>
                         <strong>{row.displayName}</strong>
+                        {row.capabilities?.length ? (
+                          <div className="hint">
+                            {row.capabilities.join(" · ")}
+                          </div>
+                        ) : null}
                       </td>
                       <td>
                         <span className="wa-pill soft">
@@ -305,10 +312,14 @@ export default function ProvidersPage() {
           <pre className="hint" style={{ whiteSpace: "pre-wrap", margin: 0 }}>
 {`# أمثلة .env
 FLIGHT_PROVIDER=amadeus          # أو travelport | travelfusion | duffel | mock
-HOTEL_PROVIDER=hotelbeds         # أو duffel | mock
+HOTEL_PROVIDER=hotelbeds         # فنادق Hotelbeds فقط
 HOTELBEDS_API_KEY=...
 HOTELBEDS_API_SECRET=...
 HOTELBEDS_BASE_URL=https://api.test.hotelbeds.com
+TRANSFER_PROVIDER=hotelbeds-transfers   # مواصلات Hotelbeds — API منفصل
+HOTELBEDS_TRANSFER_API_KEY=...
+HOTELBEDS_TRANSFER_API_SECRET=...
+HOTELBEDS_TRANSFER_BASE_URL=https://api.test.hotelbeds.com
 AMADEUS_CLIENT_ID=...
 AMADEUS_CLIENT_SECRET=...
 AMADEUS_HOSTNAME=test.api.amadeus.com

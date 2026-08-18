@@ -786,7 +786,7 @@ export class BookingsService {
     const provider = await getTransferProviderForOrg(
       this.prisma,
       input.organizationId,
-      process.env.TRANSFER_PROVIDER || "hotelbeds",
+      process.env.TRANSFER_PROVIDER || "hotelbeds-transfers",
     );
     const offers = await provider.searchTransfers({
       city,

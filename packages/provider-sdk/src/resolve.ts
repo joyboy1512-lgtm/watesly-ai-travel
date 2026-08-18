@@ -28,7 +28,20 @@ function normalizeProviderAlias(raw: string): string {
   // Common aliases for low-cost / domestic aggregator
   if (key === "tf" || key === "lcc") return "travelfusion";
   if (key === "tp" || key === "galileo") return "travelport";
+  if (
+    key === "hotelbeds-transfers" ||
+    key === "hotelbeds_transfers" ||
+    key === "hotelbeds-transfer" ||
+    key === "hotelbeds_transfer"
+  ) {
+    return "hotelbeds-transfers";
+  }
   return key;
+}
+
+export function isHotelbedsTransferKey(raw?: string): boolean {
+  const key = normalizeProviderAlias(raw || "");
+  return key === "hotelbeds-transfers";
 }
 
 /**
@@ -58,10 +71,14 @@ export function resolveHotelProviderKey(preferred?: string): string {
 export function resolveTransferProviderKey(preferred?: string): string {
   const fromEnv =
     process.env.TRANSFER_PROVIDER?.trim() ||
-    process.env.HOTEL_PROVIDER?.trim() ||
-    process.env.TRAVEL_DEFAULT_PROVIDER?.trim() ||
+    (process.env.HOTELBEDS_TRANSFER_API_KEY?.trim()
+      ? "hotelbeds-transfers"
+      : "") ||
     "mock";
-  return normalizeProviderAlias(preferred || fromEnv);
+  const key = normalizeProviderAlias(preferred || fromEnv);
+  // TRANSFER_PROVIDER=hotelbeds means the Transfers API, never the Hotels API.
+  if (key === "hotelbeds") return "hotelbeds-transfers";
+  return key;
 }
 
 /** @deprecated Use resolveFlightProviderKey / resolveHotelProviderKey */
@@ -221,7 +238,7 @@ export function getHotelProvider(
     }
   }
 
-  // Flight-only providers fall back to mock hotels unless a hotel adapter exists.
+  // Flight-only / transfer-only keys are not hotel adapters.
   if (mockFallbackAllowed()) return new MockHotelProvider();
   throw new Error(`مزود فنادق غير معروف: ${key}`);
 }
@@ -236,7 +253,7 @@ export function getTransferProvider(
     return new MockTransferProvider();
   }
 
-  if (key === "hotelbeds") {
+  if (key === "hotelbeds" || key === "hotelbeds-transfers") {
     try {
       const provider = new HotelbedsTransferProvider({
         apiKey: creds?.apiKey,
@@ -245,7 +262,7 @@ export function getTransferProvider(
       });
       if (!provider.liveMode) {
         throw new Error(
-          "TRANSFER_PROVIDER=hotelbeds يتطلب HOTELBEDS_TRANSFER_API_KEY و HOTELBEDS_TRANSFER_API_SECRET",
+          "TRANSFER_PROVIDER=hotelbeds-transfers يتطلب HOTELBEDS_TRANSFER_API_KEY و HOTELBEDS_TRANSFER_API_SECRET",
         );
       }
       return provider;

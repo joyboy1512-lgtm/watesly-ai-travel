@@ -59,7 +59,12 @@ export async function getHotelProviderForOrg(
       ? decryptProviderConfig<Record<string, string>>(row.configEncrypted) ||
         undefined
       : undefined;
-  return getHotelProvider(key, creds);
+  return getHotelProvider(key, {
+    apiKey: creds?.apiKey,
+    apiSecret: creds?.apiSecret,
+    baseUrl: creds?.baseUrl,
+    accessToken: creds?.accessToken,
+  });
 }
 
 export async function getTransferProviderForOrg(
@@ -74,14 +79,38 @@ export async function getTransferProviderForOrg(
     },
     select: { configEncrypted: true, enabled: true },
   });
-  const creds =
+  let creds =
     row?.enabled && row.configEncrypted
       ? decryptProviderConfig<Record<string, string>>(row.configEncrypted) ||
         undefined
       : undefined;
+
+  // Legacy: transfer keys used to live on the combined hotelbeds row.
+  if (!creds?.apiKey) {
+    const legacy = await prisma.travelProviderConfig.findUnique({
+      where: {
+        organizationId_providerKey: {
+          organizationId,
+          providerKey: "hotelbeds",
+        },
+      },
+      select: { configEncrypted: true, enabled: true },
+    });
+    if (legacy?.enabled && legacy.configEncrypted) {
+      const legacyCreds =
+        decryptProviderConfig<Record<string, string>>(legacy.configEncrypted) ||
+        {};
+      creds = {
+        apiKey: legacyCreds.transferApiKey,
+        apiSecret: legacyCreds.transferApiSecret,
+        baseUrl: legacyCreds.transferBaseUrl,
+      };
+    }
+  }
+
   return getTransferProvider(key, {
-    apiKey: creds?.transferApiKey,
-    apiSecret: creds?.transferApiSecret,
-    baseUrl: creds?.transferBaseUrl || creds?.baseUrl,
+    apiKey: creds?.apiKey || creds?.transferApiKey,
+    apiSecret: creds?.apiSecret || creds?.transferApiSecret,
+    baseUrl: creds?.baseUrl || creds?.transferBaseUrl,
   });
 }

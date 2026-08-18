@@ -756,12 +756,12 @@ export class TravelAiService {
     const provider = await getTransferProviderForOrg(
       this.prisma,
       organizationId,
-      process.env.TRANSFER_PROVIDER || "hotelbeds",
+      process.env.TRANSFER_PROVIDER || "hotelbeds-transfers",
     );
     if (!provider.liveMode) {
       return JSON.stringify({
         disabled: true,
-        reason: "بحث المواصلات غير مفعّل — ينقص HOTELBEDS_TRANSFER_API_KEY",
+        reason: "بحث المواصلات غير مفعّل — ينقص HOTELBEDS_TRANSFER_API_KEY (مزود منفصل عن الفنادق)",
       });
     }
     const fromKind = str(args.fromKind) as "IATA" | "ATLAS" | "GPS" | "";

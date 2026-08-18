@@ -208,9 +208,7 @@ export function listToolAvailability(): ToolAvailability[] {
   const hotelsLive = Boolean(
     process.env.HOTELBEDS_API_KEY || process.env.DUFFEL_ACCESS_TOKEN,
   );
-  const transfersLive = Boolean(
-    process.env.HOTELBEDS_TRANSFER_API_KEY || process.env.HOTELBEDS_API_KEY,
-  );
+  const transfersLive = Boolean(process.env.HOTELBEDS_TRANSFER_API_KEY);
 
   return [
     {
@@ -247,7 +245,9 @@ export function listToolAvailability(): ToolAvailability[] {
     {
       name: "search_transfers",
       enabled: transfersLive,
-      reason: transfersLive ? undefined : "يتطلب HOTELBEDS_TRANSFER_API_KEY",
+      reason: transfersLive
+        ? undefined
+        : "يتطلب HOTELBEDS_TRANSFER_API_KEY و HOTELBEDS_TRANSFER_API_SECRET (مزود مواصلات منفصل عن الفنادق)",
     },
     {
       name: "search_flights_travelport",

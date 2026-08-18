@@ -38,7 +38,6 @@ export function resolveHotelbedsTransferCredentials(
   const baseUrl = (
     creds?.baseUrl?.trim() ||
     process.env.HOTELBEDS_TRANSFER_BASE_URL?.trim() ||
-    process.env.HOTELBEDS_BASE_URL?.trim() ||
     "https://api.test.hotelbeds.com"
   ).replace(/\/$/, "");
   return { apiKey, apiSecret, baseUrl };

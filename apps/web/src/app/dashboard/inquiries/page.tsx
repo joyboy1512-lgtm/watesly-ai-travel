@@ -377,6 +377,59 @@ function AutocompleteField({
   );
 }
 
+function PassengerCountRow({
+  adults,
+  childrenCount,
+  infants,
+  onAdults,
+  onChildren,
+  onInfants,
+}: {
+  adults: number;
+  childrenCount: number;
+  infants: number;
+  onAdults: (n: number) => void;
+  onChildren: (n: number) => void;
+  onInfants: (n: number) => void;
+}) {
+  return (
+    <div className="guests-inline-row">
+      <label className="guests-inline">
+        <span>بالغ</span>
+        <input
+          type="number"
+          min={1}
+          max={9}
+          value={adults}
+          onChange={(e) => onAdults(Math.max(1, Number(e.target.value) || 1))}
+        />
+      </label>
+      <label className="guests-inline">
+        <span>طفل</span>
+        <input
+          type="number"
+          min={0}
+          max={8}
+          value={childrenCount}
+          onChange={(e) => onChildren(Math.max(0, Number(e.target.value) || 0))}
+        />
+      </label>
+      <label className="guests-inline">
+        <span>رضيع</span>
+        <input
+          type="number"
+          min={0}
+          max={adults}
+          value={infants}
+          onChange={(e) =>
+            onInfants(Math.min(Math.max(0, Number(e.target.value) || 0), adults))
+          }
+        />
+      </label>
+    </div>
+  );
+}
+
 export default function InquiriesPage() {
   const router = useRouter();
   const [rows, setRows] = useState<Inquiry[]>([]);
@@ -1262,77 +1315,24 @@ export default function InquiriesPage() {
                 </button>
                 <small>بالغ · طفل · رضيع</small>
                 {guestsOpen ? (
-                  <div className="guests-menu">
-                    <label>
-                      <span>بالغون</span>
-                      <select
-                        value={form.adults}
-                        onChange={(e) => {
-                          const adults = Number(e.target.value) || 1;
-                          setForm({
-                            ...form,
-                            adults,
-                            infants: Math.min(form.infants, adults),
-                          });
-                        }}
-                      >
-                        {Array.from({ length: 9 }, (_, i) => i + 1).map((n) => (
-                          <option key={n} value={n}>
-                            {n}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                    <label>
-                      <span>أطفال (2–11 سنة)</span>
-                      <select
-                        value={form.children}
-                        onChange={(e) =>
-                          setForm({
-                            ...form,
-                            children: Number(e.target.value) || 0,
-                          })
-                        }
-                      >
-                        {Array.from({ length: 9 }, (_, i) => i).map((n) => (
-                          <option key={n} value={n}>
-                            {n}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                    <label>
-                      <span>رضع (أقل من سنتين)</span>
-                      <select
-                        value={form.infants}
-                        onChange={(e) =>
-                          setForm({
-                            ...form,
-                            infants: Math.min(
-                              Number(e.target.value) || 0,
-                              form.adults,
-                            ),
-                          })
-                        }
-                      >
-                        {Array.from(
-                          { length: form.adults + 1 },
-                          (_, i) => i,
-                        ).map((n) => (
-                          <option key={n} value={n}>
-                            {n}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                    <p className="guests-hint">الرضيع يجلس في حضن بالغ</p>
-                    <button
-                      type="button"
-                      className="btn secondary"
-                      onClick={() => setGuestsOpen(false)}
-                    >
-                      تم
-                    </button>
+                  <div className="guests-menu guests-menu-pop">
+                    <PassengerCountRow
+                      adults={form.adults}
+                      childrenCount={form.children}
+                      infants={form.infants}
+                      onAdults={(adults) =>
+                        setForm({
+                          ...form,
+                          adults,
+                          infants: Math.min(form.infants, adults),
+                        })
+                      }
+                      onChildren={(children) =>
+                        setForm({ ...form, children })
+                      }
+                      onInfants={(infants) => setForm({ ...form, infants })}
+                    />
+                    <p className="guests-hint">طفل 2–11 سنة · رضيع أقل من سنتين</p>
                   </div>
                 ) : null}
               </div>
@@ -1428,74 +1428,32 @@ export default function InquiriesPage() {
                 </button>
                 <small>من القائمة</small>
                 {guestsOpen ? (
-                  <div className="guests-menu">
-                    <label>
-                      <span>عدد الكبار</span>
-                      <select
-                        value={form.adults}
-                        onChange={(e) => {
-                          const adults = Number(e.target.value) || 1;
-                          setForm({
-                            ...form,
-                            adults,
-                            infants: Math.min(form.infants, adults),
-                          });
-                        }}
-                      >
-                        {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => (
-                          <option key={n} value={n}>
-                            {n}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                    <label>
-                      <span>عدد الأطفال</span>
-                      <select
-                        value={form.children}
-                        onChange={(e) => {
-                          const children = Number(e.target.value) || 0;
-                          const childrenAges = [
-                            ...form.childrenAges,
-                          ].slice(0, children);
-                          while (childrenAges.length < children) childrenAges.push(6);
-                          setForm({ ...form, children, childrenAges });
-                        }}
-                      >
-                        {Array.from({ length: 9 }, (_, i) => i).map((n) => (
-                          <option key={n} value={n}>
-                            {n}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                    <label>
-                      <span>عدد الرضع</span>
-                      <select
-                        value={form.infants}
-                        onChange={(e) =>
-                          setForm({
-                            ...form,
-                            infants: Math.min(
-                              Number(e.target.value) || 0,
-                              form.adults,
-                            ),
-                          })
-                        }
-                      >
-                        {Array.from({ length: form.adults + 1 }, (_, i) => i).map(
-                          (n) => (
-                            <option key={n} value={n}>
-                              {n}
-                            </option>
-                          ),
-                        )}
-                      </select>
-                    </label>
-                    <p className="guests-hint">الرضيع أقل من سنتين ويجلس في حضن بالغ</p>
+                  <div className="guests-menu guests-menu-pop">
+                    <PassengerCountRow
+                      adults={form.adults}
+                      childrenCount={form.children}
+                      infants={form.infants}
+                      onAdults={(adults) =>
+                        setForm({
+                          ...form,
+                          adults,
+                          infants: Math.min(form.infants, adults),
+                        })
+                      }
+                      onChildren={(children) => {
+                        const childrenAges = [...form.childrenAges].slice(
+                          0,
+                          children,
+                        );
+                        while (childrenAges.length < children) childrenAges.push(6);
+                        setForm({ ...form, children, childrenAges });
+                      }}
+                      onInfants={(infants) => setForm({ ...form, infants })}
+                    />
+                    <p className="guests-hint">طفل 2–11 سنة · رضيع أقل من سنتين</p>
                     {form.children > 0
                       ? Array.from({ length: form.children }, (_, i) => (
-                          <label key={i}>
+                          <label key={i} className="guests-age">
                             <span>عمر الطفل {i + 1}</span>
                             <select
                               value={form.childrenAges[i] ?? 6}
@@ -1517,13 +1475,6 @@ export default function InquiriesPage() {
                           </label>
                         ))
                       : null}
-                    <button
-                      type="button"
-                      className="btn secondary"
-                      onClick={() => setGuestsOpen(false)}
-                    >
-                      تم
-                    </button>
                   </div>
                 ) : null}
               </div>

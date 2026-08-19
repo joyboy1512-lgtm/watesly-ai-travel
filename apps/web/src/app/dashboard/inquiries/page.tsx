@@ -280,6 +280,8 @@ function AutocompleteField({
   value,
   display,
   placeholder,
+  hint,
+  emptyHint,
   onQuery,
   onPick,
   onClearText,
@@ -288,6 +290,8 @@ function AutocompleteField({
   value: string;
   display: string;
   placeholder: string;
+  hint?: string;
+  emptyHint?: string;
   onQuery: (q: string) => Promise<Array<{ id: string; title: string; subtitle?: string; code?: string }>>;
   onPick: (item: { id: string; title: string; subtitle?: string; code?: string }) => void;
   onClearText: (text: string) => void;
@@ -347,7 +351,11 @@ function AutocompleteField({
         }}
         onChange={(e) => handleChange(e.target.value)}
       />
-      <small>{value ? `رمز المطار: ${value}` : "اختر من القائمة"}</small>
+      <small>
+        {value
+          ? hint || `رمز المطار: ${value}`
+          : emptyHint || "اختر من القائمة"}
+      </small>
       {open ? (
         <div className="fs-suggest">
           {loading ? <div className="fs-suggest-loading">جاري البحث عن المطارات…</div> : null}
@@ -1350,10 +1358,12 @@ export default function InquiriesPage() {
           {mode === "stays" ? (
             <div className="fs-grid stays">
               <AutocompleteField
-                label="الدولة / المدينة / اسم الفندق"
+                label="الوجهة أو اسم الفندق"
                 value={form.stayQuery}
                 display={form.stayQuery}
-                placeholder="مثال: دبي أو الإمارات أو Hilton"
+                placeholder="مدينة أو دولة أو اسم فندق"
+                hint="اختر مدينة من القائمة"
+                emptyHint="اكتب ثم اختر المدينة"
                 onClearText={(text) => setForm((f) => ({ ...f, stayQuery: text }))}
                 onQuery={async (q) => {
                   const cities = await searchCities(q);
@@ -1376,7 +1386,7 @@ export default function InquiriesPage() {
                 }
               />
               <label className="fs-cell">
-                <span>من تاريخ</span>
+                <span>تاريخ الدخول</span>
                 <input
                   type="date"
                   value={form.departDate}
@@ -1387,7 +1397,7 @@ export default function InquiriesPage() {
                 <small>تسجيل الوصول</small>
               </label>
               <label className="fs-cell">
-                <span>إلى تاريخ</span>
+                <span>تاريخ الخروج</span>
                 <input
                   type="date"
                   value={form.returnDate}
@@ -1396,39 +1406,41 @@ export default function InquiriesPage() {
                   }
                 />
                 <small className="nights-pill">
-                  {nights ? `${nights} ليلة` : "اختر المدة"}
+                  {nights ? `${nights} ليلة` : "تسجيل المغادرة"}
                 </small>
               </label>
-              <label className="fs-cell fs-cell-center">
-                <span>الغرف</span>
-                <select
-                  value={form.rooms}
-                  onChange={(e) =>
-                    setForm({ ...form, rooms: Number(e.target.value) || 1 })
-                  }
-                >
-                  {Array.from({ length: 8 }, (_, i) => i + 1).map((n) => (
-                    <option key={n} value={n}>
-                      {n}
-                    </option>
-                  ))}
-                </select>
-                <small>غرفة</small>
-              </label>
               <div className="fs-cell fs-cell-center guests-cell" ref={guestsRef}>
-                <span>المسافرون</span>
+                <span>المسافرون والغرف</span>
                 <button
                   type="button"
                   className="guests-trigger"
                   onClick={() => setGuestsOpen((v) => !v)}
                 >
-                  {form.adults} كبار
-                  {form.children > 0 ? ` · ${form.children} أطفال` : ""}
-                  {form.infants > 0 ? ` · ${form.infants} رضع` : ""}
+                  {form.adults} بالغ
+                  {form.children > 0 ? ` · ${form.children} طفل` : ""}
+                  {form.infants > 0 ? ` · ${form.infants} رضيع` : ""}
+                  {` · ${form.rooms} غرفة`}
                 </button>
-                <small>من القائمة</small>
+                <small>اختر العدد</small>
                 {guestsOpen ? (
                   <div className="guests-menu guests-menu-pop">
+                    <div className="guests-inline-row">
+                      <label className="guests-inline">
+                        <span>غرف</span>
+                        <input
+                          type="number"
+                          min={1}
+                          max={8}
+                          value={form.rooms}
+                          onChange={(e) =>
+                            setForm({
+                              ...form,
+                              rooms: Math.max(1, Number(e.target.value) || 1),
+                            })
+                          }
+                        />
+                      </label>
+                    </div>
                     <PassengerCountRow
                       adults={form.adults}
                       childrenCount={form.children}
@@ -1478,39 +1490,6 @@ export default function InquiriesPage() {
                   </div>
                 ) : null}
               </div>
-              <label className="fs-cell fs-cell-center">
-                <span>تواريخ مرنة</span>
-                <button
-                  type="button"
-                  className={`guests-trigger${form.shiftDays ? " on" : ""}`}
-                  onClick={() => setForm({ ...form, shiftDays: !form.shiftDays })}
-                >
-                  {form.shiftDays ? "±1 يوم مفعّل" : "التواريخ كما هي"}
-                </button>
-                <small>± يوم واحد</small>
-              </label>
-              <label className="fs-cell fs-cell-center">
-                <span>سعر من</span>
-                <input
-                  type="number"
-                  min={0}
-                  value={form.minRate}
-                  onChange={(e) => setForm({ ...form, minRate: e.target.value })}
-                  placeholder="—"
-                />
-                <small>اختياري</small>
-              </label>
-              <label className="fs-cell fs-cell-center">
-                <span>سعر إلى</span>
-                <input
-                  type="number"
-                  min={0}
-                  value={form.maxRate}
-                  onChange={(e) => setForm({ ...form, maxRate: e.target.value })}
-                  placeholder="—"
-                />
-                <small>يُرسل لـ Hotelbeds</small>
-              </label>
               <button
                 type="button"
                 className="flight-explore"

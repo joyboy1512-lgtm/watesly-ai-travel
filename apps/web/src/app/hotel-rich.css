@@ -1341,7 +1341,12 @@
   font-weight: 700;
 }
 
-.flight-search .flight-explore {
-  min-width: 148px;
-  align-self: stretch;
+.flight-search .fs-grid.stays {
+  grid-template-columns:
+    minmax(220px, 1.6fr)
+    minmax(128px, 0.9fr)
+    minmax(128px, 0.9fr)
+    minmax(210px, 1.2fr)
+    148px;
+  min-width: 860px;
 }

@@ -112,6 +112,10 @@ export default function FlightBookPage() {
       router.replace("/dashboard/inquiries/book/transfer");
       return;
     }
+    if (stored.serviceType === "activity") {
+      router.replace("/dashboard/inquiries/book/activity");
+      return;
+    }
     setDraft(stored);
     const count = Math.max(1, stored.adults + stored.children);
     setTravelers(Array.from({ length: count }, () => emptyTraveler()));

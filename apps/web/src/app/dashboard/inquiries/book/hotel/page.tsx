@@ -111,6 +111,10 @@ export default function HotelBookPage() {
         router.replace("/dashboard/inquiries/book/transfer");
         return;
       }
+      if (stored.serviceType === "activity") {
+        router.replace("/dashboard/inquiries/book/activity");
+        return;
+      }
       router.replace("/dashboard/inquiries/book");
       return;
     }

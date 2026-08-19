@@ -1,6 +1,567 @@
 @import url("https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap");
 
-/* —— Light sea palette —— */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* —— Expedia-inspired theme —— */
+.shop-root.exp-theme {
+  --exp-navy: #00255d;
+  --exp-ink: #191e3b;
+  --exp-blue: #1668e3;
+  --exp-yellow: #ffc72c;
+  --exp-border: #dcdee5;
+  --exp-muted: #5b5f6d;
+  --exp-surface: #ffffff;
+  --exp-bg: #ffffff;
+  --shop-bg: #ffffff;
+  --sea-ink: var(--exp-ink);
+  --sea-muted: var(--exp-muted);
+  --sea-line: var(--exp-border);
+  --sea-800: var(--exp-navy);
+  --sea-700: var(--exp-navy);
+  --sea-600: var(--exp-blue);
+  --sea-500: var(--exp-blue);
+  color: var(--exp-ink);
+  background: var(--exp-bg);
+  font-family: Cairo, system-ui, sans-serif;
+}
+
+.exp-loyalty-stripe {
+  background: var(--exp-yellow);
+  color: var(--exp-navy);
+  text-align: center;
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 0.35rem 1rem;
+}
+
+.exp-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: var(--exp-navy);
+  border-bottom: 0;
+  box-shadow: none;
+}
+
+.exp-header-inner {
+  width: min(1280px, calc(100% - 2rem));
+  min-height: 60px;
+  padding: 0.65rem 0;
+}
+
+.exp-brand {
+  text-decoration: none;
+}
+
+.exp-wordmark {
+  font-size: 1.45rem;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: -0.02em;
+}
+
+.exp-nav a,
+.exp-linkbtn {
+  color: rgba(255, 255, 255, 0.92) !important;
+  font-weight: 600;
+  font-size: 0.9rem;
+  background: none !important;
+}
+
+.exp-nav a:hover,
+.exp-linkbtn:hover {
+  color: #fff !important;
+  text-decoration: underline;
+}
+
+.exp-signin {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.45rem 0.95rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.55) !important;
+  text-decoration: none;
+  color: #fff !important;
+}
+
+.exp-menu-toggle {
+  color: #fff !important;
+  border-color: rgba(255, 255, 255, 0.35) !important;
+  background: transparent !important;
+}
+
+.exp-main {
+  background: #fff;
+}
+
+/* —— Expedia search hero —— */
+.exp-search-hero {
+  background: #fff;
+  padding: 1.5rem 0 2rem;
+  border-bottom: 1px solid var(--exp-border);
+}
+
+.exp-search-wrap {
+  width: min(1280px, calc(100% - 2rem));
+  margin: 0 auto;
+}
+
+.exp-page-title {
+  margin: 0 0 1.25rem;
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  font-weight: 700;
+  color: var(--exp-ink);
+  line-height: 1.2;
+}
+
+.exp-product-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--exp-border);
+  margin-bottom: 1rem;
+  overflow-x: auto;
+}
+
+.exp-product-tabs button {
+  border: 0;
+  background: transparent;
+  color: var(--exp-muted);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  padding: 0.65rem 1.1rem;
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -1px;
+  white-space: nowrap;
+}
+
+.exp-product-tabs button.on {
+  color: var(--exp-blue);
+  border-bottom-color: var(--exp-blue);
+}
+
+.exp-trip-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.85rem;
+}
+
+.exp-trip-type {
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.exp-trip-type button {
+  border: 1px solid var(--exp-border);
+  background: #fff;
+  color: var(--exp-ink);
+  border-radius: 999px;
+  padding: 0.38rem 0.85rem;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.exp-trip-type button.on {
+  border-color: var(--exp-navy);
+  background: var(--exp-navy);
+  color: #fff;
+}
+
+.exp-cabin-select select {
+  border: 1px solid var(--exp-border);
+  border-radius: 8px;
+  padding: 0.4rem 0.65rem;
+  font: inherit;
+  font-size: 0.82rem;
+  color: var(--exp-ink);
+  background: #fff;
+}
+
+.exp-search-bar {
+  display: flex;
+  align-items: stretch;
+  background: #fff;
+  border: 1px solid var(--exp-border);
+  border-radius: 999px;
+  min-height: 64px;
+  box-shadow: 0 2px 8px rgba(13, 16, 35, 0.08);
+  position: relative;
+}
+
+.exp-segment {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  padding: 0.55rem 1rem;
+  border-inline-start: 1px solid var(--exp-border);
+}
+
+.exp-segment:first-child,
+.exp-segment-wide:first-child {
+  border-inline-start: 0;
+}
+
+.exp-segment-wide {
+  flex: 1.4 1 0;
+}
+
+.exp-segment-from,
+.exp-segment-to {
+  flex: 1.1 1 0;
+}
+
+.exp-swap-btn {
+  flex-shrink: 0;
+  align-self: center;
+  width: 2rem;
+  height: 2rem;
+  margin: 0 -0.35rem;
+  z-index: 2;
+  border: 1px solid var(--exp-border);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--exp-blue);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 2px 6px rgba(13, 16, 35, 0.08);
+}
+
+.exp-field {
+  display: grid;
+  gap: 0.1rem;
+  width: 100%;
+}
+
+.exp-field > span,
+.exp-field-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--exp-muted);
+}
+
+.exp-field input,
+.exp-segment .shop-ac input {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  font: inherit;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--exp-ink);
+  width: 100%;
+  box-shadow: none !important;
+}
+
+.exp-field input:focus,
+.exp-segment .shop-ac input:focus {
+  outline: none;
+  box-shadow: none !important;
+}
+
+.exp-field-hint {
+  font-style: normal;
+  font-size: 0.78rem;
+  color: var(--exp-muted);
+  font-weight: 500;
+}
+
+.exp-segment .shop-ac {
+  width: 100%;
+  gap: 0.1rem;
+}
+
+.exp-segment .shop-ac span {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--exp-muted);
+}
+
+.exp-segment-travelers {
+  flex: 0.9 1 0;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 0.15rem;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  text-align: start;
+}
+
+.exp-segment-travelers strong {
+  font-size: 0.95rem;
+  color: var(--exp-ink);
+}
+
+.exp-search-btn {
+  flex-shrink: 0;
+  width: 56px;
+  height: 56px;
+  margin: 4px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--exp-navy);
+  color: #fff;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  align-self: center;
+}
+
+.exp-search-btn:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.exp-travelers-panel {
+  margin-top: 0.75rem;
+  padding: 1rem;
+  border: 1px solid var(--exp-border);
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 8px 24px rgba(13, 16, 35, 0.1);
+  display: grid;
+  gap: 0.75rem;
+  max-width: 320px;
+}
+
+.exp-travelers-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  font-size: 0.9rem;
+}
+
+.exp-travelers-row select {
+  border: 1px solid var(--exp-border);
+  border-radius: 8px;
+  padding: 0.35rem 0.5rem;
+  font: inherit;
+}
+
+.exp-stepper {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.exp-stepper button {
+  width: 1.75rem;
+  height: 1.75rem;
+  border: 1px solid var(--exp-border);
+  border-radius: 999px;
+  background: #fff;
+  cursor: pointer;
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.exp-search-msg {
+  margin: 0.75rem 0 0;
+}
+
+/* —— Expedia flight results —— */
+.exp-flight-card {
+  display: grid;
+  grid-template-columns: 1.3fr 0.8fr 0.9fr 0.8fr 1fr;
+  gap: 0.75rem;
+  align-items: center;
+  padding: 1rem 1.15rem;
+  background: #fff;
+  border: 1px solid var(--exp-border);
+  border-radius: 12px;
+  transition: box-shadow 0.15s;
+}
+
+.exp-flight-card:hover {
+  box-shadow: 0 8px 24px rgba(13, 16, 35, 0.12);
+}
+
+.exp-flight-airline {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  min-width: 0;
+}
+
+.exp-flight-airline img,
+.exp-flight-logo-fallback {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.exp-flight-logo-fallback {
+  display: grid;
+  place-items: center;
+  background: #f5f6f8;
+  border-radius: 8px;
+  font-size: 1.1rem;
+}
+
+.exp-flight-airline strong {
+  display: block;
+  font-size: 0.9rem;
+  color: var(--exp-ink);
+}
+
+.exp-flight-airline span {
+  display: block;
+  font-size: 0.78rem;
+  color: var(--exp-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.exp-flight-leg strong {
+  display: block;
+  font-size: 1.05rem;
+  color: var(--exp-ink);
+}
+
+.exp-flight-leg span {
+  font-size: 0.82rem;
+  color: var(--exp-muted);
+}
+
+.exp-flight-mid {
+  text-align: center;
+  font-size: 0.82rem;
+  color: var(--exp-muted);
+}
+
+.exp-flight-mid span {
+  display: block;
+  font-weight: 600;
+  color: var(--exp-ink);
+}
+
+.exp-flight-mid em {
+  display: block;
+  font-style: normal;
+  font-size: 0.78rem;
+}
+
+.exp-flight-price {
+  text-align: end;
+  display: grid;
+  gap: 0.2rem;
+  justify-items: end;
+}
+
+.exp-flight-price strong {
+  font-size: 1.15rem;
+  color: var(--exp-ink);
+}
+
+.exp-flight-price small {
+  font-size: 0.75rem;
+  color: var(--exp-muted);
+}
+
+.exp-select-btn {
+  margin-top: 0.35rem;
+  border: 0;
+  border-radius: 999px;
+  padding: 0.5rem 1.25rem;
+  font: inherit;
+  font-weight: 700;
+  font-size: 0.88rem;
+  background: var(--exp-navy);
+  color: #fff;
+  cursor: pointer;
+}
+
+.exp-select-btn:hover {
+  background: #001a42;
+}
+
+@media (max-width: 900px) {
+  .exp-search-bar {
+    flex-direction: column;
+    border-radius: 16px;
+    min-height: unset;
+    padding-bottom: 0.35rem;
+  }
+
+  .exp-segment,
+  .exp-segment-travelers {
+    border-inline-start: 0;
+    border-top: 1px solid var(--exp-border);
+    width: 100%;
+  }
+
+  .exp-segment:first-child {
+    border-top: 0;
+  }
+
+  .exp-swap-btn {
+    position: absolute;
+    top: 4.5rem;
+    inset-inline-end: 1rem;
+    margin: 0;
+  }
+
+  .exp-search-btn {
+    width: calc(100% - 0.7rem);
+    height: 48px;
+    border-radius: 999px;
+    margin: 0.35rem;
+  }
+
+  .exp-flight-card {
+    grid-template-columns: 1fr 1fr;
+    gap: 0.65rem;
+  }
+
+  .exp-flight-airline {
+    grid-column: 1 / -1;
+  }
+
+  .exp-flight-price {
+    grid-column: 1 / -1;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    display: flex;
+  }
+}
+
+@media (max-width: 720px) {
+  .exp-nav.open {
+    background: var(--exp-navy);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  }
+}
+
+/* —— Light sea palette (legacy) —— */
 .shop-root {
   --sea-50: #f0fafb;
   --sea-100: #e2f3f6;
@@ -1500,4 +2061,79 @@
   .shop-footer-grid {
     grid-template-columns: 1fr;
   }
+}
+
+/* —— Expedia theme overrides —— */
+.exp-theme .shop-kicker {
+  color: var(--exp-blue);
+}
+
+.exp-theme .shop-landing {
+  width: min(1280px, calc(100% - 2rem));
+}
+
+.exp-theme .shop-results-block {
+  width: min(1280px, calc(100% - 2rem));
+}
+
+.exp-theme .shop-dest-card,
+.exp-theme .shop-offer-card,
+.exp-theme .shop-feature-card,
+.exp-theme .shop-review-card,
+.exp-theme .shop-stat {
+  border-radius: 12px;
+  border-color: var(--exp-border);
+  box-shadow: none;
+}
+
+.exp-theme .shop-dest-card:hover,
+.exp-theme .shop-offer-card:hover {
+  box-shadow: 0 8px 24px rgba(13, 16, 35, 0.12);
+}
+
+.exp-theme .shop-btn,
+.exp-theme .shop-cta {
+  background: var(--exp-navy);
+  box-shadow: none;
+  border-radius: 999px;
+}
+
+.exp-theme .shop-btn-ghost {
+  border-color: var(--exp-border);
+  color: var(--exp-navy);
+  border-radius: 999px;
+}
+
+.exp-theme .shop-section-soft {
+  background: #fff;
+  border-color: var(--exp-border);
+  border-radius: 12px;
+  box-shadow: none;
+}
+
+.exp-theme .shop-cta-banner {
+  background: var(--exp-navy);
+  border-radius: 12px;
+  box-shadow: none;
+}
+
+.exp-theme .shop-stats-bar {
+  margin-top: 1.25rem;
+}
+
+.exp-theme .exp-footer {
+  background: var(--exp-navy);
+}
+
+.exp-theme .shop-assist-toggle {
+  background: var(--exp-navy);
+  box-shadow: 0 8px 20px rgba(0, 37, 93, 0.25);
+}
+
+.exp-theme .shop-assist-panel header {
+  background: var(--exp-navy);
+}
+
+.exp-theme .exp-segment .prc-suggest {
+  z-index: 80;
 }

@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { HERO_SLIDES } from "@/lib/shop-content";
+import { useState } from "react";
 import { ShopAutocomplete, type SuggestItem } from "@/components/shop/ShopAutocomplete";
 
 type Mode = "flights" | "stays" | "cars" | "activities";
@@ -48,116 +47,84 @@ type Props = {
   searchCities: (q: string) => Promise<SuggestItem[]>;
 };
 
-function IconPin() {
+const PRODUCTS: Array<[Mode, string]> = [
+  ["stays", "الفنادق"],
+  ["flights", "الطيران"],
+  ["cars", "النقل"],
+  ["activities", "الأنشطة"],
+];
+
+const CABIN_LABELS: Record<string, string> = {
+  economy: "اقتصادية",
+  premium_economy: "اقتصادية مميزة",
+  business: "رجال أعمال",
+  first: "أولى",
+};
+
+function IconSearch() {
   return (
     <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden>
       <path
         fill="currentColor"
-        d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5z"
+        d="M15.5 14h-.79l-.28-.27A6.47 6.47 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16a6.47 6.47 0 0 0 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"
       />
     </svg>
   );
 }
 
-function IconCalendar() {
+function IconSwap() {
   return (
-    <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden>
+    <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden>
       <path
         fill="currentColor"
-        d="M19 4h-1V2h-2v2H8V2H6v2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2zm0 16H5V10h14v10z"
+        d="M16 17.01V10h-2v7.01h-3L15 21l4-3.99h-3zM9 3 5 6.99h3V14h2V6.99h3L9 3z"
       />
     </svg>
   );
 }
 
-function IconUsers() {
-  return (
-    <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden>
-      <path
-        fill="currentColor"
-        d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5C15 14.17 10.33 13 8 13zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"
-      />
-    </svg>
-  );
+function formatDateShort(iso: string) {
+  if (!iso) return "";
+  const d = new Date(iso + "T12:00:00");
+  return d.toLocaleDateString("ar-KW", { weekday: "short", day: "numeric", month: "short" });
 }
 
 export function ShopHeroBanner(props: Props) {
-  const [slide, setSlide] = useState(0);
   const [expanded, setExpanded] = useState(false);
-  const current = HERO_SLIDES[slide]!;
 
-  useEffect(() => {
-    const timer = window.setInterval(() => {
-      setSlide((s) => (s + 1) % HERO_SLIDES.length);
-    }, 7000);
-    return () => window.clearInterval(timer);
-  }, []);
-
-  const whereLabel =
+  const pageTitle =
     props.mode === "flights"
-      ? "الوجهة"
+      ? "قارن واحجز رحلات الطيران"
       : props.mode === "stays"
-        ? "الإقامة"
+        ? "ابحث عن أفضل الفنادق"
         : props.mode === "cars"
-          ? "المدينة / الفندق"
-          : "النشاط";
+          ? "احجز النقل من المطار"
+          : "اكتشف الأنشطة والمعالم";
+
+  const travelerSummary = `${props.adults + props.children} مسافر${
+    props.mode === "flights" ? ` · ${CABIN_LABELS[props.cabinClass] || "اقتصادية"}` : ""
+  }`;
+
+  function swapAirports() {
+    const o = props.origin;
+    const ol = props.originLabel;
+    props.onOriginPick({ id: "swap", code: props.destination, title: props.destinationLabel });
+    props.onDestinationPick({ id: "swap", code: o, title: ol });
+  }
 
   return (
-    <div className="shop-hero-cinematic">
-      <div
-        className="shop-hero-slide"
-        style={{ backgroundImage: `url(${current.image})` }}
-      />
-      <div className="shop-hero-shade" />
+    <section className="exp-search-hero" id="search">
+      <div className="exp-search-wrap">
+        <h1 className="exp-page-title">{pageTitle}</h1>
 
-      <div className="shop-hero-inner">
-        <div className="shop-hero-copy cinematic">
-          <p className="shop-hero-kicker">{current.kicker}</p>
-          <h1>{current.title}</h1>
-          <p className="shop-hero-sub">{current.subtitle}</p>
-          <p className="shop-hero-desc">{current.description}</p>
-        </div>
-
-      </div>
-
-      <div className="shop-hero-dots-wrap" role="tablist" aria-label="شرائح الهيرو">
-        {HERO_SLIDES.map((_, i) => (
-          <button
-            key={i}
-            type="button"
-            className={i === slide ? "on" : undefined}
-            aria-selected={i === slide}
-            onClick={() => setSlide(i)}
-          />
-        ))}
-      </div>
-
-      <svg
-        className="shop-hero-wave"
-        viewBox="0 0 1440 120"
-        preserveAspectRatio="none"
-        aria-hidden
-      >
-        <path
-          fill="#ffffff"
-          d="M0,72 C360,108 720,36 1080,72 C1260,88 1380,56 1440,64 L1440,120 L0,120 Z"
-        />
-      </svg>
-
-      <div className="shop-hero-float-wrap" id="search">
-        <div className="shop-mode-row">
-          {(
-            [
-              ["flights", "الطيران"],
-              ["stays", "الفنادق"],
-              ["cars", "نقل"],
-              ["activities", "أنشطة"],
-            ] as Array<[Mode, string]>
-          ).map(([key, label]) => (
+        <div className="exp-product-tabs" role="tablist" aria-label="نوع الحجز">
+          {PRODUCTS.map(([key, label]) => (
             <button
               key={key}
               type="button"
+              role="tab"
               className={props.mode === key ? "on" : undefined}
+              aria-selected={props.mode === key}
               onClick={() => props.onModeChange(key)}
             >
               {label}
@@ -165,240 +132,245 @@ export function ShopHeroBanner(props: Props) {
           ))}
         </div>
 
-        <div className="shop-search-pill">
-          <div className="shop-pill-field shop-pill-where">
-            <span className="shop-pill-icon">
-              <IconPin />
-            </span>
-            <div className="shop-pill-input">
-              {props.mode === "flights" ? (
-                <ShopAutocomplete
-                  label={whereLabel}
-                  value={props.destination}
-                  display={props.destinationLabel}
-                  placeholder="إلى أين؟"
-                  onQuery={props.searchAirports}
-                  onClearText={props.onDestinationClear}
-                  onPick={props.onDestinationPick}
-                />
-              ) : props.mode === "activities" ? (
-                <ShopAutocomplete
-                  label={whereLabel}
-                  value={props.activityDest}
-                  display={props.activityLabel}
-                  placeholder="مدينة النشاط"
-                  onQuery={props.searchCities}
-                  onClearText={props.onActivityClear}
-                  onPick={props.onActivityPick}
-                />
-              ) : (
-                <ShopAutocomplete
-                  label={whereLabel}
-                  value={props.stayQuery}
-                  display={props.stayQuery}
-                  placeholder="مدينة أو فندق"
-                  onQuery={props.searchCities}
-                  onClearText={props.onStayQueryChange}
-                  onPick={props.onStayPick}
-                />
-              )}
+        {props.mode === "flights" ? (
+          <div className="exp-trip-row">
+            <div className="exp-trip-type" role="group" aria-label="نوع الرحلة">
+              <button
+                type="button"
+                className={props.tripType === "roundtrip" ? "on" : undefined}
+                onClick={() => props.onTripTypeChange("roundtrip")}
+              >
+                ذهاب وعودة
+              </button>
+              <button
+                type="button"
+                className={props.tripType === "oneway" ? "on" : undefined}
+                onClick={() => props.onTripTypeChange("oneway")}
+              >
+                ذهاب فقط
+              </button>
             </div>
-          </div>
-
-          <div className="shop-pill-divider" />
-
-          <div className="shop-pill-field shop-pill-when">
-            <span className="shop-pill-icon">
-              <IconCalendar />
-            </span>
-            <label className="shop-pill-input">
-              <span>متى</span>
-              <input
-                type="date"
-                value={props.departDate}
-                onChange={(e) => props.onDepartDateChange(e.target.value)}
-              />
+            <label className="exp-cabin-select">
+              <span className="sr-only">درجة السفر</span>
+              <select
+                value={props.cabinClass}
+                onChange={(e) => props.onCabinClassChange(e.target.value)}
+              >
+                <option value="economy">اقتصادية</option>
+                <option value="premium_economy">اقتصادية مميزة</option>
+                <option value="business">رجال أعمال</option>
+                <option value="first">أولى</option>
+              </select>
             </label>
           </div>
+        ) : null}
 
-          <div className="shop-pill-divider" />
-
-          <div className="shop-pill-field shop-pill-guests">
-            <span className="shop-pill-icon">
-              <IconUsers />
-            </span>
-            <div className="shop-pill-input">
-              <span>المسافرون</span>
-              <div className="shop-pill-counter">
-                <button
-                  type="button"
-                  aria-label="تقليل"
-                  onClick={() => props.onAdultsChange(Math.max(1, props.adults - 1))}
-                >
-                  −
-                </button>
-                <strong>{props.adults + props.children}</strong>
-                <button
-                  type="button"
-                  aria-label="زيادة"
-                  onClick={() => props.onAdultsChange(props.adults + 1)}
-                >
-                  +
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <button
-            type="button"
-            className="shop-pill-submit"
-            disabled={props.loading}
-            onClick={props.onSearch}
-          >
-            {props.loading ? "..." : "ابحث"}
-          </button>
-        </div>
-
-        <button
-          type="button"
-          className="shop-expand-toggle"
-          onClick={() => setExpanded((v) => !v)}
-        >
-          {expanded ? "إخفاء الخيارات" : "خيارات متقدمة"}
-        </button>
-
-        {expanded ? (
-          <div className="shop-search-expanded">
-            {props.mode === "flights" ? (
-              <>
-                <div className="shop-chips">
-                  <button
-                    type="button"
-                    className={props.tripType === "roundtrip" ? "on" : undefined}
-                    onClick={() => props.onTripTypeChange("roundtrip")}
-                  >
-                    ذهاب وعودة
-                  </button>
-                  <button
-                    type="button"
-                    className={props.tripType === "oneway" ? "on" : undefined}
-                    onClick={() => props.onTripTypeChange("oneway")}
-                  >
-                    ذهاب فقط
-                  </button>
-                  <label className="opt-chip opt-select">
-                    <span>الدرجة</span>
-                    <select
-                      value={props.cabinClass}
-                      onChange={(e) => props.onCabinClassChange(e.target.value)}
-                    >
-                      <option value="economy">اقتصادية</option>
-                      <option value="premium_economy">اقتصادية مميزة</option>
-                      <option value="business">رجال أعمال</option>
-                      <option value="first">أولى</option>
-                    </select>
-                  </label>
-                </div>
-                <div className="shop-expanded-grid">
-                  <ShopAutocomplete
-                    label="من"
-                    value={props.origin}
-                    display={props.originLabel}
-                    placeholder="مطار المغادرة"
-                    onQuery={props.searchAirports}
-                    onClearText={props.onOriginClear}
-                    onPick={props.onOriginPick}
-                  />
-                  {props.tripType === "roundtrip" ? (
-                    <label className="fs-cell">
-                      <span>تاريخ العودة</span>
-                      <input
-                        type="date"
-                        value={props.returnDate}
-                        onChange={(e) => props.onReturnDateChange(e.target.value)}
-                      />
-                    </label>
-                  ) : null}
-                </div>
-              </>
-            ) : null}
-
-            {props.mode === "stays" || props.mode === "activities" ? (
-              <label className="fs-cell">
-                <span>تاريخ العودة / النهاية</span>
-                <input
-                  type="date"
-                  value={props.returnDate}
-                  onChange={(e) => props.onReturnDateChange(e.target.value)}
-                />
-              </label>
-            ) : null}
-
-            {props.mode === "cars" ? (
-              <>
-                <div className="shop-chips">
-                  <button
-                    type="button"
-                    className={!props.transferRoundtrip ? "on" : undefined}
-                    onClick={() => props.onTransferRoundtripChange(false)}
-                  >
-                    وصول فقط
-                  </button>
-                  <button
-                    type="button"
-                    className={props.transferRoundtrip ? "on" : undefined}
-                    onClick={() => props.onTransferRoundtripChange(true)}
-                  >
-                    وصول وعودة
-                  </button>
-                </div>
-                <div className="shop-expanded-grid">
-                  <ShopAutocomplete
-                    label="المطار"
-                    value={props.origin}
-                    display={props.originLabel}
-                    placeholder="KWI"
-                    onQuery={props.searchAirports}
-                    onClearText={props.onOriginClear}
-                    onPick={props.onOriginPick}
-                  />
-                  <label className="fs-cell">
-                    <span>وقت الاستلام</span>
-                    <input
-                      type="time"
-                      value={props.pickupTime}
-                      onChange={(e) => props.onPickupTimeChange(e.target.value)}
-                    />
-                  </label>
-                  {props.transferRoundtrip ? (
-                    <label className="fs-cell">
-                      <span>تاريخ العودة</span>
-                      <input
-                        type="date"
-                        value={props.returnDate}
-                        onChange={(e) => props.onReturnDateChange(e.target.value)}
-                      />
-                    </label>
-                  ) : null}
-                </div>
-              </>
-            ) : null}
-
-            <div className="shop-chips">
-              <button type="button" onClick={() => props.onChildrenChange(Math.max(0, props.children - 1))}>
-                طفل −
+        {props.mode === "cars" ? (
+          <div className="exp-trip-row">
+            <div className="exp-trip-type" role="group" aria-label="نوع النقل">
+              <button
+                type="button"
+                className={!props.transferRoundtrip ? "on" : undefined}
+                onClick={() => props.onTransferRoundtripChange(false)}
+              >
+                وصول فقط
               </button>
-              <span>{props.children} طفل</span>
-              <button type="button" onClick={() => props.onChildrenChange(props.children + 1)}>
-                طفل +
+              <button
+                type="button"
+                className={props.transferRoundtrip ? "on" : undefined}
+                onClick={() => props.onTransferRoundtripChange(true)}
+              >
+                وصول وعودة
               </button>
             </div>
           </div>
         ) : null}
 
-        {props.error ? <p className="shop-error">{props.error}</p> : null}
-        {props.message ? <p className="shop-status">{props.message}</p> : null}
+        <div className="exp-search-bar">
+          {props.mode === "flights" ? (
+            <>
+              <div className="exp-segment exp-segment-from">
+                <ShopAutocomplete
+                  label="من"
+                  value={props.origin}
+                  display={props.originLabel}
+                  placeholder="مطار المغادرة"
+                  onQuery={props.searchAirports}
+                  onClearText={props.onOriginClear}
+                  onPick={props.onOriginPick}
+                />
+              </div>
+              <button
+                type="button"
+                className="exp-swap-btn"
+                aria-label="تبديل المطارات"
+                onClick={swapAirports}
+              >
+                <IconSwap />
+              </button>
+              <div className="exp-segment exp-segment-to">
+                <ShopAutocomplete
+                  label="إلى"
+                  value={props.destination}
+                  display={props.destinationLabel}
+                  placeholder="مطار الوصول"
+                  onQuery={props.searchAirports}
+                  onClearText={props.onDestinationClear}
+                  onPick={props.onDestinationPick}
+                />
+              </div>
+            </>
+          ) : props.mode === "stays" || props.mode === "cars" ? (
+            <div className="exp-segment exp-segment-wide">
+              <ShopAutocomplete
+                label={props.mode === "cars" ? "إلى" : "الوجهة"}
+                value={props.stayQuery}
+                display={props.stayQuery}
+                placeholder="مدينة أو فندق"
+                onQuery={props.searchCities}
+                onClearText={props.onStayQueryChange}
+                onPick={props.onStayPick}
+              />
+            </div>
+          ) : (
+            <div className="exp-segment exp-segment-wide">
+              <ShopAutocomplete
+                label="الوجهة"
+                value={props.activityDest}
+                display={props.activityLabel}
+                placeholder="مدينة النشاط"
+                onQuery={props.searchCities}
+                onClearText={props.onActivityClear}
+                onPick={props.onActivityPick}
+              />
+            </div>
+          )}
+
+          {props.mode === "cars" ? (
+            <div className="exp-segment">
+              <ShopAutocomplete
+                label="المطار"
+                value={props.origin}
+                display={props.originLabel}
+                placeholder="KWI"
+                onQuery={props.searchAirports}
+                onClearText={props.onOriginClear}
+                onPick={props.onOriginPick}
+              />
+            </div>
+          ) : null}
+
+          <div className="exp-segment exp-segment-dates">
+            <label className="exp-field">
+              <span>{props.mode === "stays" ? "الوصول" : "المغادرة"}</span>
+              <input
+                type="date"
+                value={props.departDate}
+                onChange={(e) => props.onDepartDateChange(e.target.value)}
+              />
+              <em className="exp-field-hint">{formatDateShort(props.departDate)}</em>
+            </label>
+          </div>
+
+          {(props.mode === "flights" && props.tripType === "roundtrip") ||
+          props.mode === "stays" ||
+          props.mode === "activities" ||
+          (props.mode === "cars" && props.transferRoundtrip) ? (
+            <div className="exp-segment exp-segment-dates">
+              <label className="exp-field">
+                <span>{props.mode === "stays" ? "المغادرة" : "العودة"}</span>
+                <input
+                  type="date"
+                  value={props.returnDate}
+                  onChange={(e) => props.onReturnDateChange(e.target.value)}
+                />
+                <em className="exp-field-hint">{formatDateShort(props.returnDate)}</em>
+              </label>
+            </div>
+          ) : null}
+
+          {props.mode === "cars" ? (
+            <div className="exp-segment">
+              <label className="exp-field">
+                <span>وقت الاستلام</span>
+                <input
+                  type="time"
+                  value={props.pickupTime}
+                  onChange={(e) => props.onPickupTimeChange(e.target.value)}
+                />
+              </label>
+            </div>
+          ) : null}
+
+          <button
+            type="button"
+            className="exp-segment exp-segment-travelers"
+            onClick={() => setExpanded((v) => !v)}
+          >
+            <span className="exp-field-label">المسافرون</span>
+            <strong>{travelerSummary}</strong>
+          </button>
+
+          <button
+            type="button"
+            className="exp-search-btn"
+            disabled={props.loading}
+            aria-label="بحث"
+            onClick={props.onSearch}
+          >
+            {props.loading ? "…" : <IconSearch />}
+          </button>
+        </div>
+
+        {expanded ? (
+          <div className="exp-travelers-panel">
+            <div className="exp-travelers-row">
+              <span>بالغون</span>
+              <div className="exp-stepper">
+                <button type="button" onClick={() => props.onAdultsChange(Math.max(1, props.adults - 1))}>
+                  −
+                </button>
+                <strong>{props.adults}</strong>
+                <button type="button" onClick={() => props.onAdultsChange(props.adults + 1)}>
+                  +
+                </button>
+              </div>
+            </div>
+            <div className="exp-travelers-row">
+              <span>أطفال</span>
+              <div className="exp-stepper">
+                <button
+                  type="button"
+                  onClick={() => props.onChildrenChange(Math.max(0, props.children - 1))}
+                >
+                  −
+                </button>
+                <strong>{props.children}</strong>
+                <button type="button" onClick={() => props.onChildrenChange(props.children + 1)}>
+                  +
+                </button>
+              </div>
+            </div>
+            {props.mode === "flights" ? (
+              <label className="exp-travelers-row">
+                <span>درجة السفر</span>
+                <select
+                  value={props.cabinClass}
+                  onChange={(e) => props.onCabinClassChange(e.target.value)}
+                >
+                  <option value="economy">اقتصادية</option>
+                  <option value="premium_economy">اقتصادية مميزة</option>
+                  <option value="business">رجال أعمال</option>
+                  <option value="first">أولى</option>
+                </select>
+              </label>
+            ) : null}
+          </div>
+        ) : null}
+
+        {props.error ? <p className="shop-error exp-search-msg">{props.error}</p> : null}
+        {props.message ? <p className="shop-status exp-search-msg">{props.message}</p> : null}
       </div>
-    </div>
+    </section>
   );
 }

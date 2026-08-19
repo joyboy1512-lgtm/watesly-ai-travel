@@ -34,63 +34,54 @@ export function StoreFront({
     window.location.href = "/";
   }
 
-  const heroOverlay = pathname === "/";
-
   return (
-    <div className={`shop-root${heroOverlay ? " shop-home" : ""}`}>
-      <header className={`shop-header${heroOverlay ? " shop-header-hero" : ""}`}>
-        <div className="shop-header-inner">
-          <Link href="/" className="shop-brand">
-            <span className="shop-mark" aria-hidden>
-              <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
-                <path d="M12 2C8 6 4 8 4 13a8 8 0 1 0 16 0c0-5-4-7-8-11zm0 18a6 6 0 0 1-6-6c0-3.5 2.8-5.2 6-8.6 3.2 3.4 6 5.1 6 8.6a6 6 0 0 1-6 6z" />
-              </svg>
-            </span>
-            <span>
-              <strong>{BRAND}</strong>
-              <small>سفر بلمسة بحرية</small>
-            </span>
+    <div className="shop-root exp-theme">
+      <div className="exp-loyalty-stripe" aria-hidden>
+        <span>عروض حصرية · أسعار حية · دعم 24/7</span>
+      </div>
+
+      <header className="shop-header exp-header">
+        <div className="shop-header-inner exp-header-inner">
+          <Link href="/" className="shop-brand exp-brand">
+            <span className="exp-wordmark">{BRAND}</span>
           </Link>
 
           <button
             type="button"
-            className="shop-menu-toggle"
+            className="shop-menu-toggle exp-menu-toggle"
             aria-expanded={menuOpen}
             onClick={() => setMenuOpen((v) => !v)}
           >
             القائمة
           </button>
 
-          <nav className={`shop-nav${menuOpen ? " open" : ""}`}>
-            <Link href="/#search">احجز الآن</Link>
-            <Link href="/#destinations">الوجهات</Link>
-            <Link href="/#offers">العروض</Link>
-            <Link href="/#reviews">التقييمات</Link>
+          <nav className={`shop-nav exp-nav${menuOpen ? " open" : ""}`}>
             <Link href="/account">رحلاتي</Link>
             <Link href="/chat">المساعد</Link>
+            <Link href="/#destinations">الوجهات</Link>
             {customer ? (
               <>
-                <Link href="/account" className="shop-user">
+                <Link href="/account" className="exp-user">
                   {customer.name || customer.phone}
                 </Link>
-                <button type="button" className="shop-linkbtn" onClick={logout}>
+                <button type="button" className="shop-linkbtn exp-linkbtn" onClick={logout}>
                   خروج
                 </button>
               </>
             ) : (
-              <Link href="/account/login" className="shop-cta">
-                دخول
+              <Link href="/account/login" className="exp-signin">
+                تسجيل الدخول
               </Link>
             )}
           </nav>
         </div>
       </header>
 
-      <main className={wide ? "shop-main shop-main-wide" : "shop-main"}>
+      <main className={wide ? "shop-main shop-main-wide exp-main" : "shop-main exp-main"}>
         {children}
       </main>
 
-      <footer className="shop-footer">
+      <footer className="shop-footer exp-footer">
         <div className="shop-footer-grid">
           <div>
             <strong className="shop-footer-brand">{BRAND}</strong>

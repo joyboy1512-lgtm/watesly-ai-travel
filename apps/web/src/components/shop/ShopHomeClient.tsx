@@ -493,24 +493,42 @@ export function ShopHomeClient() {
         {flights.map((flight) => {
           const code = String(flight.details.airlineCode || "");
           const logo = airlineLogo(code);
+          const fromCode = String(flight.details.from || origin);
+          const toCode = String(flight.details.to || destination);
+          const departTime = String(flight.details.departureTime || flight.details.departTime || "—");
+          const arriveTime = String(flight.details.arrivalTime || flight.details.arriveTime || "—");
+          const duration = String(flight.details.duration || "");
+          const stops = String(flight.details.stops ?? flight.details.stopCount ?? "مباشر");
           return (
-            <article key={flight.id} className="shop-flight">
-              {logo ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={logo} alt="" />
-              ) : (
-                <div className="shop-mark">✈</div>
-              )}
-              <div>
-                <h3>{flight.description}</h3>
-                <p>
-                  {String(flight.details.from || origin)} → {String(flight.details.to || destination)} ·{" "}
-                  {String(flight.details.duration || "")}
-                </p>
+            <article key={flight.id} className="exp-flight-card">
+              <div className="exp-flight-airline">
+                {logo ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={logo} alt="" />
+                ) : (
+                  <div className="exp-flight-logo-fallback">✈</div>
+                )}
+                <div>
+                  <strong>{code || "—"}</strong>
+                  <span>{flight.description}</span>
+                </div>
               </div>
-              <div className="shop-price">
+              <div className="exp-flight-leg">
+                <strong>{departTime}</strong>
+                <span>{fromCode}</span>
+              </div>
+              <div className="exp-flight-mid">
+                <span>{duration}</span>
+                <em>{stops}</em>
+              </div>
+              <div className="exp-flight-leg">
+                <strong>{arriveTime}</strong>
+                <span>{toCode}</span>
+              </div>
+              <div className="exp-flight-price">
                 <strong>{formatMoneyMinor(flight.sellAmountMinor, flight.currency)}</strong>
-                <button type="button" className="shop-btn" onClick={() => bookFlight(flight)}>
+                <small>للمسافر</small>
+                <button type="button" className="exp-select-btn" onClick={() => bookFlight(flight)}>
                   اختر
                 </button>
               </div>

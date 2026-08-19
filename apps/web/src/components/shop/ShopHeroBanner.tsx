@@ -118,28 +118,29 @@ export function ShopHeroBanner(props: Props) {
           <p className="shop-hero-desc">{current.description}</p>
         </div>
 
-        <div className="shop-hero-dots" role="tablist" aria-label="شرائح الهيرو">
-          {HERO_SLIDES.map((_, i) => (
-            <button
-              key={i}
-              type="button"
-              className={i === slide ? "on" : undefined}
-              aria-selected={i === slide}
-              onClick={() => setSlide(i)}
-            />
-          ))}
-        </div>
+      </div>
+
+      <div className="shop-hero-dots-wrap" role="tablist" aria-label="شرائح الهيرو">
+        {HERO_SLIDES.map((_, i) => (
+          <button
+            key={i}
+            type="button"
+            className={i === slide ? "on" : undefined}
+            aria-selected={i === slide}
+            onClick={() => setSlide(i)}
+          />
+        ))}
       </div>
 
       <svg
         className="shop-hero-wave"
-        viewBox="0 0 1440 100"
+        viewBox="0 0 1440 120"
         preserveAspectRatio="none"
         aria-hidden
       >
         <path
           fill="#ffffff"
-          d="M0,55 C240,95 480,15 720,55 C960,95 1200,20 1440,60 L1440,100 L0,100 Z"
+          d="M0,72 C360,108 720,36 1080,72 C1260,88 1380,56 1440,64 L1440,120 L0,120 Z"
         />
       </svg>
 

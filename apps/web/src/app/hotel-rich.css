@@ -1694,6 +1694,10 @@
   min-width: 860px;
 }
 
+.flight-search .fs-grid.stays.activities {
+  min-width: 820px;
+}
+
 .flight-search .flight-explore {
   min-width: 148px;
   align-self: stretch;

@@ -97,10 +97,32 @@ export type TransferBookingDraft = {
   quoteItemId?: string;
 };
 
+export type BookingDraftActivity = {
+  id: string;
+  description: string;
+  sellAmountMinor: number;
+  currency: string;
+  details: Record<string, unknown>;
+};
+
+export type ActivityBookingDraft = {
+  serviceType: "activity";
+  activity: BookingDraftActivity;
+  destination: string;
+  destinationLabel: string;
+  fromDate: string;
+  toDate: string;
+  adults: number;
+  children: number;
+  createdAt: string;
+  inquiryId?: string;
+};
+
 export type BookingDraft =
   | FlightBookingDraft
   | HotelBookingDraft
-  | TransferBookingDraft;
+  | TransferBookingDraft
+  | ActivityBookingDraft;
 
 /** @deprecated kept only for backward-compatible imports; use FlightBookingDraft */
 export type LegacyFlightBookingDraft = Omit<FlightBookingDraft, "serviceType">;
@@ -131,6 +153,12 @@ export function saveTransferDraft(
   write({ ...draft, serviceType: "transfer" });
 }
 
+export function saveActivityDraft(
+  draft: Omit<ActivityBookingDraft, "serviceType">,
+) {
+  write({ ...draft, serviceType: "activity" });
+}
+
 export function getBookingDraft(): BookingDraft | null {
   if (typeof window === "undefined") return null;
   const raw = sessionStorage.getItem(KEY);
@@ -146,6 +174,9 @@ export function getBookingDraft(): BookingDraft | null {
     }
     if (parsed.serviceType === "transfer" && "transfer" in parsed) {
       return parsed as TransferBookingDraft;
+    }
+    if (parsed.serviceType === "activity" && "activity" in parsed) {
+      return parsed as ActivityBookingDraft;
     }
     // Legacy drafts saved before `serviceType` existed were always flights.
     if (parsed.serviceType === "flight" || "flight" in parsed) {

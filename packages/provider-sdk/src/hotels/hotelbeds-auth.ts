@@ -24,6 +24,25 @@ export function resolveHotelbedsCredentials(
   return { apiKey, apiSecret, baseUrl };
 }
 
+export function resolveHotelbedsActivityCredentials(
+  creds?: Partial<HotelbedsCredentials>,
+): HotelbedsCredentials {
+  const apiKey =
+    creds?.apiKey?.trim() ||
+    process.env.HOTELBEDS_ACTIVITY_API_KEY?.trim() ||
+    "";
+  const apiSecret =
+    creds?.apiSecret?.trim() ||
+    process.env.HOTELBEDS_ACTIVITY_API_SECRET?.trim() ||
+    "";
+  const baseUrl = (
+    creds?.baseUrl?.trim() ||
+    process.env.HOTELBEDS_ACTIVITY_BASE_URL?.trim() ||
+    "https://api.test.hotelbeds.com"
+  ).replace(/\/$/, "");
+  return { apiKey, apiSecret, baseUrl };
+}
+
 export function resolveHotelbedsTransferCredentials(
   creds?: Partial<HotelbedsCredentials>,
 ): HotelbedsCredentials {

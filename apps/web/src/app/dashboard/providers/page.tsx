@@ -40,6 +40,7 @@ const CAPABILITY_LABEL: Record<string, string> = {
   flight: "طيران",
   hotel: "فنادق",
   transfer: "مواصلات",
+  activity: "أنشطة",
 };
 
 const STATUS_LABEL: Record<string, string> = {

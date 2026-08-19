@@ -1,5 +1,5 @@
 /** Known travel provider adapters available in the platform. */
-export type ProviderCapability = "flight" | "hotel" | "transfer";
+export type ProviderCapability = "flight" | "hotel" | "transfer" | "activity";
 
 export type ProviderCredentialField = {
   key: string;
@@ -198,6 +198,42 @@ export const PROVIDER_CATALOG: ProviderCatalogEntry[] = [
     notes:
       "فعّل TRANSFER_PROVIDER=hotelbeds-transfers مع HOTELBEDS_TRANSFER_API_KEY / SECRET. لا يستخدم مفاتيح الفنادق.",
   },
+  {
+    providerKey: "hotelbeds-activities",
+    displayName: "Hotelbeds Activities",
+    displayNameAr: "Hotelbeds أنشطة",
+    description:
+      "API أنشطة ومعالم Hotelbeds Activities فقط. يعمل بمفاتيح مستقلة عن الفنادق والمواصلات.",
+    capabilities: ["activity"],
+    status: "ready",
+    envKeys: [
+      "HOTELBEDS_ACTIVITY_API_KEY",
+      "HOTELBEDS_ACTIVITY_API_SECRET",
+      "HOTELBEDS_ACTIVITY_BASE_URL",
+    ],
+    credentialFields: [
+      {
+        key: "apiKey",
+        label: "Activities API Key",
+        secret: true,
+        required: true,
+        placeholder: "مفتاح Activity API منفصل عن الفنادق والنقل",
+      },
+      {
+        key: "apiSecret",
+        label: "Activities API Secret",
+        secret: true,
+        required: true,
+      },
+      {
+        key: "baseUrl",
+        label: "Activities Base URL",
+        placeholder: "https://api.test.hotelbeds.com",
+      },
+    ],
+    notes:
+      "فعّل ACTIVITY_PROVIDER=hotelbeds-activities مع HOTELBEDS_ACTIVITY_API_KEY / SECRET.",
+  },
 ];
 
 export function getCatalogEntry(providerKey: string) {
@@ -209,6 +245,10 @@ export function getCatalogEntry(providerKey: string) {
           key === "hotelbeds-transfer" ||
           key === "hotelbeds_transfer"
         ? "hotelbeds-transfers"
-        : key;
+        : key === "hotelbeds_activities" ||
+            key === "hotelbeds-activity" ||
+            key === "hotelbeds_activity"
+          ? "hotelbeds-activities"
+          : key;
   return PROVIDER_CATALOG.find((p) => p.providerKey === alias) || null;
 }

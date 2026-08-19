@@ -9,7 +9,7 @@ import { Prisma } from "@watesly-travel/database";
 import { PrismaService } from "../prisma/prisma.service";
 import { AuditService } from "../common/audit.service";
 import { formatMoneyMinor } from "../common/money";
-import { getHotelProviderForOrg, getTransferProviderForOrg } from "../common/provider-runtime";
+import { getActivityProviderForOrg, getHotelProviderForOrg, getTransferProviderForOrg } from "../common/provider-runtime";
 import { BotPipelineService } from "../pipeline/bot-pipeline.service";
 
 export type BookingDraftOfferInput = {
@@ -45,7 +45,7 @@ export type CreateFromDraftInput = {
   organizationId: string;
   actorUserId?: string;
   canManagePayments: boolean;
-  serviceType: "flight" | "hotel" | "transfer";
+  serviceType: "flight" | "hotel" | "transfer" | "activity";
   inquiryId?: string;
   quoteItemId?: string;
   offer: BookingDraftOfferInput;
@@ -567,7 +567,8 @@ export class BookingsService {
     const profitAmount = sellAmount - costAmount;
 
     const isFlight = input.serviceType === "flight";
-    const isTransfer = input.serviceType === "transfer";
+    const isTransfer =
+      input.serviceType === "transfer" || input.serviceType === "activity";
     const origin = isFlight || isTransfer ? input.route?.origin || null : null;
     const destination =
       isFlight || isTransfer
@@ -812,6 +813,57 @@ export class BookingsService {
       items: offers.map((offer) => ({
         id: offer.providerOfferRef,
         serviceType: "transfer" as const,
+        name: offer.description,
+        description: String(offer.raw.description || offer.description),
+        sellAmountMinor: offer.costAmountMinor,
+        costAmountMinor: offer.costAmountMinor,
+        currency: offer.currency,
+        expiresAt: offer.expiresAt,
+        details: offer.raw,
+      })),
+    };
+  }
+
+  async searchActivities(input: {
+    organizationId: string;
+    destination: string;
+    fromDate: string;
+    toDate: string;
+    adults: number;
+    children?: number;
+  }) {
+    const destination = String(input.destination || "").trim();
+    if (!destination) {
+      throw new BadRequestException("حدد وجهة النشاط");
+    }
+    if (!input.fromDate || !input.toDate) {
+      throw new BadRequestException("حدد تاريخ البداية والنهاية");
+    }
+    const provider = await getActivityProviderForOrg(
+      this.prisma,
+      input.organizationId,
+      process.env.ACTIVITY_PROVIDER || "hotelbeds-activities",
+    );
+    let offers;
+    try {
+      offers = await provider.searchActivities({
+        destination,
+        fromDate: input.fromDate,
+        toDate: input.toDate,
+        adults: Math.max(1, input.adults || 1),
+        children: Math.max(0, input.children || 0),
+      });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "تعذر البحث عن الأنشطة";
+      throw new BadRequestException(message);
+    }
+    return {
+      providerKey: provider.providerKey,
+      providerName: provider.displayName,
+      liveMode: provider.liveMode,
+      items: offers.map((offer) => ({
+        id: offer.providerOfferRef,
+        serviceType: "activity" as const,
         name: offer.description,
         description: String(offer.raw.description || offer.description),
         sellAmountMinor: offer.costAmountMinor,

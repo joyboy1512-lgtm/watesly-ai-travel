@@ -9,8 +9,9 @@ import { HotelSearchCard } from "@/components/hotels/HotelSearchCard";
 import { HotelDetailModal } from "@/components/hotels/HotelDetailModal";
 import { HotelLiveBadge } from "@/components/hotels/HotelLiveBadge";
 import { TransferSearchCard } from "@/components/hotels/TransferSearchCard";
+import { ActivitySearchCard } from "@/components/hotels/ActivitySearchCard";
 import { apiFetch } from "@/lib/api";
-import { saveFlightDraft, saveHotelDraft, saveTransferDraft } from "@/lib/booking-draft";
+import { saveFlightDraft, saveHotelDraft, saveTransferDraft, saveActivityDraft } from "@/lib/booking-draft";
 import { transferPointKindToEndpoint } from "@watesly-travel/shared";
 import { getPreferredCurrency } from "@/lib/currency";
 import { formatDate, formatMoneyMinor, formatMoneyMinorCompact } from "@/lib/format";
@@ -502,7 +503,9 @@ function PassengerCountRow({
 export default function InquiriesPage() {
   const router = useRouter();
   const [rows, setRows] = useState<Inquiry[]>([]);
-  const [mode, setMode] = useState<"flights" | "stays" | "cars">("flights");
+  const [mode, setMode] = useState<"flights" | "stays" | "cars" | "activities">(
+    "flights",
+  );
   const [tripType, setTripType] = useState<"roundtrip" | "oneway">("roundtrip");
   const [form, setForm] = useState({
     origin: "KWI",
@@ -520,6 +523,7 @@ export default function InquiriesPage() {
     preferredAirline: "",
     preferredAirlineName: "",
     stayQuery: "دبي",
+    activityQuery: "دبي",
     transferCity: "الكويت",
     transferCityLabel: "الكويت",
     pickupKind: "airport" as TransferPointKind,
@@ -549,6 +553,7 @@ export default function InquiriesPage() {
     EMPTY_CAR_QUICK_FILTERS,
   );
   const [carResults, setCarResults] = useState<AncillaryResult[]>([]);
+  const [activityResults, setActivityResults] = useState<AncillaryResult[]>([]);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
@@ -838,6 +843,7 @@ export default function InquiriesPage() {
     if (mode === "flights" && flight) return `طيران: ${flight}`;
     if (mode === "stays" && hotel) return `فنادق: ${hotel}`;
     if (mode === "cars") return `مواصلات: ${search.providerName || search.providerKey}`;
+    if (mode === "activities") return `أنشطة: ${search.providerName || search.providerKey}`;
     if (flight && hotel && flight !== hotel) {
       return `طيران: ${flight} · فنادق: ${hotel}`;
     }
@@ -1182,11 +1188,34 @@ export default function InquiriesPage() {
     router.push("/dashboard/inquiries/book/transfer");
   }
 
+  function confirmActivityBooking(item: AncillaryResult) {
+    const extra = item.extra || {};
+    saveActivityDraft({
+      activity: {
+        id: item.id,
+        description: item.name,
+        sellAmountMinor: item.price,
+        currency: item.currency,
+        details: extra,
+      },
+      destination: String(extra.destinationCode || form.activityQuery),
+      destinationLabel: String(extra.destinationName || form.activityQuery),
+      fromDate: form.departDate,
+      toDate: form.returnDate,
+      adults: form.adults,
+      children: form.children,
+      createdAt: new Date().toISOString(),
+      inquiryId: currentInquiryId || undefined,
+    });
+    router.push("/dashboard/inquiries/book/activity");
+  }
+
   async function createAndSearch() {
     setError("");
     setMessage("");
     setSearch(null);
     setCarResults([]);
+    setActivityResults([]);
     setLoading(true);
 
     try {
@@ -1293,6 +1322,64 @@ export default function InquiriesPage() {
           result.items?.length
             ? `تم جلب ${result.items.length} خيار نقل عبر ${result.providerName}`
             : "لا توجد رحلات نقل متاحة. جرّب مطاراً مع تاريخ لاحق، أو فعّل تسليم في موقع مختلف.",
+        );
+        setLoading(false);
+        return;
+      }
+
+      if (mode === "activities") {
+        const destination = form.activityQuery.trim();
+        if (!destination) {
+          setError("أدخل وجهة النشاط");
+          setLoading(false);
+          return;
+        }
+        const result = await apiFetch<{
+          providerKey: string;
+          providerName: string;
+          liveMode: boolean;
+          items: Array<{
+            id: string;
+            serviceType: string;
+            name: string;
+            description: string;
+            sellAmountMinor: number;
+            currency: string;
+            details?: Record<string, unknown>;
+          }>;
+        }>("/bookings/search-activities", {
+          method: "POST",
+          timeoutMs: 45000,
+          body: JSON.stringify({
+            destination,
+            fromDate: form.departDate,
+            toDate: form.returnDate,
+            adults: form.adults,
+            children: form.children,
+          }),
+        });
+        setActivityResults(
+          (result.items || []).map((row) => ({
+            id: row.id,
+            serviceType: row.serviceType || "activity",
+            name: row.name,
+            price: row.sellAmountMinor,
+            currency: row.currency,
+            details: row.description,
+            extra: row.details,
+          })),
+        );
+        setSearch({
+          providerKey: result.providerKey || "hotelbeds-activities",
+          providerName: result.providerName || "Hotelbeds Activities",
+          liveMode: result.liveMode,
+          flights: [],
+          hotels: [],
+        });
+        setMessage(
+          result.items?.length
+            ? `تم جلب ${result.items.length} نشاط عبر ${result.providerName}`
+            : "لا توجد أنشطة متاحة لهذه الوجهة والتواريخ.",
         );
         setLoading(false);
         return;
@@ -1406,6 +1493,16 @@ export default function InquiriesPage() {
           >
             نقل
           </button>
+          <button
+            type="button"
+            className={mode === "activities" ? "active" : undefined}
+            onClick={() => {
+              setMode("activities");
+              setGuestsOpen(false);
+            }}
+          >
+            أنشطة
+          </button>
         </div>
 
         <h2>
@@ -1413,12 +1510,16 @@ export default function InquiriesPage() {
             ? "قارن واحجز أرخص الرحلات بسهولة"
             : mode === "stays"
               ? "اكتشف أفضل الإقامات حول العالم"
-              : "استئجار سيارة تناسب جميع أنواع الرحلات"}
+              : mode === "cars"
+                ? "استئجار سيارة تناسب جميع أنواع الرحلات"
+                : "اكتشف أفضل الأنشطة والمعالم"}
         </h2>
         <p>
           {mode === "cars"
             ? "موقع الاستلام والتسليم مع الوقت وعمر السائق ومصفيات المركبة"
-            : "محرك بحث سفر متكامل مع كتالوج المطارات وشركات الطيران"}
+            : mode === "activities"
+              ? "ابحث عن جولات وتذاكر حسب الوجهة والتاريخ"
+              : "محرك بحث سفر متكامل مع كتالوج المطارات وشركات الطيران"}
         </p>
 
         {mode === "flights" ? (
@@ -1994,6 +2095,96 @@ export default function InquiriesPage() {
               ) : null}
             </>
           ) : null}
+
+          {mode === "activities" ? (
+            <div className="fs-grid stays activities">
+              <AutocompleteField
+                label="الوجهة"
+                value={form.activityQuery}
+                display={form.activityQuery}
+                placeholder="مدينة أو رمز مثل دبي أو DXB"
+                hint="اختر مدينة من القائمة"
+                emptyHint="اكتب ثم اختر المدينة"
+                loadingHint="جاري البحث عن الوجهات…"
+                emptyListHint="لا توجد وجهات مطابقة"
+                onClearText={(text) =>
+                  setForm((f) => ({ ...f, activityQuery: text }))
+                }
+                onQuery={async (q) => {
+                  const cities = await searchCities(q);
+                  if (cities.length) return cities;
+                  return [
+                    {
+                      id: q,
+                      title: q,
+                      subtitle: "بحث حر بالاسم",
+                      code: q,
+                    },
+                  ];
+                }}
+                onPick={(item) =>
+                  setForm((f) => ({
+                    ...f,
+                    activityQuery: item.code || item.title,
+                  }))
+                }
+              />
+              <label className="fs-cell">
+                <span>من تاريخ</span>
+                <input
+                  type="date"
+                  value={form.departDate}
+                  onChange={(e) =>
+                    setForm({ ...form, departDate: e.target.value })
+                  }
+                />
+                <small>بداية النشاط</small>
+              </label>
+              <label className="fs-cell">
+                <span>إلى تاريخ</span>
+                <input
+                  type="date"
+                  value={form.returnDate}
+                  onChange={(e) =>
+                    setForm({ ...form, returnDate: e.target.value })
+                  }
+                />
+                <small>نهاية الفترة</small>
+              </label>
+              <div className="fs-cell fs-cell-center guests-cell" ref={guestsRef}>
+                <span>المشاركون</span>
+                <button
+                  type="button"
+                  className="guests-trigger"
+                  onClick={() => setGuestsOpen((v) => !v)}
+                >
+                  {form.adults} بالغ
+                  {form.children > 0 ? ` · ${form.children} طفل` : ""}
+                </button>
+                <small>بالغ · طفل</small>
+                {guestsOpen ? (
+                  <div className="guests-menu guests-menu-pop">
+                    <PassengerCountRow
+                      adults={form.adults}
+                      childrenCount={form.children}
+                      infants={0}
+                      onAdults={(adults) => setForm({ ...form, adults })}
+                      onChildren={(children) => setForm({ ...form, children })}
+                      onInfants={() => undefined}
+                    />
+                  </div>
+                ) : null}
+              </div>
+              <button
+                type="button"
+                className="flight-explore"
+                disabled={loading}
+                onClick={createAndSearch}
+              >
+                {loading ? "..." : "استكشاف"}
+              </button>
+            </div>
+          ) : null}
         </div>
 
         {message ? <p className="flight-status">{message}</p> : null}
@@ -2286,7 +2477,7 @@ export default function InquiriesPage() {
                   ) : null}
                 </div>
               </>
-            ) : mode === "cars" ? (
+            ) : mode === "cars" || mode === "activities" ? (
               <div className="results-sort">
                 <button
                   type="button"
@@ -2423,6 +2614,41 @@ export default function InquiriesPage() {
                       {carResults.length
                         ? "لا توجد مركبات مطابقة للمصفيات السريعة. امسح المصفيات أو غيّر المتطلبات."
                         : "لا توجد نتائج. نبحث عن نقل المطار ↔ المدينة. جرّب مطاراً معروفاً مثل KWI أو DXB."}
+                    </p>
+                  ) : null}
+                </div>
+              </div>
+            ) : null}
+
+            {mode === "activities" ? (
+              <div className="panel hotel-results-panel">
+                <div className="hotel-results-head">
+                  <h3>
+                    أنشطة {form.activityQuery}: {activityResults.length} خياراً
+                  </h3>
+                  {search ? (
+                    <HotelLiveBadge
+                      liveMode={Boolean(search.liveMode)}
+                      sourceLabel={search.providerName}
+                    />
+                  ) : null}
+                </div>
+                <div className="hotel-search-list">
+                  {[...activityResults]
+                    .sort((a, b) =>
+                      sortKey === "price_desc" ? b.price - a.price : a.price - b.price,
+                    )
+                    .map((row) => (
+                      <ActivitySearchCard
+                        key={row.id}
+                        item={row}
+                        destination={form.activityQuery}
+                        onBook={() => confirmActivityBooking(row)}
+                      />
+                    ))}
+                  {activityResults.length === 0 ? (
+                    <p className="hint">
+                      لا توجد أنشطة مطابقة. جرّب وجهة مثل دبي أو برشلونة مع تواريخ لاحقة.
                     </p>
                   ) : null}
                 </div>

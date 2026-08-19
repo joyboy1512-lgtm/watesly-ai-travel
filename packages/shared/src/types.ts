@@ -124,4 +124,15 @@ export interface TransferOffer {
   raw: Record<string, unknown>;
 }
 
-export type TravelOffer = FlightOffer | HotelOffer | TransferOffer;
+export interface ActivityOffer {
+  providerKey: string;
+  providerOfferRef: string;
+  description: string;
+  costAmountMinor: MoneyMinor;
+  currency: CurrencyCode;
+  revalidationToken: string;
+  expiresAt: string;
+  raw: Record<string, unknown>;
+}
+
+export type TravelOffer = FlightOffer | HotelOffer | TransferOffer | ActivityOffer;

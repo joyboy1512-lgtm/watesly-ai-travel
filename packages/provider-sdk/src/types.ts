@@ -1,4 +1,5 @@
 import type {
+  ActivityOffer,
   FlightOffer,
   HotelOffer,
   HotelRateOption,
@@ -55,6 +56,16 @@ export interface TransferSearchParams {
   children?: number;
   infants?: number;
   currency?: string;
+}
+
+export interface ActivitySearchParams {
+  destination: string;
+  fromDate: string;
+  toDate: string;
+  adults: number;
+  children?: number;
+  currency?: string;
+  language?: string;
 }
 
 export interface ProviderBookingResult {
@@ -124,6 +135,18 @@ export interface TransferProviderAdapter {
   searchTransfers(params: TransferSearchParams): Promise<TransferOffer[]>;
   createBooking?(
     offer: TransferOffer,
+    guests: unknown,
+  ): Promise<ProviderBookingResult>;
+}
+
+/** Activity-only provider contract (Hotelbeds Activities, mock, …). */
+export interface ActivityProviderAdapter {
+  readonly providerKey: string;
+  readonly displayName: string;
+  readonly liveMode: boolean;
+  searchActivities(params: ActivitySearchParams): Promise<ActivityOffer[]>;
+  createBooking?(
+    offer: ActivityOffer,
     guests: unknown,
   ): Promise<ProviderBookingResult>;
 }

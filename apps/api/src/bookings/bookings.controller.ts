@@ -29,7 +29,7 @@ const BOOKING_TRANSITIONS: Record<string, string[]> = {
 };
 
 type FromDraftBody = {
-  serviceType: "flight" | "hotel" | "transfer";
+  serviceType: "flight" | "hotel" | "transfer" | "activity";
   inquiryId?: string;
   quoteItemId?: string;
   offer: BookingDraftOfferInput;
@@ -401,6 +401,29 @@ export class BookingsController {
       adults: body.adults || 1,
       children: body.children || 0,
       infants: body.infants || 0,
+    });
+  }
+
+  @Post("search-activities")
+  @RequirePermissions("conversations.read")
+  searchActivities(
+    @CurrentUser() user: AuthUser,
+    @Body()
+    body: {
+      destination?: string;
+      fromDate?: string;
+      toDate?: string;
+      adults?: number;
+      children?: number;
+    },
+  ) {
+    return this.bookings.searchActivities({
+      organizationId: user.organizationId,
+      destination: body.destination || "",
+      fromDate: body.fromDate || "",
+      toDate: body.toDate || "",
+      adults: body.adults || 1,
+      children: body.children || 0,
     });
   }
 

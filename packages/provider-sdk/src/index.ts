@@ -8,11 +8,13 @@ export {
   resolveFlightProviderKey,
   resolveHotelProviderKey,
   resolveTransferProviderKey,
+  resolveActivityProviderKey,
   resolveProviderKey,
   isHotelbedsTransferKey,
   getFlightProvider,
   getHotelProvider,
   getTransferProvider,
+  getActivityProvider,
   getTravelProvider,
 } from "./resolve";
 export type { FlightProviderCreds } from "./resolve";
@@ -25,11 +27,14 @@ export { DuffelHotelProvider } from "./hotels/duffel-hotel-provider";
 export { HotelbedsHotelProvider } from "./hotels/hotelbeds-hotel-provider";
 export { HotelbedsTransferProvider } from "./transfers/hotelbeds-transfer-provider";
 export { MockTransferProvider } from "./transfers/mock-transfer-provider";
+export { HotelbedsActivityProvider } from "./activities/hotelbeds-activity-provider";
+export { MockActivityProvider } from "./activities/mock-activity-provider";
 export {
   hotelbedsHeaders,
   hotelbedsSignature,
   resolveHotelbedsCredentials,
   resolveHotelbedsTransferCredentials,
+  resolveHotelbedsActivityCredentials,
 } from "./hotels/hotelbeds-auth";
 export type { HotelbedsCredentials } from "./hotels/hotelbeds-auth";
 export { AmadeusFlightProvider } from "./flights/amadeus-flight-provider";

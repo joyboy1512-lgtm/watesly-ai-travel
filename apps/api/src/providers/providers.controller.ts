@@ -28,6 +28,7 @@ function envReady(keys: string[]) {
 const DEFAULT_PRIORITY: Record<string, number> = {
   hotelbeds: 10,
   "hotelbeds-transfers": 11,
+  "hotelbeds-activities": 12,
   amadeus: 20,
   travelfusion: 30,
   travelport: 40,

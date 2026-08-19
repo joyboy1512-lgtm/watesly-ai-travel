@@ -1,3 +1,5 @@
+import { HotelbedsActivityProvider } from "./activities/hotelbeds-activity-provider";
+import { MockActivityProvider } from "./activities/mock-activity-provider";
 import { CompositeTravelProvider } from "./composite";
 import { AmadeusFlightProvider } from "./flights/amadeus-flight-provider";
 import { DuffelFlightProvider } from "./flights/duffel-flight-provider";
@@ -10,6 +12,7 @@ import { MockHotelProvider } from "./hotels/mock-hotel-provider";
 import { HotelbedsTransferProvider } from "./transfers/hotelbeds-transfer-provider";
 import { MockTransferProvider } from "./transfers/mock-transfer-provider";
 import type {
+  ActivityProviderAdapter,
   FlightProviderAdapter,
   HotelProviderAdapter,
   TransferProviderAdapter,
@@ -35,6 +38,14 @@ function normalizeProviderAlias(raw: string): string {
     key === "hotelbeds_transfer"
   ) {
     return "hotelbeds-transfers";
+  }
+  if (
+    key === "hotelbeds-activities" ||
+    key === "hotelbeds_activities" ||
+    key === "hotelbeds-activity" ||
+    key === "hotelbeds_activity"
+  ) {
+    return "hotelbeds-activities";
   }
   return key;
 }
@@ -78,6 +89,18 @@ export function resolveTransferProviderKey(preferred?: string): string {
   const key = normalizeProviderAlias(preferred || fromEnv);
   // TRANSFER_PROVIDER=hotelbeds means the Transfers API, never the Hotels API.
   if (key === "hotelbeds") return "hotelbeds-transfers";
+  return key;
+}
+
+export function resolveActivityProviderKey(preferred?: string): string {
+  const fromEnv =
+    process.env.ACTIVITY_PROVIDER?.trim() ||
+    (process.env.HOTELBEDS_ACTIVITY_API_KEY?.trim()
+      ? "hotelbeds-activities"
+      : "") ||
+    "mock";
+  const key = normalizeProviderAlias(preferred || fromEnv);
+  if (key === "hotelbeds") return "hotelbeds-activities";
   return key;
 }
 
@@ -274,6 +297,39 @@ export function getTransferProvider(
 
   if (mockFallbackAllowed()) return new MockTransferProvider();
   throw new Error(`مزود مواصلات غير معروف: ${key}`);
+}
+
+export function getActivityProvider(
+  preferred?: string,
+  creds?: HotelProviderCreds,
+): ActivityProviderAdapter {
+  const key = resolveActivityProviderKey(preferred);
+
+  if (key === "mock") {
+    return new MockActivityProvider();
+  }
+
+  if (key === "hotelbeds" || key === "hotelbeds-activities") {
+    try {
+      const provider = new HotelbedsActivityProvider({
+        apiKey: creds?.apiKey,
+        apiSecret: creds?.apiSecret,
+        baseUrl: creds?.baseUrl,
+      });
+      if (!provider.liveMode) {
+        throw new Error(
+          "ACTIVITY_PROVIDER=hotelbeds-activities يتطلب HOTELBEDS_ACTIVITY_API_KEY و HOTELBEDS_ACTIVITY_API_SECRET",
+        );
+      }
+      return provider;
+    } catch (err) {
+      if (mockFallbackAllowed()) return new MockActivityProvider();
+      throw err;
+    }
+  }
+
+  if (mockFallbackAllowed()) return new MockActivityProvider();
+  throw new Error(`مزود أنشطة غير معروف: ${key}`);
 }
 
 /**

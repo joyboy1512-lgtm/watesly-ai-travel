@@ -1,10 +1,13 @@
 import {
+  getActivityProvider,
   getFlightProvider,
   getHotelProvider,
   getTransferProvider,
+  resolveActivityProviderKey,
   resolveFlightProviderKey,
   resolveHotelProviderKey,
   resolveTransferProviderKey,
+  type ActivityProviderAdapter,
   type FlightProviderAdapter,
   type HotelProviderAdapter,
   type TransferProviderAdapter,
@@ -112,5 +115,29 @@ export async function getTransferProviderForOrg(
     apiKey: creds?.apiKey || creds?.transferApiKey,
     apiSecret: creds?.apiSecret || creds?.transferApiSecret,
     baseUrl: creds?.baseUrl || creds?.transferBaseUrl,
+  });
+}
+
+export async function getActivityProviderForOrg(
+  prisma: PrismaService,
+  organizationId: string,
+  preferred?: string,
+): Promise<ActivityProviderAdapter> {
+  const key = resolveActivityProviderKey(preferred);
+  const row = await prisma.travelProviderConfig.findUnique({
+    where: {
+      organizationId_providerKey: { organizationId, providerKey: key },
+    },
+    select: { configEncrypted: true, enabled: true },
+  });
+  const creds =
+    row?.enabled && row.configEncrypted
+      ? decryptProviderConfig<Record<string, string>>(row.configEncrypted) ||
+        undefined
+      : undefined;
+  return getActivityProvider(key, {
+    apiKey: creds?.apiKey,
+    apiSecret: creds?.apiSecret,
+    baseUrl: creds?.baseUrl,
   });
 }

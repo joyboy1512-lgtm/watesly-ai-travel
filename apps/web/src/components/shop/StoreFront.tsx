@@ -39,9 +39,6 @@ export function StoreFront({
       <header className="shop-header exp-header exp-header-white">
         <div className="shop-header-inner exp-header-inner">
           <Link href="/" className="shop-brand exp-brand">
-            <span className="exp-brand-circle" aria-hidden>
-              WG
-            </span>
             <span className="exp-wordmark exp-wordmark-dark">{BRAND}</span>
           </Link>
 

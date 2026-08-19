@@ -217,34 +217,39 @@ export function ShopHeroBanner(props: Props) {
 
   return (
     <section className="exp-home-hero" id="search">
-      <div
-        className="exp-home-bg"
-        style={{ backgroundImage: `url(${heroImage})` }}
-        aria-hidden
-      />
-      <div className="exp-home-shade" aria-hidden />
+      <div className="exp-home-visual">
+        <div
+          className="exp-home-bg"
+          style={{ backgroundImage: `url(${heroImage})` }}
+          aria-hidden
+        />
+        <div className="exp-home-shade" aria-hidden />
 
-      <div className="exp-home-content">
-        <h1 className="exp-home-tagline">مكان واحد تذهب إليه لتذهب إلى أي مكان</h1>
+        <div className="exp-home-visual-inner">
+          <h1 className="exp-home-tagline">مكان واحد تذهب إليه لتذهب إلى أي مكان</h1>
 
-        <div className="exp-dialog">
-          <div className="exp-icon-tabs" role="tablist" aria-label="نوع الحجز">
+          <div className="exp-icon-tabs exp-icon-tabs-hero" role="tablist" aria-label="نوع الحجز">
             {PRODUCTS.map(({ key, label, icon }) => (
               <button
                 key={key}
                 type="button"
                 role="tab"
-                className={`exp-icon-circle${props.mode === key ? " on" : ""}`}
+                className={`exp-icon-circle exp-icon-circle-labeled${props.mode === key ? " on" : ""}`}
                 aria-selected={props.mode === key}
                 aria-label={label}
                 title={label}
                 onClick={() => props.onModeChange(key)}
               >
                 <span className="exp-icon-circle-svg">{icon}</span>
+                <span className="exp-icon-circle-label">{label}</span>
               </button>
             ))}
           </div>
+        </div>
+      </div>
 
+      <div className="exp-home-search">
+        <div className="exp-dialog">
           {props.mode === "flights" ? (
             <div className="exp-subtabs" role="group" aria-label="نوع الرحلة">
               <button
@@ -570,7 +575,9 @@ export function ShopHeroBanner(props: Props) {
           {props.error ? <p className="shop-error exp-dialog-msg">{props.error}</p> : null}
           {props.message ? <p className="shop-status exp-dialog-msg">{props.message}</p> : null}
         </div>
+      </div>
 
+      <div className="exp-home-below">
         <div className="exp-promo-banner">
           <div className="exp-promo-copy">
             <span className="exp-promo-icon" aria-hidden>

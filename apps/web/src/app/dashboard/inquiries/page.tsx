@@ -12,7 +12,6 @@ import { TransferSearchCard } from "@/components/hotels/TransferSearchCard";
 import { ActivitySearchCard } from "@/components/hotels/ActivitySearchCard";
 import { apiFetch } from "@/lib/api";
 import { saveFlightDraft, saveHotelDraft, saveTransferDraft, saveActivityDraft } from "@/lib/booking-draft";
-import { transferPointKindToEndpoint } from "@watesly-travel/shared";
 import { getPreferredCurrency } from "@/lib/currency";
 import { formatDate, formatMoneyMinor, formatMoneyMinorCompact } from "@/lib/format";
 import {
@@ -56,8 +55,6 @@ const CAR_ADDON_OPTIONS: Array<{ value: CarAddon; label: string }> = [
   { value: "booster", label: "مقعد سيارة داعم للأطفال" },
 ];
 
-const DRIVER_AGE_PRESETS = [18, 21, 25, 29, 66, 70];
-
 function carQuickFiltersCount(filters: CarQuickFilters) {
   return (
     (filters.seats ? 1 : 0) +
@@ -70,6 +67,9 @@ function carQuickFiltersCount(filters: CarQuickFilters) {
 function placeKindFromSuggest(item: { id: string; subtitle?: string }): TransferPointKind {
   if (item.id.startsWith("airport:") || String(item.subtitle || "").startsWith("مطار")) {
     return "airport";
+  }
+  if (item.id.startsWith("hotel:") || String(item.subtitle || "").startsWith("فندق")) {
+    return "hotel";
   }
   return "address";
 }
@@ -526,15 +526,16 @@ export default function InquiriesPage() {
     activityQuery: "دبي",
     transferCity: "الكويت",
     transferCityLabel: "الكويت",
+    transferDirection: "airport_hotel" as "airport_hotel" | "hotel_airport",
     pickupKind: "airport" as TransferPointKind,
-    dropoffKind: "address" as TransferPointKind,
+    dropoffKind: "hotel" as TransferPointKind,
     pickupLocation: "KWI",
     pickupLocationLabel: "KWI · الكويت",
-    dropoffLocation: "الكويت",
-    dropoffLocationLabel: "الكويت",
+    dropoffLocation: "",
+    dropoffLocationLabel: "",
     pickupTime: "10:00",
     dropoffTime: "10:00",
-    differentDropoff: false,
+    differentDropoff: true,
     driverAgeStandard: true,
     driverAge: 30,
     childrenAges: [] as number[],
@@ -748,36 +749,38 @@ export default function InquiriesPage() {
           title: "DXB · دبي",
           subtitle: "مطار · دبي الدولية",
         },
-        {
-          id: "city:الكويت",
-          code: "الكويت",
-          title: "الكويت",
-          subtitle: "مدينة",
-        },
-        {
-          id: "city:دبي",
-          code: "دبي",
-          title: "دبي",
-          subtitle: "مدينة",
-        },
       ];
     }
-    const [airports, cities] = await Promise.all([
-      searchAirports(query),
-      searchCities(query),
-    ]);
-    return [
-      ...airports.map((a) => ({
+    const airports = await searchAirports(query);
+    return airports
+      .map((a) => ({
         ...a,
         id: `airport:${a.id}`,
         subtitle: a.subtitle ? `مطار · ${a.subtitle}` : "مطار",
-      })),
-      ...cities.map((c) => ({
-        ...c,
-        id: `city:${c.id}`,
-        subtitle: c.subtitle ? `مدينة · ${c.subtitle}` : "مدينة",
-      })),
-    ].slice(0, 20);
+      }))
+      .slice(0, 20);
+  }
+
+  async function searchTransferHotels(q: string) {
+    const query = q.trim();
+    if (query.length < 2) return [];
+    const result = await apiFetch<{
+      items: Array<{ code: string; name: string; city: string }>;
+    }>("/bookings/suggest-hotels", {
+      method: "POST",
+      timeoutMs: 25000,
+      body: JSON.stringify({
+        query,
+        checkIn: form.departDate,
+        checkOut: form.returnDate,
+      }),
+    });
+    return (result.items || []).map((row) => ({
+      id: `hotel:${row.code}`,
+      code: row.code,
+      title: row.name,
+      subtitle: row.city ? `فندق · ${row.city}` : "فندق",
+    }));
   }
 
   function applyTransportPlace(
@@ -787,32 +790,37 @@ export default function InquiriesPage() {
     const kind = placeKindFromSuggest(item);
     const code = String(item.code || "").toUpperCase();
     const location =
-      kind === "airport" && /^[A-Z]{3}$/.test(code) ? code : item.title;
+      kind === "airport" && /^[A-Z]{3}$/.test(code)
+        ? code
+        : kind === "hotel"
+          ? String(item.code || "").replace(/^hb-/i, "")
+          : item.title;
     const city =
       kind === "airport"
         ? item.title.split("·")[1]?.trim() || form.transferCity
-        : item.title;
+        : kind === "hotel"
+          ? item.subtitle?.replace(/^فندق(?: · )?/u, "") || form.transferCity
+          : item.title;
 
     setForm((f) => {
-      const pickupPatch =
-        which === "pickup"
-          ? {
-              pickupKind: kind,
-              pickupLocation: location,
-              pickupLocationLabel: item.title,
-              transferCity: city || f.transferCity,
-              transferCityLabel: city || f.transferCityLabel,
-            }
-          : {};
-      const dropoffPatch =
-        which === "dropoff" || (which === "pickup" && !f.differentDropoff)
-          ? {
-              dropoffKind: kind,
-              dropoffLocation: location,
-              dropoffLocationLabel: item.title,
-            }
-          : {};
-      return { ...f, ...pickupPatch, ...dropoffPatch };
+      if (which === "pickup") {
+        return {
+          ...f,
+          pickupKind: kind,
+          pickupLocation: location,
+          pickupLocationLabel: item.title,
+          transferCity: city || f.transferCity,
+          transferCityLabel: city || f.transferCityLabel,
+        };
+      }
+      return {
+        ...f,
+        dropoffKind: kind,
+        dropoffLocation: location,
+        dropoffLocationLabel: item.title,
+        transferCity: city || f.transferCity,
+        transferCityLabel: city || f.transferCityLabel,
+      };
     });
   }
 
@@ -1166,14 +1174,19 @@ export default function InquiriesPage() {
         details: extra,
       },
       city: form.transferCity,
-      pickupKind: form.pickupKind,
-      dropoffKind: form.differentDropoff ? form.dropoffKind : form.pickupKind,
-      from: String(extra.fromLabel || form.pickupLocationLabel || form.pickupLocation),
+      pickupKind: "airport",
+      dropoffKind: "hotel",
+      from: String(
+        extra.fromLabel ||
+          (form.transferDirection === "hotel_airport"
+            ? form.dropoffLocationLabel
+            : form.pickupLocationLabel),
+      ),
       to: String(
         extra.toLabel ||
-          (form.differentDropoff
-            ? form.dropoffLocationLabel || form.dropoffLocation
-            : form.pickupLocationLabel || form.pickupLocation),
+          (form.transferDirection === "hotel_airport"
+            ? form.pickupLocationLabel
+            : form.dropoffLocationLabel),
       ),
       outboundDate: form.departDate,
       outboundTime: form.pickupTime,
@@ -1220,42 +1233,27 @@ export default function InquiriesPage() {
 
     try {
       if (mode === "cars") {
-        const pickup = form.pickupLocation.trim();
-        const dropoff = form.differentDropoff
-          ? form.dropoffLocation.trim()
-          : pickup;
-        if (!pickup) {
-          setError("أدخل موقع الاستلام");
+        const airport = form.pickupLocation.trim().toUpperCase();
+        const hotelCode = form.dropoffLocation.trim().replace(/^hb-/i, "");
+        if (!/^[A-Z]{3}$/.test(airport)) {
+          setError("اختر المطار من القائمة");
           setLoading(false);
           return;
         }
-        if (form.differentDropoff && !dropoff) {
-          setError("أدخل موقع التسليم");
+        if (!/^\d+$/.test(hotelCode)) {
+          setError("اختر الفندق من القائمة — لا نبحث إلى أي فندق تلقائياً");
           setLoading(false);
           return;
         }
         const cityName =
           form.transferCity.trim() ||
           form.pickupLocationLabel.split("·")[1]?.trim() ||
-          pickup;
-        let from = pickup;
-        let to = dropoff;
-        let fromKind = transferPointKindToEndpoint(form.pickupKind);
-        let toKind = transferPointKindToEndpoint(
-          form.differentDropoff ? form.dropoffKind : form.pickupKind,
-        );
-        // Hotelbeds transfers need two points. Same pickup/drop-off → airport ↔ city.
-        if (!form.differentDropoff) {
-          if (form.pickupKind === "airport") {
-            fromKind = "IATA";
-            toKind = "GPS";
-            to = cityName;
-          } else {
-            fromKind = "GPS";
-            toKind = "GPS";
-            to = pickup;
-          }
-        }
+          airport;
+        const arrival = form.transferDirection !== "hotel_airport";
+        const from = arrival ? airport : hotelCode;
+        const to = arrival ? hotelCode : airport;
+        const fromKind = arrival ? "IATA" : "ATLAS";
+        const toKind = arrival ? "ATLAS" : "IATA";
         const children = carFilters.addons.some(
           (a) => a === "child_seat" || a === "booster",
         )
@@ -1293,11 +1291,6 @@ export default function InquiriesPage() {
             adults: form.adults,
             children,
             infants,
-            driverAge: form.driverAgeStandard ? 30 : form.driverAge,
-            seats: carFilters.seats || undefined,
-            addons: carFilters.addons,
-            automaticOnly: carFilters.automaticOnly,
-            unlimitedKm: carFilters.unlimitedKm,
           }),
         });
         setCarResults(
@@ -1511,12 +1504,12 @@ export default function InquiriesPage() {
             : mode === "stays"
               ? "اكتشف أفضل الإقامات حول العالم"
               : mode === "cars"
-                ? "استئجار سيارة تناسب جميع أنواع الرحلات"
+                ? "نقل من المطار إلى فندقك"
                 : "اكتشف أفضل الأنشطة والمعالم"}
         </h2>
         <p>
           {mode === "cars"
-            ? "موقع الاستلام والتسليم مع الوقت وعمر السائق ومصفيات المركبة"
+            ? "اختر المطار والفندق بنفسك. هذه خدمة نقل بسائق، وليست تأجير سيارة."
             : mode === "activities"
               ? "ابحث عن جولات وتذاكر حسب الوجهة والتاريخ"
               : "محرك بحث سفر متكامل مع كتالوج المطارات وشركات الطيران"}
@@ -1869,80 +1862,82 @@ export default function InquiriesPage() {
 
           {mode === "cars" ? (
             <>
-              <div
-                className={`fs-grid cars car-hire-grid${
-                  form.differentDropoff ? " two-locs" : ""
-                }`}
-              >
+              <div className="flight-search-options">
+                <button
+                  type="button"
+                  className={`opt-chip${
+                    form.transferDirection === "airport_hotel" ? " on" : ""
+                  }`}
+                  onClick={() =>
+                    setForm((f) => ({ ...f, transferDirection: "airport_hotel" }))
+                  }
+                >
+                  مطار → فندق
+                </button>
+                <button
+                  type="button"
+                  className={`opt-chip${
+                    form.transferDirection === "hotel_airport" ? " on" : ""
+                  }`}
+                  onClick={() =>
+                    setForm((f) => ({ ...f, transferDirection: "hotel_airport" }))
+                  }
+                >
+                  فندق → مطار
+                </button>
+              </div>
+              <div className="fs-grid cars car-hire-grid two-locs">
                 <AutocompleteField
-                  label="موقع الاستلام"
+                  label="المطار"
                   value={form.pickupLocation}
                   display={form.pickupLocationLabel}
-                  placeholder="المطار أو المدينة أو المحطة"
+                  placeholder="اختر المطار"
                   hint={
-                    form.pickupKind === "airport"
+                    form.pickupLocation
                       ? `مطار ${form.pickupLocation}`
-                      : "مدينة أو عنوان"
+                      : "مطار الوصول أو المغادرة"
                   }
-                  emptyHint="المطار أو المدينة أو المحطة"
-                  loadingHint="جاري البحث عن المواقع…"
-                  emptyListHint="لا توجد مواقع مطابقة — جرّب المطار أو المدينة"
+                  emptyHint="اكتب رمز أو اسم المطار"
+                  loadingHint="جاري البحث عن المطارات…"
+                  emptyListHint="لا توجد مطارات مطابقة"
                   onClearText={(text) => {
                     const code = text.trim().toUpperCase();
-                    const kind: TransferPointKind = /^[A-Z]{3}$/.test(code)
-                      ? "airport"
-                      : "address";
-                    const location = kind === "airport" ? code : text;
                     setForm((f) => ({
                       ...f,
-                      pickupKind: kind,
-                      pickupLocation: location,
+                      pickupKind: "airport",
+                      pickupLocation: /^[A-Z]{3}$/.test(code) ? code : "",
                       pickupLocationLabel: text,
-                      transferCity: kind === "address" ? text || f.transferCity : f.transferCity,
-                      ...(!f.differentDropoff
-                        ? {
-                            dropoffKind: kind,
-                            dropoffLocation: location,
-                            dropoffLocationLabel: text,
-                          }
-                        : {}),
                     }));
                   }}
                   onQuery={searchTransportPlaces}
                   onPick={(item) => applyTransportPlace("pickup", item)}
                 />
-                {form.differentDropoff ? (
-                  <AutocompleteField
-                    label="موقع التسليم"
-                    value={form.dropoffLocation}
-                    display={form.dropoffLocationLabel}
-                    placeholder="المطار أو المدينة أو المحطة"
-                    hint={
-                      form.dropoffKind === "airport"
-                        ? `مطار ${form.dropoffLocation}`
-                        : "مدينة أو عنوان"
-                    }
-                    emptyHint="مكان إعادة السيارة"
-                    loadingHint="جاري البحث عن المواقع…"
-                    emptyListHint="لا توجد مواقع مطابقة — جرّب المطار أو المدينة"
-                    onClearText={(text) => {
-                      const code = text.trim().toUpperCase();
-                      const kind: TransferPointKind = /^[A-Z]{3}$/.test(code)
-                        ? "airport"
-                        : "address";
-                      setForm((f) => ({
-                        ...f,
-                        dropoffKind: kind,
-                        dropoffLocation: kind === "airport" ? code : text,
-                        dropoffLocationLabel: text,
-                      }));
-                    }}
-                    onQuery={searchTransportPlaces}
-                    onPick={(item) => applyTransportPlace("dropoff", item)}
-                  />
-                ) : null}
+                <AutocompleteField
+                  label="الفندق"
+                  value={form.dropoffLocation}
+                  display={form.dropoffLocationLabel}
+                  placeholder="اكتب اسم الفندق واختره"
+                  hint={
+                    form.dropoffLocationLabel
+                      ? form.dropoffLocationLabel
+                      : "فندق محدد من القائمة"
+                  }
+                  emptyHint="اكتب حرفين على الأقل ثم اختر الفندق"
+                  loadingHint="جاري البحث عن الفنادق…"
+                  emptyListHint="لا توجد فنادق مطابقة — غيّر الاسم"
+                  onClearText={(text) =>
+                    setForm((f) => ({
+                      ...f,
+                      dropoffKind: "hotel",
+                      dropoffLocation: "",
+                      dropoffLocationLabel: text,
+                    }))
+                  }
+                  onQuery={searchTransferHotels}
+                  onPick={(item) => applyTransportPlace("dropoff", item)}
+                />
                 <label className="fs-cell">
-                  <span>تاريخ الاستلام</span>
+                  <span>التاريخ</span>
                   <input
                     type="date"
                     value={form.departDate}
@@ -1950,7 +1945,7 @@ export default function InquiriesPage() {
                       setForm({ ...form, departDate: e.target.value })
                     }
                   />
-                  <small>{formatDay(form.departDate) || "الاستلام"}</small>
+                  <small>{formatDay(form.departDate) || "موعد النقل"}</small>
                 </label>
                 <label className="fs-cell">
                   <span>الوقت</span>
@@ -1964,7 +1959,7 @@ export default function InquiriesPage() {
                   <small>الاستلام</small>
                 </label>
                 <label className="fs-cell">
-                  <span>تاريخ التسليم</span>
+                  <span>العودة</span>
                   <input
                     type="date"
                     value={form.returnDate}
@@ -1972,10 +1967,10 @@ export default function InquiriesPage() {
                       setForm({ ...form, returnDate: e.target.value })
                     }
                   />
-                  <small>{formatDay(form.returnDate) || "التسليم"}</small>
+                  <small>{formatDay(form.returnDate) || "اختياري"}</small>
                 </label>
                 <label className="fs-cell">
-                  <span>الوقت</span>
+                  <span>وقت العودة</span>
                   <input
                     type="time"
                     value={form.dropoffTime}
@@ -1983,7 +1978,7 @@ export default function InquiriesPage() {
                       setForm({ ...form, dropoffTime: e.target.value })
                     }
                   />
-                  <small>التسليم</small>
+                  <small>إن وُجدت عودة</small>
                 </label>
                 <button
                   type="button"
@@ -1996,83 +1991,11 @@ export default function InquiriesPage() {
               </div>
               <div className="car-hire-options">
                 <div className="car-hire-options-main">
-                  <label>
-                    <input
-                      type="checkbox"
-                      checked={form.differentDropoff}
-                      onChange={() =>
-                        setForm((f) => {
-                          const next = !f.differentDropoff;
-                          if (!next) {
-                            return {
-                              ...f,
-                              differentDropoff: false,
-                              dropoffKind: f.pickupKind,
-                              dropoffLocation: f.pickupLocation,
-                              dropoffLocationLabel: f.pickupLocationLabel,
-                            };
-                          }
-                          const samePlace =
-                            f.dropoffLocation === f.pickupLocation;
-                          return {
-                            ...f,
-                            differentDropoff: true,
-                            ...(samePlace
-                              ? {
-                                  dropoffLocation: "",
-                                  dropoffLocationLabel: "",
-                                }
-                              : {}),
-                          };
-                        })
-                      }
-                    />
-                    تسليم السيارة في موقع مختلف
-                  </label>
-                  <label>
-                    <input
-                      type="checkbox"
-                      checked={form.driverAgeStandard}
-                      onChange={() =>
-                        setForm((f) => ({
-                          ...f,
-                          driverAgeStandard: !f.driverAgeStandard,
-                          driverAge: !f.driverAgeStandard ? 30 : f.driverAge,
-                        }))
-                      }
-                    />
-                    هل عمر السائق بين 30 و 65؟
-                  </label>
-                  {!form.driverAgeStandard ? (
-                    <div className="driver-age-options">
-                      <span>عمر السائق</span>
-                      {DRIVER_AGE_PRESETS.map((age) => (
-                        <button
-                          key={age}
-                          type="button"
-                          className={form.driverAge === age ? "on" : undefined}
-                          onClick={() => setForm({ ...form, driverAge: age })}
-                        >
-                          {age}
-                        </button>
-                      ))}
-                      <input
-                        type="number"
-                        min={18}
-                        max={99}
-                        value={form.driverAge}
-                        onChange={(e) =>
-                          setForm({
-                            ...form,
-                            driverAge: Math.min(
-                              99,
-                              Math.max(18, Number(e.target.value) || 18),
-                            ),
-                          })
-                        }
-                      />
-                    </div>
-                  ) : null}
+                  <p className="car-hire-hint" style={{ margin: 0 }}>
+                    {form.transferDirection === "hotel_airport"
+                      ? "من الفندق الذي اخترته إلى المطار"
+                      : "من المطار إلى الفندق الذي اخترته"}
+                  </p>
                 </div>
                 <button
                   type="button"
@@ -2088,11 +2011,6 @@ export default function InquiriesPage() {
                   ) : null}
                 </button>
               </div>
-              {!form.differentDropoff ? (
-                <p className="car-hire-hint">
-                  نفس الموقع: نبحث عن نقل من المطار إلى وسط المدينة لهذه الوجهة
-                </p>
-              ) : null}
             </>
           ) : null}
 
@@ -2600,11 +2518,15 @@ export default function InquiriesPage() {
                     <TransferSearchCard
                       key={c.id}
                       item={c}
-                      from={form.pickupLocationLabel || form.pickupLocation}
-                      to={
-                        form.differentDropoff
+                      from={
+                        form.transferDirection === "hotel_airport"
                           ? form.dropoffLocationLabel || form.dropoffLocation
                           : form.pickupLocationLabel || form.pickupLocation
+                      }
+                      to={
+                        form.transferDirection === "hotel_airport"
+                          ? form.pickupLocationLabel || form.pickupLocation
+                          : form.dropoffLocationLabel || form.dropoffLocation
                       }
                       onBook={() => confirmTransferBooking(c)}
                     />
@@ -2613,7 +2535,7 @@ export default function InquiriesPage() {
                     <p className="hint">
                       {carResults.length
                         ? "لا توجد مركبات مطابقة للمصفيات السريعة. امسح المصفيات أو غيّر المتطلبات."
-                        : "لا توجد نتائج. نبحث عن نقل المطار ↔ المدينة. جرّب مطاراً معروفاً مثل KWI أو DXB."}
+                        : "اختر المطار وفندقاً محدداً من القائمة. لا نبحث إلى أي فندق تلقائياً."}
                     </p>
                   ) : null}
                 </div>

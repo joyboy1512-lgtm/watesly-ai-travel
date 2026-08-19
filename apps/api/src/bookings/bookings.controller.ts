@@ -404,6 +404,25 @@ export class BookingsController {
     });
   }
 
+  @Post("suggest-hotels")
+  @RequirePermissions("conversations.read")
+  suggestHotels(
+    @CurrentUser() user: AuthUser,
+    @Body()
+    body: {
+      query?: string;
+      checkIn?: string;
+      checkOut?: string;
+    },
+  ) {
+    return this.bookings.suggestHotels({
+      organizationId: user.organizationId,
+      query: body.query || "",
+      checkIn: body.checkIn,
+      checkOut: body.checkOut,
+    });
+  }
+
   @Post("search-activities")
   @RequirePermissions("conversations.read")
   searchActivities(

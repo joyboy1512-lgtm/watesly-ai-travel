@@ -20,7 +20,6 @@ import {
   resolveHotelbedsTransferCredentials,
   type HotelbedsCredentials,
 } from "../hotels/hotelbeds-auth";
-import { HotelbedsHotelProvider } from "../hotels/hotelbeds-hotel-provider";
 import type {
   HbTransferAvailabilityResponse,
   HbTransferName,
@@ -37,13 +36,6 @@ export type ResolveTransferEndpointInput = {
   query: string;
   kind: "IATA" | "ATLAS" | "GPS";
   city?: string;
-  outboundDate?: string;
-  inboundDate?: string;
-  hotelLookup?: (
-    city: string,
-    hotelName: string,
-    dates: { checkIn: string; checkOut: string },
-  ) => Promise<{ code: string; label: string } | null>;
 };
 
 function textOf(value?: string | HbTransferName): string {
@@ -61,13 +53,6 @@ function normalizeTime(raw?: string): string {
 
 function datetimeStamp(date: string, time?: string): string {
   return `${date}T${normalizeTime(time)}:00`;
-}
-
-function addDaysIso(date: string, days: number): string {
-  const d = new Date(`${date}T12:00:00`);
-  if (Number.isNaN(d.getTime())) return date;
-  d.setDate(d.getDate() + days);
-  return d.toISOString().slice(0, 10);
 }
 
 function encodeSegment(value: string): string {
@@ -96,27 +81,11 @@ export async function resolveTransferEndpoint(
   }
 
   if (kind === "ATLAS") {
-    if (/^\d+$/.test(raw)) {
-      return { type: "ATLAS", code: raw, label: raw };
+    const code = raw.replace(/^hb-/i, "");
+    if (/^\d+$/.test(code)) {
+      return { type: "ATLAS", code, label: raw || code };
     }
-    if (!raw) {
-      throw new Error("أدخل اسم الفندق أو رمز Hotelbeds (ATLAS)");
-    }
-    if (input.hotelLookup && city && input.outboundDate) {
-      const checkIn = input.outboundDate;
-      const checkOut =
-        input.inboundDate && input.inboundDate > checkIn
-          ? input.inboundDate
-          : addDaysIso(checkIn, 1);
-      const found = await input.hotelLookup(city, raw, { checkIn, checkOut }).catch(
-        () => null,
-      );
-      if (found) {
-        return { type: "ATLAS", code: found.code, label: found.label };
-      }
-    }
-    // Transfers API stays independent: hotel name → GPS if Hotels API is not available.
-    return resolveTransferEndpoint({ ...input, kind: "GPS" });
+    throw new Error("اختر فندقاً محدداً من قائمة الفنادق");
   }
 
   const geoQuery =
@@ -143,37 +112,16 @@ function sameTransferPoint(a: TransferEndpoint, b: TransferEndpoint) {
 }
 
 /**
- * Hotelbeds Transfers needs two distinct points (typically airport ↔ city).
- * Same-location car-hire search is mapped to airport pickup + city drop-off.
+ * Hotelbeds Transfers needs two distinct points (airport ↔ the chosen hotel).
+ * Never rewrite a search into "airport → any hotel / city center".
  */
 export async function ensureDistinctTransferEndpoints(
   from: TransferEndpoint,
   to: TransferEndpoint,
-  city?: string,
 ): Promise<{ from: TransferEndpoint; to: TransferEndpoint }> {
   if (!sameTransferPoint(from, to)) return { from, to };
-
-  const cityQuery = String(city || from.label || to.label || "").trim();
-
-  if (from.type === "IATA") {
-    const gps = await resolveTransferEndpoint({
-      query: cityQuery || from.label,
-      kind: "GPS",
-      city: cityQuery,
-    });
-    if (!sameTransferPoint(from, gps)) return { from, to: gps };
-  }
-
-  const iata = cityDefaultAirport(cityQuery) || cityDefaultAirport(from.label);
-  if (iata && !(from.type === "IATA" && from.code.toUpperCase() === iata)) {
-    return {
-      from: { type: "IATA", code: iata, label: iata },
-      to: from.type === "IATA" ? to : from,
-    };
-  }
-
   throw new Error(
-    "حدد مطاراً ومكان تسليم مختلف، أو اكتب مدينة لها مطار معروف حتى نبحث عن نقل المطار ↔ المدينة",
+    "حدد المطار والفندق كنقطتين مختلفتين. النقل إلى الفندق الذي تختاره، وليس إلى أي فندق.",
   );
 }
 
@@ -294,65 +242,24 @@ export class HotelbedsTransferProvider implements TransferProviderAdapter {
     }
   }
 
-  private hotelLookupFactory() {
-    // Optional Hotels API — never reuse Transfers credentials.
-    const hotelProvider = new HotelbedsHotelProvider();
-    if (!hotelProvider.liveMode) return undefined;
-    return async (
-      city: string,
-      hotelName: string,
-      dates: { checkIn: string; checkOut: string },
-    ) => {
-      const offers = await hotelProvider.searchHotels({
-        location: `${hotelName} ${city}`.trim(),
-        checkInDate: dates.checkIn,
-        checkOutDate: dates.checkOut,
-        adults: 1,
-        maxHotels: 8,
-        currency: hotelbedsDisplayCurrency(),
-      });
-      const best =
-        offers.find((row) =>
-          String(row.raw?.name || row.description || "")
-            .toLowerCase()
-            .includes(hotelName.toLowerCase()),
-        ) || offers[0];
-      if (!best) return null;
-      const code = String(best.raw?.hotelCode || "").trim();
-      if (!code) return null;
-      return {
-        code,
-        label: String(best.raw?.name || hotelName),
-      };
-    };
-  }
-
   async searchTransfers(params: TransferSearchParams): Promise<TransferOffer[]> {
     this.ensureConfigured();
     const city = String(params.city || "").trim();
     const fromKind = params.fromKind || "IATA";
-    const toKind = params.toKind || "GPS";
-    const hotelLookup = this.hotelLookupFactory();
+    const toKind = params.toKind || "ATLAS";
     const resolvedFrom = await resolveTransferEndpoint({
       query: params.from,
       kind: fromKind,
       city,
-      outboundDate: params.outboundDate,
-      inboundDate: params.inboundDate,
-      hotelLookup,
     });
     const resolvedTo = await resolveTransferEndpoint({
-      query: params.to || params.from,
+      query: params.to,
       kind: toKind,
       city,
-      outboundDate: params.outboundDate,
-      inboundDate: params.inboundDate,
-      hotelLookup,
     });
     const { from, to } = await ensureDistinctTransferEndpoints(
       resolvedFrom,
       resolvedTo,
-      city,
     );
     const adults = Math.max(1, params.adults || 1);
     const children = Math.max(0, params.children || 0);

@@ -824,6 +824,60 @@ export class BookingsService {
     };
   }
 
+  async suggestHotels(input: {
+    organizationId: string;
+    query: string;
+    checkIn?: string;
+    checkOut?: string;
+  }) {
+    const query = String(input.query || "").trim();
+    if (query.length < 2) {
+      return { items: [] as Array<{ code: string; name: string; city: string }> };
+    }
+    const today = new Date();
+    const plus = (days: number) => {
+      const d = new Date(today);
+      d.setDate(d.getDate() + days);
+      return d.toISOString().slice(0, 10);
+    };
+    const checkIn = input.checkIn || plus(14);
+    const checkOut =
+      input.checkOut && input.checkOut > checkIn ? input.checkOut : plus(15);
+    const provider = await getHotelProviderForOrg(
+      this.prisma,
+      input.organizationId,
+      process.env.HOTEL_PROVIDER || "hotelbeds",
+    );
+    let offers: HotelOffer[] = [];
+    try {
+      offers = await provider.searchHotels({
+        location: query,
+        checkInDate: checkIn,
+        checkOutDate: checkOut,
+        adults: 1,
+        maxHotels: 12,
+      });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "تعذر البحث عن الفنادق";
+      throw new BadRequestException(message);
+    }
+    const seen = new Set<string>();
+    const items: Array<{ code: string; name: string; city: string }> = [];
+    for (const offer of offers) {
+      const code = String(offer.raw?.hotelCode || "")
+        .replace(/^hb-/i, "")
+        .trim();
+      const name = String(offer.raw?.name || offer.description || "").trim();
+      const city = String(
+        offer.raw?.destinationName || offer.raw?.city || offer.raw?.location || "",
+      ).trim();
+      if (!code || !/^\d+$/.test(code) || seen.has(code)) continue;
+      seen.add(code);
+      items.push({ code, name: name || `فندق ${code}`, city });
+    }
+    return { items };
+  }
+
   async searchActivities(input: {
     organizationId: string;
     destination: string;

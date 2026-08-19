@@ -36,41 +36,55 @@ export function StoreFront({
 
   return (
     <div className="shop-root exp-theme">
-      <div className="exp-loyalty-stripe" aria-hidden>
-        <span>عروض حصرية · أسعار حية · دعم 24/7</span>
-      </div>
-
-      <header className="shop-header exp-header">
+      <header className="shop-header exp-header exp-header-white">
         <div className="shop-header-inner exp-header-inner">
           <Link href="/" className="shop-brand exp-brand">
-            <span className="exp-wordmark">{BRAND}</span>
+            <span className="exp-wordmark exp-wordmark-dark">{BRAND}</span>
           </Link>
 
           <button
             type="button"
-            className="shop-menu-toggle exp-menu-toggle"
+            className="shop-menu-toggle exp-menu-toggle exp-menu-toggle-dark"
             aria-expanded={menuOpen}
             onClick={() => setMenuOpen((v) => !v)}
           >
             القائمة
           </button>
 
-          <nav className={`shop-nav exp-nav${menuOpen ? " open" : ""}`}>
-            <Link href="/account">رحلاتي</Link>
-            <Link href="/chat">المساعد</Link>
-            <Link href="/#destinations">الوجهات</Link>
+          <nav className={`exp-util-nav${menuOpen ? " open" : ""}`}>
+            <label className="exp-util-item">
+              <span className="exp-util-icon" aria-hidden>💱</span>
+              <select defaultValue="KWD" aria-label="العملة">
+                <option value="KWD">KWD</option>
+                <option value="USD">USD</option>
+                <option value="EUR">EUR</option>
+              </select>
+            </label>
+            <label className="exp-util-item">
+              <span className="exp-util-icon" aria-hidden>🌐</span>
+              <select defaultValue="ar" aria-label="اللغة">
+                <option value="ar">العربية</option>
+                <option value="en">English</option>
+              </select>
+            </label>
+            <Link href="/chat" className="exp-util-link">
+              اتصل بنا
+            </Link>
+            <Link href="/chat" className="exp-util-link">
+              الدعم
+            </Link>
             {customer ? (
               <>
-                <Link href="/account" className="exp-user">
+                <Link href="/account" className="exp-util-link">
                   {customer.name || customer.phone}
                 </Link>
-                <button type="button" className="shop-linkbtn exp-linkbtn" onClick={logout}>
+                <button type="button" className="exp-util-link exp-util-btn" onClick={logout}>
                   خروج
                 </button>
               </>
             ) : (
-              <Link href="/account/login" className="exp-signin">
-                تسجيل الدخول
+              <Link href="/account/login" className="exp-signin exp-signin-dark">
+                دخول
               </Link>
             )}
           </nav>

@@ -441,8 +441,10 @@ export function ShopHomeClient() {
         departDate={departDate}
         returnDate={returnDate}
         pickupTime={pickupTime}
+        dropoffTime={dropoffTime}
         adults={adults}
         children={children}
+        rooms={rooms}
         onOriginClear={(text) => {
           setOrigin("");
           setOriginLabel(text);
@@ -472,8 +474,10 @@ export function ShopHomeClient() {
         onDepartDateChange={setDepartDate}
         onReturnDateChange={setReturnDate}
         onPickupTimeChange={setPickupTime}
+        onDropoffTimeChange={setDropoffTime}
         onAdultsChange={setAdults}
         onChildrenChange={setChildren}
+        onRoomsChange={setRooms}
         onSearch={() => void runSearch()}
         loading={loading}
         error={error}

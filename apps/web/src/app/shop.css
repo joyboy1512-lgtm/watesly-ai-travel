@@ -1,4 +1,5 @@
 @import url("https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&display=swap");
 
 .sr-only {
   position: absolute;
@@ -35,76 +36,604 @@
   font-family: Cairo, system-ui, sans-serif;
 }
 
-.exp-loyalty-stripe {
-  background: var(--exp-yellow);
-  color: var(--exp-navy);
-  text-align: center;
-  font-size: 0.78rem;
-  font-weight: 700;
-  padding: 0.35rem 1rem;
-}
-
-.exp-header {
+.exp-header-white {
   position: sticky;
   top: 0;
   z-index: 50;
-  background: var(--exp-navy);
-  border-bottom: 0;
+  background: #fff;
+  border-bottom: 1px solid var(--exp-border);
   box-shadow: none;
 }
 
 .exp-header-inner {
   width: min(1280px, calc(100% - 2rem));
-  min-height: 60px;
-  padding: 0.65rem 0;
+  min-height: 56px;
+  padding: 0.5rem 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
 }
 
-.exp-brand {
-  text-decoration: none;
-}
-
-.exp-wordmark {
-  font-size: 1.45rem;
+.exp-wordmark-dark {
+  font-size: 1.35rem;
   font-weight: 800;
-  color: #fff;
+  color: var(--exp-navy);
   letter-spacing: -0.02em;
 }
 
-.exp-nav a,
-.exp-linkbtn {
-  color: rgba(255, 255, 255, 0.92) !important;
-  font-weight: 600;
-  font-size: 0.9rem;
-  background: none !important;
+.exp-util-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  flex-wrap: wrap;
+  margin-inline-start: auto;
 }
 
-.exp-nav a:hover,
-.exp-linkbtn:hover {
-  color: #fff !important;
+.exp-util-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.82rem;
+  color: var(--exp-ink);
+}
+
+.exp-util-item select {
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--exp-ink);
+  cursor: pointer;
+  padding: 0.2rem 0.1rem;
+}
+
+.exp-util-link {
+  text-decoration: none;
+  color: var(--exp-ink);
+  font-size: 0.85rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.exp-util-link:hover {
+  color: var(--exp-blue);
   text-decoration: underline;
 }
 
-.exp-signin {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.45rem 0.95rem;
-  border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.55) !important;
-  text-decoration: none;
-  color: #fff !important;
+.exp-util-btn {
+  border: 0;
+  background: none;
+  cursor: pointer;
+  font: inherit;
 }
 
-.exp-menu-toggle {
-  color: #fff !important;
-  border-color: rgba(255, 255, 255, 0.35) !important;
-  background: transparent !important;
+.exp-signin-dark {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.4rem 0.9rem;
+  border-radius: 999px;
+  border: 1px solid var(--exp-navy) !important;
+  text-decoration: none;
+  color: var(--exp-navy) !important;
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.exp-menu-toggle-dark {
+  color: var(--exp-navy) !important;
+  border-color: var(--exp-border) !important;
+  background: #fff !important;
 }
 
 .exp-main {
   background: #fff;
+  padding: 0;
 }
 
-/* —— Expedia search hero —— */
+/* —— Expedia home hero + dialog —— */
+.exp-home-hero {
+  position: relative;
+  min-height: clamp(420px, 52vh, 520px);
+  margin-bottom: 0;
+  overflow: visible;
+}
+
+.exp-home-bg {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center 35%;
+}
+
+.exp-home-shade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0.35) 0%,
+    rgba(0, 0, 0, 0.45) 50%,
+    rgba(0, 0, 0, 0.25) 100%
+  );
+}
+
+.exp-home-content {
+  position: relative;
+  z-index: 2;
+  width: min(920px, calc(100% - 1.5rem));
+  margin: 0 auto;
+  padding: 2.5rem 0 1.5rem;
+  display: grid;
+  gap: 1rem;
+}
+
+.exp-home-tagline {
+  margin: 0;
+  text-align: center;
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: clamp(1.5rem, 3.5vw, 2.35rem);
+  font-weight: 700;
+  color: #fff;
+  line-height: 1.25;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
+}
+
+.exp-dialog {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(13, 16, 35, 0.18);
+  overflow: visible;
+  padding-bottom: 0.65rem;
+}
+
+.exp-icon-tabs {
+  display: flex;
+  justify-content: center;
+  gap: 0.15rem;
+  padding: 0.35rem 0.5rem 0;
+  overflow-x: auto;
+  border-bottom: 1px solid var(--exp-border);
+}
+
+.exp-icon-tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  min-width: 4.5rem;
+  padding: 0.45rem 0.65rem 0.5rem;
+  border: 0;
+  background: transparent;
+  color: var(--exp-ink);
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -1px;
+  white-space: nowrap;
+}
+
+.exp-icon-tab-svg {
+  color: var(--exp-muted);
+  line-height: 0;
+}
+
+.exp-icon-tab.on {
+  color: var(--exp-blue);
+  border-bottom-color: var(--exp-blue);
+}
+
+.exp-icon-tab.on .exp-icon-tab-svg {
+  color: var(--exp-blue);
+}
+
+.exp-subtabs {
+  display: flex;
+  gap: 1.1rem;
+  padding: 0.55rem 1rem 0.35rem;
+  flex-wrap: wrap;
+}
+
+.exp-subtabs button {
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--exp-muted);
+  padding: 0 0 0.35rem;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+}
+
+.exp-subtabs button.on {
+  color: var(--exp-blue);
+  border-bottom-color: var(--exp-blue);
+  font-weight: 700;
+}
+
+.exp-subtabs button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.exp-subtabs-cars {
+  align-items: center;
+}
+
+.exp-subtabs-spacer {
+  flex: 1;
+  min-width: 0.5rem;
+}
+
+.exp-activities-hint {
+  margin: 0;
+  padding: 0.45rem 1rem 0;
+  font-size: 0.82rem;
+  color: var(--exp-muted);
+}
+
+.exp-activities-hint button {
+  border: 0;
+  background: none;
+  color: var(--exp-blue);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.exp-form-row {
+  display: flex;
+  align-items: stretch;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  padding: 0.65rem 0.75rem 0.35rem;
+  position: relative;
+}
+
+.exp-input-cell {
+  flex: 1 1 120px;
+  min-height: 46px;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.35rem 0.55rem;
+  border: 1px solid #818494;
+  border-radius: 8px;
+  background: #fff;
+  color: var(--exp-muted);
+  position: relative;
+}
+
+.exp-cell-grow {
+  flex: 1.3 1 140px;
+}
+
+.exp-cell-dates {
+  flex: 1.4 1 160px;
+}
+
+.exp-cell-time {
+  flex: 0.8 1 100px;
+  min-width: 95px;
+}
+
+.exp-cell-time label {
+  display: grid;
+  gap: 0.05rem;
+  width: 100%;
+}
+
+.exp-cell-time span {
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--exp-muted);
+}
+
+.exp-cell-time select {
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--exp-ink);
+  padding: 0;
+  cursor: pointer;
+}
+
+.exp-cell-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.exp-cell-label {
+  display: block;
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--exp-muted);
+}
+
+.exp-cell-body .shop-ac span {
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--exp-muted);
+}
+
+.exp-cell-body .shop-ac input {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--exp-ink);
+  box-shadow: none !important;
+}
+
+.exp-dates-inline {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.exp-dates-inline label {
+  display: grid;
+  gap: 0.02rem;
+  min-width: 0;
+}
+
+.exp-dates-inline label span {
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.exp-dates-inline input {
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--exp-ink);
+  padding: 0;
+  width: 100%;
+  min-width: 0;
+}
+
+.exp-dates-inline em {
+  font-style: normal;
+  font-size: 0.72rem;
+  color: var(--exp-muted);
+}
+
+.exp-date-sep {
+  color: var(--exp-muted);
+  font-weight: 600;
+  padding-top: 0.5rem;
+}
+
+.exp-swap-inline {
+  flex-shrink: 0;
+  align-self: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  margin: 0 -0.15rem;
+  z-index: 2;
+  border: 1px solid var(--exp-border);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--exp-blue);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+}
+
+.exp-cell-travelers {
+  flex: 1 1 130px;
+  padding: 0;
+  overflow: visible;
+}
+
+.exp-travelers-trigger {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  width: 100%;
+  height: 100%;
+  padding: 0.35rem 0.55rem;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  text-align: start;
+  font: inherit;
+}
+
+.exp-travelers-trigger strong {
+  display: block;
+  font-size: 0.86rem;
+  color: var(--exp-ink);
+  font-weight: 600;
+}
+
+.exp-travelers-pop {
+  position: absolute;
+  z-index: 90;
+  top: calc(100% + 6px);
+  inset-inline-start: 0;
+  min-width: 260px;
+  padding: 0.85rem;
+  background: #fff;
+  border: 1px solid var(--exp-border);
+  border-radius: 12px;
+  box-shadow: 0 12px 32px rgba(13, 16, 35, 0.14);
+  display: grid;
+  gap: 0.65rem;
+}
+
+.exp-pop-done {
+  border: 0;
+  border-radius: 999px;
+  padding: 0.45rem 1rem;
+  background: var(--exp-blue);
+  color: #fff;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  justify-self: end;
+}
+
+.exp-search-submit {
+  flex: 0 0 auto;
+  align-self: stretch;
+  min-height: 46px;
+  padding: 0 1.35rem;
+  border: 0;
+  border-radius: 999px;
+  background: var(--exp-blue);
+  color: #fff;
+  font: inherit;
+  font-size: 0.92rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.exp-search-submit:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+
+.exp-extras {
+  display: flex;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+  padding: 0.15rem 1rem 0.55rem;
+}
+
+.exp-extras label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  color: var(--exp-ink);
+  cursor: pointer;
+}
+
+.exp-dialog-msg {
+  margin: 0;
+  padding: 0 1rem 0.5rem;
+  font-size: 0.85rem;
+}
+
+.exp-promo-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  background: var(--exp-navy);
+  color: #fff;
+  border-radius: 16px;
+  padding: 0.85rem 1.1rem;
+  box-shadow: 0 8px 24px rgba(0, 37, 93, 0.2);
+}
+
+.exp-promo-copy {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.exp-promo-icon {
+  width: 2.25rem;
+  height: 2.25rem;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  background: var(--exp-blue);
+  font-weight: 800;
+  font-size: 1rem;
+}
+
+.exp-promo-copy strong {
+  display: block;
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.exp-promo-copy span {
+  display: block;
+  font-size: 0.78rem;
+  opacity: 0.85;
+  margin-top: 0.1rem;
+}
+
+.exp-promo-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.5rem 1.15rem;
+  border-radius: 999px;
+  background: #fff;
+  color: var(--exp-navy);
+  font-weight: 700;
+  font-size: 0.88rem;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.exp-promo-btn:hover {
+  background: #f5f6f8;
+}
+
+@media (max-width: 720px) {
+  .exp-util-nav {
+    display: none;
+    position: absolute;
+    top: 100%;
+    inset-inline: 0;
+    background: #fff;
+    border-bottom: 1px solid var(--exp-border);
+    padding: 0.75rem 1rem;
+    flex-direction: column;
+    align-items: stretch;
+    box-shadow: 0 8px 20px rgba(13, 16, 35, 0.1);
+  }
+
+  .exp-util-nav.open {
+    display: flex;
+  }
+
+  .exp-header-inner {
+    position: relative;
+    flex-wrap: wrap;
+  }
+
+  .exp-home-content {
+    padding-top: 1.75rem;
+  }
+
+  .exp-form-row {
+    flex-direction: column;
+  }
+
+  .exp-search-submit {
+    width: 100%;
+  }
+
+  .exp-swap-inline {
+    align-self: flex-end;
+    margin-top: -1.5rem;
+  }
+}
+
+/* —— Legacy Expedia flat search (unused) —— */
 .exp-search-hero {
   background: #fff;
   padding: 1.5rem 0 2rem;
@@ -2069,11 +2598,16 @@
 }
 
 .exp-theme .shop-landing {
-  width: min(1280px, calc(100% - 2rem));
+  width: min(920px, calc(100% - 1.5rem));
+  padding-top: 2rem;
+}
+
+.exp-theme .shop-stats-bar {
+  margin-top: 0;
 }
 
 .exp-theme .shop-results-block {
-  width: min(1280px, calc(100% - 2rem));
+  width: min(920px, calc(100% - 1.5rem));
 }
 
 .exp-theme .shop-dest-card,
@@ -2134,6 +2668,6 @@
   background: var(--exp-navy);
 }
 
-.exp-theme .exp-segment .prc-suggest {
-  z-index: 80;
+.exp-theme .exp-input-cell .prc-suggest {
+  z-index: 100;
 }

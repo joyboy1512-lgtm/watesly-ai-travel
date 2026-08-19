@@ -138,6 +138,45 @@ export async function resolveTransferEndpoint(
   };
 }
 
+function sameTransferPoint(a: TransferEndpoint, b: TransferEndpoint) {
+  return a.type === b.type && a.code.trim().toUpperCase() === b.code.trim().toUpperCase();
+}
+
+/**
+ * Hotelbeds Transfers needs two distinct points (typically airport ↔ city).
+ * Same-location car-hire search is mapped to airport pickup + city drop-off.
+ */
+export async function ensureDistinctTransferEndpoints(
+  from: TransferEndpoint,
+  to: TransferEndpoint,
+  city?: string,
+): Promise<{ from: TransferEndpoint; to: TransferEndpoint }> {
+  if (!sameTransferPoint(from, to)) return { from, to };
+
+  const cityQuery = String(city || from.label || to.label || "").trim();
+
+  if (from.type === "IATA") {
+    const gps = await resolveTransferEndpoint({
+      query: cityQuery || from.label,
+      kind: "GPS",
+      city: cityQuery,
+    });
+    if (!sameTransferPoint(from, gps)) return { from, to: gps };
+  }
+
+  const iata = cityDefaultAirport(cityQuery) || cityDefaultAirport(from.label);
+  if (iata && !(from.type === "IATA" && from.code.toUpperCase() === iata)) {
+    return {
+      from: { type: "IATA", code: iata, label: iata },
+      to: from.type === "IATA" ? to : from,
+    };
+  }
+
+  throw new Error(
+    "حدد مطاراً ومكان تسليم مختلف، أو اكتب مدينة لها مطار معروف حتى نبحث عن نقل المطار ↔ المدينة",
+  );
+}
+
 /** @deprecated Use resolveTransferEndpoint with explicit kind. */
 export async function resolveTransferEndpointLegacy(
   query: string,
@@ -294,7 +333,7 @@ export class HotelbedsTransferProvider implements TransferProviderAdapter {
     const fromKind = params.fromKind || "IATA";
     const toKind = params.toKind || "GPS";
     const hotelLookup = this.hotelLookupFactory();
-    const from = await resolveTransferEndpoint({
+    const resolvedFrom = await resolveTransferEndpoint({
       query: params.from,
       kind: fromKind,
       city,
@@ -302,14 +341,19 @@ export class HotelbedsTransferProvider implements TransferProviderAdapter {
       inboundDate: params.inboundDate,
       hotelLookup,
     });
-    const to = await resolveTransferEndpoint({
-      query: params.to,
+    const resolvedTo = await resolveTransferEndpoint({
+      query: params.to || params.from,
       kind: toKind,
       city,
       outboundDate: params.outboundDate,
       inboundDate: params.inboundDate,
       hotelLookup,
     });
+    const { from, to } = await ensureDistinctTransferEndpoints(
+      resolvedFrom,
+      resolvedTo,
+      city,
+    );
     const adults = Math.max(1, params.adults || 1);
     const children = Math.max(0, params.children || 0);
     const infants = Math.max(0, params.infants || 0);
@@ -338,8 +382,15 @@ export class HotelbedsTransferProvider implements TransferProviderAdapter {
       message?: string;
     };
     if (!response.ok) {
+      const detail =
+        json.error?.message ||
+        json.message ||
+        (typeof json.error === "string" ? json.error : "") ||
+        "";
       throw new Error(
-        json.error?.message || json.message || `Hotelbeds Transfers HTTP ${response.status}`,
+        detail
+          ? `تعذر جلب النقل: ${detail}`
+          : `تعذر جلب النقل من Hotelbeds (HTTP ${response.status})`,
       );
     }
 

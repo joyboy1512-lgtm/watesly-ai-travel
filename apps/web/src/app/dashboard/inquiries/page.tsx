@@ -1205,10 +1205,28 @@ export default function InquiriesPage() {
           setLoading(false);
           return;
         }
-        const fromKind = transferPointKindToEndpoint(form.pickupKind);
-        const toKind = transferPointKindToEndpoint(
+        const cityName =
+          form.transferCity.trim() ||
+          form.pickupLocationLabel.split("·")[1]?.trim() ||
+          pickup;
+        let from = pickup;
+        let to = dropoff;
+        let fromKind = transferPointKindToEndpoint(form.pickupKind);
+        let toKind = transferPointKindToEndpoint(
           form.differentDropoff ? form.dropoffKind : form.pickupKind,
         );
+        // Hotelbeds transfers need two points. Same pickup/drop-off → airport ↔ city.
+        if (!form.differentDropoff) {
+          if (form.pickupKind === "airport") {
+            fromKind = "IATA";
+            toKind = "GPS";
+            to = cityName;
+          } else {
+            fromKind = "GPS";
+            toKind = "GPS";
+            to = pickup;
+          }
+        }
         const children = carFilters.addons.some(
           (a) => a === "child_seat" || a === "booster",
         )
@@ -1234,9 +1252,9 @@ export default function InquiriesPage() {
           method: "POST",
           timeoutMs: 45000,
           body: JSON.stringify({
-            city: form.transferCity,
-            from: pickup,
-            to: dropoff,
+            city: cityName,
+            from,
+            to,
             fromKind,
             toKind,
             outboundDate: form.departDate,
@@ -1274,7 +1292,7 @@ export default function InquiriesPage() {
         setMessage(
           result.items?.length
             ? `تم جلب ${result.items.length} خيار نقل عبر ${result.providerName}`
-            : "لا توجد رحلات نقل متاحة لهذا المسار والتوقيت",
+            : "لا توجد رحلات نقل متاحة. جرّب مطاراً مع تاريخ لاحق، أو فعّل تسليم في موقع مختلف.",
         );
         setLoading(false);
         return;
@@ -1969,6 +1987,11 @@ export default function InquiriesPage() {
                   ) : null}
                 </button>
               </div>
+              {!form.differentDropoff ? (
+                <p className="car-hire-hint">
+                  نفس الموقع: نبحث عن نقل من المطار إلى وسط المدينة لهذه الوجهة
+                </p>
+              ) : null}
             </>
           ) : null}
         </div>
@@ -2399,7 +2422,7 @@ export default function InquiriesPage() {
                     <p className="hint">
                       {carResults.length
                         ? "لا توجد مركبات مطابقة للمصفيات السريعة. امسح المصفيات أو غيّر المتطلبات."
-                        : "لا توجد نتائج. جرّب مطاراً أو مدينة للاستلام، مع تاريخ ووقت الاستلام والتسليم."}
+                        : "لا توجد نتائج. نبحث عن نقل المطار ↔ المدينة. جرّب مطاراً معروفاً مثل KWI أو DXB."}
                     </p>
                   ) : null}
                 </div>

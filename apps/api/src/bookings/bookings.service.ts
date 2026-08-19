@@ -771,14 +771,11 @@ export class BookingsService {
     children?: number;
     infants?: number;
   }) {
-    const city = String(input.city || "").trim();
     const from = String(input.from || "").trim();
-    const to = String(input.to || "").trim();
-    if (!city) {
-      throw new BadRequestException("حدد مدينة/وجهة النقل");
-    }
-    if (!from || !to) {
-      throw new BadRequestException("حدد نقطة الاستلام والتسليم");
+    const to = String(input.to || "").trim() || from;
+    const city = String(input.city || "").trim() || to || from;
+    if (!from) {
+      throw new BadRequestException("حدد نقطة الاستلام");
     }
     if (!input.outboundDate) {
       throw new BadRequestException("حدد تاريخ الذهاب");
@@ -788,20 +785,26 @@ export class BookingsService {
       input.organizationId,
       process.env.TRANSFER_PROVIDER || "hotelbeds-transfers",
     );
-    const offers = await provider.searchTransfers({
-      city,
-      from,
-      to,
-      fromKind: input.fromKind,
-      toKind: input.toKind,
-      outboundDate: input.outboundDate,
-      outboundTime: input.outboundTime,
-      inboundDate: input.inboundDate,
-      inboundTime: input.inboundTime,
-      adults: Math.max(1, input.adults || 1),
-      children: Math.max(0, input.children || 0),
-      infants: Math.max(0, input.infants || 0),
-    });
+    let offers;
+    try {
+      offers = await provider.searchTransfers({
+        city,
+        from,
+        to,
+        fromKind: input.fromKind,
+        toKind: input.toKind,
+        outboundDate: input.outboundDate,
+        outboundTime: input.outboundTime,
+        inboundDate: input.inboundDate,
+        inboundTime: input.inboundTime,
+        adults: Math.max(1, input.adults || 1),
+        children: Math.max(0, input.children || 0),
+        infants: Math.max(0, input.infants || 0),
+      });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "تعذر البحث عن النقل";
+      throw new BadRequestException(message);
+    }
     return {
       providerKey: provider.providerKey,
       providerName: provider.displayName,

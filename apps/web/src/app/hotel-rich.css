@@ -1213,6 +1213,13 @@
   font-weight: 800;
 }
 
+.car-hire-hint {
+  margin: 0.15rem 0 0;
+  color: #5d7270;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
 .quick-filters-link {
   display: inline-flex;
   align-items: center;

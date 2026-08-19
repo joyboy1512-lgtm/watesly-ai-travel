@@ -1160,6 +1160,7 @@ export default function InquiriesPage() {
         ) : null}
 
         <div className="flight-search">
+          {mode === "flights" ? (
             <div className="fs-grid">
               <AutocompleteField
                 label="المغادرة من"

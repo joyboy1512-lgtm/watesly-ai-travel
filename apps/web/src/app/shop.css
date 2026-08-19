@@ -62,6 +62,27 @@
   letter-spacing: -0.02em;
 }
 
+.exp-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  text-decoration: none;
+}
+
+.exp-brand-circle {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: var(--exp-navy);
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
 .exp-util-nav {
   display: flex;
   align-items: center;
@@ -190,12 +211,51 @@
 .exp-icon-tabs {
   display: flex;
   justify-content: center;
-  gap: 0.1rem;
-  padding: 0.25rem 0.35rem 0;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.85rem 0.65rem 0.55rem;
   overflow-x: auto;
-  border-bottom: 1px solid var(--exp-border);
 }
 
+.exp-icon-circle {
+  width: 46px;
+  height: 46px;
+  flex-shrink: 0;
+  border: 1.5px solid var(--exp-border);
+  border-radius: 50%;
+  background: #fff;
+  color: var(--exp-muted);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.15s, border-color 0.15s, color 0.15s, transform 0.15s;
+}
+
+.exp-icon-circle:hover {
+  border-color: var(--exp-blue);
+  color: var(--exp-blue);
+}
+
+.exp-icon-circle.on {
+  background: var(--exp-blue);
+  border-color: var(--exp-blue);
+  color: #fff;
+  transform: scale(1.04);
+}
+
+.exp-icon-circle-svg {
+  line-height: 0;
+  display: grid;
+  place-items: center;
+}
+
+.exp-icon-circle-svg svg {
+  width: 22px;
+  height: 22px;
+}
+
+/* Legacy tab styles (unused) */
 .exp-icon-tab {
   display: flex;
   flex-direction: column;
@@ -285,6 +345,214 @@
   text-decoration: underline;
 }
 
+/* Flat search bar — single container, no nested boxes */
+.exp-form-bar {
+  display: flex;
+  align-items: stretch;
+  margin: 0.35rem 0.65rem 0.55rem;
+  border: 1px solid #818494;
+  border-radius: 8px;
+  background: #fff;
+  overflow: visible;
+  position: relative;
+  min-height: 52px;
+}
+
+.exp-field {
+  flex: 1;
+  min-width: 0;
+  padding: 0.4rem 0.65rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.08rem;
+  position: relative;
+  overflow: visible;
+  border-inline-start: 1px solid var(--exp-border);
+}
+
+.exp-field:first-child {
+  border-inline-start: none;
+}
+
+.exp-field-grow {
+  flex: 1.35;
+}
+
+.exp-field-dates {
+  flex: 1.15;
+}
+
+.exp-field-time {
+  flex: 0.85;
+}
+
+.exp-field-travelers {
+  flex: 0.95;
+  overflow: visible;
+  position: relative;
+}
+
+.exp-field-swap {
+  flex: 0;
+  padding: 0 0.35rem;
+  display: grid;
+  place-items: center;
+  border-inline-start: 1px solid var(--exp-border);
+}
+
+.exp-field-label {
+  display: block;
+  font-size: 0.58rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--exp-muted);
+  line-height: 1;
+}
+
+.exp-form-bar .exp-ac-field {
+  display: grid;
+  gap: 0.08rem;
+  position: relative;
+  width: 100%;
+  min-width: 0;
+  overflow: visible;
+}
+
+.exp-form-bar .exp-ac-field .exp-field-label {
+  pointer-events: none;
+}
+
+.exp-form-bar .exp-ac-field input {
+  border: 0 !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  outline: none !important;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--exp-ink);
+  width: 100%;
+  min-width: 0;
+  line-height: 1.25;
+}
+
+.exp-form-bar .exp-ac-field input:focus {
+  box-shadow: none !important;
+}
+
+.exp-form-bar .exp-ac-menu,
+.exp-form-bar .prc-suggest {
+  z-index: 200;
+  top: calc(100% + 2px);
+}
+
+.exp-time-select {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--exp-ink);
+  cursor: pointer;
+  width: 100%;
+  outline: none;
+}
+
+.exp-swap-btn {
+  width: 1.65rem;
+  height: 1.65rem;
+  border: 1px solid var(--exp-border);
+  border-radius: 50%;
+  background: #fff;
+  color: var(--exp-blue);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  padding: 0;
+}
+
+.exp-date-btn {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--exp-ink);
+  cursor: pointer;
+  text-align: start;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  line-height: 1.25;
+}
+
+.exp-date-native {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.exp-form-bar .exp-dates-row {
+  overflow: visible;
+}
+
+.exp-form-bar .exp-travelers-trigger {
+  width: 100%;
+  text-align: start;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+}
+
+.exp-form-bar .exp-travelers-trigger strong {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--exp-ink);
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.exp-form-bar .exp-search-submit {
+  flex-shrink: 0;
+  align-self: stretch;
+  height: auto;
+  min-height: 52px;
+  border-radius: 8px 0 0 8px;
+  padding: 0 1.35rem;
+  margin: -1px;
+  border: 1px solid var(--exp-blue);
+}
+
+.exp-form-flights .exp-field-grow {
+  flex: 1.1;
+}
+
+.exp-form-stays .exp-field-grow {
+  flex: 1.5;
+}
+
+.exp-form-cars .exp-field-grow {
+  flex: 1.2;
+}
+
+.exp-form-activities .exp-field-grow {
+  flex: 1.4;
+}
+
+/* Legacy grid cells (unused) */
 .exp-form-row {
   display: grid;
   align-items: center;
@@ -294,11 +562,11 @@
 }
 
 .exp-form-flights {
-  grid-template-columns: minmax(0, 1.05fr) auto minmax(0, 1.05fr) minmax(0, 1.15fr) minmax(0, 0.95fr) auto;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) minmax(0, 1.4fr) minmax(0, 0.9fr) auto;
 }
 
 .exp-form-stays {
-  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1.2fr) minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1.35fr) minmax(0, 0.95fr) auto;
 }
 
 .exp-form-cars {
@@ -589,7 +857,7 @@
 
 .exp-travelers-pop {
   position: absolute;
-  z-index: 90;
+  z-index: 200;
   top: calc(100% + 4px);
   inset-inline-start: 0;
   min-width: 240px;
@@ -756,6 +1024,36 @@
 
   .exp-home-content {
     padding-top: 1.75rem;
+  }
+
+  .exp-form-bar {
+    flex-direction: column;
+    margin-inline: 0.5rem;
+  }
+
+  .exp-field {
+    border-inline-start: none;
+    border-top: 1px solid var(--exp-border);
+    padding: 0.55rem 0.75rem;
+  }
+
+  .exp-field:first-child {
+    border-top: none;
+  }
+
+  .exp-field-swap {
+    position: absolute;
+    top: 3.4rem;
+    inset-inline-end: 0.85rem;
+    border: 0;
+    padding: 0;
+    z-index: 3;
+  }
+
+  .exp-form-bar .exp-search-submit {
+    width: 100%;
+    border-radius: 0 0 8px 8px;
+    min-height: 46px;
   }
 
   .exp-form-row {

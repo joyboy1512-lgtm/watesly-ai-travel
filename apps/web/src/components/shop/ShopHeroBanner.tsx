@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useState, useRef, type ReactNode } from "react";
 import { HERO_SLIDES } from "@/lib/shop-content";
 import { ShopAutocomplete, type SuggestItem } from "@/components/shop/ShopAutocomplete";
 
@@ -110,39 +110,6 @@ const CABIN_LABELS: Record<string, string> = {
   first: "أولى",
 };
 
-function IconPin() {
-  return (
-    <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden>
-      <path
-        fill="currentColor"
-        d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5z"
-      />
-    </svg>
-  );
-}
-
-function IconCalendar() {
-  return (
-    <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden>
-      <path
-        fill="currentColor"
-        d="M19 4h-1V2h-2v2H8V2H6v2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2zm0 16H5V10h14v10z"
-      />
-    </svg>
-  );
-}
-
-function IconUsers() {
-  return (
-    <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden>
-      <path
-        fill="currentColor"
-        d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5C15 14.17 10.33 13 8 13zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"
-      />
-    </svg>
-  );
-}
-
 function IconSwap() {
   return (
     <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden>
@@ -184,17 +151,38 @@ function DatePick({
   onChange: (v: string) => void;
   label: string;
 }) {
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  function openPicker() {
+    const el = inputRef.current;
+    if (!el) return;
+    if (typeof el.showPicker === "function") {
+      try {
+        el.showPicker();
+        return;
+      } catch {
+        /* fallback */
+      }
+    }
+    el.focus();
+    el.click();
+  }
+
   return (
-    <label className="exp-date-pick" title={label}>
-      <span className="exp-date-text">{formatDateDisplay(value)}</span>
+    <div className="exp-date-pick">
+      <button type="button" className="exp-date-btn" onClick={openPicker} aria-label={label}>
+        {formatDateDisplay(value)}
+      </button>
       <input
+        ref={inputRef}
         type="date"
-        className="exp-date-hidden"
+        className="exp-date-native"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        aria-label={label}
+        tabIndex={-1}
+        aria-hidden
       />
-    </label>
+    </div>
   );
 }
 
@@ -246,12 +234,13 @@ export function ShopHeroBanner(props: Props) {
                 key={key}
                 type="button"
                 role="tab"
-                className={`exp-icon-tab${props.mode === key ? " on" : ""}`}
+                className={`exp-icon-circle${props.mode === key ? " on" : ""}`}
                 aria-selected={props.mode === key}
+                aria-label={label}
+                title={label}
                 onClick={() => props.onModeChange(key)}
               >
-                <span className="exp-icon-tab-svg">{icon}</span>
-                <span>{label}</span>
+                <span className="exp-icon-circle-svg">{icon}</span>
               </button>
             ))}
           </div>
@@ -301,208 +290,174 @@ export function ShopHeroBanner(props: Props) {
             </div>
           ) : null}
 
-          {props.mode === "activities" ? (
-            <p className="exp-activities-hint">
-              تبحث عن رياضة أو حفلات؟{" "}
-              <button type="button" onClick={() => void props.onSearch()}>
-                ابحث عن فعاليات
-              </button>
-            </p>
-          ) : null}
-
-          <div className={`exp-form-row exp-form-${props.mode}`}>
+          <div className={`exp-form-bar exp-form-${props.mode}`}>
             {props.mode === "flights" ? (
               <>
-                <div className="exp-input-cell exp-cell-grow">
-                  <IconPin />
-                  <div className="exp-cell-body">
-                    <ShopAutocomplete
-                      inline
-                      label="المغادرة من"
-                      value={props.origin}
-                      display={props.originLabel}
-                      placeholder="مدينة أو مطار"
-                      onQuery={props.searchAirports}
-                      onClearText={props.onOriginClear}
-                      onPick={props.onOriginPick}
-                    />
-                  </div>
+                <div className="exp-field exp-field-grow">
+                  <ShopAutocomplete
+                    inline
+                    label="المغادرة من"
+                    value={props.origin}
+                    display={props.originLabel}
+                    placeholder="مدينة أو مطار"
+                    onQuery={props.searchAirports}
+                    onClearText={props.onOriginClear}
+                    onPick={props.onOriginPick}
+                  />
                 </div>
-                <button
-                  type="button"
-                  className="exp-swap-inline"
-                  aria-label="تبديل"
-                  onClick={swapAirports}
-                >
-                  <IconSwap />
-                </button>
-                <div className="exp-input-cell exp-cell-grow">
-                  <IconPin />
-                  <div className="exp-cell-body">
-                    <ShopAutocomplete
-                      inline
-                      label="الوجهة"
-                      value={props.destination}
-                      display={props.destinationLabel}
-                      placeholder="إلى أين؟"
-                      onQuery={props.searchAirports}
-                      onClearText={props.onDestinationClear}
-                      onPick={props.onDestinationPick}
-                    />
-                  </div>
+                <div className="exp-field exp-field-swap">
+                  <button
+                    type="button"
+                    className="exp-swap-btn"
+                    aria-label="تبديل"
+                    onClick={swapAirports}
+                  >
+                    <IconSwap />
+                  </button>
+                </div>
+                <div className="exp-field exp-field-grow">
+                  <ShopAutocomplete
+                    inline
+                    label="الوجهة"
+                    value={props.destination}
+                    display={props.destinationLabel}
+                    placeholder="إلى أين؟"
+                    onQuery={props.searchAirports}
+                    onClearText={props.onDestinationClear}
+                    onPick={props.onDestinationPick}
+                  />
                 </div>
               </>
             ) : null}
 
             {props.mode === "stays" ? (
-              <div className="exp-input-cell exp-cell-grow">
-                <IconPin />
-                <div className="exp-cell-body">
+              <div className="exp-field exp-field-grow">
+                <ShopAutocomplete
+                  inline
+                  label="إلى أين؟"
+                  value={props.stayQuery}
+                  display={props.stayQuery}
+                  placeholder="مدينة أو فندق"
+                  onQuery={props.searchCities}
+                  onClearText={props.onStayQueryChange}
+                  onPick={props.onStayPick}
+                />
+              </div>
+            ) : null}
+
+            {props.mode === "cars" ? (
+              <>
+                <div className="exp-field">
                   <ShopAutocomplete
                     inline
-                    label="إلى أين؟"
+                    label="من (المطار)"
+                    value={props.origin}
+                    display={props.originLabel}
+                    placeholder="KWI"
+                    onQuery={props.searchAirports}
+                    onClearText={props.onOriginClear}
+                    onPick={props.onOriginPick}
+                  />
+                </div>
+                <div className="exp-field exp-field-grow">
+                  <ShopAutocomplete
+                    inline
+                    label="إلى"
                     value={props.stayQuery}
                     display={props.stayQuery}
-                    placeholder="مدينة أو فندق"
+                    placeholder="فندق أو مدينة"
                     onQuery={props.searchCities}
                     onClearText={props.onStayQueryChange}
                     onPick={props.onStayPick}
                   />
                 </div>
-              </div>
-            ) : null}
-
-            {props.mode === "cars" ? (
-              <>
-                <div className="exp-input-cell">
-                  <IconPin />
-                  <div className="exp-cell-body">
-                    <ShopAutocomplete
-                      inline
-                      label="من (المطار)"
-                      value={props.origin}
-                      display={props.originLabel}
-                      placeholder="KWI"
-                      onQuery={props.searchAirports}
-                      onClearText={props.onOriginClear}
-                      onPick={props.onOriginPick}
-                    />
-                  </div>
-                </div>
-                <div className="exp-input-cell exp-cell-grow">
-                  <IconPin />
-                  <div className="exp-cell-body">
-                    <ShopAutocomplete
-                      inline
-                      label="إلى"
-                      value={props.stayQuery}
-                      display={props.stayQuery}
-                      placeholder="فندق أو مدينة"
-                      onQuery={props.searchCities}
-                      onClearText={props.onStayQueryChange}
-                      onPick={props.onStayPick}
-                    />
-                  </div>
-                </div>
               </>
             ) : null}
 
             {props.mode === "activities" ? (
-              <div className="exp-input-cell exp-cell-grow">
-                <IconPin />
-                <div className="exp-cell-body">
-                  <ShopAutocomplete
-                    inline
-                    label="الوجهة"
-                    value={props.activityDest}
-                    display={props.activityLabel}
-                    placeholder="مدينة النشاط"
-                    onQuery={props.searchCities}
-                    onClearText={props.onActivityClear}
-                    onPick={props.onActivityPick}
-                  />
-                </div>
+              <div className="exp-field exp-field-grow">
+                <ShopAutocomplete
+                  inline
+                  label="الوجهة"
+                  value={props.activityDest}
+                  display={props.activityLabel}
+                  placeholder="مدينة النشاط"
+                  onQuery={props.searchCities}
+                  onClearText={props.onActivityClear}
+                  onPick={props.onActivityPick}
+                />
               </div>
             ) : null}
 
-            <div className="exp-input-cell exp-cell-dates">
-              <IconCalendar />
-              <div className="exp-cell-body exp-dates-unified">
-                <span className="exp-cell-label">التواريخ</span>
-                <div className="exp-dates-row">
-                  <DatePick
-                    value={props.departDate}
-                    onChange={props.onDepartDateChange}
-                    label={props.mode === "stays" ? "تاريخ الوصول" : "تاريخ المغادرة"}
-                  />
-                  {showReturnDate ? (
-                    <>
-                      <span className="exp-date-sep">–</span>
-                      <DatePick
-                        value={props.returnDate}
-                        onChange={props.onReturnDateChange}
-                        label={props.mode === "stays" ? "تاريخ المغادرة" : "تاريخ العودة"}
-                      />
-                    </>
-                  ) : null}
-                </div>
+            <div className="exp-field exp-field-dates">
+              <span className="exp-field-label">التواريخ</span>
+              <div className="exp-dates-row">
+                <DatePick
+                  value={props.departDate}
+                  onChange={props.onDepartDateChange}
+                  label={props.mode === "stays" ? "تاريخ الوصول" : "تاريخ المغادرة"}
+                />
+                {showReturnDate ? (
+                  <>
+                    <span className="exp-date-sep">–</span>
+                    <DatePick
+                      value={props.returnDate}
+                      onChange={props.onReturnDateChange}
+                      label={props.mode === "stays" ? "تاريخ المغادرة" : "تاريخ العودة"}
+                    />
+                  </>
+                ) : null}
               </div>
             </div>
 
             {props.mode === "cars" ? (
               <>
-                <div className="exp-input-cell exp-cell-time">
-                  <label>
-                    <span>وقت الاستلام</span>
-                    <select
-                      value={props.pickupTime}
-                      onChange={(e) => props.onPickupTimeChange(e.target.value)}
-                    >
-                      {["06:00", "08:00", "10:30", "12:00", "14:00", "16:00", "18:00", "20:00"].map(
-                        (t) => (
-                          <option key={t} value={t}>
-                            {formatTimeShort(t)}
-                          </option>
-                        ),
-                      )}
-                    </select>
-                  </label>
+                <div className="exp-field exp-field-time">
+                  <span className="exp-field-label">وقت الاستلام</span>
+                  <select
+                    className="exp-time-select"
+                    value={props.pickupTime}
+                    onChange={(e) => props.onPickupTimeChange(e.target.value)}
+                  >
+                    {["06:00", "08:00", "10:30", "12:00", "14:00", "16:00", "18:00", "20:00"].map(
+                      (t) => (
+                        <option key={t} value={t}>
+                          {formatTimeShort(t)}
+                        </option>
+                      ),
+                    )}
+                  </select>
                 </div>
-                <div className="exp-input-cell exp-cell-time">
-                  <label>
-                    <span>وقت التسليم</span>
-                    <select
-                      value={props.dropoffTime}
-                      onChange={(e) => props.onDropoffTimeChange(e.target.value)}
-                    >
-                      {["08:00", "10:00", "10:30", "12:00", "14:00", "16:00", "18:00", "20:00"].map(
-                        (t) => (
-                          <option key={t} value={t}>
-                            {formatTimeShort(t)}
-                          </option>
-                        ),
-                      )}
-                    </select>
-                  </label>
+                <div className="exp-field exp-field-time">
+                  <span className="exp-field-label">وقت التسليم</span>
+                  <select
+                    className="exp-time-select"
+                    value={props.dropoffTime}
+                    onChange={(e) => props.onDropoffTimeChange(e.target.value)}
+                  >
+                    {["08:00", "10:00", "10:30", "12:00", "14:00", "16:00", "18:00", "20:00"].map(
+                      (t) => (
+                        <option key={t} value={t}>
+                          {formatTimeShort(t)}
+                        </option>
+                      ),
+                    )}
+                  </select>
                 </div>
               </>
             ) : null}
 
-            {props.mode !== "activities" && props.mode !== "cars" ? (
-              <div className="exp-input-cell exp-cell-travelers">
-                <IconUsers />
-                <button
-                  type="button"
-                  className="exp-travelers-trigger"
-                  onClick={() => setTravelersOpen((v) => !v)}
-                >
-                  <span className="exp-cell-body">
-                    <span className="exp-cell-label">المسافرون</span>
-                    <strong>{travelerSummary}</strong>
-                  </span>
-                </button>
-                {travelersOpen ? (
-                  <div className="exp-travelers-pop">
+            <div className="exp-field exp-field-travelers">
+              <button
+                type="button"
+                className="exp-travelers-trigger"
+                onClick={() => setTravelersOpen((v) => !v)}
+              >
+                <span className="exp-field-label">المسافرون</span>
+                <strong>{travelerSummary}</strong>
+              </button>
+              {travelersOpen ? (
+                <div className="exp-travelers-pop">
                     <div className="exp-travelers-row">
                       <span>بالغون</span>
                       <div className="exp-stepper">
@@ -578,8 +533,7 @@ export function ShopHeroBanner(props: Props) {
                     </button>
                   </div>
                 ) : null}
-              </div>
-            ) : null}
+            </div>
 
             <button
               type="button"

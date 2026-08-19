@@ -25,11 +25,61 @@ import { saveHotelSearchSession } from "@/lib/hotel-search-session";
 
 type TransferPointKind = "airport" | "hotel" | "address";
 
-const TRANSFER_KIND_OPTIONS: Array<{ value: TransferPointKind; label: string; hint: string }> = [
-  { value: "airport", label: "مطار", hint: "رمز IATA مثل KWI" },
-  { value: "hotel", label: "فندق", hint: "اسم الفندق (Hotelbeds ATLAS)" },
-  { value: "address", label: "عنوان", hint: "حي أو عنوان داخل المدينة" },
+type CarSeatFilter = "" | "2-4" | "5" | "6+";
+type CarAddon = "extra_driver" | "child_seat" | "infant_seat" | "booster";
+
+type CarQuickFilters = {
+  seats: CarSeatFilter;
+  addons: CarAddon[];
+  automaticOnly: boolean;
+  unlimitedKm: boolean;
+};
+
+const EMPTY_CAR_QUICK_FILTERS: CarQuickFilters = {
+  seats: "",
+  addons: [],
+  automaticOnly: false,
+  unlimitedKm: false,
+};
+
+const CAR_SEAT_OPTIONS: Array<{ value: Exclude<CarSeatFilter, "">; label: string }> = [
+  { value: "2-4", label: "مقعدان إلى 4 مقاعد" },
+  { value: "5", label: "5 مقاعد" },
+  { value: "6+", label: "6 مقاعد أو أكثر" },
 ];
+
+const CAR_ADDON_OPTIONS: Array<{ value: CarAddon; label: string }> = [
+  { value: "extra_driver", label: "سائق إضافي" },
+  { value: "child_seat", label: "مقعد أطفال" },
+  { value: "infant_seat", label: "مقعد للرضع" },
+  { value: "booster", label: "مقعد سيارة داعم للأطفال" },
+];
+
+const DRIVER_AGE_PRESETS = [18, 21, 25, 29, 66, 70];
+
+function carQuickFiltersCount(filters: CarQuickFilters) {
+  return (
+    (filters.seats ? 1 : 0) +
+    filters.addons.length +
+    Number(filters.automaticOnly) +
+    Number(filters.unlimitedKm)
+  );
+}
+
+function placeKindFromSuggest(item: { id: string; subtitle?: string }): TransferPointKind {
+  if (item.id.startsWith("airport:") || String(item.subtitle || "").startsWith("مطار")) {
+    return "airport";
+  }
+  return "address";
+}
+
+function matchesCarSeatFilter(maxPax: number | null, seats: CarSeatFilter) {
+  if (!seats || maxPax == null || !Number.isFinite(maxPax)) return true;
+  if (seats === "2-4") return maxPax >= 2 && maxPax <= 4;
+  if (seats === "5") return maxPax >= 5 && maxPax < 6;
+  if (seats === "6+") return maxPax >= 6;
+  return true;
+}
 
 type Inquiry = {
   id: string;
@@ -282,6 +332,8 @@ function AutocompleteField({
   placeholder,
   hint,
   emptyHint,
+  loadingHint,
+  emptyListHint,
   onQuery,
   onPick,
   onClearText,
@@ -292,6 +344,8 @@ function AutocompleteField({
   placeholder: string;
   hint?: string;
   emptyHint?: string;
+  loadingHint?: string;
+  emptyListHint?: string;
   onQuery: (q: string) => Promise<Array<{ id: string; title: string; subtitle?: string; code?: string }>>;
   onPick: (item: { id: string; title: string; subtitle?: string; code?: string }) => void;
   onClearText: (text: string) => void;
@@ -358,9 +412,16 @@ function AutocompleteField({
       </small>
       {open ? (
         <div className="fs-suggest">
-          {loading ? <div className="fs-suggest-loading">جاري البحث عن المطارات…</div> : null}
+          {loading ? (
+            <div className="fs-suggest-loading">
+              {loadingHint || "جاري البحث عن المطارات…"}
+            </div>
+          ) : null}
           {!loading && items.length === 0 ? (
-            <div className="fs-suggest-empty">لا توجد مطارات مطابقة — جرّب اسم المدينة أو رمز IATA</div>
+            <div className="fs-suggest-empty">
+              {emptyListHint ||
+                "لا توجد مطارات مطابقة — جرّب اسم المدينة أو رمز IATA"}
+            </div>
           ) : null}
           {!loading
             ? items.map((item) => (
@@ -468,7 +529,10 @@ export default function InquiriesPage() {
     dropoffLocation: "الكويت",
     dropoffLocationLabel: "الكويت",
     pickupTime: "10:00",
-    dropoffTime: "18:00",
+    dropoffTime: "10:00",
+    differentDropoff: false,
+    driverAgeStandard: true,
+    driverAge: 30,
     childrenAges: [] as number[],
     shiftDays: false,
     minRate: "",
@@ -477,6 +541,14 @@ export default function InquiriesPage() {
   const [airlines, setAirlines] = useState<Airline[]>([]);
   const [guestsOpen, setGuestsOpen] = useState(false);
   const guestsRef = useRef<HTMLDivElement>(null);
+  const [quickFiltersOpen, setQuickFiltersOpen] = useState(false);
+  const [carFilters, setCarFilters] = useState<CarQuickFilters>(
+    EMPTY_CAR_QUICK_FILTERS,
+  );
+  const [carFiltersDraft, setCarFiltersDraft] = useState<CarQuickFilters>(
+    EMPTY_CAR_QUICK_FILTERS,
+  );
+  const [carResults, setCarResults] = useState<AncillaryResult[]>([]);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
@@ -547,6 +619,32 @@ export default function InquiriesPage() {
 
   const nights = nightsBetween(form.departDate, form.returnDate);
 
+  const filteredCarResults = useMemo(() => {
+    return carResults.filter((item) => {
+      const extra = item.extra || {};
+      const maxPax =
+        extra.maxPax != null && Number.isFinite(Number(extra.maxPax))
+          ? Number(extra.maxPax)
+          : null;
+      if (!matchesCarSeatFilter(maxPax, carFilters.seats)) return false;
+      const hay = `${item.name} ${item.details} ${extra.vehicleName || ""} ${extra.categoryName || ""}`.toLowerCase();
+      if (carFilters.automaticOnly) {
+        const mentionsManual = /manual|يدوي|مانيوال/.test(hay);
+        const mentionsAuto = /auto|أوتو|اتومات|automatic/.test(hay);
+        if (mentionsManual && !mentionsAuto) return false;
+      }
+      if (carFilters.unlimitedKm) {
+        const mentionsLimited = /limited km|كيلومتر محدود|محدود الكيل/.test(hay);
+        const mentionsUnlimited = /unlimited|غير محدود/.test(hay);
+        if (mentionsLimited && !mentionsUnlimited) return false;
+      }
+      return true;
+    });
+  }, [carResults, carFilters]);
+
+  const appliedCarFilterCount = carQuickFiltersCount(carFilters);
+  const draftCarFilterCount = carQuickFiltersCount(carFiltersDraft);
+
   useEffect(() => {
     if (!detailFlightId) return;
     function onKey(e: KeyboardEvent) {
@@ -592,6 +690,19 @@ export default function InquiriesPage() {
     return () => document.removeEventListener("mousedown", onDoc);
   }, []);
 
+  useEffect(() => {
+    if (!quickFiltersOpen) return;
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setQuickFiltersOpen(false);
+    }
+    document.addEventListener("keydown", onKey);
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = "";
+    };
+  }, [quickFiltersOpen]);
+
   async function searchAirports(q: string) {
     const rows = await apiFetch<Airport[]>(
       `/travel-meta/airports?q=${encodeURIComponent(q)}&limit=50`,
@@ -614,6 +725,104 @@ export default function InquiriesPage() {
       title: c.city || "مدينة",
       subtitle: c.country || undefined,
     }));
+  }
+
+  async function searchTransportPlaces(q: string) {
+    const query = q.trim();
+    if (!query) {
+      return [
+        {
+          id: "airport:KWI",
+          code: "KWI",
+          title: "KWI · الكويت",
+          subtitle: "مطار · الكويت الدولية",
+        },
+        {
+          id: "airport:DXB",
+          code: "DXB",
+          title: "DXB · دبي",
+          subtitle: "مطار · دبي الدولية",
+        },
+        {
+          id: "city:الكويت",
+          code: "الكويت",
+          title: "الكويت",
+          subtitle: "مدينة",
+        },
+        {
+          id: "city:دبي",
+          code: "دبي",
+          title: "دبي",
+          subtitle: "مدينة",
+        },
+      ];
+    }
+    const [airports, cities] = await Promise.all([
+      searchAirports(query),
+      searchCities(query),
+    ]);
+    return [
+      ...airports.map((a) => ({
+        ...a,
+        id: `airport:${a.id}`,
+        subtitle: a.subtitle ? `مطار · ${a.subtitle}` : "مطار",
+      })),
+      ...cities.map((c) => ({
+        ...c,
+        id: `city:${c.id}`,
+        subtitle: c.subtitle ? `مدينة · ${c.subtitle}` : "مدينة",
+      })),
+    ].slice(0, 20);
+  }
+
+  function applyTransportPlace(
+    which: "pickup" | "dropoff",
+    item: { id: string; title: string; subtitle?: string; code?: string },
+  ) {
+    const kind = placeKindFromSuggest(item);
+    const code = String(item.code || "").toUpperCase();
+    const location =
+      kind === "airport" && /^[A-Z]{3}$/.test(code) ? code : item.title;
+    const city =
+      kind === "airport"
+        ? item.title.split("·")[1]?.trim() || form.transferCity
+        : item.title;
+
+    setForm((f) => {
+      const pickupPatch =
+        which === "pickup"
+          ? {
+              pickupKind: kind,
+              pickupLocation: location,
+              pickupLocationLabel: item.title,
+              transferCity: city || f.transferCity,
+              transferCityLabel: city || f.transferCityLabel,
+            }
+          : {};
+      const dropoffPatch =
+        which === "dropoff" || (which === "pickup" && !f.differentDropoff)
+          ? {
+              dropoffKind: kind,
+              dropoffLocation: location,
+              dropoffLocationLabel: item.title,
+            }
+          : {};
+      return { ...f, ...pickupPatch, ...dropoffPatch };
+    });
+  }
+
+  function openQuickFilters() {
+    setCarFiltersDraft(carFilters);
+    setQuickFiltersOpen(true);
+  }
+
+  function applyQuickFilters() {
+    setCarFilters(carFiltersDraft);
+    setQuickFiltersOpen(false);
+  }
+
+  function clearQuickFiltersDraft() {
+    setCarFiltersDraft(EMPTY_CAR_QUICK_FILTERS);
   }
 
   const providerBadge = useMemo(() => {
@@ -952,9 +1161,14 @@ export default function InquiriesPage() {
       },
       city: form.transferCity,
       pickupKind: form.pickupKind,
-      dropoffKind: form.dropoffKind,
+      dropoffKind: form.differentDropoff ? form.dropoffKind : form.pickupKind,
       from: String(extra.fromLabel || form.pickupLocationLabel || form.pickupLocation),
-      to: String(extra.toLabel || form.dropoffLocationLabel || form.dropoffLocation),
+      to: String(
+        extra.toLabel ||
+          (form.differentDropoff
+            ? form.dropoffLocationLabel || form.dropoffLocation
+            : form.pickupLocationLabel || form.pickupLocation),
+      ),
       outboundDate: form.departDate,
       outboundTime: form.pickupTime,
       inboundDate: form.returnDate || undefined,
@@ -968,8 +1182,6 @@ export default function InquiriesPage() {
     router.push("/dashboard/inquiries/book/transfer");
   }
 
-  const [carResults, setCarResults] = useState<AncillaryResult[]>([]);
-
   async function createAndSearch() {
     setError("");
     setMessage("");
@@ -979,6 +1191,32 @@ export default function InquiriesPage() {
 
     try {
       if (mode === "cars") {
+        const pickup = form.pickupLocation.trim();
+        const dropoff = form.differentDropoff
+          ? form.dropoffLocation.trim()
+          : pickup;
+        if (!pickup) {
+          setError("أدخل موقع الاستلام");
+          setLoading(false);
+          return;
+        }
+        if (form.differentDropoff && !dropoff) {
+          setError("أدخل موقع التسليم");
+          setLoading(false);
+          return;
+        }
+        const fromKind = transferPointKindToEndpoint(form.pickupKind);
+        const toKind = transferPointKindToEndpoint(
+          form.differentDropoff ? form.dropoffKind : form.pickupKind,
+        );
+        const children = carFilters.addons.some(
+          (a) => a === "child_seat" || a === "booster",
+        )
+          ? Math.max(form.children, 1)
+          : form.children;
+        const infants = carFilters.addons.includes("infant_seat")
+          ? Math.max(form.infants, 1)
+          : form.infants;
         const result = await apiFetch<{
           providerKey: string;
           providerName: string;
@@ -997,17 +1235,22 @@ export default function InquiriesPage() {
           timeoutMs: 45000,
           body: JSON.stringify({
             city: form.transferCity,
-            from: form.pickupLocation,
-            to: form.dropoffLocation,
-            fromKind: transferPointKindToEndpoint(form.pickupKind),
-            toKind: transferPointKindToEndpoint(form.dropoffKind),
+            from: pickup,
+            to: dropoff,
+            fromKind,
+            toKind,
             outboundDate: form.departDate,
             outboundTime: form.pickupTime,
             inboundDate: form.returnDate || undefined,
             inboundTime: form.returnDate ? form.dropoffTime : undefined,
             adults: form.adults,
-            children: form.children,
-            infants: form.infants,
+            children,
+            infants,
+            driverAge: form.driverAgeStandard ? 30 : form.driverAge,
+            seats: carFilters.seats || undefined,
+            addons: carFilters.addons,
+            automaticOnly: carFilters.automaticOnly,
+            unlimitedKm: carFilters.unlimitedKm,
           }),
         });
         setCarResults(
@@ -1152,9 +1395,13 @@ export default function InquiriesPage() {
             ? "قارن واحجز أرخص الرحلات بسهولة"
             : mode === "stays"
               ? "اكتشف أفضل الإقامات حول العالم"
-              : "انقل من المطار إلى وجهتك بسهولة"}
+              : "استئجار سيارة تناسب جميع أنواع الرحلات"}
         </h2>
-        <p>محرك بحث سفر متكامل مع كتالوج المطارات وشركات الطيران</p>
+        <p>
+          {mode === "cars"
+            ? "موقع الاستلام والتسليم مع الوقت وعمر السائق ومصفيات المركبة"
+            : "محرك بحث سفر متكامل مع كتالوج المطارات وشركات الطيران"}
+        </p>
 
         {mode === "flights" ? (
           <div className="flight-search-options">
@@ -1502,280 +1749,227 @@ export default function InquiriesPage() {
           ) : null}
 
           {mode === "cars" ? (
-            <div className="fs-grid cars transfer-search-grid">
-              <AutocompleteField
-                label="المدينة / الوجهة"
-                value={form.transferCity}
-                display={form.transferCityLabel}
-                placeholder="مثال: الكويت أو دبي"
-                onClearText={(text) =>
-                  setForm((f) => ({
-                    ...f,
-                    transferCity: text,
-                    transferCityLabel: text,
-                  }))
-                }
-                onQuery={searchCities}
-                onPick={(item) => {
-                  const iata = String(item.code || "").toUpperCase();
-                  setForm((f) => ({
-                    ...f,
-                    transferCity: item.title,
-                    transferCityLabel: item.title,
-                    ...(f.pickupKind === "airport" && iata
-                      ? {
-                          pickupLocation: iata,
-                          pickupLocationLabel: item.code
-                            ? `${iata} · ${item.title}`
-                            : item.title,
-                        }
-                      : {}),
-                    ...(f.dropoffKind === "address"
-                      ? {
-                          dropoffLocation: item.title,
-                          dropoffLocationLabel: item.title,
-                        }
-                      : {}),
-                  }));
-                }}
-              />
-              <label className="fs-cell">
-                <span>نوع الاستلام</span>
-                <select
-                  value={form.pickupKind}
-                  onChange={(e) =>
-                    setForm({
-                      ...form,
-                      pickupKind: e.target.value as TransferPointKind,
-                    })
-                  }
-                >
-                  {TRANSFER_KIND_OPTIONS.map((opt) => (
-                    <option key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </option>
-                  ))}
-                </select>
-                <small>
-                  {TRANSFER_KIND_OPTIONS.find((o) => o.value === form.pickupKind)?.hint}
-                </small>
-              </label>
-              {form.pickupKind === "airport" ? (
+            <>
+              <div
+                className={`fs-grid cars car-hire-grid${
+                  form.differentDropoff ? " two-locs" : ""
+                }`}
+              >
                 <AutocompleteField
-                  label="مكان الاستلام"
+                  label="موقع الاستلام"
                   value={form.pickupLocation}
                   display={form.pickupLocationLabel}
-                  placeholder="KWI أو اسم المطار"
-                  onClearText={(text) =>
+                  placeholder="المطار أو المدينة أو المحطة"
+                  hint={
+                    form.pickupKind === "airport"
+                      ? `مطار ${form.pickupLocation}`
+                      : "مدينة أو عنوان"
+                  }
+                  emptyHint="المطار أو المدينة أو المحطة"
+                  loadingHint="جاري البحث عن المواقع…"
+                  emptyListHint="لا توجد مواقع مطابقة — جرّب المطار أو المدينة"
+                  onClearText={(text) => {
+                    const code = text.trim().toUpperCase();
+                    const kind: TransferPointKind = /^[A-Z]{3}$/.test(code)
+                      ? "airport"
+                      : "address";
+                    const location = kind === "airport" ? code : text;
                     setForm((f) => ({
                       ...f,
-                      pickupLocation: text.toUpperCase(),
+                      pickupKind: kind,
+                      pickupLocation: location,
                       pickupLocationLabel: text,
-                    }))
-                  }
-                  onQuery={searchAirports}
-                  onPick={(item) =>
-                    setForm((f) => ({
-                      ...f,
-                      pickupLocation: String(item.code || item.id).toUpperCase(),
-                      pickupLocationLabel: item.title,
-                    }))
-                  }
-                />
-              ) : (
-                <label className="fs-cell">
-                  <span>مكان الاستلام</span>
-                  <input
-                    value={form.pickupLocation}
-                    onChange={(e) =>
-                      setForm({
-                        ...form,
-                        pickupLocation: e.target.value,
-                        pickupLocationLabel: e.target.value,
-                      })
-                    }
-                    placeholder={
-                      form.pickupKind === "hotel"
-                        ? "اسم الفندق"
-                        : "الحي أو العنوان"
-                    }
-                  />
-                  <small>
-                    {form.pickupKind === "hotel"
-                      ? "يُحوَّل إلى ATLAS عبر بحث الفنادق"
-                      : "GPS داخل المدينة"}
-                  </small>
-                </label>
-              )}
-              <label className="fs-cell">
-                <span>نوع التسليم</span>
-                <select
-                  value={form.dropoffKind}
-                  onChange={(e) =>
-                    setForm({
-                      ...form,
-                      dropoffKind: e.target.value as TransferPointKind,
-                    })
-                  }
-                >
-                  {TRANSFER_KIND_OPTIONS.map((opt) => (
-                    <option key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </option>
-                  ))}
-                </select>
-                <small>
-                  {TRANSFER_KIND_OPTIONS.find((o) => o.value === form.dropoffKind)?.hint}
-                </small>
-              </label>
-              {form.dropoffKind === "airport" ? (
-                <AutocompleteField
-                  label="مكان التسليم"
-                  value={form.dropoffLocation}
-                  display={form.dropoffLocationLabel}
-                  placeholder="DXB أو اسم المطار"
-                  onClearText={(text) =>
-                    setForm((f) => ({
-                      ...f,
-                      dropoffLocation: text.toUpperCase(),
-                      dropoffLocationLabel: text,
-                    }))
-                  }
-                  onQuery={searchAirports}
-                  onPick={(item) =>
-                    setForm((f) => ({
-                      ...f,
-                      dropoffLocation: String(item.code || item.id).toUpperCase(),
-                      dropoffLocationLabel: item.title,
-                    }))
-                  }
-                />
-              ) : (
-                <label className="fs-cell">
-                  <span>مكان التسليم</span>
-                  <input
-                    value={form.dropoffLocation}
-                    onChange={(e) =>
-                      setForm({
-                        ...form,
-                        dropoffLocation: e.target.value,
-                        dropoffLocationLabel: e.target.value,
-                      })
-                    }
-                    placeholder={
-                      form.dropoffKind === "hotel"
-                        ? "اسم الفندق"
-                        : "الحي أو العنوان"
-                    }
-                  />
-                  <small>
-                    {form.dropoffKind === "hotel"
-                      ? "يُحوَّل إلى ATLAS عبر بحث الفنادق"
-                      : "GPS داخل المدينة"}
-                  </small>
-                </label>
-              )}
-              <label className="fs-cell">
-                <span>الذهاب</span>
-                <input
-                  type="date"
-                  value={form.departDate}
-                  onChange={(e) =>
-                    setForm({ ...form, departDate: e.target.value })
-                  }
-                />
-                <small>تاريخ الوصول</small>
-              </label>
-              <label className="fs-cell">
-                <span>وقت الذهاب</span>
-                <input
-                  type="time"
-                  value={form.pickupTime}
-                  onChange={(e) =>
-                    setForm({ ...form, pickupTime: e.target.value })
-                  }
-                />
-                <small>الاستلام</small>
-              </label>
-              <label className="fs-cell">
-                <span>العودة</span>
-                <input
-                  type="date"
-                  value={form.returnDate}
-                  onChange={(e) =>
-                    setForm({ ...form, returnDate: e.target.value })
-                  }
-                />
-                <small>اختياري</small>
-              </label>
-              <label className="fs-cell">
-                <span>وقت العودة</span>
-                <input
-                  type="time"
-                  value={form.dropoffTime}
-                  onChange={(e) =>
-                    setForm({ ...form, dropoffTime: e.target.value })
-                  }
-                />
-                <small>التسليم</small>
-              </label>
-              <label className="fs-cell fs-cell-center">
-                <span>بالغون</span>
-                <input
-                  type="number"
-                  min={1}
-                  value={form.adults}
-                  onChange={(e) => {
-                    const adults = Number(e.target.value) || 1;
-                    setForm({
-                      ...form,
-                      adults,
-                      infants: Math.min(form.infants, adults),
-                    });
+                      transferCity: kind === "address" ? text || f.transferCity : f.transferCity,
+                      ...(!f.differentDropoff
+                        ? {
+                            dropoffKind: kind,
+                            dropoffLocation: location,
+                            dropoffLocationLabel: text,
+                          }
+                        : {}),
+                    }));
                   }}
+                  onQuery={searchTransportPlaces}
+                  onPick={(item) => applyTransportPlace("pickup", item)}
                 />
-                <small>ركاب</small>
-              </label>
-              <label className="fs-cell fs-cell-center">
-                <span>أطفال</span>
-                <input
-                  type="number"
-                  min={0}
-                  value={form.children}
-                  onChange={(e) =>
-                    setForm({ ...form, children: Number(e.target.value) || 0 })
-                  }
-                />
-                <small>2–11 سنة</small>
-              </label>
-              <label className="fs-cell fs-cell-center">
-                <span>رضع</span>
-                <input
-                  type="number"
-                  min={0}
-                  max={form.adults}
-                  value={form.infants}
-                  onChange={(e) =>
-                    setForm({
-                      ...form,
-                      infants: Math.min(
-                        Math.max(0, Number(e.target.value) || 0),
-                        form.adults,
-                      ),
-                    })
-                  }
-                />
-                <small>أقل من سنتين</small>
-              </label>
-              <button
-                type="button"
-                className="flight-explore"
-                disabled={loading}
-                onClick={createAndSearch}
-              >
-                {loading ? "..." : "استكشاف"}
-              </button>
-            </div>
+                {form.differentDropoff ? (
+                  <AutocompleteField
+                    label="موقع التسليم"
+                    value={form.dropoffLocation}
+                    display={form.dropoffLocationLabel}
+                    placeholder="المطار أو المدينة أو المحطة"
+                    hint={
+                      form.dropoffKind === "airport"
+                        ? `مطار ${form.dropoffLocation}`
+                        : "مدينة أو عنوان"
+                    }
+                    emptyHint="مكان إعادة السيارة"
+                    loadingHint="جاري البحث عن المواقع…"
+                    emptyListHint="لا توجد مواقع مطابقة — جرّب المطار أو المدينة"
+                    onClearText={(text) => {
+                      const code = text.trim().toUpperCase();
+                      const kind: TransferPointKind = /^[A-Z]{3}$/.test(code)
+                        ? "airport"
+                        : "address";
+                      setForm((f) => ({
+                        ...f,
+                        dropoffKind: kind,
+                        dropoffLocation: kind === "airport" ? code : text,
+                        dropoffLocationLabel: text,
+                      }));
+                    }}
+                    onQuery={searchTransportPlaces}
+                    onPick={(item) => applyTransportPlace("dropoff", item)}
+                  />
+                ) : null}
+                <label className="fs-cell">
+                  <span>تاريخ الاستلام</span>
+                  <input
+                    type="date"
+                    value={form.departDate}
+                    onChange={(e) =>
+                      setForm({ ...form, departDate: e.target.value })
+                    }
+                  />
+                  <small>{formatDay(form.departDate) || "الاستلام"}</small>
+                </label>
+                <label className="fs-cell">
+                  <span>الوقت</span>
+                  <input
+                    type="time"
+                    value={form.pickupTime}
+                    onChange={(e) =>
+                      setForm({ ...form, pickupTime: e.target.value })
+                    }
+                  />
+                  <small>الاستلام</small>
+                </label>
+                <label className="fs-cell">
+                  <span>تاريخ التسليم</span>
+                  <input
+                    type="date"
+                    value={form.returnDate}
+                    onChange={(e) =>
+                      setForm({ ...form, returnDate: e.target.value })
+                    }
+                  />
+                  <small>{formatDay(form.returnDate) || "التسليم"}</small>
+                </label>
+                <label className="fs-cell">
+                  <span>الوقت</span>
+                  <input
+                    type="time"
+                    value={form.dropoffTime}
+                    onChange={(e) =>
+                      setForm({ ...form, dropoffTime: e.target.value })
+                    }
+                  />
+                  <small>التسليم</small>
+                </label>
+                <button
+                  type="button"
+                  className="flight-explore"
+                  disabled={loading}
+                  onClick={createAndSearch}
+                >
+                  {loading ? "..." : "استكشاف"}
+                </button>
+              </div>
+              <div className="car-hire-options">
+                <div className="car-hire-options-main">
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={form.differentDropoff}
+                      onChange={() =>
+                        setForm((f) => {
+                          const next = !f.differentDropoff;
+                          if (!next) {
+                            return {
+                              ...f,
+                              differentDropoff: false,
+                              dropoffKind: f.pickupKind,
+                              dropoffLocation: f.pickupLocation,
+                              dropoffLocationLabel: f.pickupLocationLabel,
+                            };
+                          }
+                          const samePlace =
+                            f.dropoffLocation === f.pickupLocation;
+                          return {
+                            ...f,
+                            differentDropoff: true,
+                            ...(samePlace
+                              ? {
+                                  dropoffLocation: "",
+                                  dropoffLocationLabel: "",
+                                }
+                              : {}),
+                          };
+                        })
+                      }
+                    />
+                    تسليم السيارة في موقع مختلف
+                  </label>
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={form.driverAgeStandard}
+                      onChange={() =>
+                        setForm((f) => ({
+                          ...f,
+                          driverAgeStandard: !f.driverAgeStandard,
+                          driverAge: !f.driverAgeStandard ? 30 : f.driverAge,
+                        }))
+                      }
+                    />
+                    هل عمر السائق بين 30 و 65؟
+                  </label>
+                  {!form.driverAgeStandard ? (
+                    <div className="driver-age-options">
+                      <span>عمر السائق</span>
+                      {DRIVER_AGE_PRESETS.map((age) => (
+                        <button
+                          key={age}
+                          type="button"
+                          className={form.driverAge === age ? "on" : undefined}
+                          onClick={() => setForm({ ...form, driverAge: age })}
+                        >
+                          {age}
+                        </button>
+                      ))}
+                      <input
+                        type="number"
+                        min={18}
+                        max={99}
+                        value={form.driverAge}
+                        onChange={(e) =>
+                          setForm({
+                            ...form,
+                            driverAge: Math.min(
+                              99,
+                              Math.max(18, Number(e.target.value) || 18),
+                            ),
+                          })
+                        }
+                      />
+                    </div>
+                  ) : null}
+                </div>
+                <button
+                  type="button"
+                  className={`quick-filters-link${
+                    appliedCarFilterCount ? " on" : ""
+                  }`}
+                  onClick={openQuickFilters}
+                >
+                  <span className="quick-filters-ico" aria-hidden />
+                  مصفيات سريعة
+                  {appliedCarFilterCount ? (
+                    <em>{appliedCarFilterCount}</em>
+                  ) : null}
+                </button>
+              </div>
+            </>
           ) : null}
         </div>
 
@@ -2158,7 +2352,12 @@ export default function InquiriesPage() {
             {mode === "cars" ? (
               <div className="panel hotel-results-panel">
                 <div className="hotel-results-head">
-                  <h3>نقل: {carResults.length} خياراً</h3>
+                  <h3>
+                    نقل: {filteredCarResults.length} خياراً
+                    {appliedCarFilterCount && carResults.length !== filteredCarResults.length
+                      ? ` من ${carResults.length}`
+                      : ""}
+                  </h3>
                   {search ? (
                     <HotelLiveBadge
                       liveMode={Boolean(search.liveMode)}
@@ -2166,19 +2365,41 @@ export default function InquiriesPage() {
                     />
                   ) : null}
                 </div>
+                {appliedCarFilterCount ? (
+                  <div className="car-applied-filters">
+                    {carFilters.seats ? (
+                      <span>
+                        {CAR_SEAT_OPTIONS.find((o) => o.value === carFilters.seats)?.label}
+                      </span>
+                    ) : null}
+                    {carFilters.addons.map((addon) => (
+                      <span key={addon}>
+                        {CAR_ADDON_OPTIONS.find((o) => o.value === addon)?.label}
+                      </span>
+                    ))}
+                    {carFilters.automaticOnly ? <span>ناقل أوتوماتيكي</span> : null}
+                    {carFilters.unlimitedKm ? <span>كيلومترات غير محدودة</span> : null}
+                  </div>
+                ) : null}
                 <div className="hotel-search-list">
-                  {carResults.map((c) => (
+                  {filteredCarResults.map((c) => (
                     <TransferSearchCard
                       key={c.id}
                       item={c}
                       from={form.pickupLocationLabel || form.pickupLocation}
-                      to={form.dropoffLocationLabel || form.dropoffLocation}
+                      to={
+                        form.differentDropoff
+                          ? form.dropoffLocationLabel || form.dropoffLocation
+                          : form.pickupLocationLabel || form.pickupLocation
+                      }
                       onBook={() => confirmTransferBooking(c)}
                     />
                   ))}
-                  {carResults.length === 0 ? (
+                  {filteredCarResults.length === 0 ? (
                     <p className="hint">
-                      لا توجد رحلات نقل مطابقة. جرّب مدينة + مطار → عنوان، مثل الكويت + KWI → حي السالمية.
+                      {carResults.length
+                        ? "لا توجد مركبات مطابقة للمصفيات السريعة. امسح المصفيات أو غيّر المتطلبات."
+                        : "لا توجد نتائج. جرّب مطاراً أو مدينة للاستلام، مع تاريخ ووقت الاستلام والتسليم."}
                     </p>
                   ) : null}
                 </div>
@@ -3092,6 +3313,133 @@ export default function InquiriesPage() {
           onClose={() => setDetailHotelId(null)}
           onEnterGuestData={confirmHotelBooking}
         />
+      ) : null}
+
+      {quickFiltersOpen ? (
+        <div
+          className="car-qf-overlay"
+          onClick={() => setQuickFiltersOpen(false)}
+        >
+          <div
+            className="car-qf-modal"
+            role="dialog"
+            aria-labelledby="car-qf-title"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <header className="car-qf-head">
+              <div>
+                <h3 id="car-qf-title">مصفيات سريعة</h3>
+                <p>وفر الوقت وحسّن من نتائجك</p>
+              </div>
+              <button
+                type="button"
+                className="car-qf-close"
+                aria-label="إغلاق"
+                onClick={() => setQuickFiltersOpen(false)}
+              >
+                ×
+              </button>
+            </header>
+
+            <section className="car-qf-section">
+              <h4>عدد المقاعد</h4>
+              <div className="car-qf-pills">
+                {CAR_SEAT_OPTIONS.map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    className={carFiltersDraft.seats === opt.value ? "on" : undefined}
+                    onClick={() =>
+                      setCarFiltersDraft((f) => ({
+                        ...f,
+                        seats: f.seats === opt.value ? "" : opt.value,
+                      }))
+                    }
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </section>
+
+            <section className="car-qf-section">
+              <h4>إضافات رائجة</h4>
+              <p className="car-qf-hint">
+                إظهار شركات تأجير السيارات التي لديها هذه الإضافات متاحة فقط
+              </p>
+              <div className="car-qf-tags">
+                {CAR_ADDON_OPTIONS.map((opt) => {
+                  const on = carFiltersDraft.addons.includes(opt.value);
+                  return (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      className={on ? "on" : undefined}
+                      onClick={() =>
+                        setCarFiltersDraft((f) => ({
+                          ...f,
+                          addons: on
+                            ? f.addons.filter((a) => a !== opt.value)
+                            : [...f.addons, opt.value],
+                        }))
+                      }
+                    >
+                      {opt.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
+
+            <section className="car-qf-toggles">
+              <label>
+                <span>ناقل حركة أوتوماتيكي</span>
+                <input
+                  type="checkbox"
+                  className="car-qf-switch"
+                  checked={carFiltersDraft.automaticOnly}
+                  onChange={() =>
+                    setCarFiltersDraft((f) => ({
+                      ...f,
+                      automaticOnly: !f.automaticOnly,
+                    }))
+                  }
+                />
+              </label>
+              <label>
+                <span>كيلومترات غير محدودة</span>
+                <input
+                  type="checkbox"
+                  className="car-qf-switch"
+                  checked={carFiltersDraft.unlimitedKm}
+                  onChange={() =>
+                    setCarFiltersDraft((f) => ({
+                      ...f,
+                      unlimitedKm: !f.unlimitedKm,
+                    }))
+                  }
+                />
+              </label>
+            </section>
+
+            <footer className="car-qf-foot">
+              <button
+                type="button"
+                className="car-qf-clear"
+                onClick={clearQuickFiltersDraft}
+              >
+                حذف
+              </button>
+              <button
+                type="button"
+                className={`car-qf-apply${draftCarFilterCount ? "" : " is-muted"}`}
+                onClick={applyQuickFilters}
+              >
+                تطبيق
+              </button>
+            </footer>
+          </div>
+        </div>
       ) : null}
 
     </AppShell>

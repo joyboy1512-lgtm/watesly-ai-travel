@@ -1117,26 +1117,362 @@
   }
 }
 
-.fs-grid.cars.transfer-search-grid {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+.flight-search .fs-grid.cars.car-hire-grid {
+  grid-template-columns:
+    minmax(220px, 1.5fr)
+    minmax(128px, 0.85fr)
+    minmax(100px, 0.7fr)
+    minmax(128px, 0.85fr)
+    minmax(100px, 0.7fr)
+    148px;
+  min-width: 860px;
 }
 
-.fs-grid.cars.transfer-search-grid select {
-  width: 100%;
-  padding: 0.55rem 0.65rem;
-  border-radius: 8px;
-  border: 1px solid #e2e8f0;
+.flight-search .fs-grid.cars.car-hire-grid.two-locs {
+  grid-template-columns:
+    minmax(170px, 1.15fr)
+    minmax(170px, 1.15fr)
+    minmax(118px, 0.8fr)
+    minmax(92px, 0.65fr)
+    minmax(118px, 0.8fr)
+    minmax(92px, 0.65fr)
+    140px;
+  min-width: 1020px;
+}
+
+.car-hire-options {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem 1.25rem;
+  padding: 0.85rem 0.2rem 0.1rem;
+  color: #142028;
+}
+
+.car-hire-options-main {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.85rem 1.15rem;
+}
+
+.car-hire-options-main > label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0;
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.car-hire-options-main input[type="checkbox"] {
+  width: 1.05rem;
+  height: 1.05rem;
+  accent-color: #0f3340;
+}
+
+.driver-age-options {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.driver-age-options > span {
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: #0f3340;
+}
+
+.driver-age-options button {
+  min-height: 2rem;
+  padding: 0.2rem 0.65rem;
+  border-radius: 999px;
+  border: 1px solid rgba(15, 51, 64, 0.18);
   background: #fff;
+  color: #0f3340;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.driver-age-options button.on {
+  background: #0f3340;
+  color: #fff;
+  border-color: #0f3340;
+}
+
+.driver-age-options input {
+  width: 4.2rem;
+  min-height: 2rem;
+  border: 1px solid rgba(20, 32, 40, 0.16);
+  border-radius: 8px;
+  text-align: center;
+  font-weight: 800;
+}
+
+.quick-filters-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0.25rem 0;
+  border: 0;
+  background: none;
+  color: #0f3340;
+  font-size: 0.9rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.quick-filters-link.on,
+.quick-filters-link:hover {
+  color: #b07d32;
+}
+
+.quick-filters-link em {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  padding: 0 0.3rem;
+  border-radius: 999px;
+  background: #d8a35e;
+  color: #0f3340;
+  font-size: 0.72rem;
+  font-style: normal;
+  font-weight: 800;
+}
+
+.quick-filters-ico {
+  display: inline-grid;
+  gap: 3px;
+  width: 14px;
+}
+
+.quick-filters-ico::before,
+.quick-filters-ico::after {
+  content: "";
+  height: 2px;
+  background: currentColor;
+  border-radius: 2px;
+}
+
+.quick-filters-ico::before {
+  width: 100%;
+}
+
+.quick-filters-ico::after {
+  width: 70%;
+  justify-self: end;
+}
+
+.car-applied-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.car-applied-filters span {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.65rem;
+  border-radius: 999px;
+  background: rgba(216, 163, 94, 0.16);
+  color: #0f3340;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.car-qf-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: grid;
+  place-items: center;
+  padding: 1.25rem;
+  background: rgba(7, 24, 34, 0.55);
+}
+
+.car-qf-modal {
+  width: min(640px, 100%);
+  max-height: min(88vh, 720px);
+  overflow: auto;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 24px 60px rgba(7, 24, 34, 0.28);
+  padding: 1.15rem 1.25rem 1rem;
+}
+
+.car-qf-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.car-qf-head h3 {
+  margin: 0;
+  color: #0f3340;
+  font-size: 1.25rem;
+}
+
+.car-qf-head p {
+  margin: 0.25rem 0 0;
+  color: #5d7270;
+  font-size: 0.88rem;
+}
+
+.car-qf-close {
+  width: 2.2rem;
+  height: 2.2rem;
+  border: 0;
+  background: transparent;
+  color: #334155;
+  font-size: 1.7rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.car-qf-section {
+  margin: 0 0 1.05rem;
+}
+
+.car-qf-section h4 {
+  margin: 0 0 0.65rem;
+  color: #142028;
+  font-size: 0.95rem;
+}
+
+.car-qf-hint {
+  margin: -0.35rem 0 0.7rem;
+  color: #5d7270;
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
+.car-qf-pills,
+.car-qf-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.car-qf-pills button,
+.car-qf-tags button {
+  min-height: 2.5rem;
+  padding: 0.45rem 0.9rem;
+  border-radius: 999px;
+  border: 1px solid rgba(15, 51, 64, 0.16);
+  background: #f7faf9;
+  color: #0f3340;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.car-qf-pills button.on,
+.car-qf-tags button.on {
+  background: #0f3340;
+  color: #fff;
+  border-color: #0f3340;
+}
+
+.car-qf-toggles {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0.4rem 0 1.2rem;
+}
+
+.car-qf-toggles label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 0;
+  color: #142028;
+  font-weight: 700;
+}
+
+.car-qf-switch {
+  appearance: none;
+  width: 2.6rem;
+  height: 1.45rem;
+  border-radius: 999px;
+  background: #d5ddd9;
+  position: relative;
+  cursor: pointer;
+  border: 0;
+}
+
+.car-qf-switch::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  inset-inline-start: 2px;
+  inset-inline-end: auto;
+  width: 1.15rem;
+  height: 1.15rem;
+  border-radius: 50%;
+  background: #fff;
+  transition: inset-inline-start 0.15s ease, inset-inline-end 0.15s ease;
+}
+
+.car-qf-switch:checked {
+  background: #0f3340;
+}
+
+.car-qf-switch:checked::after {
+  inset-inline-start: auto;
+  inset-inline-end: 2px;
+}
+
+.car-qf-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-top: 0.35rem;
+}
+
+.car-qf-clear {
+  border: 0;
+  background: none;
+  color: #0f3340;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.car-qf-apply {
+  min-width: 9rem;
+  min-height: 2.7rem;
+  border: 0;
+  border-radius: 8px;
+  background: #0f3340;
+  color: #fff;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.car-qf-apply.is-muted {
+  background: #c5d0cc;
+  color: #fff;
 }
 
 @media (max-width: 1100px) {
-  .fs-grid.cars.transfer-search-grid {
+  .flight-search .fs-grid.cars.car-hire-grid,
+  .flight-search .fs-grid.cars.car-hire-grid.two-locs {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    min-width: 0;
   }
 }
 
 @media (max-width: 860px) {
-  .fs-grid.cars.transfer-search-grid {
+  .flight-search .fs-grid.cars.car-hire-grid,
+  .flight-search .fs-grid.cars.car-hire-grid.two-locs {
     grid-template-columns: 1fr;
   }
 }

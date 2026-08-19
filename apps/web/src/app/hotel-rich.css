@@ -1545,6 +1545,31 @@
   background: transparent;
 }
 
+.flight-hero .transfer-trip-options .opt-chip {
+  min-width: 7.8rem;
+  justify-content: center;
+  font-weight: 800;
+}
+
+.flight-hero .car-hire-options {
+  justify-content: flex-end;
+  padding: 0.5rem 0 0;
+  color: #f3f7f4;
+}
+
+.flight-hero .car-hire-options .quick-filters-link {
+  color: #f3f7f4;
+}
+
+.flight-hero .car-hire-options .quick-filters-link.on,
+.flight-hero .car-hire-options .quick-filters-link:hover {
+  color: #d8a35e;
+}
+
+.flight-search .fs-grid.cars .fs-cell small {
+  display: none;
+}
+
 .flight-hero .opt-chip {
   min-height: 2.6rem;
   background: rgba(255, 255, 255, 0.08);

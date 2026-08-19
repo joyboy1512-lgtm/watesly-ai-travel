@@ -1621,6 +1621,31 @@ export default function InquiriesPage() {
           </div>
         ) : null}
 
+        {mode === "cars" ? (
+          <div className="flight-search-options transfer-trip-options">
+            <button
+              type="button"
+              className={`opt-chip${
+                !form.transferRoundtrip ? " on" : ""
+              }`}
+              onClick={() =>
+                setForm((f) => ({ ...f, transferRoundtrip: false }))
+              }
+            >
+              وصول فقط
+            </button>
+            <button
+              type="button"
+              className={`opt-chip${form.transferRoundtrip ? " on" : ""}`}
+              onClick={() =>
+                setForm((f) => ({ ...f, transferRoundtrip: true }))
+              }
+            >
+              وصول وعودة
+            </button>
+          </div>
+        ) : null}
+
         <div className="flight-search">
           {mode === "flights" ? (
             <div className="fs-grid">
@@ -1904,28 +1929,6 @@ export default function InquiriesPage() {
 
           {mode === "cars" ? (
             <>
-              <div className="flight-search-options">
-                <button
-                  type="button"
-                  className={`opt-chip${
-                    !form.transferRoundtrip ? " on" : ""
-                  }`}
-                  onClick={() =>
-                    setForm((f) => ({ ...f, transferRoundtrip: false }))
-                  }
-                >
-                  وصول فقط
-                </button>
-                <button
-                  type="button"
-                  className={`opt-chip${form.transferRoundtrip ? " on" : ""}`}
-                  onClick={() =>
-                    setForm((f) => ({ ...f, transferRoundtrip: true }))
-                  }
-                >
-                  وصول وعودة
-                </button>
-              </div>
               <div
                 className={`fs-grid cars car-hire-grid airport-dest${
                   form.transferRoundtrip ? " two-locs" : ""
@@ -1991,7 +1994,6 @@ export default function InquiriesPage() {
                           setForm({ ...form, departDate: e.target.value })
                         }
                       />
-                      <small>{formatDay(form.departDate) || "الوصول"}</small>
                     </label>
                     <label className="fs-cell">
                       <span>من وقت</span>
@@ -2002,7 +2004,6 @@ export default function InquiriesPage() {
                           setForm({ ...form, pickupTime: e.target.value })
                         }
                       />
-                      <small>الاستلام من المطار</small>
                     </label>
                     <label className="fs-cell">
                       <span>إلى تاريخ</span>
@@ -2013,7 +2014,6 @@ export default function InquiriesPage() {
                           setForm({ ...form, returnDate: e.target.value })
                         }
                       />
-                      <small>{formatDay(form.returnDate) || "العودة"}</small>
                     </label>
                     <label className="fs-cell">
                       <span>إلى وقت</span>
@@ -2024,7 +2024,6 @@ export default function InquiriesPage() {
                           setForm({ ...form, dropoffTime: e.target.value })
                         }
                       />
-                      <small>الاستلام من الفندق</small>
                     </label>
                   </>
                 ) : (
@@ -2038,7 +2037,6 @@ export default function InquiriesPage() {
                           setForm({ ...form, departDate: e.target.value })
                         }
                       />
-                      <small>{formatDay(form.departDate) || "الوصول"}</small>
                     </label>
                     <label className="fs-cell">
                       <span>الساعة</span>
@@ -2049,7 +2047,6 @@ export default function InquiriesPage() {
                           setForm({ ...form, pickupTime: e.target.value })
                         }
                       />
-                      <small>وقت الاستلام من المطار</small>
                     </label>
                   </>
                 )}
@@ -2060,28 +2057,6 @@ export default function InquiriesPage() {
                   onClick={createAndSearch}
                 >
                   {loading ? "..." : "استكشاف"}
-                </button>
-              </div>
-              <div className="car-hire-options">
-                <div className="car-hire-options-main">
-                  <p className="car-hire-hint" style={{ margin: 0 }}>
-                    {form.transferRoundtrip
-                      ? "وصول من المطار إلى الفندق، وعودة من الفندق إلى المطار"
-                      : "وصول فقط من المطار إلى الفندق"}
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  className={`quick-filters-link${
-                    appliedCarFilterCount ? " on" : ""
-                  }`}
-                  onClick={openQuickFilters}
-                >
-                  <span className="quick-filters-ico" aria-hidden />
-                  مصفيات سريعة
-                  {appliedCarFilterCount ? (
-                    <em>{appliedCarFilterCount}</em>
-                  ) : null}
                 </button>
               </div>
             </>
@@ -2177,6 +2152,24 @@ export default function InquiriesPage() {
             </div>
           ) : null}
         </div>
+
+        {mode === "cars" ? (
+          <div className="car-hire-options">
+            <button
+              type="button"
+              className={`quick-filters-link${
+                appliedCarFilterCount ? " on" : ""
+              }`}
+              onClick={openQuickFilters}
+            >
+              <span className="quick-filters-ico" aria-hidden />
+              مصفيات سريعة
+              {appliedCarFilterCount ? (
+                <em>{appliedCarFilterCount}</em>
+              ) : null}
+            </button>
+          </div>
+        ) : null}
 
         {message ? <p className="flight-status">{message}</p> : null}
         {providerBadge ? (
@@ -2558,7 +2551,8 @@ export default function InquiriesPage() {
               <div className="panel hotel-results-panel">
                 <div className="hotel-results-head">
                   <h3>
-                    نقل: {filteredCarResults.length} خياراً
+                    {form.transferRoundtrip ? "وصول وعودة" : "وصول فقط"}:{" "}
+                    {filteredCarResults.length} خياراً
                     {appliedCarFilterCount && carResults.length !== filteredCarResults.length
                       ? ` من ${carResults.length}`
                       : ""}

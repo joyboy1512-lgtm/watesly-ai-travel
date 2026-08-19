@@ -276,7 +276,7 @@ export function ShopHeroBanner(props: Props) {
             </p>
           ) : null}
 
-          <div className="exp-form-row">
+          <div className={`exp-form-row exp-form-${props.mode}`}>
             {props.mode === "flights" ? (
               <>
                 <div className="exp-input-cell exp-cell-grow">
@@ -395,7 +395,6 @@ export function ShopHeroBanner(props: Props) {
                     value={props.departDate}
                     onChange={(e) => props.onDepartDateChange(e.target.value)}
                   />
-                  <em>{formatDateShort(props.departDate)}</em>
                 </label>
                 {(props.mode === "flights" && props.tripType === "roundtrip") ||
                 props.mode === "stays" ||
@@ -410,7 +409,6 @@ export function ShopHeroBanner(props: Props) {
                         value={props.returnDate}
                         onChange={(e) => props.onReturnDateChange(e.target.value)}
                       />
-                      <em>{formatDateShort(props.returnDate)}</em>
                     </label>
                   </>
                 ) : null}

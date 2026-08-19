@@ -771,6 +771,7 @@ export class BookingsService {
     adults: number;
     children?: number;
     infants?: number;
+    toLabel?: string;
   }) {
     const from = String(input.from || "").trim();
     const to = String(input.to || "").trim() || from;
@@ -801,6 +802,7 @@ export class BookingsService {
         adults: Math.max(1, input.adults || 1),
         children: Math.max(0, input.children || 0),
         infants: Math.max(0, input.infants || 0),
+        toLabel: input.toLabel,
       });
     } catch (err) {
       const message = err instanceof Error ? err.message : "تعذر البحث عن النقل";

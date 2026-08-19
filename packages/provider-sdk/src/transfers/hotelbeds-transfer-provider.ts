@@ -242,11 +242,71 @@ export class HotelbedsTransferProvider implements TransferProviderAdapter {
     }
   }
 
+  private async fetchAvailability(input: {
+    from: TransferEndpoint;
+    to: TransferEndpoint;
+    outboundAt: string;
+    inboundAt?: string;
+    adults: number;
+    children: number;
+    infants: number;
+    city?: string;
+    currency?: string;
+  }): Promise<TransferOffer[]> {
+    const pathParts = [
+      "/transfer-api/1.0/availability/en/from",
+      input.from.type,
+      encodeSegment(input.from.code),
+      "to",
+      input.to.type,
+      encodeSegment(input.to.code),
+      input.outboundAt,
+    ];
+    if (input.inboundAt) pathParts.push(input.inboundAt);
+    pathParts.push(
+      String(input.adults),
+      String(input.children),
+      String(input.infants),
+    );
+    const url = `${this.creds.baseUrl}${pathParts.join("/")}`;
+    const response = await fetch(url, { headers: hotelbedsHeaders(this.creds) });
+    const json = (await response.json().catch(() => ({}))) as HbTransferAvailabilityResponse & {
+      message?: string;
+    };
+    if (!response.ok) {
+      if (response.status === 400 || response.status === 404) return [];
+      const detail =
+        json.error?.message ||
+        json.message ||
+        (typeof json.error === "string" ? json.error : "") ||
+        "";
+      throw new Error(
+        detail
+          ? `تعذر جلب النقل: ${detail}`
+          : `تعذر جلب النقل من Hotelbeds (HTTP ${response.status})`,
+      );
+    }
+    return (json.services || [])
+      .map((service) =>
+        mapService(service, {
+          from: input.from,
+          to: input.to,
+          liveMode: this.liveMode,
+          outboundAt: input.outboundAt,
+          inboundAt: input.inboundAt,
+          city: input.city,
+          currency: input.currency,
+        }),
+      )
+      .filter((row): row is TransferOffer => Boolean(row))
+      .sort((a, b) => a.costAmountMinor - b.costAmountMinor);
+  }
+
   async searchTransfers(params: TransferSearchParams): Promise<TransferOffer[]> {
     this.ensureConfigured();
     const city = String(params.city || "").trim();
     const fromKind = params.fromKind || "IATA";
-    const toKind = params.toKind || "ATLAS";
+    const toKind = params.toKind || "GPS";
     const resolvedFrom = await resolveTransferEndpoint({
       query: params.from,
       kind: fromKind,
@@ -264,58 +324,49 @@ export class HotelbedsTransferProvider implements TransferProviderAdapter {
     const adults = Math.max(1, params.adults || 1);
     const children = Math.max(0, params.children || 0);
     const infants = Math.max(0, params.infants || 0);
-    const outboundAt = datetimeStamp(params.outboundDate, params.outboundTime || "10:00");
-    const inboundAt =
-      params.inboundDate
-        ? datetimeStamp(params.inboundDate, params.inboundTime || "18:00")
-        : undefined;
+    const outboundAt = datetimeStamp(
+      params.outboundDate,
+      params.outboundTime || "10:00",
+    );
+    const inboundAt = params.inboundDate
+      ? datetimeStamp(params.inboundDate, params.inboundTime || "18:00")
+      : undefined;
 
-    const pathParts = [
-      "/transfer-api/1.0/availability/en/from",
-      from.type,
-      encodeSegment(from.code),
-      "to",
-      to.type,
-      encodeSegment(to.code),
-      outboundAt,
-    ];
-    if (inboundAt) pathParts.push(inboundAt);
-    pathParts.push(String(adults), String(children), String(infants));
-    const path = pathParts.join("/");
+    const fetchOnce = (
+      origin: TransferEndpoint,
+      dest: TransferEndpoint,
+      returnAt?: string,
+    ) =>
+      this.fetchAvailability({
+        from: origin,
+        to: dest,
+        outboundAt,
+        inboundAt: returnAt,
+        adults,
+        children,
+        infants,
+        city,
+        currency: params.currency,
+      });
 
-    const url = `${this.creds.baseUrl}${path}`;
-    const response = await fetch(url, { headers: hotelbedsHeaders(this.creds) });
-    const json = (await response.json().catch(() => ({}))) as HbTransferAvailabilityResponse & {
-      message?: string;
-    };
-    if (!response.ok) {
-      const detail =
-        json.error?.message ||
-        json.message ||
-        (typeof json.error === "string" ? json.error : "") ||
-        "";
-      throw new Error(
-        detail
-          ? `تعذر جلب النقل: ${detail}`
-          : `تعذر جلب النقل من Hotelbeds (HTTP ${response.status})`,
-      );
+    let offers = await fetchOnce(from, to, inboundAt);
+    if (!offers.length && inboundAt) {
+      offers = await fetchOnce(from, to, undefined);
     }
-
-    const offers = (json.services || [])
-      .map((service) =>
-        mapService(service, {
-          from,
-          to,
-          liveMode: this.liveMode,
-          outboundAt,
-          inboundAt,
+    if (!offers.length && to.type === "ATLAS") {
+      const gpsQuery = String(params.toLabel || city || "").trim();
+      if (gpsQuery) {
+        const gps = await resolveTransferEndpoint({
+          query: gpsQuery,
+          kind: "GPS",
           city,
-          currency: params.currency,
-        }),
-      )
-      .filter((row): row is TransferOffer => Boolean(row));
-
-    return offers.sort((a, b) => a.costAmountMinor - b.costAmountMinor);
+        });
+        if (!sameTransferPoint(from, gps)) {
+          offers = await fetchOnce(from, gps, undefined);
+        }
+      }
+    }
+    return offers;
   }
 
   async createBooking(

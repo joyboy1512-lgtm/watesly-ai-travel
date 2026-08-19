@@ -56,6 +56,8 @@ export interface TransferSearchParams {
   children?: number;
   infants?: number;
   currency?: string;
+  /** Human label for ATLAS/GPS fallback when hotel code has no transfer offers. */
+  toLabel?: string;
 }
 
 export interface ActivitySearchParams {

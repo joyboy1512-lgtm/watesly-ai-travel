@@ -385,6 +385,7 @@ export class BookingsController {
       adults?: number;
       children?: number;
       infants?: number;
+      toLabel?: string;
     },
   ) {
     return this.bookings.searchTransfers({
@@ -401,6 +402,7 @@ export class BookingsController {
       adults: body.adults || 1,
       children: body.children || 0,
       infants: body.infants || 0,
+      toLabel: body.toLabel,
     });
   }
 

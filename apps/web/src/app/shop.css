@@ -1,5 +1,51 @@
 @import url("https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap");
 
+.shop-ac {
+  position: relative;
+}
+
+.prc-suggest {
+  position: absolute;
+  z-index: 40;
+  top: calc(100% - 0.15rem);
+  inset-inline: 0;
+  max-height: 240px;
+  overflow: auto;
+  display: grid;
+  gap: 0.15rem;
+  padding: 0.4rem;
+  border-radius: 10px;
+  border: 1px solid rgba(15, 51, 64, 0.12);
+  background: #fff;
+  box-shadow: 0 14px 28px rgba(7, 24, 34, 0.14);
+}
+
+.prc-suggest button {
+  display: grid;
+  gap: 0.1rem;
+  width: 100%;
+  text-align: start;
+  padding: 0.55rem 0.65rem;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #0f3340;
+  cursor: pointer;
+}
+
+.prc-suggest button strong {
+  font-size: 0.88rem;
+}
+
+.prc-suggest button span {
+  color: #5f7470;
+  font-size: 0.76rem;
+}
+
+.prc-suggest button:hover {
+  background: #eef4f3;
+}
+
 .shop-root {
   --shop-navy: #0f3340;
   --shop-navy-2: #184a52;

@@ -5,7 +5,7 @@ import { ShopHomeClient } from "@/components/shop/ShopHomeClient";
 
 export default function PublicHomePage() {
   return (
-    <StoreFront>
+    <StoreFront wide>
       <ShopHomeClient />
     </StoreFront>
   );

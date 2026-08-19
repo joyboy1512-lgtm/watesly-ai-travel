@@ -20,6 +20,8 @@ import {
 } from "@/lib/booking-draft";
 import { formatMoneyMinor } from "@/lib/format";
 import { shopFetch } from "@/lib/shop-session";
+import { ShopLanding } from "@/components/shop/ShopLanding";
+import type { ShopDestination, ShopOffer } from "@/lib/shop-content";
 
 type Mode = "flights" | "stays" | "cars" | "activities";
 
@@ -95,6 +97,12 @@ export function ShopHomeClient() {
   const [hotelOpen, setHotelOpen] = useState<HotelOfferRow | null>(null);
 
   const nights = nightsBetween(departDate, returnDate);
+
+  const hasResults =
+    flights.length > 0 ||
+    hotels.length > 0 ||
+    transfers.length > 0 ||
+    activities.length > 0;
 
   const hotelRows = useMemo(
     () => filterHotelOffers(hotels, defaultHotelFilters(), "price_asc"),
@@ -373,10 +381,66 @@ export function ShopHomeClient() {
     router.push("/book");
   }
 
+  function scrollToSearch() {
+    document.getElementById("search")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  function applyDestination(dest: ShopDestination) {
+    setMode("flights");
+    setOrigin("KWI");
+    setOriginLabel("KWI · الكويت");
+    setDestination(dest.code);
+    setDestinationLabel(`${dest.code} · ${dest.name}`);
+    setStayQuery(dest.name);
+    setActivityDest(dest.code);
+    setActivityLabel(dest.name);
+    setError("");
+    setMessage("");
+    scrollToSearch();
+  }
+
+  function applyOffer(offer: ShopOffer) {
+    setMode(offer.mode);
+    setError("");
+    setMessage("");
+    if (offer.mode === "flights") {
+      setOrigin("KWI");
+      setOriginLabel("KWI · الكويت");
+      setDestination(offer.code || "DXB");
+      setDestinationLabel(`${offer.code || "DXB"} · ${offer.destination || ""}`);
+    }
+    if (offer.mode === "stays" || offer.mode === "cars") {
+      setStayQuery(offer.destination || "دبي");
+    }
+    if (offer.mode === "activities") {
+      setActivityDest(offer.code || "DXB");
+      setActivityLabel(offer.destination || "دبي");
+    }
+    scrollToSearch();
+  }
+
   return (
     <>
-      <section className="shop-hero" id="search">
-        <div className="shop-tabs">
+      <div className="shop-hero-wrap">
+        <div
+          className="shop-hero-bg"
+          style={{
+            backgroundImage:
+              "url(https://images.unsplash.com/photo-1505118380757-91f5daf2b46f?auto=format&fit=crop&w=1600&q=80)",
+          }}
+        />
+        <section className="shop-hero" id="search">
+          <div className="shop-hero-copy">
+            <p className="shop-kicker light">مرحباً بك في WeekendGate</p>
+            <h1>رحلتك تبدأ من ماء البحر</h1>
+            <p>
+              احجز طيراناً، إقامة، نقلاً، أو نشاطاً — بأسعار حية وتجربة هادئة
+              بلون البحر الفاتح.
+            </p>
+          </div>
+
+          <div className="shop-search-shell">
+            <div className="shop-tabs" role="tablist" aria-label="نوع البحث">
           {(
             [
               ["flights", "الطيران"],
@@ -394,19 +458,18 @@ export function ShopHomeClient() {
               {label}
             </button>
           ))}
-        </div>
-        <h1>
-          {mode === "flights"
-            ? "قارن واحجز رحلتك"
-            : mode === "stays"
-              ? "اعثر على الإقامة المناسبة"
-              : mode === "cars"
-                ? "نقل من المطار إلى الفندق"
-                : "اكتشف الأنشطة والتجارب"}
-        </h1>
-        <p>بحث حي بنفس أسعار WeekendGate. بعد الاختيار نحفظ طلبك لفريق الحجوزات لإتمام التأكيد.</p>
+            </div>
+            <h2 className="shop-search-title">
+              {mode === "flights"
+                ? "قارن واحجز أرخص الرحلات"
+                : mode === "stays"
+                  ? "اكتشف أفضل الإقامات"
+                  : mode === "cars"
+                    ? "نقل من المطار إلى الفندق"
+                    : "اكتشف الأنشطة والمعالم"}
+            </h2>
 
-        <div className="shop-search">
+            <div className="shop-search">
           {mode === "flights" ? (
             <div className="shop-chips">
               <button
@@ -567,12 +630,21 @@ export function ShopHomeClient() {
               {loading ? "جارٍ البحث..." : "بحث"}
             </button>
           </div>
-        </div>
-        {error ? <p className="shop-error">{error}</p> : null}
-        {message ? <p className="shop-status">{message}</p> : null}
-      </section>
+              {error ? <p className="shop-error">{error}</p> : null}
+              {message ? <p className="shop-status">{message}</p> : null}
+            </div>
+          </div>
+        </section>
+      </div>
 
-      <section className="shop-results">
+      {hasResults ? (
+        <section className="shop-results shop-results-block">
+          <div className="shop-section-head">
+            <div>
+              <p className="shop-kicker">نتائج البحث</p>
+              <h2>اختر العرض المناسب لك</h2>
+            </div>
+          </div>
         {flights.map((flight) => {
           const code = String(flight.details.airlineCode || "");
           const logo = airlineLogo(code);
@@ -628,7 +700,13 @@ export function ShopHomeClient() {
             onBook={() => bookActivity(item)}
           />
         ))}
-      </section>
+        </section>
+      ) : null}
+
+      <ShopLanding
+        onPickDestination={applyDestination}
+        onPickOffer={applyOffer}
+      />
 
       {hotelOpen ? (
         <HotelDetailModal

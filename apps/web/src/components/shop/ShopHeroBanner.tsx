@@ -290,10 +290,10 @@ export function ShopHeroBanner(props: Props) {
             </div>
           ) : null}
 
-          <div className={`exp-form-bar exp-form-${props.mode}`}>
+          <div className={`exp-form-row exp-form-${props.mode}`}>
             {props.mode === "flights" ? (
               <>
-                <div className="exp-field exp-field-grow">
+                <div className="exp-input-cell exp-cell-grow">
                   <ShopAutocomplete
                     inline
                     label="المغادرة من"
@@ -305,17 +305,15 @@ export function ShopHeroBanner(props: Props) {
                     onPick={props.onOriginPick}
                   />
                 </div>
-                <div className="exp-field exp-field-swap">
-                  <button
-                    type="button"
-                    className="exp-swap-btn"
-                    aria-label="تبديل"
-                    onClick={swapAirports}
-                  >
-                    <IconSwap />
-                  </button>
-                </div>
-                <div className="exp-field exp-field-grow">
+                <button
+                  type="button"
+                  className="exp-swap-inline"
+                  aria-label="تبديل"
+                  onClick={swapAirports}
+                >
+                  <IconSwap />
+                </button>
+                <div className="exp-input-cell exp-cell-grow">
                   <ShopAutocomplete
                     inline
                     label="الوجهة"
@@ -331,7 +329,7 @@ export function ShopHeroBanner(props: Props) {
             ) : null}
 
             {props.mode === "stays" ? (
-              <div className="exp-field exp-field-grow">
+              <div className="exp-input-cell exp-cell-grow">
                 <ShopAutocomplete
                   inline
                   label="إلى أين؟"
@@ -347,7 +345,7 @@ export function ShopHeroBanner(props: Props) {
 
             {props.mode === "cars" ? (
               <>
-                <div className="exp-field">
+                <div className="exp-input-cell">
                   <ShopAutocomplete
                     inline
                     label="من (المطار)"
@@ -359,7 +357,7 @@ export function ShopHeroBanner(props: Props) {
                     onPick={props.onOriginPick}
                   />
                 </div>
-                <div className="exp-field exp-field-grow">
+                <div className="exp-input-cell exp-cell-grow">
                   <ShopAutocomplete
                     inline
                     label="إلى"
@@ -375,7 +373,7 @@ export function ShopHeroBanner(props: Props) {
             ) : null}
 
             {props.mode === "activities" ? (
-              <div className="exp-field exp-field-grow">
+              <div className="exp-input-cell exp-cell-grow">
                 <ShopAutocomplete
                   inline
                   label="الوجهة"
@@ -389,8 +387,8 @@ export function ShopHeroBanner(props: Props) {
               </div>
             ) : null}
 
-            <div className="exp-field exp-field-dates">
-              <span className="exp-field-label">التواريخ</span>
+            <div className="exp-input-cell exp-cell-dates">
+              <span className="exp-cell-label">التواريخ</span>
               <div className="exp-dates-row">
                 <DatePick
                   value={props.departDate}
@@ -412,8 +410,8 @@ export function ShopHeroBanner(props: Props) {
 
             {props.mode === "cars" ? (
               <>
-                <div className="exp-field exp-field-time">
-                  <span className="exp-field-label">وقت الاستلام</span>
+                <div className="exp-input-cell exp-cell-time">
+                  <span className="exp-cell-label">وقت الاستلام</span>
                   <select
                     className="exp-time-select"
                     value={props.pickupTime}
@@ -428,8 +426,8 @@ export function ShopHeroBanner(props: Props) {
                     )}
                   </select>
                 </div>
-                <div className="exp-field exp-field-time">
-                  <span className="exp-field-label">وقت التسليم</span>
+                <div className="exp-input-cell exp-cell-time">
+                  <span className="exp-cell-label">وقت التسليم</span>
                   <select
                     className="exp-time-select"
                     value={props.dropoffTime}
@@ -447,92 +445,90 @@ export function ShopHeroBanner(props: Props) {
               </>
             ) : null}
 
-            <div className="exp-field exp-field-travelers">
+            <div className="exp-input-cell exp-cell-travelers">
               <button
                 type="button"
                 className="exp-travelers-trigger"
                 onClick={() => setTravelersOpen((v) => !v)}
               >
-                <span className="exp-field-label">المسافرون</span>
+                <span className="exp-cell-label">المسافرون</span>
                 <strong>{travelerSummary}</strong>
               </button>
               {travelersOpen ? (
                 <div className="exp-travelers-pop">
-                    <div className="exp-travelers-row">
-                      <span>بالغون</span>
-                      <div className="exp-stepper">
-                        <button
-                          type="button"
-                          onClick={() => props.onAdultsChange(Math.max(1, props.adults - 1))}
-                        >
-                          −
-                        </button>
-                        <strong>{props.adults}</strong>
-                        <button type="button" onClick={() => props.onAdultsChange(props.adults + 1)}>
-                          +
-                        </button>
-                      </div>
+                  <div className="exp-travelers-row">
+                    <span>بالغون</span>
+                    <div className="exp-stepper">
+                      <button
+                        type="button"
+                        onClick={() => props.onAdultsChange(Math.max(1, props.adults - 1))}
+                      >
+                        −
+                      </button>
+                      <strong>{props.adults}</strong>
+                      <button type="button" onClick={() => props.onAdultsChange(props.adults + 1)}>
+                        +
+                      </button>
                     </div>
-                    <div className="exp-travelers-row">
-                      <span>أطفال</span>
-                      <div className="exp-stepper">
-                        <button
-                          type="button"
-                          onClick={() =>
-                            props.onChildrenChange(Math.max(0, props.children - 1))
-                          }
-                        >
-                          −
-                        </button>
-                        <strong>{props.children}</strong>
-                        <button
-                          type="button"
-                          onClick={() => props.onChildrenChange(props.children + 1)}
-                        >
-                          +
-                        </button>
-                      </div>
-                    </div>
-                    {props.mode === "stays" ? (
-                      <div className="exp-travelers-row">
-                        <span>غرف</span>
-                        <div className="exp-stepper">
-                          <button
-                            type="button"
-                            onClick={() => props.onRoomsChange(Math.max(1, props.rooms - 1))}
-                          >
-                            −
-                          </button>
-                          <strong>{props.rooms}</strong>
-                          <button type="button" onClick={() => props.onRoomsChange(props.rooms + 1)}>
-                            +
-                          </button>
-                        </div>
-                      </div>
-                    ) : null}
-                    {props.mode === "flights" ? (
-                      <label className="exp-travelers-row">
-                        <span>الدرجة</span>
-                        <select
-                          value={props.cabinClass}
-                          onChange={(e) => props.onCabinClassChange(e.target.value)}
-                        >
-                          <option value="economy">اقتصادية</option>
-                          <option value="premium_economy">اقتصادية مميزة</option>
-                          <option value="business">رجال أعمال</option>
-                          <option value="first">أولى</option>
-                        </select>
-                      </label>
-                    ) : null}
-                    <button
-                      type="button"
-                      className="exp-pop-done"
-                      onClick={() => setTravelersOpen(false)}
-                    >
-                      تم
-                    </button>
                   </div>
-                ) : null}
+                  <div className="exp-travelers-row">
+                    <span>أطفال</span>
+                    <div className="exp-stepper">
+                      <button
+                        type="button"
+                        onClick={() => props.onChildrenChange(Math.max(0, props.children - 1))}
+                      >
+                        −
+                      </button>
+                      <strong>{props.children}</strong>
+                      <button
+                        type="button"
+                        onClick={() => props.onChildrenChange(props.children + 1)}
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
+                  {props.mode === "stays" ? (
+                    <div className="exp-travelers-row">
+                      <span>غرف</span>
+                      <div className="exp-stepper">
+                        <button
+                          type="button"
+                          onClick={() => props.onRoomsChange(Math.max(1, props.rooms - 1))}
+                        >
+                          −
+                        </button>
+                        <strong>{props.rooms}</strong>
+                        <button type="button" onClick={() => props.onRoomsChange(props.rooms + 1)}>
+                          +
+                        </button>
+                      </div>
+                    </div>
+                  ) : null}
+                  {props.mode === "flights" ? (
+                    <label className="exp-travelers-row">
+                      <span>الدرجة</span>
+                      <select
+                        value={props.cabinClass}
+                        onChange={(e) => props.onCabinClassChange(e.target.value)}
+                      >
+                        <option value="economy">اقتصادية</option>
+                        <option value="premium_economy">اقتصادية مميزة</option>
+                        <option value="business">رجال أعمال</option>
+                        <option value="first">أولى</option>
+                      </select>
+                    </label>
+                  ) : null}
+                  <button
+                    type="button"
+                    className="exp-pop-done"
+                    onClick={() => setTravelersOpen(false)}
+                  >
+                    تم
+                  </button>
+                </div>
+              ) : null}
             </div>
 
             <button

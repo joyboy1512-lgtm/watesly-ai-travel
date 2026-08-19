@@ -76,7 +76,7 @@ export function ShopAutocomplete({
   if (inline) {
     return (
       <div className="shop-ac shop-ac-inline exp-ac-field" ref={boxRef}>
-        <span className="exp-field-label">{label}</span>
+        <span className="exp-cell-label">{label}</span>
         <input
           type="text"
           value={display || value}

@@ -583,15 +583,16 @@
   min-height: 38px;
   max-height: 38px;
   display: flex;
-  align-items: center;
-  gap: 0.35rem;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.05rem;
   padding: 0 0.45rem;
   border: 1px solid #818494;
   border-radius: 6px;
   background: #fff;
   color: var(--exp-muted);
   position: relative;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .exp-input-cell > svg {
@@ -611,18 +612,11 @@
 
 .exp-cell-time {
   padding: 0 0.4rem;
+  gap: 0.05rem;
 }
 
-.exp-cell-time label {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 0;
-  width: 100%;
-  line-height: 1.1;
-}
-
-.exp-cell-time span {
+.exp-cell-time .exp-cell-label {
+  display: block;
   font-size: 0.58rem;
   font-weight: 700;
   text-transform: uppercase;
@@ -630,7 +624,8 @@
   line-height: 1;
 }
 
-.exp-cell-time select {
+.exp-cell-time select,
+.exp-cell-time .exp-time-select {
   border: 0 !important;
   background: transparent !important;
   padding: 0 !important;
@@ -640,6 +635,19 @@
   line-height: 1.2;
   color: var(--exp-ink);
   cursor: pointer;
+  box-shadow: none !important;
+  outline: none !important;
+  width: 100%;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.exp-cell-time select:focus,
+.exp-cell-time select:focus-visible,
+.exp-cell-time .exp-time-select:focus,
+.exp-cell-time .exp-time-select:focus-visible {
+  border: 0 !important;
+  outline: none !important;
   box-shadow: none !important;
 }
 
@@ -720,7 +728,7 @@
   min-width: 0;
   width: 100%;
   flex-wrap: nowrap;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .exp-date-pick {
@@ -785,34 +793,60 @@
   justify-self: center;
 }
 
+/* No inner boxes — only the outer cell border */
+.exp-input-cell input,
+.exp-input-cell select,
+.exp-input-cell button,
+.exp-input-cell .exp-date-btn,
+.exp-input-cell .exp-travelers-trigger {
+  border: 0 !important;
+  outline: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+
+.exp-input-cell input:focus,
+.exp-input-cell input:focus-visible,
+.exp-input-cell select:focus,
+.exp-input-cell select:focus-visible,
+.exp-input-cell button:focus,
+.exp-input-cell button:focus-visible,
+.exp-input-cell .exp-date-btn:focus,
+.exp-input-cell .exp-date-btn:focus-visible,
+.exp-input-cell .exp-travelers-trigger:focus,
+.exp-input-cell .exp-travelers-trigger:focus-visible {
+  border: 0 !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.exp-input-cell:focus-within {
+  border-color: var(--exp-blue);
+  box-shadow: 0 0 0 1px var(--exp-blue);
+}
+
 .exp-cell-travelers {
   height: 38px;
   padding: 0 0.45rem;
   display: flex;
-  align-items: center;
-  gap: 0.35rem;
+  flex-direction: column;
+  justify-content: center;
   overflow: visible;
+  position: relative;
 }
 
 .exp-travelers-trigger {
-  flex: 1;
-  min-width: 0;
-  display: block;
-  height: auto;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.05rem;
   padding: 0;
   border: 0;
   background: transparent;
   cursor: pointer;
   text-align: start;
   font: inherit;
-}
-
-.exp-travelers-trigger .exp-cell-body {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 0;
-  width: 100%;
 }
 
 .exp-travelers-trigger .exp-cell-label {
@@ -832,6 +866,71 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.exp-cell-dates {
+  min-width: 0;
+  gap: 0.05rem;
+}
+
+.exp-cell-dates .exp-cell-label {
+  display: block;
+  font-size: 0.58rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--exp-muted);
+  line-height: 1;
+}
+
+.exp-dates-row {
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+  min-width: 0;
+  width: 100%;
+  flex-wrap: nowrap;
+  overflow: visible;
+}
+
+.exp-date-btn {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--exp-ink);
+  cursor: pointer;
+  text-align: start;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  line-height: 1.2;
+}
+
+.exp-input-cell .shop-ac-inline {
+  display: grid;
+  gap: 0.05rem;
+  position: relative;
+  width: 100%;
+  min-width: 0;
+  overflow: visible;
+}
+
+.exp-input-cell .shop-ac-inline > span:first-child,
+.exp-input-cell .shop-ac-inline .exp-cell-label {
+  font-size: 0.58rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--exp-muted);
+  line-height: 1;
+}
+
+.exp-input-cell .prc-suggest,
+.exp-input-cell .exp-ac-menu {
+  z-index: 200;
+  top: calc(100% + 4px);
 }
 
 .exp-search-submit {

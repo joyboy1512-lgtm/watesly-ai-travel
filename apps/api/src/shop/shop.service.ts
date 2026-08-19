@@ -853,7 +853,6 @@ export class ShopService {
     return this.assistant.thread({
       organizationId: customer.organizationId,
       channel: "web_chat",
-      contactId: customer.contactId || undefined,
       externalRef: `customer:${customer.id}`,
       createIfMissing: false,
     });

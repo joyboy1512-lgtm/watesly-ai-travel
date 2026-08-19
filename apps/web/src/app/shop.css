@@ -346,7 +346,9 @@
 }
 
 .exp-cell-time label {
-  display: grid;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
   gap: 0;
   width: 100%;
   line-height: 1.1;
@@ -354,31 +356,37 @@
 
 .exp-cell-time span {
   font-size: 0.58rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--exp-muted);
   line-height: 1;
 }
 
 .exp-cell-time select {
+  border: 0 !important;
+  background: transparent !important;
+  padding: 0 !important;
+  font: inherit;
   font-size: 0.78rem;
+  font-weight: 600;
   line-height: 1.2;
+  color: var(--exp-ink);
+  cursor: pointer;
+  box-shadow: none !important;
 }
 
 .exp-cell-body {
   flex: 1;
   min-width: 0;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0;
 }
 
 .exp-cell-label {
-  font-size: 0.58rem;
-  line-height: 1;
-}
-
-.exp-cell-body .shop-ac {
-  gap: 0;
-  line-height: 1.1;
-}
-
-.exp-cell-body .shop-ac span {
+  display: block;
   font-size: 0.58rem;
   font-weight: 700;
   text-transform: uppercase;
@@ -386,58 +394,104 @@
   line-height: 1;
 }
 
-.exp-dates-inline input[type="date"] {
+/* Inline fields inside dialog cells — no nested card borders */
+.exp-input-cell .shop-ac-inline {
+  display: grid;
+  gap: 0;
+  position: relative;
+  width: 100%;
+  min-width: 0;
+}
+
+.exp-input-cell .shop-ac-inline > span:first-child {
+  font-size: 0.58rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--exp-muted);
+  line-height: 1;
+}
+
+.exp-input-cell .shop-ac-inline input,
+.exp-input-cell .shop-ac input,
+.exp-input-cell .fs-cell input {
+  border: 0 !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  outline: none !important;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--exp-ink);
+  width: 100%;
+  min-width: 0;
   height: 1.15rem;
+  line-height: 1.15rem;
+}
+
+.exp-input-cell .shop-ac-inline input:focus,
+.exp-input-cell .shop-ac input:focus {
+  box-shadow: none !important;
+}
+
+/* Unified dates field — single cell, inline range */
+.exp-dates-unified {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0;
+  width: 100%;
+  min-width: 0;
+}
+
+.exp-dates-row {
+  display: flex;
+  align-items: center;
+  gap: 0.12rem;
+  min-width: 0;
+  width: 100%;
+}
+
+.exp-date-input {
+  border: 0 !important;
+  background: transparent !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  box-shadow: none !important;
+  outline: none !important;
+  font: inherit;
+  font-size: 0.78rem !important;
+  font-weight: 600;
+  color: var(--exp-ink);
+  flex: 1 1 0;
+  min-width: 0;
+  width: auto;
+  height: 1.15rem;
+  line-height: 1.15rem;
   color-scheme: light;
 }
 
-.exp-cell-body .shop-ac input {
-  height: 1.15rem;
+.exp-date-input:focus {
+  box-shadow: none !important;
 }
 
-.exp-dates-inline {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-  width: 100%;
-  min-width: 0;
-}
-
-.exp-dates-inline label {
-  display: grid;
-  gap: 0;
-  min-width: 0;
-  flex: 1;
-  line-height: 1.1;
-}
-
-.exp-dates-inline label span {
-  font-size: 0.58rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  line-height: 1;
-}
-
-.exp-dates-inline input {
-  border: 0;
-  background: transparent;
-  font: inherit;
-  font-size: 0.78rem;
-  font-weight: 600;
-  color: var(--exp-ink);
+.exp-date-input::-webkit-calendar-picker-indicator {
+  margin: 0;
   padding: 0;
-  width: 100%;
-  min-width: 0;
-  line-height: 1.25;
-  min-height: 0;
+  cursor: pointer;
+  opacity: 0.55;
+  flex-shrink: 0;
 }
 
 .exp-date-sep {
-  color: var(--exp-muted);
-  font-weight: 600;
-  font-size: 0.75rem;
   flex-shrink: 0;
-  padding-top: 0.45rem;
+  padding: 0;
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--exp-muted);
+  line-height: 1;
 }
 
 .exp-swap-inline {
@@ -457,26 +511,40 @@
 
 .exp-cell-travelers {
   height: 38px;
-  padding: 0;
-}
-
-.exp-travelers-trigger {
+  padding: 0 0.45rem;
   display: flex;
   align-items: center;
   gap: 0.35rem;
-  width: 100%;
-  height: 38px;
-  padding: 0 0.45rem;
+  overflow: visible;
+}
+
+.exp-travelers-trigger {
+  flex: 1;
+  min-width: 0;
+  display: block;
+  height: auto;
+  padding: 0;
   border: 0;
   background: transparent;
   cursor: pointer;
   text-align: start;
   font: inherit;
-  overflow: hidden;
+}
+
+.exp-travelers-trigger .exp-cell-body {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0;
+  width: 100%;
 }
 
 .exp-travelers-trigger .exp-cell-label {
   font-size: 0.58rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--exp-muted);
+  line-height: 1;
 }
 
 .exp-travelers-trigger strong {

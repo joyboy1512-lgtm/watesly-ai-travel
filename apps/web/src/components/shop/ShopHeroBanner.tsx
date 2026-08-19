@@ -154,12 +154,6 @@ function IconSwap() {
   );
 }
 
-function formatDateShort(iso: string) {
-  if (!iso) return "";
-  const d = new Date(iso + "T12:00:00");
-  return d.toLocaleDateString("ar-KW", { weekday: "short", day: "numeric", month: "short" });
-}
-
 function formatTimeShort(t: string) {
   if (!t) return "";
   const [h, m] = t.split(":");
@@ -283,6 +277,7 @@ export function ShopHeroBanner(props: Props) {
                   <IconPin />
                   <div className="exp-cell-body">
                     <ShopAutocomplete
+                      inline
                       label="المغادرة من"
                       value={props.origin}
                       display={props.originLabel}
@@ -305,6 +300,7 @@ export function ShopHeroBanner(props: Props) {
                   <IconPin />
                   <div className="exp-cell-body">
                     <ShopAutocomplete
+                      inline
                       label="الوجهة"
                       value={props.destination}
                       display={props.destinationLabel}
@@ -323,6 +319,7 @@ export function ShopHeroBanner(props: Props) {
                 <IconPin />
                 <div className="exp-cell-body">
                   <ShopAutocomplete
+                    inline
                     label="إلى أين؟"
                     value={props.stayQuery}
                     display={props.stayQuery}
@@ -341,6 +338,7 @@ export function ShopHeroBanner(props: Props) {
                   <IconPin />
                   <div className="exp-cell-body">
                     <ShopAutocomplete
+                      inline
                       label="من (المطار)"
                       value={props.origin}
                       display={props.originLabel}
@@ -355,6 +353,7 @@ export function ShopHeroBanner(props: Props) {
                   <IconPin />
                   <div className="exp-cell-body">
                     <ShopAutocomplete
+                      inline
                       label="إلى"
                       value={props.stayQuery}
                       display={props.stayQuery}
@@ -373,6 +372,7 @@ export function ShopHeroBanner(props: Props) {
                 <IconPin />
                 <div className="exp-cell-body">
                   <ShopAutocomplete
+                    inline
                     label="الوجهة"
                     value={props.activityDest}
                     display={props.activityLabel}
@@ -387,31 +387,32 @@ export function ShopHeroBanner(props: Props) {
 
             <div className="exp-input-cell exp-cell-dates">
               <IconCalendar />
-              <div className="exp-cell-body exp-dates-inline">
-                <label>
-                  <span>{props.mode === "stays" ? "الوصول" : "المغادرة"}</span>
+              <div className="exp-cell-body exp-dates-unified">
+                <span className="exp-cell-label">التواريخ</span>
+                <div className="exp-dates-row">
                   <input
                     type="date"
+                    className="exp-date-input"
                     value={props.departDate}
                     onChange={(e) => props.onDepartDateChange(e.target.value)}
+                    aria-label={props.mode === "stays" ? "تاريخ الوصول" : "تاريخ المغادرة"}
                   />
-                </label>
-                {(props.mode === "flights" && props.tripType === "roundtrip") ||
-                props.mode === "stays" ||
-                props.mode === "activities" ||
-                (props.mode === "cars" && props.transferRoundtrip) ? (
-                  <>
-                    <span className="exp-date-sep">–</span>
-                    <label>
-                      <span>{props.mode === "stays" ? "المغادرة" : "العودة"}</span>
+                  {(props.mode === "flights" && props.tripType === "roundtrip") ||
+                  props.mode === "stays" ||
+                  props.mode === "activities" ||
+                  (props.mode === "cars" && props.transferRoundtrip) ? (
+                    <>
+                      <span className="exp-date-sep">–</span>
                       <input
                         type="date"
+                        className="exp-date-input"
                         value={props.returnDate}
                         onChange={(e) => props.onReturnDateChange(e.target.value)}
+                        aria-label={props.mode === "stays" ? "تاريخ المغادرة" : "تاريخ العودة"}
                       />
-                    </label>
-                  </>
-                ) : null}
+                    </>
+                  ) : null}
+                </div>
               </div>
             </div>
 
@@ -456,12 +457,12 @@ export function ShopHeroBanner(props: Props) {
 
             {props.mode !== "activities" && props.mode !== "cars" ? (
               <div className="exp-input-cell exp-cell-travelers">
+                <IconUsers />
                 <button
                   type="button"
                   className="exp-travelers-trigger"
                   onClick={() => setTravelersOpen((v) => !v)}
                 >
-                  <IconUsers />
                   <span className="exp-cell-body">
                     <span className="exp-cell-label">المسافرون</span>
                     <strong>{travelerSummary}</strong>

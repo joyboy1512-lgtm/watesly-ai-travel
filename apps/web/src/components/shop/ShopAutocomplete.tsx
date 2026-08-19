@@ -15,6 +15,7 @@ type Props = {
   value: string;
   display: string;
   placeholder?: string;
+  inline?: boolean;
   onQuery: (q: string) => Promise<SuggestItem[]>;
   onPick: (item: SuggestItem) => void;
   onClearText: (text: string) => void;
@@ -25,6 +26,7 @@ export function ShopAutocomplete({
   value,
   display,
   placeholder,
+  inline = false,
   onQuery,
   onPick,
   onClearText,
@@ -52,7 +54,7 @@ export function ShopAutocomplete({
   }
 
   return (
-    <label className="fs-cell shop-ac" ref={boxRef}>
+    <label className={inline ? "shop-ac shop-ac-inline" : "fs-cell shop-ac"} ref={boxRef}>
       <span>{label}</span>
       <input
         value={display || value}

@@ -1170,3 +1170,99 @@
   font-size: 0.75rem;
   line-height: 1.45;
 }
+
+/* Flight search: option chips above the white bar; fields + Explore on one row */
+.flight-hero .flight-search-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  align-items: stretch;
+  margin: 0 0 0.9rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.flight-hero .opt-chip {
+  min-height: 2.6rem;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(243, 247, 244, 0.18);
+  color: #f3f7f4;
+  box-shadow: 0 6px 16px rgba(7, 24, 34, 0.16);
+}
+
+.flight-hero .opt-chip:hover {
+  border-color: rgba(216, 163, 94, 0.55);
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.flight-hero .opt-chip.on {
+  background: #fff;
+  color: #0f3340;
+  border-color: #fff;
+}
+
+.flight-hero .opt-chip.opt-select {
+  background: rgba(255, 255, 255, 0.1);
+  color: #f3f7f4;
+}
+
+.flight-hero .opt-chip.opt-select span {
+  color: rgba(243, 247, 244, 0.72);
+}
+
+.flight-hero .opt-chip.opt-select select {
+  color: #fff;
+  background: transparent;
+}
+
+.flight-hero .opt-chip.opt-select select option {
+  color: #0f3340;
+}
+
+.flight-hero .opt-chip.on.opt-select,
+.flight-hero .opt-chip.opt-select:focus-within {
+  background: #fff;
+  color: #0f3340;
+}
+
+.flight-hero .opt-chip.on.opt-select span,
+.flight-hero .opt-chip.opt-select:focus-within span {
+  color: #5f7470;
+}
+
+.flight-hero .opt-chip.on.opt-select select,
+.flight-hero .opt-chip.opt-select:focus-within select {
+  color: #0f3340;
+}
+
+.flight-search {
+  overflow-x: auto;
+}
+
+.flight-search .fs-grid {
+  display: grid;
+  grid-template-columns:
+    minmax(150px, 1.2fr)
+    42px
+    minmax(150px, 1.2fr)
+    minmax(118px, 0.9fr)
+    minmax(118px, 0.9fr)
+    minmax(168px, 1fr)
+    148px;
+  align-items: stretch;
+  min-width: 920px;
+}
+
+.fs-oneway {
+  display: block;
+  margin-top: 0.35rem;
+  color: #7a8f8a;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.flight-search .flight-explore {
+  min-width: 148px;
+  align-self: stretch;
+}

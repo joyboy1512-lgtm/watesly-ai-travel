@@ -1057,21 +1057,30 @@ export default function InquiriesPage() {
           <button
             type="button"
             className={mode === "flights" ? "active" : undefined}
-            onClick={() => setMode("flights")}
+            onClick={() => {
+              setMode("flights");
+              setGuestsOpen(false);
+            }}
           >
             الطيران
           </button>
           <button
             type="button"
             className={mode === "stays" ? "active" : undefined}
-            onClick={() => setMode("stays")}
+            onClick={() => {
+              setMode("stays");
+              setGuestsOpen(false);
+            }}
           >
             الفنادق
           </button>
           <button
             type="button"
             className={mode === "cars" ? "active" : undefined}
-            onClick={() => setMode("cars")}
+            onClick={() => {
+              setMode("cars");
+              setGuestsOpen(false);
+            }}
           >
             نقل
           </button>
@@ -1086,72 +1095,71 @@ export default function InquiriesPage() {
         </h2>
         <p>محرك بحث سفر متكامل مع كتالوج المطارات وشركات الطيران</p>
 
-        <div className="flight-search">
-          {mode === "flights" ? (
-            <div className="flight-search-options">
-              <button
-                type="button"
-                className={`opt-chip${tripType === "roundtrip" ? " on" : ""}`}
-                onClick={() => setTripType("roundtrip")}
-              >
-                ذهاب وعودة
-              </button>
-              <button
-                type="button"
-                className={`opt-chip${tripType === "oneway" ? " on" : ""}`}
-                onClick={() => setTripType("oneway")}
-              >
-                ذهاب فقط
-              </button>
-              <label className="opt-chip opt-select">
-                <span>درجة السفر</span>
-                <select
-                  value={form.cabinClass}
-                  onChange={(e) =>
-                    setForm({ ...form, cabinClass: e.target.value })
-                  }
-                >
-                  <option value="economy">اقتصادية</option>
-                  <option value="premium_economy">اقتصادية مميزة</option>
-                  <option value="business">رجال أعمال</option>
-                  <option value="first">أولى</option>
-                </select>
-              </label>
-              <button
-                type="button"
-                className={`opt-chip${form.directOnly ? " on" : ""}`}
-                onClick={() =>
-                  setForm((f) => ({ ...f, directOnly: !f.directOnly }))
+        {mode === "flights" ? (
+          <div className="flight-search-options">
+            <button
+              type="button"
+              className={`opt-chip${tripType === "roundtrip" ? " on" : ""}`}
+              onClick={() => setTripType("roundtrip")}
+            >
+              ذهاب وعودة
+            </button>
+            <button
+              type="button"
+              className={`opt-chip${tripType === "oneway" ? " on" : ""}`}
+              onClick={() => setTripType("oneway")}
+            >
+              ذهاب فقط
+            </button>
+            <label className="opt-chip opt-select">
+              <span>درجة السفر</span>
+              <select
+                value={form.cabinClass}
+                onChange={(e) =>
+                  setForm({ ...form, cabinClass: e.target.value })
                 }
               >
-                رحلات مباشرة فقط
-              </button>
-              <label className="opt-chip opt-select">
-                <span>الطيران المفضل</span>
-                <select
-                  value={form.preferredAirline}
-                  onChange={(e) => {
-                    const code = e.target.value;
-                    const airline = airlines.find((a) => a.iataCode === code);
-                    setForm({
-                      ...form,
-                      preferredAirline: code,
-                      preferredAirlineName: airline?.name || "",
-                    });
-                  }}
-                >
-                  <option value="">الكل</option>
-                  {airlines.map((a) => (
-                    <option key={a.id} value={a.iataCode || ""}>
-                      {a.iataCode} — {a.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            </div>
-          ) : null}
+                <option value="economy">اقتصادية</option>
+                <option value="premium_economy">اقتصادية مميزة</option>
+                <option value="business">رجال أعمال</option>
+                <option value="first">أولى</option>
+              </select>
+            </label>
+            <button
+              type="button"
+              className={`opt-chip${form.directOnly ? " on" : ""}`}
+              onClick={() =>
+                setForm((f) => ({ ...f, directOnly: !f.directOnly }))
+              }
+            >
+              رحلات مباشرة فقط
+            </button>
+            <label className="opt-chip opt-select">
+              <span>الطيران المفضل</span>
+              <select
+                value={form.preferredAirline}
+                onChange={(e) => {
+                  const code = e.target.value;
+                  const airline = airlines.find((a) => a.iataCode === code);
+                  setForm({
+                    ...form,
+                    preferredAirline: code,
+                    preferredAirlineName: airline?.name || "",
+                  });
+                }}
+              >
+                <option value="">الكل</option>
+                {airlines.map((a) => (
+                  <option key={a.id} value={a.iataCode || ""}>
+                    {a.iataCode} — {a.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+        ) : null}
 
-          {mode === "flights" ? (
+        <div className="flight-search">
             <div className="fs-grid">
               <AutocompleteField
                 label="المغادرة من"
@@ -1234,56 +1242,99 @@ export default function InquiriesPage() {
                   <small>{nights ? `${nights} ليلة` : "العودة"}</small>
                 </label>
               ) : (
-                <div className="fs-cell fs-cell-empty" />
+                <div className="fs-cell fs-cell-empty">
+                  <span>تاريخ العودة</span>
+                  <strong className="fs-oneway">ذهاب فقط</strong>
+                  <small>بدون عودة</small>
+                </div>
               )}
-              <label className="fs-cell fs-cell-center">
-                <span>بالغون</span>
-                <input
-                  type="number"
-                  min={1}
-                  value={form.adults}
-                  onChange={(e) => {
-                    const adults = Number(e.target.value) || 1;
-                    setForm({
-                      ...form,
-                      adults,
-                      infants: Math.min(form.infants, adults),
-                    });
-                  }}
-                />
-                <small>مسافر</small>
-              </label>
-              <label className="fs-cell fs-cell-center">
-                <span>أطفال</span>
-                <input
-                  type="number"
-                  min={0}
-                  value={form.children}
-                  onChange={(e) =>
-                    setForm({ ...form, children: Number(e.target.value) || 0 })
-                  }
-                />
-                <small>2–11 سنة</small>
-              </label>
-              <label className="fs-cell fs-cell-center">
-                <span>رضع</span>
-                <input
-                  type="number"
-                  min={0}
-                  max={form.adults}
-                  value={form.infants}
-                  onChange={(e) =>
-                    setForm({
-                      ...form,
-                      infants: Math.min(
-                        Math.max(0, Number(e.target.value) || 0),
-                        form.adults,
-                      ),
-                    })
-                  }
-                />
-                <small>أقل من سنتين</small>
-              </label>
+              <div className="fs-cell fs-cell-center guests-cell" ref={guestsRef}>
+                <span>المسافرون</span>
+                <button
+                  type="button"
+                  className="guests-trigger"
+                  onClick={() => setGuestsOpen((v) => !v)}
+                >
+                  {form.adults} بالغ
+                  {form.children > 0 ? ` · ${form.children} طفل` : ""}
+                  {form.infants > 0 ? ` · ${form.infants} رضيع` : ""}
+                </button>
+                <small>بالغ · طفل · رضيع</small>
+                {guestsOpen ? (
+                  <div className="guests-menu">
+                    <label>
+                      <span>بالغون</span>
+                      <select
+                        value={form.adults}
+                        onChange={(e) => {
+                          const adults = Number(e.target.value) || 1;
+                          setForm({
+                            ...form,
+                            adults,
+                            infants: Math.min(form.infants, adults),
+                          });
+                        }}
+                      >
+                        {Array.from({ length: 9 }, (_, i) => i + 1).map((n) => (
+                          <option key={n} value={n}>
+                            {n}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <label>
+                      <span>أطفال (2–11 سنة)</span>
+                      <select
+                        value={form.children}
+                        onChange={(e) =>
+                          setForm({
+                            ...form,
+                            children: Number(e.target.value) || 0,
+                          })
+                        }
+                      >
+                        {Array.from({ length: 9 }, (_, i) => i).map((n) => (
+                          <option key={n} value={n}>
+                            {n}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <label>
+                      <span>رضع (أقل من سنتين)</span>
+                      <select
+                        value={form.infants}
+                        onChange={(e) =>
+                          setForm({
+                            ...form,
+                            infants: Math.min(
+                              Number(e.target.value) || 0,
+                              form.adults,
+                            ),
+                          })
+                        }
+                      >
+                        {Array.from(
+                          { length: form.adults + 1 },
+                          (_, i) => i,
+                        ).map((n) => (
+                          <option key={n} value={n}>
+                            {n}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <p className="guests-hint">الرضيع يجلس في حضن بالغ</p>
+                    <button
+                      type="button"
+                      className="btn secondary"
+                      onClick={() => setGuestsOpen(false)}
+                    >
+                      تم
+                    </button>
+                  </div>
+                ) : null}
+              </div>
               <button
                 type="button"
                 className="flight-explore"

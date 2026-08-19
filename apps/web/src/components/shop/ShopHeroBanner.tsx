@@ -164,6 +164,40 @@ function formatTimeShort(t: string) {
   return `${h12}:${m} ${suffix}`;
 }
 
+function formatDateDisplay(iso: string) {
+  if (!iso) return "اختر تاريخ";
+  const d = new Date(iso + "T12:00:00");
+  if (Number.isNaN(d.getTime())) return iso;
+  return d.toLocaleDateString("ar-KW", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+  });
+}
+
+function DatePick({
+  value,
+  onChange,
+  label,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  label: string;
+}) {
+  return (
+    <label className="exp-date-pick" title={label}>
+      <span className="exp-date-text">{formatDateDisplay(value)}</span>
+      <input
+        type="date"
+        className="exp-date-hidden"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        aria-label={label}
+      />
+    </label>
+  );
+}
+
 export function ShopHeroBanner(props: Props) {
   const [travelersOpen, setTravelersOpen] = useState(false);
   const heroImage = HERO_SLIDES[0]?.image;
@@ -186,6 +220,12 @@ export function ShopHeroBanner(props: Props) {
     props.onModeChange(mode);
     document.getElementById("search")?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
+
+  const showReturnDate =
+    (props.mode === "flights" && props.tripType === "roundtrip") ||
+    props.mode === "stays" ||
+    props.mode === "activities" ||
+    (props.mode === "cars" && props.transferRoundtrip);
 
   return (
     <section className="exp-home-hero" id="search">
@@ -390,25 +430,18 @@ export function ShopHeroBanner(props: Props) {
               <div className="exp-cell-body exp-dates-unified">
                 <span className="exp-cell-label">التواريخ</span>
                 <div className="exp-dates-row">
-                  <input
-                    type="date"
-                    className="exp-date-input"
+                  <DatePick
                     value={props.departDate}
-                    onChange={(e) => props.onDepartDateChange(e.target.value)}
-                    aria-label={props.mode === "stays" ? "تاريخ الوصول" : "تاريخ المغادرة"}
+                    onChange={props.onDepartDateChange}
+                    label={props.mode === "stays" ? "تاريخ الوصول" : "تاريخ المغادرة"}
                   />
-                  {(props.mode === "flights" && props.tripType === "roundtrip") ||
-                  props.mode === "stays" ||
-                  props.mode === "activities" ||
-                  (props.mode === "cars" && props.transferRoundtrip) ? (
+                  {showReturnDate ? (
                     <>
                       <span className="exp-date-sep">–</span>
-                      <input
-                        type="date"
-                        className="exp-date-input"
+                      <DatePick
                         value={props.returnDate}
-                        onChange={(e) => props.onReturnDateChange(e.target.value)}
-                        aria-label={props.mode === "stays" ? "تاريخ المغادرة" : "تاريخ العودة"}
+                        onChange={props.onReturnDateChange}
+                        label={props.mode === "stays" ? "تاريخ المغادرة" : "تاريخ العودة"}
                       />
                     </>
                   ) : null}

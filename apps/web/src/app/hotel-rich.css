@@ -1350,3 +1350,8 @@
     148px;
   min-width: 860px;
 }
+
+.flight-search .flight-explore {
+  min-width: 148px;
+  align-self: stretch;
+}

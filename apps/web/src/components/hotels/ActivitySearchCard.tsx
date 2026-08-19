@@ -57,7 +57,11 @@ export function ActivitySearchCard({ item, destination, onBook }: Props) {
           />
         </div>
         <p className="transfer-search-card-route">{dest}</p>
-        {item.details ? <p className="transfer-search-card-desc">{item.details}</p> : null}
+        {item.details ? (
+          <p className="transfer-search-card-desc">
+            {item.details.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim()}
+          </p>
+        ) : null}
         <p className="transfer-search-card-policy">
           {freeCancel ? "إلغاء مجاني*" : "راجع سياسة الإلغاء عند التأكيد"}
         </p>

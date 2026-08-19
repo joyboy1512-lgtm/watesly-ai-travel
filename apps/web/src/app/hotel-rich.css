@@ -1091,6 +1091,13 @@
   font-size: 0.85rem;
 }
 
+.transfer-search-card-desc {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
 .transfer-search-card-action {
   min-width: 160px;
   text-align: start;

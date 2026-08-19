@@ -1,5 +1,5 @@
 import type { ActivityOffer } from "@watesly-travel/shared";
-import { activityTypeLabelAr } from "@watesly-travel/shared";
+import { activityTypeLabelAr, stripActivityHtml } from "@watesly-travel/shared";
 import { cityDefaultAirport } from "../locations";
 import type {
   ActivityProviderAdapter,
@@ -108,9 +108,11 @@ function mapActivity(
   const destinationCode = dest?.code || input.destination;
   const typeLabel = activityTypeLabelAr(activity.type);
   const summary =
-    textOf(activity.content?.summary) ||
-    textOf(activity.content?.description) ||
-    name;
+    stripActivityHtml(
+      textOf(activity.content?.summary) ||
+        textOf(activity.content?.description) ||
+        name,
+    ) || name;
   const imageUrl = pickImage(activity);
   const freeCancellation = Boolean(activity.modalities?.[0]?.freeCancellation);
   const duration = durationLabel(activity);

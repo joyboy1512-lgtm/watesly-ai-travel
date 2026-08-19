@@ -22,6 +22,21 @@ export type ActivityServiceDetails = {
   [key: string]: unknown;
 };
 
+export function stripActivityHtml(value?: string | null): string {
+  return String(value || "")
+    .replace(/<br\s*\/?>/gi, " ")
+    .replace(/<\/p>/gi, " ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 export function activityTypeLabelAr(type?: string): string {
   const key = String(type || "").toUpperCase();
   if (key === "TICKET") return "تذكرة";

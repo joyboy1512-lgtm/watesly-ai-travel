@@ -193,6 +193,36 @@ export const SHOP_REVIEWS: ShopReview[] = [
   },
 ];
 
+export const HERO_SLIDES = [
+  {
+    image:
+      "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?auto=format&fit=crop&w=1800&q=80",
+    kicker: "WEEKENDGATE TRAVEL",
+    title: "الطبيعة العظيمة",
+    subtitle: "سافر بمتعة",
+    description:
+      "اكتشف وجهات بحرية وثقافية مع بحث حي للطيران والفنادق والنقل — تجربة سفر كاملة بلمسة ماء البحر.",
+  },
+  {
+    image:
+      "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1800&q=80",
+    kicker: "SHORE & SKY",
+    title: "شواطئ وسماء صافية",
+    subtitle: "رحلات لا تُنسى",
+    description:
+      "من الكويت إلى العالم — احجز رحلتك بخطوات بسيطة واترك التأكيد لفريقنا المحترف.",
+  },
+  {
+    image:
+      "https://images.unsplash.com/photo-1476514525535-07fb1097aaf6?auto=format&fit=crop&w=1800&q=80",
+    kicker: "LIVE SEARCH",
+    title: "عروض حية فورية",
+    subtitle: "أسعار محدّثة",
+    description:
+      "طيران، إقامة، نقل من المطار، وأنشطة — كلها في منصة واحدة بتصميم عصري ومريح.",
+  },
+] as const;
+
 export const SHOP_FEATURES = [
   {
     icon: "🌊",

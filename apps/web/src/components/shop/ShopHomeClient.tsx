@@ -6,7 +6,7 @@ import { HotelSearchCard } from "@/components/hotels/HotelSearchCard";
 import { HotelDetailModal } from "@/components/hotels/HotelDetailModal";
 import { TransferSearchCard } from "@/components/hotels/TransferSearchCard";
 import { ActivitySearchCard } from "@/components/hotels/ActivitySearchCard";
-import { ShopAutocomplete, type SuggestItem } from "@/components/shop/ShopAutocomplete";
+import { type SuggestItem } from "@/components/shop/ShopAutocomplete";
 import {
   defaultHotelFilters,
   filterHotelOffers,
@@ -21,6 +21,7 @@ import {
 import { formatMoneyMinor } from "@/lib/format";
 import { shopFetch } from "@/lib/shop-session";
 import { ShopLanding } from "@/components/shop/ShopLanding";
+import { ShopHeroBanner } from "@/components/shop/ShopHeroBanner";
 import type { ShopDestination, ShopOffer } from "@/lib/shop-content";
 
 type Mode = "flights" | "stays" | "cars" | "activities";
@@ -421,221 +422,65 @@ export function ShopHomeClient() {
 
   return (
     <>
-      <div className="shop-hero-wrap">
-        <div
-          className="shop-hero-bg"
-          style={{
-            backgroundImage:
-              "url(https://images.unsplash.com/photo-1505118380757-91f5daf2b46f?auto=format&fit=crop&w=1600&q=80)",
-          }}
-        />
-        <section className="shop-hero" id="search">
-          <div className="shop-hero-copy">
-            <p className="shop-kicker light">مرحباً بك في WeekendGate</p>
-            <h1>رحلتك تبدأ من ماء البحر</h1>
-            <p>
-              احجز طيراناً، إقامة، نقلاً، أو نشاطاً — بأسعار حية وتجربة هادئة
-              بلون البحر الفاتح.
-            </p>
-          </div>
-
-          <div className="shop-search-shell">
-            <div className="shop-tabs" role="tablist" aria-label="نوع البحث">
-          {(
-            [
-              ["flights", "الطيران"],
-              ["stays", "الفنادق"],
-              ["cars", "نقل"],
-              ["activities", "أنشطة"],
-            ] as Array<[Mode, string]>
-          ).map(([key, label]) => (
-            <button
-              key={key}
-              type="button"
-              className={mode === key ? "on" : undefined}
-              onClick={() => setMode(key)}
-            >
-              {label}
-            </button>
-          ))}
-            </div>
-            <h2 className="shop-search-title">
-              {mode === "flights"
-                ? "قارن واحجز أرخص الرحلات"
-                : mode === "stays"
-                  ? "اكتشف أفضل الإقامات"
-                  : mode === "cars"
-                    ? "نقل من المطار إلى الفندق"
-                    : "اكتشف الأنشطة والمعالم"}
-            </h2>
-
-            <div className="shop-search">
-          {mode === "flights" ? (
-            <div className="shop-chips">
-              <button
-                type="button"
-                className={tripType === "roundtrip" ? "on" : undefined}
-                onClick={() => setTripType("roundtrip")}
-              >
-                ذهاب وعودة
-              </button>
-              <button
-                type="button"
-                className={tripType === "oneway" ? "on" : undefined}
-                onClick={() => setTripType("oneway")}
-              >
-                ذهاب فقط
-              </button>
-              <label className="opt-chip opt-select">
-                <span>الدرجة</span>
-                <select value={cabinClass} onChange={(e) => setCabinClass(e.target.value)}>
-                  <option value="economy">اقتصادية</option>
-                  <option value="premium_economy">اقتصادية مميزة</option>
-                  <option value="business">رجال أعمال</option>
-                  <option value="first">أولى</option>
-                </select>
-              </label>
-            </div>
-          ) : null}
-          {mode === "cars" ? (
-            <div className="shop-chips">
-              <button
-                type="button"
-                className={!transferRoundtrip ? "on" : undefined}
-                onClick={() => setTransferRoundtrip(false)}
-              >
-                وصول فقط
-              </button>
-              <button
-                type="button"
-                className={transferRoundtrip ? "on" : undefined}
-                onClick={() => setTransferRoundtrip(true)}
-              >
-                وصول وعودة
-              </button>
-            </div>
-          ) : null}
-
-          <div className={`fs-grid ${mode === "stays" ? "stays" : ""}`}>
-            {mode === "flights" || mode === "cars" ? (
-              <ShopAutocomplete
-                label={mode === "cars" ? "المطار" : "من"}
-                value={origin}
-                display={originLabel}
-                placeholder="مطار المغادرة"
-                onQuery={searchAirports}
-                onClearText={(text) => {
-                  setOrigin("");
-                  setOriginLabel(text);
-                }}
-                onPick={(item) => {
-                  setOrigin(item.code);
-                  setOriginLabel(item.title);
-                }}
-              />
-            ) : null}
-            {mode === "flights" ? (
-              <ShopAutocomplete
-                label="إلى"
-                value={destination}
-                display={destinationLabel}
-                placeholder="الوجهة"
-                onQuery={searchAirports}
-                onClearText={(text) => {
-                  setDestination("");
-                  setDestinationLabel(text);
-                }}
-                onPick={(item) => {
-                  setDestination(item.code);
-                  setDestinationLabel(item.title);
-                }}
-              />
-            ) : null}
-            {mode === "stays" || mode === "cars" ? (
-              <ShopAutocomplete
-                label={mode === "cars" ? "المدينة أو الفندق" : "الوجهة"}
-                value={stayQuery}
-                display={stayQuery}
-                placeholder="مدينة أو اسم فندق"
-                onQuery={searchCities}
-                onClearText={setStayQuery}
-                onPick={(item) => setStayQuery(item.title)}
-              />
-            ) : null}
-            {mode === "activities" ? (
-              <ShopAutocomplete
-                label="الوجهة"
-                value={activityDest}
-                display={activityLabel}
-                placeholder="مدينة النشاط"
-                onQuery={searchCities}
-                onClearText={(text) => {
-                  setActivityDest(text);
-                  setActivityLabel(text);
-                }}
-                onPick={(item) => {
-                  setActivityDest(item.code || item.title);
-                  setActivityLabel(item.title);
-                }}
-              />
-            ) : null}
-            <label className="fs-cell">
-              <span>{mode === "stays" ? "الوصول" : "التاريخ"}</span>
-              <input type="date" value={departDate} onChange={(e) => setDepartDate(e.target.value)} />
-            </label>
-            {(mode === "flights" && tripType === "roundtrip") ||
-            mode === "stays" ||
-            mode === "activities" ||
-            (mode === "cars" && transferRoundtrip) ? (
-              <label className="fs-cell">
-                <span>{mode === "stays" ? "المغادرة" : "العودة"}</span>
-                <input type="date" value={returnDate} onChange={(e) => setReturnDate(e.target.value)} />
-              </label>
-            ) : null}
-            {mode === "cars" ? (
-              <label className="fs-cell">
-                <span>وقت الاستلام</span>
-                <input type="time" value={pickupTime} onChange={(e) => setPickupTime(e.target.value)} />
-              </label>
-            ) : null}
-            <label className="fs-cell">
-              <span>المسافرون</span>
-              <select
-                value={`${adults}-${children}-${infants}-${rooms}`}
-                onChange={() => undefined}
-              >
-                <option>
-                  {adults} بالغ
-                  {children ? ` · ${children} طفل` : ""}
-                  {infants ? ` · ${infants} رضيع` : ""}
-                  {mode === "stays" ? ` · ${rooms} غرفة` : ""}
-                </option>
-              </select>
-              <div className="shop-chips" style={{ marginTop: "0.35rem" }}>
-                <button type="button" onClick={() => setAdults((n) => Math.max(1, n - 1))}>
-                  بالغ -
-                </button>
-                <button type="button" onClick={() => setAdults((n) => n + 1)}>
-                  بالغ +
-                </button>
-                <button type="button" onClick={() => setChildren((n) => Math.max(0, n - 1))}>
-                  طفل -
-                </button>
-                <button type="button" onClick={() => setChildren((n) => n + 1)}>
-                  طفل +
-                </button>
-              </div>
-            </label>
-            <button type="button" className="flight-explore" disabled={loading} onClick={() => void runSearch()}>
-              {loading ? "جارٍ البحث..." : "بحث"}
-            </button>
-          </div>
-              {error ? <p className="shop-error">{error}</p> : null}
-              {message ? <p className="shop-status">{message}</p> : null}
-            </div>
-          </div>
-        </section>
-      </div>
+      <ShopHeroBanner
+        mode={mode}
+        onModeChange={setMode}
+        tripType={tripType}
+        onTripTypeChange={setTripType}
+        transferRoundtrip={transferRoundtrip}
+        onTransferRoundtripChange={setTransferRoundtrip}
+        cabinClass={cabinClass}
+        onCabinClassChange={setCabinClass}
+        origin={origin}
+        originLabel={originLabel}
+        destination={destination}
+        destinationLabel={destinationLabel}
+        stayQuery={stayQuery}
+        activityDest={activityDest}
+        activityLabel={activityLabel}
+        departDate={departDate}
+        returnDate={returnDate}
+        pickupTime={pickupTime}
+        adults={adults}
+        children={children}
+        onOriginClear={(text) => {
+          setOrigin("");
+          setOriginLabel(text);
+        }}
+        onOriginPick={(item) => {
+          setOrigin(item.code);
+          setOriginLabel(item.title);
+        }}
+        onDestinationClear={(text) => {
+          setDestination("");
+          setDestinationLabel(text);
+        }}
+        onDestinationPick={(item) => {
+          setDestination(item.code);
+          setDestinationLabel(item.title);
+        }}
+        onStayQueryChange={setStayQuery}
+        onStayPick={(item) => setStayQuery(item.title)}
+        onActivityClear={(text) => {
+          setActivityDest(text);
+          setActivityLabel(text);
+        }}
+        onActivityPick={(item) => {
+          setActivityDest(item.code || item.title);
+          setActivityLabel(item.title);
+        }}
+        onDepartDateChange={setDepartDate}
+        onReturnDateChange={setReturnDate}
+        onPickupTimeChange={setPickupTime}
+        onAdultsChange={setAdults}
+        onChildrenChange={setChildren}
+        onSearch={() => void runSearch()}
+        loading={loading}
+        error={error}
+        message={message}
+        searchAirports={searchAirports}
+        searchCities={searchCities}
+      />
 
       {hasResults ? (
         <section className="shop-results shop-results-block">

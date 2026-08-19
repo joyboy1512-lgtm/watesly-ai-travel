@@ -34,9 +34,11 @@ export function StoreFront({
     window.location.href = "/";
   }
 
+  const heroOverlay = pathname === "/";
+
   return (
-    <div className="shop-root">
-      <header className="shop-header">
+    <div className={`shop-root${heroOverlay ? " shop-home" : ""}`}>
+      <header className={`shop-header${heroOverlay ? " shop-header-hero" : ""}`}>
         <div className="shop-header-inner">
           <Link href="/" className="shop-brand">
             <span className="shop-mark" aria-hidden>

@@ -207,12 +207,17 @@ export class AssistantController {
       message?: string;
       sessionId?: string;
       organizationSlug?: string;
+      phone?: string;
     },
   ) {
     const text = String(body.message || "").trim();
     const sessionId = String(body.sessionId || "").trim();
+    const phone = String(body.phone || "").trim();
     if (!text) throw new BadRequestException("نص الرسالة مطلوب");
     if (!sessionId) throw new BadRequestException("معرّف الجلسة مطلوب");
+    if (!phone) {
+      throw new BadRequestException("أدخل رقم الجوال قبل بدء المحادثة");
+    }
 
     const slug =
       body.organizationSlug?.trim() ||
@@ -229,10 +234,26 @@ export class AssistantController {
       throw new BadRequestException("لا توجد منظمة مفعّلة للمساعد");
     }
 
+    const waId = phone.replace(/[^\d+]/g, "");
+    const contact = await this.prisma.contact.upsert({
+      where: {
+        organizationId_waId: { organizationId: organization.id, waId },
+      },
+      update: { lastContactedAt: new Date() },
+      create: {
+        organizationId: organization.id,
+        waId,
+        name: waId,
+        source: "web_shop",
+        lastContactedAt: new Date(),
+      },
+    });
+
     return this.assistant.chat({
       organizationId: organization.id,
       channel: "web_chat",
       text,
+      contactId: contact.id,
       externalRef: sessionId,
     });
   }

@@ -25,6 +25,8 @@ type Props = {
   meta: StayMeta;
   onClose: () => void;
   onEnterGuestData: (rate: HotelRateOption) => void;
+  checkRatePath?: string;
+  fetchJson?: typeof apiFetch;
 };
 
 type CheckRateResponse = {
@@ -48,7 +50,15 @@ function formatDay(value?: string) {
   }
 }
 
-export function HotelDetailModal({ hotel, nights, meta, onClose, onEnterGuestData }: Props) {
+export function HotelDetailModal({
+  hotel,
+  nights,
+  meta,
+  onClose,
+  onEnterGuestData,
+  checkRatePath = "/bookings/checkrate-hotel",
+  fetchJson = apiFetch,
+}: Props) {
   const [descOpen, setDescOpen] = useState(false);
   const [selectedRate, setSelectedRate] = useState<HotelRateOption | null>(null);
   const [tab, setTab] = useState<"rooms" | "map" | "reviews" | "facilities" | "policies">(
@@ -88,7 +98,7 @@ export function HotelDetailModal({ hotel, nights, meta, onClose, onEnterGuestDat
     setPriceChange(null);
     setCheckingRateKey(rate.rateKey);
     try {
-      const result = await apiFetch<CheckRateResponse>("/bookings/checkrate-hotel", {
+      const result = await fetchJson<CheckRateResponse>(checkRatePath, {
         method: "POST",
         timeoutMs: 35000,
         body: JSON.stringify({

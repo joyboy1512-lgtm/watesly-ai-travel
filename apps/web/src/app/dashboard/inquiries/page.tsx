@@ -526,7 +526,6 @@ export default function InquiriesPage() {
     activityQuery: "دبي",
     transferCity: "الكويت",
     transferCityLabel: "الكويت",
-    transferDirection: "airport_hotel" as "airport_hotel" | "hotel_airport",
     pickupKind: "airport" as TransferPointKind,
     dropoffKind: "address" as TransferPointKind,
     pickupLocation: "KWI",
@@ -1219,22 +1218,12 @@ export default function InquiriesPage() {
       city: form.transferCity,
       pickupKind: "airport",
       dropoffKind: "hotel",
-      from: String(
-        extra.fromLabel ||
-          (form.transferDirection === "hotel_airport"
-            ? form.dropoffLocationLabel
-            : form.pickupLocationLabel),
-      ),
-      to: String(
-        extra.toLabel ||
-          (form.transferDirection === "hotel_airport"
-            ? form.pickupLocationLabel
-            : form.dropoffLocationLabel),
-      ),
+      from: String(extra.fromLabel || form.pickupLocationLabel),
+      to: String(extra.toLabel || form.dropoffLocationLabel),
       outboundDate: form.departDate,
       outboundTime: form.pickupTime,
-      inboundDate: form.returnDate || undefined,
-      inboundTime: form.returnDate ? form.dropoffTime : undefined,
+      inboundDate: form.transferRoundtrip ? form.returnDate : undefined,
+      inboundTime: form.transferRoundtrip ? form.dropoffTime : undefined,
       adults: form.adults,
       children: form.children,
       infants: form.infants,
@@ -1301,11 +1290,11 @@ export default function InquiriesPage() {
           destRaw;
         const destCode = isHotel ? hotelCode : destRaw;
         const destKind = isHotel ? "ATLAS" : "GPS";
-        const arrival = form.transferDirection !== "hotel_airport";
-        const from = arrival ? airport : destCode;
-        const to = arrival ? destCode : airport;
-        const fromKind = arrival ? "IATA" : destKind;
-        const toKind = arrival ? destKind : "IATA";
+        if (form.transferRoundtrip && !form.returnDate) {
+          setError("حدد تاريخ العودة");
+          setLoading(false);
+          return;
+        }
         const children = carFilters.addons.some(
           (a) => a === "child_seat" || a === "booster",
         )
@@ -1332,10 +1321,10 @@ export default function InquiriesPage() {
           timeoutMs: 45000,
           body: JSON.stringify({
             city: cityName,
-            from,
-            to,
-            fromKind,
-            toKind,
+            from: airport,
+            to: destCode,
+            fromKind: "IATA",
+            toKind: destKind,
             toLabel: form.dropoffLocationLabel || destRaw,
             outboundDate: form.departDate,
             outboundTime: form.pickupTime,
@@ -1557,12 +1546,12 @@ export default function InquiriesPage() {
             : mode === "stays"
               ? "اكتشف أفضل الإقامات حول العالم"
               : mode === "cars"
-                ? "نقل من المطار إلى مدينتك أو فندقك"
+                ? "نقل من المطار إلى الفندق"
                 : "اكتشف أفضل الأنشطة والمعالم"}
         </h2>
         <p>
           {mode === "cars"
-            ? "اختر المطار والوجهة. يمكنك البحث بالمدينة مباشرة، أو اختيار فندق محدد."
+            ? "وصول فقط بتاريخ ووقت الاستلام، أو وصول وعودة بتاريخ ووقت من وإلى"
             : mode === "activities"
               ? "ابحث عن جولات وتذاكر حسب الوجهة والتاريخ"
               : "محرك بحث سفر متكامل مع كتالوج المطارات وشركات الطيران"}
@@ -1919,36 +1908,22 @@ export default function InquiriesPage() {
                 <button
                   type="button"
                   className={`opt-chip${
-                    form.transferDirection === "airport_hotel" ? " on" : ""
+                    !form.transferRoundtrip ? " on" : ""
                   }`}
                   onClick={() =>
-                    setForm((f) => ({ ...f, transferDirection: "airport_hotel" }))
+                    setForm((f) => ({ ...f, transferRoundtrip: false }))
                   }
                 >
-                  مطار → الوجهة
-                </button>
-                <button
-                  type="button"
-                  className={`opt-chip${
-                    form.transferDirection === "hotel_airport" ? " on" : ""
-                  }`}
-                  onClick={() =>
-                    setForm((f) => ({ ...f, transferDirection: "hotel_airport" }))
-                  }
-                >
-                  الوجهة → مطار
+                  وصول فقط
                 </button>
                 <button
                   type="button"
                   className={`opt-chip${form.transferRoundtrip ? " on" : ""}`}
                   onClick={() =>
-                    setForm((f) => ({
-                      ...f,
-                      transferRoundtrip: !f.transferRoundtrip,
-                    }))
+                    setForm((f) => ({ ...f, transferRoundtrip: true }))
                   }
                 >
-                  ذهاب وعودة
+                  وصول وعودة
                 </button>
               </div>
               <div
@@ -1964,7 +1939,7 @@ export default function InquiriesPage() {
                   hint={
                     form.pickupLocation
                       ? `مطار ${form.pickupLocation}`
-                      : "مطار الوصول أو المغادرة"
+                      : "مطار الوصول"
                   }
                   emptyHint="اكتب رمز أو اسم المطار"
                   loadingHint="جاري البحث عن المطارات…"
@@ -1982,18 +1957,18 @@ export default function InquiriesPage() {
                   onPick={(item) => applyTransportPlace("pickup", item)}
                 />
                 <AutocompleteField
-                  label="الوجهة"
+                  label="الفندق"
                   value={form.dropoffLocation}
                   display={form.dropoffLocationLabel}
-                  placeholder="مدينة أو اسم فندق"
+                  placeholder="اسم الفندق أو المدينة"
                   hint={
                     form.dropoffKind === "hotel"
                       ? form.dropoffLocationLabel
-                      : form.dropoffLocationLabel || "مدينة أو فندق"
+                      : form.dropoffLocationLabel || "فندق أو مدينة"
                   }
-                  emptyHint="اكتب المدينة أو اسم الفندق"
-                  loadingHint="جاري البحث عن الوجهات…"
-                  emptyListHint="لا توجد وجهات مطابقة"
+                  emptyHint="اكتب اسم الفندق أو المدينة"
+                  loadingHint="جاري البحث عن الفنادق…"
+                  emptyListHint="لا توجد فنادق مطابقة"
                   onClearText={(text) =>
                     setForm((f) => ({
                       ...f,
@@ -2005,32 +1980,32 @@ export default function InquiriesPage() {
                   onQuery={searchTransferDestinations}
                   onPick={(item) => applyTransportPlace("dropoff", item)}
                 />
-                <label className="fs-cell">
-                  <span>التاريخ</span>
-                  <input
-                    type="date"
-                    value={form.departDate}
-                    onChange={(e) =>
-                      setForm({ ...form, departDate: e.target.value })
-                    }
-                  />
-                  <small>{formatDay(form.departDate) || "موعد النقل"}</small>
-                </label>
-                <label className="fs-cell">
-                  <span>الوقت</span>
-                  <input
-                    type="time"
-                    value={form.pickupTime}
-                    onChange={(e) =>
-                      setForm({ ...form, pickupTime: e.target.value })
-                    }
-                  />
-                  <small>الاستلام</small>
-                </label>
                 {form.transferRoundtrip ? (
                   <>
                     <label className="fs-cell">
-                      <span>العودة</span>
+                      <span>من تاريخ</span>
+                      <input
+                        type="date"
+                        value={form.departDate}
+                        onChange={(e) =>
+                          setForm({ ...form, departDate: e.target.value })
+                        }
+                      />
+                      <small>{formatDay(form.departDate) || "الوصول"}</small>
+                    </label>
+                    <label className="fs-cell">
+                      <span>من وقت</span>
+                      <input
+                        type="time"
+                        value={form.pickupTime}
+                        onChange={(e) =>
+                          setForm({ ...form, pickupTime: e.target.value })
+                        }
+                      />
+                      <small>الاستلام من المطار</small>
+                    </label>
+                    <label className="fs-cell">
+                      <span>إلى تاريخ</span>
                       <input
                         type="date"
                         value={form.returnDate}
@@ -2041,7 +2016,7 @@ export default function InquiriesPage() {
                       <small>{formatDay(form.returnDate) || "العودة"}</small>
                     </label>
                     <label className="fs-cell">
-                      <span>وقت العودة</span>
+                      <span>إلى وقت</span>
                       <input
                         type="time"
                         value={form.dropoffTime}
@@ -2049,10 +2024,35 @@ export default function InquiriesPage() {
                           setForm({ ...form, dropoffTime: e.target.value })
                         }
                       />
-                      <small>التسليم</small>
+                      <small>الاستلام من الفندق</small>
                     </label>
                   </>
-                ) : null}
+                ) : (
+                  <>
+                    <label className="fs-cell">
+                      <span>تاريخ الاستلام</span>
+                      <input
+                        type="date"
+                        value={form.departDate}
+                        onChange={(e) =>
+                          setForm({ ...form, departDate: e.target.value })
+                        }
+                      />
+                      <small>{formatDay(form.departDate) || "الوصول"}</small>
+                    </label>
+                    <label className="fs-cell">
+                      <span>الساعة</span>
+                      <input
+                        type="time"
+                        value={form.pickupTime}
+                        onChange={(e) =>
+                          setForm({ ...form, pickupTime: e.target.value })
+                        }
+                      />
+                      <small>وقت الاستلام من المطار</small>
+                    </label>
+                  </>
+                )}
                 <button
                   type="button"
                   className="flight-explore"
@@ -2065,9 +2065,9 @@ export default function InquiriesPage() {
               <div className="car-hire-options">
                 <div className="car-hire-options-main">
                   <p className="car-hire-hint" style={{ margin: 0 }}>
-                    {form.transferDirection === "hotel_airport"
-                      ? "من الوجهة إلى المطار"
-                      : "من المطار إلى المدينة أو الفندق الذي اخترته"}
+                    {form.transferRoundtrip
+                      ? "وصول من المطار إلى الفندق، وعودة من الفندق إلى المطار"
+                      : "وصول فقط من المطار إلى الفندق"}
                   </p>
                 </div>
                 <button
@@ -2591,16 +2591,8 @@ export default function InquiriesPage() {
                     <TransferSearchCard
                       key={c.id}
                       item={c}
-                      from={
-                        form.transferDirection === "hotel_airport"
-                          ? form.dropoffLocationLabel || form.dropoffLocation
-                          : form.pickupLocationLabel || form.pickupLocation
-                      }
-                      to={
-                        form.transferDirection === "hotel_airport"
-                          ? form.pickupLocationLabel || form.pickupLocation
-                          : form.dropoffLocationLabel || form.dropoffLocation
-                      }
+                      from={form.pickupLocationLabel || form.pickupLocation}
+                      to={form.dropoffLocationLabel || form.dropoffLocation}
                       onBook={() => confirmTransferBooking(c)}
                     />
                   ))}

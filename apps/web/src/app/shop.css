@@ -3139,12 +3139,63 @@
 }
 
 .shop-assist-panel {
-  width: min(380px, calc(100vw - 2rem));
+  width: min(400px, calc(100vw - 2rem));
+  min-height: 520px;
+  max-height: min(720px, calc(100vh - 5rem));
   background: #fff;
   border-radius: 18px;
   border: 1px solid var(--sea-line);
   box-shadow: 0 20px 48px rgba(24, 74, 84, 0.16);
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.shop-assist-head {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.1rem;
+  padding: 0.55rem 2.5rem 0.55rem 0.85rem;
+  background: linear-gradient(135deg, var(--sea-500), var(--sea-700));
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.shop-assist-head strong {
+  font-size: 0.88rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.shop-assist-head-hint {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 0.72rem;
+  line-height: 1.2;
+}
+
+.shop-assist-close {
+  position: absolute;
+  top: 0.35rem;
+  inset-inline-end: 0.45rem;
+  width: 1.65rem;
+  height: 1.65rem;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
+  font-size: 1.25rem;
+  line-height: 1;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  padding: 0;
+}
+
+.shop-assist-close:hover {
+  background: rgba(255, 255, 255, 0.3);
 }
 
 .shop-assist-panel header {
@@ -3164,15 +3215,26 @@
   display: grid;
   gap: 0.55rem;
   padding: 0.85rem;
+  flex-shrink: 0;
+}
+
+.shop-assist-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .shop-assist-log {
-  max-height: 280px;
+  flex: 1;
+  min-height: 360px;
+  max-height: none;
   overflow: auto;
   padding: 0.75rem;
   background: var(--sea-50);
   display: grid;
   gap: 0.5rem;
+  align-content: start;
 }
 
 .shop-assist .ta-bubble {
@@ -3372,7 +3434,8 @@
   box-shadow: 0 8px 20px rgba(0, 37, 93, 0.25);
 }
 
-.exp-theme .shop-assist-panel header {
+.exp-theme .shop-assist-panel header,
+.exp-theme .shop-assist-head {
   background: var(--exp-navy);
 }
 

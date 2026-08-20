@@ -36,17 +36,35 @@ export function ShopAssistant() {
       "/shop/assistant/thread",
     )
       .then((data) => {
-        if (!data.messages?.length) return;
-        setMessages(
-          data.messages.map((row) => ({
-            id: row.id,
-            role: row.role === "user" ? "user" : "assistant",
-            content: row.content,
-          })),
-        );
+        if (data.messages?.length) {
+          setMessages(
+            data.messages.map((row) => ({
+              id: row.id,
+              role: row.role === "user" ? "user" : "assistant",
+              content: row.content,
+            })),
+          );
+          return;
+        }
+        setMessages([
+          {
+            id: "welcome-back",
+            role: "assistant",
+            content: "مرحباً بعودتك! كيف يمكنني مساعدتك في تخطيط رحلتك؟",
+          },
+        ]);
       })
       .catch(() => undefined);
   }, []);
+
+  useEffect(() => {
+    if (!open) return;
+    const session = getShopSession();
+    if (!session) return;
+    setUnlocked(true);
+    setPhone(session.customer.phone);
+    setName(session.customer.name || "");
+  }, [open]);
 
   async function unlock(e: FormEvent) {
     e.preventDefault();
@@ -71,6 +89,13 @@ export function ShopAssistant() {
         customer: result.customer,
       });
       setUnlocked(true);
+      setMessages([
+        {
+          id: "welcome-unlocked",
+          role: "assistant",
+          content: "مرحباً! كيف يمكنني مساعدتك في تخطيط رحلتك؟",
+        },
+      ]);
     } catch (err) {
       setError(err instanceof Error ? err.message : "تعذر فتح المساعد");
     } finally {
@@ -112,18 +137,30 @@ export function ShopAssistant() {
 
   return (
     <div className={`shop-assist ${open ? "open" : ""}`}>
-      <button
-        type="button"
-        className="shop-assist-toggle"
-        onClick={() => setOpen((v) => !v)}
-      >
-        {open ? "إغلاق المساعد" : "مساعد السفر"}
-      </button>
+      {!open ? (
+        <button
+          type="button"
+          className="shop-assist-toggle"
+          onClick={() => setOpen(true)}
+        >
+          مساعد السفر
+        </button>
+      ) : null}
       {open ? (
         <section className="shop-assist-panel">
-          <header>
+          <header className="shop-assist-head">
             <strong>مساعد WeekendGate</strong>
-            <p>يُفعّل بعد إدخال رقم الجوال</p>
+            {!unlocked ? (
+              <p className="shop-assist-head-hint">أدخل رقم جوالك للبدء</p>
+            ) : null}
+            <button
+              type="button"
+              className="shop-assist-close"
+              aria-label="إغلاق"
+              onClick={() => setOpen(false)}
+            >
+              ×
+            </button>
           </header>
           {error ? <p className="shop-error">{error}</p> : null}
           {!unlocked ? (
@@ -150,7 +187,7 @@ export function ShopAssistant() {
               </button>
             </form>
           ) : (
-            <>
+            <div className="shop-assist-body">
               <div className="shop-assist-log">
                 {messages.map((row) => (
                   <div key={row.id} className={`ta-msg ${row.role === "user" ? "out" : "in"}`}>
@@ -171,7 +208,7 @@ export function ShopAssistant() {
                   إرسال
                 </button>
               </form>
-            </>
+            </div>
           )}
         </section>
       ) : null}

@@ -543,21 +543,6 @@ export function ShopHeroBanner(props: Props) {
           {props.error ? <p className="shop-error exp-dialog-msg">{props.error}</p> : null}
           {props.message ? <p className="shop-status exp-dialog-msg">{props.message}</p> : null}
         </div>
-
-        <div className="exp-promo-banner">
-          <div className="exp-promo-copy">
-            <span className="exp-promo-icon" aria-hidden>
-              %
-            </span>
-            <div>
-              <strong>وفّر 30% أو أكثر على الفنادق</strong>
-              <span>عروض مختارة لمسافري WeekendGate</span>
-            </div>
-          </div>
-          <a href="/#offers" className="exp-promo-btn">
-            احجز الآن
-          </a>
-        </div>
       </div>
     </section>
   );

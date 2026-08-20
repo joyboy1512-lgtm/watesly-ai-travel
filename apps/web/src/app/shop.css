@@ -1041,23 +1041,24 @@
 .exp-search-link {
   height: 38px;
   min-height: 38px;
-  padding: 0 0.65rem;
+  padding: 0 1.15rem;
   border: 0;
-  border-radius: 0;
-  background: transparent;
-  color: var(--exp-blue);
+  border-radius: 999px;
+  background: var(--exp-blue);
+  color: #fff;
   font: inherit;
-  font-size: 0.95rem;
+  font-size: 0.88rem;
   font-weight: 700;
   cursor: pointer;
   white-space: nowrap;
   justify-self: end;
   align-self: center;
-  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 2px 8px rgba(22, 104, 227, 0.35);
 }
 
 .exp-search-link:hover:not(:disabled) {
-  text-decoration: underline;
+  background: #1256c7;
+  text-decoration: none;
 }
 
 .exp-search-link:disabled {
@@ -1328,9 +1329,8 @@
   .exp-search-link,
   .exp-search-submit {
     width: auto;
+    min-width: 4.5rem;
     justify-self: end;
-    grid-column: 1 / -1;
-    text-align: end;
   }
 
   .exp-swap-inline {

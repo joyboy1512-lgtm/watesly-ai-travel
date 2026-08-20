@@ -69,6 +69,31 @@
   text-decoration: none;
 }
 
+.wg-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.wg-logo-mark {
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  display: block;
+}
+
+.wg-logo-word {
+  font-size: 1.28rem;
+  font-weight: 800;
+  color: var(--exp-navy);
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+.wg-logo-word span {
+  color: var(--exp-blue);
+}
+
 .exp-brand-circle {
   width: 38px;
   height: 38px;

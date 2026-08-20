@@ -9,6 +9,7 @@ import {
   type ShopCustomer,
 } from "@/lib/shop-session";
 import { ShopAssistant } from "@/components/shop/ShopAssistant";
+import { WeekendGateLogo } from "@/components/shop/WeekendGateLogo";
 
 const BRAND = "WeekendGate";
 
@@ -39,7 +40,7 @@ export function StoreFront({
       <header className="shop-header exp-header exp-header-white">
         <div className="shop-header-inner exp-header-inner">
           <Link href="/" className="shop-brand exp-brand">
-            <span className="exp-wordmark exp-wordmark-dark">{BRAND}</span>
+            <WeekendGateLogo />
           </Link>
 
           <button

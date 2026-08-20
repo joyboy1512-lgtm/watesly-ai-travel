@@ -3,9 +3,13 @@ export function WeekendGateLogo() {
     <span className="wg-logo">
       <img
         src="/weekendgate-logo.png"
-        alt="WeekendGate"
-        className="wg-logo-img"
+        alt=""
+        className="wg-logo-mark"
+        aria-hidden
       />
+      <span className="wg-logo-word">
+        Weekend<span className="wg-logo-gate">Gate</span>
+      </span>
     </span>
   );
 }

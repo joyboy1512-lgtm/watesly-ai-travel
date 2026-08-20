@@ -202,12 +202,70 @@
 }
 
 .exp-dialog {
-  background: #fff;
-  border-radius: 14px;
-  box-shadow: 0 8px 32px rgba(13, 16, 35, 0.18);
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
   overflow: visible;
-  padding-bottom: 0.45rem;
+  padding: 0;
   isolation: isolate;
+}
+
+.exp-pill-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  padding: 0 0 0.55rem;
+}
+
+.exp-pill-tab {
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--exp-ink);
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  padding: 0.45rem 0.85rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.exp-pill-tab:hover:not(:disabled) {
+  border-color: var(--exp-blue);
+  color: var(--exp-blue);
+}
+
+.exp-pill-tab.on {
+  background: var(--exp-blue);
+  border-color: var(--exp-blue);
+  color: #fff;
+}
+
+.exp-pill-tab:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.exp-cars-pills {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  padding: 0.55rem 0 0;
+}
+
+.exp-cars-pills-start,
+.exp-cars-pills-end {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.exp-cars-pills-end {
+  margin-inline-start: auto;
 }
 
 .exp-icon-tabs {
@@ -604,24 +662,24 @@
   display: grid;
   align-items: center;
   gap: 0.3rem;
-  padding: 0.45rem 0.65rem 0.3rem;
+  padding: 0.15rem 0 0.25rem;
   position: relative;
 }
 
 .exp-form-flights {
-  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) minmax(0, 1.4fr) minmax(0, 0.9fr) auto;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) minmax(0, 1.35fr) minmax(0, 0.9fr) auto;
 }
 
 .exp-form-stays {
-  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1.35fr) minmax(0, 0.95fr) auto;
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1.3fr) minmax(0, 0.95fr) auto;
 }
 
 .exp-form-cars {
-  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1fr) minmax(0, 1.1fr) minmax(0, 0.75fr) minmax(0, 0.75fr) auto;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1fr) minmax(0, 1.1fr) minmax(0, 0.75fr) minmax(0, 0.75fr) minmax(0, 0.9fr) auto;
 }
 
 .exp-form-activities {
-  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1.2fr) auto;
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1.2fr) minmax(0, 0.95fr) auto;
 }
 
 .exp-input-cell {
@@ -980,6 +1038,33 @@
   top: calc(100% + 4px);
 }
 
+.exp-search-link {
+  height: 38px;
+  min-height: 38px;
+  padding: 0 0.65rem;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--exp-blue);
+  font: inherit;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  justify-self: end;
+  align-self: center;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.25);
+}
+
+.exp-search-link:hover:not(:disabled) {
+  text-decoration: underline;
+}
+
+.exp-search-link:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+
 .exp-search-submit {
   height: 38px;
   min-height: 38px;
@@ -1080,8 +1165,17 @@
 
 .exp-dialog-msg {
   margin: 0;
-  padding: 0 1rem 0.5rem;
+  padding: 0.35rem 0 0.25rem;
   font-size: 0.85rem;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.45);
+}
+
+.exp-dialog-msg.shop-error {
+  color: #ffb4aa;
+}
+
+.exp-dialog-msg.shop-status {
+  color: #d4e8ff;
 }
 
 .exp-promo-banner {
@@ -1231,9 +1325,12 @@
     height: 40px;
   }
 
+  .exp-search-link,
   .exp-search-submit {
-    width: 100%;
-    justify-self: stretch;
+    width: auto;
+    justify-self: end;
+    grid-column: 1 / -1;
+    text-align: end;
   }
 
   .exp-swap-inline {

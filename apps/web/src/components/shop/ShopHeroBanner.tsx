@@ -242,27 +242,25 @@ export function ShopHeroBanner(props: Props) {
 
         <div className="exp-dialog">
           {props.mode === "flights" ? (
-            <div className="exp-pill-tabs" role="group" aria-label="نوع الرحلة">
-              <button
-                type="button"
-                className={`exp-pill-tab${props.tripType === "roundtrip" ? " on" : ""}`}
-                onClick={() => props.onTripTypeChange("roundtrip")}
-              >
-                ذهاب وعودة
-              </button>
-              <button
-                type="button"
-                className={`exp-pill-tab${props.tripType === "oneway" ? " on" : ""}`}
-                onClick={() => props.onTripTypeChange("oneway")}
-              >
-                ذهاب فقط
-              </button>
-            </div>
-          ) : null}
+            <div className="exp-unified-card exp-unified-card-flights">
+              <div className="exp-pill-tabs exp-pill-tabs-inset" role="group" aria-label="نوع الرحلة">
+                <button
+                  type="button"
+                  className={`exp-pill-tab${props.tripType === "roundtrip" ? " on" : ""}`}
+                  onClick={() => props.onTripTypeChange("roundtrip")}
+                >
+                  ذهاب وعودة
+                </button>
+                <button
+                  type="button"
+                  className={`exp-pill-tab${props.tripType === "oneway" ? " on" : ""}`}
+                  onClick={() => props.onTripTypeChange("oneway")}
+                >
+                  ذهاب فقط
+                </button>
+              </div>
 
-          <div className={`exp-form-row exp-form-${props.mode}`}>
-            {props.mode === "flights" ? (
-              <>
+              <div className="exp-form-row exp-form-flights">
                 <div className="exp-input-cell exp-cell-grow">
                   <ShopAutocomplete
                     inline
@@ -295,9 +293,104 @@ export function ShopHeroBanner(props: Props) {
                     onPick={props.onDestinationPick}
                   />
                 </div>
-              </>
-            ) : null}
-
+                <div className="exp-input-cell exp-cell-dates">
+                  <span className="exp-cell-label">التواريخ</span>
+                  <div className="exp-dates-row">
+                    <DatePick
+                      value={props.departDate}
+                      onChange={props.onDepartDateChange}
+                      label="تاريخ المغادرة"
+                    />
+                    {showReturnDate ? (
+                      <>
+                        <span className="exp-date-sep">–</span>
+                        <DatePick
+                          value={props.returnDate}
+                          onChange={props.onReturnDateChange}
+                          label="تاريخ العودة"
+                        />
+                      </>
+                    ) : null}
+                  </div>
+                </div>
+                <div className="exp-input-cell exp-cell-travelers">
+                  <button
+                    type="button"
+                    className="exp-travelers-trigger"
+                    onClick={() => setTravelersOpen((v) => !v)}
+                  >
+                    <span className="exp-cell-label">المسافرون</span>
+                    <strong>{travelerSummary}</strong>
+                  </button>
+                  {travelersOpen ? (
+                    <div className="exp-travelers-pop">
+                      <div className="exp-travelers-row">
+                        <span>بالغون</span>
+                        <div className="exp-stepper">
+                          <button
+                            type="button"
+                            onClick={() => props.onAdultsChange(Math.max(1, props.adults - 1))}
+                          >
+                            −
+                          </button>
+                          <strong>{props.adults}</strong>
+                          <button type="button" onClick={() => props.onAdultsChange(props.adults + 1)}>
+                            +
+                          </button>
+                        </div>
+                      </div>
+                      <div className="exp-travelers-row">
+                        <span>أطفال</span>
+                        <div className="exp-stepper">
+                          <button
+                            type="button"
+                            onClick={() => props.onChildrenChange(Math.max(0, props.children - 1))}
+                          >
+                            −
+                          </button>
+                          <strong>{props.children}</strong>
+                          <button
+                            type="button"
+                            onClick={() => props.onChildrenChange(props.children + 1)}
+                          >
+                            +
+                          </button>
+                        </div>
+                      </div>
+                      <label className="exp-travelers-row">
+                        <span>الدرجة</span>
+                        <select
+                          value={props.cabinClass}
+                          onChange={(e) => props.onCabinClassChange(e.target.value)}
+                        >
+                          <option value="economy">اقتصادية</option>
+                          <option value="premium_economy">اقتصادية مميزة</option>
+                          <option value="business">رجال أعمال</option>
+                          <option value="first">أولى</option>
+                        </select>
+                      </label>
+                      <button
+                        type="button"
+                        className="exp-pop-done"
+                        onClick={() => setTravelersOpen(false)}
+                      >
+                        تم
+                      </button>
+                    </div>
+                  ) : null}
+                </div>
+                <button
+                  type="button"
+                  className="exp-search-link"
+                  disabled={props.loading}
+                  onClick={props.onSearch}
+                >
+                  {props.loading ? "..." : "بحث"}
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className={`exp-form-row exp-form-${props.mode}`}>
             {props.mode === "stays" ? (
               <div className="exp-input-cell exp-cell-grow">
                 <ShopAutocomplete
@@ -476,20 +569,6 @@ export function ShopHeroBanner(props: Props) {
                       </div>
                     </div>
                   ) : null}
-                  {props.mode === "flights" ? (
-                    <label className="exp-travelers-row">
-                      <span>الدرجة</span>
-                      <select
-                        value={props.cabinClass}
-                        onChange={(e) => props.onCabinClassChange(e.target.value)}
-                      >
-                        <option value="economy">اقتصادية</option>
-                        <option value="premium_economy">اقتصادية مميزة</option>
-                        <option value="business">رجال أعمال</option>
-                        <option value="first">أولى</option>
-                      </select>
-                    </label>
-                  ) : null}
                   <button
                     type="button"
                     className="exp-pop-done"
@@ -509,7 +588,8 @@ export function ShopHeroBanner(props: Props) {
             >
               {props.loading ? "..." : "بحث"}
             </button>
-          </div>
+            </div>
+          )}
 
           {props.mode === "cars" ? (
             <div className="exp-cars-pills" role="group" aria-label="نوع النقل">

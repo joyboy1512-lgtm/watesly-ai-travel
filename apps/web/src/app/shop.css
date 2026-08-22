@@ -297,6 +297,79 @@
   margin-inline-start: auto;
 }
 
+.exp-unified-card-flights {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.32);
+  border-radius: 16px;
+  padding: 0.85rem 0.95rem 0.95rem;
+  display: grid;
+  gap: 0.75rem;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.exp-pill-tabs-inset {
+  padding: 0;
+  gap: 0.5rem;
+}
+
+.exp-unified-card-flights .exp-form-row {
+  padding: 0;
+  gap: 0.45rem;
+}
+
+.exp-unified-card-flights .exp-input-cell {
+  height: 50px;
+  min-height: 50px;
+  max-height: none;
+  padding: 0.5rem 0.7rem;
+  border-radius: 10px;
+  gap: 0.12rem;
+  border-color: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 2px 10px rgba(13, 16, 35, 0.08);
+}
+
+.exp-unified-card-flights .exp-cell-label,
+.exp-unified-card-flights .exp-input-cell .shop-ac-inline > span:first-child,
+.exp-unified-card-flights .exp-input-cell .shop-ac-inline .exp-cell-label {
+  font-size: 0.64rem;
+  letter-spacing: 0.07em;
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+.exp-unified-card-flights .exp-input-cell .shop-ac-inline input,
+.exp-unified-card-flights .exp-date-btn,
+.exp-unified-card-flights .exp-travelers-trigger strong {
+  font-size: 0.94rem;
+  line-height: 1.35;
+  font-weight: 600;
+}
+
+.exp-unified-card-flights .exp-date-sep {
+  font-size: 0.9rem;
+}
+
+.exp-unified-card-flights .exp-search-link {
+  height: 50px;
+  min-height: 50px;
+  padding: 0 1.35rem;
+  font-size: 0.94rem;
+  border-radius: 999px;
+}
+
+.exp-unified-card-flights .exp-swap-inline {
+  width: 1.75rem;
+  height: 1.75rem;
+  align-self: center;
+}
+
+.exp-unified-card-flights .exp-pill-tab {
+  padding: 0.5rem 1rem;
+  font-size: 0.84rem;
+  border-radius: 10px;
+}
+
 .exp-icon-tabs {
   display: flex;
   justify-content: center;
@@ -696,7 +769,7 @@
 }
 
 .exp-form-flights {
-  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) minmax(0, 1.35fr) minmax(0, 0.9fr) auto;
+  grid-template-columns: minmax(0, 1.15fr) auto minmax(0, 1.15fr) minmax(0, 1.45fr) minmax(0, 1.05fr) auto;
 }
 
 .exp-form-stays {

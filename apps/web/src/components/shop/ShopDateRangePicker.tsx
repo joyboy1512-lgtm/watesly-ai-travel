@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
 type Props = {
   checkIn: string;
@@ -42,6 +43,20 @@ function monthLabel(year: number, month: number) {
 }
 
 const WEEKDAYS = ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
+
+function useIsMobile(breakpoint = 768) {
+  const [mobile, setMobile] = useState(false);
+
+  useEffect(() => {
+    const mq = window.matchMedia(`(max-width: ${breakpoint}px)`);
+    const update = () => setMobile(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, [breakpoint]);
+
+  return mobile;
+}
 
 function buildMonthCells(year: number, month: number, todayIso: string) {
   const first = new Date(year, month, 1);
@@ -141,6 +156,12 @@ export function ShopDateRangePicker({
   });
   const wrapRef = useRef<HTMLDivElement>(null);
   const todayIso = useMemo(() => toIso(new Date()), []);
+  const isMobile = useIsMobile();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const monthB = useMemo(() => {
     const d = new Date(viewYear, viewMonth + 1, 1);
@@ -158,13 +179,22 @@ export function ShopDateRangePicker({
   }, [open, checkIn, checkOut]);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open || isMobile) return;
     function onDoc(e: MouseEvent) {
       if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) setOpen(false);
     }
     document.addEventListener("mousedown", onDoc);
     return () => document.removeEventListener("mousedown", onDoc);
-  }, [open]);
+  }, [open, isMobile]);
+
+  useEffect(() => {
+    if (!open || !isMobile) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [open, isMobile]);
 
   function shiftMonth(delta: number) {
     const d = new Date(viewYear, viewMonth + delta, 1);
@@ -201,8 +231,95 @@ export function ShopDateRangePicker({
       ? `${formatShort(checkIn)} – ${formatShort(checkOut)}`
       : placeholder;
 
+  const panel = (
+    <div
+      className={`shop-date-range-pop shop-date-range-pop-dual${
+        isMobile ? " shop-date-range-pop-mobile" : ""
+      }`}
+      role="dialog"
+      aria-modal={isMobile ? true : undefined}
+      aria-label="اختيار التواريخ"
+    >
+      <div className="shop-date-range-pop-head">
+        <p className="shop-date-range-phase">{phase === "checkin" ? startLabel : endLabel}</p>
+        {isMobile ? (
+          <button
+            type="button"
+            className="shop-date-range-close"
+            aria-label="إغلاق"
+            onClick={() => setOpen(false)}
+          >
+            ×
+          </button>
+        ) : null}
+      </div>
+      <div className="shop-date-range-nav">
+        <button type="button" onClick={() => shiftMonth(-1)} aria-label="الشهر السابق">
+          ‹
+        </button>
+        <button type="button" onClick={() => shiftMonth(1)} aria-label="الشهر التالي">
+          ›
+        </button>
+      </div>
+      <div className="shop-date-range-months">
+        <MonthGrid
+          year={viewYear}
+          month={viewMonth}
+          todayIso={todayIso}
+          draftIn={draftIn}
+          draftOut={draftOut}
+          onPick={pickDay}
+        />
+        <MonthGrid
+          year={monthB.year}
+          month={monthB.month}
+          todayIso={todayIso}
+          draftIn={draftIn}
+          draftOut={draftOut}
+          onPick={pickDay}
+        />
+      </div>
+      <div className="shop-date-range-footer">
+        <span>
+          {formatShort(draftIn)} → {formatShort(draftOut)}
+        </span>
+        <button
+          type="button"
+          className="exp-pop-done"
+          onClick={() => {
+            if (draftIn && draftOut && draftOut > draftIn) {
+              onChange(draftIn, draftOut);
+              setOpen(false);
+            }
+          }}
+        >
+          تم
+        </button>
+      </div>
+    </div>
+  );
+
+  const mobileOverlay =
+    open && isMobile && mounted
+      ? createPortal(
+          <>
+            <button
+              type="button"
+              className="shop-date-range-backdrop"
+              aria-label="إغلاق"
+              onClick={() => setOpen(false)}
+            />
+            {panel}
+          </>,
+          document.body,
+        )
+      : null;
+
   return (
-    <div className={`shop-date-range${className ? ` ${className}` : ""}`} ref={wrapRef}>
+    <div
+      className={`shop-date-range${open ? " is-open" : ""}${className ? ` ${className}` : ""}`}
+      ref={wrapRef}
+    >
       <button
         type="button"
         className="shop-date-range-trigger"
@@ -211,56 +328,8 @@ export function ShopDateRangePicker({
       >
         {summary}
       </button>
-      {open ? (
-        <div className="shop-date-range-pop shop-date-range-pop-dual">
-          <p className="shop-date-range-phase">
-            {phase === "checkin" ? startLabel : endLabel}
-          </p>
-          <div className="shop-date-range-nav">
-            <button type="button" onClick={() => shiftMonth(-1)} aria-label="الشهر السابق">
-              ‹
-            </button>
-            <button type="button" onClick={() => shiftMonth(1)} aria-label="الشهر التالي">
-              ›
-            </button>
-          </div>
-          <div className="shop-date-range-months">
-            <MonthGrid
-              year={viewYear}
-              month={viewMonth}
-              todayIso={todayIso}
-              draftIn={draftIn}
-              draftOut={draftOut}
-              onPick={pickDay}
-            />
-            <MonthGrid
-              year={monthB.year}
-              month={monthB.month}
-              todayIso={todayIso}
-              draftIn={draftIn}
-              draftOut={draftOut}
-              onPick={pickDay}
-            />
-          </div>
-          <div className="shop-date-range-footer">
-            <span>
-              {formatShort(draftIn)} → {formatShort(draftOut)}
-            </span>
-            <button
-              type="button"
-              className="exp-pop-done"
-              onClick={() => {
-                if (draftIn && draftOut && draftOut > draftIn) {
-                  onChange(draftIn, draftOut);
-                  setOpen(false);
-                }
-              }}
-            >
-              تم
-            </button>
-          </div>
-        </div>
-      ) : null}
+      {open && !isMobile ? panel : null}
+      {mobileOverlay}
     </div>
   );
 }

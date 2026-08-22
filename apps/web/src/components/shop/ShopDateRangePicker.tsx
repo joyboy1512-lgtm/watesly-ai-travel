@@ -7,6 +7,9 @@ type Props = {
   checkOut: string;
   onChange: (checkIn: string, checkOut: string) => void;
   className?: string;
+  startLabel?: string;
+  endLabel?: string;
+  placeholder?: string;
 };
 
 function toIso(d: Date) {
@@ -38,9 +41,92 @@ function monthLabel(year: number, month: number) {
   return new Date(year, month, 1).toLocaleDateString("ar-KW", { month: "long", year: "numeric" });
 }
 
-const WEEKDAYS = ["أحد", "إثن", "ثلا", "أرب", "خمي", "جمع", "سبت"];
+const WEEKDAYS = ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
 
-export function ShopDateRangePicker({ checkIn, checkOut, onChange, className }: Props) {
+function buildMonthCells(year: number, month: number, todayIso: string) {
+  const first = new Date(year, month, 1);
+  const startPad = first.getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const cells: Array<{ iso: string; day: number; muted: boolean } | null> = [];
+  for (let i = 0; i < startPad; i += 1) cells.push(null);
+  for (let day = 1; day <= daysInMonth; day += 1) {
+    const iso = toIso(new Date(year, month, day));
+    cells.push({ iso, day, muted: iso < todayIso });
+  }
+  return cells;
+}
+
+function MonthGrid({
+  year,
+  month,
+  todayIso,
+  draftIn,
+  draftOut,
+  onPick,
+}: {
+  year: number;
+  month: number;
+  todayIso: string;
+  draftIn: string;
+  draftOut: string;
+  onPick: (iso: string) => void;
+}) {
+  const cells = useMemo(() => buildMonthCells(year, month, todayIso), [year, month, todayIso]);
+
+  function cellClass(iso: string) {
+    const isStart = iso === draftIn;
+    const isEnd = iso === draftOut;
+    const between = draftIn && draftOut && iso > draftIn && iso < draftOut;
+    return [
+      "shop-date-day-cell",
+      isStart ? "range-start" : "",
+      isEnd ? "range-end" : "",
+      between ? "in-range" : "",
+      isStart && isEnd ? "range-single" : "",
+    ]
+      .filter(Boolean)
+      .join(" ");
+  }
+
+  return (
+    <div className="shop-date-month">
+      <strong className="shop-date-month-title">{monthLabel(year, month)}</strong>
+      <div className="shop-date-range-weekdays">
+        {WEEKDAYS.map((w) => (
+          <span key={w}>{w}</span>
+        ))}
+      </div>
+      <div className="shop-date-range-grid">
+        {cells.map((cell, i) =>
+          cell ? (
+            <div key={cell.iso} className={cellClass(cell.iso)}>
+              <button
+                type="button"
+                className={`shop-date-range-day${cell.muted ? " muted" : ""}`}
+                disabled={cell.muted}
+                onClick={() => onPick(cell.iso)}
+              >
+                {cell.day}
+              </button>
+            </div>
+          ) : (
+            <span key={`pad-${year}-${month}-${i}`} className="shop-date-day-cell pad" />
+          ),
+        )}
+      </div>
+    </div>
+  );
+}
+
+export function ShopDateRangePicker({
+  checkIn,
+  checkOut,
+  onChange,
+  className,
+  startLabel = "تاريخ الوصول",
+  endLabel = "تاريخ المغادرة",
+  placeholder = "اختر التواريخ",
+}: Props) {
   const [open, setOpen] = useState(false);
   const [phase, setPhase] = useState<"checkin" | "checkout">("checkin");
   const [draftIn, setDraftIn] = useState(checkIn);
@@ -55,6 +141,11 @@ export function ShopDateRangePicker({ checkIn, checkOut, onChange, className }: 
   });
   const wrapRef = useRef<HTMLDivElement>(null);
   const todayIso = useMemo(() => toIso(new Date()), []);
+
+  const monthB = useMemo(() => {
+    const d = new Date(viewYear, viewMonth + 1, 1);
+    return { year: d.getFullYear(), month: d.getMonth() };
+  }, [viewYear, viewMonth]);
 
   useEffect(() => {
     if (!open) return;
@@ -100,48 +191,15 @@ export function ShopDateRangePicker({ checkIn, checkOut, onChange, className }: 
     setOpen(false);
   }
 
-  const cells = useMemo(() => {
-    const first = new Date(viewYear, viewMonth, 1);
-    const startPad = first.getDay();
-    const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
-    const rows: Array<{ iso: string; day: number; muted: boolean } | null> = [];
-    for (let i = 0; i < startPad; i += 1) rows.push(null);
-    for (let day = 1; day <= daysInMonth; day += 1) {
-      const iso = toIso(new Date(viewYear, viewMonth, day));
-      rows.push({ iso, day, muted: iso < todayIso });
-    }
-    return rows;
-  }, [viewYear, viewMonth, todayIso]);
-
-  function inRange(iso: string) {
-    if (!draftIn || !draftOut) return false;
-    return iso > draftIn && iso < draftOut;
-  }
-
   const summary = open
     ? draftIn && draftOut
       ? `${formatShort(draftIn)} – ${formatShort(draftOut)}`
       : draftIn
         ? `${formatShort(draftIn)} – …`
-        : "اختر تواريخ الإقامة"
+        : placeholder
     : checkIn && checkOut
       ? `${formatShort(checkIn)} – ${formatShort(checkOut)}`
-      : "اختر تواريخ الإقامة";
-
-  function dayClass(iso: string, muted: boolean) {
-    const isStart = iso === draftIn;
-    const isEnd = iso === draftOut;
-    const between = inRange(iso);
-    return [
-      "shop-date-range-day",
-      muted ? "muted" : "",
-      isStart ? "selected range-start" : "",
-      isEnd ? "selected range-end" : "",
-      between ? "in-range" : "",
-    ]
-      .filter(Boolean)
-      .join(" ");
-  }
+      : placeholder;
 
   return (
     <div className={`shop-date-range${className ? ` ${className}` : ""}`} ref={wrapRef}>
@@ -154,40 +212,35 @@ export function ShopDateRangePicker({ checkIn, checkOut, onChange, className }: 
         {summary}
       </button>
       {open ? (
-        <div className="shop-date-range-pop">
-          <div className="shop-date-range-head">
+        <div className="shop-date-range-pop shop-date-range-pop-dual">
+          <p className="shop-date-range-phase">
+            {phase === "checkin" ? startLabel : endLabel}
+          </p>
+          <div className="shop-date-range-nav">
             <button type="button" onClick={() => shiftMonth(-1)} aria-label="الشهر السابق">
               ‹
             </button>
-            <strong>{monthLabel(viewYear, viewMonth)}</strong>
             <button type="button" onClick={() => shiftMonth(1)} aria-label="الشهر التالي">
               ›
             </button>
           </div>
-          <p className="shop-date-range-phase">
-            {phase === "checkin" ? "اختر تاريخ الوصول" : "اختر تاريخ المغادرة"}
-          </p>
-          <div className="shop-date-range-weekdays">
-            {WEEKDAYS.map((w) => (
-              <span key={w}>{w}</span>
-            ))}
-          </div>
-          <div className="shop-date-range-grid">
-            {cells.map((cell, i) =>
-              cell ? (
-                <button
-                  key={cell.iso}
-                  type="button"
-                  className={dayClass(cell.iso, cell.muted)}
-                  disabled={cell.muted}
-                  onClick={() => pickDay(cell.iso)}
-                >
-                  {cell.day}
-                </button>
-              ) : (
-                <span key={`pad-${i}`} className="shop-date-range-pad" />
-              ),
-            )}
+          <div className="shop-date-range-months">
+            <MonthGrid
+              year={viewYear}
+              month={viewMonth}
+              todayIso={todayIso}
+              draftIn={draftIn}
+              draftOut={draftOut}
+              onPick={pickDay}
+            />
+            <MonthGrid
+              year={monthB.year}
+              month={monthB.month}
+              todayIso={todayIso}
+              draftIn={draftIn}
+              draftOut={draftOut}
+              onPick={pickDay}
+            />
           </div>
           <div className="shop-date-range-footer">
             <span>

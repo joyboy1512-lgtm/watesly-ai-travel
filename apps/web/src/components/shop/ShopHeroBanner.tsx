@@ -504,23 +504,25 @@ export function ShopHeroBanner(props: Props) {
                 </div>
                 <div className="exp-input-cell exp-cell-dates">
                   <span className="exp-cell-label">التواريخ</span>
-                  <div className="exp-dates-row">
+                  {showReturnDate ? (
+                    <ShopDateRangePicker
+                      checkIn={props.departDate}
+                      checkOut={props.returnDate}
+                      onChange={(checkIn, checkOut) => {
+                        props.onDepartDateChange(checkIn);
+                        props.onReturnDateChange(checkOut);
+                      }}
+                      startLabel="تاريخ المغادرة"
+                      endLabel="تاريخ العودة"
+                      placeholder="اختر تواريخ السفر"
+                    />
+                  ) : (
                     <DatePick
                       value={props.departDate}
                       onChange={props.onDepartDateChange}
                       label="تاريخ المغادرة"
                     />
-                    {showReturnDate ? (
-                      <>
-                        <span className="exp-date-sep">–</span>
-                        <DatePick
-                          value={props.returnDate}
-                          onChange={props.onReturnDateChange}
-                          label="تاريخ العودة"
-                        />
-                      </>
-                    ) : null}
-                  </div>
+                  )}
                 </div>
                 {renderTravelersCell()}
                 <button
@@ -638,7 +640,7 @@ export function ShopHeroBanner(props: Props) {
               }`}
             >
               <span className="exp-cell-label">{props.mode === "cars" ? "التاريخ" : "التواريخ"}</span>
-              {props.mode === "stays" ? (
+              {showReturnDate ? (
                 <ShopDateRangePicker
                   checkIn={props.departDate}
                   checkOut={props.returnDate}
@@ -646,33 +648,34 @@ export function ShopHeroBanner(props: Props) {
                     props.onDepartDateChange(checkIn);
                     props.onReturnDateChange(checkOut);
                   }}
+                  startLabel={
+                    props.mode === "activities"
+                      ? "تاريخ البداية"
+                      : props.mode === "cars"
+                        ? "تاريخ الوصول"
+                        : "تاريخ الوصول"
+                  }
+                  endLabel={
+                    props.mode === "activities"
+                      ? "تاريخ النهاية"
+                      : "تاريخ المغادرة"
+                  }
+                  placeholder={
+                    props.mode === "stays"
+                      ? "اختر تواريخ الإقامة"
+                      : props.mode === "activities"
+                        ? "اختر تواريخ النشاط"
+                        : props.mode === "cars"
+                          ? "اختر تواريخ الرحلة"
+                          : "اختر التواريخ"
+                  }
                 />
               ) : (
-              <div className="exp-dates-row">
                 <DatePick
                   value={props.departDate}
                   onChange={props.onDepartDateChange}
-                  label={
-                    props.mode === "cars"
-                      ? "تاريخ الوصول"
-                      : "تاريخ المغادرة"
-                  }
+                  label="تاريخ الوصول"
                 />
-                {showReturnDate ? (
-                  <>
-                    <span className="exp-date-sep">–</span>
-                    <DatePick
-                      value={props.returnDate}
-                      onChange={props.onReturnDateChange}
-                      label={
-                        props.mode === "cars"
-                          ? "تاريخ العودة"
-                          : "تاريخ العودة"
-                      }
-                    />
-                  </>
-                ) : null}
-              </div>
               )}
             </div>
 

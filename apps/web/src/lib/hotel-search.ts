@@ -79,16 +79,16 @@ export type HotelSearchFilters = {
   noPrepayment: boolean;
   propertyTypes: string[];
   facilities: string[];
-  roomFacilities: string[];
-  starRatings: string[];
-  mealTypes: string[];
-  maxDistanceKm: string;
-  landmarks: string[];
-  brands: string[];
-  bedTypes: string[];
-  minBedrooms: number;
-  minBathrooms: number;
-  onlinePayment: boolean;
+  roomFacilities?: string[];
+  starRatings?: string[];
+  mealTypes?: string[];
+  maxDistanceKm?: string;
+  landmarks?: string[];
+  brands?: string[];
+  bedTypes?: string[];
+  minBedrooms?: number;
+  minBathrooms?: number;
+  onlinePayment?: boolean;
   maxPrice: string;
   refundableOnly: boolean;
   bookableOnly: boolean;
@@ -176,10 +176,11 @@ function matchingRates(h: HotelOfferRow, filters: HotelSearchFilters): HotelRate
   if (filters.onlinePayment) {
     rates = rates.filter((r) => r.paymentType === "AT_WEB");
   }
-  if (filters.mealTypes.length) {
+  const mealTypes = filters.mealTypes || [];
+  if (mealTypes.length) {
     rates = rates.filter((r) => {
       const code = r.boardCode;
-      return filters.mealTypes.some((meal) => {
+      return mealTypes.some((meal) => {
         if (meal === "BB") return ["BB", "HB", "FB", "AI"].includes(code);
         if (meal === "HB") return ["HB", "FB", "AI"].includes(code);
         if (meal === "FB") return ["FB", "AI"].includes(code);
@@ -249,9 +250,9 @@ export function filterHotelOffers(
     const min = Number(filters.minStars);
     list = list.filter((h) => Number(h.details.stars || 0) >= min);
   }
-  if (filters.starRatings.length) {
+  if ((filters.starRatings || []).length) {
     list = list.filter((h) =>
-      filters.starRatings.includes(String(Number(h.details.stars || 0))),
+      (filters.starRatings || []).includes(String(Number(h.details.stars || 0))),
     );
   }
   if (filters.minReviewScore !== "any") {
@@ -266,9 +267,9 @@ export function filterHotelOffers(
   if (filters.facilities.length) {
     list = list.filter((h) => filters.facilities.every((f) => hotelHasFacility(h, f)));
   }
-  if (filters.roomFacilities.length) {
+  if ((filters.roomFacilities || []).length) {
     list = list.filter((h) =>
-      filters.roomFacilities.every((f) => hotelHasRoomFacility(h, f)),
+      (filters.roomFacilities || []).every((f) => hotelHasRoomFacility(h, f)),
     );
   }
   if (filters.maxDistanceKm) {
@@ -280,22 +281,22 @@ export function filterHotelOffers(
       });
     }
   }
-  if (filters.landmarks.length) {
+  if ((filters.landmarks || []).length) {
     list = list.filter((h) => {
       const marks = hotelLandmarks(h);
-      return filters.landmarks.some((mark) => marks.includes(mark));
+      return (filters.landmarks || []).some((mark) => marks.includes(mark));
     });
   }
-  if (filters.brands.length) {
+  if ((filters.brands || []).length) {
     list = list.filter((h) => {
       const brand = hotelBrandId(h);
-      return brand != null && filters.brands.includes(brand);
+      return brand != null && (filters.brands || []).includes(brand);
     });
   }
-  if (filters.bedTypes.length) {
+  if ((filters.bedTypes || []).length) {
     list = list.filter((h) => {
       const beds = hotelBedTypes(h);
-      return filters.bedTypes.some((bed) => beds.includes(bed));
+      return (filters.bedTypes || []).some((bed) => beds.includes(bed));
     });
   }
   if (filters.onlinePayment) {

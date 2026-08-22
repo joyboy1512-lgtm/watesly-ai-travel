@@ -64,13 +64,19 @@ function airlineLogo(code?: string | null) {
   return `https://pics.avs.io/80/80/${code.toUpperCase()}.png`;
 }
 
-function newLegId() {
-  return `leg-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+function newLegId(existing: FlightLeg[]) {
+  let index = existing.length + 1;
+  let id = `leg-${index}`;
+  while (existing.some((leg) => leg.id === id)) {
+    index += 1;
+    id = `leg-${index}`;
+  }
+  return id;
 }
 
 function createFlightLeg(partial?: Partial<FlightLeg>): FlightLeg {
   return {
-    id: partial?.id || newLegId(),
+    id: partial?.id || "leg-new",
     origin: partial?.origin || "",
     originLabel: partial?.originLabel || "",
     destination: partial?.destination || "",
@@ -93,6 +99,7 @@ export function ShopHomeClient() {
   const [tripType, setTripType] = useState<FlightTripType>("roundtrip");
   const [flightLegs, setFlightLegs] = useState<FlightLeg[]>(() => [
     createFlightLeg({
+      id: "leg-1",
       origin: "KWI",
       originLabel: "KWI · الكويت",
       destination: "DXB",
@@ -100,6 +107,7 @@ export function ShopHomeClient() {
       departDate: plusDays(14),
     }),
     createFlightLeg({
+      id: "leg-2",
       origin: "DXB",
       originLabel: "DXB · دبي",
       destination: "",
@@ -191,6 +199,7 @@ export function ShopHomeClient() {
     if (next === "multicity" && tripType !== "multicity") {
       setFlightLegs([
         createFlightLeg({
+          id: "leg-1",
           origin,
           originLabel,
           destination,
@@ -198,6 +207,7 @@ export function ShopHomeClient() {
           departDate,
         }),
         createFlightLeg({
+          id: "leg-2",
           origin: destination,
           originLabel: destinationLabel,
           destination: "",
@@ -244,6 +254,7 @@ export function ShopHomeClient() {
       return [
         ...prev,
         createFlightLeg({
+          id: newLegId(prev),
           origin: last?.destination || "",
           originLabel: last?.destinationLabel || "",
           departDate: addDaysToIso(last?.departDate || plusDays(14), 4),

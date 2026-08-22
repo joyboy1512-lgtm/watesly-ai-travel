@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, type ReactNode } from "react";
+import { useState, useRef, useEffect, type ReactNode } from "react";
 import { HERO_SLIDES } from "@/lib/shop-content";
 import { ShopAutocomplete, type SuggestItem } from "@/components/shop/ShopAutocomplete";
 
@@ -161,6 +161,11 @@ function DatePick({
   label: string;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   function openPicker() {
     const el = inputRef.current;
@@ -180,7 +185,7 @@ function DatePick({
   return (
     <div className="exp-date-pick">
       <button type="button" className="exp-date-btn" onClick={openPicker} aria-label={label}>
-        {formatDateDisplay(value)}
+        {mounted ? formatDateDisplay(value) : value || "اختر تاريخ"}
       </button>
       <input
         ref={inputRef}
@@ -319,13 +324,6 @@ export function ShopHeroBanner(props: Props) {
                 <div className="exp-pill-tabs exp-pill-tabs-inset" role="group" aria-label="نوع الرحلة">
                   <button
                     type="button"
-                    className={`exp-pill-tab${props.tripType === "multicity" ? " on" : ""}`}
-                    onClick={() => props.onTripTypeChange("multicity")}
-                  >
-                    وجهات متعددة
-                  </button>
-                  <button
-                    type="button"
                     className={`exp-pill-tab${props.tripType === "roundtrip" ? " on" : ""}`}
                     onClick={() => props.onTripTypeChange("roundtrip")}
                   >
@@ -337,6 +335,13 @@ export function ShopHeroBanner(props: Props) {
                     onClick={() => props.onTripTypeChange("oneway")}
                   >
                     ذهاب فقط
+                  </button>
+                  <button
+                    type="button"
+                    className={`exp-pill-tab${props.tripType === "multicity" ? " on" : ""}`}
+                    onClick={() => props.onTripTypeChange("multicity")}
+                  >
+                    وجهات متعددة
                   </button>
                 </div>
                 <label className="exp-cabin-pill">

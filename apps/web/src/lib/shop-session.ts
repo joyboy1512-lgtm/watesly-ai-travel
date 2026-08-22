@@ -1,4 +1,16 @@
-const API_URL = (process.env.NEXT_PUBLIC_API_URL || "/api").replace(/\/$/, "");
+function getShopApiUrl(): string {
+  const fromEnv = process.env.NEXT_PUBLIC_API_URL?.trim();
+  if (fromEnv) return fromEnv.replace(/\/$/, "");
+
+  if (typeof window !== "undefined") {
+    const host = window.location.hostname.toLowerCase();
+    if (host === "weekendgate.com" || host.endsWith(".weekendgate.com")) {
+      return "https://api.weekendgate.com";
+    }
+  }
+
+  return "/api";
+}
 
 export type ShopCustomer = {
   id: string;
@@ -61,7 +73,7 @@ export async function shopFetch<T>(
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   let response: Response;
   try {
-    response = await fetch(`${API_URL}${path}`, {
+    response = await fetch(`${getShopApiUrl()}${path}`, {
       ...rest,
       headers,
       signal: rest.signal || controller.signal,

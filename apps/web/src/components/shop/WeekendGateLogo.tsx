@@ -2,7 +2,7 @@ export function WeekendGateLogo() {
   return (
     <span className="wg-logo">
       <img
-        src="/weekendgate-logo.png"
+        src="/weekendgate-mark.svg"
         alt=""
         className="wg-logo-mark"
         aria-hidden

@@ -176,12 +176,15 @@ function FiltersPanel({
           <ExpandableChecks
             name="meals"
             options={facets.meals}
-            selected={filters.mealTypes}
+            selected={filters.mealTypes || []}
             onToggle={(id) =>
               onChange({
                 ...filters,
-                mealTypes: toggleList(filters.mealTypes, id),
-                breakfast: id === "BB" ? !filters.mealTypes.includes("BB") : filters.breakfast,
+                mealTypes: toggleList(filters.mealTypes || [], id),
+                breakfast:
+                  id === "BB"
+                    ? !(filters.mealTypes || []).includes("BB")
+                    : filters.breakfast,
               })
             }
           />
@@ -204,12 +207,12 @@ function FiltersPanel({
       <FilterSection title="غرف النوم والحمامات">
         <Stepper
           label="غرف النوم"
-          value={filters.minBedrooms}
+          value={filters.minBedrooms || 0}
           onChange={(n) => onChange({ ...filters, minBedrooms: n })}
         />
         <Stepper
           label="الحمامات"
-          value={filters.minBathrooms}
+          value={filters.minBathrooms || 0}
           onChange={(n) => onChange({ ...filters, minBathrooms: n })}
         />
       </FilterSection>
@@ -232,9 +235,12 @@ function FiltersPanel({
           <ExpandableChecks
             name="roomFacilities"
             options={facets.roomFacilities}
-            selected={filters.roomFacilities}
+            selected={filters.roomFacilities || []}
             onToggle={(id) =>
-              onChange({ ...filters, roomFacilities: toggleList(filters.roomFacilities, id) })
+              onChange({
+                ...filters,
+                roomFacilities: toggleList(filters.roomFacilities || [], id),
+              })
             }
           />
         </FilterSection>
@@ -248,9 +254,9 @@ function FiltersPanel({
           <ExpandableChecks
             name="starRatings"
             options={facets.starRatings}
-            selected={filters.starRatings}
+            selected={filters.starRatings || []}
             onToggle={(id) =>
-              onChange({ ...filters, starRatings: toggleList(filters.starRatings, id) })
+              onChange({ ...filters, starRatings: toggleList(filters.starRatings || [], id) })
             }
           />
         </FilterSection>
@@ -279,9 +285,9 @@ function FiltersPanel({
           <ExpandableChecks
             name="bedTypes"
             options={facets.bedTypes}
-            selected={filters.bedTypes}
+            selected={filters.bedTypes || []}
             onToggle={(id) =>
-              onChange({ ...filters, bedTypes: toggleList(filters.bedTypes, id) })
+              onChange({ ...filters, bedTypes: toggleList(filters.bedTypes || [], id) })
             }
           />
         </FilterSection>
@@ -382,8 +388,8 @@ function FiltersPanel({
           <ExpandableChecks
             name="brands"
             options={facets.brands}
-            selected={filters.brands}
-            onToggle={(id) => onChange({ ...filters, brands: toggleList(filters.brands, id) })}
+            selected={filters.brands || []}
+            onToggle={(id) => onChange({ ...filters, brands: toggleList(filters.brands || [], id) })}
             initial={8}
           />
         </FilterSection>
@@ -394,9 +400,9 @@ function FiltersPanel({
           <ExpandableChecks
             name="landmarks"
             options={facets.landmarks}
-            selected={filters.landmarks}
+            selected={filters.landmarks || []}
             onToggle={(id) =>
-              onChange({ ...filters, landmarks: toggleList(filters.landmarks, id) })
+              onChange({ ...filters, landmarks: toggleList(filters.landmarks || [], id) })
             }
           />
         </FilterSection>

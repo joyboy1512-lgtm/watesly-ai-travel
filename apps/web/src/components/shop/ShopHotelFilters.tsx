@@ -52,8 +52,8 @@ function FilterCheck({
 }) {
   return (
     <label className="shop-hotel-filter-check shop-hotel-filter-row">
-      {count != null ? <span className="shop-hotel-filter-count">{count}</span> : <span />}
-      <span>{label}</span>
+      <span className="shop-hotel-filter-count">{count ?? ""}</span>
+      <span className="shop-hotel-filter-label">{label}</span>
       <input type="checkbox" checked={checked} onChange={() => onToggle(id)} />
     </label>
   );
@@ -76,8 +76,8 @@ function FilterRadio({
 }) {
   return (
     <label className="shop-hotel-filter-radio shop-hotel-filter-row">
-      {count != null ? <span className="shop-hotel-filter-count">{count}</span> : <span />}
-      <span>{label}</span>
+      <span className="shop-hotel-filter-count">{count ?? ""}</span>
+      <span className="shop-hotel-filter-label">{label}</span>
       <input type="radio" name={name} checked={checked} onChange={() => onSelect(id)} />
     </label>
   );

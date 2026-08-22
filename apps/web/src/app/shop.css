@@ -3936,16 +3936,25 @@
 }
 
 .shop-hotel-filter-row {
-  display: grid;
-  grid-template-columns: 2.2rem 1fr auto;
+  display: flex;
+  flex-direction: row;
   align-items: center;
-  gap: 0.45rem;
+  gap: 0.5rem;
+  direction: ltr;
+  width: 100%;
 }
 
 .shop-hotel-filter-count {
+  flex: 0 0 2.2rem;
   color: #94a3b8;
   font-size: 0.82rem;
-  text-align: start;
+  text-align: left;
+}
+
+.shop-hotel-filter-label {
+  flex: 1;
+  direction: rtl;
+  text-align: right;
 }
 
 .shop-hotel-filter-more {
@@ -3983,12 +3992,14 @@
 
 .shop-hotel-filter-radio,
 .shop-hotel-filter-check {
-  display: flex;
-  align-items: center;
-  gap: 0.45rem;
   font-size: 0.86rem;
   color: #334155;
   cursor: pointer;
+}
+
+.shop-hotel-filter-radio.shop-hotel-filter-row,
+.shop-hotel-filter-check.shop-hotel-filter-row {
+  display: flex;
 }
 
 .shop-hotel-filter-radio input,

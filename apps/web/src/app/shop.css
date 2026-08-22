@@ -4376,3 +4376,1023 @@
   width: 100%;
   margin-top: 0.5rem;
 }
+
+/* —— Booking-style flight results —— */
+.shop-flight-results {
+  width: min(1200px, calc(100% - 2rem));
+  margin: 0 auto 2rem;
+}
+
+.shop-flight-results-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.85rem;
+}
+
+.shop-flight-results-head h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: #0f172a;
+}
+
+.shop-flight-results-sort {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  align-items: center;
+  font-size: 0.82rem;
+  color: #64748b;
+}
+
+.shop-flight-results-sort button,
+.shop-flight-quick-chips button {
+  border: 1px solid #dbe3ea;
+  background: #fff;
+  border-radius: 999px;
+  padding: 0.35rem 0.85rem;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #0f172a;
+  cursor: pointer;
+}
+
+.shop-flight-results-sort button.on,
+.shop-flight-quick-chips button.on {
+  background: #0071c2;
+  border-color: #0071c2;
+  color: #fff;
+}
+
+.shop-flight-quick-chips {
+  display: none;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 0.75rem;
+}
+
+.shop-flight-filters-mobile-toggle {
+  display: none;
+  width: 100%;
+  margin-bottom: 0.75rem;
+  border: 1px solid #dbe3ea;
+  background: #fff;
+  border-radius: 8px;
+  padding: 0.65rem 0.85rem;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.shop-flight-results-layout {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 1.15rem;
+  align-items: start;
+}
+
+.shop-flight-filters-panel {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 0.9rem;
+  display: grid;
+  gap: 0.85rem;
+  position: sticky;
+  top: 0.75rem;
+}
+
+.shop-flight-filter-block {
+  display: grid;
+  gap: 0.4rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.shop-flight-filter-block:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.shop-flight-filter-block strong {
+  font-size: 0.9rem;
+  color: #0f172a;
+}
+
+.shop-flight-filter-radio,
+.shop-flight-filter-check {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 0.45rem;
+  align-items: center;
+  font-size: 0.82rem;
+  color: #475569;
+  direction: ltr;
+}
+
+.shop-flight-filter-radio span,
+.shop-flight-filter-check span {
+  direction: rtl;
+  text-align: start;
+}
+
+.shop-flight-filter-radio em,
+.shop-flight-filter-check em {
+  font-style: normal;
+  font-size: 0.72rem;
+  color: #0071c2;
+  white-space: nowrap;
+  direction: rtl;
+}
+
+.shop-flight-filter-block input[type="range"] {
+  width: 100%;
+  accent-color: #0071c2;
+}
+
+.shop-flight-filter-block small {
+  color: #64748b;
+  font-size: 0.78rem;
+}
+
+.shop-flight-time-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.35rem;
+  margin-bottom: 0.25rem;
+}
+
+.shop-flight-time-tabs button {
+  border: 1px solid #dbe3ea;
+  background: #fff;
+  border-radius: 8px;
+  padding: 0.45rem 0.5rem;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  color: #0f172a;
+}
+
+.shop-flight-time-tabs button.on {
+  background: #e7f0fa;
+  border-color: #0071c2;
+  color: #0071c2;
+}
+
+.shop-flight-time-hint {
+  margin: 0 0 0.2rem;
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+.shop-ticket-list {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.shop-ticket-card {
+  display: grid;
+  grid-template-columns: 1fr 190px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  overflow: hidden;
+  color: #0f172a;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+}
+
+.shop-ticket-flex-note {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: 0.45rem 1rem 0;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #18785a;
+}
+
+.shop-ticket-body {
+  padding: 0.9rem 1rem;
+  display: grid;
+  gap: 0.55rem;
+}
+
+.shop-ticket-legs {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.shop-ticket-leg {
+  display: grid;
+  grid-template-columns: 56px 1fr 1.2fr 1fr;
+  gap: 0.7rem;
+  align-items: center;
+}
+
+.shop-ticket-leg-return {
+  padding-top: 0.65rem;
+  border-top: 1px dashed #e2e8f0;
+}
+
+.shop-ticket-carrier {
+  display: grid;
+  justify-items: center;
+  gap: 0.25rem;
+}
+
+.shop-ticket-carrier img,
+.shop-ticket-logo-fallback {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+  border-radius: 8px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+}
+
+.shop-ticket-logo-fallback {
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  color: #0071c2;
+  font-size: 0.8rem;
+}
+
+.shop-ticket-leg-label {
+  font-size: 0.66rem;
+  font-weight: 800;
+  color: #0071c2;
+  background: #e7f0fa;
+  border-radius: 999px;
+  padding: 0.1rem 0.4rem;
+  white-space: nowrap;
+}
+
+.shop-ticket-leg-label.return {
+  color: #9a6a2e;
+  background: rgba(216, 163, 94, 0.18);
+}
+
+.shop-ticket-time {
+  display: grid;
+  gap: 0.15rem;
+}
+
+.shop-ticket-time.end {
+  text-align: start;
+}
+
+.shop-ticket-time strong {
+  font-size: 1.25rem;
+  line-height: 1.1;
+}
+
+.shop-ticket-time span {
+  color: #64748b;
+  font-size: 0.78rem;
+}
+
+.shop-ticket-path {
+  display: grid;
+  gap: 0.3rem;
+  justify-items: center;
+  text-align: center;
+}
+
+.shop-ticket-path-line {
+  width: 100%;
+}
+
+.shop-ticket-path-bar {
+  display: block;
+  height: 2px;
+  background: #cbd5e1;
+  width: 100%;
+}
+
+.shop-ticket-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  justify-content: center;
+}
+
+.shop-ticket-meta-stops,
+.shop-ticket-meta-duration {
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 0.22rem 0.55rem;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  color: #0f172a;
+  white-space: nowrap;
+}
+
+.shop-ticket-meta-stops.direct {
+  background: rgba(24, 120, 90, 0.1);
+  border-color: rgba(24, 120, 90, 0.35);
+  color: #18785a;
+}
+
+.shop-ticket-footer-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  align-items: center;
+}
+
+.shop-ticket-airline-name {
+  color: #64748b;
+  font-size: 0.82rem;
+}
+
+.shop-ticket-side {
+  border-inline-start: 1px solid #e2e8f0;
+  padding: 0.9rem 0.8rem;
+  display: grid;
+  gap: 0.45rem;
+  align-content: center;
+  justify-items: center;
+  background: #f8fafc;
+}
+
+.shop-ticket-bags {
+  display: flex;
+  gap: 0.45rem;
+  color: #18785a;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.shop-ticket-bags .off {
+  opacity: 0.35;
+  color: #94a3b8;
+}
+
+.shop-ticket-price {
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: #0f172a;
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+
+.shop-ticket-price-note {
+  color: #64748b;
+  font-size: 0.72rem;
+  text-align: center;
+  line-height: 1.35;
+}
+
+.shop-ticket-details-btn {
+  width: 100%;
+  min-height: 2.35rem;
+  border-radius: 8px;
+  border: 1.5px solid #0071c2;
+  background: #fff;
+  color: #0071c2;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.shop-ticket-details-btn:hover {
+  background: #0071c2;
+  color: #fff;
+}
+
+.shop-ticket-empty {
+  display: grid;
+  gap: 0.55rem;
+  padding: 1.25rem 1rem;
+  border-radius: 12px;
+  border: 1px dashed #cbd5e1;
+  background: #f8fafc;
+  text-align: center;
+}
+
+.shop-ticket-empty button {
+  justify-self: center;
+  border: 1px solid #0071c2;
+  background: #fff;
+  color: #0071c2;
+  border-radius: 8px;
+  padding: 0.45rem 1rem;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* Flight detail modal */
+.shop-flight-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 600;
+  background: rgba(15, 23, 42, 0.5);
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+}
+
+.shop-flight-modal {
+  width: min(820px, 100%);
+  max-height: min(92vh, 900px);
+  overflow: auto;
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.28);
+}
+
+.shop-flight-modal-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-start;
+  padding: 1rem 1.15rem 0.75rem;
+  border-bottom: 1px solid #f1f5f9;
+  position: sticky;
+  top: 0;
+  background: #fff;
+  z-index: 2;
+}
+
+.shop-flight-modal-head h2 {
+  margin: 0 0 0.45rem;
+  font-size: 1.25rem;
+}
+
+.shop-flight-modal-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.shop-flight-modal-share {
+  border: 0;
+  background: none;
+  color: #0071c2;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0;
+}
+
+.shop-flight-modal-close {
+  border: 0;
+  background: #f1f5f9;
+  width: 2.1rem;
+  height: 2.1rem;
+  border-radius: 999px;
+  font-size: 1.35rem;
+  line-height: 1;
+  cursor: pointer;
+  color: #475569;
+}
+
+.shop-flight-modal-section {
+  padding: 1rem 1.15rem;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.shop-flight-modal-section h3 {
+  margin: 0 0 0.75rem;
+  font-size: 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem 0.75rem;
+  align-items: baseline;
+}
+
+.shop-flight-modal-section h3 span {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.shop-flight-modal-section.split {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  gap: 1rem;
+}
+
+.shop-flight-modal-section.split > div p {
+  margin: 0.25rem 0 0;
+  color: #64748b;
+  font-size: 0.8rem;
+}
+
+.shop-flight-modal-itinerary {
+  display: grid;
+  grid-template-columns: 1fr 180px;
+  gap: 1rem;
+  align-items: start;
+}
+
+.shop-flight-timeline {
+  display: grid;
+  gap: 0;
+}
+
+.shop-flight-timeline-point {
+  display: grid;
+  grid-template-columns: 16px 1fr;
+  gap: 0.65rem;
+  align-items: start;
+}
+
+.shop-flight-timeline-point i {
+  width: 12px;
+  height: 12px;
+  border-radius: 999px;
+  border: 2px solid #0071c2;
+  background: #fff;
+  margin-top: 0.25rem;
+  justify-self: center;
+}
+
+.shop-flight-timeline-point strong {
+  display: block;
+  font-size: 0.95rem;
+}
+
+.shop-flight-timeline-point p {
+  margin: 0.15rem 0 0;
+  color: #64748b;
+  font-size: 0.82rem;
+}
+
+.shop-flight-timeline-line {
+  width: 2px;
+  height: 1.4rem;
+  background: #cbd5e1;
+  margin-inline-start: 7px;
+}
+
+.shop-flight-timeline-segment {
+  display: grid;
+}
+
+.shop-flight-timeline-layover {
+  margin: 0.35rem 0 0.55rem 1.4rem;
+  padding: 0.35rem 0.55rem;
+  background: #f8fafc;
+  border-radius: 6px;
+  font-size: 0.78rem;
+  color: #64748b;
+}
+
+.shop-flight-modal-carrier {
+  display: grid;
+  gap: 0.25rem;
+  justify-items: start;
+}
+
+.shop-flight-modal-carrier img {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+}
+
+.shop-flight-modal-carrier span {
+  color: #64748b;
+  font-size: 0.8rem;
+}
+
+.shop-flight-modal-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.55rem;
+}
+
+.shop-flight-modal-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  align-items: center;
+  font-size: 0.88rem;
+}
+
+.shop-flight-modal-list em {
+  font-style: normal;
+  color: #18785a;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.shop-flight-modal-list.soft em {
+  color: #64748b;
+  font-weight: 600;
+}
+
+.shop-flight-modal-foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.9rem 1.15rem;
+  position: sticky;
+  bottom: 0;
+  background: #fff;
+  border-top: 1px solid #f1f5f9;
+}
+
+.shop-flight-modal-foot strong {
+  font-size: 1.25rem;
+}
+
+.shop-flight-continue-btn {
+  border: 0;
+  border-radius: 8px;
+  background: #0071c2;
+  color: #fff;
+  font: inherit;
+  font-weight: 800;
+  padding: 0.7rem 1.35rem;
+  cursor: pointer;
+}
+
+.shop-flight-continue-btn:hover {
+  background: #006bb3;
+}
+
+/* Flight checkout (book page) */
+.shop-flight-checkout {
+  width: min(1100px, calc(100% - 2rem));
+  margin: 1.25rem auto 2.5rem;
+}
+
+.shop-flight-checkout-steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem 1rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.85rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.shop-flight-checkout-step {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.82rem;
+  color: #94a3b8;
+  font-weight: 600;
+}
+
+.shop-flight-checkout-step.on {
+  color: #0f172a;
+}
+
+.shop-flight-checkout-step i {
+  width: 1.45rem;
+  height: 1.45rem;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: #e2e8f0;
+  color: #64748b;
+  font-style: normal;
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.shop-flight-checkout-step.on i {
+  background: #0071c2;
+  color: #fff;
+}
+
+.shop-flight-checkout-summary {
+  margin-bottom: 1.15rem;
+}
+
+.shop-flight-checkout-summary p {
+  margin: 0 0 0.25rem;
+  color: #64748b;
+  font-size: 0.85rem;
+}
+
+.shop-flight-checkout-summary h1 {
+  margin: 0;
+  font-size: clamp(1.35rem, 2.5vw, 1.85rem);
+}
+
+.shop-flight-checkout-layout {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 1.25rem;
+  align-items: start;
+}
+
+.shop-flight-checkout-main {
+  display: grid;
+  gap: 1rem;
+}
+
+.shop-flight-checkout-card {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1rem 1.1rem;
+}
+
+.shop-flight-checkout-card h2 {
+  margin: 0 0 0.85rem;
+  font-size: 1.1rem;
+}
+
+.shop-traveler-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.85rem 0;
+  border-top: 1px solid #f1f5f9;
+}
+
+.shop-traveler-row:first-of-type {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.shop-traveler-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.shop-traveler-meta i {
+  width: 2.2rem;
+  height: 2.2rem;
+  border-radius: 999px;
+  background: #e7f0fa;
+  color: #0071c2;
+  display: grid;
+  place-items: center;
+  font-style: normal;
+}
+
+.shop-traveler-add {
+  border: 1.5px solid #0071c2;
+  background: #fff;
+  color: #0071c2;
+  border-radius: 8px;
+  padding: 0.55rem 0.9rem;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.shop-traveler-add.filled {
+  border-color: #e2e8f0;
+  color: #0f172a;
+}
+
+.shop-flight-baggage-block {
+  display: grid;
+  gap: 0.55rem;
+  margin-top: 0.75rem;
+}
+
+.shop-flight-baggage-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  align-items: center;
+  font-size: 0.88rem;
+}
+
+.shop-flight-baggage-row em {
+  font-style: normal;
+  color: #18785a;
+  font-weight: 700;
+}
+
+.shop-flight-contact-grid {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.shop-flight-contact-grid label {
+  display: grid;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.shop-flight-contact-grid input,
+.shop-traveler-modal input,
+.shop-traveler-modal select {
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 0.65rem 0.75rem;
+  font: inherit;
+}
+
+.shop-flight-contact-grid small {
+  color: #64748b;
+  font-weight: 500;
+  font-size: 0.75rem;
+}
+
+.shop-flight-price-card {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1rem;
+  position: sticky;
+  top: 0.75rem;
+  display: grid;
+  gap: 0.65rem;
+}
+
+.shop-flight-price-card h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.shop-flight-price-line {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  font-size: 0.9rem;
+}
+
+.shop-flight-price-total {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  font-size: 1.1rem;
+  font-weight: 800;
+  padding-top: 0.55rem;
+  border-top: 1px solid #f1f5f9;
+}
+
+.shop-flight-price-note {
+  margin: 0;
+  font-size: 0.78rem;
+  color: #18785a;
+}
+
+.shop-flight-checkout-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1.25rem;
+}
+
+.shop-flight-checkout-nav a {
+  color: #0071c2;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.shop-flight-checkout-nav button {
+  border: 0;
+  border-radius: 8px;
+  background: #0071c2;
+  color: #fff;
+  font: inherit;
+  font-weight: 800;
+  padding: 0.7rem 1.4rem;
+  cursor: pointer;
+}
+
+.shop-traveler-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 650;
+  background: rgba(15, 23, 42, 0.5);
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+}
+
+.shop-traveler-modal {
+  width: min(480px, 100%);
+  background: #fff;
+  border-radius: 12px;
+  padding: 1.1rem;
+  display: grid;
+  gap: 0.75rem;
+  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.25);
+}
+
+.shop-traveler-modal-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.shop-traveler-modal-head strong {
+  font-size: 0.78rem;
+  color: #64748b;
+}
+
+.shop-traveler-modal label {
+  display: grid;
+  gap: 0.3rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.shop-traveler-modal small {
+  color: #64748b;
+  font-weight: 500;
+  font-size: 0.74rem;
+}
+
+.shop-traveler-dob {
+  display: grid;
+  grid-template-columns: 1.4fr 0.8fr 1fr;
+  gap: 0.45rem;
+}
+
+.shop-traveler-modal-foot {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 0.25rem;
+}
+
+.shop-traveler-modal-foot button {
+  border: 0;
+  border-radius: 8px;
+  background: #0071c2;
+  color: #fff;
+  font: inherit;
+  font-weight: 800;
+  padding: 0.65rem 1.25rem;
+  cursor: pointer;
+}
+
+@media (max-width: 900px) {
+  .shop-flight-results-layout,
+  .shop-flight-checkout-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .shop-flight-filters-mobile-toggle {
+    display: block;
+  }
+
+  .shop-flight-filters-desktop {
+    display: none;
+  }
+
+  .shop-flight-filters-desktop.open {
+    display: block;
+  }
+
+  .shop-flight-results-sort {
+    display: none;
+  }
+
+  .shop-flight-quick-chips {
+    display: flex;
+  }
+
+  .shop-ticket-card {
+    grid-template-columns: 1fr;
+  }
+
+  .shop-ticket-side {
+    border-inline-start: 0;
+    border-top: 1px solid #e2e8f0;
+    grid-template-columns: 1fr auto;
+    justify-items: stretch;
+    align-items: center;
+  }
+
+  .shop-ticket-bags {
+    grid-column: 1 / -1;
+  }
+
+  .shop-ticket-leg {
+    grid-template-columns: 48px 1fr 1fr;
+    grid-template-areas:
+      "carrier dep arr"
+      "path path path";
+  }
+
+  .shop-ticket-carrier { grid-area: carrier; }
+  .shop-ticket-time:not(.end) { grid-area: dep; }
+  .shop-ticket-time.end { grid-area: arr; text-align: end; }
+  .shop-ticket-path { grid-area: path; }
+
+  .shop-flight-modal-section.split,
+  .shop-flight-modal-itinerary {
+    grid-template-columns: 1fr;
+  }
+
+  .shop-flight-price-card {
+    position: static;
+  }
+}

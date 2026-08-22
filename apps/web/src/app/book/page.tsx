@@ -2,14 +2,16 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useState, type Dispatch, type SetStateAction } from "react";
 import "../shop.css";
 import { StoreFront } from "@/components/shop/StoreFront";
 import {
   clearBookingDraft,
   getBookingDraft,
   type BookingDraft,
+  type FlightBookingDraft,
 } from "@/lib/booking-draft";
+import { formatDay } from "@/lib/flight-search";
 import { formatMoneyMinor } from "@/lib/format";
 import {
   getShopSession,
@@ -24,6 +26,7 @@ type Traveler = {
   birthDate: string;
   nationality: string;
   passportNumber: string;
+  gender: string;
 };
 
 function emptyTraveler(): Traveler {
@@ -34,6 +37,7 @@ function emptyTraveler(): Traveler {
     birthDate: "",
     nationality: "KW",
     passportNumber: "",
+    gender: "",
   };
 }
 
@@ -56,6 +60,340 @@ function draftTitle(draft: BookingDraft) {
   if (draft.serviceType === "hotel") return draft.hotel.description;
   if (draft.serviceType === "transfer") return draft.transfer.description;
   return draft.activity.description;
+}
+
+function travelerComplete(t: Traveler) {
+  return Boolean(t.firstName.trim() && t.lastName.trim() && t.gender && t.birthDate);
+}
+
+function splitBirthDate(iso: string) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(iso)) return { y: "", m: "", d: "" };
+  const [y, m, d] = iso.split("-");
+  return { y: y || "", m: m || "", d: d || "" };
+}
+
+function joinBirthDate(y: string, m: string, d: string) {
+  if (!y || !m || !d) return "";
+  return `${y.padStart(4, "0")}-${m.padStart(2, "0")}-${d.padStart(2, "0")}`;
+}
+
+const MONTHS = [
+  { v: "01", l: "يناير" },
+  { v: "02", l: "فبراير" },
+  { v: "03", l: "مارس" },
+  { v: "04", l: "أبريل" },
+  { v: "05", l: "مايو" },
+  { v: "06", l: "يونيو" },
+  { v: "07", l: "يوليو" },
+  { v: "08", l: "أغسطس" },
+  { v: "09", l: "سبتمبر" },
+  { v: "10", l: "أكتوبر" },
+  { v: "11", l: "نوفمبر" },
+  { v: "12", l: "ديسمبر" },
+];
+
+function FlightCheckout({
+  draft,
+  travelers,
+  setTravelers,
+  email,
+  setEmail,
+  phone,
+  setPhone,
+  name,
+  setName,
+  error,
+  submitting,
+  onSubmit,
+}: {
+  draft: FlightBookingDraft;
+  travelers: Traveler[];
+  setTravelers: Dispatch<SetStateAction<Traveler[]>>;
+  email: string;
+  setEmail: (v: string) => void;
+  phone: string;
+  setPhone: (v: string) => void;
+  name: string;
+  setName: (v: string) => void;
+  error: string;
+  submitting: boolean;
+  onSubmit: () => void;
+}) {
+  const [editIndex, setEditIndex] = useState<number | null>(null);
+  const baggage = (draft.flight.details.baggage || {}) as Record<string, string>;
+  const tripLabel =
+    draft.tripType === "roundtrip"
+      ? "ذهاب وعودة"
+      : draft.tripType === "multicity"
+        ? "وجهات متعددة"
+        : "اتجاه واحد";
+  const pax = draft.adults + draft.children;
+  const dateLabel = [
+    formatDay(draft.departDate),
+    draft.returnDate ? formatDay(draft.returnDate) : "",
+  ]
+    .filter(Boolean)
+    .join(" – ");
+
+  const editing = editIndex != null ? travelers[editIndex] : null;
+  const dob = splitBirthDate(editing?.birthDate || "");
+
+  function updateEditing(patch: Partial<Traveler>) {
+    if (editIndex == null) return;
+    setTravelers((rows) =>
+      rows.map((row, i) => (i === editIndex ? { ...row, ...patch } : row)),
+    );
+  }
+
+  return (
+    <div className="shop-flight-checkout">
+      <div className="shop-flight-checkout-steps" aria-label="خطوات الحجز">
+        {[
+          "بياناتك",
+          "نوع التذكرة",
+          "إضافات",
+          "اختيار المقعد",
+          "المراجعة والدفع",
+        ].map((label, idx) => (
+          <span
+            key={label}
+            className={`shop-flight-checkout-step${idx === 0 ? " on" : ""}`}
+          >
+            <i>{idx + 1}</i>
+            {label}
+          </span>
+        ))}
+      </div>
+
+      <div className="shop-flight-checkout-summary">
+        <p>
+          {tripLabel} · {pax} مسافر · {dateLabel}
+        </p>
+        <h1>
+          {draft.originLabel || draft.origin} إلى{" "}
+          {draft.destinationLabel || draft.destination}
+        </h1>
+      </div>
+
+      {error ? <p className="shop-error">{error}</p> : null}
+
+      <div className="shop-flight-checkout-layout">
+        <div className="shop-flight-checkout-main">
+          <section className="shop-flight-checkout-card">
+            <h2>أدخل بياناتك</h2>
+            {travelers.map((traveler, idx) => {
+              const done = travelerComplete(traveler);
+              return (
+                <div key={idx} className="shop-traveler-row">
+                  <div className="shop-traveler-meta">
+                    <i>👤</i>
+                    <div>
+                      <strong>
+                        {idx < draft.adults ? `بالغ ${idx + 1}` : `طفل ${idx - draft.adults + 1}`}
+                      </strong>
+                      {done ? (
+                        <p className="shop-hint" style={{ margin: 0 }}>
+                          {traveler.firstName} {traveler.lastName}
+                        </p>
+                      ) : null}
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    className={`shop-traveler-add${done ? " filled" : ""}`}
+                    onClick={() => setEditIndex(idx)}
+                  >
+                    {done ? "تعديل بيانات المسافر" : "أضف بيانات هذا المسافر"}
+                  </button>
+                </div>
+              );
+            })}
+
+            <div className="shop-flight-baggage-block">
+              <strong>في كل رحلة</strong>
+              <div className="shop-flight-baggage-row">
+                <span>حقيبة شخصية</span>
+                <em>{baggage.personal || "مشمولة"}</em>
+              </div>
+              <div className="shop-flight-baggage-row">
+                <span>حقيبة مقصورة</span>
+                <em>{baggage.cabin || "مشمولة"}</em>
+              </div>
+              {baggage.checked ? (
+                <div className="shop-flight-baggage-row">
+                  <span>حقيبة مسجّلة</span>
+                  <em>{baggage.checked}</em>
+                </div>
+              ) : null}
+            </div>
+          </section>
+
+          <section className="shop-flight-checkout-card">
+            <h2>بيانات التواصل</h2>
+            <div className="shop-flight-contact-grid">
+              <label>
+                الاسم للتواصل
+                <input value={name} onChange={(e) => setName(e.target.value)} />
+              </label>
+              <label>
+                البريد الإلكتروني
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+                <small>سنرسل تأكيد الرحلة إلى هذا البريد</small>
+              </label>
+              <label>
+                رقم الجوال
+                <input
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder="+965"
+                />
+              </label>
+            </div>
+          </section>
+
+          <div className="shop-flight-checkout-nav">
+            <Link href="/">‹ رجوع</Link>
+            <button type="button" disabled={submitting} onClick={onSubmit}>
+              {submitting ? "جارٍ الحفظ..." : "التالي"}
+            </button>
+          </div>
+        </div>
+
+        <aside className="shop-flight-price-card">
+          <h3>تفاصيل السعر</h3>
+          <div className="shop-flight-price-line">
+            <span>
+              رحلة · بالغ ({draft.adults})
+            </span>
+            <span>
+              {formatMoneyMinor(draft.flight.sellAmountMinor, draft.flight.currency)}
+            </span>
+          </div>
+          <div className="shop-flight-price-total">
+            <span>الإجمالي</span>
+            <span>
+              {formatMoneyMinor(draft.flight.sellAmountMinor, draft.flight.currency)}
+            </span>
+          </div>
+          <p className="shop-hint" style={{ margin: 0 }}>
+            يشمل الضرائب والرسوم
+          </p>
+          <p className="shop-flight-price-note">✓ لا رسوم خفية — تابع السعر في كل خطوة</p>
+        </aside>
+      </div>
+
+      {editing && editIndex != null ? (
+        <div
+          className="shop-traveler-modal-backdrop"
+          onClick={() => setEditIndex(null)}
+          role="presentation"
+        >
+          <div
+            className="shop-traveler-modal"
+            role="dialog"
+            aria-modal="true"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="shop-traveler-modal-head">
+              <strong>* مطلوب</strong>
+              <button
+                type="button"
+                className="shop-flight-modal-close"
+                aria-label="إغلاق"
+                onClick={() => setEditIndex(null)}
+              >
+                ×
+              </button>
+            </div>
+            <label>
+              الاسم الأول
+              <input
+                value={editing.firstName}
+                onChange={(e) => updateEditing({ firstName: e.target.value })}
+              />
+              <small>أدخل الاسم كما هو مكتوب في وثيقة السفر</small>
+            </label>
+            <label>
+              اسم العائلة
+              <input
+                value={editing.lastName}
+                onChange={(e) => updateEditing({ lastName: e.target.value })}
+              />
+              <small>أدخل الاسم كما هو مكتوب في وثيقة السفر</small>
+            </label>
+            <label>
+              الجنس كما في وثيقة السفر
+              <select
+                value={editing.gender}
+                onChange={(e) => {
+                  const gender = e.target.value;
+                  updateEditing({
+                    gender,
+                    title: gender === "female" ? "ms" : "mr",
+                  });
+                }}
+              >
+                <option value="">اختر</option>
+                <option value="male">ذكر</option>
+                <option value="female">أنثى</option>
+              </select>
+            </label>
+            <label>
+              تاريخ الميلاد
+              <div className="shop-traveler-dob">
+                <select
+                  value={dob.m}
+                  onChange={(e) =>
+                    updateEditing({
+                      birthDate: joinBirthDate(dob.y, e.target.value, dob.d),
+                    })
+                  }
+                >
+                  <option value="">الشهر</option>
+                  {MONTHS.map((m) => (
+                    <option key={m.v} value={m.v}>
+                      {m.l}
+                    </option>
+                  ))}
+                </select>
+                <input
+                  inputMode="numeric"
+                  placeholder="يوم"
+                  maxLength={2}
+                  value={dob.d}
+                  onChange={(e) =>
+                    updateEditing({
+                      birthDate: joinBirthDate(dob.y, dob.m, e.target.value.replace(/\D/g, "")),
+                    })
+                  }
+                />
+                <input
+                  inputMode="numeric"
+                  placeholder="سنة"
+                  maxLength={4}
+                  value={dob.y}
+                  onChange={(e) =>
+                    updateEditing({
+                      birthDate: joinBirthDate(e.target.value.replace(/\D/g, ""), dob.m, dob.d),
+                    })
+                  }
+                />
+              </div>
+            </label>
+            <div className="shop-traveler-modal-foot">
+              <button type="button" onClick={() => setEditIndex(null)}>
+                تم
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
 }
 
 export default function PublicBookPage() {
@@ -145,6 +483,7 @@ export default function PublicBookPage() {
               birthDate: saved.birthDate?.slice(0, 10) || "",
               nationality: saved.nationality || "KW",
               passportNumber: saved.passportNumber || "",
+              gender: saved.title === "ms" || saved.title === "mrs" ? "female" : "male",
             };
           }),
         );
@@ -188,6 +527,13 @@ export default function PublicBookPage() {
     if (!name.trim() || !phone.trim()) {
       setError("أدخل الاسم والجوال");
       return;
+    }
+    if (draft.serviceType === "flight") {
+      const incomplete = travelers.some((t) => !travelerComplete(t));
+      if (incomplete) {
+        setError("أكمل بيانات جميع المسافرين قبل المتابعة");
+        return;
+      }
     }
     setSubmitting(true);
     setError("");
@@ -308,6 +654,8 @@ export default function PublicBookPage() {
     }
   }
 
+  const isFlight = draft?.serviceType === "flight";
+
   if (!draft) return null;
 
   return (
@@ -324,6 +672,49 @@ export default function PublicBookPage() {
             عرض رحلاتي
           </Link>
         </section>
+      ) : needLogin ? (
+        <section className="shop-panel">
+          <h1>إتمام الطلب</h1>
+          <p>{draftTitle(draft)}</p>
+          {error ? <p className="shop-error">{error}</p> : null}
+          <form className="shop-form" onSubmit={unlock}>
+            <p>أدخل جوالك لحفظ الطلب على حسابك.</p>
+            <label>
+              الاسم
+              <input value={name} onChange={(e) => setName(e.target.value)} />
+            </label>
+            <label>
+              الجوال
+              <input
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                required
+              />
+            </label>
+            <label>
+              البريد
+              <input value={email} onChange={(e) => setEmail(e.target.value)} />
+            </label>
+            <button className="shop-btn" type="submit" disabled={submitting}>
+              {submitting ? "..." : "متابعة"}
+            </button>
+          </form>
+        </section>
+      ) : isFlight ? (
+        <FlightCheckout
+          draft={draft}
+          travelers={travelers}
+          setTravelers={setTravelers}
+          email={email}
+          setEmail={setEmail}
+          phone={phone}
+          setPhone={setPhone}
+          name={name}
+          setName={setName}
+          error={error}
+          submitting={submitting}
+          onSubmit={() => void submit()}
+        />
       ) : (
         <section className="shop-panel">
           <h1>إتمام الطلب</h1>
@@ -334,120 +725,94 @@ export default function PublicBookPage() {
             </strong>
           </p>
           {error ? <p className="shop-error">{error}</p> : null}
-
-          {needLogin ? (
-            <form className="shop-form" onSubmit={unlock}>
-              <p>أدخل جوالك لحفظ الطلب على حسابك.</p>
-              <label>
-                الاسم
-                <input value={name} onChange={(e) => setName(e.target.value)} />
-              </label>
-              <label>
-                الجوال
-                <input
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  required
-                />
-              </label>
-              <label>
-                البريد
-                <input value={email} onChange={(e) => setEmail(e.target.value)} />
-              </label>
-              <button className="shop-btn" type="submit" disabled={submitting}>
-                {submitting ? "..." : "متابعة"}
-              </button>
-            </form>
-          ) : (
-            <div className="shop-form">
-              <label>
-                الاسم للتواصل
-                <input value={name} onChange={(e) => setName(e.target.value)} />
-              </label>
-              <label>
-                الجوال
-                <input value={phone} onChange={(e) => setPhone(e.target.value)} />
-              </label>
-              <label>
-                البريد
-                <input value={email} onChange={(e) => setEmail(e.target.value)} />
-              </label>
-              {travelers.map((traveler, idx) => (
-                <div key={idx} className="shop-form-row">
-                  <label>
-                    المسافر {idx + 1}
-                    <input
-                      value={traveler.firstName}
-                      placeholder="الاسم الأول"
-                      onChange={(e) =>
-                        setTravelers((rows) =>
-                          rows.map((row, i) =>
-                            i === idx ? { ...row, firstName: e.target.value } : row,
-                          ),
-                        )
-                      }
-                    />
-                  </label>
-                  <label>
-                    العائلة
-                    <input
-                      value={traveler.lastName}
-                      onChange={(e) =>
-                        setTravelers((rows) =>
-                          rows.map((row, i) =>
-                            i === idx ? { ...row, lastName: e.target.value } : row,
-                          ),
-                        )
-                      }
-                    />
-                  </label>
-                </div>
-              ))}
-              {draft.serviceType === "hotel" ? (
+          <div className="shop-form">
+            <label>
+              الاسم للتواصل
+              <input value={name} onChange={(e) => setName(e.target.value)} />
+            </label>
+            <label>
+              الجوال
+              <input value={phone} onChange={(e) => setPhone(e.target.value)} />
+            </label>
+            <label>
+              البريد
+              <input value={email} onChange={(e) => setEmail(e.target.value)} />
+            </label>
+            {travelers.map((traveler, idx) => (
+              <div key={idx} className="shop-form-row">
                 <label>
-                  طلبات خاصة للفندق
-                  <textarea
-                    value={specialRequests}
-                    onChange={(e) => setSpecialRequests(e.target.value)}
-                    placeholder="وصول متأخر، ملاحظات للفندق..."
-                    rows={3}
+                  المسافر {idx + 1}
+                  <input
+                    value={traveler.firstName}
+                    placeholder="الاسم الأول"
+                    onChange={(e) =>
+                      setTravelers((rows) =>
+                        rows.map((row, i) =>
+                          i === idx ? { ...row, firstName: e.target.value } : row,
+                        ),
+                      )
+                    }
                   />
                 </label>
-              ) : null}
-              <div className="shop-payment-methods">
-                <p className="shop-kicker">طريقة الدفع</p>
-                <div className="shop-payment-grid">
-                  {[
-                    { id: "knet", label: "كي نت", hint: "KNET" },
-                    { id: "visa", label: "فيزا", hint: "Visa / MC" },
-                    { id: "deema", label: "ديما", hint: "Deema" },
-                    { id: "linktap", label: "لينك تاب", hint: "LinkTap" },
-                  ].map((opt) => (
-                    <button
-                      key={opt.id}
-                      type="button"
-                      className={`shop-payment-option${paymentMethod === opt.id ? " on" : ""}`}
-                      onClick={() => setPaymentMethod(opt.id)}
-                    >
-                      <strong>{opt.label}</strong>
-                      <small>{opt.hint}</small>
-                    </button>
-                  ))}
-                </div>
+                <label>
+                  العائلة
+                  <input
+                    value={traveler.lastName}
+                    onChange={(e) =>
+                      setTravelers((rows) =>
+                        rows.map((row, i) =>
+                          i === idx ? { ...row, lastName: e.target.value } : row,
+                        ),
+                      )
+                    }
+                  />
+                </label>
               </div>
-              <p className="shop-hint">
-                بعد تأكيد الطلب سيتم توجيهك لبوابة الدفع المختارة (كي نت / فيزا / ديما / لينك تاب).
-              </p>
-              <button
-                type="button"
-                className="shop-btn shop-btn-checkout"
-                disabled={submitting || !paymentMethod}
-                onClick={() => void submit()}
-              >
-                {submitting ? "جارٍ الحفظ..." : "إتمام الحجز والدفع"}
-              </button>
+            ))}
+            {draft.serviceType === "hotel" ? (
+              <label>
+                طلبات خاصة للفندق
+                <textarea
+                  value={specialRequests}
+                  onChange={(e) => setSpecialRequests(e.target.value)}
+                  placeholder="وصول متأخر، ملاحظات للفندق..."
+                  rows={3}
+                />
+              </label>
+            ) : null}
+            <div className="shop-payment-methods">
+              <p className="shop-kicker">طريقة الدفع</p>
+              <div className="shop-payment-grid">
+                {[
+                  { id: "knet", label: "كي نت", hint: "KNET" },
+                  { id: "visa", label: "فيزا", hint: "Visa / MC" },
+                  { id: "deema", label: "ديما", hint: "Deema" },
+                  { id: "linktap", label: "لينك تاب", hint: "LinkTap" },
+                ].map((opt) => (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    className={`shop-payment-option${paymentMethod === opt.id ? " on" : ""}`}
+                    onClick={() => setPaymentMethod(opt.id)}
+                  >
+                    <strong>{opt.label}</strong>
+                    <small>{opt.hint}</small>
+                  </button>
+                ))}
+              </div>
             </div>
-          )}
+            <p className="shop-hint">
+              بعد تأكيد الطلب سيتم توجيهك لبوابة الدفع المختارة (كي نت / فيزا / ديما / لينك تاب).
+            </p>
+            <button
+              type="button"
+              className="shop-btn shop-btn-checkout"
+              disabled={submitting || !paymentMethod}
+              onClick={() => void submit()}
+            >
+              {submitting ? "جارٍ الحفظ..." : "إتمام الحجز والدفع"}
+            </button>
+          </div>
         </section>
       )}
     </StoreFront>

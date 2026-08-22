@@ -4,6 +4,8 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { HotelDetailModal } from "@/components/hotels/HotelDetailModal";
 import { ShopHotelResults } from "@/components/shop/ShopHotelResults";
+import { ShopFlightResults } from "@/components/shop/ShopFlightResults";
+import { ShopFlightDetailModal } from "@/components/shop/ShopFlightDetailModal";
 import { TransferSearchCard } from "@/components/hotels/TransferSearchCard";
 import { ActivitySearchCard } from "@/components/hotels/ActivitySearchCard";
 import { type SuggestItem } from "@/components/shop/ShopAutocomplete";
@@ -15,12 +17,19 @@ import {
   type HotelSearchFilters,
 } from "@/lib/hotel-search";
 import {
+  collectFlightFacets,
+  defaultFlightFilters,
+  filterAndSortFlights,
+  type FlightOfferRow,
+  type FlightSearchFilters,
+  type FlightSortKey,
+} from "@/lib/flight-search";
+import {
   saveActivityDraft,
   saveFlightDraft,
   saveHotelDraft,
   saveTransferDraft,
 } from "@/lib/booking-draft";
-import { formatMoneyMinor } from "@/lib/format";
 import { shopFetch } from "@/lib/shop-session";
 import { ShopLanding } from "@/components/shop/ShopLanding";
 import { ShopHeroBanner, type FlightLeg, type FlightTripType } from "@/components/shop/ShopHeroBanner";
@@ -59,11 +68,6 @@ function addDaysToIso(iso: string, days: number) {
   if (Number.isNaN(d.getTime())) return plusDays(days);
   d.setDate(d.getDate() + days);
   return d.toISOString().slice(0, 10);
-}
-
-function airlineLogo(code?: string | null) {
-  if (!code || code.length !== 2) return null;
-  return `https://pics.avs.io/80/80/${code.toUpperCase()}.png`;
 }
 
 function newLegId(existing: FlightLeg[]) {
@@ -153,22 +157,35 @@ export function ShopHomeClient() {
   const [hotelSortKey, setHotelSortKey] = useState<
     "price_asc" | "price_desc" | "rating_desc"
   >("price_asc");
+  const [flightFilters, setFlightFilters] = useState<FlightSearchFilters>(() =>
+    defaultFlightFilters(),
+  );
+  const [flightSortKey, setFlightSortKey] = useState<FlightSortKey>("best");
+  const [detailFlight, setDetailFlight] = useState<FlightOfferRow | null>(null);
 
   const nights = nightsBetween(departDate, returnDate);
 
-  const flights = useMemo(() => {
-    if (!directOnly) return flightResults;
-    return flightResults.filter((f) => Number(f.details.stops || 0) === 0);
-  }, [flightResults, directOnly]);
+  const flightFacets = useMemo(
+    () => collectFlightFacets(flightResults as FlightOfferRow[]),
+    [flightResults],
+  );
+
+  const flights = useMemo(
+    () =>
+      filterAndSortFlights(
+        flightResults as FlightOfferRow[],
+        flightFilters,
+        flightSortKey,
+        directOnly,
+      ),
+    [flightResults, flightFilters, flightSortKey, directOnly],
+  );
 
   const hasResults =
     flightResults.length > 0 ||
     hotels.length > 0 ||
     transfers.length > 0 ||
     activities.length > 0;
-
-  const showDirectFlightsEmpty =
-    mode === "flights" && directOnly && flightResults.length > 0 && flights.length === 0;
 
   const hotelFacets = useMemo(() => collectFilterFacets(hotels), [hotels]);
 
@@ -290,9 +307,14 @@ export function ShopHomeClient() {
     setHotels([]);
     setTransfers([]);
     setActivities([]);
+    setDetailFlight(null);
     if (mode === "stays") {
       setHotelFilters(defaultHotelFilters());
       setHotelSortKey("price_asc");
+    }
+    if (mode === "flights") {
+      setFlightFilters(defaultFlightFilters());
+      setFlightSortKey("best");
     }
     try {
       if (mode === "flights") {
@@ -789,7 +811,25 @@ export function ShopHomeClient() {
         />
       ) : null}
 
-      {hasResults && !(mode === "stays" && hotels.length > 0) ? (
+      {mode === "flights" && flightResults.length > 0 ? (
+        <ShopFlightResults
+          flights={flights}
+          totalCount={flightResults.length}
+          filters={flightFilters}
+          facets={flightFacets}
+          sortKey={flightSortKey}
+          origin={origin}
+          destination={destination}
+          originLabel={originLabel}
+          destinationLabel={destinationLabel}
+          onFiltersChange={setFlightFilters}
+          onSortChange={setFlightSortKey}
+          onResetFilters={() => setFlightFilters(defaultFlightFilters())}
+          onViewDetails={setDetailFlight}
+        />
+      ) : null}
+
+      {hasResults && !(mode === "stays" && hotels.length > 0) && mode !== "flights" ? (
         <section className="shop-results shop-results-block">
           <div className="shop-section-head">
             <div>
@@ -797,56 +837,6 @@ export function ShopHomeClient() {
               <h2>اختر العرض المناسب لك</h2>
             </div>
           </div>
-        {showDirectFlightsEmpty ? (
-          <p className="shop-status">لا توجد رحلات مباشرة ضمن النتائج. أزل التصفية أو جرّب تواريخاً أخرى.</p>
-        ) : null}
-        {flights.map((flight) => {
-          const code = String(flight.details.airlineCode || "");
-          const logo = airlineLogo(code);
-          const fromCode = String(flight.details.legOrigin || flight.details.from || origin);
-          const toCode = String(flight.details.legDestination || flight.details.to || destination);
-          const legLabel = String(flight.details.legLabel || "");
-          const departTime = String(flight.details.departureTime || flight.details.departTime || "—");
-          const arriveTime = String(flight.details.arrivalTime || flight.details.arriveTime || "—");
-          const duration = String(flight.details.duration || "");
-          const stops = String(flight.details.stops ?? flight.details.stopCount ?? "مباشر");
-          return (
-            <article key={flight.id} className="exp-flight-card">
-              {legLabel ? <span className="exp-flight-leg-tag">{legLabel}</span> : null}
-              <div className="exp-flight-airline">
-                {logo ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={logo} alt="" />
-                ) : (
-                  <div className="exp-flight-logo-fallback">✈</div>
-                )}
-                <div>
-                  <strong>{code || "—"}</strong>
-                  <span>{flight.description}</span>
-                </div>
-              </div>
-              <div className="exp-flight-leg">
-                <strong>{departTime}</strong>
-                <span>{fromCode}</span>
-              </div>
-              <div className="exp-flight-mid">
-                <span>{duration}</span>
-                <em>{stops}</em>
-              </div>
-              <div className="exp-flight-leg">
-                <strong>{arriveTime}</strong>
-                <span>{toCode}</span>
-              </div>
-              <div className="exp-flight-price">
-                <strong>{formatMoneyMinor(flight.sellAmountMinor, flight.currency)}</strong>
-                <small>للمسافر</small>
-                <button type="button" className="exp-select-btn" onClick={() => bookFlight(flight)}>
-                  اختر
-                </button>
-              </div>
-            </article>
-          );
-        })}
 
         {transfers.map((item) => (
           <TransferSearchCard
@@ -873,6 +863,23 @@ export function ShopHomeClient() {
         onPickDestination={applyDestination}
         onPickOffer={applyOffer}
       />
+
+      {detailFlight ? (
+        <ShopFlightDetailModal
+          flight={detailFlight}
+          origin={origin}
+          destination={destination}
+          originLabel={originLabel}
+          destinationLabel={destinationLabel}
+          cabinClass={cabinClass}
+          onClose={() => setDetailFlight(null)}
+          onContinue={() => {
+            const selected = detailFlight;
+            setDetailFlight(null);
+            bookFlight(selected);
+          }}
+        />
+      ) : null}
 
       {hotelOpen ? (
         <HotelDetailModal

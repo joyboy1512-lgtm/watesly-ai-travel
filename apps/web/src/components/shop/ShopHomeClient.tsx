@@ -89,7 +89,8 @@ export function ShopHomeClient() {
   const [infants, setInfants] = useState(0);
   const [rooms, setRooms] = useState(1);
   const [cabinClass, setCabinClass] = useState("economy");
-  const [flights, setFlights] = useState<Offer[]>([]);
+  const [directOnly, setDirectOnly] = useState(false);
+  const [flightResults, setFlightResults] = useState<Offer[]>([]);
   const [hotels, setHotels] = useState<HotelOfferRow[]>([]);
   const [transfers, setTransfers] = useState<TransferItem[]>([]);
   const [activities, setActivities] = useState<TransferItem[]>([]);
@@ -99,11 +100,19 @@ export function ShopHomeClient() {
 
   const nights = nightsBetween(departDate, returnDate);
 
+  const flights = useMemo(() => {
+    if (!directOnly) return flightResults;
+    return flightResults.filter((f) => Number(f.details.stops || 0) === 0);
+  }, [flightResults, directOnly]);
+
   const hasResults =
-    flights.length > 0 ||
+    flightResults.length > 0 ||
     hotels.length > 0 ||
     transfers.length > 0 ||
     activities.length > 0;
+
+  const showDirectFlightsEmpty =
+    mode === "flights" && directOnly && flightResults.length > 0 && flights.length === 0;
 
   const hotelRows = useMemo(
     () => filterHotelOffers(hotels, defaultHotelFilters(), "price_asc"),
@@ -144,7 +153,7 @@ export function ShopHomeClient() {
     setLoading(true);
     setError("");
     setMessage("");
-    setFlights([]);
+    setFlightResults([]);
     setHotels([]);
     setTransfers([]);
     setActivities([]);
@@ -174,9 +183,12 @@ export function ShopHomeClient() {
         });
         setInquiryId(result.inquiryId);
         setQuoteItems(result.quoteItems || []);
-        setFlights(result.flights || []);
+        const rows = result.flights || [];
+        setFlightResults(rows);
         setMessage(
-          `تم جلب ${result.flights?.length || 0} رحلة عبر ${result.providerName || "المزوّد"}`,
+          directOnly
+            ? `تم جلب ${rows.length} رحلة — ${rows.filter((f) => Number(f.details.stops || 0) === 0).length} مباشرة`
+            : `تم جلب ${rows.length} رحلة عبر ${result.providerName || "المزوّد"}`,
         );
       } else if (mode === "stays") {
         const result = await shopFetch<{
@@ -431,6 +443,8 @@ export function ShopHomeClient() {
         onTransferRoundtripChange={setTransferRoundtrip}
         cabinClass={cabinClass}
         onCabinClassChange={setCabinClass}
+        directOnly={directOnly}
+        onDirectOnlyChange={setDirectOnly}
         origin={origin}
         originLabel={originLabel}
         destination={destination}
@@ -494,6 +508,9 @@ export function ShopHomeClient() {
               <h2>اختر العرض المناسب لك</h2>
             </div>
           </div>
+        {showDirectFlightsEmpty ? (
+          <p className="shop-status">لا توجد رحلات مباشرة ضمن النتائج. أزل التصفية أو جرّب تواريخاً أخرى.</p>
+        ) : null}
         {flights.map((flight) => {
           const code = String(flight.details.airlineCode || "");
           const logo = airlineLogo(code);

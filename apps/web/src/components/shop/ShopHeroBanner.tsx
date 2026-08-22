@@ -15,6 +15,8 @@ type Props = {
   onTransferRoundtripChange: (v: boolean) => void;
   cabinClass: string;
   onCabinClassChange: (v: string) => void;
+  directOnly: boolean;
+  onDirectOnlyChange: (v: boolean) => void;
   origin: string;
   originLabel: string;
   destination: string;
@@ -103,13 +105,6 @@ const PRODUCTS: Array<{ key: Mode; label: string; icon: ReactNode }> = [
   },
 ];
 
-const CABIN_LABELS: Record<string, string> = {
-  economy: "اقتصادية",
-  premium_economy: "اقتصادية مميزة",
-  business: "رجال أعمال",
-  first: "أولى",
-};
-
 function IconSwap() {
   return (
     <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden>
@@ -193,9 +188,7 @@ export function ShopHeroBanner(props: Props) {
   const travelerSummary =
     props.mode === "stays"
       ? `${props.adults + props.children} مسافر · ${props.rooms} غرفة`
-      : props.mode === "flights"
-        ? `${props.adults + props.children} مسافر · ${CABIN_LABELS[props.cabinClass] || "اقتصادية"}`
-        : `${props.adults + props.children} مسافر`;
+      : `${props.adults + props.children} مسافر`;
 
   function swapAirports() {
     const o = props.origin;
@@ -243,21 +236,44 @@ export function ShopHeroBanner(props: Props) {
         <div className="exp-dialog">
           {props.mode === "flights" ? (
             <div className="exp-unified-card exp-unified-card-flights">
-              <div className="exp-pill-tabs exp-pill-tabs-inset" role="group" aria-label="نوع الرحلة">
-                <button
-                  type="button"
-                  className={`exp-pill-tab${props.tripType === "roundtrip" ? " on" : ""}`}
-                  onClick={() => props.onTripTypeChange("roundtrip")}
-                >
-                  ذهاب وعودة
-                </button>
-                <button
-                  type="button"
-                  className={`exp-pill-tab${props.tripType === "oneway" ? " on" : ""}`}
-                  onClick={() => props.onTripTypeChange("oneway")}
-                >
-                  ذهاب فقط
-                </button>
+              <div className="exp-flight-toolbar">
+                <div className="exp-pill-tabs exp-pill-tabs-inset" role="group" aria-label="نوع الرحلة">
+                  <button
+                    type="button"
+                    className={`exp-pill-tab${props.tripType === "roundtrip" ? " on" : ""}`}
+                    onClick={() => props.onTripTypeChange("roundtrip")}
+                  >
+                    ذهاب وعودة
+                  </button>
+                  <button
+                    type="button"
+                    className={`exp-pill-tab${props.tripType === "oneway" ? " on" : ""}`}
+                    onClick={() => props.onTripTypeChange("oneway")}
+                  >
+                    ذهاب فقط
+                  </button>
+                </div>
+                <label className="exp-cabin-pill">
+                  <span>فئة المقصورة</span>
+                  <select
+                    value={props.cabinClass}
+                    onChange={(e) => props.onCabinClassChange(e.target.value)}
+                    aria-label="فئة المقصورة"
+                  >
+                    <option value="economy">اقتصادية</option>
+                    <option value="premium_economy">اقتصادية مميزة</option>
+                    <option value="business">رجال أعمال</option>
+                    <option value="first">أولى</option>
+                  </select>
+                </label>
+                <label className={`exp-direct-pill${props.directOnly ? " on" : ""}`}>
+                  <input
+                    type="checkbox"
+                    checked={props.directOnly}
+                    onChange={(e) => props.onDirectOnlyChange(e.target.checked)}
+                  />
+                  <span>الرحلات المباشرة فقط</span>
+                </label>
               </div>
 
               <div className="exp-form-row exp-form-flights">
@@ -357,18 +373,6 @@ export function ShopHeroBanner(props: Props) {
                           </button>
                         </div>
                       </div>
-                      <label className="exp-travelers-row">
-                        <span>الدرجة</span>
-                        <select
-                          value={props.cabinClass}
-                          onChange={(e) => props.onCabinClassChange(e.target.value)}
-                        >
-                          <option value="economy">اقتصادية</option>
-                          <option value="premium_economy">اقتصادية مميزة</option>
-                          <option value="business">رجال أعمال</option>
-                          <option value="first">أولى</option>
-                        </select>
-                      </label>
                       <button
                         type="button"
                         className="exp-pop-done"

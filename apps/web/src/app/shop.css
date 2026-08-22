@@ -313,6 +313,81 @@
   gap: 0.5rem;
 }
 
+.exp-flight-toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.exp-flight-toolbar .exp-pill-tabs-inset {
+  flex: 0 0 auto;
+}
+
+.exp-cabin-pill,
+.exp-direct-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--exp-ink);
+  font: inherit;
+  font-size: 0.84rem;
+  font-weight: 600;
+  padding: 0.5rem 0.85rem;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.exp-cabin-pill:hover,
+.exp-direct-pill:hover {
+  border-color: var(--exp-blue);
+  color: var(--exp-blue);
+}
+
+.exp-cabin-pill span:first-child {
+  color: var(--exp-muted, #5c6478);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.exp-cabin-pill select {
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: inherit;
+  cursor: pointer;
+  padding: 0;
+  min-width: 5.5rem;
+}
+
+.exp-cabin-pill select:focus {
+  outline: none;
+}
+
+.exp-direct-pill input {
+  width: 1rem;
+  height: 1rem;
+  margin: 0;
+  accent-color: var(--exp-blue);
+  cursor: pointer;
+}
+
+.exp-direct-pill.on {
+  background: var(--exp-blue);
+  border-color: var(--exp-blue);
+  color: #fff;
+}
+
+.exp-direct-pill.on span {
+  color: #fff;
+}
+
 .exp-unified-card-flights .exp-form-row {
   padding: 0;
   gap: 0.45rem;
@@ -1361,6 +1436,22 @@
     height: 40px;
     min-height: 40px;
     max-height: 40px;
+  }
+
+  .exp-unified-card-flights .exp-input-cell {
+    height: 48px;
+    min-height: 48px;
+    max-height: none;
+  }
+
+  .exp-unified-card-flights .exp-search-link {
+    width: 100%;
+    justify-self: stretch;
+    min-height: 48px;
+  }
+
+  .exp-unified-card-flights {
+    padding: 0.75rem 0.8rem 0.85rem;
   }
 
   .exp-travelers-trigger {

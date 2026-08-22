@@ -34,22 +34,53 @@ type CancelInfo = {
 
 function itemCancellation(item: QuoteItem): CancelInfo {
   const raw = item.rawOfferSnapshot;
-  if (!raw) return { kind: "unknown", text: "—" };
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
+    return { kind: "unknown", text: "—" };
+  }
 
   if (item.serviceType === "hotel") {
-    const rooms = raw.rooms as
-      | Array<{ rates?: Array<{ freeCancellation?: boolean }> }>
-      | undefined;
-    if (rooms?.some((room) => room.rates?.some((rate) => rate.freeCancellation))) {
+    const policies = raw.policies as { freeCancellation?: boolean } | undefined;
+    if (policies?.freeCancellation === true) {
       return { kind: "free", text: "إلغاء مجاني" };
     }
-    const matchingRates = raw.matchingRates as Array<{ freeCancellation?: boolean }> | undefined;
-    if (matchingRates?.some((rate) => rate.freeCancellation)) {
-      return { kind: "free", text: "إلغاء مجاني" };
-    }
-    if (rooms?.length || matchingRates?.length) {
+    if (policies?.freeCancellation === false) {
       return { kind: "non_refundable", text: "غير قابل للاسترداد" };
     }
+
+    const rooms = raw.rooms;
+    if (Array.isArray(rooms)) {
+      if (
+        rooms.some(
+          (room) =>
+            room &&
+            typeof room === "object" &&
+            (room as { rates?: Array<{ freeCancellation?: boolean }> }).rates?.some(
+              (rate) => rate.freeCancellation,
+            ),
+        )
+      ) {
+        return { kind: "free", text: "إلغاء مجاني" };
+      }
+      if (rooms.length) {
+        return { kind: "non_refundable", text: "غير قابل للاسترداد" };
+      }
+    }
+
+    const matchingRates = raw.matchingRates;
+    if (Array.isArray(matchingRates)) {
+      if (
+        matchingRates.some(
+          (rate) =>
+            rate && typeof rate === "object" && (rate as { freeCancellation?: boolean }).freeCancellation,
+        )
+      ) {
+        return { kind: "free", text: "إلغاء مجاني" };
+      }
+      if (matchingRates.length) {
+        return { kind: "non_refundable", text: "غير قابل للاسترداد" };
+      }
+    }
+
     return { kind: "unknown", text: "—" };
   }
 
@@ -93,7 +124,9 @@ export default function QuotesPage() {
   const [cancelFilter, setCancelFilter] = useState<CancelFilter>("all");
 
   async function load() {
-    setRows(await apiFetch<Quote[]>("/quotes"));
+    setError("");
+    const data = await apiFetch<Quote[]>("/quotes");
+    setRows(Array.isArray(data) ? data : []);
   }
 
   useEffect(() => {

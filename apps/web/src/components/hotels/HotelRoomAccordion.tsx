@@ -15,7 +15,10 @@ type Props = {
   hotel: HotelOfferRow & { matchingRates: HotelRateOption[]; displayFromMinor: number };
   nights: number;
   checkingRateKey?: string | null;
+  highlightRateKey?: string | null;
+  shopStyle?: boolean;
   onBookRate: (rate: HotelRateOption) => void;
+  onRateFocus?: (rateKey: string) => void;
 };
 
 function paymentLabel(type?: string) {
@@ -74,7 +77,15 @@ function taxHint(rate: HotelRateOption) {
   return "شامل الضرائب";
 }
 
-export function HotelRoomAccordion({ hotel, nights, checkingRateKey, onBookRate }: Props) {
+export function HotelRoomAccordion({
+  hotel,
+  nights,
+  checkingRateKey,
+  highlightRateKey,
+  shopStyle,
+  onBookRate,
+  onRateFocus,
+}: Props) {
   const rooms = useMemo(() => {
     const raw = hotel.details.rooms;
     const fromDetails = Array.isArray(raw) ? (raw as HotelRoomOption[]) : [];
@@ -98,12 +109,11 @@ export function HotelRoomAccordion({ hotel, nights, checkingRateKey, onBookRate 
   }
 
   return (
-    <div className="hotel-room-accordion">
+    <div className={`hotel-room-accordion${shopStyle ? " hotel-room-accordion-shop" : ""}`}>
       <header className="hotel-room-accordion-head">
         <h2>اختر نوع الغرفة</h2>
         <p>
-          {rooms.length} {rooms.length === 1 ? "نوع" : "أنواع"} ·{" "}
-          {hotel.matchingRates.length}{" "}
+          {rooms.length} {rooms.length === 1 ? "نوع" : "أنواع"} · {hotel.matchingRates.length}{" "}
           {hotel.matchingRates.length === 1 ? "سعر" : "أسعار"} · {nights}{" "}
           {nights === 1 ? "ليلة" : "ليالي"}
         </p>
@@ -112,16 +122,15 @@ export function HotelRoomAccordion({ hotel, nights, checkingRateKey, onBookRate 
       {rooms.map((room) => {
         const open = openCode === room.code;
         const cheapest = room.rates[0];
-        const fromMinor = cheapest
-          ? rateDisplayMinor(cheapest, hotel, nights)
-          : hotel.displayFromMinor;
+        const fromMinor = cheapest ? rateDisplayMinor(cheapest, hotel, nights) : hotel.displayFromMinor;
         const perNight = nights > 0 ? Math.round(fromMinor / nights) : fromMinor;
         const occ = occupancyLabel(room);
+        const roomHighlighted = room.rates.some((r) => r.rateKey === highlightRateKey);
 
         return (
           <section
             key={room.code || room.name}
-            className={`hotel-room-panel${open ? " is-open" : ""}`}
+            className={`hotel-room-panel${open ? " is-open" : ""}${roomHighlighted ? " is-highlighted" : ""}`}
           >
             <button
               type="button"
@@ -136,8 +145,7 @@ export function HotelRoomAccordion({ hotel, nights, checkingRateKey, onBookRate 
               <div className="hotel-room-panel-title">
                 <strong>{room.name}</strong>
                 <span>
-                  {room.rates.length}{" "}
-                  {room.rates.length === 1 ? "خيار إقامة" : "خيارات إقامة"}
+                  {room.rates.length} {room.rates.length === 1 ? "خيار إقامة" : "خيارات إقامة"}
                   {occ ? ` · ${occ}` : ""}
                 </span>
                 {room.facilities?.length ? (
@@ -156,9 +164,7 @@ export function HotelRoomAccordion({ hotel, nights, checkingRateKey, onBookRate 
 
             {open ? (
               <div className="hotel-room-panel-body">
-                {room.description ? (
-                  <p className="hotel-room-desc">{room.description}</p>
-                ) : null}
+                {room.description ? <p className="hotel-room-desc">{room.description}</p> : null}
                 {room.images && room.images.length > 1 ? (
                   <div className="hotel-room-gallery">
                     {room.images.slice(0, 6).map((src) => (
@@ -176,14 +182,18 @@ export function HotelRoomAccordion({ hotel, nights, checkingRateKey, onBookRate 
                 ) : null}
                 {room.rates.map((rate: HotelRateOption) => {
                   const totalMinor = rateDisplayMinor(rate, hotel, nights);
-                  const perNightMinor =
-                    nights > 0 ? Math.round(totalMinor / nights) : totalMinor;
+                  const perNightMinor = nights > 0 ? Math.round(totalMinor / nights) : totalMinor;
                   const cancel = cancellationSummary(rate);
                   const taxes = taxHint(rate);
                   const busy = checkingRateKey === rate.rateKey;
+                  const selected = highlightRateKey === rate.rateKey;
 
                   return (
-                    <article key={rate.rateKey} className="hotel-rate-row">
+                    <article
+                      key={rate.rateKey}
+                      className={`hotel-rate-row${selected ? " is-selected" : ""}`}
+                      onClick={() => onRateFocus?.(rate.rateKey)}
+                    >
                       <div className="hotel-rate-col meal">
                         <strong>{rate.boardName}</strong>
                         <small>{rate.boardCode}</small>
@@ -203,18 +213,14 @@ export function HotelRoomAccordion({ hotel, nights, checkingRateKey, onBookRate 
                         <strong>{formatMoneyMinor(totalMinor, hotel.currency)}</strong>
                         <small>{nightlyHint(rate, nights, perNightMinor, hotel.currency)}</small>
                         {taxes ? <small>{taxes}</small> : null}
-                        {rate.sellingRate && rate.sellingRate !== rate.net ? (
-                          <small>
-                            صافي {rate.net} · بيع {rate.sellingRate} {rate.currency}
-                          </small>
-                        ) : null}
                       </div>
                       <button
                         type="button"
-                        className="btn hotel-rate-book-btn"
+                        className={`btn hotel-rate-book-btn${shopStyle ? " hotel-rate-book-btn-shop" : ""}`}
                         disabled={Boolean(checkingRateKey)}
                         onClick={(e) => {
                           e.stopPropagation();
+                          onRateFocus?.(rate.rateKey);
                           onBookRate(rate);
                         }}
                       >

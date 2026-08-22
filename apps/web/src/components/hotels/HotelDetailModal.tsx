@@ -25,8 +25,16 @@ type Props = {
   meta: StayMeta;
   onClose: () => void;
   onEnterGuestData: (rate: HotelRateOption) => void;
+  onCheckout?: (payload: {
+    rate: HotelRateOption;
+    contact: { name: string; email: string; phone: string };
+    specialRequests: string;
+    paymentMethod: string;
+    travelers: Array<{ firstName: string; lastName: string }>;
+  }) => void;
   checkRatePath?: string;
   fetchJson?: typeof apiFetch;
+  variant?: "default" | "shop";
 };
 
 type CheckRateResponse = {
@@ -56,11 +64,15 @@ export function HotelDetailModal({
   meta,
   onClose,
   onEnterGuestData,
+  onCheckout,
   checkRatePath = "/bookings/checkrate-hotel",
   fetchJson = apiFetch,
+  variant = "default",
 }: Props) {
+  const shopStyle = variant === "shop";
   const [descOpen, setDescOpen] = useState(false);
   const [selectedRate, setSelectedRate] = useState<HotelRateOption | null>(null);
+  const [highlightRateKey, setHighlightRateKey] = useState<string | null>(null);
   const [tab, setTab] = useState<"rooms" | "map" | "reviews" | "facilities" | "policies">(
     "rooms",
   );
@@ -146,6 +158,7 @@ export function HotelDetailModal({
         });
       }
       setSelectedRate(nextRate);
+      setHighlightRateKey(nextRate.rateKey);
     } catch (err) {
       setCheckError(err instanceof Error ? err.message : "تعذر التحقق من السعر الحي");
     } finally {
@@ -201,11 +214,13 @@ export function HotelDetailModal({
             nights={nights}
             meta={meta}
             priceChange={priceChange}
+            shopStyle={shopStyle}
             onBack={() => {
               setSelectedRate(null);
               setPriceChange(null);
             }}
             onEnterGuestData={() => onEnterGuestData(selectedRate)}
+            onCheckout={onCheckout}
           />
         ) : (
           <>
@@ -311,14 +326,29 @@ export function HotelDetailModal({
             {checkError ? <p className="hotel-check-error">{checkError}</p> : null}
 
             {tab === "rooms" ? (
-              <section className="flight-modal-section hotel-detail-rooms-section">
-                <HotelRoomAccordion
-                  hotel={hotel}
-                  nights={nights}
-                  checkingRateKey={checkingRateKey}
-                  onBookRate={(rate) => void handleBookRate(rate)}
-                />
-              </section>
+              <>
+                {shopStyle ? (
+                  <div className="hotel-modal-price-banner">
+                    <div>
+                      <small>يبدأ من</small>
+                      <strong>{formatMoneyMinor(perNight, hotel.currency)}</strong>
+                      <em>/ ليلة</em>
+                    </div>
+                    <span>{formatMoneyMinor(hotel.displayFromMinor, hotel.currency)} إجمالي</span>
+                  </div>
+                ) : null}
+                <section className="flight-modal-section hotel-detail-rooms-section">
+                  <HotelRoomAccordion
+                    hotel={hotel}
+                    nights={nights}
+                    checkingRateKey={checkingRateKey}
+                    highlightRateKey={highlightRateKey}
+                    shopStyle={shopStyle}
+                    onRateFocus={setHighlightRateKey}
+                    onBookRate={(rate) => void handleBookRate(rate)}
+                  />
+                </section>
+              </>
             ) : null}
 
             {tab === "map" ? (

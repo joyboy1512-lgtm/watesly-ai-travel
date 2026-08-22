@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
+import { ShopPriceRangeSlider } from "@/components/shop/ShopPriceRangeSlider";
 import {
   BOARD_LABELS_AR,
   type HotelFilterFacets,
@@ -448,13 +449,21 @@ function FiltersPanel({
         </FilterSection>
       ) : null}
 
-      <FilterSection title="السعر الأقصى (د.ك)">
-        <input
-          type="number"
+      <FilterSection title="نطاق السعر (د.ك)">
+        <ShopPriceRangeSlider
           min={0}
-          value={filters.maxPrice}
-          onChange={(e) => onChange({ ...filters, maxPrice: e.target.value })}
-          placeholder="مثال: 250"
+          max={facets.priceMaxMajor}
+          value={
+            filters.maxPrice
+              ? Number(filters.maxPrice)
+              : facets.priceMaxMajor
+          }
+          onChange={(v) =>
+            onChange({
+              ...filters,
+              maxPrice: v >= facets.priceMaxMajor ? "" : String(v),
+            })
+          }
         />
       </FilterSection>
     </aside>

@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, type ReactNode } from "react";
 import { HERO_SLIDES } from "@/lib/shop-content";
 import { ShopAutocomplete, type SuggestItem } from "@/components/shop/ShopAutocomplete";
+import { ShopDateRangePicker } from "@/components/shop/ShopDateRangePicker";
 
 type Mode = "flights" | "stays" | "cars" | "activities";
 export type FlightTripType = "roundtrip" | "oneway" | "multicity";
@@ -637,12 +638,22 @@ export function ShopHeroBanner(props: Props) {
               }`}
             >
               <span className="exp-cell-label">{props.mode === "cars" ? "التاريخ" : "التواريخ"}</span>
+              {props.mode === "stays" ? (
+                <ShopDateRangePicker
+                  checkIn={props.departDate}
+                  checkOut={props.returnDate}
+                  onChange={(checkIn, checkOut) => {
+                    props.onDepartDateChange(checkIn);
+                    props.onReturnDateChange(checkOut);
+                  }}
+                />
+              ) : (
               <div className="exp-dates-row">
                 <DatePick
                   value={props.departDate}
                   onChange={props.onDepartDateChange}
                   label={
-                    props.mode === "stays" || props.mode === "cars"
+                    props.mode === "cars"
                       ? "تاريخ الوصول"
                       : "تاريخ المغادرة"
                   }
@@ -654,16 +665,15 @@ export function ShopHeroBanner(props: Props) {
                       value={props.returnDate}
                       onChange={props.onReturnDateChange}
                       label={
-                        props.mode === "stays"
-                          ? "تاريخ المغادرة"
-                          : props.mode === "cars"
-                            ? "تاريخ العودة"
-                            : "تاريخ العودة"
+                        props.mode === "cars"
+                          ? "تاريخ العودة"
+                          : "تاريخ العودة"
                       }
                     />
                   </>
                 ) : null}
               </div>
+              )}
             </div>
 
             {props.mode === "cars" ? (

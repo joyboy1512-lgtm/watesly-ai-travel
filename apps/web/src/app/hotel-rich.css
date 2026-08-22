@@ -1863,3 +1863,230 @@
     text-align: start;
   }
 }
+
+/* —— Shop card title + rating layout —— */
+.shop-hotel-results .hotel-search-card-title-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.5rem;
+}
+
+.shop-hotel-results .hotel-search-card-title-row h3 {
+  margin: 0;
+}
+
+.shop-hotel-results .hotel-search-card-title-row .hotel-search-card-stars {
+  margin: 0;
+}
+
+.shop-hotel-results .hotel-search-card-shop .hotel-search-card-head {
+  padding-inline-start: 0;
+}
+
+.shop-hotel-results .hotel-search-card-score-above-price {
+  text-align: center;
+  margin-bottom: 0.35rem;
+}
+
+.shop-hotel-results .hotel-search-card-room-below-price {
+  margin: 0.35rem 0 0.5rem;
+  font-size: 0.86rem;
+  color: #334155;
+  text-align: end;
+}
+
+.shop-hotel-results .hotel-search-card-room-below-price strong {
+  display: block;
+}
+
+/* —— Modal blue price banner —— */
+.hotel-modal-price-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 0.75rem 0 1rem;
+  padding: 0.85rem 1rem;
+  background: linear-gradient(135deg, #003580 0%, #0071c2 100%);
+  color: #fff;
+  border-radius: 10px;
+}
+
+.hotel-modal-price-banner small {
+  display: block;
+  opacity: 0.85;
+  font-size: 0.75rem;
+}
+
+.hotel-modal-price-banner strong {
+  font-size: 1.45rem;
+  line-height: 1.2;
+}
+
+.hotel-modal-price-banner em {
+  font-style: normal;
+  font-size: 0.82rem;
+  opacity: 0.9;
+}
+
+.hotel-modal-price-banner > span {
+  font-size: 0.85rem;
+  text-align: end;
+  max-width: 45%;
+}
+
+/* —— Room accordion shop highlights —— */
+.hotel-room-accordion-shop .hotel-room-panel.is-open {
+  border-color: #0071c2;
+  box-shadow: 0 0 0 1px rgba(0, 113, 194, 0.25);
+}
+
+.hotel-room-accordion-shop .hotel-room-panel.is-highlighted {
+  border-inline-start: 4px solid #0071c2;
+}
+
+.hotel-rate-row.is-selected {
+  border-color: #0071c2 !important;
+  box-shadow: inset 0 0 0 1px #0071c2;
+  background: rgba(0, 113, 194, 0.04);
+}
+
+.hotel-rate-book-btn-shop {
+  background: #0071c2 !important;
+  border-color: #0071c2 !important;
+  color: #fff !important;
+}
+
+/* —— Booking summary shop —— */
+.hotel-booking-summary-shop .hotel-checkout-btn {
+  background: #0071c2;
+  border-color: #0071c2;
+  color: #fff;
+  width: 100%;
+}
+
+.hotel-summary-foot-shop {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.hotel-guest-card {
+  background: linear-gradient(180deg, rgba(0, 113, 194, 0.08) 0%, #fff 40%);
+  border: 2px solid #0071c2;
+  border-radius: 12px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.hotel-guest-card h3 {
+  margin: 0 0 0.25rem;
+  color: #003580;
+}
+
+.hotel-guest-card label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.86rem;
+  color: #334155;
+}
+
+.hotel-guest-card input,
+.hotel-guest-card textarea {
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 0.5rem 0.65rem;
+  font: inherit;
+}
+
+.hotel-guest-card-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.65rem;
+}
+
+.hotel-payment-methods {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.55rem;
+  margin: 0.75rem 0 1rem;
+}
+
+.hotel-payment-method {
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  border-radius: 10px;
+  padding: 0.65rem;
+  text-align: start;
+  cursor: pointer;
+}
+
+.hotel-payment-method.on {
+  border-color: #0071c2;
+  background: rgba(0, 113, 194, 0.08);
+}
+
+.hotel-payment-method strong {
+  display: block;
+}
+
+.hotel-payment-method small {
+  color: #64748b;
+}
+
+/* —— 3-column info sections —— */
+.hotel-info-columns {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  margin: 1rem 0;
+}
+
+.hotel-info-columns-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+}
+
+.hotel-info-col {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 0.65rem 0.75rem;
+  min-width: 0;
+}
+
+.hotel-info-col h4 {
+  margin: 0 0 0.4rem;
+  font-size: 0.88rem;
+  color: #003580;
+}
+
+.hotel-info-col ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.hotel-info-col li {
+  font-size: 0.8rem;
+  color: #475569;
+  padding: 0.15rem 0;
+}
+
+@media (max-width: 720px) {
+  .hotel-info-columns-row {
+    grid-template-columns: 1fr;
+  }
+
+  .hotel-guest-card-row {
+    grid-template-columns: 1fr;
+  }
+
+  .hotel-payment-methods {
+    grid-template-columns: 1fr;
+  }
+}

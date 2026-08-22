@@ -66,6 +66,12 @@ export type HotelBookingDraft = {
   inquiryId?: string;
   quoteId?: string;
   quoteItemId?: string;
+  contactName?: string;
+  contactEmail?: string;
+  contactPhone?: string;
+  specialRequests?: string;
+  paymentMethod?: string;
+  travelers?: Array<{ firstName: string; lastName: string }>;
 };
 
 export type BookingDraftTransfer = {

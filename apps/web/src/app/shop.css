@@ -4052,3 +4052,171 @@
     position: static;
   }
 }
+
+/* —— Date range picker —— */
+.shop-date-range {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+
+.shop-date-range-trigger {
+  border: 0;
+  background: transparent;
+  font: inherit;
+  color: #0f172a;
+  cursor: pointer;
+  padding: 0;
+  text-align: start;
+  white-space: nowrap;
+  width: 100%;
+}
+
+.shop-date-range-pop {
+  position: absolute;
+  inset-inline-end: 0;
+  top: calc(100% + 0.35rem);
+  z-index: 60;
+  width: min(320px, 92vw);
+  background: #fff;
+  border: 1px solid var(--exp-border, #dfe0e4);
+  border-radius: 12px;
+  box-shadow: 0 16px 40px rgba(13, 16, 35, 0.14);
+  padding: 0.85rem;
+}
+
+.shop-date-range-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.shop-date-range-head button {
+  border: 0;
+  background: #f1f5f9;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.shop-date-range-phase {
+  margin: 0 0 0.5rem;
+  font-size: 0.82rem;
+  color: #0071c2;
+  font-weight: 600;
+}
+
+.shop-date-range-weekdays,
+.shop-date-range-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.2rem;
+}
+
+.shop-date-range-weekdays span {
+  text-align: center;
+  font-size: 0.72rem;
+  color: #64748b;
+  padding: 0.2rem 0;
+}
+
+.shop-date-range-day {
+  border: 0;
+  background: transparent;
+  border-radius: 6px;
+  padding: 0.45rem 0;
+  cursor: pointer;
+  font: inherit;
+}
+
+.shop-date-range-day.in-range {
+  background: rgba(0, 113, 194, 0.12);
+}
+
+.shop-date-range-day.selected {
+  background: #0071c2;
+  color: #fff;
+  font-weight: 700;
+}
+
+.shop-date-range-day.muted {
+  color: #cbd5e1;
+  cursor: not-allowed;
+}
+
+.shop-date-range-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 0.65rem;
+  padding-top: 0.65rem;
+  border-top: 1px solid #f1f5f9;
+  font-size: 0.82rem;
+}
+
+/* —— Price range slider —— */
+.shop-price-range {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.shop-price-range-values {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.82rem;
+  color: #64748b;
+}
+
+.shop-price-range-current {
+  color: #0071c2;
+  font-weight: 600;
+}
+
+.shop-price-range-input {
+  width: 100%;
+  accent-color: #0071c2;
+}
+
+/* —— Checkout payment —— */
+.shop-payment-methods {
+  margin-top: 1rem;
+}
+
+.shop-payment-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.55rem;
+}
+
+.shop-payment-option {
+  border: 1px solid var(--exp-border, #dfe0e4);
+  background: #fff;
+  border-radius: 10px;
+  padding: 0.65rem 0.75rem;
+  text-align: start;
+  cursor: pointer;
+}
+
+.shop-payment-option.on {
+  border-color: #0071c2;
+  background: rgba(0, 113, 194, 0.08);
+}
+
+.shop-payment-option strong {
+  display: block;
+  font-size: 0.92rem;
+}
+
+.shop-payment-option small {
+  color: #64748b;
+  font-size: 0.75rem;
+}
+
+.shop-btn-checkout {
+  background: #0071c2 !important;
+  width: 100%;
+  margin-top: 0.5rem;
+}

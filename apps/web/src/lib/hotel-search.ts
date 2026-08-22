@@ -50,6 +50,7 @@ export type HotelFilterFacets = {
     bookableOnly: number;
   };
   breakfastIncluded: number;
+  priceMaxMajor: number;
 };
 
 
@@ -348,6 +349,11 @@ export function filterHotelOffers(
   return enriched;
 }
 
+function displayPriceMajor(h: HotelOfferRow): number {
+  const exp = h.currency === "KWD" || h.currency === "BHD" || h.currency === "OMR" ? 1000 : 100;
+  return Math.ceil(h.sellAmountMinor / exp);
+}
+
 export function collectFilterFacets(hotels: HotelOfferRow[]): HotelFilterFacets {
   const boardCodes = new Set<string>();
   const zones = new Set<string>();
@@ -425,6 +431,9 @@ export function collectFilterFacets(hotels: HotelOfferRow[]): HotelFilterFacets 
       ).length,
     },
     breakfastIncluded: hotels.filter((h) => hotelHasBoard(h, "BB")).length,
+    priceMaxMajor: hotels.length
+      ? Math.max(...hotels.map((h) => displayPriceMajor(h)))
+      : 500,
   };
 }
 

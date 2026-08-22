@@ -60,9 +60,10 @@ export function HotelSearchCard({ hotel, nights, variant = "default", onOpen }: 
 
   const ctaLabel = variant === "shop" ? "عرض التوفر" : "عرض الغرف والأسعار";
   const mapLabel = variant === "shop" ? "عرض على الخريطة" : "الخريطة ↗";
+  const isShop = variant === "shop";
 
   return (
-    <article className={`hotel-search-card${variant === "shop" ? " hotel-search-card-shop" : ""}`}>
+    <article className={`hotel-search-card${isShop ? " hotel-search-card-shop" : ""}`}>
       <div className="hotel-search-card-media">
         {typeof hotel.details.imageUrl === "string" && hotel.details.imageUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -70,7 +71,7 @@ export function HotelSearchCard({ hotel, nights, variant = "default", onOpen }: 
         ) : (
           <div className={`hotel-search-card-placeholder tone-${(stars % 3) + 1}`} />
         )}
-        {variant === "shop" ? (
+        {isShop ? (
           <button type="button" className="hotel-search-card-save" aria-label="حفظ" disabled>
             ♡
           </button>
@@ -80,7 +81,7 @@ export function HotelSearchCard({ hotel, nights, variant = "default", onOpen }: 
 
       <div className="hotel-search-card-main">
         <div className="hotel-search-card-head">
-          <div>
+          <div className="hotel-search-card-title-row">
             <h3>{name}</h3>
             {stars > 0 ? (
               <div className="hotel-search-card-stars" aria-label={`${stars} نجوم`}>
@@ -89,24 +90,8 @@ export function HotelSearchCard({ hotel, nights, variant = "default", onOpen }: 
                 ))}
               </div>
             ) : null}
-            {hotel.details.liveMode || hotel.details.sourceLabel ? (
-              <HotelLiveBadge
-                compact
-                liveMode={Boolean(hotel.details.liveMode)}
-                sourceLabel={
-                  typeof hotel.details.sourceLabel === "string"
-                    ? hotel.details.sourceLabel
-                    : undefined
-                }
-                fetchedAt={
-                  typeof hotel.details.fetchedAt === "string"
-                    ? hotel.details.fetchedAt
-                    : undefined
-                }
-              />
-            ) : null}
           </div>
-          {rating ? (
+          {!isShop && rating ? (
             <div className="hotel-search-card-score">
               <strong>{rating}</strong>
               {reviewCount > 0 ? (
@@ -115,6 +100,19 @@ export function HotelSearchCard({ hotel, nights, variant = "default", onOpen }: 
             </div>
           ) : null}
         </div>
+
+        {hotel.details.liveMode || hotel.details.sourceLabel ? (
+          <HotelLiveBadge
+            compact
+            liveMode={Boolean(hotel.details.liveMode)}
+            sourceLabel={
+              typeof hotel.details.sourceLabel === "string" ? hotel.details.sourceLabel : undefined
+            }
+            fetchedAt={
+              typeof hotel.details.fetchedAt === "string" ? hotel.details.fetchedAt : undefined
+            }
+          />
+        ) : null}
 
         <p className="hotel-search-card-location">
           {location}
@@ -143,7 +141,7 @@ export function HotelSearchCard({ hotel, nights, variant = "default", onOpen }: 
           </a>
         ) : null}
 
-        {!soldOut && cheapest ? (
+        {!isShop && !soldOut && cheapest ? (
           <p className="hotel-search-card-offer-line">
             <strong>{cheapest.roomName}</strong> · {cheapest.boardName}
           </p>
@@ -153,16 +151,36 @@ export function HotelSearchCard({ hotel, nights, variant = "default", onOpen }: 
       <div className="hotel-search-card-action">
         {!soldOut ? (
           <>
+            {isShop && rating ? (
+              <div className="hotel-search-card-score hotel-search-card-score-above-price">
+                <strong>{rating}</strong>
+                {reviewCount > 0 ? (
+                  <small>{reviewCount.toLocaleString("ar")} مراجعة</small>
+                ) : null}
+              </div>
+            ) : null}
             <div className="hotel-search-card-price">
-              <small>
-                {nights} {nights === 1 ? "ليلة" : "ليالي"} · {cheapest?.roomName || "غرفة"}
-              </small>
+              {!isShop ? (
+                <small>
+                  {nights} {nights === 1 ? "ليلة" : "ليالي"} · {cheapest?.roomName || "غرفة"}
+                </small>
+              ) : (
+                <small>
+                  {nights} {nights === 1 ? "ليلة" : "ليالي"}
+                </small>
+              )}
               <strong>{formatMoneyMinor(hotel.displayFromMinor, hotel.currency)}</strong>
               <em>{formatMoneyMinor(perNightMinor, hotel.currency)} / ليلة</em>
               {roomsLeft != null && roomsLeft > 0 ? (
                 <span className="hotel-rooms-left">متبقي {roomsLeft} غرفة</span>
               ) : null}
             </div>
+            {isShop && cheapest ? (
+              <p className="hotel-search-card-room-below-price">
+                <strong>{cheapest.roomName}</strong>
+                <span> · {cheapest.boardName}</span>
+              </p>
+            ) : null}
             <button type="button" className="btn hotel-search-card-cta" onClick={onOpen}>
               {ctaLabel}
             </button>

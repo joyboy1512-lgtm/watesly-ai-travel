@@ -544,7 +544,26 @@ export function ShopHomeClient() {
     router.push("/book");
   }
 
-  function bookHotel(hotel: HotelOfferRow, rate?: { rateKey: string; net: number; currency: string; boardName: string; roomName: string; rateType: string; roomCode: string; boardCode: string; freeCancellation: boolean }) {
+  function bookHotel(
+    hotel: HotelOfferRow,
+    rate?: {
+      rateKey: string;
+      net: number;
+      currency: string;
+      boardName: string;
+      roomName: string;
+      rateType: string;
+      roomCode: string;
+      boardCode: string;
+      freeCancellation: boolean;
+    },
+    extras?: {
+      contact?: { name: string; email: string; phone: string };
+      specialRequests?: string;
+      paymentMethod?: string;
+      travelers?: Array<{ firstName: string; lastName: string }>;
+    },
+  ) {
     saveHotelDraft({
       hotel,
       selectedRate: rate,
@@ -559,6 +578,12 @@ export function ShopHomeClient() {
       createdAt: new Date().toISOString(),
       inquiryId,
       quoteItemId: quoteItemIdFor(hotel.id, "hotel"),
+      contactName: extras?.contact?.name,
+      contactEmail: extras?.contact?.email,
+      contactPhone: extras?.contact?.phone,
+      specialRequests: extras?.specialRequests,
+      paymentMethod: extras?.paymentMethod,
+      travelers: extras?.travelers,
     });
     router.push("/book");
   }
@@ -870,8 +895,12 @@ export function ShopHomeClient() {
           }}
           checkRatePath="/shop/checkrate-hotel"
           fetchJson={shopFetch}
+          variant="shop"
           onClose={() => setHotelOpen(null)}
           onEnterGuestData={(rate) => bookHotel(hotelOpen, rate)}
+          onCheckout={({ rate, contact, specialRequests, paymentMethod, travelers }) =>
+            bookHotel(hotelOpen, rate, { contact, specialRequests, paymentMethod, travelers })
+          }
         />
       ) : null}
     </>

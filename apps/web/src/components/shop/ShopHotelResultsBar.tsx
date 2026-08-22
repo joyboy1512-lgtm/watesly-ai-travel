@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { ShopAutocomplete, type SuggestItem } from "@/components/shop/ShopAutocomplete";
+import { ShopDateRangePicker } from "@/components/shop/ShopDateRangePicker";
 
 type Props = {
   stayQuery: string;
@@ -21,65 +22,6 @@ type Props = {
   onSearch: () => void;
   searchCities: (q: string) => Promise<SuggestItem[]>;
 };
-
-function formatDateDisplay(iso: string) {
-  if (!iso) return "اختر تاريخ";
-  const d = new Date(iso + "T12:00:00");
-  if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleDateString("ar-KW", {
-    weekday: "short",
-    day: "numeric",
-    month: "short",
-  });
-}
-
-function DateCell({
-  value,
-  onChange,
-  label,
-}: {
-  value: string;
-  onChange: (v: string) => void;
-  label: string;
-}) {
-  const inputRef = useRef<HTMLInputElement>(null);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  function openPicker() {
-    const el = inputRef.current;
-    if (!el) return;
-    if (typeof el.showPicker === "function") {
-      try {
-        el.showPicker();
-        return;
-      } catch {
-        /* fallback */
-      }
-    }
-    el.focus();
-    el.click();
-  }
-
-  return (
-    <div className="shop-hotel-results-bar-date">
-      <button type="button" onClick={openPicker} aria-label={label}>
-        {mounted ? formatDateDisplay(value) : value || "—"}
-      </button>
-      <input
-        ref={inputRef}
-        type="date"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        tabIndex={-1}
-        aria-hidden
-      />
-    </div>
-  );
-}
 
 export function ShopHotelResultsBar(props: Props) {
   const [guestsOpen, setGuestsOpen] = useState(false);
@@ -114,19 +56,14 @@ export function ShopHotelResultsBar(props: Props) {
           <span className="shop-hotel-results-bar-icon" aria-hidden>
             📅
           </span>
-          <div className="shop-hotel-results-bar-dates-row">
-            <DateCell
-              value={props.departDate}
-              onChange={props.onDepartDateChange}
-              label="تاريخ الوصول"
-            />
-            <span className="shop-hotel-results-bar-date-sep">–</span>
-            <DateCell
-              value={props.returnDate}
-              onChange={props.onReturnDateChange}
-              label="تاريخ المغادرة"
-            />
-          </div>
+          <ShopDateRangePicker
+            checkIn={props.departDate}
+            checkOut={props.returnDate}
+            onChange={(checkIn, checkOut) => {
+              props.onDepartDateChange(checkIn);
+              props.onReturnDateChange(checkOut);
+            }}
+          />
         </div>
 
         <div className="shop-hotel-results-bar-cell shop-hotel-results-bar-guests">

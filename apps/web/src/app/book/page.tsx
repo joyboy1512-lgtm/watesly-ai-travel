@@ -69,6 +69,8 @@ export default function PublicBookPage() {
   const [submitting, setSubmitting] = useState(false);
   const [bookingId, setBookingId] = useState<string | null>(null);
   const [needLogin, setNeedLogin] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<string | null>(null);
+  const [specialRequests, setSpecialRequests] = useState("");
 
   useEffect(() => {
     const stored = getBookingDraft();
@@ -80,16 +82,46 @@ export default function PublicBookPage() {
     const session = getShopSession();
     if (!session) {
       setNeedLogin(true);
+      if (stored.serviceType === "hotel") {
+        setName(stored.contactName || "");
+        setEmail(stored.contactEmail || "");
+        setPhone(stored.contactPhone || "");
+      }
       return;
     }
-    setName(session.customer.name || "");
-    setEmail(session.customer.email || "");
-    setPhone(session.customer.phone);
+    setName(
+      stored.serviceType === "hotel" && stored.contactName
+        ? stored.contactName
+        : session.customer.name || "",
+    );
+    setEmail(
+      stored.serviceType === "hotel" && stored.contactEmail
+        ? stored.contactEmail
+        : session.customer.email || "",
+    );
+    setPhone(
+      stored.serviceType === "hotel" && stored.contactPhone
+        ? stored.contactPhone
+        : session.customer.phone,
+    );
     const count =
       stored.serviceType === "activity"
         ? Math.max(1, stored.adults)
         : Math.max(1, stored.adults + stored.children);
     setTravelers(Array.from({ length: count }, emptyTraveler));
+    if (stored.serviceType === "hotel") {
+      setSpecialRequests(stored.specialRequests || "");
+      setPaymentMethod(stored.paymentMethod || null);
+      if (stored.travelers?.length) {
+        setTravelers(
+          stored.travelers.map((t) => ({
+            ...emptyTraveler(),
+            firstName: t.firstName,
+            lastName: t.lastName,
+          })),
+        );
+      }
+    }
     shopFetch<{
       travelers: Array<{
         title: string;
@@ -260,7 +292,11 @@ export default function PublicBookPage() {
         body: JSON.stringify({
           ...payload,
           contact: { email, phone },
-          extras: { guestName: name },
+          extras: {
+            guestName: name,
+            specialRequests: specialRequests || undefined,
+            paymentMethod: paymentMethod || undefined,
+          },
         }),
       });
       clearBookingDraft();
@@ -367,17 +403,48 @@ export default function PublicBookPage() {
                   </label>
                 </div>
               ))}
+              {draft.serviceType === "hotel" ? (
+                <label>
+                  طلبات خاصة للفندق
+                  <textarea
+                    value={specialRequests}
+                    onChange={(e) => setSpecialRequests(e.target.value)}
+                    placeholder="وصول متأخر، ملاحظات للفندق..."
+                    rows={3}
+                  />
+                </label>
+              ) : null}
+              <div className="shop-payment-methods">
+                <p className="shop-kicker">طريقة الدفع</p>
+                <div className="shop-payment-grid">
+                  {[
+                    { id: "knet", label: "كي نت", hint: "KNET" },
+                    { id: "visa", label: "فيزا", hint: "Visa / MC" },
+                    { id: "deema", label: "ديما", hint: "Deema" },
+                    { id: "linktap", label: "لينك تاب", hint: "LinkTap" },
+                  ].map((opt) => (
+                    <button
+                      key={opt.id}
+                      type="button"
+                      className={`shop-payment-option${paymentMethod === opt.id ? " on" : ""}`}
+                      onClick={() => setPaymentMethod(opt.id)}
+                    >
+                      <strong>{opt.label}</strong>
+                      <small>{opt.hint}</small>
+                    </button>
+                  ))}
+                </div>
+              </div>
               <p className="shop-hint">
-                الدفع الإلكتروني غير مفعّل بعد. سيُحفظ الطلب غير مدفوع ليتابعه
-                الموظفون.
+                بعد تأكيد الطلب سيتم توجيهك لبوابة الدفع المختارة (كي نت / فيزا / ديما / لينك تاب).
               </p>
               <button
                 type="button"
-                className="shop-btn"
-                disabled={submitting}
+                className="shop-btn shop-btn-checkout"
+                disabled={submitting || !paymentMethod}
                 onClick={() => void submit()}
               >
-                {submitting ? "جارٍ الحفظ..." : "حفظ الطلب بدون دفع"}
+                {submitting ? "جارٍ الحفظ..." : "إتمام الحجز والدفع"}
               </button>
             </div>
           )}

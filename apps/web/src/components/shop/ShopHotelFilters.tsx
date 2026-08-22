@@ -368,7 +368,7 @@ function FiltersPanel({
             id="onlinePayment"
             label="يوفر خيار الدفع عبر الإنترنت"
             count={facets.bookingPolicies.onlinePayment}
-            checked={filters.onlinePayment}
+            checked={Boolean(filters.onlinePayment)}
             onToggle={() => onChange({ ...filters, onlinePayment: !filters.onlinePayment })}
           />
         ) : null}

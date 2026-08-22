@@ -318,8 +318,9 @@ export function ShopHeroBanner(props: Props) {
         </div>
 
         <div className="exp-dialog">
+          <div className="exp-unified-card">
           {props.mode === "flights" ? (
-            <div className="exp-unified-card exp-unified-card-flights">
+            <>
               <div className="exp-flight-toolbar">
                 <div className="exp-pill-tabs exp-pill-tabs-inset" role="group" aria-label="نوع الرحلة">
                   <button
@@ -523,8 +524,9 @@ export function ShopHeroBanner(props: Props) {
                 </button>
               </div>
               )}
-            </div>
+            </>
           ) : (
+            <>
             <div className={`exp-form-row exp-form-${props.mode}`}>
             {props.mode === "stays" ? (
               <div className="exp-input-cell exp-cell-grow">
@@ -724,36 +726,37 @@ export function ShopHeroBanner(props: Props) {
               {props.loading ? "..." : "بحث"}
             </button>
             </div>
+            {props.mode === "cars" ? (
+              <div className="exp-cars-pills" role="group" aria-label="نوع النقل">
+                <div className="exp-cars-pills-start">
+                  <button type="button" className="exp-pill-tab on">
+                    نقل المطار
+                  </button>
+                  <button type="button" className="exp-pill-tab" disabled>
+                    تأجير سيارات
+                  </button>
+                </div>
+                <div className="exp-cars-pills-end">
+                  <button
+                    type="button"
+                    className={`exp-pill-tab${!props.transferRoundtrip ? " on" : ""}`}
+                    onClick={() => props.onTransferRoundtripChange(false)}
+                  >
+                    وصول فقط
+                  </button>
+                  <button
+                    type="button"
+                    className={`exp-pill-tab${props.transferRoundtrip ? " on" : ""}`}
+                    onClick={() => props.onTransferRoundtripChange(true)}
+                  >
+                    وصول وعودة
+                  </button>
+                </div>
+              </div>
+            ) : null}
+            </>
           )}
-
-          {props.mode === "cars" ? (
-            <div className="exp-cars-pills" role="group" aria-label="نوع النقل">
-              <div className="exp-cars-pills-start">
-                <button type="button" className="exp-pill-tab on">
-                  نقل المطار
-                </button>
-                <button type="button" className="exp-pill-tab" disabled>
-                  تأجير سيارات
-                </button>
-              </div>
-              <div className="exp-cars-pills-end">
-                <button
-                  type="button"
-                  className={`exp-pill-tab${!props.transferRoundtrip ? " on" : ""}`}
-                  onClick={() => props.onTransferRoundtripChange(false)}
-                >
-                  وصول فقط
-                </button>
-                <button
-                  type="button"
-                  className={`exp-pill-tab${props.transferRoundtrip ? " on" : ""}`}
-                  onClick={() => props.onTransferRoundtripChange(true)}
-                >
-                  وصول وعودة
-                </button>
-              </div>
-            </div>
-          ) : null}
+          </div>
 
           {props.error ? <p className="shop-error exp-dialog-msg">{props.error}</p> : null}
           {props.message ? <p className="shop-status exp-dialog-msg">{props.message}</p> : null}

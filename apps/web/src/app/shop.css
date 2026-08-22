@@ -297,7 +297,7 @@
   margin-inline-start: auto;
 }
 
-.exp-unified-card-flights {
+.exp-unified-card {
   background: rgba(255, 255, 255, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.32);
   border-radius: 16px;
@@ -461,12 +461,12 @@
   font-weight: 800;
 }
 
-.exp-unified-card-flights .exp-form-row {
+.exp-unified-card .exp-form-row {
   padding: 0;
   gap: 0.45rem;
 }
 
-.exp-unified-card-flights .exp-input-cell {
+.exp-unified-card .exp-input-cell {
   height: 50px;
   min-height: 50px;
   max-height: none;
@@ -477,28 +477,29 @@
   box-shadow: 0 2px 10px rgba(13, 16, 35, 0.08);
 }
 
-.exp-unified-card-flights .exp-cell-label,
-.exp-unified-card-flights .exp-input-cell .shop-ac-inline > span:first-child,
-.exp-unified-card-flights .exp-input-cell .shop-ac-inline .exp-cell-label {
+.exp-unified-card .exp-cell-label,
+.exp-unified-card .exp-input-cell .shop-ac-inline > span:first-child,
+.exp-unified-card .exp-input-cell .shop-ac-inline .exp-cell-label {
   font-size: 0.64rem;
   letter-spacing: 0.07em;
   font-weight: 700;
   line-height: 1.15;
 }
 
-.exp-unified-card-flights .exp-input-cell .shop-ac-inline input,
-.exp-unified-card-flights .exp-date-btn,
-.exp-unified-card-flights .exp-travelers-trigger strong {
+.exp-unified-card .exp-input-cell .shop-ac-inline input,
+.exp-unified-card .exp-date-btn,
+.exp-unified-card .exp-travelers-trigger strong,
+.exp-unified-card .exp-time-select {
   font-size: 0.94rem;
   line-height: 1.35;
   font-weight: 600;
 }
 
-.exp-unified-card-flights .exp-date-sep {
+.exp-unified-card .exp-date-sep {
   font-size: 0.9rem;
 }
 
-.exp-unified-card-flights .exp-search-link {
+.exp-unified-card .exp-search-link {
   height: 50px;
   min-height: 50px;
   padding: 0 1.35rem;
@@ -506,16 +507,20 @@
   border-radius: 999px;
 }
 
-.exp-unified-card-flights .exp-swap-inline {
+.exp-unified-card .exp-swap-inline {
   width: 1.75rem;
   height: 1.75rem;
   align-self: center;
 }
 
-.exp-unified-card-flights .exp-pill-tab {
+.exp-unified-card .exp-pill-tab {
   padding: 0.5rem 1rem;
   font-size: 0.84rem;
   border-radius: 10px;
+}
+
+.exp-unified-card .exp-cars-pills {
+  padding: 0;
 }
 
 .exp-icon-tabs {
@@ -1511,19 +1516,19 @@
     max-height: 40px;
   }
 
-  .exp-unified-card-flights .exp-input-cell {
+  .exp-unified-card .exp-input-cell {
     height: 48px;
     min-height: 48px;
     max-height: none;
   }
 
-  .exp-unified-card-flights .exp-search-link {
+  .exp-unified-card .exp-search-link {
     width: 100%;
     justify-self: stretch;
     min-height: 48px;
   }
 
-  .exp-unified-card-flights {
+  .exp-unified-card {
     padding: 0.75rem 0.8rem 0.85rem;
   }
 

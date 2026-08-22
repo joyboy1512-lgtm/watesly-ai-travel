@@ -2,15 +2,17 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { HotelSearchCard } from "@/components/hotels/HotelSearchCard";
 import { HotelDetailModal } from "@/components/hotels/HotelDetailModal";
+import { ShopHotelResults } from "@/components/shop/ShopHotelResults";
 import { TransferSearchCard } from "@/components/hotels/TransferSearchCard";
 import { ActivitySearchCard } from "@/components/hotels/ActivitySearchCard";
 import { type SuggestItem } from "@/components/shop/ShopAutocomplete";
 import {
+  collectFilterFacets,
   defaultHotelFilters,
   filterHotelOffers,
   type HotelOfferRow,
+  type HotelSearchFilters,
 } from "@/lib/hotel-search";
 import {
   saveActivityDraft,
@@ -147,6 +149,10 @@ export function ShopHomeClient() {
   const [inquiryId, setInquiryId] = useState<string>();
   const [quoteItems, setQuoteItems] = useState<QuoteItem[]>([]);
   const [hotelOpen, setHotelOpen] = useState<HotelOfferRow | null>(null);
+  const [hotelFilters, setHotelFilters] = useState<HotelSearchFilters>(() => defaultHotelFilters());
+  const [hotelSortKey, setHotelSortKey] = useState<
+    "price_asc" | "price_desc" | "rating_desc"
+  >("price_asc");
 
   const nights = nightsBetween(departDate, returnDate);
 
@@ -164,9 +170,11 @@ export function ShopHomeClient() {
   const showDirectFlightsEmpty =
     mode === "flights" && directOnly && flightResults.length > 0 && flights.length === 0;
 
+  const hotelFacets = useMemo(() => collectFilterFacets(hotels), [hotels]);
+
   const hotelRows = useMemo(
-    () => filterHotelOffers(hotels, defaultHotelFilters(), "price_asc"),
-    [hotels],
+    () => filterHotelOffers(hotels, hotelFilters, hotelSortKey),
+    [hotels, hotelFilters, hotelSortKey],
   );
 
   async function searchAirports(q: string): Promise<SuggestItem[]> {
@@ -282,6 +290,10 @@ export function ShopHomeClient() {
     setHotels([]);
     setTransfers([]);
     setActivities([]);
+    if (mode === "stays") {
+      setHotelFilters(defaultHotelFilters());
+      setHotelSortKey("price_asc");
+    }
     try {
       if (mode === "flights") {
         if (tripType === "multicity") {
@@ -722,7 +734,37 @@ export function ShopHomeClient() {
         searchCities={searchCities}
       />
 
-      {hasResults ? (
+      {mode === "stays" && hotels.length > 0 ? (
+        <ShopHotelResults
+          destination={stayQuery}
+          stayQuery={stayQuery}
+          departDate={departDate}
+          returnDate={returnDate}
+          adults={adults}
+          children={children}
+          rooms={rooms}
+          nights={nights}
+          loading={loading}
+          hotels={hotelRows}
+          filters={hotelFilters}
+          facets={hotelFacets}
+          sortKey={hotelSortKey}
+          onFiltersChange={setHotelFilters}
+          onSortChange={setHotelSortKey}
+          onStayQueryChange={setStayQuery}
+          onStayPick={(item) => setStayQuery(item.title)}
+          onDepartDateChange={setDepartDate}
+          onReturnDateChange={setReturnDate}
+          onAdultsChange={setAdults}
+          onChildrenChange={setChildren}
+          onRoomsChange={setRooms}
+          onSearch={() => void runSearch()}
+          onOpenHotel={(hotel) => setHotelOpen(hotel)}
+          searchCities={searchCities}
+        />
+      ) : null}
+
+      {hasResults && !(mode === "stays" && hotels.length > 0) ? (
         <section className="shop-results shop-results-block">
           <div className="shop-section-head">
             <div>
@@ -780,15 +822,6 @@ export function ShopHomeClient() {
             </article>
           );
         })}
-
-        {hotelRows.map((hotel) => (
-          <HotelSearchCard
-            key={hotel.id}
-            hotel={hotel}
-            nights={nights}
-            onOpen={() => setHotelOpen(hotel)}
-          />
-        ))}
 
         {transfers.map((item) => (
           <TransferSearchCard

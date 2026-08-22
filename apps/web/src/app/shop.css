@@ -3686,3 +3686,315 @@
 .exp-theme .exp-input-cell .prc-suggest {
   z-index: 100;
 }
+
+/* —— Booking-style hotel results (public shop) —— */
+.shop-hotel-results {
+  width: min(1180px, calc(100% - 1.5rem));
+  margin: 0 auto 2.5rem;
+  padding-top: 0.5rem;
+}
+
+.shop-hotel-results-bar-wrap {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  padding: 0.65rem 0;
+  background: linear-gradient(to bottom, rgba(245, 247, 250, 0.98) 70%, rgba(245, 247, 250, 0));
+  backdrop-filter: blur(6px);
+}
+
+.shop-hotel-results-bar {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  background: #fff;
+  border: 2px solid var(--exp-gold, #ffb700);
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 37, 93, 0.08);
+  overflow: visible;
+}
+
+.shop-hotel-results-bar-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.55rem 0.85rem;
+  min-width: 0;
+  flex: 1;
+  border-inline-start: 1px solid #e2e8f0;
+}
+
+.shop-hotel-results-bar-cell:first-child {
+  border-inline-start: 0;
+}
+
+.shop-hotel-results-bar-dest {
+  flex: 1.4;
+}
+
+.shop-hotel-results-bar-dates {
+  flex: 1.2;
+}
+
+.shop-hotel-results-bar-guests {
+  flex: 1;
+  position: relative;
+}
+
+.shop-hotel-results-bar-icon {
+  flex-shrink: 0;
+  font-size: 1rem;
+  opacity: 0.75;
+}
+
+.shop-hotel-results-bar-dates-row {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.shop-hotel-results-bar-date button,
+.shop-hotel-results-bar-guests-btn {
+  border: 0;
+  background: transparent;
+  font: inherit;
+  color: #0f172a;
+  cursor: pointer;
+  padding: 0;
+  text-align: start;
+  white-space: nowrap;
+}
+
+.shop-hotel-results-bar-date input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+  width: 0;
+  height: 0;
+}
+
+.shop-hotel-results-bar-date-sep {
+  color: #94a3b8;
+}
+
+.shop-hotel-results-bar-guests-pop {
+  position: absolute;
+  inset-inline-end: 0;
+  top: calc(100% + 0.35rem);
+  min-width: 240px;
+  background: #fff;
+  border: 1px solid var(--exp-border, #dfe0e4);
+  border-radius: 12px;
+  box-shadow: 0 12px 32px rgba(13, 16, 35, 0.12);
+  padding: 0.85rem;
+  z-index: 50;
+}
+
+.shop-hotel-results-bar-search {
+  flex-shrink: 0;
+  align-self: stretch;
+  border: 0;
+  border-radius: 0 6px 6px 0;
+  padding: 0 1.65rem;
+  background: var(--exp-blue, #0071c2);
+  color: #fff;
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+[dir="rtl"] .shop-hotel-results-bar-search {
+  border-radius: 6px 0 0 6px;
+}
+
+.shop-hotel-results-bar-search:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+
+.shop-hotel-results-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin: 1rem 0 0.85rem;
+}
+
+.shop-hotel-results-head h2 {
+  margin: 0;
+  font-size: 1.35rem;
+  color: var(--exp-navy, #00375d);
+}
+
+.shop-hotel-results-sort {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.shop-hotel-results-sort button {
+  border: 1px solid var(--exp-border, #dfe0e4);
+  background: #fff;
+  border-radius: 999px;
+  padding: 0.35rem 0.85rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+  color: #334155;
+}
+
+.shop-hotel-results-sort button.on {
+  border-color: var(--exp-blue, #0071c2);
+  background: rgba(0, 113, 194, 0.08);
+  color: var(--exp-blue, #0071c2);
+  font-weight: 600;
+}
+
+.shop-hotel-results-layout {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 1.25rem;
+  align-items: start;
+}
+
+.shop-hotel-results-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  min-width: 0;
+}
+
+.shop-hotel-results-empty {
+  margin: 1rem 0;
+  color: #64748b;
+  text-align: center;
+  padding: 2rem 1rem;
+  background: #fff;
+  border: 1px dashed #cbd5e1;
+  border-radius: 12px;
+}
+
+.shop-hotel-filters-mobile-toggle {
+  display: none;
+  width: 100%;
+  margin-bottom: 0.75rem;
+  padding: 0.65rem 1rem;
+  border: 1px solid var(--exp-border, #dfe0e4);
+  border-radius: 8px;
+  background: #fff;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.shop-hotel-filters-drawer {
+  display: none;
+}
+
+.shop-hotel-filters-desktop {
+  display: block;
+}
+
+.shop-hotel-filters-panel {
+  background: #fff;
+  border: 1px solid var(--exp-border, #dfe0e4);
+  border-radius: 8px;
+  padding: 1rem;
+  position: sticky;
+  top: 4.5rem;
+}
+
+.shop-hotel-filters-title {
+  margin: 0 0 0.85rem;
+  font-size: 1.05rem;
+  color: var(--exp-navy, #00375d);
+}
+
+.shop-hotel-filter-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 0.75rem 0;
+  border-top: 1px solid #f1f5f9;
+}
+
+.shop-hotel-filter-block:first-of-type {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.shop-hotel-filter-block strong {
+  font-size: 0.88rem;
+  color: #0f172a;
+  margin-bottom: 0.15rem;
+}
+
+.shop-hotel-filter-block input[type="search"],
+.shop-hotel-filter-block input[type="number"] {
+  width: 100%;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  padding: 0.45rem 0.6rem;
+  font: inherit;
+}
+
+.shop-hotel-filter-radio,
+.shop-hotel-filter-check {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.86rem;
+  color: #334155;
+  cursor: pointer;
+}
+
+.shop-hotel-filter-radio input,
+.shop-hotel-filter-check input {
+  accent-color: var(--exp-blue, #0071c2);
+}
+
+@media (max-width: 768px) {
+  .shop-hotel-results-bar {
+    flex-direction: column;
+  }
+
+  .shop-hotel-results-bar-cell {
+    border-inline-start: 0;
+    border-top: 1px solid #e2e8f0;
+  }
+
+  .shop-hotel-results-bar-cell:first-child {
+    border-top: 0;
+  }
+
+  .shop-hotel-results-bar-search {
+    width: 100%;
+    border-radius: 0 0 6px 6px;
+    padding: 0.75rem;
+  }
+
+  .shop-hotel-results-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .shop-hotel-filters-mobile-toggle {
+    display: block;
+  }
+
+  .shop-hotel-filters-desktop {
+    display: none;
+  }
+
+  .shop-hotel-filters-drawer {
+    display: none;
+    margin-bottom: 0.75rem;
+  }
+
+  .shop-hotel-filters-drawer.open {
+    display: block;
+  }
+
+  .shop-hotel-filters-drawer .shop-hotel-filters-panel {
+    position: static;
+  }
+}

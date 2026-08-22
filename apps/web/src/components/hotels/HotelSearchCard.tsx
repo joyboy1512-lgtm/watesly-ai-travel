@@ -16,6 +16,7 @@ type HotelRow = {
 type Props = {
   hotel: HotelRow;
   nights: number;
+  variant?: "default" | "shop";
   onOpen: () => void;
 };
 
@@ -25,7 +26,7 @@ function formatRating(value: unknown): string {
   return n >= 10 ? (n / 2).toFixed(1) : n.toFixed(1);
 }
 
-export function HotelSearchCard({ hotel, nights, onOpen }: Props) {
+export function HotelSearchCard({ hotel, nights, variant = "default", onOpen }: Props) {
   const name = String(hotel.details.name || "فندق");
   const stars = Number(hotel.details.stars || 0);
   const rating = formatRating(hotel.details.rating);
@@ -57,8 +58,11 @@ export function HotelSearchCard({ hotel, nights, onOpen }: Props) {
     cheapest?.allotment ??
     (hotel.details.roomsAvailable != null ? Number(hotel.details.roomsAvailable) : null);
 
+  const ctaLabel = variant === "shop" ? "عرض التوفر" : "عرض الغرف والأسعار";
+  const mapLabel = variant === "shop" ? "عرض على الخريطة" : "الخريطة ↗";
+
   return (
-    <article className="hotel-search-card">
+    <article className={`hotel-search-card${variant === "shop" ? " hotel-search-card-shop" : ""}`}>
       <div className="hotel-search-card-media">
         {typeof hotel.details.imageUrl === "string" && hotel.details.imageUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -66,6 +70,11 @@ export function HotelSearchCard({ hotel, nights, onOpen }: Props) {
         ) : (
           <div className={`hotel-search-card-placeholder tone-${(stars % 3) + 1}`} />
         )}
+        {variant === "shop" ? (
+          <button type="button" className="hotel-search-card-save" aria-label="حفظ" disabled>
+            ♡
+          </button>
+        ) : null}
         {soldOut ? <span className="hotel-search-card-badge">غير متاح</span> : null}
       </div>
 
@@ -130,7 +139,7 @@ export function HotelSearchCard({ hotel, nights, onOpen }: Props) {
             className="hotel-map-link inline"
             onClick={(e) => e.stopPropagation()}
           >
-            الخريطة ↗
+            {mapLabel}
           </a>
         ) : null}
 
@@ -155,7 +164,7 @@ export function HotelSearchCard({ hotel, nights, onOpen }: Props) {
               ) : null}
             </div>
             <button type="button" className="btn hotel-search-card-cta" onClick={onOpen}>
-              عرض الغرف والأسعار
+              {ctaLabel}
             </button>
           </>
         ) : (

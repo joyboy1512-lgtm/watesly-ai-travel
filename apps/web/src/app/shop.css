@@ -4484,28 +4484,41 @@
 
 .shop-flight-filter-radio,
 .shop-flight-filter-check {
-  display: grid;
-  grid-template-columns: 1fr auto auto;
-  gap: 0.45rem;
+  display: flex;
+  flex-direction: row;
   align-items: center;
+  gap: 0.5rem;
+  width: 100%;
   font-size: 0.82rem;
   color: #475569;
   direction: ltr;
-}
-
-.shop-flight-filter-radio span,
-.shop-flight-filter-check span {
-  direction: rtl;
-  text-align: start;
+  cursor: pointer;
 }
 
 .shop-flight-filter-radio em,
 .shop-flight-filter-check em {
+  flex: 0 0 auto;
+  min-width: 4.5rem;
   font-style: normal;
   font-size: 0.72rem;
   color: #0071c2;
   white-space: nowrap;
+  text-align: left;
   direction: rtl;
+}
+
+.shop-flight-filter-radio span,
+.shop-flight-filter-check span {
+  flex: 1;
+  direction: rtl;
+  text-align: right;
+}
+
+.shop-flight-filter-radio input,
+.shop-flight-filter-check input {
+  flex: 0 0 auto;
+  margin: 0;
+  accent-color: #0071c2;
 }
 
 .shop-flight-filter-block input[type="range"] {

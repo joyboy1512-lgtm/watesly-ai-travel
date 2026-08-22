@@ -87,34 +87,34 @@ export function ShopFlightFilters({
       <div className="shop-flight-filter-block">
         <strong>التوقفات</strong>
         <label className="shop-flight-filter-radio">
+          <em>{moneyOrEmpty(facets.stops.minAny, facets.stops.currency)}</em>
+          <span>الكل ({facets.stops.any})</span>
           <input
             type="radio"
             name="shop-stops"
             checked={filters.stops === "any"}
             onChange={() => onChange({ ...filters, stops: "any" })}
           />
-          <span>الكل ({facets.stops.any})</span>
-          <em>{moneyOrEmpty(facets.stops.minAny, facets.stops.currency)}</em>
         </label>
         <label className="shop-flight-filter-radio">
+          <em>{moneyOrEmpty(facets.stops.minDirect, facets.stops.currency)}</em>
+          <span>مباشر فقط ({facets.stops.direct})</span>
           <input
             type="radio"
             name="shop-stops"
             checked={filters.stops === "0"}
             onChange={() => onChange({ ...filters, stops: "0" })}
           />
-          <span>مباشر فقط ({facets.stops.direct})</span>
-          <em>{moneyOrEmpty(facets.stops.minDirect, facets.stops.currency)}</em>
         </label>
         <label className="shop-flight-filter-radio">
+          <em>{moneyOrEmpty(facets.stops.minOne, facets.stops.currency)}</em>
+          <span>توقف واحد كحد أقصى ({facets.stops.one})</span>
           <input
             type="radio"
             name="shop-stops"
             checked={filters.stops === "1"}
             onChange={() => onChange({ ...filters, stops: "1" })}
           />
-          <span>توقف واحد كحد أقصى ({facets.stops.one})</span>
-          <em>{moneyOrEmpty(facets.stops.minOne, facets.stops.currency)}</em>
         </label>
       </div>
 
@@ -124,10 +124,10 @@ export function ShopFlightFilters({
           const checked = filters.airlines.includes(a.code);
           return (
             <label key={a.code} className="shop-flight-filter-check">
+              <em>{moneyOrEmpty(a.minPrice, a.currency)}</em>
               <span>
                 {a.name} ({a.count})
               </span>
-              <em>{moneyOrEmpty(a.minPrice, a.currency)}</em>
               <input
                 type="checkbox"
                 checked={checked}
@@ -171,10 +171,10 @@ export function ShopFlightFilters({
           const count = activeCounts[bucket.key] || 0;
           return (
             <label key={`${activeField}-${bucket.key}`} className="shop-flight-filter-check">
+              <em>{bucket.hint}</em>
               <span>
                 {bucket.label} ({count})
               </span>
-              <em>{bucket.hint}</em>
               <input
                 type="checkbox"
                 checked={checked}

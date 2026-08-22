@@ -7,6 +7,7 @@ import { ShopHotelResultsBar } from "@/components/shop/ShopHotelResultsBar";
 import type { SuggestItem } from "@/components/shop/ShopAutocomplete";
 import {
   type HotelOfferRow,
+  type HotelFilterFacets,
   type HotelSearchFilters,
 } from "@/lib/hotel-search";
 
@@ -15,12 +16,7 @@ type HotelRow = HotelOfferRow & {
   displayFromMinor: number;
 };
 
-type Facets = {
-  boardCodes: string[];
-  zones: string[];
-  paymentTypes: string[];
-  rateTypes: string[];
-};
+type Facets = HotelFilterFacets;
 
 type SortKey = "price_asc" | "price_desc" | "rating_desc";
 

@@ -3929,6 +3929,49 @@
   margin-bottom: 0.15rem;
 }
 
+.shop-hotel-filter-sub {
+  margin: 0 0 0.35rem;
+  color: #64748b;
+  font-size: 0.78rem;
+}
+
+.shop-hotel-filter-row {
+  display: grid;
+  grid-template-columns: 2.2rem 1fr auto;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.shop-hotel-filter-count {
+  color: #94a3b8;
+  font-size: 0.82rem;
+  text-align: start;
+}
+
+.shop-hotel-filter-more {
+  border: 0;
+  background: transparent;
+  color: var(--exp-blue, #0071c2);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0.25rem 0;
+  text-align: start;
+}
+
+.shop-hotel-filter-stepper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  font-size: 0.86rem;
+  color: #334155;
+}
+
+.shop-hotel-filter-stepper .exp-stepper {
+  flex-shrink: 0;
+}
+
 .shop-hotel-filter-block input[type="search"],
 .shop-hotel-filter-block input[type="number"] {
   width: 100%;

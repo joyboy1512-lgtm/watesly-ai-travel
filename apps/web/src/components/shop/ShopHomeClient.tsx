@@ -116,6 +116,10 @@ export function ShopHomeClient() {
     }),
   ]);
   const [transferRoundtrip, setTransferRoundtrip] = useState(false);
+  const [transferAirport, setTransferAirport] = useState(true);
+  const [transferCarRental, setTransferCarRental] = useState(false);
+  const [transferDropoff, setTransferDropoff] = useState("الكويت");
+  const [transferDropoffLabel, setTransferDropoffLabel] = useState("الكويت");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
@@ -395,6 +399,19 @@ export function ShopHomeClient() {
           `تم جلب ${result.hotels?.length || 0} إقامة عبر ${result.providerName || "المزوّد"}`,
         );
       } else if (mode === "cars") {
+        if (!transferAirport && !transferCarRental) {
+          throw new Error("اختر نوع النقل: نقل المطار أو تأجير سيارة");
+        }
+        if (transferCarRental && !transferAirport) {
+          throw new Error("تأجير السيارات قريباً — فعّل نقل المطار حالياً");
+        }
+        if (!origin) {
+          throw new Error("اختر مطار الوصول");
+        }
+        if (!transferDropoff.trim()) {
+          throw new Error("أدخل الفندق أو العنوان");
+        }
+        const dropoffText = transferDropoffLabel.trim() || transferDropoff.trim();
         const result = await shopFetch<{
           providerName?: string;
           items: Array<{
@@ -409,12 +426,12 @@ export function ShopHomeClient() {
           method: "POST",
           timeoutMs: 45000,
           body: JSON.stringify({
-            city: stayQuery || "الكويت",
+            city: dropoffText,
             from: origin || "KWI",
-            to: stayQuery || "الكويت",
+            to: dropoffText,
             fromKind: "IATA",
             toKind: "GPS",
-            toLabel: stayQuery || "الكويت",
+            toLabel: dropoffText,
             outboundDate: departDate,
             outboundTime: pickupTime,
             inboundDate: transferRoundtrip ? returnDate : undefined,
@@ -544,7 +561,7 @@ export function ShopHomeClient() {
         details: item.extra || {},
       },
       from: origin || "KWI",
-      to: stayQuery || "الكويت",
+      to: transferDropoffLabel || transferDropoff || "الكويت",
       outboundDate: departDate,
       outboundTime: pickupTime,
       inboundDate: transferRoundtrip ? returnDate : undefined,
@@ -608,6 +625,10 @@ export function ShopHomeClient() {
     if (offer.mode === "stays" || offer.mode === "cars") {
       setStayQuery(offer.destination || "دبي");
     }
+    if (offer.mode === "cars") {
+      setTransferDropoff(offer.destination || "الكويت");
+      setTransferDropoffLabel(offer.destination || "الكويت");
+    }
     if (offer.mode === "activities") {
       setActivityDest(offer.code || "DXB");
       setActivityLabel(offer.destination || "دبي");
@@ -628,6 +649,20 @@ export function ShopHomeClient() {
         onRemoveFlightLeg={removeFlightLeg}
         transferRoundtrip={transferRoundtrip}
         onTransferRoundtripChange={setTransferRoundtrip}
+        transferAirport={transferAirport}
+        onTransferAirportChange={setTransferAirport}
+        transferCarRental={transferCarRental}
+        onTransferCarRentalChange={setTransferCarRental}
+        transferDropoff={transferDropoff}
+        transferDropoffLabel={transferDropoffLabel}
+        onTransferDropoffClear={(text) => {
+          setTransferDropoff(text);
+          setTransferDropoffLabel(text);
+        }}
+        onTransferDropoffPick={(item) => {
+          setTransferDropoff(item.title);
+          setTransferDropoffLabel(item.title);
+        }}
         cabinClass={cabinClass}
         onCabinClassChange={setCabinClass}
         directOnly={directOnly}

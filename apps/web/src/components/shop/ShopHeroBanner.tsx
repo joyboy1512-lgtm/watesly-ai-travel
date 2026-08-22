@@ -27,6 +27,14 @@ type Props = {
   onRemoveFlightLeg: (id: string) => void;
   transferRoundtrip: boolean;
   onTransferRoundtripChange: (v: boolean) => void;
+  transferAirport: boolean;
+  onTransferAirportChange: (v: boolean) => void;
+  transferCarRental: boolean;
+  onTransferCarRentalChange: (v: boolean) => void;
+  transferDropoff: string;
+  transferDropoffLabel: string;
+  onTransferDropoffClear: (text: string) => void;
+  onTransferDropoffPick: (item: SuggestItem) => void;
   cabinClass: string;
   onCabinClassChange: (v: string) => void;
   directOnly: boolean;
@@ -527,6 +535,42 @@ export function ShopHeroBanner(props: Props) {
             </>
           ) : (
             <>
+            {props.mode === "cars" ? (
+              <div className="exp-transfer-toolbar">
+                <div className="exp-pill-tabs exp-pill-tabs-inset" role="group" aria-label="نوع الرحلة">
+                  <button
+                    type="button"
+                    className={`exp-pill-tab${!props.transferRoundtrip ? " on" : ""}`}
+                    onClick={() => props.onTransferRoundtripChange(false)}
+                  >
+                    وصول فقط
+                  </button>
+                  <button
+                    type="button"
+                    className={`exp-pill-tab${props.transferRoundtrip ? " on" : ""}`}
+                    onClick={() => props.onTransferRoundtripChange(true)}
+                  >
+                    وصول وعودة
+                  </button>
+                </div>
+                <label className={`exp-direct-pill${props.transferAirport ? " on" : ""}`}>
+                  <input
+                    type="checkbox"
+                    checked={props.transferAirport}
+                    onChange={(e) => props.onTransferAirportChange(e.target.checked)}
+                  />
+                  <span>نقل المطار</span>
+                </label>
+                <label className={`exp-direct-pill${props.transferCarRental ? " on" : ""}`}>
+                  <input
+                    type="checkbox"
+                    checked={props.transferCarRental}
+                    onChange={(e) => props.onTransferCarRentalChange(e.target.checked)}
+                  />
+                  <span>تأجير سيارة</span>
+                </label>
+              </div>
+            ) : null}
             <div className={`exp-form-row exp-form-${props.mode}`}>
             {props.mode === "stays" ? (
               <div className="exp-input-cell exp-cell-grow">
@@ -548,10 +592,10 @@ export function ShopHeroBanner(props: Props) {
                 <div className="exp-input-cell">
                   <ShopAutocomplete
                     inline
-                    label="من (المطار)"
+                    label="المطار"
                     value={props.origin}
                     display={props.originLabel}
-                    placeholder="KWI"
+                    placeholder="اختر المطار"
                     onQuery={props.searchAirports}
                     onClearText={props.onOriginClear}
                     onPick={props.onOriginPick}
@@ -560,13 +604,13 @@ export function ShopHeroBanner(props: Props) {
                 <div className="exp-input-cell exp-cell-grow">
                   <ShopAutocomplete
                     inline
-                    label="إلى"
-                    value={props.stayQuery}
-                    display={props.stayQuery}
-                    placeholder="فندق أو مدينة"
+                    label="الفندق أو العنوان"
+                    value={props.transferDropoff}
+                    display={props.transferDropoffLabel}
+                    placeholder="اسم فندق، عنوان، أو مدينة"
                     onQuery={props.searchCities}
-                    onClearText={props.onStayQueryChange}
-                    onPick={props.onStayPick}
+                    onClearText={props.onTransferDropoffClear}
+                    onPick={props.onTransferDropoffPick}
                   />
                 </div>
               </>
@@ -587,13 +631,21 @@ export function ShopHeroBanner(props: Props) {
               </div>
             ) : null}
 
-            <div className="exp-input-cell exp-cell-dates">
-              <span className="exp-cell-label">التواريخ</span>
+            <div
+              className={`exp-input-cell exp-cell-dates${
+                props.mode === "cars" ? " exp-cell-dates-wide" : ""
+              }`}
+            >
+              <span className="exp-cell-label">{props.mode === "cars" ? "التاريخ" : "التواريخ"}</span>
               <div className="exp-dates-row">
                 <DatePick
                   value={props.departDate}
                   onChange={props.onDepartDateChange}
-                  label={props.mode === "stays" ? "تاريخ الوصول" : "تاريخ المغادرة"}
+                  label={
+                    props.mode === "stays" || props.mode === "cars"
+                      ? "تاريخ الوصول"
+                      : "تاريخ المغادرة"
+                  }
                 />
                 {showReturnDate ? (
                   <>
@@ -601,7 +653,13 @@ export function ShopHeroBanner(props: Props) {
                     <DatePick
                       value={props.returnDate}
                       onChange={props.onReturnDateChange}
-                      label={props.mode === "stays" ? "تاريخ المغادرة" : "تاريخ العودة"}
+                      label={
+                        props.mode === "stays"
+                          ? "تاريخ المغادرة"
+                          : props.mode === "cars"
+                            ? "تاريخ العودة"
+                            : "تاريخ العودة"
+                      }
                     />
                   </>
                 ) : null}
@@ -610,8 +668,8 @@ export function ShopHeroBanner(props: Props) {
 
             {props.mode === "cars" ? (
               <>
-                <div className="exp-input-cell exp-cell-time">
-                  <span className="exp-cell-label">وقت الاستلام</span>
+                <div className="exp-input-cell exp-cell-time exp-cell-time-compact">
+                  <span className="exp-cell-label">وقت الوصول</span>
                   <select
                     className="exp-time-select"
                     value={props.pickupTime}
@@ -626,22 +684,24 @@ export function ShopHeroBanner(props: Props) {
                     )}
                   </select>
                 </div>
-                <div className="exp-input-cell exp-cell-time">
-                  <span className="exp-cell-label">وقت التسليم</span>
-                  <select
-                    className="exp-time-select"
-                    value={props.dropoffTime}
-                    onChange={(e) => props.onDropoffTimeChange(e.target.value)}
-                  >
-                    {["08:00", "10:00", "10:30", "12:00", "14:00", "16:00", "18:00", "20:00"].map(
-                      (t) => (
-                        <option key={t} value={t}>
-                          {formatTimeShort(t)}
-                        </option>
-                      ),
-                    )}
-                  </select>
-                </div>
+                {props.transferRoundtrip ? (
+                  <div className="exp-input-cell exp-cell-time exp-cell-time-compact">
+                    <span className="exp-cell-label">وقت العودة</span>
+                    <select
+                      className="exp-time-select"
+                      value={props.dropoffTime}
+                      onChange={(e) => props.onDropoffTimeChange(e.target.value)}
+                    >
+                      {["08:00", "10:00", "10:30", "12:00", "14:00", "16:00", "18:00", "20:00"].map(
+                        (t) => (
+                          <option key={t} value={t}>
+                            {formatTimeShort(t)}
+                          </option>
+                        ),
+                      )}
+                    </select>
+                  </div>
+                ) : null}
               </>
             ) : null}
 
@@ -726,34 +786,6 @@ export function ShopHeroBanner(props: Props) {
               {props.loading ? "..." : "بحث"}
             </button>
             </div>
-            {props.mode === "cars" ? (
-              <div className="exp-cars-pills" role="group" aria-label="نوع النقل">
-                <div className="exp-cars-pills-start">
-                  <button type="button" className="exp-pill-tab on">
-                    نقل المطار
-                  </button>
-                  <button type="button" className="exp-pill-tab" disabled>
-                    تأجير سيارات
-                  </button>
-                </div>
-                <div className="exp-cars-pills-end">
-                  <button
-                    type="button"
-                    className={`exp-pill-tab${!props.transferRoundtrip ? " on" : ""}`}
-                    onClick={() => props.onTransferRoundtripChange(false)}
-                  >
-                    وصول فقط
-                  </button>
-                  <button
-                    type="button"
-                    className={`exp-pill-tab${props.transferRoundtrip ? " on" : ""}`}
-                    onClick={() => props.onTransferRoundtripChange(true)}
-                  >
-                    وصول وعودة
-                  </button>
-                </div>
-              </div>
-            ) : null}
             </>
           )}
           </div>

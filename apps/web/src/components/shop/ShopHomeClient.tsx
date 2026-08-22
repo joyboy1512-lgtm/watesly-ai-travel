@@ -231,13 +231,16 @@ export function ShopHomeClient() {
 
   function updateFlightLeg(id: string, patch: Partial<FlightLeg>) {
     setFlightLegs((prev) => {
-      const next = prev.map((leg) => (leg.id === id ? { ...leg, ...patch } : leg));
+      const next = prev.map((leg) =>
+        leg.id === id ? ({ ...leg, ...patch } as FlightLeg) : leg,
+      );
       const index = prev.findIndex((leg) => leg.id === id);
       if (index >= 0 && (patch.destination !== undefined || patch.destinationLabel !== undefined)) {
         const updated = next[index];
-        if (updated && next[index + 1]) {
+        const chained = next[index + 1];
+        if (updated && chained) {
           next[index + 1] = {
-            ...next[index + 1],
+            ...chained,
             origin: updated.destination,
             originLabel: updated.destinationLabel,
           };

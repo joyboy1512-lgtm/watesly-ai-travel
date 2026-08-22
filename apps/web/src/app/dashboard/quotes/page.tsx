@@ -164,6 +164,23 @@ export default function QuotesPage() {
     }
   }
 
+  async function remove(id: string) {
+    const ok = window.confirm("حذف عرض السعر هذا نهائياً؟ لا يمكن التراجع.");
+    if (!ok) return;
+    try {
+      setError("");
+      await apiFetch(`/quotes/${id}`, { method: "DELETE" });
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "فشل الحذف");
+    }
+  }
+
+  function isExpired(row: Quote) {
+    if (!row.expiresAt) return false;
+    return new Date(row.expiresAt).getTime() < Date.now();
+  }
+
   return (
     <AppShell title="عروض الأسعار">
       <div className="quotes-suite">
@@ -171,6 +188,7 @@ export default function QuotesPage() {
 
         <div className="quotes-toolbar">
           <strong>{filtered.length} من {rows.length} عرض</strong>
+          <p className="quotes-hint">العروض المنتهية تُحذف تلقائياً عند فتح الصفحة.</p>
           <div className="quotes-filter-group" role="group" aria-label="فلتر الإلغاء">
             <span>الإلغاء:</span>
             <button
@@ -244,8 +262,10 @@ export default function QuotesPage() {
                           <span className={`quotes-cancel ${cancel.kind}`}>{cancel.text}</span>
                         </td>
                         <td>
-                          <span className="quotes-status">
-                            {STATUS_LABEL[row.status] || row.status}
+                          <span className={`quotes-status${isExpired(row) ? " expired" : ""}`}>
+                            {isExpired(row)
+                              ? "منتهي"
+                              : STATUS_LABEL[row.status] || row.status}
                           </span>
                         </td>
                         <td>{formatDate(row.expiresAt)}</td>
@@ -260,6 +280,14 @@ export default function QuotesPage() {
                             </button>
                             <button type="button" className="btn" onClick={() => book(row.id)}>
                               حجز
+                            </button>
+                            <button
+                              type="button"
+                              className="btn danger"
+                              onClick={() => remove(row.id)}
+                              title="حذف عرض السعر"
+                            >
+                              حذف
                             </button>
                           </div>
                         </td>

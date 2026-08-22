@@ -20,6 +20,13 @@
   color: #0f172a;
 }
 
+.quotes-hint {
+  margin: 0;
+  width: 100%;
+  font-size: 0.74rem;
+  color: #64748b;
+}
+
 .quotes-filter-group {
   display: flex;
   flex-wrap: wrap;
@@ -123,10 +130,19 @@
   color: #64748b;
 }
 
-.quotes-status {
-  font-size: 0.72rem;
-  font-weight: 600;
-  color: #475569;
+.quotes-status.expired {
+  color: #b45309;
+}
+
+.quotes-actions .btn.danger {
+  background: #fff;
+  border: 1px solid #fecaca;
+  color: #b91c1c;
+}
+
+.quotes-actions .btn.danger:hover {
+  background: #fef2f2;
+  border-color: #fca5a5;
 }
 
 .quotes-actions {

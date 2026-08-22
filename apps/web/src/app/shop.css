@@ -388,6 +388,79 @@
   color: #fff;
 }
 
+.exp-multicity-stack {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.exp-flight-leg-row {
+  align-items: center;
+}
+
+.exp-leg-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 4.5rem;
+  height: 50px;
+  padding: 0 0.65rem;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.92);
+  color: var(--exp-blue);
+  font-size: 0.78rem;
+  font-weight: 800;
+  white-space: nowrap;
+  box-shadow: 0 2px 10px rgba(13, 16, 35, 0.08);
+}
+
+.exp-leg-remove {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.95);
+  color: #b42318;
+  font-size: 1.2rem;
+  line-height: 1;
+  cursor: pointer;
+  align-self: center;
+}
+
+.exp-add-leg-btn {
+  justify-self: start;
+  border: 1px dashed rgba(255, 255, 255, 0.85);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  font: inherit;
+  font-size: 0.84rem;
+  font-weight: 700;
+  padding: 0.45rem 0.85rem;
+  cursor: pointer;
+}
+
+.exp-add-leg-btn:hover {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.exp-multicity-footer {
+  margin-top: 0.15rem;
+}
+
+.exp-flight-leg-tag {
+  grid-column: 1 / -1;
+  display: inline-flex;
+  align-self: start;
+  margin-bottom: 0.35rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  background: #e8f2ff;
+  color: var(--exp-blue);
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
 .exp-unified-card-flights .exp-form-row {
   padding: 0;
   gap: 0.45rem;

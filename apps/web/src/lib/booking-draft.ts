@@ -38,7 +38,7 @@ export type FlightBookingDraft = {
   destinationLabel: string;
   departDate: string;
   returnDate?: string;
-  tripType: "roundtrip" | "oneway";
+  tripType: "roundtrip" | "oneway" | "multicity";
   adults: number;
   children: number;
   infants?: number;

@@ -5,12 +5,26 @@ import { HERO_SLIDES } from "@/lib/shop-content";
 import { ShopAutocomplete, type SuggestItem } from "@/components/shop/ShopAutocomplete";
 
 type Mode = "flights" | "stays" | "cars" | "activities";
+export type FlightTripType = "roundtrip" | "oneway" | "multicity";
+
+export type FlightLeg = {
+  id: string;
+  origin: string;
+  originLabel: string;
+  destination: string;
+  destinationLabel: string;
+  departDate: string;
+};
 
 type Props = {
   mode: Mode;
   onModeChange: (mode: Mode) => void;
-  tripType: "roundtrip" | "oneway";
-  onTripTypeChange: (v: "roundtrip" | "oneway") => void;
+  tripType: FlightTripType;
+  onTripTypeChange: (v: FlightTripType) => void;
+  flightLegs: FlightLeg[];
+  onFlightLegChange: (id: string, patch: Partial<FlightLeg>) => void;
+  onAddFlightLeg: () => void;
+  onRemoveFlightLeg: (id: string) => void;
   transferRoundtrip: boolean;
   onTransferRoundtripChange: (v: boolean) => void;
   cabinClass: string;
@@ -190,6 +204,71 @@ export function ShopHeroBanner(props: Props) {
       ? `${props.adults + props.children} مسافر · ${props.rooms} غرفة`
       : `${props.adults + props.children} مسافر`;
 
+  function swapLegAirports(legId: string) {
+    const leg = props.flightLegs.find((row) => row.id === legId);
+    if (!leg) return;
+    props.onFlightLegChange(legId, {
+      origin: leg.destination,
+      originLabel: leg.destinationLabel,
+      destination: leg.origin,
+      destinationLabel: leg.originLabel,
+    });
+  }
+
+  function renderTravelersCell() {
+    return (
+      <div className="exp-input-cell exp-cell-travelers">
+        <button
+          type="button"
+          className="exp-travelers-trigger"
+          onClick={() => setTravelersOpen((v) => !v)}
+        >
+          <span className="exp-cell-label">المسافرون</span>
+          <strong>{travelerSummary}</strong>
+        </button>
+        {travelersOpen ? (
+          <div className="exp-travelers-pop">
+            <div className="exp-travelers-row">
+              <span>بالغون</span>
+              <div className="exp-stepper">
+                <button
+                  type="button"
+                  onClick={() => props.onAdultsChange(Math.max(1, props.adults - 1))}
+                >
+                  −
+                </button>
+                <strong>{props.adults}</strong>
+                <button type="button" onClick={() => props.onAdultsChange(props.adults + 1)}>
+                  +
+                </button>
+              </div>
+            </div>
+            <div className="exp-travelers-row">
+              <span>أطفال</span>
+              <div className="exp-stepper">
+                <button
+                  type="button"
+                  onClick={() => props.onChildrenChange(Math.max(0, props.children - 1))}
+                >
+                  −
+                </button>
+                <strong>{props.children}</strong>
+                <button type="button" onClick={() => props.onChildrenChange(props.children + 1)}>
+                  +
+                </button>
+              </div>
+            </div>
+            <button type="button" className="exp-pop-done" onClick={() => setTravelersOpen(false)}>
+              تم
+            </button>
+          </div>
+        ) : null}
+      </div>
+    );
+  }
+
+  const isMulticity = props.tripType === "multicity";
+
   function swapAirports() {
     const o = props.origin;
     const ol = props.originLabel;
@@ -240,6 +319,13 @@ export function ShopHeroBanner(props: Props) {
                 <div className="exp-pill-tabs exp-pill-tabs-inset" role="group" aria-label="نوع الرحلة">
                   <button
                     type="button"
+                    className={`exp-pill-tab${props.tripType === "multicity" ? " on" : ""}`}
+                    onClick={() => props.onTripTypeChange("multicity")}
+                  >
+                    وجهات متعددة
+                  </button>
+                  <button
+                    type="button"
                     className={`exp-pill-tab${props.tripType === "roundtrip" ? " on" : ""}`}
                     onClick={() => props.onTripTypeChange("roundtrip")}
                   >
@@ -276,6 +362,98 @@ export function ShopHeroBanner(props: Props) {
                 </label>
               </div>
 
+              {isMulticity ? (
+                <div className="exp-multicity-stack">
+                  {props.flightLegs.map((leg, index) => (
+                    <div key={leg.id} className="exp-form-row exp-form-flights exp-flight-leg-row">
+                      <span className="exp-leg-badge">الرحلة {index + 1}</span>
+                      <div className="exp-input-cell exp-cell-grow">
+                        <ShopAutocomplete
+                          inline
+                          label="المغادرة من"
+                          value={leg.origin}
+                          display={leg.originLabel}
+                          placeholder="مدينة أو مطار"
+                          onQuery={props.searchAirports}
+                          onClearText={(text) =>
+                            props.onFlightLegChange(leg.id, { origin: "", originLabel: text })
+                          }
+                          onPick={(item) =>
+                            props.onFlightLegChange(leg.id, {
+                              origin: item.code,
+                              originLabel: item.title,
+                            })
+                          }
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        className="exp-swap-inline"
+                        aria-label="تبديل"
+                        onClick={() => swapLegAirports(leg.id)}
+                      >
+                        <IconSwap />
+                      </button>
+                      <div className="exp-input-cell exp-cell-grow">
+                        <ShopAutocomplete
+                          inline
+                          label="الوجهة"
+                          value={leg.destination}
+                          display={leg.destinationLabel}
+                          placeholder="إلى أين؟"
+                          onQuery={props.searchAirports}
+                          onClearText={(text) =>
+                            props.onFlightLegChange(leg.id, {
+                              destination: "",
+                              destinationLabel: text,
+                            })
+                          }
+                          onPick={(item) =>
+                            props.onFlightLegChange(leg.id, {
+                              destination: item.code,
+                              destinationLabel: item.title,
+                            })
+                          }
+                        />
+                      </div>
+                      <div className="exp-input-cell exp-cell-dates">
+                        <span className="exp-cell-label">التاريخ</span>
+                        <DatePick
+                          value={leg.departDate}
+                          onChange={(v) => props.onFlightLegChange(leg.id, { departDate: v })}
+                          label={`تاريخ الرحلة ${index + 1}`}
+                        />
+                      </div>
+                      {props.flightLegs.length > 2 ? (
+                        <button
+                          type="button"
+                          className="exp-leg-remove"
+                          aria-label={`حذف الرحلة ${index + 1}`}
+                          onClick={() => props.onRemoveFlightLeg(leg.id)}
+                        >
+                          ×
+                        </button>
+                      ) : null}
+                    </div>
+                  ))}
+                  {props.flightLegs.length < 5 ? (
+                    <button type="button" className="exp-add-leg-btn" onClick={props.onAddFlightLeg}>
+                      + إضافة رحلة
+                    </button>
+                  ) : null}
+                  <div className="exp-form-row exp-form-flights exp-multicity-footer">
+                    {renderTravelersCell()}
+                    <button
+                      type="button"
+                      className="exp-search-link"
+                      disabled={props.loading}
+                      onClick={props.onSearch}
+                    >
+                      {props.loading ? "..." : "بحث"}
+                    </button>
+                  </div>
+                </div>
+              ) : (
               <div className="exp-form-row exp-form-flights">
                 <div className="exp-input-cell exp-cell-grow">
                   <ShopAutocomplete
@@ -329,60 +507,7 @@ export function ShopHeroBanner(props: Props) {
                     ) : null}
                   </div>
                 </div>
-                <div className="exp-input-cell exp-cell-travelers">
-                  <button
-                    type="button"
-                    className="exp-travelers-trigger"
-                    onClick={() => setTravelersOpen((v) => !v)}
-                  >
-                    <span className="exp-cell-label">المسافرون</span>
-                    <strong>{travelerSummary}</strong>
-                  </button>
-                  {travelersOpen ? (
-                    <div className="exp-travelers-pop">
-                      <div className="exp-travelers-row">
-                        <span>بالغون</span>
-                        <div className="exp-stepper">
-                          <button
-                            type="button"
-                            onClick={() => props.onAdultsChange(Math.max(1, props.adults - 1))}
-                          >
-                            −
-                          </button>
-                          <strong>{props.adults}</strong>
-                          <button type="button" onClick={() => props.onAdultsChange(props.adults + 1)}>
-                            +
-                          </button>
-                        </div>
-                      </div>
-                      <div className="exp-travelers-row">
-                        <span>أطفال</span>
-                        <div className="exp-stepper">
-                          <button
-                            type="button"
-                            onClick={() => props.onChildrenChange(Math.max(0, props.children - 1))}
-                          >
-                            −
-                          </button>
-                          <strong>{props.children}</strong>
-                          <button
-                            type="button"
-                            onClick={() => props.onChildrenChange(props.children + 1)}
-                          >
-                            +
-                          </button>
-                        </div>
-                      </div>
-                      <button
-                        type="button"
-                        className="exp-pop-done"
-                        onClick={() => setTravelersOpen(false)}
-                      >
-                        تم
-                      </button>
-                    </div>
-                  ) : null}
-                </div>
+                {renderTravelersCell()}
                 <button
                   type="button"
                   className="exp-search-link"
@@ -392,6 +517,7 @@ export function ShopHeroBanner(props: Props) {
                   {props.loading ? "..." : "بحث"}
                 </button>
               </div>
+              )}
             </div>
           ) : (
             <div className={`exp-form-row exp-form-${props.mode}`}>

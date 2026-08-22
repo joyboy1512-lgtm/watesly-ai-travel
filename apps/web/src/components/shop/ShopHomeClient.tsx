@@ -21,7 +21,7 @@ import {
 import { formatMoneyMinor } from "@/lib/format";
 import { shopFetch } from "@/lib/shop-session";
 import { ShopLanding } from "@/components/shop/ShopLanding";
-import { ShopHeroBanner } from "@/components/shop/ShopHeroBanner";
+import { ShopHeroBanner, type FlightLeg, type FlightTripType } from "@/components/shop/ShopHeroBanner";
 import type { ShopDestination, ShopOffer } from "@/lib/shop-content";
 
 type Mode = "flights" | "stays" | "cars" | "activities";
@@ -52,9 +52,31 @@ function plusDays(n: number) {
   return d.toISOString().slice(0, 10);
 }
 
+function addDaysToIso(iso: string, days: number) {
+  const d = new Date(`${iso}T12:00:00`);
+  if (Number.isNaN(d.getTime())) return plusDays(days);
+  d.setDate(d.getDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+
 function airlineLogo(code?: string | null) {
   if (!code || code.length !== 2) return null;
   return `https://pics.avs.io/80/80/${code.toUpperCase()}.png`;
+}
+
+function newLegId() {
+  return `leg-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+}
+
+function createFlightLeg(partial?: Partial<FlightLeg>): FlightLeg {
+  return {
+    id: partial?.id || newLegId(),
+    origin: partial?.origin || "",
+    originLabel: partial?.originLabel || "",
+    destination: partial?.destination || "",
+    destinationLabel: partial?.destinationLabel || "",
+    departDate: partial?.departDate || plusDays(14),
+  };
 }
 
 function nightsBetween(from: string, to: string) {
@@ -68,7 +90,23 @@ function nightsBetween(from: string, to: string) {
 export function ShopHomeClient() {
   const router = useRouter();
   const [mode, setMode] = useState<Mode>("flights");
-  const [tripType, setTripType] = useState<"roundtrip" | "oneway">("roundtrip");
+  const [tripType, setTripType] = useState<FlightTripType>("roundtrip");
+  const [flightLegs, setFlightLegs] = useState<FlightLeg[]>(() => [
+    createFlightLeg({
+      origin: "KWI",
+      originLabel: "KWI · الكويت",
+      destination: "DXB",
+      destinationLabel: "DXB · دبي",
+      departDate: plusDays(14),
+    }),
+    createFlightLeg({
+      origin: "DXB",
+      originLabel: "DXB · دبي",
+      destination: "",
+      destinationLabel: "",
+      departDate: plusDays(18),
+    }),
+  ]);
   const [transferRoundtrip, setTransferRoundtrip] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -149,6 +187,75 @@ export function ShopHomeClient() {
     }));
   }
 
+  function handleTripTypeChange(next: FlightTripType) {
+    if (next === "multicity" && tripType !== "multicity") {
+      setFlightLegs([
+        createFlightLeg({
+          origin,
+          originLabel,
+          destination,
+          destinationLabel,
+          departDate,
+        }),
+        createFlightLeg({
+          origin: destination,
+          originLabel: destinationLabel,
+          destination: "",
+          destinationLabel: "",
+          departDate: returnDate || plusDays(18),
+        }),
+      ]);
+    }
+    if (next !== "multicity" && tripType === "multicity") {
+      const first = flightLegs[0];
+      if (first) {
+        setOrigin(first.origin);
+        setOriginLabel(first.originLabel);
+        setDestination(first.destination);
+        setDestinationLabel(first.destinationLabel);
+        setDepartDate(first.departDate);
+      }
+    }
+    setTripType(next);
+  }
+
+  function updateFlightLeg(id: string, patch: Partial<FlightLeg>) {
+    setFlightLegs((prev) => {
+      const next = prev.map((leg) => (leg.id === id ? { ...leg, ...patch } : leg));
+      const index = prev.findIndex((leg) => leg.id === id);
+      if (index >= 0 && (patch.destination !== undefined || patch.destinationLabel !== undefined)) {
+        const updated = next[index];
+        if (updated && next[index + 1]) {
+          next[index + 1] = {
+            ...next[index + 1],
+            origin: updated.destination,
+            originLabel: updated.destinationLabel,
+          };
+        }
+      }
+      return next;
+    });
+  }
+
+  function addFlightLeg() {
+    setFlightLegs((prev) => {
+      if (prev.length >= 5) return prev;
+      const last = prev[prev.length - 1];
+      return [
+        ...prev,
+        createFlightLeg({
+          origin: last?.destination || "",
+          originLabel: last?.destinationLabel || "",
+          departDate: addDaysToIso(last?.departDate || plusDays(14), 4),
+        }),
+      ];
+    });
+  }
+
+  function removeFlightLeg(id: string) {
+    setFlightLegs((prev) => (prev.length <= 2 ? prev : prev.filter((leg) => leg.id !== id)));
+  }
+
   async function runSearch() {
     setLoading(true);
     setError("");
@@ -159,6 +266,63 @@ export function ShopHomeClient() {
     setActivities([]);
     try {
       if (mode === "flights") {
+        if (tripType === "multicity") {
+          for (let i = 0; i < flightLegs.length; i += 1) {
+            const leg = flightLegs[i];
+            if (!leg.origin || !leg.destination || !leg.departDate) {
+              throw new Error(`أكمل بيانات الرحلة ${i + 1}`);
+            }
+          }
+          const combined: Offer[] = [];
+          let providerName = "المزوّد";
+          for (let i = 0; i < flightLegs.length; i += 1) {
+            const leg = flightLegs[i];
+            const result = await shopFetch<{
+              inquiryId: string;
+              quoteItems?: QuoteItem[];
+              providerName?: string;
+              flights: Offer[];
+            }>("/shop/search-flights", {
+              method: "POST",
+              timeoutMs: 60000,
+              body: JSON.stringify({
+                origin: leg.origin,
+                destination: leg.destination,
+                departDate: leg.departDate,
+                adults,
+                children,
+                infants,
+                cabinClass,
+              }),
+            });
+            if (i === 0) {
+              setInquiryId(result.inquiryId);
+              setQuoteItems(result.quoteItems || []);
+            }
+            providerName = result.providerName || providerName;
+            const tagged = (result.flights || []).map((row) => ({
+              ...row,
+              id: `${leg.id}-${row.id}`,
+              details: {
+                ...row.details,
+                originalOfferId: row.id,
+                legIndex: i + 1,
+                legLabel: `الرحلة ${i + 1}`,
+                legOrigin: leg.origin,
+                legDestination: leg.destination,
+                legDepartDate: leg.departDate,
+              },
+            }));
+            combined.push(...tagged);
+          }
+          setFlightResults(combined);
+          const directCount = combined.filter((f) => Number(f.details.stops || 0) === 0).length;
+          setMessage(
+            directOnly
+              ? `تم جلب ${combined.length} رحلة عبر ${flightLegs.length} مسارات — ${directCount} مباشرة`
+              : `تم جلب ${combined.length} رحلة عبر ${flightLegs.length} مسارات (${providerName})`,
+          );
+        } else {
         if (!origin || !destination || !departDate) {
           throw new Error("أدخل المغادرة والوجهة والتاريخ");
         }
@@ -190,6 +354,7 @@ export function ShopHomeClient() {
             ? `تم جلب ${rows.length} رحلة — ${rows.filter((f) => Number(f.details.stops || 0) === 0).length} مباشرة`
             : `تم جلب ${rows.length} رحلة عبر ${result.providerName || "المزوّد"}`,
         );
+        }
       } else if (mode === "stays") {
         const result = await shopFetch<{
           inquiryId: string;
@@ -312,13 +477,17 @@ export function ShopHomeClient() {
   }
 
   function bookFlight(flight: Offer) {
+    const legOrigin = String(flight.details.legOrigin || origin);
+    const legDestination = String(flight.details.legDestination || destination);
+    const legDepartDate = String(flight.details.legDepartDate || departDate);
+    const offerRef = String(flight.details.originalOfferId || flight.id);
     saveFlightDraft({
       flight,
-      origin,
-      destination,
-      originLabel,
-      destinationLabel,
-      departDate,
+      origin: legOrigin,
+      destination: legDestination,
+      originLabel: legOrigin,
+      destinationLabel: legDestination,
+      departDate: legDepartDate,
       returnDate: tripType === "roundtrip" ? returnDate : undefined,
       tripType,
       adults,
@@ -327,7 +496,7 @@ export function ShopHomeClient() {
       cabinClass,
       createdAt: new Date().toISOString(),
       inquiryId,
-      quoteItemId: quoteItemIdFor(flight.id, "flight"),
+      quoteItemId: quoteItemIdFor(offerRef, "flight"),
     });
     router.push("/book");
   }
@@ -438,7 +607,11 @@ export function ShopHomeClient() {
         mode={mode}
         onModeChange={setMode}
         tripType={tripType}
-        onTripTypeChange={setTripType}
+        onTripTypeChange={handleTripTypeChange}
+        flightLegs={flightLegs}
+        onFlightLegChange={updateFlightLeg}
+        onAddFlightLeg={addFlightLeg}
+        onRemoveFlightLeg={removeFlightLeg}
         transferRoundtrip={transferRoundtrip}
         onTransferRoundtripChange={setTransferRoundtrip}
         cabinClass={cabinClass}
@@ -514,14 +687,16 @@ export function ShopHomeClient() {
         {flights.map((flight) => {
           const code = String(flight.details.airlineCode || "");
           const logo = airlineLogo(code);
-          const fromCode = String(flight.details.from || origin);
-          const toCode = String(flight.details.to || destination);
+          const fromCode = String(flight.details.legOrigin || flight.details.from || origin);
+          const toCode = String(flight.details.legDestination || flight.details.to || destination);
+          const legLabel = String(flight.details.legLabel || "");
           const departTime = String(flight.details.departureTime || flight.details.departTime || "—");
           const arriveTime = String(flight.details.arrivalTime || flight.details.arriveTime || "—");
           const duration = String(flight.details.duration || "");
           const stops = String(flight.details.stops ?? flight.details.stopCount ?? "مباشر");
           return (
             <article key={flight.id} className="exp-flight-card">
+              {legLabel ? <span className="exp-flight-leg-tag">{legLabel}</span> : null}
               <div className="exp-flight-airline">
                 {logo ? (
                   // eslint-disable-next-line @next/next/no-img-element

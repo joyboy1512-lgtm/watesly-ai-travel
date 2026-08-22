@@ -4125,14 +4125,37 @@
 .shop-date-range-day {
   border: 0;
   background: transparent;
-  border-radius: 6px;
+  border-radius: 0;
   padding: 0.45rem 0;
   cursor: pointer;
   font: inherit;
+  color: #0f172a;
+  font-weight: 500;
+  position: relative;
+  z-index: 1;
 }
 
 .shop-date-range-day.in-range {
-  background: rgba(0, 113, 194, 0.12);
+  background: rgba(0, 113, 194, 0.18);
+  color: #003580;
+}
+
+.shop-date-range-day.range-start {
+  background: #0071c2;
+  color: #fff;
+  font-weight: 700;
+  border-radius: 6px 0 0 6px;
+}
+
+.shop-date-range-day.range-end {
+  background: #0071c2;
+  color: #fff;
+  font-weight: 700;
+  border-radius: 0 6px 6px 0;
+}
+
+.shop-date-range-day.range-start.range-end {
+  border-radius: 6px;
 }
 
 .shop-date-range-day.selected {
@@ -4144,6 +4167,7 @@
 .shop-date-range-day.muted {
   color: #cbd5e1;
   cursor: not-allowed;
+  background: transparent;
 }
 
 .shop-date-range-footer {

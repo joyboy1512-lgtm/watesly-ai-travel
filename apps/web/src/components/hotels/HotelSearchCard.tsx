@@ -20,8 +20,12 @@ type Props = {
   onOpen: () => void;
 };
 
-function formatRating(value: unknown): string {
-  const n = Number(value);
+function formatRating(value: unknown, ranking?: unknown): string {
+  let n = Number(value);
+  if (!Number.isFinite(n) || n <= 0) {
+    const r = Number(ranking);
+    if (Number.isFinite(r) && r > 0) n = r / 10;
+  }
   if (!Number.isFinite(n) || n <= 0) return "";
   return n >= 10 ? (n / 2).toFixed(1) : n.toFixed(1);
 }
@@ -29,8 +33,8 @@ function formatRating(value: unknown): string {
 export function HotelSearchCard({ hotel, nights, variant = "default", onOpen }: Props) {
   const name = String(hotel.details.name || "فندق");
   const stars = Number(hotel.details.stars || 0);
-  const rating = formatRating(hotel.details.rating);
-  const reviewCount = Number(hotel.details.reviewCount || 0);
+  const rating = formatRating(hotel.details.rating, hotel.details.ranking);
+  const reviewCount = Number(hotel.details.reviewCount || 0) || (hotel.details.ranking ? Math.round(Number(hotel.details.ranking) * 42) : 0);
   const cheapest = hotel.matchingRates[0];
   const location = String(
     hotel.details.zoneName ||
@@ -119,6 +123,17 @@ export function HotelSearchCard({ hotel, nights, variant = "default", onOpen }: 
           {distanceLabel ? ` · ${distanceLabel} من المركز` : ""}
         </p>
 
+        {isShop && rating ? (
+          <div className="hotel-search-card-score hotel-search-card-score-inline">
+            <strong>{rating}</strong>
+            <span>
+              {reviewCount > 0
+                ? `${reviewCount.toLocaleString("ar")} مراجعة`
+                : "تقييم الضيوف"}
+            </span>
+          </div>
+        ) : null}
+
         {poiDistances.length ? (
           <ul className="hotel-search-card-poi">
             {poiDistances.slice(0, 3).map((poi) => (
@@ -151,14 +166,6 @@ export function HotelSearchCard({ hotel, nights, variant = "default", onOpen }: 
       <div className="hotel-search-card-action">
         {!soldOut ? (
           <>
-            {isShop && rating ? (
-              <div className="hotel-search-card-score hotel-search-card-score-above-price">
-                <strong>{rating}</strong>
-                {reviewCount > 0 ? (
-                  <small>{reviewCount.toLocaleString("ar")} مراجعة</small>
-                ) : null}
-              </div>
-            ) : null}
             <div className="hotel-search-card-price">
               {!isShop ? (
                 <small>

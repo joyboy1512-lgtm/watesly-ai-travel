@@ -15,10 +15,8 @@ type Props = {
   hotel: HotelOfferRow & { matchingRates: HotelRateOption[]; displayFromMinor: number };
   nights: number;
   checkingRateKey?: string | null;
-  highlightRateKey?: string | null;
   shopStyle?: boolean;
   onBookRate: (rate: HotelRateOption) => void;
-  onRateFocus?: (rateKey: string) => void;
 };
 
 function paymentLabel(type?: string) {
@@ -81,10 +79,8 @@ export function HotelRoomAccordion({
   hotel,
   nights,
   checkingRateKey,
-  highlightRateKey,
   shopStyle,
   onBookRate,
-  onRateFocus,
 }: Props) {
   const rooms = useMemo(() => {
     const raw = hotel.details.rooms;
@@ -125,12 +121,11 @@ export function HotelRoomAccordion({
         const fromMinor = cheapest ? rateDisplayMinor(cheapest, hotel, nights) : hotel.displayFromMinor;
         const perNight = nights > 0 ? Math.round(fromMinor / nights) : fromMinor;
         const occ = occupancyLabel(room);
-        const roomHighlighted = room.rates.some((r) => r.rateKey === highlightRateKey);
 
         return (
           <section
             key={room.code || room.name}
-            className={`hotel-room-panel${open ? " is-open" : ""}${roomHighlighted ? " is-highlighted" : ""}`}
+            className={`hotel-room-panel${open ? " is-open" : ""}${shopStyle && open ? " is-open-shop" : ""}`}
           >
             <button
               type="button"
@@ -186,14 +181,9 @@ export function HotelRoomAccordion({
                   const cancel = cancellationSummary(rate);
                   const taxes = taxHint(rate);
                   const busy = checkingRateKey === rate.rateKey;
-                  const selected = highlightRateKey === rate.rateKey;
 
                   return (
-                    <article
-                      key={rate.rateKey}
-                      className={`hotel-rate-row${selected ? " is-selected" : ""}`}
-                      onClick={() => onRateFocus?.(rate.rateKey)}
-                    >
+                    <article key={rate.rateKey} className="hotel-rate-row">
                       <div className="hotel-rate-col meal">
                         <strong>{rate.boardName}</strong>
                         <small>{rate.boardCode}</small>
@@ -220,7 +210,6 @@ export function HotelRoomAccordion({
                         disabled={Boolean(checkingRateKey)}
                         onClick={(e) => {
                           e.stopPropagation();
-                          onRateFocus?.(rate.rateKey);
                           onBookRate(rate);
                         }}
                       >

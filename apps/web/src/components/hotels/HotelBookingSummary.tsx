@@ -171,12 +171,21 @@ export function HotelBookingSummary({
         <button type="button" className="hotel-summary-back" onClick={() => setStep("guest")}>
           ← العودة لبيانات الحجز
         </button>
-        <div className="hotel-modal-price-banner">
-          <div>
+        <div className="hotel-selected-price-card">
+          <div className="hotel-selected-price-main">
             <small>المبلغ الإجمالي</small>
             <strong>{formatMoneyMinor(totalMinor, hotel.currency)}</strong>
+            <em>
+              {formatMoneyMinor(perNight, hotel.currency)} / ليلة · {nights}{" "}
+              {nights === 1 ? "ليلة" : "ليالي"}
+            </em>
           </div>
-          <span>{hotelName}</span>
+          <div className="hotel-selected-price-meta">
+            <span>{hotelName}</span>
+            <span>
+              {rate.roomName} · {rate.boardName}
+            </span>
+          </div>
         </div>
         <h3>اختر طريقة الدفع</h3>
         <div className="hotel-payment-methods">
@@ -260,20 +269,30 @@ export function HotelBookingSummary({
       </button>
 
       {shopStyle ? (
-        <div className="hotel-modal-price-banner">
-          <div>
+        <div className="hotel-selected-price-card">
+          <div className="hotel-selected-price-main">
             <small>السعر المختار</small>
             <strong>{formatMoneyMinor(totalMinor, hotel.currency)}</strong>
-            <em>{formatMoneyMinor(perNight, hotel.currency)} / ليلة</em>
+            <em>
+              {formatMoneyMinor(perNight, hotel.currency)} / ليلة · {nights}{" "}
+              {nights === 1 ? "ليلة" : "ليالي"}
+            </em>
           </div>
-          <span>
-            {rate.roomName} · {rate.boardName}
-          </span>
+          <div className="hotel-selected-price-meta">
+            <span>{hotelName}</span>
+            <span>
+              {rate.roomName} · {rate.boardName}
+            </span>
+          </div>
         </div>
       ) : null}
 
-      <h3>تفاصيل الحجز</h3>
-      <p className="hotel-summary-sub">{hotelName}</p>
+      {!shopStyle ? (
+        <>
+          <h3>تفاصيل الحجز</h3>
+          <p className="hotel-summary-sub">{hotelName}</p>
+        </>
+      ) : null}
 
       {priceChange ? (
         <div className="hotel-price-change">

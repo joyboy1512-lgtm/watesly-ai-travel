@@ -118,10 +118,30 @@ export function ShopDateRangePicker({ checkIn, checkOut, onChange, className }: 
     return iso > draftIn && iso < draftOut;
   }
 
-  const summary =
-    checkIn && checkOut
+  const summary = open
+    ? draftIn && draftOut
+      ? `${formatShort(draftIn)} – ${formatShort(draftOut)}`
+      : draftIn
+        ? `${formatShort(draftIn)} – …`
+        : "اختر تواريخ الإقامة"
+    : checkIn && checkOut
       ? `${formatShort(checkIn)} – ${formatShort(checkOut)}`
       : "اختر تواريخ الإقامة";
+
+  function dayClass(iso: string, muted: boolean) {
+    const isStart = iso === draftIn;
+    const isEnd = iso === draftOut;
+    const between = inRange(iso);
+    return [
+      "shop-date-range-day",
+      muted ? "muted" : "",
+      isStart ? "selected range-start" : "",
+      isEnd ? "selected range-end" : "",
+      between ? "in-range" : "",
+    ]
+      .filter(Boolean)
+      .join(" ");
+  }
 
   return (
     <div className={`shop-date-range${className ? ` ${className}` : ""}`} ref={wrapRef}>
@@ -158,14 +178,7 @@ export function ShopDateRangePicker({ checkIn, checkOut, onChange, className }: 
                 <button
                   key={cell.iso}
                   type="button"
-                  className={[
-                    "shop-date-range-day",
-                    cell.muted ? "muted" : "",
-                    cell.iso === draftIn || cell.iso === draftOut ? "selected" : "",
-                    inRange(cell.iso) ? "in-range" : "",
-                  ]
-                    .filter(Boolean)
-                    .join(" ")}
+                  className={dayClass(cell.iso, cell.muted)}
                   disabled={cell.muted}
                   onClick={() => pickDay(cell.iso)}
                 >

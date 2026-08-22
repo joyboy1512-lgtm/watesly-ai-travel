@@ -72,7 +72,6 @@ export function HotelDetailModal({
   const shopStyle = variant === "shop";
   const [descOpen, setDescOpen] = useState(false);
   const [selectedRate, setSelectedRate] = useState<HotelRateOption | null>(null);
-  const [highlightRateKey, setHighlightRateKey] = useState<string | null>(null);
   const [tab, setTab] = useState<"rooms" | "map" | "reviews" | "facilities" | "policies">(
     "rooms",
   );
@@ -158,7 +157,6 @@ export function HotelDetailModal({
         });
       }
       setSelectedRate(nextRate);
-      setHighlightRateKey(nextRate.rateKey);
     } catch (err) {
       setCheckError(err instanceof Error ? err.message : "تعذر التحقق من السعر الحي");
     } finally {
@@ -169,27 +167,29 @@ export function HotelDetailModal({
   return (
     <div className="flight-modal-backdrop" onClick={onClose} role="presentation">
       <div
-        className="flight-modal hotel-detail-modal"
+        className={`flight-modal hotel-detail-modal${shopStyle ? " hotel-detail-modal-shop" : ""}`}
         role="dialog"
         aria-modal="true"
         aria-labelledby="hotel-detail-title"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="hotel-modal-toolbar">
-          <button type="button" className="flight-modal-close" aria-label="إغلاق" onClick={onClose}>
-            ×
-          </button>
-        </div>
+        <div className="hotel-modal-sticky-head">
+          <div className="hotel-modal-toolbar">
+            <button type="button" className="flight-modal-close" aria-label="إغلاق" onClick={onClose}>
+              ×
+            </button>
+          </div>
 
-        <div className="hotel-name-chip" title={name}>
-          <h2 id="hotel-detail-title">{name}</h2>
-          {stars > 0 ? (
-            <div className="hotel-gold-stars" aria-label={`${stars} نجوم`}>
-              {Array.from({ length: Math.min(5, stars) }, (_, i) => (
-                <span key={i}>★</span>
-              ))}
-            </div>
-          ) : null}
+          <div className="hotel-name-chip" title={name}>
+            <h2 id="hotel-detail-title">{name}</h2>
+            {stars > 0 ? (
+              <div className="hotel-gold-stars" aria-label={`${stars} نجوم`}>
+                {Array.from({ length: Math.min(5, stars) }, (_, i) => (
+                  <span key={i}>★</span>
+                ))}
+              </div>
+            ) : null}
+          </div>
         </div>
 
         <div className="hotel-modal-live">
@@ -267,7 +267,7 @@ export function HotelDetailModal({
                   </a>
                 ) : null}
               </div>
-              <div className="hotel-detail-from">
+              <div className={`hotel-detail-from${shopStyle ? " hotel-detail-from-shop" : ""}`}>
                 <small>يبدأ من</small>
                 <strong>{formatMoneyMinor(perNight, hotel.currency)}</strong>
                 <em>/ ليلة</em>
@@ -326,29 +326,15 @@ export function HotelDetailModal({
             {checkError ? <p className="hotel-check-error">{checkError}</p> : null}
 
             {tab === "rooms" ? (
-              <>
-                {shopStyle ? (
-                  <div className="hotel-modal-price-banner">
-                    <div>
-                      <small>يبدأ من</small>
-                      <strong>{formatMoneyMinor(perNight, hotel.currency)}</strong>
-                      <em>/ ليلة</em>
-                    </div>
-                    <span>{formatMoneyMinor(hotel.displayFromMinor, hotel.currency)} إجمالي</span>
-                  </div>
-                ) : null}
-                <section className="flight-modal-section hotel-detail-rooms-section">
-                  <HotelRoomAccordion
-                    hotel={hotel}
-                    nights={nights}
-                    checkingRateKey={checkingRateKey}
-                    highlightRateKey={highlightRateKey}
-                    shopStyle={shopStyle}
-                    onRateFocus={setHighlightRateKey}
-                    onBookRate={(rate) => void handleBookRate(rate)}
-                  />
-                </section>
-              </>
+              <section className="flight-modal-section hotel-detail-rooms-section">
+                <HotelRoomAccordion
+                  hotel={hotel}
+                  nights={nights}
+                  checkingRateKey={checkingRateKey}
+                  shopStyle={shopStyle}
+                  onBookRate={(rate) => void handleBookRate(rate)}
+                />
+              </section>
             ) : null}
 
             {tab === "map" ? (

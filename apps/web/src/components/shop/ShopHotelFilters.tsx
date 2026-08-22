@@ -172,6 +172,20 @@ function FiltersPanel({
         />
       </FilterSection>
 
+      <FilterSection title="نطاق السعر (د.ك)">
+        <ShopPriceRangeSlider
+          min={0}
+          max={facets.priceMaxMajor}
+          value={filters.maxPrice ? Number(filters.maxPrice) : facets.priceMaxMajor}
+          onChange={(v) =>
+            onChange({
+              ...filters,
+              maxPrice: v >= facets.priceMaxMajor ? "" : String(v),
+            })
+          }
+        />
+      </FilterSection>
+
       {facets.meals.length ? (
         <FilterSection title="الوجبات">
           <ExpandableChecks
@@ -448,24 +462,6 @@ function FiltersPanel({
           ))}
         </FilterSection>
       ) : null}
-
-      <FilterSection title="نطاق السعر (د.ك)">
-        <ShopPriceRangeSlider
-          min={0}
-          max={facets.priceMaxMajor}
-          value={
-            filters.maxPrice
-              ? Number(filters.maxPrice)
-              : facets.priceMaxMajor
-          }
-          onChange={(v) =>
-            onChange({
-              ...filters,
-              maxPrice: v >= facets.priceMaxMajor ? "" : String(v),
-            })
-          }
-        />
-      </FilterSection>
     </aside>
   );
 }

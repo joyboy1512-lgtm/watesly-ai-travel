@@ -281,16 +281,16 @@ export function ShopHomeClient() {
     try {
       if (mode === "flights") {
         if (tripType === "multicity") {
-          for (let i = 0; i < flightLegs.length; i += 1) {
-            const leg = flightLegs[i];
-            if (!leg.origin || !leg.destination || !leg.departDate) {
+          flightLegs.forEach((leg, i) => {
+            if (!leg?.origin || !leg.destination || !leg.departDate) {
               throw new Error(`أكمل بيانات الرحلة ${i + 1}`);
             }
-          }
+          });
           const combined: Offer[] = [];
           let providerName = "المزوّد";
           for (let i = 0; i < flightLegs.length; i += 1) {
             const leg = flightLegs[i];
+            if (!leg) continue;
             const result = await shopFetch<{
               inquiryId: string;
               quoteItems?: QuoteItem[];

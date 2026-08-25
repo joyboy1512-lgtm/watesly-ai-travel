@@ -58,8 +58,9 @@ Use IATA codes when possible. Dates must be YYYY-MM-DD. Never invent prices.
 Smart extraction (like search engines):
 - Parse ALL fields present in the message at once (dates, cities, people, rooms, hotel name).
 - Ask ONLY about fields still missing — never re-ask for data the customer already gave.
-- Infer serviceTypes from context: hotel stay details → hotel; route من X إلى Y → flight; both mentioned → both.
-- If ambiguous with no travel cues, leave serviceTypes empty and ask the Arabic service-type question.
+- Infer serviceTypes only when explicit (طيران، فنادق، من X إلى Y with origin, hotel dates+rooms).
+- «أريد السفر إلى دبي» or «trip to Dubai» alone → serviceTypes EMPTY — ask: flights only, flights+hotels, or hotels only. Do NOT assume flights.
+- If destination is known but serviceTypes empty, nextQuestion (Arabic) must offer the three options for that destination.
 
 Hotel search needs: destination, check-in (departDate), check-out (returnDate), adults, rooms.
 Flight search needs: origin, destination, departDate, adults (returnDate optional).

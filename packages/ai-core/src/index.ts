@@ -527,10 +527,12 @@ export type { AiTravelContext, InquirySlot } from "./inquiry-slots";
 export {
   HOTEL_SEARCH_YES_RE,
   SERVICE_TYPE_CLARIFY_QUESTION,
+  destinationDisplayLabel,
   hasExplicitServiceTypes,
   inferServiceTypesFromMessage,
   mergeServiceTypes,
   parseServiceTypesFromText,
+  serviceTypeClarifyQuestion,
 } from "./service-intent";
 export {
   extractPassportFromImage,

@@ -1,5 +1,8 @@
 import type { ServiceType, TravelInquiryFields } from "@watesly-travel/shared";
-import { SERVICE_TYPE_CLARIFY_QUESTION, hasExplicitServiceTypes } from "./service-intent";
+import {
+  serviceTypeClarifyQuestion,
+  hasExplicitServiceTypes,
+} from "./service-intent";
 
 export const HOTEL_UPSELL_PROMPT =
   "🏨 هل تريد البحث عن فنادق في الوجهة أيضاً؟\n• اكتب «ابحث عن فنادق» لعرض خيارات\n• أو اذكر *اسم فندق* معيّن لمعرفة أسعاره";
@@ -77,7 +80,7 @@ export function nextInquiryQuestion(
   const flight = wantsFlight(fields.serviceTypes);
 
   const questions: Record<InquirySlot, string> = {
-    serviceTypes: SERVICE_TYPE_CLARIFY_QUESTION,
+    serviceTypes: serviceTypeClarifyQuestion(fields.destination),
     origin: "من أي مدينة أو مطار ترغب بالمغادرة؟",
     destination: hotel && !flight
       ? "في أي مدينة تريد الإقامة؟"

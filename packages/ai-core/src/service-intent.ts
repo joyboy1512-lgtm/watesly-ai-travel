@@ -1,7 +1,23 @@
 import type { ServiceType } from "@watesly-travel/shared";
 
 export const SERVICE_TYPE_CLARIFY_QUESTION =
-  "هل تريد تذاكر طيران، فنادق، أم طيران وفنادق؟";
+  "هل تريد تذاكر *طيران* فقط، *طيران وفنادق*، أم *فنادق* فقط؟";
+
+const CITY_LABELS: Record<string, string> = {
+  DXB: "دبي",
+  KWI: "الكويت",
+  RUH: "الرياض",
+  JED: "جدة",
+  CAI: "القاهرة",
+  DOH: "الدوحة",
+  IST: "إسطنbul",
+  LHR: "لندن",
+  CDG: "باريس",
+};
+
+/** Generic «travel to X» without saying flights or hotels — service type is unknown. */
+const VAGUE_TRAVEL_ONLY_RE =
+  /(?:أريد|ابي|أبي|حاب|حابب|بدي|want\s+to)\s*(?:أ)?(?:سافر|روح|سفر)|(?:سفر|رحلة)\s*(?:إلى|الى|إلي|to)|travel\s+to|trip\s+to/i;
 
 export const HOTEL_UPSELL_PROMPT =
   "🏨 هل تريد البحث عن فنادق في الوجهة أيضاً؟\n• اكتب «ابحث عن فنادق» لعرض خيارات\n• أو اذكر *اسم فندق* معيّن لمعرفة أسعاره";
@@ -66,17 +82,48 @@ export function parseServiceTypesFromText(
   return null;
 }
 
-/** Infer service type from a rich message (like search forms) without asking redundantly. */
+/** Infer service type only when the message is explicit — not from «أريد السفر إلى دبي» alone. */
 export function inferServiceTypesFromMessage(text: string): ServiceType[] | null {
   const hasHotelCue = HOTEL_RE.test(text);
   const hasFlightCue = FLIGHT_RE.test(text);
   const hasRoute = ROUTE_RE.test(text);
   const hasStayShape = STAY_RANGE_RE.test(text) || ROOMS_RE.test(text);
 
+  const vagueTravelOnly =
+    VAGUE_TRAVEL_ONLY_RE.test(text) &&
+    !hasFlightCue &&
+    !hasHotelCue &&
+    !hasStayShape;
+
+  if (vagueTravelOnly) {
+    return null;
+  }
+
   if (hasHotelCue && hasFlightCue) return ["flight", "hotel"];
   if (hasHotelCue || (hasStayShape && !hasRoute)) return ["hotel"];
   if (hasFlightCue || hasRoute) return ["flight"];
   return null;
+}
+
+export function destinationDisplayLabel(codeOrName?: string | null): string {
+  if (!codeOrName) return "";
+  const upper = codeOrName.toUpperCase();
+  return CITY_LABELS[upper] || codeOrName;
+}
+
+/** Ask flight vs hotel when destination is known but intent is not. */
+export function serviceTypeClarifyQuestion(destination?: string | null): string {
+  const place = destinationDisplayLabel(destination);
+  if (place) {
+    return (
+      `تمام — الوجهة *${place}*.\n` +
+      "ماذا تريد بالتحديد؟\n" +
+      "1️⃣ *تذاكر طيران* فقط\n" +
+      "2️⃣ *طيران وفنادق*\n" +
+      "3️⃣ *فنادق* فقط"
+    );
+  }
+  return SERVICE_TYPE_CLARIFY_QUESTION;
 }
 
 export function mergeServiceTypes(

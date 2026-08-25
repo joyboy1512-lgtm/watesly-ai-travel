@@ -306,8 +306,6 @@ export function ShopHeroBanner(props: Props) {
       <div className="exp-home-shade" aria-hidden />
 
       <div className="exp-home-content">
-        <h1 className="exp-home-tagline">مكان واحد تذهب إليه لتذهب إلى أي مكان</h1>
-
         <div className="exp-icon-tabs exp-icon-tabs-hero" role="tablist" aria-label="نوع الحجز">
           {PRODUCTS.map(({ key, label, icon }) => (
             <button
@@ -806,6 +804,8 @@ export function ShopHeroBanner(props: Props) {
           {props.error ? <p className="shop-error exp-dialog-msg">{props.error}</p> : null}
           {props.message ? <p className="shop-status exp-dialog-msg">{props.message}</p> : null}
         </div>
+
+        <h1 className="exp-home-tagline">مكان واحد تذهب إليه لتذهب إلى أي مكان</h1>
       </div>
     </section>
   );

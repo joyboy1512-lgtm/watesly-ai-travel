@@ -29,17 +29,12 @@ function Stars({ value }: { value: number }) {
 }
 
 export function ShopLanding({ onPickDestination, onPickOffer }: Props) {
+  const footerStats = SHOP_STATS.filter(
+    (row) => row.label !== "مسافر سعيد" && row.label !== "تقييم العملاء",
+  );
+
   return (
     <div className="shop-landing">
-      <section className="shop-stats-bar" aria-label="أرقام WeekendGate">
-        {SHOP_STATS.map((row) => (
-          <div key={row.label} className="shop-stat">
-            <strong>{row.value}</strong>
-            <span>{row.label}</span>
-          </div>
-        ))}
-      </section>
-
       <section className="shop-section" id="destinations">
         <div className="shop-section-head">
           <div>
@@ -173,6 +168,17 @@ export function ShopLanding({ onPickDestination, onPickOffer }: Props) {
           </Link>
         </div>
       </section>
+
+      {footerStats.length > 0 ? (
+        <section className="shop-stats-bar shop-stats-bar-footer" aria-label="أرقام WeekendGate">
+          {footerStats.map((row) => (
+            <div key={row.label} className="shop-stat">
+              <strong>{row.value}</strong>
+              <span>{row.label}</span>
+            </div>
+          ))}
+        </section>
+      ) : null}
     </div>
   );
 }

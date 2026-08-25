@@ -12,6 +12,11 @@ import type {
 } from "./types-chat";
 import { EMPTY_USAGE } from "./types-chat";
 import { OpenAiProvider } from "./openai-provider";
+import {
+  SERVICE_TYPE_CLARIFY_QUESTION,
+  hasExplicitServiceTypes,
+  mergeServiceTypes,
+} from "./service-intent";
 
 const CITY_ALIASES: Record<string, string> = {
   الرياض: "RUH",
@@ -57,6 +62,9 @@ function parseDateToken(text: string): string | undefined {
 
 function computeMissing(fields: TravelInquiryFields): string[] {
   const missing: string[] = [];
+  if (!hasExplicitServiceTypes(fields.serviceTypes)) {
+    missing.push("serviceTypes");
+  }
   for (const key of INQUIRY_REQUIRED_FIELDS) {
     const value = fields[key as keyof TravelInquiryFields];
     if (value === undefined || value === null || value === "") {
@@ -68,6 +76,7 @@ function computeMissing(fields: TravelInquiryFields): string[] {
 
 function nextQuestionFor(missing: string[]): string | null {
   const map: Record<string, string> = {
+    serviceTypes: SERVICE_TYPE_CLARIFY_QUESTION,
     origin: "من أي مدينة أو مطار ترغب بالمغادرة؟",
     destination: "ما هي الوجهة المطلوبة؟",
     departDate: "ما هو تاريخ المغادرة؟ (مثال: 2026-09-15)",
@@ -175,13 +184,9 @@ export class MockAiProvider implements AiProvider {
     }
 
     if (!fields.adults) fields.adults = 1;
-    if (/(فندق|فنادق|إقامة|hotel)/i.test(text)) {
-      fields.serviceTypes = ["hotel"];
-    } else if (/(نقل|مواصلات|transfer)/i.test(text)) {
-      fields.serviceTypes = ["transfer"];
-    } else {
-      fields.serviceTypes = fields.serviceTypes ?? ["flight"];
-    }
+
+    const mergedServiceTypes = mergeServiceTypes(text, input.current?.serviceTypes);
+    fields.serviceTypes = mergedServiceTypes ?? null;
 
     // If user replies with a bare city while a field is missing
     if (
@@ -276,9 +281,9 @@ function mockSearchCalls(
   const allowed = new Set(
     tools.filter((tool) => tool.type === "function").map((tool) => tool.name),
   );
-  const services: string[] = extraction.fields.serviceTypes?.length
-    ? [...extraction.fields.serviceTypes]
-    : ["flight"];
+  const services: string[] = hasExplicitServiceTypes(extraction.fields.serviceTypes)
+    ? [...extraction.fields.serviceTypes!]
+    : [];
   const calls: AiFunctionCall[] = [];
   if (
     extraction.readyToSearch &&
@@ -424,6 +429,12 @@ export {
 export type { ToolAvailability } from "./tools/registry";
 export * from "./types-chat";
 
+export {
+  SERVICE_TYPE_CLARIFY_QUESTION,
+  hasExplicitServiceTypes,
+  mergeServiceTypes,
+  parseServiceTypesFromText,
+} from "./service-intent";
 export {
   extractPassportFromImage,
   parseMrzText,

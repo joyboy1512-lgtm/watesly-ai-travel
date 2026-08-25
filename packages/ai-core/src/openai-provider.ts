@@ -7,6 +7,11 @@ import {
   type AiProvider,
   type TokenUsage,
 } from "./types-chat";
+import {
+  SERVICE_TYPE_CLARIFY_QUESTION,
+  hasExplicitServiceTypes,
+  mergeServiceTypes,
+} from "./service-intent";
 
 type ResponsesJson = {
   id?: string;
@@ -43,8 +48,15 @@ function usageFrom(json: ResponsesJson): TokenUsage {
 }
 
 const EXTRACT_INSTRUCTIONS = `Extract travel booking fields from the user message.
-Return JSON only with keys: origin, destination, departDate, returnDate, adults, children, infants, cabinClass, budgetAmount, budgetCurrency, serviceTypes, summary, nextQuestion.
-Use IATA codes when possible. Dates must be YYYY-MM-DD. Never invent prices.`;
+Return JSON only with keys: origin, destination, departDate, returnDate, adults, children, infants, cabinClass, budgetAmount, budgetCurrency, serviceTypes, missingFields, summary, nextQuestion.
+Use IATA codes when possible. Dates must be YYYY-MM-DD. Never invent prices.
+
+Service type rules:
+- If the customer has NOT clearly asked for flights, hotels, or both, leave serviceTypes null/empty.
+- Set nextQuestion (Arabic) to: «هل تريد تذاكر طيران، فنادق، أم طيران وفنادق؟»
+- Do NOT default to flight-only when ambiguous.
+- serviceTypes values: "flight", "hotel", or both ["flight","hotel"] when they want package.
+- Include "serviceTypes" in missingFields when still unknown.`;
 
 export class OpenAiProvider implements AiProvider {
   readonly name = "openai";
@@ -155,14 +167,35 @@ export class OpenAiProvider implements AiProvider {
       ...(input.current || {}),
       ...parsed.fields,
     };
+    const mergedServiceTypes = mergeServiceTypes(
+      input.messageText,
+      fields.serviceTypes ?? input.current?.serviceTypes,
+    );
+    fields.serviceTypes = mergedServiceTypes ?? null;
+
     const missingFields = Array.isArray(parsed.missingFields)
-      ? parsed.missingFields
+      ? [...parsed.missingFields]
       : [];
+    if (!hasExplicitServiceTypes(fields.serviceTypes)) {
+      if (!missingFields.includes("serviceTypes")) {
+        missingFields.unshift("serviceTypes");
+      }
+    }
+
+    const nextQuestion =
+      parsed.nextQuestion ||
+      (missingFields.includes("serviceTypes")
+        ? SERVICE_TYPE_CLARIFY_QUESTION
+        : null);
+
     return {
       fields,
       missingFields,
-      nextQuestion: parsed.nextQuestion,
-      readyToSearch: missingFields.length === 0 && Boolean(fields.origin && fields.destination && fields.departDate),
+      nextQuestion,
+      readyToSearch:
+        missingFields.length === 0 &&
+        hasExplicitServiceTypes(fields.serviceTypes) &&
+        Boolean(fields.origin && fields.destination && fields.departDate),
       summary: parsed.summary || "استعلام سفر",
       prices: [],
       provider: this.name,

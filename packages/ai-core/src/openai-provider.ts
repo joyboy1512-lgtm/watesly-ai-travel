@@ -7,6 +7,15 @@ import {
   type AiProvider,
   type TokenUsage,
 } from "./types-chat";
+import {
+  hasExplicitServiceTypes,
+  mergeServiceTypes,
+} from "./service-intent";
+import {
+  computeInquiryMissing,
+  nextInquiryQuestion,
+  wantsHotel,
+} from "./inquiry-slots";
 
 type ResponsesJson = {
   id?: string;
@@ -43,8 +52,23 @@ function usageFrom(json: ResponsesJson): TokenUsage {
 }
 
 const EXTRACT_INSTRUCTIONS = `Extract travel booking fields from the user message.
-Return JSON only with keys: origin, destination, departDate, returnDate, adults, children, infants, cabinClass, budgetAmount, budgetCurrency, serviceTypes, summary, nextQuestion.
-Use IATA codes when possible. Dates must be YYYY-MM-DD. Never invent prices.`;
+Return JSON only with keys: origin, destination, departDate, returnDate, adults, children, infants, rooms, preferredHotel, cabinClass, budgetAmount, budgetCurrency, serviceTypes, missingFields, summary, nextQuestion.
+Use IATA codes when possible. Dates must be YYYY-MM-DD. Never invent prices.
+
+Smart extraction (like search engines):
+- Parse ALL fields present in the message at once (dates, cities, people, rooms, hotel name).
+- Ask ONLY about fields still missing — never re-ask for data the customer already gave.
+- Infer serviceTypes only when explicit (طيران، فنادق، من X إلى Y with origin, hotel dates+rooms).
+- «أريد السفر إلى دبي» or «trip to Dubai» alone → serviceTypes EMPTY — ask: flights only, flights+hotels, or hotels only. Do NOT assume flights.
+- If destination is known but serviceTypes empty, nextQuestion (Arabic) must offer the three options for that destination.
+
+Hotel search needs: destination, check-in (departDate), check-out (returnDate), adults, rooms.
+Flight search needs: origin, destination, departDate, adults (returnDate optional).
+Both: all of the above.
+
+After flight-only results, the assistant may offer hotel search — not part of extraction.
+
+Include missing field names in missingFields. Use Arabic nextQuestion for the first missing field only.`;
 
 export class OpenAiProvider implements AiProvider {
   readonly name = "openai";
@@ -155,14 +179,28 @@ export class OpenAiProvider implements AiProvider {
       ...(input.current || {}),
       ...parsed.fields,
     };
-    const missingFields = Array.isArray(parsed.missingFields)
-      ? parsed.missingFields
-      : [];
+    const mergedServiceTypes = mergeServiceTypes(
+      input.messageText,
+      fields.serviceTypes ?? input.current?.serviceTypes,
+    );
+    fields.serviceTypes = mergedServiceTypes ?? null;
+    if (!fields.adults) fields.adults = null;
+
+    const missingFields = computeInquiryMissing(fields);
+    if (missingFields.length === 0 && !fields.adults) fields.adults = 1;
+    if (missingFields.length === 0 && wantsHotel(fields.serviceTypes) && !fields.rooms) {
+      fields.rooms = 1;
+    }
+
+    const nextQuestion =
+      parsed.nextQuestion ||
+      nextInquiryQuestion(missingFields, fields);
+
     return {
       fields,
-      missingFields,
-      nextQuestion: parsed.nextQuestion,
-      readyToSearch: missingFields.length === 0 && Boolean(fields.origin && fields.destination && fields.departDate),
+      missingFields: missingFields.map(String),
+      nextQuestion,
+      readyToSearch: missingFields.length === 0,
       summary: parsed.summary || "استعلام سفر",
       prices: [],
       provider: this.name,
@@ -199,6 +237,8 @@ function parseExtractJson(raw: string): {
         cabinClass: strOrUndef(json.cabinClass),
         budgetAmount: numOrUndef(json.budgetAmount),
         budgetCurrency: strOrUndef(json.budgetCurrency),
+        rooms: numOrUndef(json.rooms),
+        preferredHotel: strOrUndef(json.preferredHotel),
         serviceTypes: serviceTypes as AiExtractResult["fields"]["serviceTypes"],
       },
       missingFields: Array.isArray(json.missingFields)

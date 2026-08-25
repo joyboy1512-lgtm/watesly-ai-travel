@@ -103,7 +103,6 @@ export class BotPipelineService {
           source: "whatsapp",
           status: "collecting",
           adults: 1,
-          serviceTypes: ["flight"],
         },
       });
     }
@@ -172,7 +171,7 @@ export class BotPipelineService {
           extraction.fields.budgetCurrency ?? inquiry.budgetCurrency,
         preferences: extraction.fields.preferences ?? inquiry.preferences,
         serviceTypes: asJson(
-          extraction.fields.serviceTypes ?? inquiry.serviceTypes ?? ["flight"],
+          extraction.fields.serviceTypes ?? inquiry.serviceTypes ?? null,
         ),
         missingFields: asJson(extraction.missingFields),
         aiSummary: extraction.summary,
@@ -229,7 +228,6 @@ export class BotPipelineService {
           source: "whatsapp",
           status: "collecting",
           adults: 1,
-          serviceTypes: ["flight"],
         },
       });
     }
@@ -298,7 +296,7 @@ export class BotPipelineService {
           extraction.fields.budgetCurrency ?? inquiry.budgetCurrency,
         preferences: extraction.fields.preferences ?? inquiry.preferences,
         serviceTypes: asJson(
-          extraction.fields.serviceTypes ?? inquiry.serviceTypes ?? ["flight"],
+          extraction.fields.serviceTypes ?? inquiry.serviceTypes ?? null,
         ),
         missingFields: asJson(extraction.missingFields),
         aiSummary: extraction.summary,
@@ -360,16 +358,17 @@ export class BotPipelineService {
 
     const serviceTypes = Array.isArray(inquiry.serviceTypes)
       ? (inquiry.serviceTypes as string[])
-      : ["flight"];
+      : [];
+    if (serviceTypes.length === 0) {
+      throw new BadRequestException(
+        "حدد نوع الخدمة: تذاكر طيران، فنادق، أو طيران وفنادق",
+      );
+    }
     const wantHotels =
       input.includeHotels ??
       (serviceTypes.includes("hotel") || serviceTypes.includes("package"));
     const wantFlights =
-      serviceTypes.includes("flight") ||
-      serviceTypes.includes("package") ||
-      (!serviceTypes.includes("hotel") &&
-        !serviceTypes.includes("car") &&
-        serviceTypes.length === 0);
+      serviceTypes.includes("flight") || serviceTypes.includes("package");
 
     if (wantFlights && (!inquiry.origin || !inquiry.destination)) {
       throw new Error("بيانات الطيران غير مكتملة (المغادرة والوجهة)");

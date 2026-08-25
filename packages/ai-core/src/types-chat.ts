@@ -54,6 +54,8 @@ export type AiChatTurnInput = {
   previousResponseId?: string;
   tools: AiToolDefinition[];
   functionOutputs?: Array<{ callId: string; output: string }>;
+  /** Accumulated travel slots across turns (mock / fallback path). */
+  inquiryContext?: TravelInquiryFields;
 };
 
 export type AiChatTurnResult = {

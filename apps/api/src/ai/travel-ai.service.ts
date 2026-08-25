@@ -25,7 +25,7 @@ import {
   getTransferProviderForOrg,
 } from "../common/provider-runtime";
 import { hotelCatalogEntry, serializeHotelDetailsForAi, serializeSearchResult } from "./tool-result-serializers";
-import type { HotelOffer } from "@watesly-travel/shared";
+import type { HotelOffer, TravelInquiryFields } from "@watesly-travel/shared";
 import { chatTextForAi, parseChatAttachments } from "@watesly-travel/shared";
 
 type HotelCatalogEntry = {
@@ -52,6 +52,12 @@ function readHotelSearchContext(metadata: unknown): HotelSearchContext {
   if (!metadata || typeof metadata !== "object") return {};
   const row = metadata as { lastHotelSearch?: HotelSearchContext };
   return row.lastHotelSearch || {};
+}
+
+function readTravelInquiry(metadata: unknown): TravelInquiryFields {
+  if (!metadata || typeof metadata !== "object") return {};
+  const row = metadata as { travelInquiry?: TravelInquiryFields };
+  return row.travelInquiry || {};
 }
 
 function normalizeHotelName(value: string): string {
@@ -306,12 +312,16 @@ export class TravelAiService {
       .filter((row) => row.kind === "image")
       .map((row) => row.url);
 
+    const inquiryContext = readTravelInquiry(thread.metadata);
+    const slotExtractor = new MockAiProvider();
+
     let result: AiChatTurnResult = await provider.respond({
       system: TRAVEL_SYSTEM_INSTRUCTIONS,
       userText,
       imageUrls: imageUrls.length ? imageUrls : undefined,
       previousResponseId,
       tools,
+      inquiryContext,
     });
     usage = addUsage(usage, result.usage);
     model = result.model || model;
@@ -344,6 +354,7 @@ export class TravelAiService {
         previousResponseId: result.responseId || previousResponseId,
         tools,
         functionOutputs: outputs,
+        inquiryContext,
       });
       usage = addUsage(usage, result.usage);
       model = result.model || model;
@@ -352,10 +363,17 @@ export class TravelAiService {
       previousResponseId = result.responseId || previousResponseId;
     }
 
+    const slotSync = await slotExtractor.extractTravelIntent({
+      messageText: userText,
+      current: inquiryContext,
+    });
+
     if (!text) {
-      text = handoff
-        ? "سأحوّلك الآن إلى موظف مختص."
-        : "تم استلام رسالتك. هل يمكنك توضيح وجهتك وتاريخ السفر؟";
+      text =
+        slotSync.nextQuestion ||
+        (handoff
+          ? "سأحوّلك الآن إلى موظف مختص."
+          : "تم استلام رسالتك. هل يمكنك توضيح وجهتك وتاريخ السفر؟");
     }
 
     const estimatedCostUsd = estimateCostUsd(model, usage);
@@ -376,6 +394,12 @@ export class TravelAiService {
       data: {
         previousResponseId: lastId,
         spentUsd: { increment: estimatedCostUsd },
+        metadata: asJson({
+          ...(thread.metadata && typeof thread.metadata === "object"
+            ? (thread.metadata as Record<string, unknown>)
+            : {}),
+          travelInquiry: slotSync.fields,
+        }),
       },
     });
     await this.prisma.aiUsageLog.create({
@@ -934,6 +958,7 @@ export class TravelAiService {
         const extractor = new MockAiProvider();
         const extraction = await extractor.extractTravelIntent({
           messageText: str(args.messageText) || ctx.text,
+          current: readTravelInquiry(thread.metadata),
         });
         return JSON.stringify(extraction);
       }

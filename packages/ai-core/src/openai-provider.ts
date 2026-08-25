@@ -8,10 +8,13 @@ import {
   type TokenUsage,
 } from "./types-chat";
 import {
-  SERVICE_TYPE_CLARIFY_QUESTION,
   hasExplicitServiceTypes,
   mergeServiceTypes,
 } from "./service-intent";
+import {
+  computeInquiryMissing,
+  nextInquiryQuestion,
+} from "./inquiry-slots";
 
 type ResponsesJson = {
   id?: string;
@@ -56,7 +59,20 @@ Service type rules:
 - Set nextQuestion (Arabic) to: «هل تريد تذاكر طيران، فنادق، أم طيران وفنادق؟»
 - Do NOT default to flight-only when ambiguous.
 - serviceTypes values: "flight", "hotel", or both ["flight","hotel"] when they want package.
-- Include "serviceTypes" in missingFields when still unknown.`;
+
+Collection order (one question per turn):
+1) serviceTypes — if unknown
+2) origin — required for flight (not for hotel-only)
+3) destination — city or airport
+4) departDate — departure or hotel check-in (YYYY-MM-DD)
+5) returnDate — required for hotels (check-out); for flight+hotel package use same date
+6) adults — number of adults
+
+Hotel-only: skip origin, require destination + check-in + check-out + adults.
+Flight-only: origin + destination + departDate + adults (returnDate optional unless round-trip).
+Both: all flight fields + hotel check-out date.
+
+Include missing field names in missingFields. Use Arabic nextQuestion matching the first missing field.`;
 
 export class OpenAiProvider implements AiProvider {
   readonly name = "openai";
@@ -172,30 +188,20 @@ export class OpenAiProvider implements AiProvider {
       fields.serviceTypes ?? input.current?.serviceTypes,
     );
     fields.serviceTypes = mergedServiceTypes ?? null;
+    if (!fields.adults) fields.adults = null;
 
-    const missingFields = Array.isArray(parsed.missingFields)
-      ? [...parsed.missingFields]
-      : [];
-    if (!hasExplicitServiceTypes(fields.serviceTypes)) {
-      if (!missingFields.includes("serviceTypes")) {
-        missingFields.unshift("serviceTypes");
-      }
-    }
+    const missingFields = computeInquiryMissing(fields);
+    if (missingFields.length === 0 && !fields.adults) fields.adults = 1;
 
     const nextQuestion =
       parsed.nextQuestion ||
-      (missingFields.includes("serviceTypes")
-        ? SERVICE_TYPE_CLARIFY_QUESTION
-        : null);
+      nextInquiryQuestion(missingFields, fields);
 
     return {
       fields,
-      missingFields,
+      missingFields: missingFields.map(String),
       nextQuestion,
-      readyToSearch:
-        missingFields.length === 0 &&
-        hasExplicitServiceTypes(fields.serviceTypes) &&
-        Boolean(fields.origin && fields.destination && fields.departDate),
+      readyToSearch: missingFields.length === 0,
       summary: parsed.summary || "استعلام سفر",
       prices: [],
       provider: this.name,

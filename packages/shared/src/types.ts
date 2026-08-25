@@ -89,6 +89,10 @@ export interface TravelInquiryFields {
   budgetCurrency?: string | null;
   preferences?: string | null;
   serviceTypes?: ServiceType[] | null;
+  /** Hotel search — number of rooms (default 1 when searching if omitted). */
+  rooms?: number | null;
+  /** Named hotel the customer asked about (optional). */
+  preferredHotel?: string | null;
 }
 
 export interface FlightOffer {

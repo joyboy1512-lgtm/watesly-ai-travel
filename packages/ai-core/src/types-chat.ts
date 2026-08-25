@@ -1,4 +1,5 @@
 import type { TravelInquiryFields } from "@watesly-travel/shared";
+import type { AiTravelContext } from "./inquiry-slots";
 
 export type AiChannel =
   | "dashboard"
@@ -9,7 +10,7 @@ export type AiChannel =
 
 export interface AiExtractInput {
   messageText: string;
-  current?: TravelInquiryFields;
+  current?: AiTravelContext;
 }
 
 export interface AiExtractResult {
@@ -55,7 +56,7 @@ export type AiChatTurnInput = {
   tools: AiToolDefinition[];
   functionOutputs?: Array<{ callId: string; output: string }>;
   /** Accumulated travel slots across turns (mock / fallback path). */
-  inquiryContext?: TravelInquiryFields;
+  inquiryContext?: AiTravelContext;
 };
 
 export type AiChatTurnResult = {

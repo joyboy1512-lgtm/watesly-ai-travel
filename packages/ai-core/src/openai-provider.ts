@@ -14,6 +14,7 @@ import {
 import {
   computeInquiryMissing,
   nextInquiryQuestion,
+  wantsHotel,
 } from "./inquiry-slots";
 
 type ResponsesJson = {
@@ -51,28 +52,22 @@ function usageFrom(json: ResponsesJson): TokenUsage {
 }
 
 const EXTRACT_INSTRUCTIONS = `Extract travel booking fields from the user message.
-Return JSON only with keys: origin, destination, departDate, returnDate, adults, children, infants, cabinClass, budgetAmount, budgetCurrency, serviceTypes, missingFields, summary, nextQuestion.
+Return JSON only with keys: origin, destination, departDate, returnDate, adults, children, infants, rooms, preferredHotel, cabinClass, budgetAmount, budgetCurrency, serviceTypes, missingFields, summary, nextQuestion.
 Use IATA codes when possible. Dates must be YYYY-MM-DD. Never invent prices.
 
-Service type rules:
-- If the customer has NOT clearly asked for flights, hotels, or both, leave serviceTypes null/empty.
-- Set nextQuestion (Arabic) to: «هل تريد تذاكر طيران، فنادق، أم طيران وفنادق؟»
-- Do NOT default to flight-only when ambiguous.
-- serviceTypes values: "flight", "hotel", or both ["flight","hotel"] when they want package.
+Smart extraction (like search engines):
+- Parse ALL fields present in the message at once (dates, cities, people, rooms, hotel name).
+- Ask ONLY about fields still missing — never re-ask for data the customer already gave.
+- Infer serviceTypes from context: hotel stay details → hotel; route من X إلى Y → flight; both mentioned → both.
+- If ambiguous with no travel cues, leave serviceTypes empty and ask the Arabic service-type question.
 
-Collection order (one question per turn):
-1) serviceTypes — if unknown
-2) origin — required for flight (not for hotel-only)
-3) destination — city or airport
-4) departDate — departure or hotel check-in (YYYY-MM-DD)
-5) returnDate — required for hotels (check-out); for flight+hotel package use same date
-6) adults — number of adults
+Hotel search needs: destination, check-in (departDate), check-out (returnDate), adults, rooms.
+Flight search needs: origin, destination, departDate, adults (returnDate optional).
+Both: all of the above.
 
-Hotel-only: skip origin, require destination + check-in + check-out + adults.
-Flight-only: origin + destination + departDate + adults (returnDate optional unless round-trip).
-Both: all flight fields + hotel check-out date.
+After flight-only results, the assistant may offer hotel search — not part of extraction.
 
-Include missing field names in missingFields. Use Arabic nextQuestion matching the first missing field.`;
+Include missing field names in missingFields. Use Arabic nextQuestion for the first missing field only.`;
 
 export class OpenAiProvider implements AiProvider {
   readonly name = "openai";
@@ -192,6 +187,9 @@ export class OpenAiProvider implements AiProvider {
 
     const missingFields = computeInquiryMissing(fields);
     if (missingFields.length === 0 && !fields.adults) fields.adults = 1;
+    if (missingFields.length === 0 && wantsHotel(fields.serviceTypes) && !fields.rooms) {
+      fields.rooms = 1;
+    }
 
     const nextQuestion =
       parsed.nextQuestion ||
@@ -238,6 +236,8 @@ function parseExtractJson(raw: string): {
         cabinClass: strOrUndef(json.cabinClass),
         budgetAmount: numOrUndef(json.budgetAmount),
         budgetCurrency: strOrUndef(json.budgetCurrency),
+        rooms: numOrUndef(json.rooms),
+        preferredHotel: strOrUndef(json.preferredHotel),
         serviceTypes: serviceTypes as AiExtractResult["fields"]["serviceTypes"],
       },
       missingFields: Array.isArray(json.missingFields)

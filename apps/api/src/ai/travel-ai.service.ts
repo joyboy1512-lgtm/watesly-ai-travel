@@ -7,11 +7,15 @@ import {
   enabledOpenAiTools,
   EMPTY_USAGE,
   estimateCostUsd,
+  HOTEL_UPSELL_PROMPT,
   listToolAvailability,
   MockAiProvider,
   TRAVEL_SYSTEM_INSTRUCTIONS,
+  wantsFlight,
+  wantsHotel,
   type AiChannel,
   type AiChatTurnResult,
+  type AiTravelContext,
   type TokenUsage,
 } from "@watesly-travel/ai-core";
 import {
@@ -54,9 +58,9 @@ function readHotelSearchContext(metadata: unknown): HotelSearchContext {
   return row.lastHotelSearch || {};
 }
 
-function readTravelInquiry(metadata: unknown): TravelInquiryFields {
+function readTravelInquiry(metadata: unknown): AiTravelContext {
   if (!metadata || typeof metadata !== "object") return {};
-  const row = metadata as { travelInquiry?: TravelInquiryFields };
+  const row = metadata as { travelInquiry?: AiTravelContext };
   return row.travelInquiry || {};
 }
 
@@ -367,6 +371,21 @@ export class TravelAiService {
       messageText: userText,
       current: inquiryContext,
     });
+
+    const flightOnlyDone =
+      toolsUsed.includes("search_flights") && !toolsUsed.includes("search_hotels");
+    if (
+      flightOnlyDone &&
+      wantsFlight(slotSync.fields.serviceTypes) &&
+      !wantsHotel(slotSync.fields.serviceTypes)
+    ) {
+      slotSync.fields.awaitingHotelUpsell = true;
+      if (!text.includes("فندق")) {
+        text = `${text}\n\n${HOTEL_UPSELL_PROMPT}`;
+      }
+    } else if (toolsUsed.includes("search_hotels")) {
+      slotSync.fields.awaitingHotelUpsell = false;
+    }
 
     if (!text) {
       text =

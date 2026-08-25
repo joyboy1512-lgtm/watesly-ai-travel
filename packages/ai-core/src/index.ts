@@ -12,15 +12,23 @@ import type {
 import { EMPTY_USAGE } from "./types-chat";
 import { OpenAiProvider } from "./openai-provider";
 import {
+  HOTEL_SEARCH_YES_RE,
   hasExplicitServiceTypes,
   mergeServiceTypes,
   parseServiceTypesFromText,
 } from "./service-intent";
 import {
+  AiTravelContext,
+  HOTEL_UPSELL_PROMPT,
   buildInquirySummary,
   computeInquiryMissing,
   nextInquiryQuestion,
+  parseDateRange,
+  parsePeopleCount,
+  parsePreferredHotel,
   parseRelativeDate,
+  parseRoomsCount,
+  parseSingleDateToken,
   wantsFlight,
   wantsHotel,
 } from "./inquiry-slots";
@@ -55,6 +63,9 @@ function normalizeCity(value?: string | null): string | undefined {
 }
 
 function parseDateToken(text: string): string | undefined {
+  const range = parseDateRange(text);
+  if (range.checkIn) return range.checkIn;
+
   const iso = text.match(/\b(20\d{2}-\d{2}-\d{2})\b/);
   if (iso?.[1]) return iso[1];
 
@@ -69,7 +80,14 @@ function parseDateToken(text: string): string | undefined {
 }
 
 function isServiceTypeOnlyReply(text: string): boolean {
-  return mergeServiceTypes(text, null) !== null && text.trim().length <= 24;
+  if (!parseServiceTypesFromText(text)) return false;
+  if (parseDateToken(text)) return false;
+  if (/من\s+\S+\s+(?:إلى|الى|إلي)/i.test(text)) return false;
+  for (const alias of Object.keys(CITY_ALIASES)) {
+    if (alias.length >= 3 && text.includes(alias)) return false;
+  }
+  if (/\b[A-Z]{3}\b/.test(text.toUpperCase())) return false;
+  return true;
 }
 
 /**
@@ -82,14 +100,34 @@ export class MockAiProvider implements AiProvider {
   async extractTravelIntent(input: AiExtractInput): Promise<AiExtractResult> {
     const text = input.messageText.trim();
     const lower = text.toLowerCase();
-    const fields: TravelInquiryFields = { ...(input.current ?? {}) };
+    const fields: AiTravelContext = { ...(input.current ?? {}) };
 
     const mergedServiceTypes = mergeServiceTypes(text, input.current?.serviceTypes);
     fields.serviceTypes = mergedServiceTypes ?? null;
 
+    if (fields.awaitingHotelUpsell && HOTEL_SEARCH_YES_RE.test(text)) {
+      fields.serviceTypes = wantsFlight(fields.serviceTypes)
+        ? ["flight", "hotel"]
+        : ["hotel"];
+      fields.awaitingHotelUpsell = false;
+    }
+
+    const preferredHotel = parsePreferredHotel(text);
+    if (preferredHotel) {
+      fields.preferredHotel = preferredHotel;
+      if (!fields.serviceTypes) fields.serviceTypes = ["hotel"];
+      else if (!wantsHotel(fields.serviceTypes)) {
+        fields.serviceTypes = [...fields.serviceTypes, "hotel"];
+      }
+      fields.awaitingHotelUpsell = false;
+    }
+
     const serviceOnly = isServiceTypeOnlyReply(text);
 
     if (!serviceOnly) {
+      const stayRange = parseDateRange(text);
+      if (stayRange.checkIn) fields.departDate = stayRange.checkIn;
+      if (stayRange.checkOut) fields.returnDate = stayRange.checkOut;
       const routeMatch = text.match(
         /من\s+([A-Za-z\u0600-\u06FF]+)\s+(?:إلى|الى|إلي)\s+([A-Za-z\u0600-\u06FF]+)/i,
       );
@@ -161,6 +199,9 @@ export class MockAiProvider implements AiProvider {
         }
       }
 
+      const people = parsePeopleCount(text);
+      if (people) fields.adults = people;
+
       const adultsMatch = text.match(/(?:بالغ|بالغين|adults?)\s*[:=]?\s*(\d+)/i);
       if (adultsMatch?.[1]) fields.adults = Number(adultsMatch[1]);
       if (/^(?:1|[\u0661]|شخص(?:\s|$)|واحد)$/i.test(text.trim())) fields.adults = 1;
@@ -173,6 +214,9 @@ export class MockAiProvider implements AiProvider {
       if (text.includes("ثلاثة") || text.includes("3 أشخاص")) {
         fields.adults = 3;
       }
+
+      const rooms = parseRoomsCount(text);
+      if (rooms) fields.rooms = rooms;
 
       const childrenMatch = text.match(/(?:طفل|أطفال|children)\s*[:=]?\s*(\d+)/i);
       if (childrenMatch?.[1]) fields.children = Number(childrenMatch[1]);
@@ -187,7 +231,11 @@ export class MockAiProvider implements AiProvider {
         fields.budgetCurrency = "KWD";
       }
 
-      const pending = computeInquiryMissing({ ...fields, adults: fields.adults ?? null });
+      const pending = computeInquiryMissing({
+        ...fields,
+        adults: fields.adults ?? null,
+        rooms: fields.rooms ?? null,
+      });
       const nextSlot = pending[0];
       if (
         (CITY_ALIASES[text] || CITY_ALIASES[lower]) &&
@@ -196,10 +244,12 @@ export class MockAiProvider implements AiProvider {
         const city = normalizeCity(text);
         if (nextSlot === "origin") fields.origin = city;
         else fields.destination = city;
-      } else if (/^\d+$/.test(text.trim()) && nextSlot === "adults") {
-        fields.adults = Math.max(1, Number(text.trim()));
+      } else if (/^\d+$/.test(text.trim())) {
+        const n = Math.max(1, Number(text.trim()));
+        if (nextSlot === "adults") fields.adults = n;
+        if (nextSlot === "rooms") fields.rooms = n;
       } else if (nextSlot === "departDate" || nextSlot === "returnDate") {
-        const rel = parseRelativeDate(text);
+        const rel = parseRelativeDate(text) || parseSingleDateToken(text);
         if (rel) {
           if (nextSlot === "departDate") fields.departDate = rel;
           else fields.returnDate = rel;
@@ -208,10 +258,14 @@ export class MockAiProvider implements AiProvider {
     }
 
     if (!fields.adults) fields.adults = null;
+    if (!fields.rooms) fields.rooms = null;
 
     const missingFields = computeInquiryMissing(fields);
     const readyToSearch = missingFields.length === 0;
-    if (readyToSearch && !fields.adults) fields.adults = 1;
+    if (readyToSearch) {
+      if (!fields.adults) fields.adults = 1;
+      if (wantsHotel(fields.serviceTypes) && !fields.rooms) fields.rooms = 1;
+    }
     const summary = buildInquirySummary(fields);
 
     return {
@@ -228,8 +282,26 @@ export class MockAiProvider implements AiProvider {
 
   async respond(input: AiChatTurnInput): Promise<AiChatTurnResult> {
     if (input.functionOutputs?.length) {
+      let text = summarizeMockToolOutputs(input.functionOutputs);
+      const ctx = input.inquiryContext as AiTravelContext | undefined;
+      const hadFlightResults = input.functionOutputs.some((row) => {
+        try {
+          const parsed = JSON.parse(row.output) as { items?: unknown[]; presentAs?: string };
+          return Boolean(parsed.items?.length && parsed.presentAs !== "short_list");
+        } catch {
+          return false;
+        }
+      });
+      if (
+        ctx &&
+        wantsFlight(ctx.serviceTypes) &&
+        !wantsHotel(ctx.serviceTypes) &&
+        hadFlightResults
+      ) {
+        text = `${text}\n\n${HOTEL_UPSELL_PROMPT}`;
+      }
       return {
-        text: summarizeMockToolOutputs(input.functionOutputs),
+        text,
         model: "mock-rules-v1",
         usage: EMPTY_USAGE,
         functionCalls: [],
@@ -331,12 +403,14 @@ function mockSearchCalls(
       callId: "mock_search_hotels",
       name: "search_hotels",
       arguments: JSON.stringify({
-        location: extraction.fields.destination,
+        location: extraction.fields.preferredHotel
+          ? `${extraction.fields.destination} ${extraction.fields.preferredHotel}`
+          : extraction.fields.destination,
         checkInDate: extraction.fields.departDate,
         checkOutDate: checkOut,
         adults: extraction.fields.adults || 1,
         children: extraction.fields.children || 0,
-        rooms: 1,
+        rooms: extraction.fields.rooms || 1,
       }),
     });
   }
@@ -437,16 +511,24 @@ export * from "./types-chat";
 export {
   buildInquirySummary,
   computeInquiryMissing,
+  HOTEL_UPSELL_PROMPT,
   nextInquiryQuestion,
+  parseDateRange,
+  parsePeopleCount,
+  parsePreferredHotel,
   parseRelativeDate,
+  parseRoomsCount,
+  parseSingleDateToken,
   wantsFlight,
   wantsHotel,
   wantsTransfer,
 } from "./inquiry-slots";
-export type { InquirySlot } from "./inquiry-slots";
+export type { AiTravelContext, InquirySlot } from "./inquiry-slots";
 export {
+  HOTEL_SEARCH_YES_RE,
   SERVICE_TYPE_CLARIFY_QUESTION,
   hasExplicitServiceTypes,
+  inferServiceTypesFromMessage,
   mergeServiceTypes,
   parseServiceTypesFromText,
 } from "./service-intent";

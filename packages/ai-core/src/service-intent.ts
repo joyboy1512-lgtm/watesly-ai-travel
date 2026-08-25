@@ -3,6 +3,9 @@ import type { ServiceType } from "@watesly-travel/shared";
 export const SERVICE_TYPE_CLARIFY_QUESTION =
   "هل تريد تذاكر طيران، فنادق، أم طيران وفنادق؟";
 
+export const HOTEL_UPSELL_PROMPT =
+  "🏨 هل تريد البحث عن فنادق في الوجهة أيضاً؟\n• اكتب «ابحث عن فنادق» لعرض خيارات\n• أو اذكر *اسم فندق* معيّن لمعرفة أسعاره";
+
 const FLIGHT_RE =
   /(?:طيران|تذك(?:ير|ار(?:ة|ات)?)|رحل(?:ة|ات)|✈|flight|ticket|tickets|airfare)/i;
 const HOTEL_RE =
@@ -10,6 +13,10 @@ const HOTEL_RE =
 const BOTH_RE =
   /(?:كلاهما|الاثن(?:ين|ان)|طيران\s*(?:و|\+|مع)\s*فنادق|فنادق\s*(?:و|\+|مع)\s*طيران|باق(?:ة|ات)|package|both|flights?\s+and\s+hotels?)/i;
 const TRANSFER_RE = /(?:نقل|مواصلات|transfer|transfers)/i;
+const ROUTE_RE = /من\s+\S+\s+(?:إلى|الى|إلي|to)\s+\S+/i;
+const ROOMS_RE = /(?:\d+\s*(?:غرف|غرفة|rooms?)|(?:غرف|غرفة|rooms?)\s*[:=]?\s*\d+)/i;
+const STAY_RANGE_RE =
+  /(?:من|from|check[\s-]?in|دخول|تاريخ\s*الدخول).+(?:إلى|الى|إلي|to|until|حتى|check[\s-]?out|مغادرة)/i;
 
 /** Short replies when the assistant just asked what service type is needed. */
 const FLIGHT_ONLY_REPLY =
@@ -18,6 +25,9 @@ const HOTEL_ONLY_REPLY =
   /^(?:2|[\u0662]|فنادق|فندق|إقام(?:ة|ات)|hotel|hotels?|stay)$/i;
 const BOTH_REPLY =
   /^(?:3|[\u0663]|كلاهما|الاثن(?:ين|ان)|طيران\s*(?:و|\+)\s*فنادق|فنادق\s*(?:و|\+)\s*طيران|both|package|باق(?:ة|ات))$/i;
+
+export const HOTEL_SEARCH_YES_RE =
+  /(?:ابحث\s*(?:لي\s*)?عن\s*فنادق|فنادق\s*في|أريد\s*فنادق|نعم.*فندق|yes.*hotel|search\s*hotels?)/i;
 
 export function hasExplicitServiceTypes(types: ServiceType[] | null | undefined) {
   return Array.isArray(types) && types.length > 0;
@@ -56,12 +66,29 @@ export function parseServiceTypesFromText(
   return null;
 }
 
+/** Infer service type from a rich message (like search forms) without asking redundantly. */
+export function inferServiceTypesFromMessage(text: string): ServiceType[] | null {
+  const hasHotelCue = HOTEL_RE.test(text);
+  const hasFlightCue = FLIGHT_RE.test(text);
+  const hasRoute = ROUTE_RE.test(text);
+  const hasStayShape = STAY_RANGE_RE.test(text) || ROOMS_RE.test(text);
+
+  if (hasHotelCue && hasFlightCue) return ["flight", "hotel"];
+  if (hasHotelCue || (hasStayShape && !hasRoute)) return ["hotel"];
+  if (hasFlightCue || hasRoute) return ["flight"];
+  return null;
+}
+
 export function mergeServiceTypes(
   messageText: string,
   current?: ServiceType[] | null,
 ): ServiceType[] | null | undefined {
   const parsed = parseServiceTypesFromText(messageText);
   if (parsed) return parsed;
+
+  const inferred = inferServiceTypesFromMessage(messageText);
+  if (inferred) return inferred;
+
   if (hasExplicitServiceTypes(current)) return current!;
   return null;
 }

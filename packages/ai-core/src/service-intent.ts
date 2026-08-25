@@ -10,7 +10,7 @@ const CITY_LABELS: Record<string, string> = {
   JED: "جدة",
   CAI: "القاهرة",
   DOH: "الدوحة",
-  IST: "إسطنbul",
+  IST: "إسطنبول",
   LHR: "لندن",
   CDG: "باريس",
 };

@@ -211,7 +211,9 @@ function DatePick({
 
 export function ShopHeroBanner(props: Props) {
   const [travelersOpen, setTravelersOpen] = useState(false);
-  const heroImage = HERO_SLIDES[0]?.image;
+  const heroSlide = HERO_SLIDES[0];
+  const heroImage = heroSlide?.image;
+  const heroVideo = "video" in (heroSlide || {}) ? (heroSlide as { video?: string }).video : undefined;
 
   const travelerSummary =
     props.mode === "stays"
@@ -298,11 +300,27 @@ export function ShopHeroBanner(props: Props) {
 
   return (
     <section className="exp-home-hero" id="search">
-      <div
-        className="exp-home-bg"
-        style={{ backgroundImage: `url(${heroImage})` }}
-        aria-hidden
-      />
+      <div className="exp-home-bg" aria-hidden>
+        {heroVideo ? (
+          <video
+            className="exp-home-video"
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="metadata"
+            poster={heroImage}
+          >
+            <source src={heroVideo} type="video/mp4" />
+          </video>
+        ) : null}
+        {!heroVideo && heroImage ? (
+          <div className="exp-home-bg-image" style={{ backgroundImage: `url(${heroImage})` }} />
+        ) : null}
+        {heroVideo && heroImage ? (
+          <div className="exp-home-bg-image exp-home-bg-fallback" style={{ backgroundImage: `url(${heroImage})` }} />
+        ) : null}
+      </div>
       <div className="exp-home-shade" aria-hidden />
 
       <div className="exp-home-content">

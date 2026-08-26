@@ -197,9 +197,30 @@
 .exp-home-bg {
   position: absolute;
   inset: 0;
+  overflow: hidden;
+  background: #0b1c33;
+}
+
+.exp-home-bg-image {
+  position: absolute;
+  inset: 0;
   background-size: cover;
   background-position: center center;
   transform: scale(1.02);
+}
+
+.exp-home-bg-fallback {
+  z-index: 0;
+}
+
+.exp-home-video {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center center;
 }
 
 .exp-home-shade {

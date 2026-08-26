@@ -195,8 +195,8 @@ export const SHOP_REVIEWS: ShopReview[] = [
 
 export const HERO_SLIDES = [
   {
-    image:
-      "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?auto=format&fit=crop&w=1800&q=80",
+    image: "/media/hero-travel-poster.jpg",
+    video: "/media/hero-travel.mp4",
     kicker: "WEEKENDGATE TRAVEL",
     title: "الطبيعة العظيمة",
     subtitle: "سافر بمتعة",

@@ -3713,7 +3713,7 @@
 }
 
 .shop-ticket-time.end {
-  text-align: start;
+  text-align: end;
 }
 
 .shop-ticket-time strong {
@@ -4814,8 +4814,8 @@
 .shop-ticket-badges {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.35rem;
-  padding: 0.55rem 0.85rem 0;
+  gap: 0.25rem;
+  padding: 0.35rem 0.7rem 0;
 }
 
 .shop-ticket-badge {

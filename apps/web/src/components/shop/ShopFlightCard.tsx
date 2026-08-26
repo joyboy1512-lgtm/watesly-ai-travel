@@ -84,7 +84,10 @@ function LegRow({
   isReturn?: boolean;
 }) {
   return (
-    <div className={`shop-ticket-leg${isReturn ? " shop-ticket-leg-return" : ""}`}>
+    <div
+      className={`shop-ticket-leg${isReturn ? " shop-ticket-leg-return" : ""}`}
+      dir="ltr"
+    >
       <label className="shop-ticket-check">
         <input type="checkbox" checked={checked} onChange={onToggle} aria-label="اختيار الرحلة" />
       </label>

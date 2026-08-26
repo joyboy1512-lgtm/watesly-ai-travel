@@ -170,7 +170,7 @@ export function ShopFlightFilters({
               aria-selected={timeTab === "depart"}
               onClick={() => setTimeTab("depart")}
             >
-              رحلة الذهاب
+              {originLabel}
             </button>
             <button
               type="button"
@@ -179,7 +179,7 @@ export function ShopFlightFilters({
               aria-selected={timeTab === "return"}
               onClick={() => setTimeTab("return")}
             >
-              رحلة العودة
+              {destinationLabel}
             </button>
           </div>
         ) : null}

@@ -150,7 +150,7 @@ export function ShopFlightResultsClient() {
         const directCount = rows.filter((f) => packageMaxStops(f) === 0).length;
         setMessage(
           search.tripType === "roundtrip" && hasReturns
-            ? `تم جلب ${rows.length} عرض ذهاب وعودة عبر ${result.providerName || "المزوّد"}`
+            ? `تم جلب ${rows.length} عرض عبر ${result.providerName || "المزوّد"}`
             : search.directOnly
               ? `تم جلب ${rows.length} رحلة — ${directCount} مباشرة`
               : `تم جلب ${rows.length} رحلة عبر ${result.providerName || "المزوّد"}`,

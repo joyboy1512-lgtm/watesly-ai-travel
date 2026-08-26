@@ -189,7 +189,11 @@ export function ShopFlightCard({
   const showReturn = displayLeg === "both" || displayLeg === "return";
 
   function togglePick() {
-    setPicked(true);
+    setPicked((was) => {
+      const next = !was;
+      if (next) onViewDetails();
+      return next;
+    });
   }
 
   return (

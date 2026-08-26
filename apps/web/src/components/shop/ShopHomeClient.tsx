@@ -34,6 +34,7 @@ import { shopFetch } from "@/lib/shop-session";
 import { ShopLanding } from "@/components/shop/ShopLanding";
 import { ShopHeroBanner, type FlightLeg, type FlightTripType } from "@/components/shop/ShopHeroBanner";
 import type { ShopDestination, ShopOffer } from "@/lib/shop-content";
+import { openFlightResultsInNewTab } from "@/lib/flight-results-url";
 
 type Mode = "flights" | "stays" | "cars" | "activities";
 
@@ -300,6 +301,55 @@ export function ShopHomeClient() {
   }
 
   async function runSearch() {
+    if (mode === "flights") {
+      try {
+        if (tripType === "multicity") {
+          flightLegs.forEach((leg, i) => {
+            if (!leg?.origin || !leg.destination || !leg.departDate) {
+              throw new Error(`أكمل بيانات الرحلة ${i + 1}`);
+            }
+          });
+          openFlightResultsInNewTab({
+            tripType: "multicity",
+            adults,
+            children,
+            infants,
+            cabinClass,
+            directOnly,
+            legs: flightLegs.map((leg) => ({
+              origin: leg.origin,
+              originLabel: leg.originLabel,
+              destination: leg.destination,
+              destinationLabel: leg.destinationLabel,
+              departDate: leg.departDate,
+            })),
+          });
+          return;
+        }
+        if (!origin || !destination || !departDate) {
+          throw new Error("أدخل المغادرة والوجهة والتاريخ");
+        }
+        openFlightResultsInNewTab({
+          tripType,
+          origin,
+          originLabel,
+          destination,
+          destinationLabel,
+          departDate,
+          returnDate: tripType === "roundtrip" ? returnDate : undefined,
+          adults,
+          children,
+          infants,
+          cabinClass,
+          directOnly,
+        });
+        return;
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "فشل البحث");
+        return;
+      }
+    }
+
     setLoading(true);
     setError("");
     setMessage("");
@@ -312,102 +362,8 @@ export function ShopHomeClient() {
       setHotelFilters(defaultHotelFilters());
       setHotelSortKey("price_asc");
     }
-    if (mode === "flights") {
-      setFlightFilters(defaultFlightFilters());
-      setFlightSortKey("best");
-    }
     try {
-      if (mode === "flights") {
-        if (tripType === "multicity") {
-          flightLegs.forEach((leg, i) => {
-            if (!leg?.origin || !leg.destination || !leg.departDate) {
-              throw new Error(`أكمل بيانات الرحلة ${i + 1}`);
-            }
-          });
-          const combined: Offer[] = [];
-          let providerName = "المزوّد";
-          for (let i = 0; i < flightLegs.length; i += 1) {
-            const leg = flightLegs[i];
-            if (!leg) continue;
-            const result = await shopFetch<{
-              inquiryId: string;
-              quoteItems?: QuoteItem[];
-              providerName?: string;
-              flights: Offer[];
-            }>("/shop/search-flights", {
-              method: "POST",
-              timeoutMs: 60000,
-              body: JSON.stringify({
-                origin: leg.origin,
-                destination: leg.destination,
-                departDate: leg.departDate,
-                adults,
-                children,
-                infants,
-                cabinClass,
-              }),
-            });
-            if (i === 0) {
-              setInquiryId(result.inquiryId);
-              setQuoteItems(result.quoteItems || []);
-            }
-            providerName = result.providerName || providerName;
-            const tagged = (result.flights || []).map((row) => ({
-              ...row,
-              id: `${leg.id}-${row.id}`,
-              details: {
-                ...row.details,
-                originalOfferId: row.id,
-                legIndex: i + 1,
-                legLabel: `الرحلة ${i + 1}`,
-                legOrigin: leg.origin,
-                legDestination: leg.destination,
-                legDepartDate: leg.departDate,
-              },
-            }));
-            combined.push(...tagged);
-          }
-          setFlightResults(combined);
-          const directCount = combined.filter((f) => Number(f.details.stops || 0) === 0).length;
-          setMessage(
-            directOnly
-              ? `تم جلب ${combined.length} رحلة عبر ${flightLegs.length} مسارات — ${directCount} مباشرة`
-              : `تم جلب ${combined.length} رحلة عبر ${flightLegs.length} مسارات (${providerName})`,
-          );
-        } else {
-        if (!origin || !destination || !departDate) {
-          throw new Error("أدخل المغادرة والوجهة والتاريخ");
-        }
-        const result = await shopFetch<{
-          inquiryId: string;
-          quoteItems?: QuoteItem[];
-          providerName?: string;
-          flights: Offer[];
-        }>("/shop/search-flights", {
-          method: "POST",
-          timeoutMs: 60000,
-          body: JSON.stringify({
-            origin,
-            destination,
-            departDate,
-            returnDate: tripType === "roundtrip" ? returnDate : undefined,
-            adults,
-            children,
-            infants,
-            cabinClass,
-          }),
-        });
-        setInquiryId(result.inquiryId);
-        setQuoteItems(result.quoteItems || []);
-        const rows = result.flights || [];
-        setFlightResults(rows);
-        setMessage(
-          directOnly
-            ? `تم جلب ${rows.length} رحلة — ${rows.filter((f) => Number(f.details.stops || 0) === 0).length} مباشرة`
-            : `تم جلب ${rows.length} رحلة عبر ${result.providerName || "المزوّد"}`,
-        );
-        }
-      } else if (mode === "stays") {
+      if (mode === "stays") {
         const result = await shopFetch<{
           inquiryId: string;
           quoteItems?: QuoteItem[];

@@ -18,6 +18,14 @@ type Props = {
   originFallback?: string;
   destinationFallback?: string;
   onViewDetails: () => void;
+  badges?: Array<"best" | "cheapest" | "fastest">;
+  selectLabel?: string;
+};
+
+const BADGE_LABEL: Record<"best" | "cheapest" | "fastest", string> = {
+  best: "الأفضل",
+  cheapest: "الأرخص",
+  fastest: "الأسرع",
 };
 
 export function ShopFlightCard({
@@ -25,6 +33,8 @@ export function ShopFlightCard({
   originFallback = "",
   destinationFallback = "",
   onViewDetails,
+  badges = [],
+  selectLabel,
 }: Props) {
   const segs = getSegments(flight.details);
   const returnSegs = getReturnSegments(flight.details);
@@ -70,6 +80,15 @@ export function ShopFlightCard({
 
   return (
     <article className="shop-ticket-card">
+      {badges.length ? (
+        <div className="shop-ticket-badges">
+          {badges.map((b) => (
+            <span key={b} className={`shop-ticket-badge shop-ticket-badge-${b}`}>
+              {BADGE_LABEL[b]}
+            </span>
+          ))}
+        </div>
+      ) : null}
       {isFlexible ? (
         <p className="shop-ticket-flex-note">ترقية تذكرة مرنة متاحة</p>
       ) : null}
@@ -175,7 +194,7 @@ export function ShopFlightCard({
         </strong>
         <small className="shop-ticket-price-note">يشمل الضرائب والرسوم</small>
         <button type="button" className="shop-ticket-details-btn" onClick={onViewDetails}>
-          عرض التفاصيل
+          {selectLabel || "عرض التفاصيل"}
         </button>
       </div>
     </article>

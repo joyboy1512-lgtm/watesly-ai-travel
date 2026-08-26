@@ -331,3 +331,74 @@ export function flightFiltersActive(filters: FlightSearchFilters, directOnly = f
     Boolean(filters.maxDurationHours)
   );
 }
+
+/** Total trip duration (outbound + return when present). */
+export function totalTripDurationMinutes(flight: FlightOfferRow) {
+  const out = durationMinutes(flight.details.durationMinutes ?? flight.details.duration);
+  const outSafe = out === Number.MAX_SAFE_INTEGER ? 0 : out;
+  const returnSegs = getReturnSegments(flight.details);
+  if (!returnSegs.length) return outSafe || Number.MAX_SAFE_INTEGER;
+  const retRaw = durationMinutes(flight.details.returnDuration);
+  if (retRaw !== Number.MAX_SAFE_INTEGER) return outSafe + retRaw;
+  const retFirst = returnSegs[0];
+  const retLast = returnSegs[returnSegs.length - 1];
+  const computed = layoverMinutes(
+    retFirst?.departAt || retFirst?.departTime,
+    retLast?.arriveAt || retLast?.arriveTime,
+  );
+  return outSafe + (computed ?? 0);
+}
+
+export type FlightSortTabSummary = {
+  key: FlightSortKey;
+  label: string;
+  priceMinor: number | null;
+  durationMins: number | null;
+  currency: string;
+  flightId?: string;
+};
+
+/** Kayak-style Best / Cheapest / Quickest summaries from a result set. */
+export function summarizeFlightSortTabs(flights: FlightOfferRow[]): FlightSortTabSummary[] {
+  const currency = flights[0]?.currency || "KWD";
+  if (!flights.length) {
+    return [
+      { key: "best", label: "الأفضل", priceMinor: null, durationMins: null, currency },
+      { key: "price_asc", label: "الأرخص", priceMinor: null, durationMins: null, currency },
+      { key: "duration_asc", label: "الأسرع", priceMinor: null, durationMins: null, currency },
+    ];
+  }
+
+  const byBest = [...flights].sort((a, b) => scoreBest(a) - scoreBest(b))[0]!;
+  const byPrice = [...flights].sort((a, b) => a.sellAmountMinor - b.sellAmountMinor)[0]!;
+  const bySpeed = [...flights].sort(
+    (a, b) => totalTripDurationMinutes(a) - totalTripDurationMinutes(b),
+  )[0]!;
+
+  return [
+    {
+      key: "best",
+      label: "الأفضل",
+      priceMinor: byBest.sellAmountMinor,
+      durationMins: totalTripDurationMinutes(byBest),
+      currency: byBest.currency,
+      flightId: byBest.id,
+    },
+    {
+      key: "price_asc",
+      label: "الأرخص",
+      priceMinor: byPrice.sellAmountMinor,
+      durationMins: totalTripDurationMinutes(byPrice),
+      currency: byPrice.currency,
+      flightId: byPrice.id,
+    },
+    {
+      key: "duration_asc",
+      label: "الأسرع",
+      priceMinor: bySpeed.sellAmountMinor,
+      durationMins: totalTripDurationMinutes(bySpeed),
+      currency: bySpeed.currency,
+      flightId: bySpeed.id,
+    },
+  ];
+}

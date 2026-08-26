@@ -213,7 +213,7 @@ export function ShopHeroBanner(props: Props) {
   const [travelersOpen, setTravelersOpen] = useState(false);
   const heroSlide = HERO_SLIDES[0];
   const heroImage = heroSlide?.image;
-  const heroVideo = "video" in (heroSlide || {}) ? (heroSlide as { video?: string }).video : undefined;
+  const heroVideo = heroSlide && "video" in heroSlide ? heroSlide.video : undefined;
 
   const travelerSummary =
     props.mode === "stays"

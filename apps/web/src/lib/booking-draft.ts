@@ -38,7 +38,7 @@ export type FlightBookingDraft = {
   destinationLabel: string;
   departDate: string;
   returnDate?: string;
-  tripType: "roundtrip" | "oneway";
+  tripType: "roundtrip" | "oneway" | "multicity";
   adults: number;
   children: number;
   infants?: number;
@@ -66,6 +66,12 @@ export type HotelBookingDraft = {
   inquiryId?: string;
   quoteId?: string;
   quoteItemId?: string;
+  contactName?: string;
+  contactEmail?: string;
+  contactPhone?: string;
+  specialRequests?: string;
+  paymentMethod?: string;
+  travelers?: Array<{ firstName: string; lastName: string }>;
 };
 
 export type BookingDraftTransfer = {

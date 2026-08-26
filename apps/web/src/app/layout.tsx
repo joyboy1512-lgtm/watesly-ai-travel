@@ -1,11 +1,10 @@
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
-import { APP_NAME } from "@watesly-travel/shared";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: APP_NAME,
-  description: "مساعد مبيعات السفر الذكي لشركات السياحة",
+  title: "WeekendGate",
+  description: "احجز طيران وفنادق ونقل وأنشطة مع WeekendGate",
 };
 
 export const viewport: Viewport = {

@@ -219,39 +219,30 @@
   height: 100%;
 }
 
-/* Blurred fill so wide screens aren't empty beside the portrait clip */
-.exp-home-video-blur {
+/* Landscape hero: fill viewport cleanly */
+.exp-home-video-main {
   z-index: 1;
   object-fit: cover;
-  object-position: center 35%;
-  transform: scale(1.12);
-  filter: blur(22px) saturate(1.05) brightness(0.72);
-}
-
-/* Full portrait frame — traveler stays visible, no extreme crop */
-.exp-home-video-main {
-  z-index: 2;
-  object-fit: contain;
   object-position: center center;
 }
 
 .exp-home-shade {
   position: absolute;
   inset: 0;
-  z-index: 3;
+  z-index: 2;
   background: linear-gradient(
     180deg,
-    rgba(0, 20, 40, 0.18) 0%,
-    rgba(0, 20, 40, 0.05) 40%,
-    rgba(0, 20, 40, 0.35) 72%,
-    rgba(0, 20, 40, 0.72) 100%
+    rgba(0, 20, 40, 0.22) 0%,
+    rgba(0, 20, 40, 0.08) 42%,
+    rgba(0, 20, 40, 0.4) 74%,
+    rgba(0, 20, 40, 0.78) 100%
   );
   pointer-events: none;
 }
 
 .exp-home-content {
   position: relative;
-  z-index: 4;
+  z-index: 3;
   width: min(920px, calc(100% - 1.5rem));
   margin: 0 auto;
   padding: 0 0 clamp(1.35rem, 3.5vw, 2.25rem);
@@ -263,14 +254,8 @@
 }
 
 @media (max-width: 720px) {
-  /* On tall phones, cover fills better while keeping the person in frame */
-  .exp-home-video-blur {
-    display: none;
-  }
-
   .exp-home-video-main {
-    object-fit: cover;
-    object-position: center 30%;
+    object-position: center 40%;
   }
 }
 

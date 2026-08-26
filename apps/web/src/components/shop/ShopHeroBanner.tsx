@@ -302,31 +302,17 @@ export function ShopHeroBanner(props: Props) {
     <section className="exp-home-hero" id="search">
       <div className="exp-home-bg" aria-hidden>
         {heroVideo ? (
-          <>
-            <video
-              className="exp-home-video exp-home-video-blur"
-              autoPlay
-              muted
-              loop
-              playsInline
-              preload="metadata"
-              poster={heroImage}
-              aria-hidden
-            >
-              <source src={heroVideo} type="video/mp4" />
-            </video>
-            <video
-              className="exp-home-video exp-home-video-main"
-              autoPlay
-              muted
-              loop
-              playsInline
-              preload="metadata"
-              poster={heroImage}
-            >
-              <source src={heroVideo} type="video/mp4" />
-            </video>
-          </>
+          <video
+            className="exp-home-video exp-home-video-main"
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="metadata"
+            poster={heroImage}
+          >
+            <source src={heroVideo} type="video/mp4" />
+          </video>
         ) : null}
         {!heroVideo && heroImage ? (
           <div className="exp-home-bg-image" style={{ backgroundImage: `url(${heroImage})` }} />

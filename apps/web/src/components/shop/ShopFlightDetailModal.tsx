@@ -208,13 +208,13 @@ export function ShopFlightDetailModal({
       >
         <header className="shop-flight-modal-head">
           <div>
-            <h2 id="shop-flight-modal-title">رحلتك إلى {to}</h2>
+            <h2 id="shop-flight-modal-title">تفاصيل الرحلة · {from} → {to}</h2>
             <div className="shop-flight-modal-actions">
-              <button type="button" className="shop-flight-modal-share">
-                حفظ
+              <button type="button" className="shop-flight-modal-share" aria-label="حفظ">
+                ♡ حفظ
               </button>
-              <button type="button" className="shop-flight-modal-share">
-                مشاركة هذه الرحلة
+              <button type="button" className="shop-flight-modal-share" aria-label="مشاركة">
+                ↗ مشاركة
               </button>
             </div>
           </div>
@@ -230,7 +230,7 @@ export function ShopFlightDetailModal({
 
         <section className="shop-flight-modal-section">
           <h3>
-            الرحلة إلى {to}
+            {from} → {to}
             <span>
               {stopsLabel(stops)} · {duration}
             </span>
@@ -264,7 +264,7 @@ export function ShopFlightDetailModal({
         {returnSegs.length > 0 ? (
           <section className="shop-flight-modal-section">
             <h3>
-              الرحلة إلى {from}
+              {String(retFirst?.from || to)} → {String(retLast?.to || from)}
               <span>
                 {stopsLabel(returnStops)} · {returnDuration}
               </span>

@@ -212,7 +212,6 @@ export function ShopFlightResultsClient() {
             <span>
               {summary.travelers} مسافر · {cabinLabel(params.cabinClass)}
             </span>
-            {isRoundTrip ? <span className="shop-flight-chip">ذهاب وعودة</span> : null}
             {params.directOnly ? <span className="shop-flight-chip">مباشر فقط</span> : null}
           </div>
           <div className="shop-flight-results-topbar-actions">
@@ -345,7 +344,6 @@ export function ShopFlightResultsClient() {
             onResetFilters={() => setFilters(defaultFlightFilters())}
             onSelectFlight={setDetailFlight}
             pickStep="single"
-            stepTitle={isRoundTrip ? "عروض الذهاب والعودة" : undefined}
           />
         </>
       ) : null}

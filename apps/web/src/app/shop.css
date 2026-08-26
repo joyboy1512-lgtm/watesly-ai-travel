@@ -219,11 +219,12 @@
   height: 100%;
 }
 
-/* Landscape hero: fill viewport cleanly */
+/* Landscape 1080p hero: fill viewport without soft stretch artifacts */
 .exp-home-video-main {
   z-index: 1;
   object-fit: cover;
   object-position: center center;
+  image-rendering: auto;
 }
 
 .exp-home-shade {

@@ -5429,17 +5429,17 @@
   }
 }
 
-/* —— Kayak-style flight results page —— */
+/* —— Flight results page (brand colors) —— */
 .shop-flight-results-page {
-  background: #f1f2f8;
+  background: #f5f7fb;
   min-height: calc(100svh - 72px);
   padding-bottom: 2.5rem;
 }
 
 .shop-flight-results-topbar {
   background: #fff;
-  border-bottom: 1px solid #dbe1ea;
-  margin-bottom: 1rem;
+  border-bottom: 1px solid var(--exp-border);
+  margin-bottom: 0.85rem;
   position: sticky;
   top: 72px;
   z-index: 30;
@@ -5462,17 +5462,17 @@
   align-items: center;
   gap: 0.55rem 1rem;
   font-size: 0.9rem;
-  color: #475569;
+  color: var(--exp-muted);
 }
 
 .shop-flight-results-summary strong {
-  color: #0f172a;
+  color: var(--exp-navy);
   font-size: 1rem;
 }
 
 .shop-flight-chip {
-  background: #e8f3ff;
-  color: #0369a1;
+  background: #e8f1ff;
+  color: var(--exp-blue);
   border-radius: 999px;
   padding: 0.15rem 0.55rem;
   font-size: 0.75rem;
@@ -5488,17 +5488,17 @@
 .shop-flight-change-btn,
 .shop-flight-search-again {
   border: 0;
-  background: #ff6915;
+  background: var(--exp-navy);
   color: #fff;
-  border-radius: 8px;
-  padding: 0.55rem 1rem;
+  border-radius: 999px;
+  padding: 0.55rem 1.1rem;
   font: inherit;
   font-weight: 700;
   cursor: pointer;
 }
 
 .shop-flight-home-link {
-  color: #0b5fff;
+  color: var(--exp-blue);
   font-weight: 600;
   text-decoration: none;
   font-size: 0.88rem;
@@ -5519,18 +5519,19 @@
   gap: 0.25rem;
   font-size: 0.75rem;
   font-weight: 700;
-  color: #64748b;
+  color: var(--exp-muted);
 }
 
 .shop-flight-edit-bar input[type="text"],
 .shop-flight-edit-bar input[type="date"],
 .shop-flight-edit-bar input[type="number"] {
-  border: 1px solid #d0d7e2;
+  border: 1px solid var(--exp-border);
   border-radius: 8px;
   padding: 0.5rem 0.65rem;
   font: inherit;
   min-width: 7.5rem;
   background: #fff;
+  color: var(--exp-ink);
 }
 
 .shop-flight-edit-check {
@@ -5538,7 +5539,7 @@
   align-items: center;
   gap: 0.4rem;
   padding-bottom: 0.55rem;
-  color: #0f172a !important;
+  color: var(--exp-ink) !important;
 }
 
 .shop-flight-results-loading,
@@ -5547,7 +5548,7 @@
   margin: 2.5rem auto;
   text-align: center;
   background: #fff;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--exp-border);
   border-radius: 16px;
   padding: 2rem 1.5rem;
 }
@@ -5556,8 +5557,8 @@
   width: 42px;
   height: 42px;
   margin: 0 auto 1rem;
-  border: 3px solid #e2e8f0;
-  border-top-color: #ff6915;
+  border: 3px solid var(--exp-border);
+  border-top-color: var(--exp-blue);
   border-radius: 50%;
   animation: shop-flight-spin 0.8s linear infinite;
 }
@@ -5571,9 +5572,9 @@
 .shop-flight-results-error button {
   margin-top: 0.75rem;
   border: 0;
-  background: #0f172a;
+  background: var(--exp-navy);
   color: #fff;
-  border-radius: 8px;
+  border-radius: 999px;
   padding: 0.55rem 1rem;
   font: inherit;
   font-weight: 700;
@@ -5583,8 +5584,116 @@
 .shop-flight-results-status {
   width: min(1200px, calc(100% - 2rem));
   margin: 0 auto 0.75rem;
-  color: #64748b;
+  color: var(--exp-muted);
   font-size: 0.88rem;
+}
+
+.shop-flight-stepper {
+  width: min(1200px, calc(100% - 2rem));
+  margin: 0 auto 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+}
+
+.shop-flight-step {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  border: 1px solid var(--exp-border);
+  background: #fff;
+  border-radius: 999px;
+  padding: 0.45rem 0.9rem;
+  font: inherit;
+  font-weight: 700;
+  color: var(--exp-muted);
+  cursor: pointer;
+}
+
+.shop-flight-step.on {
+  border-color: var(--exp-blue);
+  color: var(--exp-blue);
+  background: #eef5ff;
+}
+
+.shop-flight-step.done:not(.on) {
+  color: var(--exp-navy);
+}
+
+.shop-flight-step:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.shop-flight-step-num {
+  width: 1.35rem;
+  height: 1.35rem;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--exp-border);
+  color: var(--exp-ink);
+  font-size: 0.75rem;
+}
+
+.shop-flight-step.on .shop-flight-step-num {
+  background: var(--exp-blue);
+  color: #fff;
+}
+
+.shop-flight-step-sep {
+  width: 1.5rem;
+  height: 2px;
+  background: var(--exp-border);
+}
+
+.shop-flight-picked-outbound {
+  width: min(1200px, calc(100% - 2rem));
+  margin: 0 auto 0.85rem;
+  background: #fff;
+  border: 1px solid var(--exp-border);
+  border-radius: 12px;
+  padding: 0.75rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.shop-flight-picked-outbound-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.shop-flight-picked-outbound-info img {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+}
+
+.shop-flight-picked-outbound-info strong {
+  display: block;
+  color: var(--exp-navy);
+  font-size: 0.92rem;
+}
+
+.shop-flight-picked-outbound-info span {
+  color: var(--exp-muted);
+  font-size: 0.84rem;
+}
+
+.shop-flight-change-outbound {
+  border: 1px solid var(--exp-border);
+  background: #fff;
+  color: var(--exp-blue);
+  border-radius: 999px;
+  padding: 0.45rem 0.9rem;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
 }
 
 .shop-flight-results.kayak {
@@ -5601,7 +5710,7 @@
 
 .shop-flight-sort-tab {
   background: #fff;
-  border: 1px solid #d5dbe7;
+  border: 1px solid var(--exp-border);
   border-radius: 10px;
   padding: 0.75rem 0.9rem;
   text-align: start;
@@ -5613,34 +5722,34 @@
 }
 
 .shop-flight-sort-tab.on {
-  border-color: #0b5fff;
-  box-shadow: inset 0 -3px 0 #0b5fff;
+  border-color: var(--exp-blue);
+  box-shadow: inset 0 -3px 0 var(--exp-blue);
 }
 
 .shop-flight-sort-tab-label {
   font-size: 0.8rem;
   font-weight: 700;
-  color: #64748b;
+  color: var(--exp-muted);
 }
 
 .shop-flight-sort-tab.on .shop-flight-sort-tab-label {
-  color: #0b5fff;
+  color: var(--exp-blue);
 }
 
 .shop-flight-sort-tab-price {
   font-size: 1.15rem;
-  color: #0f172a;
+  color: var(--exp-navy);
 }
 
 .shop-flight-sort-tab-meta {
   font-size: 0.8rem;
-  color: #64748b;
+  color: var(--exp-muted);
 }
 
 .shop-flight-results-count {
   margin: 0 0 0.75rem;
   font-size: 0.85rem;
-  color: #64748b;
+  color: var(--exp-muted);
 }
 
 .shop-ticket-badges {
@@ -5658,26 +5767,31 @@
 }
 
 .shop-ticket-badge-best {
-  background: #dcfce7;
-  color: #166534;
+  background: #e8f1ff;
+  color: var(--exp-blue);
 }
 
 .shop-ticket-badge-cheapest {
-  background: #dbeafe;
-  color: #1d4ed8;
+  background: #eef2ff;
+  color: var(--exp-navy);
 }
 
 .shop-ticket-badge-fastest {
-  background: #ffedd5;
-  color: #c2410c;
+  background: #fff7e6;
+  color: #9a6700;
 }
 
 .shop-flight-results.kayak .shop-ticket-details-btn {
-  background: #ff6915;
-  border-color: #ff6915;
+  background: var(--exp-navy);
+  border-color: var(--exp-navy);
   color: #fff;
-  border-radius: 8px;
+  border-radius: 999px;
   font-weight: 800;
+}
+
+.shop-flight-results.kayak .shop-ticket-details-btn:hover {
+  background: var(--exp-blue);
+  border-color: var(--exp-blue);
 }
 
 @media (max-width: 900px) {

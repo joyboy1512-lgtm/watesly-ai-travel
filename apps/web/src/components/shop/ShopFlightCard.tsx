@@ -13,6 +13,8 @@ import {
   type FlightOfferRow,
 } from "@/lib/flight-search";
 
+export type FlightCardDisplayLeg = "outbound" | "return" | "both";
+
 type Props = {
   flight: FlightOfferRow;
   originFallback?: string;
@@ -20,6 +22,10 @@ type Props = {
   onViewDetails: () => void;
   badges?: Array<"best" | "cheapest" | "fastest">;
   selectLabel?: string;
+  /** Which leg(s) to show on the card */
+  displayLeg?: FlightCardDisplayLeg;
+  /** Prefix price with "from" (outbound step) */
+  priceFrom?: boolean;
 };
 
 const BADGE_LABEL: Record<"best" | "cheapest" | "fastest", string> = {
@@ -28,6 +34,73 @@ const BADGE_LABEL: Record<"best" | "cheapest" | "fastest", string> = {
   fastest: "الأسرع",
 };
 
+function LegRow({
+  logo,
+  code,
+  label,
+  labelClass,
+  dep,
+  arr,
+  depDay,
+  arrDay,
+  from,
+  to,
+  stops,
+  duration,
+}: {
+  logo: string | null;
+  code: string;
+  label?: string;
+  labelClass?: string;
+  dep: string;
+  arr: string;
+  depDay: string;
+  arrDay: string;
+  from: string;
+  to: string;
+  stops: number;
+  duration: string;
+}) {
+  return (
+    <div className="shop-ticket-leg">
+      <div className="shop-ticket-carrier">
+        {logo ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={logo} alt={code} />
+        ) : (
+          <div className="shop-ticket-logo-fallback">{code || "✈"}</div>
+        )}
+        {label ? <span className={`shop-ticket-leg-label ${labelClass || ""}`}>{label}</span> : null}
+      </div>
+      <div className="shop-ticket-time">
+        <strong>{dep}</strong>
+        <span>
+          {from}
+          {depDay ? ` · ${depDay}` : ""}
+        </span>
+      </div>
+      <div className="shop-ticket-path">
+        <div className="shop-ticket-path-line">
+          <i className="shop-ticket-path-bar" />
+        </div>
+        <div className="shop-ticket-meta">
+          <span className={`shop-ticket-meta-stops${stops === 0 ? " direct" : ""}`}>
+            {stopsLabel(stops)}
+          </span>
+          <span className="shop-ticket-meta-duration">{duration}</span>
+        </div>
+      </div>
+      <div className="shop-ticket-time end">
+        <strong>{arr}</strong>
+        <span>
+          {to}
+          {arrDay ? ` · ${arrDay}` : ""}
+        </span>
+      </div>
+    </div>
+  );
+}
+
 export function ShopFlightCard({
   flight,
   originFallback = "",
@@ -35,6 +108,8 @@ export function ShopFlightCard({
   onViewDetails,
   badges = [],
   selectLabel,
+  displayLeg = "both",
+  priceFrom = false,
 }: Props) {
   const segs = getSegments(flight.details);
   const returnSegs = getReturnSegments(flight.details);
@@ -78,8 +153,11 @@ export function ShopFlightCard({
   const retTo = String(retLast?.to || from);
   const legLabel = String(flight.details.legLabel || "");
 
+  const showOutbound = displayLeg === "both" || displayLeg === "outbound";
+  const showReturn = displayLeg === "both" || displayLeg === "return";
+
   return (
-    <article className="shop-ticket-card">
+    <article className={`shop-ticket-card shop-ticket-card-${displayLeg}`}>
       {badges.length ? (
         <div className="shop-ticket-badges">
           {badges.map((b) => (
@@ -94,84 +172,43 @@ export function ShopFlightCard({
       ) : null}
       <div className="shop-ticket-body">
         <div className="shop-ticket-legs">
-          <div className="shop-ticket-leg">
-            <div className="shop-ticket-carrier">
-              {logo ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={logo} alt={code} />
-              ) : (
-                <div className="shop-ticket-logo-fallback">{code || "✈"}</div>
-              )}
-              {hasReturn || legLabel ? (
-                <span className="shop-ticket-leg-label">{legLabel || "الذهاب"}</span>
-              ) : null}
-            </div>
-            <div className="shop-ticket-time">
-              <strong>{dep}</strong>
-              <span>
-                {from}
-                {depDay ? ` · ${depDay}` : ""}
-              </span>
-            </div>
-            <div className="shop-ticket-path">
-              <div className="shop-ticket-path-line">
-                <i className="shop-ticket-path-bar" />
-              </div>
-              <div className="shop-ticket-meta">
-                <span className={`shop-ticket-meta-stops${stops === 0 ? " direct" : ""}`}>
-                  {stopsLabel(stops)}
-                </span>
-                <span className="shop-ticket-meta-duration">{duration}</span>
-              </div>
-            </div>
-            <div className="shop-ticket-time end">
-              <strong>{arr}</strong>
-              <span>
-                {to}
-                {arrDay ? ` · ${arrDay}` : ""}
-              </span>
-            </div>
-          </div>
+          {showOutbound ? (
+            <LegRow
+              logo={logo}
+              code={code}
+              label={
+                displayLeg === "outbound"
+                  ? "رحلة الذهاب"
+                  : hasReturn || legLabel
+                    ? legLabel || "الذهاب"
+                    : undefined
+              }
+              dep={dep}
+              arr={arr}
+              depDay={depDay}
+              arrDay={arrDay}
+              from={from}
+              to={to}
+              stops={stops}
+              duration={duration}
+            />
+          ) : null}
 
-          {hasReturn ? (
-            <div className="shop-ticket-leg shop-ticket-leg-return">
-              <div className="shop-ticket-carrier">
-                {logo ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={logo} alt={code} />
-                ) : (
-                  <div className="shop-ticket-logo-fallback">{code || "✈"}</div>
-                )}
-                <span className="shop-ticket-leg-label return">العودة</span>
-              </div>
-              <div className="shop-ticket-time">
-                <strong>{retDep}</strong>
-                <span>
-                  {retFrom}
-                  {retDepDay ? ` · ${retDepDay}` : ""}
-                </span>
-              </div>
-              <div className="shop-ticket-path">
-                <div className="shop-ticket-path-line">
-                  <i className="shop-ticket-path-bar" />
-                </div>
-                <div className="shop-ticket-meta">
-                  <span
-                    className={`shop-ticket-meta-stops${returnStops === 0 ? " direct" : ""}`}
-                  >
-                    {stopsLabel(returnStops)}
-                  </span>
-                  <span className="shop-ticket-meta-duration">{returnDuration || "—"}</span>
-                </div>
-              </div>
-              <div className="shop-ticket-time end">
-                <strong>{retArr}</strong>
-                <span>
-                  {retTo}
-                  {retArrDay ? ` · ${retArrDay}` : ""}
-                </span>
-              </div>
-            </div>
+          {showReturn && hasReturn ? (
+            <LegRow
+              logo={logo}
+              code={code}
+              label="رحلة العودة"
+              labelClass="return"
+              dep={retDep}
+              arr={retArr}
+              depDay={retDepDay}
+              arrDay={retArrDay}
+              from={retFrom}
+              to={retTo}
+              stops={returnStops}
+              duration={returnDuration || "—"}
+            />
           ) : null}
         </div>
 
@@ -179,7 +216,7 @@ export function ShopFlightCard({
           <div className="shop-ticket-airline-name">
             {String(flight.details.airlineAr || flight.details.airline || "شركة طيران")}
             {code ? ` (${code})` : ""}
-            {hasReturn ? " · ذهاب وعودة" : ""}
+            {displayLeg === "both" && hasReturn ? " · ذهاب وعودة" : ""}
           </div>
         </div>
       </div>
@@ -190,9 +227,12 @@ export function ShopFlightCard({
           {hasChecked ? <span title="حقيبة مسجّلة">✓ 🧳</span> : <span className="off">🧳</span>}
         </div>
         <strong className="shop-ticket-price">
+          {priceFrom ? "من " : ""}
           {formatMoneyMinor(flight.sellAmountMinor, flight.currency)}
         </strong>
-        <small className="shop-ticket-price-note">يشمل الضرائب والرسوم</small>
+        <small className="shop-ticket-price-note">
+          {priceFrom ? "أقل سعر لهذه الرحلة" : "يشمل الضرائب والرسوم"}
+        </small>
         <button type="button" className="shop-ticket-details-btn" onClick={onViewDetails}>
           {selectLabel || "عرض التفاصيل"}
         </button>

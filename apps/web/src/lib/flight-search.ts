@@ -155,6 +155,59 @@ export function getReturnSegments(details: Record<string, unknown>): FlightSeg[]
     : []) as FlightSeg[];
 }
 
+/** Stable key for the outbound itinerary (for round-trip two-step pick). */
+export function outboundLegKey(flight: FlightOfferRow) {
+  const segs = getSegments(flight.details);
+  if (!segs.length) {
+    return [
+      String(flight.details.airlineCode || ""),
+      String(flight.details.departAt || ""),
+      String(flight.details.arriveAt || ""),
+      String(flight.details.duration || ""),
+    ].join("|");
+  }
+  return segs
+    .map(
+      (s) =>
+        `${s.airline || ""}-${s.flightNumber || ""}-${s.from || ""}-${s.to || ""}-${s.departAt || s.departTime || ""}-${s.arriveAt || s.arriveTime || ""}`,
+    )
+    .join(">");
+}
+
+export function returnLegKey(flight: FlightOfferRow) {
+  const segs = getReturnSegments(flight.details);
+  if (!segs.length) return "";
+  return segs
+    .map(
+      (s) =>
+        `${s.airline || ""}-${s.flightNumber || ""}-${s.from || ""}-${s.to || ""}-${s.departAt || s.departTime || ""}-${s.arriveAt || s.arriveTime || ""}`,
+    )
+    .join(">");
+}
+
+/**
+ * Deduplicate round-trip packages by outbound leg, keeping the cheapest package
+ * for each unique outbound (used in step 1).
+ */
+export function uniqueOutboundFlights(flights: FlightOfferRow[]) {
+  const map = new Map<string, FlightOfferRow>();
+  for (const f of flights) {
+    const key = outboundLegKey(f);
+    const prev = map.get(key);
+    if (!prev || f.sellAmountMinor < prev.sellAmountMinor) map.set(key, f);
+  }
+  return [...map.values()];
+}
+
+/** Packages that share the same outbound as the selected representative. */
+export function packagesMatchingOutbound(
+  flights: FlightOfferRow[],
+  selectedOutbound: FlightOfferRow,
+) {
+  const key = outboundLegKey(selectedOutbound);
+  return flights.filter((f) => outboundLegKey(f) === key);
+}
+
 export function flightDepartureHour(flight: FlightOfferRow, leg: "out" | "return" = "out") {
   const segs = leg === "return" ? getReturnSegments(flight.details) : getSegments(flight.details);
   const first = segs[0];
@@ -359,7 +412,10 @@ export type FlightSortTabSummary = {
 };
 
 /** Kayak-style Best / Cheapest / Quickest summaries from a result set. */
-export function summarizeFlightSortTabs(flights: FlightOfferRow[]): FlightSortTabSummary[] {
+export function summarizeFlightSortTabs(
+  flights: FlightOfferRow[],
+  mode: "full" | "outbound" | "return" = "full",
+): FlightSortTabSummary[] {
   const currency = flights[0]?.currency || "KWD";
   if (!flights.length) {
     return [
@@ -369,18 +425,37 @@ export function summarizeFlightSortTabs(flights: FlightOfferRow[]): FlightSortTa
     ];
   }
 
+  const durationOf = (f: FlightOfferRow) => {
+    if (mode === "outbound") {
+      return durationMinutes(f.details.durationMinutes ?? f.details.duration);
+    }
+    if (mode === "return") {
+      const segs = getReturnSegments(f.details);
+      if (!segs.length) return Number.MAX_SAFE_INTEGER;
+      const retRaw = durationMinutes(f.details.returnDuration);
+      if (retRaw !== Number.MAX_SAFE_INTEGER) return retRaw;
+      const first = segs[0];
+      const last = segs[segs.length - 1];
+      return (
+        layoverMinutes(
+          first?.departAt || first?.departTime,
+          last?.arriveAt || last?.arriveTime,
+        ) ?? Number.MAX_SAFE_INTEGER
+      );
+    }
+    return totalTripDurationMinutes(f);
+  };
+
   const byBest = [...flights].sort((a, b) => scoreBest(a) - scoreBest(b))[0]!;
   const byPrice = [...flights].sort((a, b) => a.sellAmountMinor - b.sellAmountMinor)[0]!;
-  const bySpeed = [...flights].sort(
-    (a, b) => totalTripDurationMinutes(a) - totalTripDurationMinutes(b),
-  )[0]!;
+  const bySpeed = [...flights].sort((a, b) => durationOf(a) - durationOf(b))[0]!;
 
   return [
     {
       key: "best",
       label: "الأفضل",
       priceMinor: byBest.sellAmountMinor,
-      durationMins: totalTripDurationMinutes(byBest),
+      durationMins: durationOf(byBest),
       currency: byBest.currency,
       flightId: byBest.id,
     },
@@ -388,7 +463,7 @@ export function summarizeFlightSortTabs(flights: FlightOfferRow[]): FlightSortTa
       key: "price_asc",
       label: "الأرخص",
       priceMinor: byPrice.sellAmountMinor,
-      durationMins: totalTripDurationMinutes(byPrice),
+      durationMins: durationOf(byPrice),
       currency: byPrice.currency,
       flightId: byPrice.id,
     },
@@ -396,7 +471,7 @@ export function summarizeFlightSortTabs(flights: FlightOfferRow[]): FlightSortTa
       key: "duration_asc",
       label: "الأسرع",
       priceMinor: bySpeed.sellAmountMinor,
-      durationMins: totalTripDurationMinutes(bySpeed),
+      durationMins: durationOf(bySpeed),
       currency: bySpeed.currency,
       flightId: bySpeed.id,
     },

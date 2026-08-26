@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ShopFlightCard } from "@/components/shop/ShopFlightCard";
+import { ShopFlightCard, type FlightCardDisplayLeg } from "@/components/shop/ShopFlightCard";
 import { ShopFlightFilters } from "@/components/shop/ShopFlightFilters";
 import { formatMoneyMinorCompact } from "@/lib/format";
 import {
@@ -14,6 +14,8 @@ import {
 } from "@/lib/flight-search";
 
 type Facets = Parameters<typeof ShopFlightFilters>[0]["facets"];
+
+export type FlightPickStep = "outbound" | "return" | "single";
 
 type Props = {
   flights: FlightOfferRow[];
@@ -28,75 +30,62 @@ type Props = {
   onFiltersChange: (next: FlightSearchFilters) => void;
   onSortChange: (key: FlightSortKey) => void;
   onResetFilters: () => void;
-  onViewDetails: (flight: FlightOfferRow) => void;
-  /** Kayak-style Best / Cheapest / Quickest tabs with price + duration */
-  kayakStyle?: boolean;
+  onSelectFlight: (flight: FlightOfferRow) => void;
+  pickStep?: FlightPickStep;
+  stepTitle?: string;
 };
-
-const SORT_CHIPS: Array<{ key: FlightSortKey; label: string }> = [
-  { key: "best", label: "الأفضل" },
-  { key: "price_asc", label: "الأرخص" },
-  { key: "cheapest_direct", label: "أرخص مباشر" },
-  { key: "duration_asc", label: "الأسرع" },
-];
 
 export function ShopFlightResults(props: Props) {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const active = flightFiltersActive(props.filters);
-  const sortTabs = useMemo(() => summarizeFlightSortTabs(props.flights), [props.flights]);
+  const pickStep = props.pickStep || "single";
+  const sortTabs = useMemo(
+    () =>
+      summarizeFlightSortTabs(
+        props.flights,
+        pickStep === "outbound" ? "outbound" : pickStep === "return" ? "return" : "full",
+      ),
+    [props.flights, pickStep],
+  );
+  const displayLeg: FlightCardDisplayLeg =
+    pickStep === "outbound" ? "outbound" : pickStep === "return" ? "return" : "both";
+  const selectLabel =
+    pickStep === "outbound" ? "اختر الذهاب" : pickStep === "return" ? "اختر العودة" : "اختر";
 
   const bestId = sortTabs.find((t) => t.key === "best")?.flightId;
   const cheapId = sortTabs.find((t) => t.key === "price_asc")?.flightId;
   const fastId = sortTabs.find((t) => t.key === "duration_asc")?.flightId;
 
   return (
-    <section className={`shop-flight-results${props.kayakStyle ? " kayak" : ""}`}>
-      {props.kayakStyle ? (
-        <div className="shop-flight-sort-tabs" role="tablist" aria-label="ترتيب النتائج">
-          {sortTabs.map((tab) => (
-            <button
-              key={tab.key}
-              type="button"
-              role="tab"
-              aria-selected={props.sortKey === tab.key}
-              className={`shop-flight-sort-tab${props.sortKey === tab.key ? " on" : ""}`}
-              onClick={() => props.onSortChange(tab.key)}
-            >
-              <span className="shop-flight-sort-tab-label">{tab.label}</span>
-              <strong className="shop-flight-sort-tab-price">
-                {tab.priceMinor != null
-                  ? formatMoneyMinorCompact(tab.priceMinor, tab.currency)
-                  : "—"}
-              </strong>
-              <span className="shop-flight-sort-tab-meta">
-                {tab.durationMins != null && tab.durationMins < Number.MAX_SAFE_INTEGER
-                  ? formatMinutesLabel(tab.durationMins)
-                  : "—"}
-              </span>
-            </button>
-          ))}
-        </div>
-      ) : (
-        <div className="shop-flight-results-head">
-          <h2>وجدنا {props.flights.length} خيار رحلة</h2>
-          <div className="shop-flight-results-sort">
-            <span>ترتيب حسب:</span>
-            {SORT_CHIPS.map((chip) => (
-              <button
-                key={chip.key}
-                type="button"
-                className={props.sortKey === chip.key ? "on" : undefined}
-                onClick={() => props.onSortChange(chip.key)}
-              >
-                {chip.label}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
+    <section className="shop-flight-results kayak">
+      <div className="shop-flight-sort-tabs" role="tablist" aria-label="ترتيب النتائج">
+        {sortTabs.map((tab) => (
+          <button
+            key={tab.key}
+            type="button"
+            role="tab"
+            aria-selected={props.sortKey === tab.key}
+            className={`shop-flight-sort-tab${props.sortKey === tab.key ? " on" : ""}`}
+            onClick={() => props.onSortChange(tab.key)}
+          >
+            <span className="shop-flight-sort-tab-label">{tab.label}</span>
+            <strong className="shop-flight-sort-tab-price">
+              {tab.priceMinor != null
+                ? formatMoneyMinorCompact(tab.priceMinor, tab.currency)
+                : "—"}
+            </strong>
+            <span className="shop-flight-sort-tab-meta">
+              {tab.durationMins != null && tab.durationMins < Number.MAX_SAFE_INTEGER
+                ? formatMinutesLabel(tab.durationMins)
+                : "—"}
+            </span>
+          </button>
+        ))}
+      </div>
 
       <div className="shop-flight-results-count">
-        عرض {props.flights.length} من {props.totalCount} رحلة
+        {props.stepTitle ? <strong>{props.stepTitle} · </strong> : null}
+        عرض {props.flights.length} من {props.totalCount}
         {active ? " · فلاتر مفعّلة" : ""}
       </div>
 
@@ -110,7 +99,7 @@ export function ShopFlightResults(props: Props) {
       </button>
 
       <div className="shop-flight-results-layout">
-        <div className={`shop-flight-filters-desktop${filtersOpen ? " open" : ""}`}>
+        <aside className={`shop-flight-filters-desktop${filtersOpen ? " open" : ""}`}>
           <ShopFlightFilters
             filters={props.filters}
             facets={props.facets}
@@ -118,24 +107,9 @@ export function ShopFlightResults(props: Props) {
             destinationLabel={props.destinationLabel || props.destination}
             onChange={props.onFiltersChange}
           />
-        </div>
+        </aside>
 
         <div className="shop-flight-results-main">
-          {!props.kayakStyle ? (
-            <div className="shop-flight-quick-chips">
-              {SORT_CHIPS.slice(0, 3).map((chip) => (
-                <button
-                  key={`chip-${chip.key}`}
-                  type="button"
-                  className={props.sortKey === chip.key ? "on" : undefined}
-                  onClick={() => props.onSortChange(chip.key)}
-                >
-                  {chip.label}
-                </button>
-              ))}
-            </div>
-          ) : null}
-
           <div className="shop-ticket-list">
             {props.flights.map((flight) => {
               const badges: Array<"best" | "cheapest" | "fastest"> = [];
@@ -149,8 +123,10 @@ export function ShopFlightResults(props: Props) {
                   originFallback={props.origin}
                   destinationFallback={props.destination}
                   badges={badges}
-                  selectLabel={props.kayakStyle ? "اختر" : undefined}
-                  onViewDetails={() => props.onViewDetails(flight)}
+                  displayLeg={displayLeg}
+                  priceFrom={pickStep === "outbound"}
+                  selectLabel={selectLabel}
+                  onViewDetails={() => props.onSelectFlight(flight)}
                 />
               );
             })}

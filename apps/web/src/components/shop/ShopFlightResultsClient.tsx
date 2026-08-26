@@ -6,11 +6,17 @@ import Link from "next/link";
 import { ShopFlightResults } from "@/components/shop/ShopFlightResults";
 import { ShopFlightDetailModal } from "@/components/shop/ShopFlightDetailModal";
 import {
+  airlineLogo,
   cabinLabel,
   collectFlightFacets,
   defaultFlightFilters,
   filterAndSortFlights,
+  formatClock,
   formatDay,
+  getReturnSegments,
+  getSegments,
+  packagesMatchingOutbound,
+  uniqueOutboundFlights,
   type FlightOfferRow,
   type FlightSearchFilters,
   type FlightSortKey,
@@ -25,6 +31,7 @@ import { saveFlightDraft } from "@/lib/booking-draft";
 import { shopFetch } from "@/lib/shop-session";
 
 type QuoteItem = { id: string; providerOfferRef: string; serviceType: string };
+type PickStep = "outbound" | "return";
 
 export function ShopFlightResultsClient() {
   const router = useRouter();
@@ -33,6 +40,8 @@ export function ShopFlightResultsClient() {
     () => parseFlightResultsSearch(searchParams),
     [searchParams],
   );
+
+  const isRoundTrip = params.tripType === "roundtrip" && Boolean(params.returnDate);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -44,6 +53,8 @@ export function ShopFlightResultsClient() {
   const [sortKey, setSortKey] = useState<FlightSortKey>("best");
   const [detailFlight, setDetailFlight] = useState<FlightOfferRow | null>(null);
   const [editOpen, setEditOpen] = useState(false);
+  const [pickStep, setPickStep] = useState<PickStep>("outbound");
+  const [selectedOutbound, setSelectedOutbound] = useState<FlightOfferRow | null>(null);
 
   const [draft, setDraft] = useState<FlightResultsSearchParams>(params);
 
@@ -51,10 +62,17 @@ export function ShopFlightResultsClient() {
     setDraft(params);
   }, [params]);
 
-  const facets = useMemo(() => collectFlightFacets(flightsRaw), [flightsRaw]);
+  const stepPool = useMemo(() => {
+    if (!isRoundTrip) return flightsRaw;
+    if (pickStep === "outbound") return uniqueOutboundFlights(flightsRaw);
+    if (!selectedOutbound) return [];
+    return packagesMatchingOutbound(flightsRaw, selectedOutbound);
+  }, [flightsRaw, isRoundTrip, pickStep, selectedOutbound]);
+
+  const facets = useMemo(() => collectFlightFacets(stepPool), [stepPool]);
   const flights = useMemo(
-    () => filterAndSortFlights(flightsRaw, filters, sortKey, params.directOnly),
-    [flightsRaw, filters, sortKey, params.directOnly],
+    () => filterAndSortFlights(stepPool, filters, sortKey, params.directOnly),
+    [stepPool, filters, sortKey, params.directOnly],
   );
 
   const summary = formatFlightSearchSummary(params);
@@ -67,6 +85,8 @@ export function ShopFlightResultsClient() {
     setDetailFlight(null);
     setFilters(defaultFlightFilters());
     setSortKey("best");
+    setPickStep("outbound");
+    setSelectedOutbound(null);
 
     try {
       if (search.tripType === "multicity") {
@@ -143,10 +163,13 @@ export function ShopFlightResultsClient() {
         setQuoteItems(result.quoteItems || []);
         const rows = result.flights || [];
         setFlightsRaw(rows);
+        const hasReturns = rows.some((f) => getReturnSegments(f.details).length > 0);
         setMessage(
-          search.directOnly
-            ? `تم جلب ${rows.length} رحلة — ${rows.filter((f) => Number(f.details.stops || 0) === 0).length} مباشرة`
-            : `تم جلب ${rows.length} رحلة عبر ${result.providerName || "المزوّد"}`,
+          search.tripType === "roundtrip" && hasReturns
+            ? `تم جلب ${rows.length} عرض ذهاب وعودة عبر ${result.providerName || "المزوّد"} — اختر الذهاب أولاً ثم العودة`
+            : search.directOnly
+              ? `تم جلب ${rows.length} رحلة — ${rows.filter((f) => Number(f.details.stops || 0) === 0).length} مباشرة`
+              : `تم جلب ${rows.length} رحلة عبر ${result.providerName || "المزوّد"}`,
         );
       }
     } catch (err) {
@@ -195,6 +218,52 @@ export function ShopFlightResultsClient() {
     router.push("/book");
   }
 
+  function handleSelectFlight(flight: FlightOfferRow) {
+    if (isRoundTrip && getReturnSegments(flight.details).length > 0) {
+      if (pickStep === "outbound") {
+        setSelectedOutbound(flight);
+        setPickStep("return");
+        setFilters(defaultFlightFilters());
+        setSortKey("best");
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        return;
+      }
+      setDetailFlight(flight);
+      return;
+    }
+    setDetailFlight(flight);
+  }
+
+  function backToOutbound() {
+    setPickStep("outbound");
+    setSelectedOutbound(null);
+    setFilters(defaultFlightFilters());
+    setSortKey("best");
+  }
+
+  const outboundSummary = selectedOutbound
+    ? (() => {
+        const segs = getSegments(selectedOutbound.details);
+        const first = segs[0];
+        const last = segs[segs.length - 1];
+        const code = String(selectedOutbound.details.airlineCode || "");
+        return {
+          airline: String(
+            selectedOutbound.details.airlineAr || selectedOutbound.details.airline || code,
+          ),
+          logo: airlineLogo(code),
+          dep: formatClock(
+            first?.departAt || first?.departTime || String(selectedOutbound.details.departAt || ""),
+          ),
+          arr: formatClock(
+            last?.arriveAt || last?.arriveTime || String(selectedOutbound.details.arriveAt || ""),
+          ),
+          from: String(first?.from || params.origin),
+          to: String(last?.to || params.destination),
+        };
+      })()
+    : null;
+
   return (
     <div className="shop-flight-results-page">
       <div className="shop-flight-results-topbar">
@@ -208,7 +277,11 @@ export function ShopFlightResultsClient() {
             {params.directOnly ? <span className="shop-flight-chip">مباشر فقط</span> : null}
           </div>
           <div className="shop-flight-results-topbar-actions">
-            <button type="button" className="shop-flight-change-btn" onClick={() => setEditOpen((v) => !v)}>
+            <button
+              type="button"
+              className="shop-flight-change-btn"
+              onClick={() => setEditOpen((v) => !v)}
+            >
               {editOpen ? "إغلاق" : "تعديل البحث"}
             </button>
             <Link href="/#search" className="shop-flight-home-link">
@@ -224,7 +297,11 @@ export function ShopFlightResultsClient() {
               <input
                 value={draft.origin}
                 onChange={(e) =>
-                  setDraft((d) => ({ ...d, origin: e.target.value.toUpperCase(), originLabel: e.target.value.toUpperCase() }))
+                  setDraft((d) => ({
+                    ...d,
+                    origin: e.target.value.toUpperCase(),
+                    originLabel: e.target.value.toUpperCase(),
+                  }))
                 }
                 placeholder="KWI"
                 required={draft.tripType !== "multicity"}
@@ -311,10 +388,55 @@ export function ShopFlightResultsClient() {
 
       {!loading && !error ? (
         <>
+          {isRoundTrip ? (
+            <div className="shop-flight-stepper" aria-label="خطوات الاختيار">
+              <button
+                type="button"
+                className={`shop-flight-step${pickStep === "outbound" ? " on" : ""}${selectedOutbound ? " done" : ""}`}
+                onClick={backToOutbound}
+              >
+                <span className="shop-flight-step-num">1</span>
+                اختيار الذهاب
+              </button>
+              <span className="shop-flight-step-sep" aria-hidden />
+              <button
+                type="button"
+                className={`shop-flight-step${pickStep === "return" ? " on" : ""}`}
+                disabled={!selectedOutbound}
+                onClick={() => selectedOutbound && setPickStep("return")}
+              >
+                <span className="shop-flight-step-num">2</span>
+                اختيار العودة
+              </button>
+            </div>
+          ) : null}
+
+          {outboundSummary && pickStep === "return" ? (
+            <div className="shop-flight-picked-outbound">
+              <div className="shop-flight-picked-outbound-info">
+                {outboundSummary.logo ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={outboundSummary.logo} alt="" />
+                ) : null}
+                <div>
+                  <strong>الذهاب المختار · {outboundSummary.airline}</strong>
+                  <span>
+                    {outboundSummary.dep} {outboundSummary.from} → {outboundSummary.arr}{" "}
+                    {outboundSummary.to}
+                  </span>
+                </div>
+              </div>
+              <button type="button" className="shop-flight-change-outbound" onClick={backToOutbound}>
+                تغيير الذهاب
+              </button>
+            </div>
+          ) : null}
+
           {message ? <p className="shop-flight-results-status">{message}</p> : null}
+
           <ShopFlightResults
             flights={flights}
-            totalCount={flightsRaw.length}
+            totalCount={stepPool.length}
             filters={filters}
             facets={facets}
             sortKey={sortKey}
@@ -325,8 +447,15 @@ export function ShopFlightResultsClient() {
             onFiltersChange={setFilters}
             onSortChange={setSortKey}
             onResetFilters={() => setFilters(defaultFlightFilters())}
-            onViewDetails={setDetailFlight}
-            kayakStyle
+            onSelectFlight={handleSelectFlight}
+            pickStep={isRoundTrip ? pickStep : "single"}
+            stepTitle={
+              isRoundTrip
+                ? pickStep === "outbound"
+                  ? "رحلات الذهاب"
+                  : "رحلات العودة"
+                : undefined
+            }
           />
         </>
       ) : null}

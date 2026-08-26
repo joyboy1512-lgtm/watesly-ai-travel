@@ -781,7 +781,7 @@ export function ShopHomeClient() {
           onFiltersChange={setFlightFilters}
           onSortChange={setFlightSortKey}
           onResetFilters={() => setFlightFilters(defaultFlightFilters())}
-          onViewDetails={setDetailFlight}
+          onSelectFlight={setDetailFlight}
         />
       ) : null}
 

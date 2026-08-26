@@ -229,24 +229,42 @@ export function departureBucket(hour: number): DepartureBucket {
   return "evening";
 }
 
+/** Max stops across outbound + return (Kayak-style package filter). */
+export function packageMaxStops(flight: FlightOfferRow) {
+  const outSegs = getSegments(flight.details);
+  const retSegs = getReturnSegments(flight.details);
+  const out = Number(
+    flight.details.stops ?? Math.max(0, outSegs.length ? outSegs.length - 1 : 0),
+  );
+  const ret =
+    retSegs.length > 0
+      ? Number(flight.details.returnStops ?? Math.max(0, retSegs.length - 1))
+      : 0;
+  return Math.max(out, ret);
+}
+
 function scoreBest(a: FlightOfferRow) {
-  const stops = Number(a.details.stops || 0);
-  const mins = durationMinutes(a.details.durationMinutes ?? a.details.duration);
-  return a.sellAmountMinor / 100 + stops * 120 + (mins === Number.MAX_SAFE_INTEGER ? 9999 : mins) * 0.8;
+  const stops = packageMaxStops(a);
+  const mins = totalTripDurationMinutes(a);
+  return (
+    a.sellAmountMinor / 100 +
+    stops * 120 +
+    (mins === Number.MAX_SAFE_INTEGER ? 9999 : mins) * 0.8
+  );
 }
 
 export function collectFlightFacets(flights: FlightOfferRow[]) {
   const currency = flights[0]?.currency || "KWD";
   const stopFacets: FlightStopFacets = {
     any: flights.length,
-    direct: flights.filter((f) => Number(f.details.stops || 0) === 0).length,
-    one: flights.filter((f) => Number(f.details.stops || 0) <= 1).length,
+    direct: flights.filter((f) => packageMaxStops(f) === 0).length,
+    one: flights.filter((f) => packageMaxStops(f) <= 1).length,
     minAny: flights.reduce((m, f) => Math.min(m, f.sellAmountMinor), Number.MAX_SAFE_INTEGER),
     minDirect: flights
-      .filter((f) => Number(f.details.stops || 0) === 0)
+      .filter((f) => packageMaxStops(f) === 0)
       .reduce((m, f) => Math.min(m, f.sellAmountMinor), Number.MAX_SAFE_INTEGER),
     minOne: flights
-      .filter((f) => Number(f.details.stops || 0) <= 1)
+      .filter((f) => packageMaxStops(f) <= 1)
       .reduce((m, f) => Math.min(m, f.sellAmountMinor), Number.MAX_SAFE_INTEGER),
     currency,
   };
@@ -295,7 +313,7 @@ export function collectFlightFacets(flights: FlightOfferRow[]) {
   );
   const durationMaxHours = Math.ceil(
     flights.reduce((m, f) => {
-      const mins = durationMinutes(f.details.durationMinutes ?? f.details.duration);
+      const mins = totalTripDurationMinutes(f);
       return mins === Number.MAX_SAFE_INTEGER ? m : Math.max(m, mins / 60);
     }, 8),
   );
@@ -319,9 +337,9 @@ export function filterAndSortFlights(
 ) {
   let list = [...flights];
   if (directOnly || filters.stops === "0") {
-    list = list.filter((f) => Number(f.details.stops || 0) === 0);
+    list = list.filter((f) => packageMaxStops(f) === 0);
   } else if (filters.stops === "1") {
-    list = list.filter((f) => Number(f.details.stops || 0) <= 1);
+    list = list.filter((f) => packageMaxStops(f) <= 1);
   }
   if (filters.airlines.length) {
     const selected = filters.airlines.map((c) => c.toUpperCase());
@@ -336,9 +354,7 @@ export function filterAndSortFlights(
   if (filters.maxDurationHours) {
     const maxMins = Number(filters.maxDurationHours) * 60;
     if (Number.isFinite(maxMins)) {
-      list = list.filter(
-        (f) => durationMinutes(f.details.durationMinutes ?? f.details.duration) <= maxMins,
-      );
+      list = list.filter((f) => totalTripDurationMinutes(f) <= maxMins);
     }
   }
   if (filters.departureTimes.length) {
@@ -356,16 +372,13 @@ export function filterAndSortFlights(
     });
   }
   if (sortKey === "cheapest_direct") {
-    list = list.filter((f) => Number(f.details.stops || 0) === 0);
+    list = list.filter((f) => packageMaxStops(f) === 0);
   }
   list.sort((a, b) => {
     if (sortKey === "best") return scoreBest(a) - scoreBest(b);
     if (sortKey === "price_desc") return b.sellAmountMinor - a.sellAmountMinor;
     if (sortKey === "duration_asc") {
-      return (
-        durationMinutes(a.details.durationMinutes ?? a.details.duration) -
-        durationMinutes(b.details.durationMinutes ?? b.details.duration)
-      );
+      return totalTripDurationMinutes(a) - totalTripDurationMinutes(b);
     }
     if (sortKey === "cheapest_direct") return a.sellAmountMinor - b.sellAmountMinor;
     return a.sellAmountMinor - b.sellAmountMinor;

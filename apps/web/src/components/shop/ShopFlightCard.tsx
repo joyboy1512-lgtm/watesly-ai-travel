@@ -47,6 +47,7 @@ function LegRow({
   to,
   stops,
   duration,
+  isReturn,
 }: {
   logo: string | null;
   code: string;
@@ -60,9 +61,10 @@ function LegRow({
   to: string;
   stops: number;
   duration: string;
+  isReturn?: boolean;
 }) {
   return (
-    <div className="shop-ticket-leg">
+    <div className={`shop-ticket-leg${isReturn ? " shop-ticket-leg-return" : ""}`}>
       <div className="shop-ticket-carrier">
         {logo ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -121,6 +123,8 @@ export function ShopFlightCard({
   const returnStops = Math.max(0, returnSegs.length - 1);
   const code = String(flight.details.airlineCode || "");
   const logo = airlineLogo(code);
+  const returnCode = String(retFirst?.airline || code).slice(0, 2).toUpperCase();
+  const returnLogo = airlineLogo(returnCode) || logo;
   const duration = String(flight.details.duration || "—");
   const returnDurationMins = layoverMinutes(
     retFirst?.departAt || retFirst?.departTime,
@@ -157,7 +161,9 @@ export function ShopFlightCard({
   const showReturn = displayLeg === "both" || displayLeg === "return";
 
   return (
-    <article className={`shop-ticket-card shop-ticket-card-${displayLeg}`}>
+    <article
+      className={`shop-ticket-card shop-ticket-card-${displayLeg}${hasReturn && displayLeg === "both" ? " shop-ticket-card-roundtrip" : ""}`}
+    >
       {badges.length ? (
         <div className="shop-ticket-badges">
           {badges.map((b) => (
@@ -196,10 +202,11 @@ export function ShopFlightCard({
 
           {showReturn && hasReturn ? (
             <LegRow
-              logo={logo}
-              code={code}
-              label="رحلة العودة"
+              logo={returnLogo}
+              code={returnCode || code}
+              label="العودة"
               labelClass="return"
+              isReturn
               dep={retDep}
               arr={retArr}
               depDay={retDepDay}
@@ -231,10 +238,14 @@ export function ShopFlightCard({
           {formatMoneyMinor(flight.sellAmountMinor, flight.currency)}
         </strong>
         <small className="shop-ticket-price-note">
-          {priceFrom ? "أقل سعر لهذه الرحلة" : "يشمل الضرائب والرسوم"}
+          {priceFrom
+            ? "أقل سعر لهذه الرحلة"
+            : hasReturn
+              ? "السعر للذهاب والعودة · يشمل الضرائب"
+              : "يشمل الضرائب والرسوم"}
         </small>
         <button type="button" className="shop-ticket-details-btn" onClick={onViewDetails}>
-          {selectLabel || "عرض التفاصيل"}
+          {selectLabel || "اختر"}
         </button>
       </div>
     </article>

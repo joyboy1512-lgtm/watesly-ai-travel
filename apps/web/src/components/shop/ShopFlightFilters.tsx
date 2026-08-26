@@ -84,6 +84,26 @@ export function ShopFlightFilters({
 
   return (
     <aside className="shop-flight-filters-panel">
+      <div className="shop-flight-filters-head">
+        <strong>تصفية النتائج</strong>
+        <button
+          type="button"
+          className="shop-flight-filters-reset"
+          onClick={() =>
+            onChange({
+              stops: "any",
+              airlines: [],
+              departureTimes: [],
+              returnDepartureTimes: [],
+              maxDurationHours: "",
+              maxPrice: "",
+            })
+          }
+        >
+          إعادة الضبط
+        </button>
+      </div>
+
       <div className="shop-flight-filter-block">
         <strong>التوقفات</strong>
         <label className="shop-flight-filter-radio">

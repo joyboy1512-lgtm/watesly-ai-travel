@@ -6,17 +6,13 @@ import Link from "next/link";
 import { ShopFlightResults } from "@/components/shop/ShopFlightResults";
 import { ShopFlightDetailModal } from "@/components/shop/ShopFlightDetailModal";
 import {
-  airlineLogo,
   cabinLabel,
   collectFlightFacets,
   defaultFlightFilters,
   filterAndSortFlights,
-  formatClock,
   formatDay,
   getReturnSegments,
-  getSegments,
-  packagesMatchingOutbound,
-  uniqueOutboundFlights,
+  packageMaxStops,
   type FlightOfferRow,
   type FlightSearchFilters,
   type FlightSortKey,
@@ -31,7 +27,6 @@ import { saveFlightDraft } from "@/lib/booking-draft";
 import { shopFetch } from "@/lib/shop-session";
 
 type QuoteItem = { id: string; providerOfferRef: string; serviceType: string };
-type PickStep = "outbound" | "return";
 
 export function ShopFlightResultsClient() {
   const router = useRouter();
@@ -53,26 +48,16 @@ export function ShopFlightResultsClient() {
   const [sortKey, setSortKey] = useState<FlightSortKey>("best");
   const [detailFlight, setDetailFlight] = useState<FlightOfferRow | null>(null);
   const [editOpen, setEditOpen] = useState(false);
-  const [pickStep, setPickStep] = useState<PickStep>("outbound");
-  const [selectedOutbound, setSelectedOutbound] = useState<FlightOfferRow | null>(null);
-
   const [draft, setDraft] = useState<FlightResultsSearchParams>(params);
 
   useEffect(() => {
     setDraft(params);
   }, [params]);
 
-  const stepPool = useMemo(() => {
-    if (!isRoundTrip) return flightsRaw;
-    if (pickStep === "outbound") return uniqueOutboundFlights(flightsRaw);
-    if (!selectedOutbound) return [];
-    return packagesMatchingOutbound(flightsRaw, selectedOutbound);
-  }, [flightsRaw, isRoundTrip, pickStep, selectedOutbound]);
-
-  const facets = useMemo(() => collectFlightFacets(stepPool), [stepPool]);
+  const facets = useMemo(() => collectFlightFacets(flightsRaw), [flightsRaw]);
   const flights = useMemo(
-    () => filterAndSortFlights(stepPool, filters, sortKey, params.directOnly),
-    [stepPool, filters, sortKey, params.directOnly],
+    () => filterAndSortFlights(flightsRaw, filters, sortKey, params.directOnly),
+    [flightsRaw, filters, sortKey, params.directOnly],
   );
 
   const summary = formatFlightSearchSummary(params);
@@ -85,8 +70,6 @@ export function ShopFlightResultsClient() {
     setDetailFlight(null);
     setFilters(defaultFlightFilters());
     setSortKey("best");
-    setPickStep("outbound");
-    setSelectedOutbound(null);
 
     try {
       if (search.tripType === "multicity") {
@@ -164,11 +147,12 @@ export function ShopFlightResultsClient() {
         const rows = result.flights || [];
         setFlightsRaw(rows);
         const hasReturns = rows.some((f) => getReturnSegments(f.details).length > 0);
+        const directCount = rows.filter((f) => packageMaxStops(f) === 0).length;
         setMessage(
           search.tripType === "roundtrip" && hasReturns
-            ? `تم جلب ${rows.length} عرض ذهاب وعودة عبر ${result.providerName || "المزوّد"} — اختر الذهاب أولاً ثم العودة`
+            ? `تم جلب ${rows.length} عرض ذهاب وعودة عبر ${result.providerName || "المزوّد"}`
             : search.directOnly
-              ? `تم جلب ${rows.length} رحلة — ${rows.filter((f) => Number(f.details.stops || 0) === 0).length} مباشرة`
+              ? `تم جلب ${rows.length} رحلة — ${directCount} مباشرة`
               : `تم جلب ${rows.length} رحلة عبر ${result.providerName || "المزوّد"}`,
         );
       }
@@ -218,52 +202,6 @@ export function ShopFlightResultsClient() {
     router.push("/book");
   }
 
-  function handleSelectFlight(flight: FlightOfferRow) {
-    if (isRoundTrip && getReturnSegments(flight.details).length > 0) {
-      if (pickStep === "outbound") {
-        setSelectedOutbound(flight);
-        setPickStep("return");
-        setFilters(defaultFlightFilters());
-        setSortKey("best");
-        window.scrollTo({ top: 0, behavior: "smooth" });
-        return;
-      }
-      setDetailFlight(flight);
-      return;
-    }
-    setDetailFlight(flight);
-  }
-
-  function backToOutbound() {
-    setPickStep("outbound");
-    setSelectedOutbound(null);
-    setFilters(defaultFlightFilters());
-    setSortKey("best");
-  }
-
-  const outboundSummary = selectedOutbound
-    ? (() => {
-        const segs = getSegments(selectedOutbound.details);
-        const first = segs[0];
-        const last = segs[segs.length - 1];
-        const code = String(selectedOutbound.details.airlineCode || "");
-        return {
-          airline: String(
-            selectedOutbound.details.airlineAr || selectedOutbound.details.airline || code,
-          ),
-          logo: airlineLogo(code),
-          dep: formatClock(
-            first?.departAt || first?.departTime || String(selectedOutbound.details.departAt || ""),
-          ),
-          arr: formatClock(
-            last?.arriveAt || last?.arriveTime || String(selectedOutbound.details.arriveAt || ""),
-          ),
-          from: String(first?.from || params.origin),
-          to: String(last?.to || params.destination),
-        };
-      })()
-    : null;
-
   return (
     <div className="shop-flight-results-page">
       <div className="shop-flight-results-topbar">
@@ -274,6 +212,7 @@ export function ShopFlightResultsClient() {
             <span>
               {summary.travelers} مسافر · {cabinLabel(params.cabinClass)}
             </span>
+            {isRoundTrip ? <span className="shop-flight-chip">ذهاب وعودة</span> : null}
             {params.directOnly ? <span className="shop-flight-chip">مباشر فقط</span> : null}
           </div>
           <div className="shop-flight-results-topbar-actions">
@@ -372,6 +311,7 @@ export function ShopFlightResultsClient() {
           <small>
             {params.origin || "—"} → {params.destination || "—"}
             {params.departDate ? ` · ${formatDay(params.departDate)}` : ""}
+            {isRoundTrip && params.returnDate ? ` – ${formatDay(params.returnDate)}` : ""}
           </small>
         </div>
       ) : null}
@@ -388,55 +328,11 @@ export function ShopFlightResultsClient() {
 
       {!loading && !error ? (
         <>
-          {isRoundTrip ? (
-            <div className="shop-flight-stepper" aria-label="خطوات الاختيار">
-              <button
-                type="button"
-                className={`shop-flight-step${pickStep === "outbound" ? " on" : ""}${selectedOutbound ? " done" : ""}`}
-                onClick={backToOutbound}
-              >
-                <span className="shop-flight-step-num">1</span>
-                اختيار الذهاب
-              </button>
-              <span className="shop-flight-step-sep" aria-hidden />
-              <button
-                type="button"
-                className={`shop-flight-step${pickStep === "return" ? " on" : ""}`}
-                disabled={!selectedOutbound}
-                onClick={() => selectedOutbound && setPickStep("return")}
-              >
-                <span className="shop-flight-step-num">2</span>
-                اختيار العودة
-              </button>
-            </div>
-          ) : null}
-
-          {outboundSummary && pickStep === "return" ? (
-            <div className="shop-flight-picked-outbound">
-              <div className="shop-flight-picked-outbound-info">
-                {outboundSummary.logo ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={outboundSummary.logo} alt="" />
-                ) : null}
-                <div>
-                  <strong>الذهاب المختار · {outboundSummary.airline}</strong>
-                  <span>
-                    {outboundSummary.dep} {outboundSummary.from} → {outboundSummary.arr}{" "}
-                    {outboundSummary.to}
-                  </span>
-                </div>
-              </div>
-              <button type="button" className="shop-flight-change-outbound" onClick={backToOutbound}>
-                تغيير الذهاب
-              </button>
-            </div>
-          ) : null}
-
           {message ? <p className="shop-flight-results-status">{message}</p> : null}
 
           <ShopFlightResults
             flights={flights}
-            totalCount={stepPool.length}
+            totalCount={flightsRaw.length}
             filters={filters}
             facets={facets}
             sortKey={sortKey}
@@ -447,15 +343,9 @@ export function ShopFlightResultsClient() {
             onFiltersChange={setFilters}
             onSortChange={setSortKey}
             onResetFilters={() => setFilters(defaultFlightFilters())}
-            onSelectFlight={handleSelectFlight}
-            pickStep={isRoundTrip ? pickStep : "single"}
-            stepTitle={
-              isRoundTrip
-                ? pickStep === "outbound"
-                  ? "رحلات الذهاب"
-                  : "رحلات العودة"
-                : undefined
-            }
+            onSelectFlight={setDetailFlight}
+            pickStep="single"
+            stepTitle={isRoundTrip ? "عروض الذهاب والعودة" : undefined}
           />
         </>
       ) : null}

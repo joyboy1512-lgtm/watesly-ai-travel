@@ -1,13 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
-import { HotelDetailModal } from "@/components/hotels/HotelDetailModal";
-import { ShopHotelResults } from "@/components/shop/ShopHotelResults";
-import { ShopFlightResults } from "@/components/shop/ShopFlightResults";
-import { ShopFlightDetailModal } from "@/components/shop/ShopFlightDetailModal";
-import { TransferSearchCard } from "@/components/hotels/TransferSearchCard";
-import { ActivitySearchCard } from "@/components/hotels/ActivitySearchCard";
 import { type SuggestItem } from "@/components/shop/ShopAutocomplete";
 import {
   collectFilterFacets,
@@ -35,6 +30,31 @@ import { ShopLanding } from "@/components/shop/ShopLanding";
 import { ShopHeroBanner, type FlightLeg, type FlightTripType } from "@/components/shop/ShopHeroBanner";
 import type { ShopDestination, ShopOffer } from "@/lib/shop-content";
 import { openFlightResultsInNewTab } from "@/lib/flight-results-url";
+
+const HotelDetailModal = dynamic(
+  () => import("@/components/hotels/HotelDetailModal").then((m) => m.HotelDetailModal),
+  { ssr: false },
+);
+const ShopHotelResults = dynamic(
+  () => import("@/components/shop/ShopHotelResults").then((m) => m.ShopHotelResults),
+  { ssr: false },
+);
+const ShopFlightResults = dynamic(
+  () => import("@/components/shop/ShopFlightResults").then((m) => m.ShopFlightResults),
+  { ssr: false },
+);
+const ShopFlightDetailModal = dynamic(
+  () => import("@/components/shop/ShopFlightDetailModal").then((m) => m.ShopFlightDetailModal),
+  { ssr: false },
+);
+const TransferSearchCard = dynamic(
+  () => import("@/components/hotels/TransferSearchCard").then((m) => m.TransferSearchCard),
+  { ssr: false },
+);
+const ActivitySearchCard = dynamic(
+  () => import("@/components/hotels/ActivitySearchCard").then((m) => m.ActivitySearchCard),
+  { ssr: false },
+);
 
 type Mode = "flights" | "stays" | "cars" | "activities";
 

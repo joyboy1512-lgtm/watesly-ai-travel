@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import "@/app/hotel-rich.css";
 import type { HotelRateOption } from "@/lib/hotel-search";
 import { type HotelOfferRow } from "@/lib/hotel-search";
 import { apiFetch } from "@/lib/api";

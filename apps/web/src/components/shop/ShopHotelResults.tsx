@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import "@/app/hotel-rich.css";
 import { HotelSearchCard } from "@/components/hotels/HotelSearchCard";
 import { ShopHotelFilters } from "@/components/shop/ShopHotelFilters";
 import { ShopHotelResultsBar } from "@/components/shop/ShopHotelResultsBar";

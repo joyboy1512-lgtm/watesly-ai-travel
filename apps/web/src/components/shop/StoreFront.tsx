@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { usePathname } from "next/navigation";
 import { type ReactNode, useEffect, useState } from "react";
 import {
@@ -8,8 +9,12 @@ import {
   getShopSession,
   type ShopCustomer,
 } from "@/lib/shop-session";
-import { ShopAssistant } from "@/components/shop/ShopAssistant";
 import { WeekendGateLogo } from "@/components/shop/WeekendGateLogo";
+
+const ShopAssistant = dynamic(
+  () => import("@/components/shop/ShopAssistant").then((m) => m.ShopAssistant),
+  { ssr: false },
+);
 
 const BRAND = "WeekendGate";
 

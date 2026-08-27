@@ -13,12 +13,13 @@ import {
   arabicNightCount,
   arabicRoomCount,
 } from "@/lib/hotel-occupancy";
-import type { HotelOfferRow } from "@/lib/hotel-search";
 
 type HotelRow = {
   id: string;
+  description?: string;
   currency: string;
   sellAmountMinor: number;
+  costAmountMinor?: number;
   displayFromMinor: number;
   matchingRates: HotelRateOption[];
   details: Record<string, unknown>;
@@ -116,7 +117,14 @@ export function HotelSearchCard({
     cheapest && hotel.displayFromMinor > 0
       ? buildHotelDraftPriceBreakdown(
           cheapest,
-          hotel as HotelOfferRow,
+          {
+            id: hotel.id,
+            description: hotel.description || String(hotel.details.name || "فندق"),
+            sellAmountMinor: hotel.sellAmountMinor,
+            costAmountMinor: hotel.costAmountMinor,
+            currency: hotel.currency,
+            details: hotel.details,
+          },
           nights,
         )
       : null;

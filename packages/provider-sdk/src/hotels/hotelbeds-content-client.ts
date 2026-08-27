@@ -16,24 +16,55 @@ export async function fetchHotelbedsContentMap(
   const unique = [...new Set(codes.filter((c) => Number.isFinite(c) && c > 0))];
   if (!unique.length || !creds.apiKey || !creds.apiSecret) return map;
 
-  for (let i = 0; i < unique.length; i += 100) {
-    const chunk = unique.slice(i, i + 100);
+  async function fetchChunk(chunk: number[], attempt: number): Promise<void> {
     const qs = new URLSearchParams({
       codes: chunk.join(","),
       fields: "all",
       language: "ARA",
     });
     const url = `${creds.baseUrl}/hotel-content-api/1.0/hotels?${qs}`;
+    const started = Date.now();
     try {
-      const response = await fetch(url, { headers: hotelbedsHeaders(creds) });
+      const response = await fetch(url, {
+        headers: hotelbedsHeaders(creds),
+        signal: AbortSignal.timeout
+          ? AbortSignal.timeout(20_000)
+          : undefined,
+      });
       const json = (await response.json().catch(() => ({}))) as HbContentHotelsResponse;
-      if (!response.ok) continue;
+      const ms = Date.now() - started;
+      if (!response.ok) {
+        // One retry on transient failures
+        if (attempt < 1 && (response.status >= 500 || response.status === 429)) {
+          await new Promise((r) => setTimeout(r, 400));
+          return fetchChunk(chunk, attempt + 1);
+        }
+        console.warn(
+          `[hotelbeds-content] chunk failed status=${response.status} ms=${ms} codes=${chunk.length}`,
+        );
+        return;
+      }
       for (const hotel of json.hotels || []) {
         if (hotel.code != null) map.set(Number(hotel.code), hotel);
       }
-    } catch {
-      // Content API is best-effort — search still works without images
+      console.info(
+        `[hotelbeds-content] ok hotels=${json.hotels?.length || 0} ms=${ms} codes=${chunk.length}`,
+      );
+    } catch (err) {
+      if (attempt < 1) {
+        await new Promise((r) => setTimeout(r, 400));
+        return fetchChunk(chunk, attempt + 1);
+      }
+      console.warn(
+        `[hotelbeds-content] error ms=${Date.now() - started}`,
+        err instanceof Error ? err.message : err,
+      );
     }
+  }
+
+  for (let i = 0; i < unique.length; i += 100) {
+    const chunk = unique.slice(i, i + 100);
+    await fetchChunk(chunk, 0);
   }
   return map;
 }
@@ -44,8 +75,28 @@ export function pickPrimaryHotelImage(hotel?: HbContentHotel): string | undefine
   const general = images
     .filter((img) => !img.roomCode)
     .sort((a, b) => (a.visualOrder ?? a.order ?? 999) - (b.visualOrder ?? b.order ?? 999));
-  const pick = general[0] || images.sort((a, b) => (a.order ?? 999) - (b.order ?? 999))[0];
+  const ordered = [...images].sort(
+    (a, b) => (a.visualOrder ?? a.order ?? 999) - (b.visualOrder ?? b.order ?? 999),
+  );
+  const pick = general[0] || ordered[0];
   return hotelbedsImageUrl(pick?.path, "bigger");
+}
+
+/** Match availability room codes (e.g. DBL.ST-1) to content room codes (DBL.ST). */
+export function resolveContentRoomCode(
+  content: HbContentHotel | undefined,
+  roomCode: string | undefined,
+): string | undefined {
+  if (!content || !roomCode) return undefined;
+  const codes = (content.rooms || []).map((r) => r.roomCode).filter(Boolean) as string[];
+  if (codes.includes(roomCode)) return roomCode;
+  const base = roomCode.split(/[.\-]/)[0] || roomCode;
+  const exactPrefix = codes.find((c) => c === roomCode.split("-")[0]);
+  if (exactPrefix) return exactPrefix;
+  const byStart = codes.find(
+    (c) => c.startsWith(base) || roomCode.startsWith(c) || c.split(".")[0] === base,
+  );
+  return byStart;
 }
 
 export function pickRoomImages(hotel?: HbContentHotel): Record<string, string> {
@@ -66,12 +117,14 @@ export function pickRoomImageLists(
       (a.visualOrder ?? a.order ?? 999) - (b.visualOrder ?? b.order ?? 999),
   );
   for (const img of images) {
-    if (!img.roomCode || !img.path) continue;
+    if (!img.path) continue;
     const url = hotelbedsImageUrl(img.path, "bigger");
     if (!url) continue;
-    const list = out[img.roomCode] ?? [];
+    // Hotel-level images (no roomCode) go under __hotel__
+    const key = img.roomCode || "__hotel__";
+    const list = out[key] ?? [];
     if (!list.includes(url)) list.push(url);
-    out[img.roomCode] = list;
+    out[key] = list;
   }
   return out;
 }

@@ -6473,3 +6473,114 @@
   0% { background-position: 100% 0; }
   100% { background-position: -100% 0; }
 }
+
+/* ===== P1 flight selection redesign ===== */
+.shop-flight-pick-stepper {
+  width: min(1200px, calc(100% - 2rem));
+  margin: 0 auto 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.shop-flight-pick-step {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--exp-border);
+  background: #fff;
+  border-radius: 999px;
+  padding: 0.45rem 0.95rem;
+  font: inherit;
+  font-weight: 700;
+  color: var(--exp-muted);
+  cursor: pointer;
+}
+
+.shop-flight-pick-step.on {
+  background: var(--exp-navy);
+  border-color: var(--exp-navy);
+  color: #fff;
+}
+
+.shop-flight-pick-step.done:not(.on) {
+  color: var(--exp-navy);
+  border-color: #94a3b8;
+}
+
+.shop-flight-pick-step:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.shop-ticket-cta-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  width: 100%;
+  align-items: stretch;
+}
+
+.shop-ticket-details-link {
+  border: 0;
+  background: transparent;
+  color: var(--exp-navy);
+  font: inherit;
+  font-weight: 700;
+  font-size: 0.86rem;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0.25rem;
+  text-align: center;
+}
+
+.shop-ticket-codeshare,
+.shop-ticket-stop-hint,
+.shop-ticket-airport-change {
+  display: block;
+  font-size: 0.72rem;
+  font-style: normal;
+  font-weight: 600;
+  color: #64748b;
+  margin-top: 0.15rem;
+}
+
+.shop-ticket-airport-change {
+  color: #b45309;
+}
+
+.shop-ticket-bags-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  font-size: 0.78rem;
+  color: #334155;
+  margin-bottom: 0.35rem;
+}
+
+.shop-ticket-bags-text .off {
+  opacity: 0.55;
+}
+
+.shop-ticket-badge-why {
+  display: block;
+  font-style: normal;
+  font-weight: 500;
+  font-size: 0.68rem;
+  opacity: 0.85;
+  margin-top: 0.1rem;
+}
+
+.shop-ticket-leg-p1 .shop-ticket-kayak-check {
+  display: none;
+}
+
+@media (max-width: 720px) {
+  .shop-ticket-cta-group {
+    margin-top: 0.35rem;
+  }
+
+  .shop-ticket-badge-why {
+    display: none;
+  }
+}

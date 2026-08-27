@@ -34,17 +34,16 @@ type Props = {
   onFiltersChange: (next: FlightSearchFilters) => void;
   onSortChange: (key: FlightSortKey) => void;
   onResetFilters: () => void;
-  enableMixMatch?: boolean;
   onSelectFlight: (flight: FlightOfferRow) => void;
-  onToggleOutbound?: (flight: FlightOfferRow) => void;
-  onToggleReturn?: (flight: FlightOfferRow) => void;
+  onViewDetails: (flight: FlightOfferRow) => void;
   selectedOutboundKey?: string | null;
   selectedReturnKey?: string | null;
   expandedTripId?: string | null;
   loadingFlightId?: string | null;
   pickStep?: FlightPickStep;
   stepTitle?: string;
-  /** Kayak-style custom trip card pinned above the list */
+  selectLabel?: string;
+  /** Sticky / pinned custom trip summary above the list */
   customTripSlot?: ReactNode;
 };
 
@@ -62,11 +61,18 @@ export function ShopFlightResults(props: Props) {
   );
   const displayLeg: FlightCardDisplayLeg =
     pickStep === "outbound" ? "outbound" : pickStep === "return" ? "return" : "both";
-  const enableMix = props.enableMixMatch !== false;
 
   const bestId = sortTabs.find((t) => t.key === "best")?.flightId;
   const cheapId = sortTabs.find((t) => t.key === "price_asc")?.flightId;
   const fastId = sortTabs.find((t) => t.key === "duration_asc")?.flightId;
+
+  const selectLabel =
+    props.selectLabel ||
+    (pickStep === "outbound"
+      ? "اختيار الذهاب"
+      : pickStep === "return"
+        ? "اختيار العودة"
+        : "اختيار هذه الرحلة");
 
   return (
     <section className="shop-flight-results kayak">
@@ -99,7 +105,6 @@ export function ShopFlightResults(props: Props) {
         {props.stepTitle ? <strong>{props.stepTitle} · </strong> : null}
         عرض {props.flights.length} من {props.totalCount}
         {active ? " · فلاتر مفعّلة" : ""}
-        {enableMix ? " · يمكنك مزج الذهاب والعودة" : ""}
       </div>
 
       <button
@@ -144,21 +149,15 @@ export function ShopFlightResults(props: Props) {
                   destinationFallback={props.destination}
                   badges={badges}
                   displayLeg={displayLeg}
-                  priceFrom={pickStep === "outbound"}
                   passengers={props.passengers}
-                  enableMixMatch={enableMix && props.enableMixMatch !== false}
-                  outboundKey={outKey}
-                  returnKey={retKey}
-                  selectedOutboundKey={props.selectedOutboundKey}
-                  selectedReturnKey={props.selectedReturnKey}
-                  onToggleOutbound={() => props.onToggleOutbound?.(flight)}
-                  onToggleReturn={() => props.onToggleReturn?.(flight)}
                   isExpanded={isExpanded}
                   selectLoading={props.loadingFlightId === flight.id}
                   isHighlighted={
                     props.selectedOutboundKey === outKey || props.selectedReturnKey === retKey
                   }
+                  selectLabel={selectLabel}
                   onSelectFlight={() => props.onSelectFlight(flight)}
+                  onViewDetails={() => props.onViewDetails(flight)}
                 />
               );
             })}

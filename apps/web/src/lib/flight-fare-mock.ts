@@ -51,7 +51,7 @@ export type RevalidateSuccess = {
 
 export type RevalidateFailure = {
   ok: false;
-  reason: "unavailable" | "error";
+  reason: "unavailable" | "expired" | "error";
   message: string;
 };
 
@@ -73,8 +73,8 @@ const TIER_DEFS: Array<{
 }> = [
   {
     tierKey: "economy_saver",
-    label: "Economy Saver",
-    labelAr: "اقتصادية موفّرة",
+    label: "Saver",
+    labelAr: "Saver · موفّرة",
     multiplier: 1,
     cabinBag: "7 كغ حقيبة مقصورة",
     checkedBag: "غير مشمولة",
@@ -87,8 +87,8 @@ const TIER_DEFS: Array<{
   },
   {
     tierKey: "economy_standard",
-    label: "Economy Standard",
-    labelAr: "اقتصادية قياسية",
+    label: "Standard",
+    labelAr: "Standard · قياسية",
     multiplier: 1.12,
     cabinBag: "7 كغ حقيبة مقصورة",
     checkedBag: "23 كغ حقيبة مسجّلة",
@@ -101,8 +101,8 @@ const TIER_DEFS: Array<{
   },
   {
     tierKey: "economy_flex",
-    label: "Economy Flex",
-    labelAr: "اقتصادية مرنة",
+    label: "Flex",
+    labelAr: "Flex · مرنة",
     multiplier: 1.28,
     cabinBag: "10 كغ حقيبة مقصورة",
     checkedBag: "30 كغ حقيبة مسجّلة",
@@ -189,11 +189,19 @@ export async function revalidateMockOffer(
 ): Promise<RevalidateResult> {
   await new Promise((r) => setTimeout(r, 700 + Math.random() * 400));
 
-  if (Math.random() < 0.02) {
+  const roll = Math.random();
+  if (roll < 0.02) {
     return {
       ok: false,
       reason: "error",
-      message: "تعذّر التحقق من السعر. تحقق من الاتصال وحاول مرة أخرى.",
+      message: "تعذر الاتصال بالمزوّد. تحقق من الاتصال وحاول مرة أخرى.",
+    };
+  }
+  if (roll < 0.035) {
+    return {
+      ok: false,
+      reason: "expired",
+      message: "انتهى العرض. حدّث النتائج واختر رحلة أخرى.",
     };
   }
 
@@ -203,7 +211,7 @@ export async function revalidateMockOffer(
     return {
       ok: false,
       reason: "unavailable",
-      message: "السعر لم يعد متاحًا. يرجى تحديث النتائج.",
+      message: "لم يعد متاحًا. يرجى تحديث النتائج.",
     };
   }
 
@@ -213,7 +221,7 @@ export async function revalidateMockOffer(
     return {
       ok: false,
       reason: "unavailable",
-      message: "عرض المزوّد لم يعد متاحًا.",
+      message: "لم يعد متاحًا لدى المزوّد.",
     };
   }
 

@@ -10,6 +10,7 @@ import {
   formatMinutesLabel,
   getReturnSegments,
   getSegments,
+  layoverMinutes,
   segmentAirlineCode,
   stopsLabel,
   type FlightOfferRow,
@@ -23,26 +24,27 @@ type Props = {
   originFallback?: string;
   destinationFallback?: string;
   onSelectFlight: () => void;
+  onViewDetails: () => void;
   badges?: Array<"best" | "cheapest" | "fastest">;
   displayLeg?: FlightCardDisplayLeg;
-  priceFrom?: boolean;
   passengers?: number;
-  enableMixMatch?: boolean;
-  outboundKey?: string;
-  returnKey?: string;
-  selectedOutboundKey?: string | null;
-  selectedReturnKey?: string | null;
-  onToggleOutbound?: () => void;
-  onToggleReturn?: () => void;
   isExpanded?: boolean;
   selectLoading?: boolean;
   isHighlighted?: boolean;
+  /** When picking a single leg in mix-match wizard */
+  selectLabel?: string;
 };
 
 const BADGE_LABEL: Record<"best" | "cheapest" | "fastest", string> = {
   best: "الأفضل",
   cheapest: "الأرخص",
   fastest: "الأسرع",
+};
+
+const BADGE_WHY: Record<"best" | "cheapest" | "fastest", string> = {
+  best: "توازن بين السعر والمدة وعدد التوقفات",
+  cheapest: "أقل سعر إجمالي لهذه البحث",
+  fastest: "أقصر مدة إجمالية للرحلة",
 };
 
 function dayOffsetLabel(departAt?: string, arriveAt?: string) {
@@ -60,7 +62,6 @@ function dayOffsetLabel(departAt?: string, arriveAt?: string) {
 function legDurationLabel(segs: FlightSeg[], fallbackRaw: unknown) {
   const mins = computeLegDurationMinutes(segs, fallbackRaw);
   if (mins > 0) return formatMinutesLabel(mins);
-  // HH:MM mock strings (e.g. "03:26") — show as Arabic duration
   if (typeof fallbackRaw === "string") {
     const fromColon = durationMinutes(fallbackRaw);
     if (fromColon !== Number.MAX_SAFE_INTEGER && fromColon > 0) {
@@ -74,6 +75,59 @@ function legDurationLabel(segs: FlightSeg[], fallbackRaw: unknown) {
   return "—";
 }
 
+function codeshareNote(segs: FlightSeg[], packageCode: string): string | null {
+  for (const seg of segs) {
+    const marketing = segmentAirlineCode(seg, packageCode);
+    const operating = String(
+      seg.operatingAirlineCode || seg.operatingAirlineName || "",
+    ).trim();
+    if (!operating) continue;
+    const opCode = operating.length === 2 ? operating.toUpperCase() : "";
+    if (opCode && opCode !== marketing) {
+      return `تشغيل فعلي: ${seg.operatingAirlineName || opCode}`;
+    }
+    if (!opCode && seg.operatingAirlineName) {
+      return `تشغيل فعلي: ${seg.operatingAirlineName}`;
+    }
+  }
+  return null;
+}
+
+function airportChangeNote(segs: FlightSeg[]): string | null {
+  for (let i = 0; i < segs.length - 1; i += 1) {
+    const cur = segs[i]!;
+    const next = segs[i + 1]!;
+    const arr = String(cur.to || "");
+    const dep = String(next.from || "");
+    if (arr && dep && arr !== dep) {
+      return `تغيير مطار: ${arr} → ${dep}`;
+    }
+    const arrT = String(cur.arrivalTerminal || "").trim();
+    const depT = String(next.departureTerminal || "").trim();
+    if (arrT && depT && arrT !== depT) {
+      return `تغيير صالة: ${arrT} → ${depT}`;
+    }
+  }
+  return null;
+}
+
+function stopDurationHint(segs: FlightSeg[]): string | null {
+  if (segs.length < 2) return null;
+  const parts: string[] = [];
+  for (let i = 0; i < segs.length - 1; i += 1) {
+    const cur = segs[i]!;
+    const next = segs[i + 1]!;
+    const mins = layoverMinutes(
+      cur.arriveAt || cur.arriveTime,
+      next.departAt || next.departTime,
+    );
+    if (mins != null && mins > 0) {
+      parts.push(`${cur.to || "توقف"} ${formatMinutesLabel(mins)}`);
+    }
+  }
+  return parts.length ? parts.join(" · ") : null;
+}
+
 function LegBlock({
   segs,
   details,
@@ -85,9 +139,6 @@ function LegBlock({
   stops,
   durationRaw,
   isReturn,
-  mixEnabled,
-  legSelected,
-  onPickLeg,
 }: {
   segs: FlightSeg[];
   details: Record<string, unknown>;
@@ -99,9 +150,6 @@ function LegBlock({
   stops: number;
   durationRaw: unknown;
   isReturn?: boolean;
-  mixEnabled?: boolean;
-  legSelected?: boolean;
-  onPickLeg?: () => void;
 }) {
   const first = segs[0];
   const code = segmentAirlineCode(first, packageCode);
@@ -116,25 +164,21 @@ function LegBlock({
     depRaw.includes("T") ? depRaw : undefined,
     arrRaw.includes("T") ? arrRaw : undefined,
   );
+  const codeshare = codeshareNote(segs, packageCode);
+  const airportChange = airportChangeNote(segs);
+  const stopHint = stopDurationHint(segs);
+  const depTerminal = first?.departureTerminal
+    ? `صالة ${first.departureTerminal}`
+    : null;
+  const arrTerminal = segs[segs.length - 1]?.arrivalTerminal
+    ? `صالة ${segs[segs.length - 1]!.arrivalTerminal}`
+    : null;
 
   return (
     <div
-      className={`shop-ticket-leg-v2 kayak-leg${isReturn ? " is-return" : ""}${
-        legSelected ? " is-leg-selected" : ""
-      }`}
+      className={`shop-ticket-leg-v2 kayak-leg shop-ticket-leg-p1${isReturn ? " is-return" : ""}`}
       dir="ltr"
     >
-      {mixEnabled ? (
-        <label className="shop-ticket-kayak-check">
-          <input
-            type="checkbox"
-            checked={Boolean(legSelected)}
-            onChange={() => onPickLeg?.()}
-            aria-label={isReturn ? "اختيار رحلة العودة" : "اختيار رحلة الذهاب"}
-          />
-        </label>
-      ) : null}
-
       <div className="shop-ticket-airline-col">
         <div className="shop-ticket-airline-logo">
           {logo ? (
@@ -147,12 +191,16 @@ function LegBlock({
         <div className="shop-ticket-airline-text">
           <strong>{name}</strong>
           <span>{flightNo || code}</span>
+          {codeshare ? <em className="shop-ticket-codeshare">{codeshare}</em> : null}
         </div>
       </div>
 
       <div className="shop-ticket-time">
         <strong>{formatClock(depRaw)}</strong>
-        <span>{from}</span>
+        <span>
+          {from}
+          {depTerminal ? ` · ${depTerminal}` : ""}
+        </span>
       </div>
 
       <div className="shop-ticket-path">
@@ -163,6 +211,10 @@ function LegBlock({
         <span className={`shop-ticket-meta-stops${stops === 0 ? " direct" : ""}`}>
           {stopsLabel(stops)}
         </span>
+        {stopHint ? <small className="shop-ticket-stop-hint">{stopHint}</small> : null}
+        {airportChange ? (
+          <small className="shop-ticket-airport-change">{airportChange}</small>
+        ) : null}
       </div>
 
       <div className="shop-ticket-time end">
@@ -170,7 +222,10 @@ function LegBlock({
           {formatClock(arrRaw)}
           {offset ? <sup className="shop-ticket-day-offset">{offset}</sup> : null}
         </strong>
-        <span>{to}</span>
+        <span>
+          {to}
+          {arrTerminal ? ` · ${arrTerminal}` : ""}
+        </span>
       </div>
     </div>
   );
@@ -181,20 +236,14 @@ export function ShopFlightCard({
   originFallback = "",
   destinationFallback = "",
   onSelectFlight,
+  onViewDetails,
   badges = [],
   displayLeg = "both",
-  priceFrom = false,
   passengers = 1,
-  enableMixMatch = false,
-  outboundKey = "",
-  returnKey = "",
-  selectedOutboundKey,
-  selectedReturnKey,
-  onToggleOutbound,
-  onToggleReturn,
   isExpanded = false,
   selectLoading = false,
   isHighlighted = false,
+  selectLabel = "اختيار هذه الرحلة",
 }: Props) {
   const segs = getSegments(flight.details);
   const returnSegs = getReturnSegments(flight.details);
@@ -215,8 +264,10 @@ export function ShopFlightCard({
 
   const hasReturn = returnSegs.length > 0;
   const baggage = (flight.details.baggage || {}) as Record<string, string>;
-  const hasCabin = Boolean(baggage.cabin || baggage.personal);
-  const hasChecked = Boolean(baggage.checked && !/غير|بدون|none|no /i.test(baggage.checked));
+  const cabinBag = baggage.cabin || baggage.personal || "";
+  const checkedBag = baggage.checked || "";
+  const hasCabin = Boolean(cabinBag);
+  const hasChecked = Boolean(checkedBag && !/غير|بدون|none|no /i.test(checkedBag));
 
   const from = String(first?.from || flight.details.legOrigin || flight.details.from || originFallback);
   const to = String(last?.to || flight.details.legDestination || flight.details.to || destinationFallback);
@@ -225,28 +276,30 @@ export function ShopFlightCard({
 
   const showOutbound = displayLeg === "both" || displayLeg === "outbound";
   const showReturn = displayLeg === "both" || displayLeg === "return";
-
-  const outboundSelected = Boolean(outboundKey && selectedOutboundKey === outboundKey);
-  const returnSelected = Boolean(returnKey && selectedReturnKey === returnKey);
-  const picked = outboundSelected || returnSelected || isHighlighted;
+  const picked = isHighlighted || isExpanded;
 
   const pax = Math.max(1, passengers);
   const priceNote =
     pax > 1
-      ? `يبدأ من · السعر الإجمالي لـ ${pax} مسافرين · شامل الضرائب`
-      : "يبدأ من · السعر الإجمالي لمسافر واحد · شامل الضرائب";
+      ? `السعر الإجمالي لـ ${pax} مسافرين · شامل الضرائب`
+      : "السعر الإجمالي لمسافر واحد · شامل الضرائب";
 
   return (
     <article
-      className={`shop-ticket-card shop-ticket-card-v2 shop-ticket-card-${displayLeg}${
+      className={`shop-ticket-card shop-ticket-card-v2 shop-ticket-card-p1 shop-ticket-card-${displayLeg}${
         hasReturn && displayLeg === "both" ? " shop-ticket-card-roundtrip" : ""
       }${picked ? " is-picked" : ""}${isExpanded ? " is-expanded" : ""}`}
     >
       {badges.length ? (
         <div className="shop-ticket-badges">
           {badges.map((b) => (
-            <span key={b} className={`shop-ticket-badge shop-ticket-badge-${b}`}>
+            <span
+              key={b}
+              className={`shop-ticket-badge shop-ticket-badge-${b}`}
+              title={BADGE_WHY[b]}
+            >
               {BADGE_LABEL[b]}
+              <em className="shop-ticket-badge-why">{BADGE_WHY[b]}</em>
             </span>
           ))}
         </div>
@@ -265,9 +318,6 @@ export function ShopFlightCard({
               to={to}
               stops={stops}
               durationRaw={flight.details.durationMinutes ?? flight.details.duration}
-              mixEnabled={enableMixMatch && hasReturn}
-              legSelected={outboundSelected}
-              onPickLeg={onToggleOutbound}
             />
           ) : null}
 
@@ -283,39 +333,47 @@ export function ShopFlightCard({
               stops={returnStops}
               durationRaw={flight.details.returnDurationMinutes ?? flight.details.returnDuration}
               isReturn
-              mixEnabled={enableMixMatch}
-              legSelected={returnSelected}
-              onPickLeg={onToggleReturn}
             />
           ) : null}
         </div>
       </div>
 
       <div className="shop-ticket-side-v2">
-        <div className="shop-ticket-bags">
-          {hasCabin ? <span title="حقيبة مقصورة">✓ 🎒</span> : <span className="off">🎒</span>}
-          {hasChecked ? <span title="حقيبة مسجّلة">✓ 🧳</span> : <span className="off">🧳</span>}
+        <div className="shop-ticket-bags shop-ticket-bags-text">
+          <span className={hasCabin ? "" : "off"}>
+            🎒 {hasCabin ? cabinBag : "مقصورة حسب الفئة"}
+          </span>
+          <span className={hasChecked ? "" : "off"}>
+            🧳 {hasChecked ? checkedBag : "مسجّلة حسب الفئة"}
+          </span>
         </div>
         <strong className="shop-ticket-price">
-          من {formatMoneyMinor(flight.sellAmountMinor, flight.currency)}
+          {formatMoneyMinor(flight.sellAmountMinor, flight.currency)}
         </strong>
         <small className="shop-ticket-price-note">{priceNote}</small>
-        <button
-          type="button"
-          className="shop-ticket-details-btn primary"
-          disabled={selectLoading}
-          onClick={onSelectFlight}
-        >
-          {selectLoading ? (
-            <span className="shop-flight-btn-loading">
-              <span className="shop-flight-spinner small" aria-hidden />
-            </span>
-          ) : isExpanded ? (
-            "إغلاق التفاصيل"
-          ) : (
-            "تفاصيل الرحلة"
-          )}
-        </button>
+        <div className="shop-ticket-cta-group">
+          <button
+            type="button"
+            className="shop-ticket-details-btn primary"
+            disabled={selectLoading}
+            onClick={onSelectFlight}
+          >
+            {selectLoading ? (
+              <span className="shop-flight-btn-loading">
+                <span className="shop-flight-spinner small" aria-hidden />
+              </span>
+            ) : (
+              selectLabel
+            )}
+          </button>
+          <button
+            type="button"
+            className="shop-ticket-details-link"
+            onClick={onViewDetails}
+          >
+            التفاصيل والشروط
+          </button>
+        </div>
       </div>
     </article>
   );

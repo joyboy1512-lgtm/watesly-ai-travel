@@ -371,7 +371,7 @@ export function ShopFlightDetailModal({
         <footer className="shop-flight-modal-foot">
           <strong>{formatMoneyMinor(flight.sellAmountMinor, flight.currency)}</strong>
           <button type="button" className="shop-flight-continue-btn" onClick={onContinue}>
-            متابعة
+            اختيار هذه الرحلة
           </button>
         </footer>
       </div>

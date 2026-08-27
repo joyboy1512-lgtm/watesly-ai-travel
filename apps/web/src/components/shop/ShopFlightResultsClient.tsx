@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { ShopFlightResults } from "@/components/shop/ShopFlightResults";
 import { ShopFlightExpandedPanel } from "@/components/shop/ShopFlightExpandedPanel";
+import { ShopFlightDetailModal } from "@/components/shop/ShopFlightDetailModal";
 import { ShopFlightSelectionBar } from "@/components/shop/ShopFlightSelectionBar";
 import {
   composeFromLegs,
@@ -45,6 +46,7 @@ import { saveFlightDraft } from "@/lib/booking-draft";
 import { shopFetch } from "@/lib/shop-session";
 
 type QuoteItem = { id: string; providerOfferRef: string; serviceType: string };
+type PickStep = "outbound" | "return" | "fare" | "single";
 
 export function ShopFlightResultsClient() {
   const router = useRouter();
@@ -71,7 +73,9 @@ export function ShopFlightResultsClient() {
 
   const [selectedOutboundKey, setSelectedOutboundKey] = useState<string | null>(null);
   const [selectedReturnKey, setSelectedReturnKey] = useState<string | null>(null);
+  const [pickStep, setPickStep] = useState<PickStep>(isRoundTrip ? "outbound" : "single");
   const [expandedTrip, setExpandedTrip] = useState<ComposedTrip | null>(null);
+  const [detailsFlight, setDetailsFlight] = useState<FlightOfferRow | null>(null);
   const [loadingFlightId, setLoadingFlightId] = useState<string | null>(null);
   const [panelBusy, setPanelBusy] = useState(false);
 
@@ -135,11 +139,13 @@ export function ShopFlightResultsClient() {
     setMessage("");
     setFlightsRaw([]);
     setExpandedTrip(null);
+    setDetailsFlight(null);
     if (!shouldRestoreResultsSession(buildFlightResultsHref(search))) {
       setFilters(defaultFlightFilters());
       setSortKey("best");
       setSelectedOutboundKey(null);
       setSelectedReturnKey(null);
+      setPickStep(search.tripType === "roundtrip" && search.returnDate ? "outbound" : "single");
       restoredRef.current = false;
     }
 
@@ -283,14 +289,31 @@ export function ShopFlightResultsClient() {
   function toggleOutbound(flight: FlightOfferRow) {
     const key = legKey(flight, "outbound");
     setExpandedTrip(null);
-    setSelectedOutboundKey((prev) => (prev === key ? null : key));
+    setDetailsFlight(null);
+    setSelectedOutboundKey(key);
+    if (isRoundTrip) {
+      setPickStep("return");
+    } else {
+      const trip = composeFromPackage(flight);
+      if (trip) void openTripPanel(trip, flight.id);
+    }
   }
 
   function toggleReturn(flight: FlightOfferRow) {
     const key = legKey(flight, "return");
     if (!key) return;
     setExpandedTrip(null);
-    setSelectedReturnKey((prev) => (prev === key ? null : key));
+    setDetailsFlight(null);
+    setSelectedReturnKey(key);
+    setPickStep("fare");
+    const outFlight = selectedOutboundKey
+      ? findFlightForLeg(flightsRaw, selectedOutboundKey, "outbound")
+      : null;
+    const outbound = outFlight ? extractLeg(outFlight, "outbound") : null;
+    const returnLeg = extractLeg(flight, "return");
+    if (outbound && returnLeg) {
+      void openTripPanel(composeFromLegs(outbound, returnLeg), flight.id);
+    }
   }
 
   async function openTripPanel(trip: ComposedTrip, flightIdForLoading?: string) {
@@ -301,27 +324,41 @@ export function ShopFlightResultsClient() {
     }
     if (flightIdForLoading) setLoadingFlightId(flightIdForLoading);
     setPanelBusy(true);
+    setDetailsFlight(null);
     await new Promise((r) => setTimeout(r, 200));
     setExpandedTrip(trip);
     setPanelBusy(false);
     setLoadingFlightId(null);
   }
 
-  function handleViewDetails(flight: FlightOfferRow) {
-    const trip = composeFromPackage(flight);
-    if (!trip) return;
-
-    if (expandedTrip?.sourcePackageId === flight.id) {
-      setExpandedTrip(null);
+  /** Primary CTA — select itinerary / open fare comparison */
+  function handleSelectFlight(flight: FlightOfferRow) {
+    if (isRoundTrip && pickStep === "outbound") {
+      toggleOutbound(flight);
       return;
     }
-
-    // Open details only — do not auto-check mix-match legs
+    if (isRoundTrip && pickStep === "return") {
+      toggleReturn(flight);
+      return;
+    }
+    const trip = composeFromPackage(flight);
+    if (!trip) return;
+    const outKey = legKey(flight, "outbound");
+    const retKey = legKey(flight, "return");
+    setSelectedOutboundKey(outKey);
+    if (retKey) setSelectedReturnKey(retKey);
     void openTripPanel(trip, flight.id);
+  }
+
+  /** Secondary CTA — details only, do not select */
+  function handleViewDetails(flight: FlightOfferRow) {
+    setExpandedTrip(null);
+    setDetailsFlight(flight);
   }
 
   function handleBarSelect() {
     if (!composedPreview || !tripReadyForSelection(composedPreview, isRoundTrip)) return;
+    setPickStep("fare");
     void openTripPanel(composedPreview);
   }
 
@@ -400,6 +437,8 @@ export function ShopFlightResultsClient() {
     setSelectedOutboundKey(null);
     setSelectedReturnKey(null);
     setExpandedTrip(null);
+    setDetailsFlight(null);
+    setPickStep(isRoundTrip ? "outbound" : "single");
   }
 
   return (
@@ -536,6 +575,50 @@ export function ShopFlightResultsClient() {
           </div>
           {message ? <p className="shop-flight-results-status">{message}</p> : null}
 
+          {isRoundTrip ? (
+            <nav className="shop-flight-pick-stepper" aria-label="خطوات اختيار الرحلة">
+              <button
+                type="button"
+                className={`shop-flight-pick-step${pickStep === "outbound" ? " on" : ""}${
+                  selectedOutboundKey ? " done" : ""
+                }`}
+                onClick={() => {
+                  setPickStep("outbound");
+                  setExpandedTrip(null);
+                }}
+              >
+                1 · الذهاب
+              </button>
+              <button
+                type="button"
+                className={`shop-flight-pick-step${pickStep === "return" ? " on" : ""}${
+                  selectedReturnKey ? " done" : ""
+                }`}
+                disabled={!selectedOutboundKey}
+                onClick={() => {
+                  if (!selectedOutboundKey) return;
+                  setPickStep("return");
+                  setExpandedTrip(null);
+                }}
+              >
+                2 · العودة
+              </button>
+              <button
+                type="button"
+                className={`shop-flight-pick-step${pickStep === "fare" || expandedTrip ? " on" : ""}`}
+                  disabled={!composedPreview || !tripReadyForSelection(composedPreview, true)}
+                onClick={() => {
+                  if (composedPreview && tripReadyForSelection(composedPreview, true)) {
+                    setPickStep("fare");
+                    void openTripPanel(composedPreview);
+                  }
+                }}
+              >
+                3 · فئة السعر
+              </button>
+            </nav>
+          ) : null}
+
           <ShopFlightResults
             flights={flights}
             totalCount={flightsRaw.length}
@@ -550,15 +633,30 @@ export function ShopFlightResultsClient() {
             onFiltersChange={setFilters}
             onSortChange={setSortKey}
             onResetFilters={() => setFilters(defaultFlightFilters())}
-            onSelectFlight={handleViewDetails}
-            onToggleOutbound={toggleOutbound}
-            onToggleReturn={toggleReturn}
+            onSelectFlight={handleSelectFlight}
+            onViewDetails={handleViewDetails}
             selectedOutboundKey={selectedOutboundKey}
             selectedReturnKey={selectedReturnKey}
             expandedTripId={expandedTripId}
             loadingFlightId={loadingFlightId}
-            pickStep="single"
-            enableMixMatch={isRoundTrip}
+            pickStep={
+              isRoundTrip
+                ? pickStep === "return"
+                  ? "return"
+                  : pickStep === "fare"
+                    ? "single"
+                    : "outbound"
+                : "single"
+            }
+            stepTitle={
+              isRoundTrip
+                ? pickStep === "outbound"
+                  ? "اختر رحلة الذهاب"
+                  : pickStep === "return"
+                    ? "اختر رحلة العودة"
+                    : "راجع الرحلة واختر فئة السعر"
+                : undefined
+            }
             customTripSlot={
               isRoundTrip && selectionBarTrip && (selectedOutboundKey || selectedReturnKey) ? (
                 <ShopFlightSelectionBar
@@ -570,17 +668,37 @@ export function ShopFlightResultsClient() {
                   onClear={clearSelection}
                   onClearOutbound={() => {
                     setSelectedOutboundKey(null);
+                    setSelectedReturnKey(null);
                     setExpandedTrip(null);
+                    setPickStep("outbound");
                   }}
                   onClearReturn={() => {
                     setSelectedReturnKey(null);
                     setExpandedTrip(null);
+                    setPickStep("return");
                   }}
                 />
               ) : null
             }
           />
         </>
+      ) : null}
+
+      {detailsFlight ? (
+        <ShopFlightDetailModal
+          flight={detailsFlight}
+          origin={params.origin}
+          destination={params.destination}
+          originLabel={params.originLabel}
+          destinationLabel={params.destinationLabel}
+          cabinClass={params.cabinClass}
+          onClose={() => setDetailsFlight(null)}
+          onContinue={() => {
+            const f = detailsFlight;
+            setDetailsFlight(null);
+            handleSelectFlight(f);
+          }}
+        />
       ) : null}
 
       {expandedTrip ? (

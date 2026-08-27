@@ -29,8 +29,10 @@ export type ExpandedPanelPhase =
   | "idle"
   | "revalidating"
   | "success"
+  | "verified"
   | "price_changed"
   | "unavailable"
+  | "expired"
   | "error";
 
 type Props = {
@@ -294,13 +296,13 @@ export function ShopFlightExpandedPanel({
         );
         return;
       }
-      setPhase("success");
-      setStatusMessage("تم التحقق من السعر بنجاح");
+      setPhase("verified");
+      setStatusMessage("تم التحقق من السعر الآن");
       await new Promise((r) => setTimeout(r, 450));
       onContinueReview({ fare: result.fare, provider: result.provider });
     } catch {
       setPhase("error");
-      setStatusMessage("حدث خطأ غير متوقع. حاول مرة أخرى.");
+      setStatusMessage("تعذر الاتصال بالمزوّد. حاول مرة أخرى.");
     } finally {
       setBusy(false);
     }
@@ -361,7 +363,7 @@ export function ShopFlightExpandedPanel({
           <section className="shop-flight-expanded-fares">
             <h3>اختر فئة السعر</h3>
             <p className="shop-flight-fares-hint">
-              اقتصادي / قياسي / مرن — مع شروط التعديل والإلغاء لكل فئة
+              Saver · Standard · Flex — حقيبة المقصورة، الأمتعة، المقعد، الوجبات، التعديل والإلغاء
             </p>
             <div className="shop-flight-fare-grid">
               {fares.map((fare) => (
@@ -436,9 +438,9 @@ export function ShopFlightExpandedPanel({
             </section>
           ) : null}
 
-          {phase === "success" ? (
+          {phase === "verified" || phase === "success" ? (
             <div className="shop-flight-expanded-status success" role="status">
-              {statusMessage}
+              {statusMessage || "تم التحقق الآن"}
             </div>
           ) : null}
           {phase === "price_changed" ? (
@@ -448,21 +450,24 @@ export function ShopFlightExpandedPanel({
                 قبول السعر الجديد والمتابعة
               </button>
               <button type="button" className="ghost" onClick={onRefreshResults}>
-                تحديث النتائج
+                العودة للنتائج
               </button>
             </div>
           ) : null}
-          {phase === "unavailable" ? (
+          {phase === "unavailable" || phase === "expired" ? (
             <div className="shop-flight-expanded-status warn" role="alert">
-              <p>{statusMessage || "السعر لم يعد متاحًا"}</p>
+              <p>
+                {statusMessage ||
+                  (phase === "expired" ? "انتهى العرض" : "لم يعد متاحًا")}
+              </p>
               <button type="button" onClick={onRefreshResults}>
-                تحديث النتائج
+                العودة للنتائج
               </button>
             </div>
           ) : null}
           {phase === "error" ? (
             <div className="shop-flight-expanded-status error" role="alert">
-              <p>{statusMessage}</p>
+              <p>{statusMessage || "تعذر الاتصال بالمزوّد"}</p>
               <button
                 type="button"
                 onClick={() => {
@@ -471,6 +476,9 @@ export function ShopFlightExpandedPanel({
                 }}
               >
                 إعادة المحاولة
+              </button>
+              <button type="button" className="ghost" onClick={onClose}>
+                العودة للنتائج
               </button>
             </div>
           ) : null}
@@ -504,15 +512,18 @@ export function ShopFlightExpandedPanel({
             <button
               type="button"
               className="shop-flight-expanded-continue-btn"
-              disabled={busy}
+              disabled={busy || phase === "unavailable" || phase === "expired"}
               onClick={() => void handleContinue()}
             >
               {busy || phase === "revalidating" ? (
                 <span className="shop-flight-btn-loading">
-                  <span className="shop-flight-spinner small" aria-hidden /> جاري التحقق…
+                  <span className="shop-flight-spinner small" aria-hidden /> جاري التحقق من السعر…
                 </span>
               ) : (
-                "متابعة لمراجعة الحجز"
+                `متابعة — ${formatMoneyMinor(
+                  confirmedPriceMinor ?? footerBreakdown.totalMinor,
+                  trip.currency,
+                )}`
               )}
             </button>
           </footer>

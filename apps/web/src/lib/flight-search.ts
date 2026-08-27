@@ -20,9 +20,16 @@ export type FlightSeg = {
   date?: string;
   airline?: string;
   airlineCode?: string;
+  /** Marketing carrier when different from operating */
+  marketingAirlineCode?: string;
+  /** Actual operating carrier (codeshare) */
+  operatingAirlineCode?: string;
+  operatingAirlineName?: string;
   flightNumber?: string;
   aircraft?: string;
   durationMinutes?: number;
+  departureTerminal?: string;
+  arrivalTerminal?: string;
 };
 
 export type DepartureBucket = "night" | "morning" | "afternoon" | "evening";

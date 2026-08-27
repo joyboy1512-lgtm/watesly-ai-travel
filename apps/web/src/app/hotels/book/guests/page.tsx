@@ -1,53 +1,92 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useEffect, useState, type Dispatch, type SetStateAction } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import "../../../shop.css";
 import { StoreFront } from "@/components/shop/StoreFront";
 import { ShopMockBanner } from "@/components/shop/ShopMockBanner";
-import { HotelCheckout } from "@/components/hotels/HotelCheckout";
+import { HotelCheckout, validateHotelCheckout } from "@/components/hotels/HotelCheckout";
 import {
   clearBookingDraft,
   getBookingDraft,
+  saveHotelDraft,
   type HotelBookingDraft,
+  type HotelRoomGuestDraft,
 } from "@/lib/booking-draft";
 import {
   getShopSession,
   saveShopSession,
   shopFetch,
 } from "@/lib/shop-session";
+import { translateRoomNameAr } from "@watesly-travel/shared";
+import { formatMoneyMinor } from "@/lib/format";
+import {
+  arabicAdultCount,
+  arabicChildCount,
+  arabicNightCount,
+  arabicRoomCount,
+} from "@/lib/hotel-occupancy";
 
-type Traveler = {
-  title: string;
-  firstName: string;
-  lastName: string;
-  birthDate: string;
-  nationality: string;
-  passportNumber: string;
-  gender: string;
-};
-
-function emptyTraveler(): Traveler {
-  return {
-    title: "mr",
-    firstName: "",
-    lastName: "",
-    birthDate: "",
-    nationality: "KW",
-    passportNumber: "",
-    gender: "",
-  };
+function buildRoomGuests(draft: HotelBookingDraft): HotelRoomGuestDraft[] {
+  if (draft.roomGuests?.length) return draft.roomGuests;
+  const occ =
+    draft.roomOccupancies?.length
+      ? draft.roomOccupancies
+      : [
+          {
+            adults: draft.adults,
+            childAges: draft.childAges || Array.from({ length: draft.children }, () => 8),
+          },
+        ];
+  const guests: HotelRoomGuestDraft[] = [];
+  occ.forEach((room, roomIndex) => {
+    for (let a = 0; a < Math.max(1, room.adults); a += 1) {
+      guests.push({
+        roomIndex,
+        isLead: a === 0,
+        title: "mr",
+        firstName: "",
+        lastName: "",
+        type: "adult",
+      });
+    }
+    (room.childAges || []).forEach((age) => {
+      guests.push({
+        roomIndex,
+        isLead: false,
+        title: "miss",
+        firstName: "",
+        lastName: "",
+        type: "child",
+        age,
+      });
+    });
+  });
+  return guests.length
+    ? guests
+    : [
+        {
+          roomIndex: 0,
+          isLead: true,
+          title: "mr",
+          firstName: "",
+          lastName: "",
+          type: "adult",
+        },
+      ];
 }
 
 export default function HotelGuestsPage() {
   const router = useRouter();
+  const submitLock = useRef(false);
   const [draft, setDraft] = useState<HotelBookingDraft | null>(null);
-  const [travelers, setTravelers] = useState<Traveler[]>([emptyTraveler()]);
+  const [roomGuests, setRoomGuests] = useState<HotelRoomGuestDraft[]>([]);
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [name, setName] = useState("");
   const [error, setError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
   const [bookingId, setBookingId] = useState<string | null>(null);
   const [needLogin, setNeedLogin] = useState(false);
@@ -61,15 +100,13 @@ export default function HotelGuestsPage() {
       return;
     }
     setDraft(stored);
+    setRoomGuests(buildRoomGuests(stored));
     const session = getShopSession();
     if (!session) {
       setNeedLogin(true);
       setName(stored.contactName || "");
       setEmail(stored.contactEmail || "");
       setPhone(stored.contactPhone || "");
-      setTravelers(
-        Array.from({ length: Math.max(1, stored.adults + stored.children) }, emptyTraveler),
-      );
       return;
     }
     setName(stored.contactName || session.customer.name || "");
@@ -77,23 +114,19 @@ export default function HotelGuestsPage() {
     setPhone(stored.contactPhone || session.customer.phone);
     setSpecialRequests(stored.specialRequests || "");
     setPaymentMethod(stored.paymentMethod || null);
-    if (stored.travelers?.length) {
-      setTravelers(
-        stored.travelers.map((t) => ({
-          ...emptyTraveler(),
-          firstName: t.firstName,
-          lastName: t.lastName,
-        })),
-      );
-    } else {
-      setTravelers(
-        Array.from({ length: Math.max(1, stored.adults + stored.children) }, emptyTraveler),
-      );
-    }
   }, [router]);
 
   async function unlock(e: FormEvent) {
     e.preventDefault();
+    const errors: Record<string, string> = {};
+    if (!name.trim()) errors.name = "أدخل الاسم";
+    if (!phone.trim() || phone.trim().length < 8) errors.phone = "أدخل رقم جوال صحيح";
+    if (email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      errors.email = "البريد غير صحيح";
+    }
+    setFieldErrors(errors);
+    if (Object.keys(errors).length) return;
+
     setSubmitting(true);
     setError("");
     try {
@@ -124,14 +157,37 @@ export default function HotelGuestsPage() {
   }
 
   async function submit() {
-    if (!draft) return;
-    if (!name.trim() || !phone.trim()) {
-      setError("أدخل الاسم والجوال");
+    if (!draft || submitLock.current || submitting) return;
+    const errors = validateHotelCheckout({
+      name,
+      phone,
+      email,
+      paymentMethod,
+      roomGuests,
+    });
+    if (Object.keys(errors).length) {
+      setError("أكمل الحقول المطلوبة");
       return;
     }
+    submitLock.current = true;
     setSubmitting(true);
     setError("");
     try {
+      const { serviceType: _s, ...payload } = {
+        ...draft,
+        contactName: name,
+        contactEmail: email,
+        contactPhone: phone,
+        specialRequests,
+        paymentMethod: paymentMethod || undefined,
+        roomGuests,
+        travelers: roomGuests.map((g) => ({
+          firstName: g.firstName,
+          lastName: g.lastName,
+        })),
+      };
+      saveHotelDraft(payload);
+
       const result = await shopFetch<{ booking: { id: string } }>("/shop/book", {
         method: "POST",
         body: JSON.stringify({
@@ -153,7 +209,15 @@ export default function HotelGuestsPage() {
             checkOut: draft.checkOut,
             rooms: draft.rooms,
           },
-          guests: travelers,
+          guests: roomGuests.map((g) => ({
+            title: g.title,
+            firstName: g.firstName,
+            lastName: g.lastName,
+            type: g.type,
+            age: g.age,
+            roomIndex: g.roomIndex,
+            isLead: g.isLead,
+          })),
           adults: draft.adults,
           children: draft.children,
           contact: { email, phone },
@@ -161,6 +225,9 @@ export default function HotelGuestsPage() {
             guestName: name,
             specialRequests: specialRequests || undefined,
             paymentMethod: paymentMethod || undefined,
+            roomGuests,
+            selectedRate: draft.selectedRate,
+            priceBreakdown: draft.priceBreakdown,
           },
         }),
       });
@@ -168,6 +235,7 @@ export default function HotelGuestsPage() {
       setBookingId(result.booking.id);
     } catch (err) {
       setError(err instanceof Error ? err.message : "تعذر حفظ الطلب");
+      submitLock.current = false;
     } finally {
       setSubmitting(false);
     }
@@ -183,6 +251,13 @@ export default function HotelGuestsPage() {
       </StoreFront>
     );
   }
+
+  const rate = draft.selectedRate;
+  const roomLabel = rate ? translateRoomNameAr(rate.roomName).ar : "غرفة";
+  const bd = draft.priceBreakdown;
+  const payNow = bd?.payNowMinor ?? draft.totalMinor ?? draft.hotel.sellAmountMinor;
+  const payAtHotel = bd?.payAtHotelMinor ?? 0;
+  const hotelName = String(draft.hotel.details.name || draft.hotel.description || "فندق");
 
   return (
     <StoreFront>
@@ -200,24 +275,54 @@ export default function HotelGuestsPage() {
           </Link>
         </section>
       ) : needLogin ? (
-        <section className="shop-panel">
+        <section className="shop-panel shop-hotel-unlock">
           <ShopMockBanner compact kind="hotel" />
           <h1>إتمام الطلب</h1>
-          <p>{draft.hotel.description}</p>
+          <div className="shop-hotel-unlock-summary">
+            <strong>{hotelName}</strong>
+            <p>
+              {roomLabel} · {arabicRoomCount(draft.rooms)}
+            </p>
+            <p>
+              {arabicNightCount(draft.nights || 1)} · {arabicAdultCount(draft.adults)}
+              {draft.children ? ` · ${arabicChildCount(draft.children)}` : ""}
+            </p>
+            <p>
+              {formatMoneyMinor(payNow, draft.hotel.currency)}
+              {payAtHotel > 0
+                ? ` + ${formatMoneyMinor(payAtHotel, draft.hotel.currency)} تُدفع في الفندق`
+                : ""}
+            </p>
+          </div>
           {error ? <p className="shop-error">{error}</p> : null}
-          <form className="shop-form" onSubmit={unlock}>
-            <p>أدخل جوالك لحفظ الطلب على حسابك.</p>
+          <form className="shop-form" onSubmit={unlock} noValidate>
+            <p>أدخل بيانات صاحب الطلب لحفظ الحجز على حسابك.</p>
             <label>
               الاسم
-              <input value={name} onChange={(e) => setName(e.target.value)} />
+              <input
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                aria-invalid={Boolean(fieldErrors.name)}
+              />
+              {fieldErrors.name ? <em className="shop-field-error">{fieldErrors.name}</em> : null}
             </label>
             <label>
               الجوال
-              <input value={phone} onChange={(e) => setPhone(e.target.value)} required />
+              <input
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                aria-invalid={Boolean(fieldErrors.phone)}
+              />
+              {fieldErrors.phone ? <em className="shop-field-error">{fieldErrors.phone}</em> : null}
             </label>
             <label>
               البريد
-              <input value={email} onChange={(e) => setEmail(e.target.value)} />
+              <input
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                aria-invalid={Boolean(fieldErrors.email)}
+              />
+              {fieldErrors.email ? <em className="shop-field-error">{fieldErrors.email}</em> : null}
             </label>
             <button className="shop-btn" type="submit" disabled={submitting}>
               {submitting ? "..." : "متابعة"}
@@ -227,8 +332,8 @@ export default function HotelGuestsPage() {
       ) : (
         <HotelCheckout
           draft={draft}
-          travelers={travelers}
-          setTravelers={setTravelers as Dispatch<SetStateAction<Traveler[]>>}
+          roomGuests={roomGuests}
+          setRoomGuests={setRoomGuests}
           email={email}
           setEmail={setEmail}
           phone={phone}

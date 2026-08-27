@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import "@/app/hotel-rich.css";
 import { HotelSearchCard } from "@/components/hotels/HotelSearchCard";
 import { ShopHotelFilters } from "@/components/shop/ShopHotelFilters";
@@ -22,6 +22,8 @@ type HotelRow = HotelOfferRow & {
 type Facets = HotelFilterFacets;
 
 type SortKey = "best" | "price_asc" | "price_desc" | "rating_desc" | "distance";
+
+const PAGE_SIZE = 12;
 
 type Props = {
   destination: string;
@@ -53,10 +55,16 @@ type Props = {
 
 export function ShopHotelResults(props: Props) {
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const title = props.destination || props.stayQuery || "الإقامات";
   const guests = props.adults + props.children;
 
+  useEffect(() => {
+    setVisibleCount(PAGE_SIZE);
+  }, [props.hotels, props.sortKey, props.filters]);
+
   const highlights = useMemo(() => computeHotelHighlights(props.hotels), [props.hotels]);
+  const visibleHotels = props.hotels.slice(0, visibleCount);
 
   const badgeLabel = (badge: HotelHighlightBadge) => {
     if (badge === "cheapest") return "الأقل سعرًا";
@@ -133,20 +141,41 @@ export function ShopHotelResults(props: Props) {
         />
 
         <div className="shop-hotel-results-list">
-          {props.hotels.map((hotel) => (
-            <HotelSearchCard
-              key={hotel.id}
-              hotel={hotel}
-              nights={props.nights}
-              guests={guests}
-              rooms={props.rooms}
-              variant="shop"
-              highlight={highlights.get(hotel.id)}
-              highlightLabel={highlights.get(hotel.id) ? badgeLabel(highlights.get(hotel.id)!) : undefined}
-              onOpen={() => props.onOpenHotel(hotel)}
-            />
-          ))}
-          {props.hotels.length === 0 ? (
+          {props.loading ? (
+            <div className="shop-hotel-skeleton-grid" aria-busy="true">
+              {Array.from({ length: 6 }, (_, i) => (
+                <div key={i} className="shop-hotel-skeleton-card" />
+              ))}
+              <p className="shop-hotel-loading-msg">نقارن الأسعار من مزودي الفنادق…</p>
+            </div>
+          ) : null}
+          {!props.loading
+            ? visibleHotels.map((hotel) => (
+                <HotelSearchCard
+                  key={hotel.id}
+                  hotel={hotel}
+                  nights={props.nights}
+                  guests={guests}
+                  rooms={props.rooms}
+                  variant="shop"
+                  highlight={highlights.get(hotel.id)}
+                  highlightLabel={
+                    highlights.get(hotel.id) ? badgeLabel(highlights.get(hotel.id)!) : undefined
+                  }
+                  onOpen={() => props.onOpenHotel(hotel)}
+                />
+              ))
+            : null}
+          {!props.loading && visibleCount < props.hotels.length ? (
+            <button
+              type="button"
+              className="shop-hotel-load-more"
+              onClick={() => setVisibleCount((n) => n + PAGE_SIZE)}
+            >
+              عرض المزيد ({props.hotels.length - visibleCount} متبقي)
+            </button>
+          ) : null}
+          {!props.loading && props.hotels.length === 0 ? (
             <p className="shop-hotel-results-empty">لا توجد فنادق مطابقة للفلاتر الحالية.</p>
           ) : null}
         </div>

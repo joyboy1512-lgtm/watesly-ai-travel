@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { translateRoomNameAr } from "@watesly-travel/shared";
 import {
   formatPolicyDate,
   groupRatesIntoRooms,
@@ -10,6 +11,7 @@ import {
   type HotelRoomOption,
 } from "@/lib/hotel-search";
 import { formatMoneyMinor } from "@/lib/format";
+import { arabicNightCount } from "@/lib/hotel-occupancy";
 
 type Props = {
   hotel: HotelOfferRow & { matchingRates: HotelRateOption[]; displayFromMinor: number };
@@ -39,15 +41,24 @@ function cancellationSummary(rate: HotelRateOption) {
   if (rate.freeCancellation) {
     const first = rate.cancellationPolicies.find((p) => Number(p.amount) === 0);
     if (first?.from) {
-      return { text: "إلغاء مجاني", deadline: `حتى ${formatPolicyDate(first.from)}`, good: true };
+      return {
+        text: "إلغاء مجاني",
+        deadline: `حتى ${formatPolicyDate(first.from)} (توقيت الكويت)`,
+        good: true,
+      };
     }
     return { text: "إلغاء مجاني*", deadline: "حسب سياسة الفندق", good: true };
   }
   const first = rate.cancellationPolicies[0];
   if (first?.from) {
+    const fee = Number(first.amount);
+    const feeLabel =
+      Number.isFinite(fee) && fee > 0
+        ? ` · رسوم ${fee} ${rate.currency}`
+        : "";
     return {
       text: "غير قابل للاسترداد",
-      deadline: `من ${formatPolicyDate(first.from)}`,
+      deadline: `من تاريخ ${formatPolicyDate(first.from)}${feeLabel}`,
       good: false,
     };
   }
@@ -110,8 +121,7 @@ export function HotelRoomAccordion({
         <h2>اختر نوع الغرفة</h2>
         <p>
           {rooms.length} {rooms.length === 1 ? "نوع" : "أنواع"} · {hotel.matchingRates.length}{" "}
-          {hotel.matchingRates.length === 1 ? "سعر" : "أسعار"} · {nights}{" "}
-          {nights === 1 ? "ليلة" : "ليالي"}
+          {hotel.matchingRates.length === 1 ? "سعر" : "أسعار"} · {arabicNightCount(nights)}
         </p>
       </header>
 
@@ -138,7 +148,12 @@ export function HotelRoomAccordion({
                 <img src={room.imageUrl} alt="" className="hotel-room-thumb" />
               ) : null}
               <div className="hotel-room-panel-title">
-                <strong>{room.name}</strong>
+                <strong>{translateRoomNameAr(room.name).ar}</strong>
+                {translateRoomNameAr(room.name).original ? (
+                  <small className="hotel-room-original-name">
+                    {translateRoomNameAr(room.name).original}
+                  </small>
+                ) : null}
                 <span>
                   {room.rates.length} {room.rates.length === 1 ? "خيار إقامة" : "خيارات إقامة"}
                   {occ ? ` · ${occ}` : ""}
@@ -213,7 +228,7 @@ export function HotelRoomAccordion({
                           onBookRate(rate);
                         }}
                       >
-                        {busy ? "جاري التحقق..." : "احجز"}
+                        {busy ? "جاري إعادة التحقق من السعر…" : "احجز"}
                       </button>
                     </article>
                   );

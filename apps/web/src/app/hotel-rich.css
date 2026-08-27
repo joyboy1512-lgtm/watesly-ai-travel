@@ -2175,3 +2175,33 @@
     grid-template-columns: 1fr;
   }
 }
+
+.hotel-recheck-banner {
+  margin: 0 1rem 0.75rem;
+  border-radius: 10px;
+  padding: 0.65rem 0.85rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+.hotel-recheck-banner.is-checking {
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+.hotel-recheck-banner.is-ok {
+  background: #ecfdf5;
+  color: #047857;
+}
+.hotel-recheck-banner.is-changed {
+  background: #fff7ed;
+  color: #c2410c;
+}
+.hotel-recheck-banner.is-soldout {
+  background: #fef2f2;
+  color: #991b1b;
+}
+.hotel-room-original-name {
+  display: block;
+  color: #64748b;
+  font-weight: 400;
+  font-size: 0.75rem;
+}

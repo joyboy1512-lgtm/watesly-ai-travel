@@ -9,6 +9,10 @@ import { StoreFront } from "@/components/shop/StoreFront";
 import { ShopMockBanner } from "@/components/shop/ShopMockBanner";
 import { saveHotelDraft } from "@/lib/booking-draft";
 import {
+  buildHotelDraftPriceBreakdown,
+  toDraftHotelRate,
+} from "@/lib/hotel-draft-price";
+import {
   defaultHotelFilters,
   filterHotelOffers,
   rateDisplayMinor,
@@ -18,6 +22,7 @@ import {
 import {
   buildHotelResultsHref,
   nightsBetween,
+  occupancyFromSearchParams,
   parseHotelResultsSearch,
 } from "@/lib/hotel-results-url";
 import {
@@ -133,6 +138,8 @@ function HotelDetailInner() {
     if (!hotel) return;
     const totalMinor = rateDisplayMinor(rate, hotel, meta.nights);
     if (!totalMinor) return;
+    const priceBreakdown = buildHotelDraftPriceBreakdown(rate, hotel, meta.nights);
+    const roomOcc = occupancyFromSearchParams(urlParams);
     saveHotelDraft({
       hotel: {
         id: hotel.id,
@@ -141,33 +148,26 @@ function HotelDetailInner() {
         currency: hotel.currency,
         details: hotel.details,
       },
-      selectedRate: {
-        rateKey: rate.rateKey,
-        rateType: rate.rateType,
-        roomCode: rate.roomCode,
-        roomName: rate.roomName,
-        boardCode: rate.boardCode,
-        boardName: rate.boardName,
-        net: rate.net,
-        currency: rate.currency,
-        paymentType: rate.paymentType,
-        freeCancellation: rate.freeCancellation,
-        allotment: rate.allotment,
-        rateComments: rate.rateComments,
-      },
+      selectedRate: toDraftHotelRate(rate),
       checkIn: meta.departDate,
       checkOut: meta.returnDate,
       rooms: meta.rooms,
       adults: meta.adults,
       children: meta.children,
       infants: meta.infants,
+      childAges: roomOcc.flatMap((r) => r.childAges),
+      roomOccupancies: roomOcc.map((r) => ({
+        adults: r.adults,
+        childAges: r.childAges,
+      })),
       location: meta.stayQuery,
       locationLabel: meta.destinationLabel || meta.stayQuery,
       createdAt: new Date().toISOString(),
       inquiryId,
       quoteItemId,
       nights: meta.nights,
-      totalMinor,
+      totalMinor: priceBreakdown.payNowMinor || totalMinor,
+      priceBreakdown,
       validatedAt: new Date().toISOString(),
       priceChanged: extras?.priceChanged,
       previousTotalMinor: extras?.previousTotalMinor,

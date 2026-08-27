@@ -18,7 +18,9 @@ import {
 import {
   buildHotelResultsHref,
   formatHotelSearchSummary,
+  hotelSearchPreferencesJson,
   nightsBetween,
+  occupancyFromSearchParams,
   parseHotelResultsSearch,
   type HotelResultsSearchParams,
 } from "@/lib/hotel-results-url";
@@ -29,7 +31,14 @@ import {
   type HotelSortKey,
 } from "@/lib/hotel-results-session";
 import { saveHotelDraft } from "@/lib/booking-draft";
-import { saveHotelSearchSession } from "@/lib/hotel-search-session";
+import {
+  buildHotelDraftPriceBreakdown,
+  toDraftHotelRate,
+} from "@/lib/hotel-draft-price";
+import {
+  getHotelSearchSession,
+  saveHotelSearchSession,
+} from "@/lib/hotel-search-session";
 import { shopFetch } from "@/lib/shop-session";
 
 const HotelDetailModal = dynamic(
@@ -103,16 +112,56 @@ export function ShopHotelResultsClient() {
       setHotelsRaw([]);
       setHotelOpen(null);
 
-      if (!shouldRestoreHotelResultsSession(buildHotelResultsHref(search))) {
+      const href = buildHotelResultsHref(search);
+      if (!shouldRestoreHotelResultsSession(href)) {
         setFilters(defaultHotelFilters());
-        setSortKey("price_asc");
+        setSortKey("best");
         restoredRef.current = false;
+      }
+
+      // Reuse short-lived cached results when returning from hotel detail
+      const cached = getHotelSearchSession();
+      const cacheFresh =
+        cached &&
+        Date.now() - new Date(cached.savedAt).getTime() < 12 * 60 * 1000 &&
+        cached.meta.stayQuery === search.destination &&
+        cached.meta.departDate === search.checkIn &&
+        cached.meta.returnDate === search.checkOut &&
+        cached.meta.adults === search.adults &&
+        cached.meta.children === search.children &&
+        cached.meta.rooms === search.rooms &&
+        Array.isArray(cached.hotels) &&
+        cached.hotels.length > 0;
+
+      if (cacheFresh && shouldRestoreHotelResultsSession(href)) {
+        setInquiryId(cached!.inquiryId || "");
+        setQuoteItems(
+          (cached!.quote?.items || []).map((item) => ({
+            id: item.id,
+            providerOfferRef: item.providerOfferRef,
+            serviceType: item.serviceType,
+          })),
+        );
+        setHotelsRaw(cached!.hotels as HotelOfferRow[]);
+        setMessage(`عرض ${cached!.hotels.length} نتيجة محفوظة مؤقتًا`);
+        setLoading(false);
+        return;
       }
 
       try {
         if (!search.destination.trim() || !search.checkIn || !search.checkOut) {
           throw new Error("أدخل الوجهة وتواريخ الإقامة");
         }
+        if (search.children > 0) {
+          const ages = String(search.childrenAges || "")
+            .split(",")
+            .map((p) => p.trim())
+            .filter(Boolean);
+          if (ages.length < search.children) {
+            throw new Error("حدد عمر كل طفل قبل البحث");
+          }
+        }
+        setMessage("نقارن الأسعار من مزودي الفنادق…");
         const result = await shopFetch<{
           inquiryId: string;
           quoteItems?: QuoteItem[];
@@ -129,16 +178,47 @@ export function ShopHotelResultsClient() {
             adults: search.adults,
             children: search.children,
             infants: search.infants,
+            childrenAges: search.childrenAges || undefined,
+            preferences: hotelSearchPreferencesJson(search),
           }),
         });
         setInquiryId(result.inquiryId);
         setQuoteItems(result.quoteItems || []);
         setHotelsRaw(result.hotels || []);
+        saveHotelSearchSession({
+          hotels: (result.hotels || []).map((h) => ({
+            id: h.id,
+            description: h.description,
+            sellAmountMinor: h.sellAmountMinor,
+            currency: h.currency,
+            details: h.details,
+          })),
+          filters: defaultHotelFilters(),
+          sortKey: "best",
+          meta: {
+            stayQuery: search.destination,
+            departDate: search.checkIn,
+            returnDate: search.checkOut,
+            rooms: search.rooms,
+            adults: search.adults,
+            children: search.children,
+            infants: search.infants,
+            destination: search.destinationLabel || search.destination,
+            nights: nightsBetween(search.checkIn, search.checkOut),
+          },
+          inquiryId: result.inquiryId,
+          quote: {
+            id: result.inquiryId,
+            items: result.quoteItems || [],
+          },
+          providerName: result.providerName,
+        });
         setMessage(
-          `تم جلب ${result.hotels?.length || 0} إقامة تجريبية عبر ${result.providerName || "المزوّد"}`,
+          `تم جلب ${result.hotels?.length || 0} إقامة عبر ${result.providerName || "المزوّد"}`,
         );
       } catch (err) {
         setError(err instanceof Error ? err.message : "فشل البحث");
+        setMessage("");
       } finally {
         setLoading(false);
       }
@@ -204,6 +284,8 @@ export function ShopHotelResultsClient() {
   ) {
     persistSession();
     const totalMinor = rateDisplayMinor(rate, hotel, nights);
+    const priceBreakdown = buildHotelDraftPriceBreakdown(rate, hotel, nights);
+    const roomOcc = occupancyFromSearchParams(params);
     saveHotelDraft({
       hotel: {
         id: hotel.id,
@@ -212,20 +294,26 @@ export function ShopHotelResultsClient() {
         currency: hotel.currency,
         details: hotel.details,
       },
-      selectedRate: rate,
+      selectedRate: toDraftHotelRate(rate),
       checkIn: params.checkIn,
       checkOut: params.checkOut,
       rooms: params.rooms,
       adults: params.adults,
       children: params.children,
       infants: params.infants,
+      childAges: roomOcc.flatMap((r) => r.childAges),
+      roomOccupancies: roomOcc.map((r) => ({
+        adults: r.adults,
+        childAges: r.childAges,
+      })),
       location: params.destination,
       locationLabel: params.destinationLabel || params.destination,
       createdAt: new Date().toISOString(),
       inquiryId,
       quoteItemId: quoteItemIdFor(hotel.id),
       nights,
-      totalMinor,
+      totalMinor: priceBreakdown.payNowMinor || totalMinor,
+      priceBreakdown,
       validatedAt: new Date().toISOString(),
       priceChanged: extras?.priceChanged,
       previousTotalMinor: extras?.previousTotalMinor,
@@ -364,11 +452,54 @@ export function ShopHotelResultsClient() {
                 type="number"
                 min={0}
                 value={draft.children}
-                onChange={(e) =>
-                  setDraft((d) => ({ ...d, children: Math.max(0, Number(e.target.value) || 0) }))
-                }
+                onChange={(e) => {
+                  const children = Math.max(0, Number(e.target.value) || 0);
+                  setDraft((d) => {
+                    const ages = String(d.childrenAges || "")
+                      .split(",")
+                      .map((p) => p.trim())
+                      .filter(Boolean);
+                    while (ages.length < children) ages.push("8");
+                    return {
+                      ...d,
+                      children,
+                      childrenAges: ages.slice(0, children).join(","),
+                      occ: "",
+                    };
+                  });
+                }}
               />
             </label>
+            {draft.children > 0 ? (
+              <div className="shop-hotel-edit-child-ages">
+                {Array.from({ length: draft.children }, (_, i) => (
+                  <label key={i}>
+                    عمر الطفل {i + 1}
+                    <select
+                      value={Number(String(draft.childrenAges || "").split(",")[i] || 8)}
+                      onChange={(e) => {
+                        const ages = String(draft.childrenAges || "")
+                          .split(",")
+                          .map((p) => p.trim());
+                        while (ages.length < draft.children) ages.push("8");
+                        ages[i] = String(Number(e.target.value));
+                        setDraft((d) => ({
+                          ...d,
+                          childrenAges: ages.slice(0, d.children).join(","),
+                          occ: "",
+                        }));
+                      }}
+                    >
+                      {Array.from({ length: 18 }, (_, age) => (
+                        <option key={age} value={age}>
+                          {age}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                ))}
+              </div>
+            ) : null}
             <label>
               غرف
               <input

@@ -87,46 +87,79 @@ function hashRateKey(rateKey: string): string {
 }
 
 const ROOM_NAME_AR: Record<string, string> = {
+  "JUNIOR SUITE STANDARD": "جناح جونيور قياسي",
+  "JUNIOR SUITE": "جناح جونيور",
   "DOUBLE STANDARD": "غرفة مزدوجة قياسية",
   "STANDARD DOUBLE": "غرفة مزدوجة قياسية",
   "DOUBLE OR TWIN STANDARD": "غرفة مزدوجة قياسية",
-  "KING ROOM": "غرفة كينغ",
-  "KING BED": "غرفة كينغ",
+  "DOUBLE DELUXE": "غرفة مزدوجة ديلوكس",
+  "SINGLE DELUXE": "غرفة مفردة ديلوكس",
   "SINGLE STANDARD": "غرفة مفردة قياسية",
   "TWIN STANDARD": "غرفة توأم قياسية",
+  "TWIN DELUXE": "غرفة توأم ديلوكس",
+  "KING ROOM": "غرفة كينغ",
+  "KING BED": "غرفة كينغ",
   "FAMILY ROOM": "غرفة عائلية",
+  "SUPERIOR ROOM": "غرفة سوبيريور",
+  "DELUXE ROOM": "غرفة ديلوكس",
   SUITE: "جناح",
   STUDIO: "استوديو",
+  DOUBLE: "غرفة مزدوجة",
+  SINGLE: "غرفة مفردة",
+  TWIN: "غرفة توأم",
 };
 
 export function translateRoomNameAr(name?: string): { ar: string; original?: string } {
   const raw = String(name || "غرفة").trim();
   const upper = raw.toUpperCase();
-  for (const [en, ar] of Object.entries(ROOM_NAME_AR)) {
+  // Longer keys first so "JUNIOR SUITE STANDARD" wins over "SUITE"
+  const keys = Object.keys(ROOM_NAME_AR).sort((a, b) => b.length - a.length);
+  for (const en of keys) {
     if (upper.includes(en)) {
+      const ar = ROOM_NAME_AR[en]!;
       return { ar, original: raw !== ar ? raw : undefined };
     }
   }
-  // Already Arabic / unknown — keep as-is
   return { ar: raw };
 }
 
 export function translateFacilityLabelAr(label: string): string {
+  let out = String(label || "").trim();
+  if (!out) return out;
+
+  // Fix known bad Arabic copy first
+  out = out
+    .replace(/مجهز للكراسي المدولبه\s*-?\s*لمتحدي الاعاقه/gi, "مهيأ لاستخدام الكراسي المتحركة")
+    .replace(/مجهز للكراسي المدولبه/gi, "مهيأ لاستخدام الكراسي المتحركة")
+    .replace(/لمتحدي الاعاقه/gi, "")
+    .replace(/دوره المياه/gi, "دورة المياه")
+    .replace(/دورة المياة/gi, "دورة المياه");
+
   const map: Record<string, string> = {
     Bathroom: "دورة المياه",
     bathroom: "دورة المياه",
-    "Wheelchair accessible": "مهيأة لذوي الإعاقة",
-    Wheelchair: "الكراسي المتحركة",
-    "Adapted for disabled": "مهيأة لذوي الإعاقة",
+    "Wheelchair accessible": "مهيأ لاستخدام الكراسي المتحركة",
+    "Adapted rooms": "مهيأ لاستخدام الكراسي المتحركة",
+    "Adapted for disabled": "مهيأ لاستخدام الكراسي المتحركة",
+    Wheelchair: "مهيأ لاستخدام الكراسي المتحركة",
     Pool: "مسبح",
     WiFi: "واي فاي",
     Wifi: "واي فاي",
+    "Internet access": "واي فاي",
     Parking: "موقف سيارات",
+    Spa: "سبا",
+    Breakfast: "إفطار",
   };
-  return map[label] || label
+  if (map[out]) return map[out];
+
+  return out
     .replace(/Bathroom/gi, "دورة المياه")
-    .replace(/Wheelchair/gi, "الكراسي المتحركة")
-    .replace(/disabled/gi, "ذوي الإعاقة");
+    .replace(/Wheelchair\s*accessible/gi, "مهيأ لاستخدام الكراسي المتحركة")
+    .replace(/Adapted for disabled/gi, "مهيأ لاستخدام الكراسي المتحركة")
+    .replace(/Wheelchair/gi, "مهيأ لاستخدام الكراسي المتحركة")
+    .replace(/\bdisabled\b/gi, "ذوي الإعاقة")
+    .replace(/\s{2,}/g, " ")
+    .trim();
 }
 
 /**

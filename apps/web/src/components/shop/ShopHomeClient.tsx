@@ -22,7 +22,16 @@ import { ShopLanding } from "@/components/shop/ShopLanding";
 import { ShopHeroBanner, type FlightLeg, type FlightTripType } from "@/components/shop/ShopHeroBanner";
 import type { ShopDestination, ShopOffer } from "@/lib/shop-content";
 import { openFlightResultsInNewTab } from "@/lib/flight-results-url";
-import { openHotelResultsInNewTab } from "@/lib/hotel-results-url";
+import {
+  encodeRoomOccupancies,
+  openHotelResultsInNewTab,
+} from "@/lib/hotel-results-url";
+import {
+  defaultOccupancy,
+  occupancyTotals,
+  validateOccupancy,
+  type HotelOccupancyState,
+} from "@/lib/hotel-occupancy";
 
 const ShopFlightResults = dynamic(
   () => import("@/components/shop/ShopFlightResults").then((m) => m.ShopFlightResults),
@@ -142,6 +151,9 @@ export function ShopHomeClient() {
   const [children, setChildren] = useState(0);
   const [infants, setInfants] = useState(0);
   const [rooms, setRooms] = useState(1);
+  const [stayOccupancy, setStayOccupancy] = useState<HotelOccupancyState>(() =>
+    defaultOccupancy(1, 1, 0),
+  );
   const [cabinClass, setCabinClass] = useState("economy");
   const [directOnly, setDirectOnly] = useState(false);
   const [flightResults, setFlightResults] = useState<Offer[]>([]);
@@ -336,15 +348,20 @@ export function ShopHomeClient() {
         if (!stayQuery.trim() || !departDate || !returnDate) {
           throw new Error("أدخل الوجهة وتواريخ الإقامة");
         }
+        const occErr = validateOccupancy(stayOccupancy);
+        if (occErr) throw new Error(occErr);
+        const totals = occupancyTotals(stayOccupancy);
         openHotelResultsInNewTab({
           destination: stayQuery,
           destinationLabel: stayQuery,
           checkIn: departDate,
           checkOut: returnDate,
-          adults,
-          children,
+          adults: totals.adults,
+          children: totals.children,
           infants,
-          rooms,
+          rooms: totals.rooms,
+          childrenAges: totals.childrenAgesCsv,
+          occ: encodeRoomOccupancies(stayOccupancy.rooms),
         });
       } catch (err) {
         setError(err instanceof Error ? err.message : "فشل البحث");
@@ -657,6 +674,8 @@ export function ShopHomeClient() {
         onAdultsChange={setAdults}
         onChildrenChange={setChildren}
         onRoomsChange={setRooms}
+        stayOccupancy={stayOccupancy}
+        onStayOccupancyChange={setStayOccupancy}
         onSearch={() => void runSearch()}
         loading={loading}
         error={error}

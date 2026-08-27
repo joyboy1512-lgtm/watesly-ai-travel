@@ -80,6 +80,7 @@ export class ShopController {
       adults?: number;
       children?: number;
       infants?: number;
+      childrenAges?: string;
       preferences?: string;
     },
     @ShopCustomerMaybe() customer?: ShopCustomer,

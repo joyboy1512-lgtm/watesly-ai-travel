@@ -267,6 +267,7 @@ export class ShopService {
       adults?: number;
       children?: number;
       infants?: number;
+      childrenAges?: string;
       preferences?: string;
     },
     customer?: ShopCustomer,
@@ -274,7 +275,26 @@ export class ShopService {
     if (!body.destination || !body.checkIn || !body.checkOut) {
       throw new BadRequestException("أدخل الوجهة وتاريخ الوصول والمغادرة");
     }
+    const childCount = Math.max(0, body.children || 0);
+    if (childCount > 0) {
+      const ages = String(body.childrenAges || "")
+        .split(",")
+        .map((p) => p.trim())
+        .filter(Boolean);
+      if (ages.length < childCount) {
+        throw new BadRequestException(
+          "يجب تحديد عمر كل طفل قبل البحث عن الفنادق",
+        );
+      }
+    }
     const org = await this.orgs.resolve();
+    const preferences =
+      body.preferences ||
+      JSON.stringify({
+        query: body.destination,
+        rooms: body.rooms || 1,
+        childrenAges: body.childrenAges || undefined,
+      });
     const inquiry = await this.createShopInquiry({
       organizationId: org.id,
       customerId: customer?.id,
@@ -286,12 +306,7 @@ export class ShopService {
       adults: body.adults,
       children: body.children,
       infants: body.infants,
-      preferences:
-        body.preferences ||
-        JSON.stringify({
-          query: body.destination,
-          rooms: body.rooms || 1,
-        }),
+      preferences,
       budgetCurrency: org.defaultCurrency,
     });
     try {

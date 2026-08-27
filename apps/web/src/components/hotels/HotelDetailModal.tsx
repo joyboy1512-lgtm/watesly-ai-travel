@@ -9,6 +9,13 @@ import { formatMoneyMinor } from "@/lib/format";
 import { HotelRoomAccordion } from "./HotelRoomAccordion";
 import { HotelBookingSummary } from "./HotelBookingSummary";
 import { HotelLiveBadge } from "./HotelLiveBadge";
+import { pickHotelHighlightFacilities } from "@/lib/hotel-facilities";
+import {
+  arabicAdultCount,
+  arabicChildCount,
+  arabicNightCount,
+  arabicRoomCount,
+} from "@/lib/hotel-occupancy";
 
 type StayMeta = {
   stayQuery: string;
@@ -73,6 +80,9 @@ export function HotelDetailModal({
     "rooms",
   );
   const [checkingRateKey, setCheckingRateKey] = useState<string | null>(null);
+  const [checkPhase, setCheckPhase] = useState<
+    "idle" | "checking" | "confirmed" | "changed" | "soldout" | "error"
+  >("idle");
   const [checkError, setCheckError] = useState("");
   const [priceChange, setPriceChange] = useState<{ fromMinor: number; toMinor: number } | null>(
     null,
@@ -95,9 +105,12 @@ export function HotelDetailModal({
   const poiDistances = Array.isArray(hotel.details.poiDistances)
     ? (hotel.details.poiDistances as Array<{ nameAr: string; label: string }>)
     : [];
-  const facilityLabels = Array.isArray(hotel.details.facilityLabels)
-    ? (hotel.details.facilityLabels as string[])
-    : [];
+  const facilityLabels = pickHotelHighlightFacilities(
+    Array.isArray(hotel.details.facilityLabels)
+      ? (hotel.details.facilityLabels as string[])
+      : [],
+    8,
+  );
   const description =
     typeof hotel.details.description === "string" ? hotel.details.description : "";
   const perNight = nights > 0 ? Math.round(hotel.displayFromMinor / nights) : hotel.displayFromMinor;
@@ -113,6 +126,7 @@ export function HotelDetailModal({
   async function handleBookRate(rate: HotelRateOption) {
     setCheckError("");
     setPriceChange(null);
+    setCheckPhase("checking");
     setCheckingRateKey(rate.rateKey);
     try {
       const result = await fetchJson<CheckRateResponse>(checkRatePath, {
@@ -139,7 +153,8 @@ export function HotelDetailModal({
         }),
       });
       if (!result.available) {
-        setCheckError("هذه التعرفة لم تعد متاحة. اختر غرفة أخرى أو أعد البحث.");
+        setCheckPhase("soldout");
+        setCheckError("انتهى التوفر لهذه التعرفة. اختر غرفة أخرى أو أعد البحث.");
         return;
       }
       const nextRate: HotelRateOption = {
@@ -159,10 +174,14 @@ export function HotelDetailModal({
           fromMinor: Number(result.previousCostMinor || hotel.sellAmountMinor),
           toMinor,
         });
+        setCheckPhase("changed");
+      } else {
+        setCheckPhase("confirmed");
       }
       setSelectedRate(nextRate);
     } catch (err) {
-      setCheckError(err instanceof Error ? err.message : "تعذر التحقق من السعر الحي");
+      setCheckPhase("error");
+      setCheckError(err instanceof Error ? err.message : "تعذر التحقق من السعر");
     } finally {
       setCheckingRateKey(null);
     }
@@ -199,6 +218,13 @@ export function HotelDetailModal({
         <div className="hotel-modal-live">
           <HotelLiveBadge
             liveMode={Boolean(hotel.details.liveMode)}
+            sandbox={
+              hotel.details.source === "hotelbeds-sandbox" ||
+              hotel.details.source === "mock" ||
+              hotel.details.liveMode === false ||
+              String(hotel.details.sourceLabel || "").includes("Sandbox") ||
+              String(hotel.details.sourceLabel || "").includes("تجريب")
+            }
             sourceLabel={
               typeof hotel.details.sourceLabel === "string"
                 ? hotel.details.sourceLabel
@@ -211,6 +237,27 @@ export function HotelDetailModal({
           />
         </div>
 
+        {checkPhase === "checking" ? (
+          <div className="hotel-recheck-banner is-checking" role="status">
+            جاري إعادة التحقق من السعر والتوفر…
+          </div>
+        ) : null}
+        {checkPhase === "confirmed" && selectedRate ? (
+          <div className="hotel-recheck-banner is-ok" role="status">
+            تم تأكيد السعر
+          </div>
+        ) : null}
+        {checkPhase === "changed" && priceChange ? (
+          <div className="hotel-recheck-banner is-changed" role="status">
+            تغيّر السعر — راجع الملخص قبل المتابعة
+          </div>
+        ) : null}
+        {checkPhase === "soldout" ? (
+          <div className="hotel-recheck-banner is-soldout" role="alert">
+            انتهى التوفر لهذه التعرفة
+          </div>
+        ) : null}
+
         {selectedRate ? (
           <HotelBookingSummary
             hotel={hotel}
@@ -222,6 +269,7 @@ export function HotelDetailModal({
             onBack={() => {
               setSelectedRate(null);
               setPriceChange(null);
+              setCheckPhase("idle");
             }}
             onEnterGuestData={() => onEnterGuestData?.(selectedRate)}
             onCheckout={onCheckout}
@@ -247,12 +295,11 @@ export function HotelDetailModal({
               <div className="hotel-detail-modal-summary">
                 <p>
                   {formatDay(meta.departDate)} → {formatDay(meta.returnDate)} · {nights}{" "}
-                  {nights === 1 ? "ليلة" : "ليالي"}
+                  {arabicNightCount(nights)}
                 </p>
                 <p>
-                  {meta.rooms} غرفة · {meta.adults} بالغ
-                  {meta.children ? ` · ${meta.children} طفل` : ""}
-                  {meta.infants ? ` · ${meta.infants} رضيع` : ""}
+                  {arabicRoomCount(meta.rooms)} · {arabicAdultCount(meta.adults)}
+                  {meta.children ? ` · ${arabicChildCount(meta.children)}` : ""}
                 </p>
                 {hotel.details.distanceToCenterLabel ? (
                   <p className="hotel-detail-distance">

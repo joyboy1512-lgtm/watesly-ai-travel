@@ -479,18 +479,45 @@ export function collectFilterFacets(hotels: HotelOfferRow[]): HotelFilterFacets 
       ).length,
     },
     breakfastIncluded: hotels.filter((h) => hotelHasBoard(h, "BB")).length,
-    priceMaxMajor: hotels.length
-      ? Math.max(...hotels.map((h) => displayPriceMajor(h)))
-      : 500,
+    priceMaxMajor: robustPriceMaxMajor(hotels.map((h) => displayPriceMajor(h))),
   };
+}
+
+/** Cap the price filter using a high percentile so one outlier doesn't stretch the slider. */
+function robustPriceMaxMajor(prices: number[]): number {
+  const clean = prices.filter((p) => Number.isFinite(p) && p > 0).sort((a, b) => a - b);
+  if (!clean.length) return 500;
+  if (clean.length === 1) return Math.ceil(clean[0]!);
+  const q = (pct: number) => {
+    const idx = Math.min(clean.length - 1, Math.max(0, Math.floor((clean.length - 1) * pct)));
+    return clean[idx]!;
+  };
+  const p25 = q(0.25);
+  const p75 = q(0.75);
+  const iqr = Math.max(0, p75 - p25);
+  const fence = p75 + 1.5 * iqr;
+  const within = clean.filter((p) => p <= Math.max(fence, p75 * 2.5));
+  const base = within.length ? within[within.length - 1]! : q(0.9);
+  return Math.max(50, Math.ceil(base));
 }
 
 export function formatPolicyDate(iso?: string): string {
   if (!iso) return "—";
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  try {
+    return new Intl.DateTimeFormat("ar-KW", {
+      timeZone: "Asia/Kuwait",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    }).format(d);
+  } catch {
+    const pad = (n: number) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  }
 }
 
 export type HotelHighlightBadge = "cheapest" | "top_rated" | "closest";

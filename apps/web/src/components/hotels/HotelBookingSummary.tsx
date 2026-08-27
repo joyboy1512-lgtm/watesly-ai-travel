@@ -2,6 +2,11 @@
 
 import { useState } from "react";
 import {
+  buildHotelPriceBreakdown,
+  hotelMajorToMinor,
+  translateRoomNameAr,
+} from "@watesly-travel/shared";
+import {
   formatHotelDay,
   formatPolicyDate,
   rateDisplayMinor,
@@ -11,6 +16,13 @@ import {
   type HotelRoomOption,
 } from "@/lib/hotel-search";
 import { formatMoneyMinor } from "@/lib/format";
+import { summarizeRateCommentsAr } from "@/lib/hotel-rate-comments";
+import {
+  arabicAdultCount,
+  arabicChildCount,
+  arabicNightCount,
+  arabicRoomCount,
+} from "@/lib/hotel-occupancy";
 
 type StayMeta = {
   stayQuery: string;
@@ -110,6 +122,7 @@ export function HotelBookingSummary({
   const [travelerFirst, setTravelerFirst] = useState("");
   const [travelerLast, setTravelerLast] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<string | null>(null);
+  const [showOriginalComments, setShowOriginalComments] = useState(false);
 
   const hotelName = String(hotel.details.name || "فندق");
   const totalMinor = rateDisplayMinor(rate, hotel, nights);
@@ -125,15 +138,58 @@ export function HotelBookingSummary({
   const roomImage = roomMeta?.imageUrl;
   const cancelPolicy = rate.cancellationPolicies[0];
   const taxItems = rate.taxes?.items || [];
+  const roomName = translateRoomNameAr(rate.roomName);
+  const comments = summarizeRateCommentsAr(rate.rateComments);
+  const breakdown = buildHotelPriceBreakdown({
+    stayNetMajor: rate.net,
+    currency: hotel.currency,
+    nights,
+    rooms: rate.rooms,
+    sellAmountMinor: totalMinor || hotel.sellAmountMinor,
+    costAmountMinor: hotel.costAmountMinor,
+    dailyRates: rate.dailyRates,
+    taxes: rate.taxes,
+    netBasis: rate.netBasis || "stay",
+  });
 
   const infoSections = [
     { title: "خدمات الغرفة", items: roomFacilities },
     { title: "مرافق الفندق", items: hotelFacilities.slice(0, 9) },
-    ...(rate.rateComments ? [{ title: "شروط التعرفة", items: [rate.rateComments] }] : []),
+    ...(comments.summaryAr
+      ? [
+          {
+            title: "شروط التعرفة",
+            items: [
+              comments.summaryAr,
+              ...(showOriginalComments && comments.original
+                ? [`النص الأصلي: ${comments.original}`]
+                : []),
+            ],
+          },
+        ]
+      : []),
     ...(rate.promotions?.length
       ? [{ title: "عروض", items: rate.promotions.map((p) => p.name || p.remark || "").filter(Boolean) }]
       : []),
   ];
+
+  function cancelPolicyText() {
+    if (rate.freeCancellation) {
+      if (cancelPolicy?.from) {
+        return `إلغاء مجاني حتى ${formatPolicyDate(cancelPolicy.from)} (توقيت الكويت)`;
+      }
+      return "إلغاء مجاني*";
+    }
+    if (cancelPolicy?.from) {
+      const amountMinor = hotelMajorToMinor(Number(cancelPolicy.amount) || 0, hotel.currency);
+      const fee =
+        amountMinor > 0
+          ? ` · رسوم الإلغاء ${formatMoneyMinor(amountMinor, hotel.currency)}`
+          : "";
+      return `هذا الحجز غير قابل للاسترداد من تاريخ ${formatPolicyDate(cancelPolicy.from)}${fee}`;
+    }
+    return "غير قابل للاسترداد";
+  }
 
   function submitGuest() {
     if (!name.trim() || !phone.trim()) return;
@@ -181,7 +237,7 @@ export function HotelBookingSummary({
           <div className="hotel-selected-price-meta">
             <span>{hotelName}</span>
             <span>
-              {rate.roomName} · {rate.boardName}
+              {roomName.ar} · {rate.boardName}
             </span>
           </div>
         </div>
@@ -279,7 +335,7 @@ export function HotelBookingSummary({
           <div className="hotel-selected-price-meta">
             <span>{hotelName}</span>
             <span>
-              {rate.roomName} · {rate.boardName}
+              {roomName.ar} · {rate.boardName}
             </span>
           </div>
         </div>
@@ -316,20 +372,19 @@ export function HotelBookingSummary({
         </div>
         <div>
           <span>المدة</span>
-          <strong>
-            {nights} {nights === 1 ? "ليلة" : "ليالي"}
-          </strong>
+          <strong>{arabicNightCount(nights)}</strong>
         </div>
         <div>
           <span>النزلاء</span>
           <strong>
-            {meta.rooms} غرفة · {meta.adults} بالغ
-            {meta.children ? ` · ${meta.children} طفل` : ""}
+            {arabicRoomCount(meta.rooms)} · {arabicAdultCount(meta.adults)}
+            {meta.children ? ` · ${arabicChildCount(meta.children)}` : ""}
           </strong>
         </div>
         <div>
           <span>نوع الغرفة</span>
-          <strong>{rate.roomName}</strong>
+          <strong>{roomName.ar}</strong>
+          {roomName.original ? <small>{roomName.original}</small> : null}
         </div>
         <div>
           <span>الوجبات</span>
@@ -341,14 +396,49 @@ export function HotelBookingSummary({
         </div>
         <div>
           <span>سياسة الإلغاء</span>
-          <strong>{rate.freeCancellation ? "إلغاء مجاني*" : "غير قابل للاسترداد"}</strong>
-          {cancelPolicy?.from ? <small>حتى {formatPolicyDate(cancelPolicy.from)}</small> : null}
+          <strong>{cancelPolicyText()}</strong>
         </div>
+      </div>
+
+      <div className="hotel-price-break">
+        <h3>تفاصيل السعر</h3>
+        <ul>
+          <li>
+            <span>سعر الإقامة</span>
+            <strong>{formatMoneyMinor(breakdown.baseMinor, hotel.currency)}</strong>
+          </li>
+          {breakdown.includedTaxMinor > 0 ? (
+            <li>
+              <span>ضرائب مشمولة</span>
+              <strong>{formatMoneyMinor(breakdown.includedTaxMinor, hotel.currency)}</strong>
+            </li>
+          ) : null}
+          {breakdown.excludedTaxMinor > 0 ? (
+            <li>
+              <span>ضرائب غير مشمولة / تُدفع في الفندق</span>
+              <strong>{formatMoneyMinor(breakdown.excludedTaxMinor, hotel.currency)}</strong>
+            </li>
+          ) : null}
+          {breakdown.serviceFeeMinor > 0 ? (
+            <li>
+              <span>رسوم WeekendGate</span>
+              <strong>{formatMoneyMinor(breakdown.serviceFeeMinor, hotel.currency)}</strong>
+            </li>
+          ) : null}
+          <li>
+            <span>تدفع الآن</span>
+            <strong>{formatMoneyMinor(breakdown.payNowMinor, hotel.currency)}</strong>
+          </li>
+          <li>
+            <span>التكلفة الكلية</span>
+            <strong>{formatMoneyMinor(breakdown.tripTotalMinor, hotel.currency)}</strong>
+          </li>
+        </ul>
       </div>
 
       {taxItems.length ? (
         <div className="hotel-price-break">
-          <h3>الضرائب والرسوم</h3>
+          <h3>تفصيل الضرائب</h3>
           <ul>
             {taxItems.map((t, i) => (
               <li key={`${t.type || i}-${t.amount}`}>
@@ -366,6 +456,15 @@ export function HotelBookingSummary({
       ) : null}
 
       <InfoColumns sections={infoSections} />
+      {comments.original && comments.summaryAr !== comments.original ? (
+        <button
+          type="button"
+          className="hotel-desc-more"
+          onClick={() => setShowOriginalComments((v) => !v)}
+        >
+          {showOriginalComments ? "إخفاء النص الأصلي" : "عرض النص الأصلي لشروط التعرفة"}
+        </button>
+      ) : null}
 
       <footer className={`hotel-summary-foot${shopStyle ? " hotel-summary-foot-shop" : ""}`}>
         {!shopStyle ? (

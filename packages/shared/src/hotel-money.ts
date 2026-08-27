@@ -30,7 +30,13 @@ export type HotelPriceBreakdown = {
   excludedTaxMinor: MoneyMinor;
   /** Margin / service fee in minor units. */
   serviceFeeMinor: MoneyMinor;
-  /** Final sell total in minor units. */
+  /** Amount charged now (sell total for the rate). */
+  payNowMinor: MoneyMinor;
+  /** Amount due at hotel (excluded taxes). */
+  payAtHotelMinor: MoneyMinor;
+  /** True trip cost = pay now + pay at hotel. */
+  tripTotalMinor: MoneyMinor;
+  /** Final sell total in minor units (alias of payNow for backward compat). */
   totalMinor: MoneyMinor;
   /** Average per night of the sell total. */
   perNightMinor: MoneyMinor;
@@ -189,6 +195,9 @@ export function buildHotelPriceBreakdown(input: {
   const serviceFeeMinor = Math.max(0, input.sellAmountMinor - costMinor);
   const totalMinor = input.sellAmountMinor > 0 ? input.sellAmountMinor : baseMinor + serviceFeeMinor;
   const perNightMinor = nights > 0 ? Math.round(totalMinor / nights) : totalMinor;
+  const payNowMinor = totalMinor;
+  const payAtHotelMinor = taxes.excludedMinor;
+  const tripTotalMinor = payNowMinor + payAtHotelMinor;
 
   return {
     currency,
@@ -198,6 +207,9 @@ export function buildHotelPriceBreakdown(input: {
     includedTaxMinor: taxes.includedMinor,
     excludedTaxMinor: taxes.excludedMinor,
     serviceFeeMinor,
+    payNowMinor,
+    payAtHotelMinor,
+    tripTotalMinor,
     totalMinor,
     perNightMinor,
     taxesIncluded: taxes.allIncluded,

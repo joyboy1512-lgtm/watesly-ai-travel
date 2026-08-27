@@ -35,7 +35,10 @@ export function HotelLiveBadge({
   compact,
 }: Props) {
   const [now, setNow] = useState(() => Date.now());
-  const isSandbox = sandbox ?? !liveMode;
+  const labelLooksSandbox =
+    Boolean(sourceLabel) &&
+    (/sandbox|تجريب/i.test(String(sourceLabel)) || /test/i.test(String(sourceLabel)));
+  const isSandbox = sandbox ?? labelLooksSandbox ?? !liveMode;
 
   useEffect(() => {
     if (!expiresAt) return;
@@ -48,16 +51,26 @@ export function HotelLiveBadge({
   const expired = remaining != null && remaining <= 0;
   const fetchedLabel = fetchedAt ? formatFetchedTime(fetchedAt) : null;
 
+  if (isSandbox) {
+    return (
+      <div className={`hotel-live-badge is-sandbox${compact ? " is-compact" : ""}`}>
+        <strong>نتيجة تجريبية من Hotelbeds Sandbox</strong>
+        {fetchedLabel ? <span>جُلب {fetchedLabel}</span> : null}
+        {remaining != null ? (
+          <em suppressHydrationWarning>
+            {expired ? "انتهت صلاحية السعر — أعد البحث" : `يتبقى ${formatRemaining(remaining)}`}
+          </em>
+        ) : null}
+      </div>
+    );
+  }
+
   return (
     <div
-      className={`hotel-live-badge${expired ? " is-expired" : ""}${compact ? " is-compact" : ""}${
-        isSandbox ? " is-sandbox" : ""
-      }`}
+      className={`hotel-live-badge${expired ? " is-expired" : ""}${compact ? " is-compact" : ""}`}
     >
-      <strong>
-        {isSandbox ? "نتيجة تجريبية من Hotelbeds Sandbox" : "عرض حي"}
-      </strong>
-      {!isSandbox && sourceLabel ? <span>{sourceLabel}</span> : null}
+      <strong>عرض حي</strong>
+      {sourceLabel ? <span>{sourceLabel}</span> : null}
       {fetchedLabel ? <span>جُلب {fetchedLabel}</span> : null}
       {remaining != null ? (
         <em suppressHydrationWarning>

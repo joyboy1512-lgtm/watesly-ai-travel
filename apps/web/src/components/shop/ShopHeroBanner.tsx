@@ -5,6 +5,13 @@ import { HERO_SLIDES } from "@/lib/shop-content";
 import { ShopAutocomplete, type SuggestItem } from "@/components/shop/ShopAutocomplete";
 import { ShopDateRangePicker } from "@/components/shop/ShopDateRangePicker";
 import { formatDay } from "@/lib/flight-search";
+import {
+  emptyRoom,
+  occupancyTotals,
+  setRoomCount,
+  type HotelOccupancyState,
+  validateOccupancy,
+} from "@/lib/hotel-occupancy";
 
 type Mode = "flights" | "stays" | "cars" | "activities";
 export type FlightTripType = "roundtrip" | "oneway" | "multicity";
@@ -55,6 +62,9 @@ type Props = {
   adults: number;
   children: number;
   rooms: number;
+  /** Per-room occupancy for hotel search (required for children ages). */
+  stayOccupancy?: HotelOccupancyState;
+  onStayOccupancyChange?: (next: HotelOccupancyState) => void;
   onOriginClear: (text: string) => void;
   onOriginPick: (item: SuggestItem) => void;
   onDestinationClear: (text: string) => void;
@@ -201,13 +211,173 @@ function DatePick({
 
 export function ShopHeroBanner(props: Props) {
   const [travelersOpen, setTravelersOpen] = useState(false);
+  const [occError, setOccError] = useState("");
   const heroSlide = HERO_SLIDES[0];
   const heroImage = heroSlide?.image;
 
+  const stayTotals = props.stayOccupancy
+    ? occupancyTotals(props.stayOccupancy)
+    : null;
+
   const travelerSummary =
     props.mode === "stays"
-      ? `${props.adults + props.children} مسافر · ${props.rooms} غرفة`
+      ? `${(stayTotals?.adults ?? props.adults) + (stayTotals?.children ?? props.children)} مسافر · ${
+          stayTotals?.rooms ?? props.rooms
+        } غرفة`
       : `${props.adults + props.children} مسافر`;
+
+  function updateStayOccupancy(next: HotelOccupancyState) {
+    props.onStayOccupancyChange?.(next);
+    const totals = occupancyTotals(next);
+    props.onAdultsChange(totals.adults);
+    props.onChildrenChange(totals.children);
+    props.onRoomsChange(totals.rooms);
+    setOccError(validateOccupancy(next) || "");
+  }
+
+  function renderStayOccupancyPop() {
+    const state = props.stayOccupancy || {
+      rooms: [{ adults: props.adults, childAges: Array.from({ length: props.children }, () => 8) }],
+    };
+    return (
+      <div className="exp-travelers-pop exp-occupancy-pop">
+        <div className="exp-travelers-row">
+          <span>عدد الغرف</span>
+          <div className="exp-stepper">
+            <button
+              type="button"
+              onClick={() => updateStayOccupancy(setRoomCount(state, state.rooms.length - 1))}
+            >
+              −
+            </button>
+            <strong>{state.rooms.length}</strong>
+            <button
+              type="button"
+              onClick={() => updateStayOccupancy(setRoomCount(state, state.rooms.length + 1))}
+            >
+              +
+            </button>
+          </div>
+        </div>
+        {state.rooms.map((room, roomIdx) => (
+          <div key={roomIdx} className="exp-room-occ-block">
+            <strong className="exp-room-occ-title">الغرفة {roomIdx + 1}</strong>
+            <div className="exp-travelers-row">
+              <span>بالغون</span>
+              <div className="exp-stepper">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const rooms = state.rooms.map((r, i) =>
+                      i === roomIdx ? { ...r, adults: Math.max(1, r.adults - 1) } : r,
+                    );
+                    updateStayOccupancy({ rooms });
+                  }}
+                >
+                  −
+                </button>
+                <strong>{room.adults}</strong>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const rooms = state.rooms.map((r, i) =>
+                      i === roomIdx ? { ...r, adults: Math.min(6, r.adults + 1) } : r,
+                    );
+                    updateStayOccupancy({ rooms });
+                  }}
+                >
+                  +
+                </button>
+              </div>
+            </div>
+            <div className="exp-travelers-row">
+              <span>أطفال</span>
+              <div className="exp-stepper">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const rooms = state.rooms.map((r, i) =>
+                      i === roomIdx
+                        ? { ...r, childAges: r.childAges.slice(0, -1) }
+                        : r,
+                    );
+                    updateStayOccupancy({ rooms });
+                  }}
+                >
+                  −
+                </button>
+                <strong>{room.childAges.length}</strong>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const rooms = state.rooms.map((r, i) =>
+                      i === roomIdx
+                        ? { ...r, childAges: [...r.childAges, 8].slice(0, 4) }
+                        : r,
+                    );
+                    updateStayOccupancy({ rooms });
+                  }}
+                >
+                  +
+                </button>
+              </div>
+            </div>
+            {room.childAges.map((age, childIdx) => (
+              <div key={childIdx} className="exp-travelers-row">
+                <span>عمر الطفل {childIdx + 1}</span>
+                <select
+                  value={age}
+                  onChange={(e) => {
+                    const nextAge = Number(e.target.value);
+                    const rooms = state.rooms.map((r, i) => {
+                      if (i !== roomIdx) return r;
+                      const childAges = [...r.childAges];
+                      childAges[childIdx] = nextAge;
+                      return { ...r, childAges };
+                    });
+                    updateStayOccupancy({ rooms });
+                  }}
+                >
+                  {Array.from({ length: 18 }, (_, ageOpt) => (
+                    <option key={ageOpt} value={ageOpt}>
+                      {ageOpt} سنة
+                    </option>
+                  ))}
+                </select>
+              </div>
+            ))}
+            {state.rooms.length > 1 ? (
+              <button
+                type="button"
+                className="exp-room-remove"
+                onClick={() => {
+                  const rooms = state.rooms.filter((_, i) => i !== roomIdx);
+                  updateStayOccupancy({ rooms: rooms.length ? rooms : [emptyRoom(1)] });
+                }}
+              >
+                حذف الغرفة
+              </button>
+            ) : null}
+          </div>
+        ))}
+        {occError ? <p className="shop-error exp-occ-error">{occError}</p> : null}
+        <button
+          type="button"
+          className="exp-pop-done"
+          onClick={() => {
+            const err = validateOccupancy(state);
+            if (err) {
+              setOccError(err);
+              return;
+            }
+            setTravelersOpen(false);
+          }}
+        >
+          تم
+        </button>
+      </div>
+    );
+  }
 
   function swapLegAirports(legId: string) {
     const leg = props.flightLegs.find((row) => row.id === legId);
@@ -232,41 +402,45 @@ export function ShopHeroBanner(props: Props) {
           <strong>{travelerSummary}</strong>
         </button>
         {travelersOpen ? (
-          <div className="exp-travelers-pop">
-            <div className="exp-travelers-row">
-              <span>بالغون</span>
-              <div className="exp-stepper">
-                <button
-                  type="button"
-                  onClick={() => props.onAdultsChange(Math.max(1, props.adults - 1))}
-                >
-                  −
-                </button>
-                <strong>{props.adults}</strong>
-                <button type="button" onClick={() => props.onAdultsChange(props.adults + 1)}>
-                  +
-                </button>
+          props.mode === "stays" ? (
+            renderStayOccupancyPop()
+          ) : (
+            <div className="exp-travelers-pop">
+              <div className="exp-travelers-row">
+                <span>بالغون</span>
+                <div className="exp-stepper">
+                  <button
+                    type="button"
+                    onClick={() => props.onAdultsChange(Math.max(1, props.adults - 1))}
+                  >
+                    −
+                  </button>
+                  <strong>{props.adults}</strong>
+                  <button type="button" onClick={() => props.onAdultsChange(props.adults + 1)}>
+                    +
+                  </button>
+                </div>
               </div>
-            </div>
-            <div className="exp-travelers-row">
-              <span>أطفال</span>
-              <div className="exp-stepper">
-                <button
-                  type="button"
-                  onClick={() => props.onChildrenChange(Math.max(0, props.children - 1))}
-                >
-                  −
-                </button>
-                <strong>{props.children}</strong>
-                <button type="button" onClick={() => props.onChildrenChange(props.children + 1)}>
-                  +
-                </button>
+              <div className="exp-travelers-row">
+                <span>أطفال</span>
+                <div className="exp-stepper">
+                  <button
+                    type="button"
+                    onClick={() => props.onChildrenChange(Math.max(0, props.children - 1))}
+                  >
+                    −
+                  </button>
+                  <strong>{props.children}</strong>
+                  <button type="button" onClick={() => props.onChildrenChange(props.children + 1)}>
+                    +
+                  </button>
+                </div>
               </div>
+              <button type="button" className="exp-pop-done" onClick={() => setTravelersOpen(false)}>
+                تم
+              </button>
             </div>
-            <button type="button" className="exp-pop-done" onClick={() => setTravelersOpen(false)}>
-              تم
-            </button>
-          </div>
+          )
         ) : null}
       </div>
     );
@@ -707,77 +881,7 @@ export function ShopHeroBanner(props: Props) {
               </>
             ) : null}
 
-            <div className="exp-input-cell exp-cell-travelers">
-              <button
-                type="button"
-                className="exp-travelers-trigger"
-                onClick={() => setTravelersOpen((v) => !v)}
-              >
-                <span className="exp-cell-label">المسافرون</span>
-                <strong>{travelerSummary}</strong>
-              </button>
-              {travelersOpen ? (
-                <div className="exp-travelers-pop">
-                  <div className="exp-travelers-row">
-                    <span>بالغون</span>
-                    <div className="exp-stepper">
-                      <button
-                        type="button"
-                        onClick={() => props.onAdultsChange(Math.max(1, props.adults - 1))}
-                      >
-                        −
-                      </button>
-                      <strong>{props.adults}</strong>
-                      <button type="button" onClick={() => props.onAdultsChange(props.adults + 1)}>
-                        +
-                      </button>
-                    </div>
-                  </div>
-                  <div className="exp-travelers-row">
-                    <span>أطفال</span>
-                    <div className="exp-stepper">
-                      <button
-                        type="button"
-                        onClick={() => props.onChildrenChange(Math.max(0, props.children - 1))}
-                      >
-                        −
-                      </button>
-                      <strong>{props.children}</strong>
-                      <button
-                        type="button"
-                        onClick={() => props.onChildrenChange(props.children + 1)}
-                      >
-                        +
-                      </button>
-                    </div>
-                  </div>
-                  {props.mode === "stays" ? (
-                    <div className="exp-travelers-row">
-                      <span>غرف</span>
-                      <div className="exp-stepper">
-                        <button
-                          type="button"
-                          onClick={() => props.onRoomsChange(Math.max(1, props.rooms - 1))}
-                        >
-                          −
-                        </button>
-                        <strong>{props.rooms}</strong>
-                        <button type="button" onClick={() => props.onRoomsChange(props.rooms + 1)}>
-                          +
-                        </button>
-                      </div>
-                    </div>
-                  ) : null}
-                  <button
-                    type="button"
-                    className="exp-pop-done"
-                    onClick={() => setTravelersOpen(false)}
-                  >
-                    تم
-                  </button>
-                </div>
-              ) : null}
-            </div>
+            {renderTravelersCell()}
 
             <button
               type="button"

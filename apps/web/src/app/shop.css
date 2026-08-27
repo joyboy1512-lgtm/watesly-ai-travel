@@ -3605,7 +3605,7 @@
 
 .shop-ticket-list {
   display: grid;
-  gap: 0.65rem;
+  gap: 0.5rem;
 }
 
 .shop-ticket-card {
@@ -5599,13 +5599,13 @@
 
 .shop-ticket-card-v2 {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(8.5rem, 10.5rem);
+  grid-template-columns: minmax(0, 1fr) minmax(10.5rem, 12.5rem);
   grid-template-areas:
     "badges badges"
     "body side";
-  gap: 0.45rem 0.85rem;
-  align-items: start;
-  padding: 0.55rem 0.7rem 0.65rem;
+  gap: 0.35rem 0.7rem;
+  align-items: stretch;
+  padding: 0.5rem 0.65rem;
   overflow: hidden;
 }
 
@@ -5622,7 +5622,7 @@
 
 .shop-ticket-card-v2 > .shop-ticket-side-v2 {
   grid-area: side;
-  align-self: center;
+  align-self: stretch;
 }
 
 .shop-ticket-body-v2 {
@@ -5631,17 +5631,17 @@
 
 .shop-ticket-legs-v2 {
   display: grid;
-  gap: 0.55rem;
+  gap: 0.35rem;
 }
 
 .shop-ticket-leg-v2 {
   display: grid;
   grid-template-columns: minmax(140px, 1.1fr) 72px 1fr 72px;
-  gap: 0.65rem;
+  gap: 0.5rem;
   align-items: center;
-  padding: 0.55rem 0.65rem;
+  padding: 0.4rem 0.55rem;
   border: 1px solid var(--exp-border);
-  border-radius: 10px;
+  border-radius: 8px;
   background: #fff;
 }
 
@@ -5983,40 +5983,70 @@
 }
 
 .shop-ticket-side-v2 {
-  display: grid;
-  gap: 0.3rem;
-  align-content: center;
-  justify-items: end;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  justify-content: flex-start;
+  align-items: stretch;
   min-width: 0;
   max-width: 100%;
   border-inline-start: 1px solid var(--exp-border);
-  padding-inline-start: 0.75rem;
+  padding-inline-start: 0.7rem;
   box-sizing: border-box;
 }
 
 .shop-ticket-side-v2 .shop-ticket-price {
-  font-size: 1.05rem;
+  font-size: 1.12rem;
+  line-height: 1.15;
   text-align: end;
   word-break: break-word;
+  margin: 0;
 }
 
 .shop-ticket-side-v2 .shop-ticket-price-note {
   text-align: end;
-  line-height: 1.3;
+  line-height: 1.25;
+  margin: 0 0 0.15rem;
+  font-size: 0.68rem;
+  color: #64748b;
+}
+
+.shop-ticket-side-v2 .shop-ticket-cta-group {
+  margin-top: 0.1rem;
+  gap: 0.2rem;
+}
+
+.shop-ticket-side-v2 .shop-ticket-bags-text {
+  margin: 0.35rem 0 0;
+  padding-top: 0.35rem;
+  border-top: 1px dashed rgba(15, 51, 64, 0.12);
+  font-size: 0.72rem;
+  gap: 0.12rem;
+  align-items: flex-end;
+  text-align: end;
 }
 
 .shop-ticket-side-v2 .shop-ticket-details-btn {
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
-  white-space: nowrap;
+  white-space: normal;
+  line-height: 1.2;
+  min-height: 2.35rem;
+  padding: 0.5rem 0.65rem;
+  font-size: 0.82rem;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .shop-ticket-details-btn.primary {
   min-width: 0;
-  padding: 0.55rem 0.85rem;
+  padding: 0.5rem 0.7rem;
+}
+
+.shop-ticket-side-v2 .shop-ticket-details-link {
+  padding: 0.1rem;
+  font-size: 0.78rem;
 }
 
 .shop-flight-expanded-panel.has-sticky-foot {
@@ -6286,13 +6316,19 @@
     border-inline-start: 0;
     padding-inline-start: 0;
     border-top: 1px solid var(--exp-border);
-    padding-top: 0.65rem;
+    padding-top: 0.55rem;
     justify-items: stretch;
+    align-items: stretch;
     width: 100%;
   }
 
   .shop-ticket-side-v2 .shop-ticket-price,
   .shop-ticket-side-v2 .shop-ticket-price-note {
+    text-align: start;
+  }
+
+  .shop-ticket-side-v2 .shop-ticket-bags-text {
+    align-items: flex-start;
     text-align: start;
   }
 
@@ -6552,10 +6588,10 @@
 .shop-ticket-bags-text {
   display: flex;
   flex-direction: column;
-  gap: 0.2rem;
-  font-size: 0.78rem;
+  gap: 0.15rem;
+  font-size: 0.74rem;
   color: #334155;
-  margin-bottom: 0.35rem;
+  margin-bottom: 0;
 }
 
 .shop-ticket-bags-text .off {

@@ -382,9 +382,13 @@ export function ShopHotelResultsClient() {
             <strong>{summary.destination}</strong>
             <span>{summary.dates}</span>
             <span>
-              {summary.nights} {summary.nights === 1 ? "ليلة" : "ليالي"} · {summary.guests}{" "}
-              {summary.guests === 1 ? "ضيف" : "ضيوف"} · {summary.rooms}{" "}
-              {summary.rooms === 1 ? "غرفة" : "غرف"}
+              {summary.nights === 1
+                ? "ليلة واحدة"
+                : summary.nights === 2
+                  ? "ليلتان"
+                  : `${summary.nights} ليالٍ`}{" "}
+              · {summary.guests === 1 ? "ضيف واحد" : `${summary.guests} ضيوف`} ·{" "}
+              {summary.rooms === 1 ? "غرفة واحدة" : summary.rooms === 2 ? "غرفتان" : `${summary.rooms} غرف`}
             </span>
           </div>
           <div className="shop-flight-results-topbar-actions">

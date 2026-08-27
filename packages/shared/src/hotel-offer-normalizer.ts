@@ -150,7 +150,8 @@ export function translateFacilityLabelAr(label: string): string {
     Spa: "سبا",
     Breakfast: "إفطار",
   };
-  if (map[out]) return map[out];
+  const mapped = map[out];
+  if (mapped) return mapped;
 
   return out
     .replace(/Bathroom/gi, "دورة المياه")

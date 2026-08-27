@@ -20,7 +20,47 @@ import {
   saveShopSession,
   shopFetch,
 } from "@/lib/shop-session";
-import type { HotelBookingDraft } from "@/lib/booking-draft";
+import type { HotelBookingDraft, HotelRoomGuestDraft } from "@/lib/booking-draft";
+
+function buildHotelRoomGuests(draft: HotelBookingDraft): HotelRoomGuestDraft[] {
+  if (draft.roomGuests?.length) return draft.roomGuests;
+  const occ =
+    draft.roomOccupancies?.length
+      ? draft.roomOccupancies
+      : [
+          {
+            adults: draft.adults,
+            childAges: draft.childAges || Array.from({ length: draft.children }, () => 8),
+          },
+        ];
+  const guests: HotelRoomGuestDraft[] = [];
+  occ.forEach((room, roomIndex) => {
+    for (let a = 0; a < Math.max(1, room.adults); a += 1) {
+      guests.push({
+        roomIndex,
+        isLead: a === 0,
+        title: "mr",
+        firstName: "",
+        lastName: "",
+        type: "adult",
+      });
+    }
+    (room.childAges || []).forEach((age) => {
+      guests.push({
+        roomIndex,
+        isLead: false,
+        title: "miss",
+        firstName: "",
+        lastName: "",
+        type: "child",
+        age,
+      });
+    });
+  });
+  return guests.length
+    ? guests
+    : [{ roomIndex: 0, isLead: true, title: "mr", firstName: "", lastName: "", type: "adult" }];
+}
 
 type Traveler = {
   title: string;
@@ -404,6 +444,7 @@ export default function PublicBookPage() {
   const router = useRouter();
   const [draft, setDraft] = useState<BookingDraft | null>(null);
   const [travelers, setTravelers] = useState<Traveler[]>([emptyTraveler()]);
+  const [roomGuests, setRoomGuests] = useState<HotelRoomGuestDraft[]>([]);
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [name, setName] = useState("");
@@ -454,6 +495,7 @@ export default function PublicBookPage() {
     if (stored.serviceType === "hotel") {
       setSpecialRequests(stored.specialRequests || "");
       setPaymentMethod(stored.paymentMethod || null);
+      setRoomGuests(buildHotelRoomGuests(stored));
       if (stored.travelers?.length) {
         setTravelers(
           stored.travelers.map((t) => ({
@@ -725,8 +767,8 @@ export default function PublicBookPage() {
       ) : isHotel ? (
         <HotelCheckout
           draft={draft as HotelBookingDraft}
-          travelers={travelers}
-          setTravelers={setTravelers}
+          roomGuests={roomGuests}
+          setRoomGuests={setRoomGuests}
           email={email}
           setEmail={setEmail}
           phone={phone}

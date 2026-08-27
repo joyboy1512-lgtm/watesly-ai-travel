@@ -220,6 +220,8 @@ export default function HotelGuestsPage() {
             title: g.title,
             firstName: g.firstName,
             lastName: g.lastName,
+            firstNameEn: g.firstNameEn,
+            lastNameEn: g.lastNameEn,
             type: g.type,
             age: g.age,
             roomIndex: g.roomIndex,

@@ -88,7 +88,8 @@ function contentRoomOf(content: HbContentHotel | undefined, roomCode: string) {
   return content?.rooms?.find((r) => r.roomCode === resolved || r.roomCode === roomCode);
 }
 
-function roomGalleryFor(
+/** Match gallery URLs to a room code. Never borrow another room's photos. */
+export function roomGalleryFor(
   roomGalleries: Record<string, string[]>,
   roomCode: string,
   hotelFallback: string[],
@@ -102,10 +103,16 @@ function roomGalleryFor(
     const list = roomGalleries[key];
     if (list?.length) return list;
   }
-  // Prefer any room gallery over empty; last resort hotel-level images
+  // Prefix match against known content room codes only (still same-room family)
   for (const [key, list] of Object.entries(roomGalleries)) {
-    if (key === "__hotel__") continue;
-    if (list.length) return list;
+    if (key === "__hotel__" || !list.length) continue;
+    if (
+      resolvedKeys.some(
+        (rk) => key === rk || key.startsWith(`${rk}.`) || rk.startsWith(`${key}.`),
+      )
+    ) {
+      return list;
+    }
   }
   return hotelFallback;
 }

@@ -12,6 +12,7 @@ import {
 } from "@/lib/hotel-search";
 import { formatMoneyMinor } from "@/lib/format";
 import { arabicNightCount } from "@/lib/hotel-occupancy";
+import { HotelMediaImage } from "@/components/hotels/HotelMediaImage";
 
 type Props = {
   hotel: HotelOfferRow & { matchingRates: HotelRateOption[]; displayFromMinor: number };
@@ -143,10 +144,13 @@ export function HotelRoomAccordion({
               aria-expanded={open}
               onClick={() => setOpenCode(open ? null : room.code)}
             >
-              {room.imageUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={room.imageUrl} alt="" className="hotel-room-thumb" />
-              ) : null}
+              <HotelMediaImage
+                src={room.imageUrl}
+                alt=""
+                className="hotel-room-thumb"
+                preferMedium
+                compactEmpty
+              />
               <div className="hotel-room-panel-title">
                 <strong>{translateRoomNameAr(room.name).ar}</strong>
                 {translateRoomNameAr(room.name).original ? (
@@ -178,8 +182,13 @@ export function HotelRoomAccordion({
                 {room.images && room.images.length > 1 ? (
                   <div className="hotel-room-gallery">
                     {room.images.slice(0, 6).map((src) => (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img key={src} src={src} alt="" />
+                      <HotelMediaImage
+                        key={src}
+                        src={src}
+                        alt=""
+                        className="hotel-room-gallery-item"
+                        preferMedium
+                      />
                     ))}
                   </div>
                 ) : null}

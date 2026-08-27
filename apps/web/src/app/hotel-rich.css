@@ -824,6 +824,21 @@
   height: 54px;
   object-fit: cover;
   border-radius: 8px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.hotel-room-thumb.hotel-media-wrap,
+.hotel-room-thumb.hotel-img-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hotel-room-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .hotel-room-panel-toggle {
@@ -1006,12 +1021,23 @@
 }
 
 .hotel-room-gallery img,
+.hotel-room-gallery .hotel-media-wrap,
+.hotel-room-gallery .hotel-img-fallback,
+.hotel-room-gallery-item,
 .hotel-hero-gallery img {
   width: 92px;
   height: 68px;
   object-fit: cover;
   border-radius: 8px;
   flex-shrink: 0;
+  overflow: hidden;
+}
+
+.hotel-room-gallery .hotel-media-wrap img,
+.hotel-room-gallery-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .hotel-room-fac-chips {

@@ -14,7 +14,7 @@ import {
 import { formatDay } from "@/lib/flight-search";
 import { formatMoneyMinor } from "@/lib/format";
 import { ShopMockBanner } from "@/components/shop/ShopMockBanner";
-import { HotelCheckout } from "@/components/hotels/HotelCheckout";
+import { HotelCheckout, validateHotelCheckout } from "@/components/hotels/HotelCheckout";
 import {
   getShopSession,
   saveShopSession,
@@ -573,7 +573,22 @@ export default function PublicBookPage() {
 
   async function submit() {
     if (!draft) return;
-    if (!name.trim() || !phone.trim()) {
+    if (draft.serviceType === "hotel") {
+      const errors = validateHotelCheckout({
+        name,
+        phone,
+        phoneCountry,
+        email,
+        emailConfirm,
+        paymentMethod,
+        termsAccepted,
+        roomGuests,
+      });
+      if (Object.keys(errors).length) {
+        setError("أكمل الحقول المطلوبة في نموذج الضيوف");
+        return;
+      }
+    } else if (!name.trim() || !phone.trim()) {
       setError("أدخل الاسم والجوال");
       return;
     }
@@ -639,6 +654,8 @@ export default function PublicBookPage() {
                   title: g.title,
                   firstName: g.firstName,
                   lastName: g.lastName,
+                  firstNameEn: g.firstNameEn,
+                  lastNameEn: g.lastNameEn,
                   type: g.type,
                   age: g.age,
                   roomIndex: g.roomIndex,
@@ -694,11 +711,25 @@ export default function PublicBookPage() {
         method: "POST",
         body: JSON.stringify({
           ...payload,
-          contact: { email, phone },
+          contact: {
+            email,
+            phone:
+              draft.serviceType === "hotel"
+                ? `${phoneCountry}${phone.replace(/\D/g, "")}`
+                : phone,
+          },
           extras: {
             guestName: name,
             specialRequests: specialRequests || undefined,
             paymentMethod: paymentMethod || undefined,
+            ...(draft.serviceType === "hotel"
+              ? {
+                  phoneCountry,
+                  roomGuests,
+                  selectedRate: (draft as HotelBookingDraft).selectedRate,
+                  priceBreakdown: (draft as HotelBookingDraft).priceBreakdown,
+                }
+              : {}),
           },
         }),
       });

@@ -1,0 +1,71 @@
+"use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __exportStar = (this && this.__exportStar) || function(m, exports) {
+    for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.DuffelTravelProvider = exports.TravelfusionFlightProvider = exports.TravelportFlightProvider = exports.AmadeusFlightProvider = exports.resolveHotelbedsActivityCredentials = exports.resolveHotelbedsTransferCredentials = exports.resolveHotelbedsCredentials = exports.hotelbedsSignature = exports.hotelbedsHeaders = exports.MockActivityProvider = exports.HotelbedsActivityProvider = exports.MockTransferProvider = exports.HotelbedsTransferProvider = exports.HotelbedsHotelProvider = exports.DuffelHotelProvider = exports.DuffelFlightProvider = exports.MockHotelProvider = exports.MockFlightProvider = exports.MockTravelProvider = exports.getTravelProvider = exports.getActivityProvider = exports.getTransferProvider = exports.getHotelProvider = exports.getFlightProvider = exports.isHotelbedsTransferKey = exports.resolveProviderKey = exports.resolveActivityProviderKey = exports.resolveTransferProviderKey = exports.resolveHotelProviderKey = exports.resolveFlightProviderKey = void 0;
+__exportStar(require("./types"), exports);
+__exportStar(require("./locations"), exports);
+__exportStar(require("./scenario"), exports);
+__exportStar(require("./mock-catalog"), exports);
+__exportStar(require("./catalog"), exports);
+__exportStar(require("./composite"), exports);
+var resolve_1 = require("./resolve");
+Object.defineProperty(exports, "resolveFlightProviderKey", { enumerable: true, get: function () { return resolve_1.resolveFlightProviderKey; } });
+Object.defineProperty(exports, "resolveHotelProviderKey", { enumerable: true, get: function () { return resolve_1.resolveHotelProviderKey; } });
+Object.defineProperty(exports, "resolveTransferProviderKey", { enumerable: true, get: function () { return resolve_1.resolveTransferProviderKey; } });
+Object.defineProperty(exports, "resolveActivityProviderKey", { enumerable: true, get: function () { return resolve_1.resolveActivityProviderKey; } });
+Object.defineProperty(exports, "resolveProviderKey", { enumerable: true, get: function () { return resolve_1.resolveProviderKey; } });
+Object.defineProperty(exports, "isHotelbedsTransferKey", { enumerable: true, get: function () { return resolve_1.isHotelbedsTransferKey; } });
+Object.defineProperty(exports, "getFlightProvider", { enumerable: true, get: function () { return resolve_1.getFlightProvider; } });
+Object.defineProperty(exports, "getHotelProvider", { enumerable: true, get: function () { return resolve_1.getHotelProvider; } });
+Object.defineProperty(exports, "getTransferProvider", { enumerable: true, get: function () { return resolve_1.getTransferProvider; } });
+Object.defineProperty(exports, "getActivityProvider", { enumerable: true, get: function () { return resolve_1.getActivityProvider; } });
+Object.defineProperty(exports, "getTravelProvider", { enumerable: true, get: function () { return resolve_1.getTravelProvider; } });
+var mock_1 = require("./mock");
+Object.defineProperty(exports, "MockTravelProvider", { enumerable: true, get: function () { return mock_1.MockTravelProvider; } });
+var mock_flight_provider_1 = require("./flights/mock-flight-provider");
+Object.defineProperty(exports, "MockFlightProvider", { enumerable: true, get: function () { return mock_flight_provider_1.MockFlightProvider; } });
+var mock_hotel_provider_1 = require("./hotels/mock-hotel-provider");
+Object.defineProperty(exports, "MockHotelProvider", { enumerable: true, get: function () { return mock_hotel_provider_1.MockHotelProvider; } });
+var duffel_flight_provider_1 = require("./flights/duffel-flight-provider");
+Object.defineProperty(exports, "DuffelFlightProvider", { enumerable: true, get: function () { return duffel_flight_provider_1.DuffelFlightProvider; } });
+var duffel_hotel_provider_1 = require("./hotels/duffel-hotel-provider");
+Object.defineProperty(exports, "DuffelHotelProvider", { enumerable: true, get: function () { return duffel_hotel_provider_1.DuffelHotelProvider; } });
+var hotelbeds_hotel_provider_1 = require("./hotels/hotelbeds-hotel-provider");
+Object.defineProperty(exports, "HotelbedsHotelProvider", { enumerable: true, get: function () { return hotelbeds_hotel_provider_1.HotelbedsHotelProvider; } });
+var hotelbeds_transfer_provider_1 = require("./transfers/hotelbeds-transfer-provider");
+Object.defineProperty(exports, "HotelbedsTransferProvider", { enumerable: true, get: function () { return hotelbeds_transfer_provider_1.HotelbedsTransferProvider; } });
+var mock_transfer_provider_1 = require("./transfers/mock-transfer-provider");
+Object.defineProperty(exports, "MockTransferProvider", { enumerable: true, get: function () { return mock_transfer_provider_1.MockTransferProvider; } });
+var hotelbeds_activity_provider_1 = require("./activities/hotelbeds-activity-provider");
+Object.defineProperty(exports, "HotelbedsActivityProvider", { enumerable: true, get: function () { return hotelbeds_activity_provider_1.HotelbedsActivityProvider; } });
+var mock_activity_provider_1 = require("./activities/mock-activity-provider");
+Object.defineProperty(exports, "MockActivityProvider", { enumerable: true, get: function () { return mock_activity_provider_1.MockActivityProvider; } });
+var hotelbeds_auth_1 = require("./hotels/hotelbeds-auth");
+Object.defineProperty(exports, "hotelbedsHeaders", { enumerable: true, get: function () { return hotelbeds_auth_1.hotelbedsHeaders; } });
+Object.defineProperty(exports, "hotelbedsSignature", { enumerable: true, get: function () { return hotelbeds_auth_1.hotelbedsSignature; } });
+Object.defineProperty(exports, "resolveHotelbedsCredentials", { enumerable: true, get: function () { return hotelbeds_auth_1.resolveHotelbedsCredentials; } });
+Object.defineProperty(exports, "resolveHotelbedsTransferCredentials", { enumerable: true, get: function () { return hotelbeds_auth_1.resolveHotelbedsTransferCredentials; } });
+Object.defineProperty(exports, "resolveHotelbedsActivityCredentials", { enumerable: true, get: function () { return hotelbeds_auth_1.resolveHotelbedsActivityCredentials; } });
+var amadeus_flight_provider_1 = require("./flights/amadeus-flight-provider");
+Object.defineProperty(exports, "AmadeusFlightProvider", { enumerable: true, get: function () { return amadeus_flight_provider_1.AmadeusFlightProvider; } });
+var travelport_flight_provider_1 = require("./flights/travelport-flight-provider");
+Object.defineProperty(exports, "TravelportFlightProvider", { enumerable: true, get: function () { return travelport_flight_provider_1.TravelportFlightProvider; } });
+var travelfusion_flight_provider_1 = require("./flights/travelfusion-flight-provider");
+Object.defineProperty(exports, "TravelfusionFlightProvider", { enumerable: true, get: function () { return travelfusion_flight_provider_1.TravelfusionFlightProvider; } });
+var duffel_1 = require("./duffel");
+Object.defineProperty(exports, "DuffelTravelProvider", { enumerable: true, get: function () { return duffel_1.DuffelTravelProvider; } });
+__exportStar(require("./ops"), exports);
+//# sourceMappingURL=index.js.map

@@ -81,6 +81,8 @@ export function ShopFlightResultsClient() {
 
   const restoredRef = useRef(false);
   const sessionSaveRef = useRef<number | null>(null);
+  const searchAbortRef = useRef<AbortController | null>(null);
+  const searchGenRef = useRef(0);
 
   useEffect(() => {
     setDraft(params);
@@ -134,6 +136,11 @@ export function ShopFlightResultsClient() {
   }, [persistSession]);
 
   const runSearch = useCallback(async (search: FlightResultsSearchParams) => {
+    searchAbortRef.current?.abort();
+    const controller = new AbortController();
+    searchAbortRef.current = controller;
+    const gen = ++searchGenRef.current;
+
     setLoading(true);
     setError("");
     setMessage("");
@@ -164,6 +171,7 @@ export function ShopFlightResultsClient() {
           }>("/shop/search-flights", {
             method: "POST",
             timeoutMs: 60000,
+            signal: controller.signal,
             body: JSON.stringify({
               origin: leg.origin,
               destination: leg.destination,
@@ -174,6 +182,7 @@ export function ShopFlightResultsClient() {
               cabinClass: search.cabinClass,
             }),
           });
+          if (gen !== searchGenRef.current) return;
           if (i === 0) {
             setInquiryId(result.inquiryId);
             setQuoteItems(result.quoteItems || []);
@@ -195,6 +204,7 @@ export function ShopFlightResultsClient() {
             })),
           );
         }
+        if (gen !== searchGenRef.current) return;
         setFlightsRaw(combined);
         setMessage(`تم جلب ${combined.length} رحلة تجريبية عبر ${search.legs.length} مسارات (${providerName})`);
       } else {
@@ -209,6 +219,7 @@ export function ShopFlightResultsClient() {
         }>("/shop/search-flights", {
           method: "POST",
           timeoutMs: 60000,
+          signal: controller.signal,
           body: JSON.stringify({
             origin: search.origin,
             destination: search.destination,
@@ -220,6 +231,7 @@ export function ShopFlightResultsClient() {
             cabinClass: search.cabinClass,
           }),
         });
+        if (gen !== searchGenRef.current) return;
         setInquiryId(result.inquiryId);
         setQuoteItems(result.quoteItems || []);
         const rows = result.flights || [];
@@ -235,9 +247,10 @@ export function ShopFlightResultsClient() {
         );
       }
     } catch (err) {
+      if (gen !== searchGenRef.current || controller.signal.aborted) return;
       setError(err instanceof Error ? err.message : "فشل البحث");
     } finally {
-      setLoading(false);
+      if (gen === searchGenRef.current) setLoading(false);
     }
   }, []);
 

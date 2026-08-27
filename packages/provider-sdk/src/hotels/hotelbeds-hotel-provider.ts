@@ -31,9 +31,21 @@ import {
   hotelbedsDisplayCurrency,
   hotelbedsSourceMarket,
 } from "./hotelbeds-currency";
+import { CircuitBreaker } from "../ops/circuit-breaker";
+import { isTransientProviderError, providerErrorCode } from "../ops/errors";
+import { singleflight } from "../ops/inflight";
+import { logProviderOps, newRequestId } from "../ops/provider-log";
+import { withTimeoutSignal } from "../ops/with-timeout";
 
 const SEARCH_CACHE_TTL_MS = 8 * 60 * 1000;
 const SEARCH_STALE_TTL_MS = 60 * 60 * 1000;
+const REQUEST_TIMEOUT_MS = 35_000;
+
+const hotelbedsCircuit = new CircuitBreaker({
+  name: "hotelbeds",
+  failureThreshold: 5,
+  resetMs: 60_000,
+});
 
 type SearchCacheEntry = {
   offers: HotelOffer[];
@@ -125,26 +137,57 @@ export class HotelbedsHotelProvider implements HotelProviderAdapter {
     method: "GET" | "POST" = "POST",
   ): Promise<T> {
     this.ensureConfigured();
-    const url = `${this.creds.baseUrl}${path}`;
-    const response = await fetch(url, {
-      method,
-      headers: hotelbedsHeaders(this.creds),
-      ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
-    });
-    const json = (await response.json().catch(() => ({}))) as T & {
-      error?: { message?: string; code?: string };
-    };
-    if (!response.ok) {
-      const err = json as { error?: { message?: string }; message?: string };
-      throw new Error(
-        humanizeHotelbedsError(
-          err.error?.message ||
-            err.message ||
-            `Hotelbeds HTTP ${response.status}`,
-        ),
-      );
+    if (!hotelbedsCircuit.allow()) {
+      throw new Error("مزود الفنادق غير متاح مؤقتًا (CIRCUIT_OPEN). أعد المحاولة بعد قليل.");
     }
-    return json;
+    const url = `${this.creds.baseUrl}${path}`;
+    const { signal, clear } = withTimeoutSignal(REQUEST_TIMEOUT_MS);
+    const started = Date.now();
+    const requestId = newRequestId();
+    try {
+      const response = await fetch(url, {
+        method,
+        headers: hotelbedsHeaders(this.creds),
+        ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
+        signal,
+      });
+      const json = (await response.json().catch(() => ({}))) as T & {
+        error?: { message?: string; code?: string };
+      };
+      if (!response.ok) {
+        const err = json as { error?: { message?: string }; message?: string };
+        throw new Error(
+          humanizeHotelbedsError(
+            err.error?.message ||
+              err.message ||
+              `Hotelbeds HTTP ${response.status}`,
+          ),
+        );
+      }
+      hotelbedsCircuit.recordSuccess();
+      logProviderOps({
+        requestId,
+        provider: "hotelbeds",
+        operation: path,
+        durationMs: Date.now() - started,
+        status: "ok",
+      });
+      return json;
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : String(error);
+      hotelbedsCircuit.recordFailure();
+      logProviderOps({
+        requestId,
+        provider: "hotelbeds",
+        operation: path,
+        durationMs: Date.now() - started,
+        status: /timeout|abort/i.test(msg) ? "timeout" : "error",
+        errorCode: providerErrorCode(error),
+      });
+      throw error instanceof Error ? error : new Error(humanizeHotelbedsError(msg));
+    } finally {
+      clear();
+    }
   }
 
   async pingStatus(): Promise<{ ok: boolean; message: string }> {
@@ -177,12 +220,22 @@ export class HotelbedsHotelProvider implements HotelProviderAdapter {
 
   async searchHotels(params: HotelSearchParams): Promise<HotelOffer[]> {
     const cacheKey = searchCacheKey(params);
+    return singleflight(`hb-search:${cacheKey}`, () => this.searchHotelsInner(params, cacheKey));
+  }
+
+  private async searchHotelsInner(
+    params: HotelSearchParams,
+    cacheKey: string,
+  ): Promise<HotelOffer[]> {
     const cached = hotelSearchCache.get(cacheKey);
     const cacheAge = cached ? Date.now() - cached.savedAt : Number.POSITIVE_INFINITY;
     if (cached && cacheAge < SEARCH_CACHE_TTL_MS) {
-      console.info(
-        `[hotelbeds-availability] cache-hit ageMs=${Math.round(cacheAge)} hotels=${cached.offers.length}`,
-      );
+      logProviderOps({
+        provider: "hotelbeds",
+        operation: "searchHotels",
+        durationMs: 0,
+        status: "cache_hit",
+      });
       return cached.offers.map((offer) => ({ ...offer }));
     }
 
@@ -321,15 +374,19 @@ export class HotelbedsHotelProvider implements HotelProviderAdapter {
         }));
       }
       // One retry on timeout/network only — never retry quota/auth
-      if (/timeout|abort|network|ECONN|fetch/i.test(msg) && !isQuotaError(msg)) {
+      if (isTransientProviderError(err) && !isQuotaError(msg)) {
         const retryStarted = Date.now();
         result = await this.request<HbAvailabilityResponse>(
           "/hotel-api/1.0/hotels",
           payload,
         );
-        console.info(
-          `[hotelbeds-availability] retry ok ms=${Date.now() - retryStarted}`,
-        );
+        logProviderOps({
+          provider: "hotelbeds",
+          operation: "searchHotels.retry",
+          durationMs: Date.now() - retryStarted,
+          status: "ok",
+          retryCount: 1,
+        });
       } else {
         throw err instanceof Error ? err : new Error(humanizeHotelbedsError(msg));
       }

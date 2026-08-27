@@ -68,15 +68,20 @@ export async function shopFetch<T>(
     headers.set("Authorization", `Bearer ${token}`);
   }
 
-  const { timeoutMs = 20000, auth: _auth, ...rest } = init;
+  const { timeoutMs = 20000, auth: _auth, signal: externalSignal, ...rest } = init;
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
+  const onExternalAbort = () => controller.abort();
+  if (externalSignal) {
+    if (externalSignal.aborted) controller.abort();
+    else externalSignal.addEventListener("abort", onExternalAbort, { once: true });
+  }
   let response: Response;
   try {
     response = await fetch(`${getShopApiUrl()}${path}`, {
       ...rest,
       headers,
-      signal: rest.signal || controller.signal,
+      signal: controller.signal,
     });
   } catch (err) {
     const aborted =
@@ -88,6 +93,7 @@ export async function shopFetch<T>(
     throw new Error("تعذر الاتصال بالخادم. تحقق من الشبكة وحاول مجددًا.");
   } finally {
     clearTimeout(timer);
+    externalSignal?.removeEventListener("abort", onExternalAbort);
   }
 
   const data = (await response.json().catch(() => ({}))) as {

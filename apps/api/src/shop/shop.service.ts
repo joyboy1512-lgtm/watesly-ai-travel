@@ -814,6 +814,23 @@ export class ShopService {
     if (!body?.offer?.description || body.offer.sellAmountMinor == null) {
       throw new BadRequestException("بيانات العرض غير مكتملة");
     }
+
+    // P6: hotel bookings require a recent reprice/checkrate before confirm
+    if (body.serviceType === "hotel") {
+      const details = (body.offer.details || {}) as Record<string, unknown>;
+      const validatedAt = String(
+        details.validatedAt || details.revalidatedAt || details.checkRateAt || "",
+      );
+      const validatedMs = validatedAt ? Date.parse(validatedAt) : NaN;
+      const fresh =
+        Number.isFinite(validatedMs) && Date.now() - validatedMs < 20 * 60 * 1000;
+      if (!fresh && !body.quoteItemId) {
+        throw new BadRequestException(
+          "يجب التحقق من السعر (إعادة التسعير) قبل تأكيد حجز الفندق. ارجع للتفاصيل وأعد التحقق.",
+        );
+      }
+    }
+
     const result = await this.bookings.createFromDraft({
       organizationId: customer.organizationId,
       customerId: customer.id,

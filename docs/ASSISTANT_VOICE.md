@@ -28,3 +28,8 @@ Examples:
 - 30s question + listen-to-reply (~30s TTS) ≈ **$0.0105**
 
 Set `OPENAI_API_KEY` on the **API server only**. Never ship the key to the browser.
+
+## Production
+Deployed to `www.weekendgate.com` / `api.weekendgate.com` (PM2 `weekendgate-web` + `weekendgate-api`).
+Backup before voice overlay: `/var/backups/weekendgate/pre-voice-*.tgz`.
+Env on API: `OPENAI_API_KEY`, `OPENAI_STT_MODEL=whisper-1`, `OPENAI_TTS_MODEL=gpt-4o-mini-tts`, `OPENAI_TTS_VOICE=alloy`.

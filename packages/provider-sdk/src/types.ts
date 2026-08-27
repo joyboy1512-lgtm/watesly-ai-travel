@@ -19,6 +19,13 @@ export interface FlightSearchParams {
   currency?: string;
 }
 
+export type HotelRoomOccupancyParam = {
+  adults: number;
+  children?: number;
+  /** Ages 0–17 for each child in this room */
+  childrenAges?: number[];
+};
+
 export interface HotelSearchParams {
   location: string;
   checkInDate: string;
@@ -27,6 +34,11 @@ export interface HotelSearchParams {
   children?: number;
   childrenAges?: string;
   rooms?: number;
+  /**
+   * Independent occupancy per room. When set, Hotelbeds receives one
+   * occupancy object per room (rooms: 1 each) instead of a single shared occupancy.
+   */
+  roomOccupancies?: HotelRoomOccupancyParam[];
   /** Numeric Hotelbeds code or `hb-12345` ref for single-hotel detail fetch */
   hotelCode?: string;
   currency?: string;

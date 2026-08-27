@@ -41,6 +41,7 @@ model Organization {
   notifications        Notification[]
   aiThreads            AiThread[]
   aiUsageLogs          AiUsageLog[]
+  customers            Customer[]
 
   @@index([status])
 }
@@ -203,9 +204,53 @@ model Contact {
   campaignRecipients CampaignRecipient[]
   aiThreads          AiThread[]
   aiUsageLogs        AiUsageLog[]
+  customers          Customer[]
 
   @@unique([organizationId, waId])
   @@index([organizationId, lastContactedAt])
+}
+
+model Customer {
+  id             String    @id @default(uuid())
+  organizationId String
+  phone          String
+  email          String?
+  name           String?
+  passwordHash   String?
+  status         String    @default("active")
+  contactId      String?
+  lastLoginAt    DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  organization Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  contact      Contact?           @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  travelers    CustomerTraveler[]
+  inquiries    TravelInquiry[]
+  bookings     Booking[]
+
+  @@unique([organizationId, phone])
+  @@index([organizationId, status])
+  @@index([contactId])
+}
+
+model CustomerTraveler {
+  id              String    @id @default(uuid())
+  customerId      String
+  title           String    @default("mr")
+  firstName       String
+  lastName        String
+  birthDate       DateTime?
+  nationality     String?
+  passportNumber  String?
+  passportExpiry  DateTime?
+  relation        String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@index([customerId])
 }
 
 model Conversation {
@@ -329,6 +374,7 @@ model TravelInquiry {
   organizationId   String
   conversationId   String?
   contactId        String?
+  customerId       String?
   source           String    @default("whatsapp")
   status           String    @default("collecting")
   origin           String?
@@ -352,12 +398,14 @@ model TravelInquiry {
   organization Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   conversation Conversation?     @relation(fields: [conversationId], references: [id], onDelete: SetNull)
   contact      Contact?          @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  customer     Customer?         @relation(fields: [customerId], references: [id], onDelete: SetNull)
   quotes       Quote[]
   handoffs     Handoff[]
   aiLogs       AiInteractionLog[]
 
   @@index([organizationId, status, createdAt])
   @@index([organizationId, conversationId])
+  @@index([customerId])
 }
 
 model AiInteractionLog {
@@ -580,6 +628,7 @@ model Booking {
   organizationId     String
   bookingRequestId   String    @unique
   quoteId            String
+  customerId         String?
   status             String    @default("draft")
   providerBookingRef String?
   totalCostAmount    Int       @default(0)
@@ -597,11 +646,13 @@ model Booking {
   organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   bookingRequest BookingRequest @relation(fields: [bookingRequestId], references: [id], onDelete: Cascade)
   quote          Quote          @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  customer       Customer?      @relation(fields: [customerId], references: [id], onDelete: SetNull)
   issuedBy       User?          @relation("BookingIssuer", fields: [issuedByUserId], references: [id], onDelete: SetNull)
   approvedBy     User?          @relation("BookingApprover", fields: [approvedByUserId], references: [id], onDelete: SetNull)
   payments       Payment[]
 
   @@index([organizationId, status, createdAt])
+  @@index([customerId])
 }
 
 model Payment {

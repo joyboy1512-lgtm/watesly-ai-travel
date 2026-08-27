@@ -9,6 +9,8 @@ import { formatMoneyMinor } from "@/lib/format";
 import { HotelRoomAccordion } from "./HotelRoomAccordion";
 import { HotelBookingSummary } from "./HotelBookingSummary";
 import { HotelLiveBadge } from "./HotelLiveBadge";
+import { HotelGallery } from "./HotelGallery";
+import { HotelMediaImage } from "./HotelMediaImage";
 import { pickHotelHighlightFacilities } from "@/lib/hotel-facilities";
 import {
   arabicAdultCount,
@@ -81,12 +83,14 @@ export function HotelDetailModal({
   );
   const [checkingRateKey, setCheckingRateKey] = useState<string | null>(null);
   const [checkPhase, setCheckPhase] = useState<
-    "idle" | "checking" | "confirmed" | "changed" | "soldout" | "error"
+    "idle" | "checking" | "confirmed" | "changed" | "soldout" | "error" | "expired"
   >("idle");
   const [checkError, setCheckError] = useState("");
   const [priceChange, setPriceChange] = useState<{ fromMinor: number; toMinor: number } | null>(
     null,
   );
+  const [pendingRate, setPendingRate] = useState<HotelRateOption | null>(null);
+  const [priceAccepted, setPriceAccepted] = useState(false);
 
   const name = String(hotel.details.name || "فندق");
   const stars = Number(hotel.details.stars || 0);
@@ -120,12 +124,27 @@ export function HotelDetailModal({
   const payHotel = hotel.matchingRates.some((r) => r.paymentType === "AT_HOTEL");
   const payWeb = hotel.matchingRates.some((r) => r.paymentType === "AT_WEB");
   const gallery = Array.isArray(hotel.details.images)
-    ? (hotel.details.images as Array<{ url?: string }>).map((i) => i.url).filter(Boolean)
+    ? (hotel.details.images as Array<{ url?: string }>).map((i) => i.url).filter(Boolean) as string[]
     : [];
+  const galleryObjects = Array.isArray(hotel.details.images)
+    ? (hotel.details.images as Array<{ url?: string; roomCode?: string; type?: string }>)
+        .filter((i) => i.url)
+        .map((i) => ({ url: String(i.url), roomCode: i.roomCode, type: i.type }))
+    : gallery.map((url) => ({ url }));
 
   async function handleBookRate(rate: HotelRateOption) {
     setCheckError("");
     setPriceChange(null);
+    setPendingRate(null);
+    setPriceAccepted(false);
+
+    const expMs = hotel.expiresAt ? new Date(hotel.expiresAt).getTime() : NaN;
+    if (Number.isFinite(expMs) && expMs <= Date.now()) {
+      setCheckPhase("expired");
+      setCheckError("انتهت صلاحية هذا العرض المحفوظ. ارجع إلى النتائج وأعد البحث.");
+      return;
+    }
+
     setCheckPhase("checking");
     setCheckingRateKey(rate.rateKey);
     try {
@@ -174,17 +193,39 @@ export function HotelDetailModal({
           fromMinor: Number(result.previousCostMinor || hotel.sellAmountMinor),
           toMinor,
         });
+        setPendingRate(nextRate);
         setCheckPhase("changed");
-      } else {
-        setCheckPhase("confirmed");
+        return;
       }
+      setCheckPhase("confirmed");
       setSelectedRate(nextRate);
     } catch (err) {
       setCheckPhase("error");
-      setCheckError(err instanceof Error ? err.message : "تعذر التحقق من السعر");
+      const msg = err instanceof Error ? err.message : "تعذر التحقق من السعر";
+      const timedOut = /timeout|abort|timed out|انتهت/i.test(msg);
+      setCheckError(
+        timedOut
+          ? "انتهت مهلة الاتصال بالمزوّد. حاول مرة أخرى أو اختر تعرفة أخرى."
+          : msg,
+      );
     } finally {
       setCheckingRateKey(null);
     }
+  }
+
+  function acceptChangedPrice() {
+    if (!pendingRate) return;
+    setPriceAccepted(true);
+    setSelectedRate(pendingRate);
+    setCheckPhase("confirmed");
+  }
+
+  function rejectChangedPrice() {
+    setPendingRate(null);
+    setPriceChange(null);
+    setPriceAccepted(false);
+    setCheckPhase("idle");
+    setCheckError("");
   }
 
   return (
@@ -239,22 +280,57 @@ export function HotelDetailModal({
 
         {checkPhase === "checking" ? (
           <div className="hotel-recheck-banner is-checking" role="status">
-            جاري إعادة التحقق من السعر والتوفر…
+            جاري التحقق من السعر والتوفر لدى المزوّد…
           </div>
         ) : null}
         {checkPhase === "confirmed" && selectedRate ? (
           <div className="hotel-recheck-banner is-ok" role="status">
-            تم تأكيد السعر
+            تم التحقق من السعر الآن
           </div>
         ) : null}
-        {checkPhase === "changed" && priceChange ? (
-          <div className="hotel-recheck-banner is-changed" role="status">
-            تغيّر السعر — راجع الملخص قبل المتابعة
+        {checkPhase === "changed" && priceChange && pendingRate ? (
+          <div className="hotel-recheck-banner is-changed" role="alertdialog" aria-labelledby="price-change-title">
+            <strong id="price-change-title">تغيّر السعر بعد التحقق</strong>
+            <p>
+              السابق: <s>{formatMoneyMinor(priceChange.fromMinor, hotel.currency)}</s>
+              {" → "}
+              الجديد: <strong>{formatMoneyMinor(priceChange.toMinor, hotel.currency)}</strong>
+            </p>
+            <div className="hotel-recheck-actions">
+              <button type="button" className="btn" onClick={acceptChangedPrice}>
+                الموافقة والمتابعة بالسعر الجديد
+              </button>
+              <button type="button" className="btn secondary" onClick={rejectChangedPrice}>
+                العودة واختيار عرض آخر
+              </button>
+            </div>
           </div>
         ) : null}
-        {checkPhase === "soldout" ? (
+        {checkPhase === "soldout" || checkPhase === "expired" ? (
           <div className="hotel-recheck-banner is-soldout" role="alert">
-            انتهى التوفر لهذه التعرفة
+            {checkError || "انتهى التوفر لهذه التعرفة"}
+            <div className="hotel-recheck-actions">
+              <button type="button" className="btn secondary" onClick={onClose}>
+                العودة إلى النتائج
+              </button>
+            </div>
+          </div>
+        ) : null}
+        {checkPhase === "error" && checkError ? (
+          <div className="hotel-recheck-banner is-soldout" role="alert">
+            {checkError}
+            <div className="hotel-recheck-actions">
+              <button
+                type="button"
+                className="btn"
+                onClick={() => {
+                  setCheckPhase("idle");
+                  setCheckError("");
+                }}
+              >
+                حسناً
+              </button>
+            </div>
           </div>
         ) : null}
 
@@ -264,11 +340,13 @@ export function HotelDetailModal({
             rate={selectedRate}
             nights={nights}
             meta={meta}
-            priceChange={priceChange}
+            priceChange={priceAccepted ? priceChange : priceChange}
             shopStyle={shopStyle}
             onBack={() => {
               setSelectedRate(null);
               setPriceChange(null);
+              setPendingRate(null);
+              setPriceAccepted(false);
               setCheckPhase("idle");
             }}
             onEnterGuestData={() => onEnterGuestData?.(selectedRate)}
@@ -285,16 +363,26 @@ export function HotelDetailModal({
           />
         ) : (
           <>
-            <div className="hotel-detail-modal-hero">
-              {imageUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={imageUrl} alt="" className="hotel-detail-modal-photo" />
-              ) : (
-                <div className={`hotel-detail-hero-placeholder tone-${(stars % 3) + 1}`} />
-              )}
+            {galleryObjects.length > 0 ? (
+              <HotelGallery
+                images={galleryObjects}
+                hotelName={name}
+                heroUrl={imageUrl || undefined}
+              />
+            ) : null}
+
+            <div className={`hotel-detail-modal-hero${galleryObjects.length ? " no-photo" : ""}`}>
+              {galleryObjects.length === 0 ? (
+                <HotelMediaImage
+                  src={imageUrl}
+                  alt={name}
+                  className="hotel-detail-modal-photo"
+                  compactEmpty
+                />
+              ) : null}
               <div className="hotel-detail-modal-summary">
                 <p>
-                  {formatDay(meta.departDate)} → {formatDay(meta.returnDate)} · {nights}{" "}
+                  {formatDay(meta.departDate)} → {formatDay(meta.returnDate)} ·{" "}
                   {arabicNightCount(nights)}
                 </p>
                 <p>
@@ -337,15 +425,6 @@ export function HotelDetailModal({
               </div>
             </div>
 
-            {gallery.length > 1 ? (
-              <div className="hotel-hero-gallery">
-                {gallery.slice(0, 6).map((src) => (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img key={src} src={src} alt="" />
-                ))}
-              </div>
-            ) : null}
-
             {description ? (
               <section className="flight-modal-section hotel-desc-section">
                 <h3>عن الفندق</h3>
@@ -385,7 +464,9 @@ export function HotelDetailModal({
               ))}
             </nav>
 
-            {checkError ? <p className="hotel-check-error">{checkError}</p> : null}
+            {checkError && checkPhase === "idle" ? (
+              <p className="hotel-check-error">{checkError}</p>
+            ) : null}
 
             {tab === "rooms" ? (
               <section className="flight-modal-section hotel-detail-rooms-section">

@@ -89,8 +89,14 @@ export type HotelRoomGuestDraft = {
   title: string;
   firstName: string;
   lastName: string;
+  /** Latin / passport spelling */
+  firstNameEn?: string;
+  lastNameEn?: string;
   type: "adult" | "child";
   age?: number;
+  birthDate?: string;
+  gender?: string;
+  nationality?: string;
 };
 
 export type HotelBookingDraft = {

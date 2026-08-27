@@ -4,6 +4,8 @@ import {
   pickPrimaryHotelImage,
   pickRoomImageLists,
   pickRoomImages,
+  resolveContentRoomCode,
+  hotelbedsImageUrl,
 } from "./hotelbeds-content-client";
 import type { HbContentFacility, HbContentHotel } from "./hotelbeds-content-types";
 
@@ -76,14 +78,36 @@ function mapRoomFacilities(
   roomCode: string | undefined,
   catalog?: Map<string, string>,
 ): string[] {
-  const room = content?.rooms?.find((r) => r.roomCode === roomCode);
+  const resolved = resolveContentRoomCode(content, roomCode) || roomCode;
+  const room = content?.rooms?.find((r) => r.roomCode === resolved);
   return mapFacilityLabels(room?.roomFacilities, catalog, true).human.slice(0, 12);
 }
 
 function contentRoomOf(content: HbContentHotel | undefined, roomCode: string) {
-  return content?.rooms?.find(
-    (r) => r.roomCode === roomCode || r.roomCode === roomCode.split(".")[0],
-  );
+  const resolved = resolveContentRoomCode(content, roomCode);
+  return content?.rooms?.find((r) => r.roomCode === resolved || r.roomCode === roomCode);
+}
+
+function roomGalleryFor(
+  roomGalleries: Record<string, string[]>,
+  roomCode: string,
+  hotelFallback: string[],
+): string[] {
+  const resolvedKeys = [
+    roomCode,
+    roomCode.split("-")[0] || "",
+    roomCode.split(".")[0] || "",
+  ].filter(Boolean);
+  for (const key of resolvedKeys) {
+    const list = roomGalleries[key];
+    if (list?.length) return list;
+  }
+  // Prefer any room gallery over empty; last resort hotel-level images
+  for (const [key, list] of Object.entries(roomGalleries)) {
+    if (key === "__hotel__") continue;
+    if (list.length) return list;
+  }
+  return hotelFallback;
 }
 
 export function enrichDetailsFromContent(input: {
@@ -99,6 +123,7 @@ export function enrichDetailsFromContent(input: {
   const imageUrl = pickPrimaryHotelImage(content);
   const roomImages = pickRoomImages(content);
   const roomGalleries = pickRoomImageLists(content);
+  const hotelGallery = roomGalleries.__hotel__ || [];
   const hotelLat = Number(content.coordinates?.latitude ?? details.latitude);
   const hotelLng = Number(content.coordinates?.longitude ?? details.longitude);
 
@@ -106,12 +131,19 @@ export function enrichDetailsFromContent(input: {
   if (content.images?.length) {
     details.images = content.images
       .filter((img) => img.path)
-      .slice(0, 12)
+      .slice(0, 16)
       .map((img) => ({
-        url: `https://photos.hotelbeds.com/giata/bigger/${img.path}`,
+        url: hotelbedsImageUrl(img.path, "bigger") || `https://photos.hotelbeds.com/giata/bigger/${img.path}`,
         roomCode: img.roomCode,
         type: img.imageTypeCode,
       }));
+  } else if (imageUrl) {
+    details.images = [{ url: imageUrl }];
+  }
+
+  // Never leave hero empty when we have any gallery URL
+  if (!details.imageUrl && details.images?.[0]?.url) {
+    details.imageUrl = details.images[0].url;
   }
 
   const mapped = mapFacilityLabels(content.facilities, facilityCatalog);
@@ -150,19 +182,23 @@ export function enrichDetailsFromContent(input: {
   if (details.rooms?.length) {
     details.rooms = details.rooms.map((room) => {
       const contentRoom = contentRoomOf(content, room.code);
-      const images =
-        roomGalleries[room.code] ||
-        roomGalleries[room.code.split(".")[0] || ""] ||
-        [];
+      const resolved = resolveContentRoomCode(content, room.code);
+      const images = roomGalleryFor(
+        roomGalleries,
+        resolved || room.code,
+        hotelGallery.length ? hotelGallery : imageUrl ? [imageUrl] : [],
+      );
       return {
         ...room,
         imageUrl:
           room.imageUrl ||
           images[0] ||
+          (resolved ? roomImages[resolved] : undefined) ||
           roomImages[room.code] ||
-          roomImages[room.code.split(".")[0] || ""],
+          roomImages[room.code.split(".")[0] || ""] ||
+          imageUrl,
         images: images.slice(0, 8),
-        facilities: mapRoomFacilities(content, room.code, facilityCatalog),
+        facilities: mapRoomFacilities(content, resolved || room.code, facilityCatalog),
         description: contentRoom?.description?.content?.trim() || room.description,
         occupancy: contentRoom
           ? {

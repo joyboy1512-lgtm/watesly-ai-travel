@@ -238,10 +238,36 @@ export class HotelbedsHotelProvider implements HotelProviderAdapter {
       delete payload.geolocation;
     }
 
-    const result = await this.request<HbAvailabilityResponse>(
-      "/hotel-api/1.0/hotels",
-      payload,
-    );
+    const availStarted = Date.now();
+    let result: HbAvailabilityResponse;
+    try {
+      result = await this.request<HbAvailabilityResponse>(
+        "/hotel-api/1.0/hotels",
+        payload,
+      );
+      console.info(
+        `[hotelbeds-availability] ok hotels=${hotelsFromHotelbedsPayload(result).length} ms=${Date.now() - availStarted}`,
+      );
+    } catch (err) {
+      console.warn(
+        `[hotelbeds-availability] fail ms=${Date.now() - availStarted}`,
+        err instanceof Error ? err.message : err,
+      );
+      // One retry on timeout/network
+      const msg = err instanceof Error ? err.message : String(err);
+      if (/timeout|abort|network|ECONN|fetch/i.test(msg)) {
+        const retryStarted = Date.now();
+        result = await this.request<HbAvailabilityResponse>(
+          "/hotel-api/1.0/hotels",
+          payload,
+        );
+        console.info(
+          `[hotelbeds-availability] retry ok ms=${Date.now() - retryStarted}`,
+        );
+      } else {
+        throw err;
+      }
+    }
 
     const hotels = hotelsFromHotelbedsPayload(result);
     const expiresAt = new Date(Date.now() + 25 * 60 * 1000).toISOString();

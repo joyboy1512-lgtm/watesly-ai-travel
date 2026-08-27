@@ -4,12 +4,16 @@ import { translateRoomNameAr } from "@watesly-travel/shared";
 import type { HotelRateOption, HotelHighlightBadge } from "@/lib/hotel-search";
 import { formatMoneyMinor } from "@/lib/format";
 import { HotelLiveBadge } from "./HotelLiveBadge";
+import { HotelMediaImage } from "./HotelMediaImage";
+import { HotelPricePanel } from "./HotelPricePanel";
+import { buildHotelDraftPriceBreakdown } from "@/lib/hotel-draft-price";
 import { pickHotelHighlightFacilities } from "@/lib/hotel-facilities";
 import {
   arabicGuestCount,
   arabicNightCount,
   arabicRoomCount,
 } from "@/lib/hotel-occupancy";
+import type { HotelOfferRow } from "@/lib/hotel-search";
 
 type HotelRow = {
   id: string;
@@ -106,6 +110,16 @@ export function HotelSearchCard({
   const roomNameAr = cheapest ? translateRoomNameAr(cheapest.roomName).ar : "غرفة";
   const taxesNote =
     cheapest?.taxes?.allIncluded === false ? "ضرائب غير مشمولة" : "شامل الضرائب";
+  const imageUrl =
+    typeof hotel.details.imageUrl === "string" ? hotel.details.imageUrl : "";
+  const priceBreakdown =
+    cheapest && hotel.displayFromMinor > 0
+      ? buildHotelDraftPriceBreakdown(
+          cheapest,
+          hotel as HotelOfferRow,
+          nights,
+        )
+      : null;
 
   const sandbox =
     hotel.details.source === "hotelbeds-sandbox" ||
@@ -119,12 +133,12 @@ export function HotelSearchCard({
   return (
     <article className={`hotel-search-card${isShop ? " hotel-search-card-shop" : ""}`}>
       <div className="hotel-search-card-media">
-        {typeof hotel.details.imageUrl === "string" && hotel.details.imageUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={String(hotel.details.imageUrl)} alt={name} loading="lazy" />
-        ) : (
-          <div className={`hotel-search-card-placeholder tone-${(stars % 3) + 1}`} />
-        )}
+        <HotelMediaImage
+          src={imageUrl}
+          alt={name}
+          preferMedium
+          className="hotel-search-card-photo"
+        />
         {highlight && highlightLabel ? (
           <span className={`hotel-search-card-highlight hotel-highlight-${highlight}`}>
             {highlightLabel}
@@ -212,15 +226,24 @@ export function HotelSearchCard({
             <div className="hotel-search-card-price">
               <small>
                 {isShop
-                  ? `الإجمالي لـ ${nightsNote} · ${guestNote} · ${roomNote}`
+                  ? `${nightsNote} · ${guestNote} · ${roomNote}`
                   : `${nightsNote} · ${roomNameAr}`}
               </small>
-              <strong>
-                {formatMoneyMinor(hotel.displayFromMinor, hotel.currency)}
-              </strong>
-              <em>
-                متوسط {formatMoneyMinor(perNightMinor, hotel.currency)} / ليلة · {taxesNote}
-              </em>
+              {priceBreakdown ? (
+                <HotelPricePanel
+                  currency={hotel.currency}
+                  nights={nights}
+                  breakdown={priceBreakdown}
+                  variant="card"
+                />
+              ) : (
+                <>
+                  <strong>{formatMoneyMinor(hotel.displayFromMinor, hotel.currency)}</strong>
+                  <em>
+                    متوسط {formatMoneyMinor(perNightMinor, hotel.currency)} / ليلة · {taxesNote}
+                  </em>
+                </>
+              )}
               <span className="hotel-rooms-left">{availabilityLabel}</span>
               {cheapest?.freeCancellation ? (
                 <span className="hotel-rooms-left">إلغاء مجاني</span>

@@ -182,6 +182,7 @@ export class ShopService {
     serviceType: "flight" | "hotel";
     description: string;
     sellAmountMinor: number;
+    costAmountMinor?: number;
     currency: string;
     expiresAt: string;
     details: Record<string, unknown>;
@@ -191,6 +192,8 @@ export class ShopService {
       serviceType: row.serviceType,
       description: row.description,
       sellAmountMinor: row.sellAmountMinor,
+      // Keep cost for markup/fee math on the shop UI (not a secret — net already in details.rates)
+      costAmountMinor: row.costAmountMinor,
       currency: row.currency,
       expiresAt: row.expiresAt,
       details: row.details,

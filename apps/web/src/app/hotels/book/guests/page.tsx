@@ -83,7 +83,9 @@ export default function HotelGuestsPage() {
   const [draft, setDraft] = useState<HotelBookingDraft | null>(null);
   const [roomGuests, setRoomGuests] = useState<HotelRoomGuestDraft[]>([]);
   const [email, setEmail] = useState("");
+  const [emailConfirm, setEmailConfirm] = useState("");
   const [phone, setPhone] = useState("");
+  const [phoneCountry, setPhoneCountry] = useState("+965");
   const [name, setName] = useState("");
   const [error, setError] = useState("");
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
@@ -92,6 +94,7 @@ export default function HotelGuestsPage() {
   const [needLogin, setNeedLogin] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<string | null>(null);
   const [specialRequests, setSpecialRequests] = useState("");
+  const [termsAccepted, setTermsAccepted] = useState(false);
 
   useEffect(() => {
     const stored = getBookingDraft();
@@ -111,6 +114,7 @@ export default function HotelGuestsPage() {
     }
     setName(stored.contactName || session.customer.name || "");
     setEmail(stored.contactEmail || session.customer.email || "");
+    setEmailConfirm(stored.contactEmail || session.customer.email || "");
     setPhone(stored.contactPhone || session.customer.phone);
     setSpecialRequests(stored.specialRequests || "");
     setPaymentMethod(stored.paymentMethod || null);
@@ -161,8 +165,11 @@ export default function HotelGuestsPage() {
     const errors = validateHotelCheckout({
       name,
       phone,
+      phoneCountry,
       email,
+      emailConfirm,
       paymentMethod,
+      termsAccepted,
       roomGuests,
     });
     if (Object.keys(errors).length) {
@@ -220,11 +227,12 @@ export default function HotelGuestsPage() {
           })),
           adults: draft.adults,
           children: draft.children,
-          contact: { email, phone },
+          contact: { email, phone: `${phoneCountry}${phone.replace(/\D/g, "")}` },
           extras: {
             guestName: name,
             specialRequests: specialRequests || undefined,
             paymentMethod: paymentMethod || undefined,
+            phoneCountry,
             roomGuests,
             selectedRate: draft.selectedRate,
             priceBreakdown: draft.priceBreakdown,
@@ -336,14 +344,20 @@ export default function HotelGuestsPage() {
           setRoomGuests={setRoomGuests}
           email={email}
           setEmail={setEmail}
+          emailConfirm={emailConfirm}
+          setEmailConfirm={setEmailConfirm}
           phone={phone}
           setPhone={setPhone}
+          phoneCountry={phoneCountry}
+          setPhoneCountry={setPhoneCountry}
           name={name}
           setName={setName}
           specialRequests={specialRequests}
           setSpecialRequests={setSpecialRequests}
           paymentMethod={paymentMethod}
           setPaymentMethod={setPaymentMethod}
+          termsAccepted={termsAccepted}
+          setTermsAccepted={setTermsAccepted}
           error={error}
           submitting={submitting}
           onSubmit={() => void submit()}

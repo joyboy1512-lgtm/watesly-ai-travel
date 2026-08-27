@@ -447,6 +447,7 @@ export default function PublicBookPage() {
   const [roomGuests, setRoomGuests] = useState<HotelRoomGuestDraft[]>([]);
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
+  const [phoneCountry, setPhoneCountry] = useState("+965");
   const [name, setName] = useState("");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -454,6 +455,8 @@ export default function PublicBookPage() {
   const [needLogin, setNeedLogin] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<string | null>(null);
   const [specialRequests, setSpecialRequests] = useState("");
+  const [emailConfirm, setEmailConfirm] = useState("");
+  const [termsAccepted, setTermsAccepted] = useState(false);
 
   useEffect(() => {
     const stored = getBookingDraft();
@@ -779,14 +782,20 @@ export default function PublicBookPage() {
           setRoomGuests={setRoomGuests}
           email={email}
           setEmail={setEmail}
+          emailConfirm={emailConfirm}
+          setEmailConfirm={setEmailConfirm}
           phone={phone}
           setPhone={setPhone}
+          phoneCountry={phoneCountry}
+          setPhoneCountry={setPhoneCountry}
           name={name}
           setName={setName}
           specialRequests={specialRequests}
           setSpecialRequests={setSpecialRequests}
           paymentMethod={paymentMethod}
           setPaymentMethod={setPaymentMethod}
+          termsAccepted={termsAccepted}
+          setTermsAccepted={setTermsAccepted}
           error={error}
           submitting={submitting}
           onSubmit={() => void submit()}

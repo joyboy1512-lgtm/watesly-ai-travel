@@ -23,6 +23,8 @@ import {
   arabicNightCount,
   arabicRoomCount,
 } from "@/lib/hotel-occupancy";
+import { HotelPricePanel } from "./HotelPricePanel";
+import type { HotelDraftPriceBreakdown } from "@/lib/booking-draft";
 
 type StayMeta = {
   stayQuery: string;
@@ -151,6 +153,18 @@ export function HotelBookingSummary({
     taxes: rate.taxes,
     netBasis: rate.netBasis || "stay",
   });
+
+  const panelBreakdown: HotelDraftPriceBreakdown = {
+    stayMinor: breakdown.baseMinor,
+    includedTaxMinor: breakdown.includedTaxMinor,
+    excludedTaxMinor: breakdown.excludedTaxMinor,
+    serviceFeeMinor: breakdown.serviceFeeMinor,
+    payNowMinor: breakdown.payNowMinor,
+    payAtHotelMinor: breakdown.payAtHotelMinor,
+    tripTotalMinor: breakdown.tripTotalMinor,
+    perNightMinor: breakdown.perNightMinor,
+    taxesIncluded: breakdown.taxesIncluded,
+  };
 
   const infoSections = [
     { title: "خدمات الغرفة", items: roomFacilities },
@@ -402,38 +416,14 @@ export function HotelBookingSummary({
 
       <div className="hotel-price-break">
         <h3>تفاصيل السعر</h3>
-        <ul>
-          <li>
-            <span>سعر الإقامة</span>
-            <strong>{formatMoneyMinor(breakdown.baseMinor, hotel.currency)}</strong>
-          </li>
-          {breakdown.includedTaxMinor > 0 ? (
-            <li>
-              <span>ضرائب مشمولة</span>
-              <strong>{formatMoneyMinor(breakdown.includedTaxMinor, hotel.currency)}</strong>
-            </li>
-          ) : null}
-          {breakdown.excludedTaxMinor > 0 ? (
-            <li>
-              <span>ضرائب غير مشمولة / تُدفع في الفندق</span>
-              <strong>{formatMoneyMinor(breakdown.excludedTaxMinor, hotel.currency)}</strong>
-            </li>
-          ) : null}
-          {breakdown.serviceFeeMinor > 0 ? (
-            <li>
-              <span>رسوم WeekendGate</span>
-              <strong>{formatMoneyMinor(breakdown.serviceFeeMinor, hotel.currency)}</strong>
-            </li>
-          ) : null}
-          <li>
-            <span>تدفع الآن</span>
-            <strong>{formatMoneyMinor(breakdown.payNowMinor, hotel.currency)}</strong>
-          </li>
-          <li>
-            <span>التكلفة الكلية</span>
-            <strong>{formatMoneyMinor(breakdown.tripTotalMinor, hotel.currency)}</strong>
-          </li>
-        </ul>
+        <HotelPricePanel
+          currency={hotel.currency}
+          nights={nights}
+          breakdown={panelBreakdown}
+          roomLabel={roomName.ar}
+          boardLabel={rate.boardName}
+          variant="full"
+        />
       </div>
 
       {taxItems.length ? (

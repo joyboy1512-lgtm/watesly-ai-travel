@@ -9,6 +9,7 @@ import {
 import { formatHotelDay } from "@/lib/hotel-search";
 import { formatMoneyMinor } from "@/lib/format";
 import { ShopMockBanner } from "@/components/shop/ShopMockBanner";
+import { HotelPricePanel, hotelPriceFromParts } from "@/components/hotels/HotelPricePanel";
 import {
   arabicAdultCount,
   arabicChildCount,
@@ -121,71 +122,30 @@ export function HotelBookReview({ booking }: Props) {
 
         <section className="shop-flight-review-card">
           <h2>تفاصيل السعر</h2>
-          {rate ? (
-            <p className="shop-flight-review-fare-name">
-              {roomLabel} · {rate.boardName}
-            </p>
-          ) : null}
-
-          <dl className="shop-flight-review-breakdown">
-            <div>
-              <dt>سعر الإقامة</dt>
-              <dd>{formatMoneyMinor(bd?.stayMinor ?? payNow, currency)}</dd>
-            </div>
-            {(bd?.includedTaxMinor || 0) > 0 ? (
-              <div>
-                <dt>ضرائب مشمولة</dt>
-                <dd>{formatMoneyMinor(bd!.includedTaxMinor, currency)}</dd>
-              </div>
-            ) : null}
-            {(bd?.excludedTaxMinor || 0) > 0 ? (
-              <div>
-                <dt>ضرائب غير مشمولة</dt>
-                <dd>{formatMoneyMinor(bd!.excludedTaxMinor, currency)}</dd>
-              </div>
-            ) : null}
-            {(bd?.serviceFeeMinor || 0) > 0 ? (
-              <div>
-                <dt>رسوم WeekendGate</dt>
-                <dd>{formatMoneyMinor(bd!.serviceFeeMinor, currency)}</dd>
-              </div>
-            ) : null}
-            <div>
-              <dt>تدفع الآن</dt>
-              <dd>{formatMoneyMinor(payNow, currency)}</dd>
-            </div>
-            {payAtHotel > 0 ? (
-              <div>
-                <dt>تدفع في الفندق</dt>
-                <dd>{formatMoneyMinor(payAtHotel, currency)}</dd>
-              </div>
-            ) : null}
-            <div>
-              <dt>متوسط الليلة</dt>
-              <dd>{formatMoneyMinor(perNight, currency)}</dd>
-            </div>
-            <div className="total">
-              <dt>التكلفة الكلية</dt>
-              <dd>{formatMoneyMinor(tripTotal, currency)}</dd>
-            </div>
-          </dl>
-
-          {payAtHotel > 0 ? (
-            <p className="shop-hotel-review-pay-split">
-              تدفع الآن: {formatMoneyMinor(payNow, currency)}
-              <br />
-              تدفع في الفندق: {formatMoneyMinor(payAtHotel, currency)}
-              <br />
-              التكلفة الكلية: {formatMoneyMinor(tripTotal, currency)}
-            </p>
+          {bd ? (
+            <HotelPricePanel
+              currency={currency}
+              nights={nights}
+              breakdown={bd}
+              roomLabel={roomLabel}
+              boardLabel={rate?.boardName}
+              variant="full"
+            />
           ) : (
-            <p className="shop-hotel-review-note">
-              {bd?.taxesIncluded === false
-                ? "قد تُضاف رسوم محلية في الفندق"
-                : "الضرائب مشمولة في السعر المعروض"}
-            </p>
+            <HotelPricePanel
+              currency={currency}
+              nights={nights}
+              breakdown={hotelPriceFromParts({
+                currency,
+                stayMinor: payNow,
+                payNowMinor: payNow,
+                payAtHotelMinor: payAtHotel,
+                nights,
+              })}
+              roomLabel={roomLabel}
+              boardLabel={rate?.boardName}
+            />
           )}
-
           <p className="shop-flight-review-pax">{guestsLabel}</p>
           <p className="shop-hotel-review-note">الأسعار تجريبية — لا يُخصم مبلغ فعلي في هذه المرحلة</p>
         </section>

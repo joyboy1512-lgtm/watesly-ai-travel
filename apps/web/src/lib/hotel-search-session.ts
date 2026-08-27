@@ -4,6 +4,7 @@ export type StoredHotelOffer = {
   id: string;
   description: string;
   sellAmountMinor: number;
+  costAmountMinor?: number;
   currency: string;
   details: Record<string, unknown>;
 };

@@ -33,7 +33,6 @@ type Props = {
   onFiltersChange: (next: FlightSearchFilters) => void;
   onSortChange: (key: FlightSortKey) => void;
   onResetFilters: () => void;
-  passengers?: number;
   enableMixMatch?: boolean;
   onSelectFlight: (flight: FlightOfferRow) => void;
   onToggleOutbound?: (flight: FlightOfferRow) => void;
@@ -44,7 +43,6 @@ type Props = {
   loadingFlightId?: string | null;
   pickStep?: FlightPickStep;
   stepTitle?: string;
-  enableMixMatch?: boolean;
 };
 
 export function ShopFlightResults(props: Props) {

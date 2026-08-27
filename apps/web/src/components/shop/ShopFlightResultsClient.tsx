@@ -1,10 +1,23 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { ShopFlightResults } from "@/components/shop/ShopFlightResults";
-import { ShopFlightDetailModal } from "@/components/shop/ShopFlightDetailModal";
+import { ShopFlightExpandedPanel } from "@/components/shop/ShopFlightExpandedPanel";
+import { ShopFlightSelectionBar } from "@/components/shop/ShopFlightSelectionBar";
+import {
+  composeFromLegs,
+  composeFromPackage,
+  tripReadyForSelection,
+  type ComposedTrip,
+} from "@/lib/flight-compose";
+import { computePriceBreakdown } from "@/lib/flight-fare-mock";
+import {
+  extractLeg,
+  findFlightForLeg,
+  legKey,
+} from "@/lib/flight-leg-selection";
 import {
   cabinLabel,
   collectFlightFacets,
@@ -23,6 +36,11 @@ import {
   parseFlightResultsSearch,
   type FlightResultsSearchParams,
 } from "@/lib/flight-results-url";
+import {
+  loadFlightResultsSession,
+  saveFlightResultsSession,
+  shouldRestoreResultsSession,
+} from "@/lib/flight-results-session";
 import { saveFlightDraft } from "@/lib/booking-draft";
 import { shopFetch } from "@/lib/shop-session";
 
@@ -35,8 +53,10 @@ export function ShopFlightResultsClient() {
     () => parseFlightResultsSearch(searchParams),
     [searchParams],
   );
+  const resultsHref = useMemo(() => buildFlightResultsHref(params), [params]);
 
   const isRoundTrip = params.tripType === "roundtrip" && Boolean(params.returnDate);
+  const passengers = params.adults + params.children;
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -46,9 +66,17 @@ export function ShopFlightResultsClient() {
   const [quoteItems, setQuoteItems] = useState<QuoteItem[]>([]);
   const [filters, setFilters] = useState<FlightSearchFilters>(defaultFlightFilters());
   const [sortKey, setSortKey] = useState<FlightSortKey>("best");
-  const [detailFlight, setDetailFlight] = useState<FlightOfferRow | null>(null);
   const [editOpen, setEditOpen] = useState(false);
   const [draft, setDraft] = useState<FlightResultsSearchParams>(params);
+
+  const [selectedOutboundKey, setSelectedOutboundKey] = useState<string | null>(null);
+  const [selectedReturnKey, setSelectedReturnKey] = useState<string | null>(null);
+  const [expandedTrip, setExpandedTrip] = useState<ComposedTrip | null>(null);
+  const [loadingFlightId, setLoadingFlightId] = useState<string | null>(null);
+  const [panelBusy, setPanelBusy] = useState(false);
+
+  const restoredRef = useRef(false);
+  const sessionSaveRef = useRef<number | null>(null);
 
   useEffect(() => {
     setDraft(params);
@@ -62,14 +90,58 @@ export function ShopFlightResultsClient() {
 
   const summary = formatFlightSearchSummary(params);
 
+  const composedPreview = useMemo(() => {
+    if (!selectedOutboundKey) return null;
+    const outFlight = findFlightForLeg(flightsRaw, selectedOutboundKey, "outbound");
+    if (!outFlight) return null;
+    const outbound = extractLeg(outFlight, "outbound");
+    if (!outbound) return null;
+    let returnLeg = null;
+    if (selectedReturnKey) {
+      const retFlight = findFlightForLeg(flightsRaw, selectedReturnKey, "return");
+      if (retFlight) returnLeg = extractLeg(retFlight, "return");
+    }
+    return composeFromLegs(outbound, returnLeg);
+  }, [flightsRaw, selectedOutboundKey, selectedReturnKey]);
+
+  const selectionBarTrip = composedPreview;
+  const expandedTripId = expandedTrip?.sourcePackageId
+    ? `pkg-${expandedTrip.sourcePackageId}`
+    : expandedTrip?.id || null;
+
+  const persistSession = useCallback(() => {
+    saveFlightResultsSession({
+      filters,
+      sortKey,
+      scrollY: typeof window !== "undefined" ? window.scrollY : 0,
+      expandedTripId: expandedTrip?.id || null,
+      selectedOutboundKey,
+      selectedReturnKey,
+      returnHref: resultsHref,
+    });
+  }, [filters, sortKey, expandedTrip, selectedOutboundKey, selectedReturnKey, resultsHref]);
+
+  useEffect(() => {
+    if (sessionSaveRef.current) window.clearTimeout(sessionSaveRef.current);
+    sessionSaveRef.current = window.setTimeout(() => persistSession(), 300);
+    return () => {
+      if (sessionSaveRef.current) window.clearTimeout(sessionSaveRef.current);
+    };
+  }, [persistSession]);
+
   const runSearch = useCallback(async (search: FlightResultsSearchParams) => {
     setLoading(true);
     setError("");
     setMessage("");
     setFlightsRaw([]);
-    setDetailFlight(null);
-    setFilters(defaultFlightFilters());
-    setSortKey("best");
+    setExpandedTrip(null);
+    if (!shouldRestoreResultsSession(buildFlightResultsHref(search))) {
+      setFilters(defaultFlightFilters());
+      setSortKey("best");
+      setSelectedOutboundKey(null);
+      setSelectedReturnKey(null);
+      restoredRef.current = false;
+    }
 
     try {
       if (search.tripType === "multicity") {
@@ -167,6 +239,40 @@ export function ShopFlightResultsClient() {
     void runSearch(params);
   }, [params, runSearch]);
 
+  useEffect(() => {
+    if (loading || restoredRef.current || !flightsRaw.length) return;
+    if (!shouldRestoreResultsSession(resultsHref)) return;
+    const saved = loadFlightResultsSession();
+    if (!saved) return;
+    restoredRef.current = true;
+    setFilters(saved.filters);
+    setSortKey(saved.sortKey);
+    setSelectedOutboundKey(saved.selectedOutboundKey);
+    setSelectedReturnKey(saved.selectedReturnKey);
+    if (saved.expandedTripId) {
+      const outKey = saved.selectedOutboundKey;
+      const retKey = saved.selectedReturnKey;
+      if (outKey) {
+        const outFlight = findFlightForLeg(flightsRaw, outKey, "outbound");
+        const outbound = outFlight ? extractLeg(outFlight, "outbound") : null;
+        let returnLeg = null;
+        if (retKey) {
+          const retFlight = findFlightForLeg(flightsRaw, retKey, "return");
+          if (retFlight) returnLeg = extractLeg(retFlight, "return");
+        }
+        if (outbound) {
+          const trip = composeFromLegs(outbound, returnLeg);
+          if (trip.id === saved.expandedTripId || saved.expandedTripId.startsWith("mix-")) {
+            setExpandedTrip(tripReadyForSelection(trip, isRoundTrip) ? trip : null);
+          }
+        }
+      }
+    }
+    requestAnimationFrame(() => {
+      window.scrollTo({ top: saved.scrollY, behavior: "auto" });
+    });
+  }, [loading, flightsRaw, resultsHref, isRoundTrip]);
+
   function applyEdit(e: FormEvent) {
     e.preventDefault();
     const href = buildFlightResultsHref(draft);
@@ -174,21 +280,101 @@ export function ShopFlightResultsClient() {
     router.push(href);
   }
 
-  function bookFlight(flight: FlightOfferRow) {
-    const legOrigin = String(flight.details.legOrigin || params.origin);
-    const legDestination = String(flight.details.legDestination || params.destination);
-    const legDepartDate = String(flight.details.legDepartDate || params.departDate);
+  function toggleOutbound(flight: FlightOfferRow) {
+    const key = legKey(flight, "outbound");
+    setExpandedTrip(null);
+    setSelectedOutboundKey((prev) => (prev === key ? null : key));
+  }
+
+  function toggleReturn(flight: FlightOfferRow) {
+    const key = legKey(flight, "return");
+    if (!key) return;
+    setExpandedTrip(null);
+    setSelectedReturnKey((prev) => (prev === key ? null : key));
+  }
+
+  async function openTripPanel(trip: ComposedTrip, flightIdForLoading?: string) {
+    if (panelBusy) return;
+    if (expandedTrip?.id === trip.id) {
+      setExpandedTrip(null);
+      return;
+    }
+    if (flightIdForLoading) setLoadingFlightId(flightIdForLoading);
+    setPanelBusy(true);
+    await new Promise((r) => setTimeout(r, 200));
+    setExpandedTrip(trip);
+    setPanelBusy(false);
+    setLoadingFlightId(null);
+  }
+
+  function handleSelectFlight(flight: FlightOfferRow) {
+    const trip = composeFromPackage(flight);
+    if (!trip) return;
+
+    if (expandedTrip?.sourcePackageId === flight.id) {
+      setExpandedTrip(null);
+      return;
+    }
+
+    setSelectedOutboundKey(trip.outbound.key);
+    if (trip.return) setSelectedReturnKey(trip.return.key);
+    void openTripPanel(trip, flight.id);
+  }
+
+  function handleBarSelect() {
+    if (!composedPreview || !tripReadyForSelection(composedPreview, isRoundTrip)) return;
+    void openTripPanel(composedPreview);
+  }
+
+  function buildDraftFlight(trip: ComposedTrip) {
+    const pkg = trip.sourcePackage;
+    if (pkg) return pkg;
+    return {
+      id: trip.id,
+      description: `${trip.outbound.from} → ${trip.outbound.to}${
+        trip.return ? ` · ${trip.return.from} → ${trip.return.to}` : ""
+      }`,
+      sellAmountMinor: trip.totalPriceMinor,
+      currency: trip.currency,
+      details: {
+        segments: trip.outbound.segments,
+        returnSegments: trip.return?.segments || [],
+        airlineCode: trip.outbound.airlineCode,
+        airline: trip.outbound.airlineName,
+        airlineAr: trip.outbound.airlineName,
+        stops: trip.outbound.stops,
+        returnStops: trip.return?.stops || 0,
+        duration: trip.outbound.durationLabel,
+        returnDuration: trip.return?.durationLabel,
+        baggage: trip.outbound.baggage,
+        policies: trip.outbound.policies,
+        cabin: trip.outbound.cabin,
+        composed: true,
+        isMixMatch: trip.isMixMatch,
+      },
+    };
+  }
+
+  function handleContinueReview(payload: {
+    fare: import("@/lib/flight-fare-mock").MockFareOption;
+    provider: import("@/lib/flight-fare-mock").MockProviderOffer;
+  }) {
+    if (!expandedTrip) return;
+    persistSession();
+    const flight = buildDraftFlight(expandedTrip);
+    const breakdown = computePriceBreakdown(payload.provider.totalPriceMinor, expandedTrip.currency);
     const offerRef = String(flight.details.originalOfferId || flight.id);
     const quoteItemId = quoteItems.find(
       (item) => item.providerOfferRef === offerRef && item.serviceType === "flight",
     )?.id;
+
     saveFlightDraft({
       flight,
-      origin: legOrigin,
-      destination: legDestination,
-      originLabel: params.originLabel || legOrigin,
-      destinationLabel: params.destinationLabel || legDestination,
-      departDate: legDepartDate,
+      origin: params.origin,
+      destination: params.destination,
+      originLabel: params.originLabel || params.origin,
+      destinationLabel: params.destinationLabel || params.destination,
+      departDate: params.departDate,
       returnDate: params.tripType === "roundtrip" ? params.returnDate : undefined,
       tripType: params.tripType,
       adults: params.adults,
@@ -198,8 +384,23 @@ export function ShopFlightResultsClient() {
       createdAt: new Date().toISOString(),
       inquiryId,
       quoteItemId,
+      composedTrip: expandedTrip,
+      selectedOutbound: expandedTrip.outbound,
+      selectedReturn: expandedTrip.return,
+      selectedFare: payload.fare,
+      selectedProvider: payload.provider,
+      priceBreakdown: breakdown,
+      validatedAt: new Date().toISOString(),
+      resultsReturnHref: resultsHref,
     });
-    router.push("/book");
+    setExpandedTrip(null);
+    router.push("/book/review");
+  }
+
+  function clearSelection() {
+    setSelectedOutboundKey(null);
+    setSelectedReturnKey(null);
+    setExpandedTrip(null);
   }
 
   return (
@@ -342,25 +543,44 @@ export function ShopFlightResultsClient() {
             onFiltersChange={setFilters}
             onSortChange={setSortKey}
             onResetFilters={() => setFilters(defaultFlightFilters())}
-            onSelectFlight={setDetailFlight}
+            onSelectFlight={handleSelectFlight}
+            onToggleOutbound={toggleOutbound}
+            onToggleReturn={toggleReturn}
+            selectedOutboundKey={selectedOutboundKey}
+            selectedReturnKey={selectedReturnKey}
+            expandedTripId={expandedTripId}
+            loadingFlightId={loadingFlightId}
             pickStep="single"
+            enableMixMatch={isRoundTrip}
           />
         </>
       ) : null}
 
-      {detailFlight ? (
-        <ShopFlightDetailModal
-          flight={detailFlight}
-          origin={params.origin}
-          destination={params.destination}
+      {isRoundTrip && selectionBarTrip && (selectedOutboundKey || selectedReturnKey) ? (
+        <ShopFlightSelectionBar
+          trip={selectionBarTrip}
+          isRoundTrip={isRoundTrip}
+          canProceed={tripReadyForSelection(selectionBarTrip, isRoundTrip)}
+          loading={panelBusy}
+          onSelectTrip={handleBarSelect}
+          onClear={clearSelection}
+        />
+      ) : null}
+
+      {expandedTrip ? (
+        <ShopFlightExpandedPanel
+          trip={expandedTrip}
+          passengers={passengers}
+          cabinClass={params.cabinClass}
+          departDate={params.departDate}
+          returnDate={params.returnDate}
           originLabel={params.originLabel}
           destinationLabel={params.destinationLabel}
-          cabinClass={params.cabinClass}
-          onClose={() => setDetailFlight(null)}
-          onContinue={() => {
-            const selected = detailFlight;
-            setDetailFlight(null);
-            bookFlight(selected);
+          onClose={() => setExpandedTrip(null)}
+          onContinueReview={handleContinueReview}
+          onRefreshResults={() => {
+            setExpandedTrip(null);
+            void runSearch(params);
           }}
         />
       ) : null}

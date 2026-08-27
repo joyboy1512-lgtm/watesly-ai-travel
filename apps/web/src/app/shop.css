@@ -4862,3 +4862,672 @@
     top: 0;
   }
 }
+
+/* —— Mix-match selection bar —— */
+.shop-flight-selection-bar {
+  position: fixed;
+  inset-inline: 0;
+  bottom: 0;
+  z-index: 40;
+  background: #fff;
+  border-top: 1px solid var(--exp-border);
+  box-shadow: 0 -8px 24px rgba(15, 35, 70, 0.12);
+  animation: shop-flight-bar-in 0.25s ease;
+}
+
+@keyframes shop-flight-bar-in {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.shop-flight-selection-bar-inner {
+  width: min(1200px, calc(100% - 2rem));
+  margin: 0 auto;
+  padding: 0.85rem 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.shop-flight-selection-legs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem 1.5rem;
+}
+
+.shop-flight-selection-leg small {
+  display: block;
+  color: var(--exp-muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.shop-flight-selection-leg strong {
+  display: block;
+  color: var(--exp-navy);
+  font-size: 0.88rem;
+}
+
+.shop-flight-selection-leg span {
+  color: var(--exp-muted);
+  font-size: 0.8rem;
+}
+
+.shop-flight-selection-missing {
+  color: #b45309 !important;
+}
+
+.shop-flight-selection-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin-inline-start: auto;
+}
+
+.shop-flight-selection-price {
+  text-align: end;
+}
+
+.shop-flight-selection-price strong {
+  display: block;
+  color: var(--exp-navy);
+  font-size: 1.1rem;
+}
+
+.shop-flight-selection-price small {
+  color: var(--exp-muted);
+  font-size: 0.75rem;
+}
+
+.shop-flight-selection-clear {
+  border: 1px solid var(--exp-border);
+  background: #fff;
+  color: var(--exp-muted);
+  border-radius: 999px;
+  padding: 0.5rem 0.85rem;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.shop-flight-selection-proceed {
+  border: 0;
+  background: var(--exp-navy);
+  color: #fff;
+  border-radius: 999px;
+  padding: 0.65rem 1.2rem;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.shop-flight-selection-proceed:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.shop-ticket-leg.is-leg-selected {
+  background: #eef5ff;
+  border-radius: 8px;
+}
+
+.shop-ticket-card.is-expanded {
+  outline: 2px solid var(--exp-blue);
+  outline-offset: 1px;
+}
+
+.shop-flight-btn-loading {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.shop-flight-spinner.small {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  border-width: 2px;
+}
+
+/* —— Expanded flight panel —— */
+.shop-flight-expanded-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: rgba(12, 24, 48, 0.55);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  animation: shop-flight-fade-in 0.2s ease;
+}
+
+@keyframes shop-flight-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.shop-flight-expanded-panel {
+  width: min(960px, 100%);
+  max-height: min(92svh, 920px);
+  background: #fff;
+  border-radius: 16px 16px 0 0;
+  display: flex;
+  flex-direction: column;
+  animation: shop-flight-panel-up 0.28s ease;
+  overflow: hidden;
+}
+
+@keyframes shop-flight-panel-up {
+  from {
+    transform: translateY(24px);
+    opacity: 0.6;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.shop-flight-expanded-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.15rem;
+  border-bottom: 1px solid var(--exp-border);
+}
+
+.shop-flight-expanded-head h2 {
+  margin: 0;
+  font-size: 1.05rem;
+  color: var(--exp-navy);
+}
+
+.shop-flight-expanded-head p {
+  margin: 0.25rem 0 0;
+  font-size: 0.82rem;
+  color: var(--exp-muted);
+}
+
+.shop-flight-expanded-body {
+  overflow: auto;
+  padding: 1rem 1.15rem 1.25rem;
+  flex: 1;
+}
+
+.shop-flight-expanded-leg {
+  border: 1px solid var(--exp-border);
+  border-radius: 12px;
+  padding: 0.85rem;
+  margin-bottom: 0.85rem;
+}
+
+.shop-flight-expanded-leg-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.65rem;
+}
+
+.shop-flight-expanded-leg-head h3 {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--exp-navy);
+}
+
+.shop-flight-expanded-leg-head p {
+  margin: 0.2rem 0 0;
+  font-size: 0.8rem;
+  color: var(--exp-muted);
+}
+
+.shop-flight-expanded-leg-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.25rem;
+  font-size: 0.78rem;
+  color: var(--exp-muted);
+}
+
+.shop-flight-expanded-leg-meta img {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+}
+
+.shop-flight-expanded-leg-foot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  margin-top: 0.65rem;
+  padding-top: 0.65rem;
+  border-top: 1px dashed var(--exp-border);
+  font-size: 0.78rem;
+  color: var(--exp-muted);
+}
+
+.shop-flight-expanded-seg-head {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin-bottom: 0.45rem;
+}
+
+.shop-flight-expanded-seg-logo {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+}
+
+.shop-flight-expanded-seg-head strong {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--exp-navy);
+}
+
+.shop-flight-expanded-seg-head span {
+  font-size: 0.75rem;
+  color: var(--exp-muted);
+}
+
+.shop-flight-expanded-fares h3,
+.shop-flight-expanded-providers h3 {
+  margin: 0 0 0.65rem;
+  font-size: 0.95rem;
+  color: var(--exp-navy);
+}
+
+.shop-flight-fare-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.65rem;
+}
+
+.shop-flight-fare-card {
+  border: 1px solid var(--exp-border);
+  border-radius: 12px;
+  padding: 0.75rem;
+  display: grid;
+  gap: 0.35rem;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.shop-flight-fare-card.selected {
+  border-color: var(--exp-blue);
+  box-shadow: 0 0 0 1px var(--exp-blue);
+}
+
+.shop-flight-fare-card header strong {
+  display: block;
+  color: var(--exp-navy);
+  font-size: 0.88rem;
+}
+
+.shop-flight-fare-card header span {
+  font-size: 0.72rem;
+  color: var(--exp-muted);
+}
+
+.shop-flight-fare-price {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--exp-navy);
+}
+
+.shop-flight-fare-features {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 0.72rem;
+  color: var(--exp-muted);
+  display: grid;
+  gap: 0.2rem;
+}
+
+.shop-flight-fare-select-btn,
+.shop-flight-fare-continue-btn,
+.shop-flight-provider-btn {
+  border: 0;
+  border-radius: 999px;
+  padding: 0.45rem 0.75rem;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.shop-flight-fare-select-btn {
+  background: #eef2f8;
+  color: var(--exp-navy);
+}
+
+.shop-flight-fare-continue-btn {
+  background: var(--exp-navy);
+  color: #fff;
+}
+
+.shop-flight-fare-continue-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.shop-flight-provider-list {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.shop-flight-provider-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 0.65rem;
+  align-items: center;
+  border: 1px solid var(--exp-border);
+  border-radius: 10px;
+  padding: 0.65rem 0.75rem;
+}
+
+.shop-flight-provider-row strong {
+  color: var(--exp-navy);
+}
+
+.shop-flight-provider-row span {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--exp-muted);
+}
+
+.shop-flight-provider-btn {
+  background: var(--exp-blue);
+  color: #fff;
+}
+
+.shop-flight-expanded-status {
+  margin-top: 0.85rem;
+  padding: 0.75rem;
+  border-radius: 10px;
+  font-size: 0.88rem;
+}
+
+.shop-flight-expanded-status.success {
+  background: #ecfdf5;
+  color: #047857;
+}
+
+.shop-flight-expanded-status.warn {
+  background: #fff7ed;
+  color: #9a3412;
+}
+
+.shop-flight-expanded-status.error {
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+.shop-flight-expanded-status button {
+  margin-top: 0.45rem;
+  border: 0;
+  background: var(--exp-navy);
+  color: #fff;
+  border-radius: 999px;
+  padding: 0.45rem 0.85rem;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.shop-flight-expanded-foot {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.85rem 1.15rem;
+  border-top: 1px solid var(--exp-border);
+  background: #fafbfd;
+}
+
+.shop-flight-expanded-foot strong {
+  font-size: 1.1rem;
+  color: var(--exp-navy);
+}
+
+.shop-flight-expanded-foot span {
+  font-size: 0.78rem;
+  color: var(--exp-muted);
+}
+
+.shop-flight-expanded-close-btn {
+  margin-inline-start: auto;
+  border: 1px solid var(--exp-border);
+  background: #fff;
+  color: var(--exp-navy);
+  border-radius: 999px;
+  padding: 0.55rem 1rem;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* —— Booking review page —— */
+.shop-flight-review-page {
+  width: min(960px, calc(100% - 2rem));
+  margin: 1.5rem auto 3rem;
+}
+
+.shop-flight-review-head h1 {
+  margin: 0;
+  color: var(--exp-navy);
+}
+
+.shop-flight-review-head p {
+  margin: 0.35rem 0 1rem;
+  color: var(--exp-muted);
+}
+
+.shop-flight-review-grid {
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: 1rem;
+}
+
+.shop-flight-review-card {
+  background: #fff;
+  border: 1px solid var(--exp-border);
+  border-radius: 14px;
+  padding: 1rem 1.1rem;
+}
+
+.shop-flight-review-card h2 {
+  margin: 0 0 0.65rem;
+  font-size: 1rem;
+  color: var(--exp-navy);
+}
+
+.shop-flight-review-route {
+  margin: 0;
+  font-weight: 800;
+  color: var(--exp-navy);
+}
+
+.shop-flight-review-dates {
+  margin: 0.25rem 0 0.85rem;
+  color: var(--exp-muted);
+  font-size: 0.88rem;
+}
+
+.shop-flight-review-leg {
+  border-top: 1px dashed var(--exp-border);
+  padding-top: 0.75rem;
+  margin-top: 0.75rem;
+}
+
+.shop-flight-review-leg h3 {
+  margin: 0 0 0.45rem;
+  font-size: 0.88rem;
+  color: var(--exp-blue);
+}
+
+.shop-flight-review-leg-row {
+  display: flex;
+  gap: 0.65rem;
+}
+
+.shop-flight-review-leg-row img {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+}
+
+.shop-flight-review-mix-tag {
+  margin: 0.75rem 0 0;
+  font-size: 0.8rem;
+  color: #9a6700;
+  background: #fff7e6;
+  border-radius: 8px;
+  padding: 0.45rem 0.65rem;
+}
+
+.shop-flight-review-fare-name {
+  margin: 0 0 0.45rem;
+  font-weight: 800;
+  color: var(--exp-navy);
+}
+
+.shop-flight-review-fare-name span {
+  font-weight: 600;
+  color: var(--exp-muted);
+  font-size: 0.85rem;
+}
+
+.shop-flight-review-fare-meta {
+  list-style: none;
+  margin: 0 0 0.65rem;
+  padding: 0;
+  font-size: 0.82rem;
+  color: var(--exp-muted);
+}
+
+.shop-flight-review-provider {
+  margin: 0 0 0.75rem;
+  font-size: 0.88rem;
+}
+
+.shop-flight-review-breakdown {
+  margin: 0;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.shop-flight-review-breakdown div {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  font-size: 0.88rem;
+}
+
+.shop-flight-review-breakdown dt {
+  color: var(--exp-muted);
+}
+
+.shop-flight-review-breakdown dd {
+  margin: 0;
+  font-weight: 700;
+  color: var(--exp-navy);
+}
+
+.shop-flight-review-breakdown .total {
+  border-top: 1px solid var(--exp-border);
+  padding-top: 0.55rem;
+  margin-top: 0.25rem;
+}
+
+.shop-flight-review-breakdown .total dd {
+  font-size: 1.05rem;
+}
+
+.shop-flight-review-pax {
+  margin: 0.75rem 0 0;
+  font-size: 0.82rem;
+  color: var(--exp-muted);
+}
+
+.shop-flight-review-foot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  margin-top: 1.25rem;
+}
+
+.shop-flight-review-back,
+.shop-flight-review-continue,
+.shop-flight-review-cancel {
+  border-radius: 999px;
+  padding: 0.65rem 1.15rem;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.shop-flight-review-back {
+  border: 1px solid var(--exp-border);
+  background: #fff;
+  color: var(--exp-navy);
+}
+
+.shop-flight-review-continue {
+  border: 0;
+  background: var(--exp-navy);
+  color: #fff;
+}
+
+.shop-flight-review-cancel {
+  border: 0;
+  background: transparent;
+  color: var(--exp-muted);
+}
+
+.shop-flight-review-loading {
+  text-align: center;
+  padding: 3rem 1rem;
+}
+
+.shop-flight-results-page:has(.shop-flight-selection-bar) {
+  padding-bottom: 6rem;
+}
+
+@media (min-width: 901px) {
+  .shop-flight-expanded-backdrop {
+    align-items: center;
+    padding: 1rem;
+  }
+
+  .shop-flight-expanded-panel {
+    border-radius: 16px;
+    max-height: min(88svh, 900px);
+  }
+}
+
+@media (max-width: 900px) {
+  .shop-flight-fare-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .shop-flight-review-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .shop-flight-provider-row {
+    grid-template-columns: 1fr;
+  }
+}

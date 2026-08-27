@@ -7,6 +7,9 @@ import { formatMoneyMinorCompact } from "@/lib/format";
 import {
   flightFiltersActive,
   formatMinutesLabel,
+  legKey,
+  outboundLegKey,
+  returnLegKey,
   summarizeFlightSortTabs,
   type FlightOfferRow,
   type FlightSearchFilters,
@@ -31,8 +34,15 @@ type Props = {
   onSortChange: (key: FlightSortKey) => void;
   onResetFilters: () => void;
   onSelectFlight: (flight: FlightOfferRow) => void;
+  onToggleOutbound: (flight: FlightOfferRow) => void;
+  onToggleReturn: (flight: FlightOfferRow) => void;
+  selectedOutboundKey?: string | null;
+  selectedReturnKey?: string | null;
+  expandedTripId?: string | null;
+  loadingFlightId?: string | null;
   pickStep?: FlightPickStep;
   stepTitle?: string;
+  enableMixMatch?: boolean;
 };
 
 export function ShopFlightResults(props: Props) {
@@ -49,8 +59,7 @@ export function ShopFlightResults(props: Props) {
   );
   const displayLeg: FlightCardDisplayLeg =
     pickStep === "outbound" ? "outbound" : pickStep === "return" ? "return" : "both";
-  const selectLabel =
-    pickStep === "outbound" ? "اختر الذهاب" : pickStep === "return" ? "اختر العودة" : "اختر";
+  const enableMix = props.enableMixMatch !== false;
 
   const bestId = sortTabs.find((t) => t.key === "best")?.flightId;
   const cheapId = sortTabs.find((t) => t.key === "price_asc")?.flightId;
@@ -87,6 +96,7 @@ export function ShopFlightResults(props: Props) {
         {props.stepTitle ? <strong>{props.stepTitle} · </strong> : null}
         عرض {props.flights.length} من {props.totalCount}
         {active ? " · فلاتر مفعّلة" : ""}
+        {enableMix ? " · يمكنك مزج الذهاب والعودة" : ""}
       </div>
 
       <button
@@ -116,6 +126,12 @@ export function ShopFlightResults(props: Props) {
               if (flight.id === bestId) badges.push("best");
               if (flight.id === cheapId) badges.push("cheapest");
               if (flight.id === fastId) badges.push("fastest");
+
+              const outKey = outboundLegKey(flight);
+              const retKey = returnLegKey(flight);
+              const pkgTripId = `pkg-${flight.id}`;
+              const isExpanded = props.expandedTripId === pkgTripId;
+
               return (
                 <ShopFlightCard
                   key={flight.id}
@@ -125,8 +141,18 @@ export function ShopFlightResults(props: Props) {
                   badges={badges}
                   displayLeg={displayLeg}
                   priceFrom={pickStep === "outbound"}
-                  selectLabel={selectLabel}
-                  onViewDetails={() => props.onSelectFlight(flight)}
+                  outboundKey={outKey}
+                  returnKey={retKey}
+                  selectedOutboundKey={props.selectedOutboundKey}
+                  selectedReturnKey={props.selectedReturnKey}
+                  onToggleOutbound={() => props.onToggleOutbound(flight)}
+                  onToggleReturn={() => props.onToggleReturn(flight)}
+                  isExpanded={isExpanded}
+                  selectLoading={props.loadingFlightId === flight.id}
+                  isHighlighted={
+                    props.selectedOutboundKey === outKey || props.selectedReturnKey === retKey
+                  }
+                  onSelectFlight={() => props.onSelectFlight(flight)}
                 />
               );
             })}

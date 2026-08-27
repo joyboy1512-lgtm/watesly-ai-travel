@@ -17,6 +17,7 @@ export type FlightSeg = {
   date?: string;
   airline?: string;
   flightNumber?: string;
+  aircraft?: string;
 };
 
 export type DepartureBucket = "night" | "morning" | "afternoon" | "evening";

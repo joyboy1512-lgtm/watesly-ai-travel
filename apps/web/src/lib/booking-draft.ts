@@ -1,3 +1,7 @@
+import type { ComposedTrip } from "./flight-compose";
+import type { FlightPriceBreakdown, MockFareOption, MockProviderOffer } from "./flight-fare-mock";
+import type { SelectedLeg } from "./flight-leg-selection";
+
 export type BookingDraftFlight = {
   id: string;
   description: string;
@@ -48,6 +52,15 @@ export type FlightBookingDraft = {
   inquiryId?: string;
   quoteId?: string;
   quoteItemId?: string;
+  /** Mix-and-match composed trip (mock-ready for API swap). */
+  composedTrip?: ComposedTrip;
+  selectedOutbound?: SelectedLeg;
+  selectedReturn?: SelectedLeg | null;
+  selectedFare?: MockFareOption;
+  selectedProvider?: MockProviderOffer;
+  priceBreakdown?: FlightPriceBreakdown;
+  validatedAt?: string;
+  resultsReturnHref?: string;
 };
 
 export type HotelBookingDraft = {

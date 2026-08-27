@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { formatMoneyMinor } from "@/lib/format";
 import {
   airlineLogo,
@@ -20,11 +19,21 @@ type Props = {
   flight: FlightOfferRow;
   originFallback?: string;
   destinationFallback?: string;
-  onViewDetails: () => void;
+  onSelectFlight: () => void;
   badges?: Array<"best" | "cheapest" | "fastest">;
   selectLabel?: string;
   displayLeg?: FlightCardDisplayLeg;
   priceFrom?: boolean;
+  /** Mix-and-match leg keys */
+  outboundKey?: string;
+  returnKey?: string;
+  selectedOutboundKey?: string | null;
+  selectedReturnKey?: string | null;
+  onToggleOutbound?: () => void;
+  onToggleReturn?: () => void;
+  isExpanded?: boolean;
+  selectLoading?: boolean;
+  isHighlighted?: boolean;
 };
 
 const BADGE_LABEL: Record<"best" | "cheapest" | "fastest", string> = {
@@ -85,11 +94,18 @@ function LegRow({
 }) {
   return (
     <div
-      className={`shop-ticket-leg${isReturn ? " shop-ticket-leg-return" : ""}`}
+      className={`shop-ticket-leg${isReturn ? " shop-ticket-leg-return" : ""}${
+        checked ? " is-leg-selected" : ""
+      }`}
       dir="ltr"
     >
       <label className="shop-ticket-check">
-        <input type="checkbox" checked={checked} onChange={onToggle} aria-label="اختيار الرحلة" />
+        <input
+          type="checkbox"
+          checked={checked}
+          onChange={onToggle}
+          aria-label={isReturn ? "اختيار رحلة العودة" : "اختيار رحلة الذهاب"}
+        />
       </label>
       <div className="shop-ticket-carrier" aria-hidden>
         {logo ? (
@@ -127,13 +143,21 @@ export function ShopFlightCard({
   flight,
   originFallback = "",
   destinationFallback = "",
-  onViewDetails,
+  onSelectFlight,
   badges = [],
   selectLabel,
   displayLeg = "both",
   priceFrom = false,
+  outboundKey = "",
+  returnKey = "",
+  selectedOutboundKey,
+  selectedReturnKey,
+  onToggleOutbound,
+  onToggleReturn,
+  isExpanded = false,
+  selectLoading = false,
+  isHighlighted = false,
 }: Props) {
-  const [picked, setPicked] = useState(false);
   const segs = getSegments(flight.details);
   const returnSegs = getReturnSegments(flight.details);
   const first = segs[0];
@@ -157,10 +181,7 @@ export function ShopFlightCard({
     layoverMinutes(outDepRaw, outArrRaw),
   );
   const returnDurationMins = layoverMinutes(retDepRaw, retArrRaw);
-  const returnDuration = compactDuration(
-    flight.details.returnDuration,
-    returnDurationMins,
-  );
+  const returnDuration = compactDuration(flight.details.returnDuration, returnDurationMins);
 
   const isFlexible = Boolean(flight.details.flexible);
   const hasReturn = returnSegs.length > 0;
@@ -188,17 +209,19 @@ export function ShopFlightCard({
   const showOutbound = displayLeg === "both" || displayLeg === "outbound";
   const showReturn = displayLeg === "both" || displayLeg === "return";
 
-  function togglePick() {
-    const next = !picked;
-    setPicked(next);
-    if (next) onViewDetails();
-  }
+  const outboundSelected = Boolean(outboundKey && selectedOutboundKey === outboundKey);
+  const returnSelected = Boolean(returnKey && selectedReturnKey === returnKey);
+  const picked = outboundSelected || returnSelected || isHighlighted;
+
+  const buttonLabel =
+    selectLabel ||
+    (isExpanded ? "إغلاق التفاصيل" : "اختيار الرحلة");
 
   return (
     <article
       className={`shop-ticket-card shop-ticket-card-compact shop-ticket-card-${displayLeg}${
         hasReturn && displayLeg === "both" ? " shop-ticket-card-roundtrip" : ""
-      }${picked ? " is-picked" : ""}`}
+      }${picked ? " is-picked" : ""}${isExpanded ? " is-expanded" : ""}`}
     >
       {badges.length ? (
         <div className="shop-ticket-badges">
@@ -226,8 +249,8 @@ export function ShopFlightCard({
         <div className="shop-ticket-legs">
           {showOutbound ? (
             <LegRow
-              checked={picked}
-              onToggle={togglePick}
+              checked={outboundSelected}
+              onToggle={() => onToggleOutbound?.()}
               logo={logo}
               code={code}
               dep={dep}
@@ -242,8 +265,8 @@ export function ShopFlightCard({
 
           {showReturn && hasReturn ? (
             <LegRow
-              checked={picked}
-              onToggle={togglePick}
+              checked={returnSelected}
+              onToggle={() => onToggleReturn?.()}
               logo={returnLogo}
               code={returnCode || code}
               isReturn
@@ -269,8 +292,19 @@ export function ShopFlightCard({
           {formatMoneyMinor(flight.sellAmountMinor, flight.currency)}
         </strong>
         <small className="shop-ticket-price-note">يشمل الضرائب والرسوم</small>
-        <button type="button" className="shop-ticket-details-btn" onClick={onViewDetails}>
-          {selectLabel || "اختر"}
+        <button
+          type="button"
+          className="shop-ticket-details-btn"
+          disabled={selectLoading}
+          onClick={onSelectFlight}
+        >
+          {selectLoading ? (
+            <span className="shop-flight-btn-loading">
+              <span className="shop-flight-spinner small" aria-hidden />
+            </span>
+          ) : (
+            buttonLabel
+          )}
         </button>
       </div>
     </article>

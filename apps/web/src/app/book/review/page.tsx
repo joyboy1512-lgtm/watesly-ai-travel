@@ -223,9 +223,9 @@ export default function BookReviewPage() {
     <StoreFront>
       {draft.serviceType === "hotel" ? (
         <HotelBookReview booking={draft} />
-      ) : (
+      ) : draft.serviceType === "flight" ? (
         <FlightBookReview booking={draft} />
-      )}
+      ) : null}
     </StoreFront>
   );
 }

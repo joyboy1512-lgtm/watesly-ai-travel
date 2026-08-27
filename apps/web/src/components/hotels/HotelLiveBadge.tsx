@@ -2,6 +2,13 @@
 
 import { useEffect, useState } from "react";
 
+function formatFetchedTime(iso: string) {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return null;
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
 function formatRemaining(ms: number) {
   if (ms <= 0) return "انتهى";
   const totalSec = Math.floor(ms / 1000);
@@ -36,12 +43,7 @@ export function HotelLiveBadge({
   const expMs = expiresAt ? new Date(expiresAt).getTime() : NaN;
   const remaining = Number.isFinite(expMs) ? expMs - now : null;
   const expired = remaining != null && remaining <= 0;
-  const fetchedLabel = fetchedAt
-    ? new Date(fetchedAt).toLocaleTimeString("ar-SA", {
-        hour: "2-digit",
-        minute: "2-digit",
-      })
-    : null;
+  const fetchedLabel = fetchedAt ? formatFetchedTime(fetchedAt) : null;
 
   return (
     <div className={`hotel-live-badge${expired ? " is-expired" : ""}${compact ? " is-compact" : ""}`}>
@@ -49,7 +51,9 @@ export function HotelLiveBadge({
       {sourceLabel ? <span>{sourceLabel}</span> : null}
       {fetchedLabel ? <span>جُلب {fetchedLabel}</span> : null}
       {remaining != null ? (
-        <em>{expired ? "انتهت صلاحية السعر — أعد البحث" : `يتبقى ${formatRemaining(remaining)}`}</em>
+        <em suppressHydrationWarning>
+          {expired ? "انتهت صلاحية السعر — أعد البحث" : `يتبقى ${formatRemaining(remaining)}`}
+        </em>
       ) : null}
     </div>
   );

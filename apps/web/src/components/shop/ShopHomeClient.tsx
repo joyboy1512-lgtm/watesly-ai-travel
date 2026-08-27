@@ -5,13 +5,6 @@ import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { type SuggestItem } from "@/components/shop/ShopAutocomplete";
 import {
-  collectFilterFacets,
-  defaultHotelFilters,
-  filterHotelOffers,
-  type HotelOfferRow,
-  type HotelSearchFilters,
-} from "@/lib/hotel-search";
-import {
   collectFlightFacets,
   defaultFlightFilters,
   filterAndSortFlights,
@@ -22,7 +15,6 @@ import {
 import {
   saveActivityDraft,
   saveFlightDraft,
-  saveHotelDraft,
   saveTransferDraft,
 } from "@/lib/booking-draft";
 import { shopFetch } from "@/lib/shop-session";
@@ -30,15 +22,8 @@ import { ShopLanding } from "@/components/shop/ShopLanding";
 import { ShopHeroBanner, type FlightLeg, type FlightTripType } from "@/components/shop/ShopHeroBanner";
 import type { ShopDestination, ShopOffer } from "@/lib/shop-content";
 import { openFlightResultsInNewTab } from "@/lib/flight-results-url";
+import { openHotelResultsInNewTab } from "@/lib/hotel-results-url";
 
-const HotelDetailModal = dynamic(
-  () => import("@/components/hotels/HotelDetailModal").then((m) => m.HotelDetailModal),
-  { ssr: false },
-);
-const ShopHotelResults = dynamic(
-  () => import("@/components/shop/ShopHotelResults").then((m) => m.ShopHotelResults),
-  { ssr: false },
-);
 const ShopFlightResults = dynamic(
   () => import("@/components/shop/ShopFlightResults").then((m) => m.ShopFlightResults),
   { ssr: false },
@@ -112,14 +97,6 @@ function createFlightLeg(partial?: Partial<FlightLeg>): FlightLeg {
   };
 }
 
-function nightsBetween(from: string, to: string) {
-  if (!from || !to) return 1;
-  const a = new Date(from).getTime();
-  const b = new Date(to).getTime();
-  if (!Number.isFinite(a) || !Number.isFinite(b) || b <= a) return 1;
-  return Math.max(1, Math.round((b - a) / 86400000));
-}
-
 export function ShopHomeClient() {
   const router = useRouter();
   const [mode, setMode] = useState<Mode>("flights");
@@ -168,23 +145,15 @@ export function ShopHomeClient() {
   const [cabinClass, setCabinClass] = useState("economy");
   const [directOnly, setDirectOnly] = useState(false);
   const [flightResults, setFlightResults] = useState<Offer[]>([]);
-  const [hotels, setHotels] = useState<HotelOfferRow[]>([]);
   const [transfers, setTransfers] = useState<TransferItem[]>([]);
   const [activities, setActivities] = useState<TransferItem[]>([]);
   const [inquiryId, setInquiryId] = useState<string>();
   const [quoteItems, setQuoteItems] = useState<QuoteItem[]>([]);
-  const [hotelOpen, setHotelOpen] = useState<HotelOfferRow | null>(null);
-  const [hotelFilters, setHotelFilters] = useState<HotelSearchFilters>(() => defaultHotelFilters());
-  const [hotelSortKey, setHotelSortKey] = useState<
-    "price_asc" | "price_desc" | "rating_desc"
-  >("price_asc");
   const [flightFilters, setFlightFilters] = useState<FlightSearchFilters>(() =>
     defaultFlightFilters(),
   );
   const [flightSortKey, setFlightSortKey] = useState<FlightSortKey>("best");
   const [detailFlight, setDetailFlight] = useState<FlightOfferRow | null>(null);
-
-  const nights = nightsBetween(departDate, returnDate);
 
   const flightFacets = useMemo(
     () => collectFlightFacets(flightResults as FlightOfferRow[]),
@@ -204,16 +173,8 @@ export function ShopHomeClient() {
 
   const hasResults =
     flightResults.length > 0 ||
-    hotels.length > 0 ||
     transfers.length > 0 ||
     activities.length > 0;
-
-  const hotelFacets = useMemo(() => collectFilterFacets(hotels), [hotels]);
-
-  const hotelRows = useMemo(
-    () => filterHotelOffers(hotels, hotelFilters, hotelSortKey),
-    [hotels, hotelFilters, hotelSortKey],
-  );
 
   async function searchAirports(q: string): Promise<SuggestItem[]> {
     const rows = await shopFetch<
@@ -370,45 +331,36 @@ export function ShopHomeClient() {
       }
     }
 
+    if (mode === "stays") {
+      try {
+        if (!stayQuery.trim() || !departDate || !returnDate) {
+          throw new Error("أدخل الوجهة وتواريخ الإقامة");
+        }
+        openHotelResultsInNewTab({
+          destination: stayQuery,
+          destinationLabel: stayQuery,
+          checkIn: departDate,
+          checkOut: returnDate,
+          adults,
+          children,
+          infants,
+          rooms,
+        });
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "فشل البحث");
+      }
+      return;
+    }
+
     setLoading(true);
     setError("");
     setMessage("");
     setFlightResults([]);
-    setHotels([]);
     setTransfers([]);
     setActivities([]);
     setDetailFlight(null);
-    if (mode === "stays") {
-      setHotelFilters(defaultHotelFilters());
-      setHotelSortKey("price_asc");
-    }
     try {
-      if (mode === "stays") {
-        const result = await shopFetch<{
-          inquiryId: string;
-          quoteItems?: QuoteItem[];
-          providerName?: string;
-          hotels: Offer[];
-        }>("/shop/search-hotels", {
-          method: "POST",
-          timeoutMs: 60000,
-          body: JSON.stringify({
-            destination: stayQuery,
-            checkIn: departDate,
-            checkOut: returnDate,
-            rooms,
-            adults,
-            children,
-            infants,
-          }),
-        });
-        setInquiryId(result.inquiryId);
-        setQuoteItems(result.quoteItems || []);
-        setHotels(result.hotels || []);
-        setMessage(
-          `تم جلب ${result.hotels?.length || 0} إقامة عبر ${result.providerName || "المزوّد"}`,
-        );
-      } else if (mode === "cars") {
+      if (mode === "cars") {
         if (!transferAirport && !transferCarRental) {
           throw new Error("اختر نوع النقل: نقل المطار أو تأجير سيارة");
         }
@@ -538,50 +490,6 @@ export function ShopHomeClient() {
       createdAt: new Date().toISOString(),
       inquiryId,
       quoteItemId: quoteItemIdFor(offerRef, "flight"),
-    });
-    router.push("/book");
-  }
-
-  function bookHotel(
-    hotel: HotelOfferRow,
-    rate?: {
-      rateKey: string;
-      net: number;
-      currency: string;
-      boardName: string;
-      roomName: string;
-      rateType: string;
-      roomCode: string;
-      boardCode: string;
-      freeCancellation: boolean;
-    },
-    extras?: {
-      contact?: { name: string; email: string; phone: string };
-      specialRequests?: string;
-      paymentMethod?: string;
-      travelers?: Array<{ firstName: string; lastName: string }>;
-    },
-  ) {
-    saveHotelDraft({
-      hotel,
-      selectedRate: rate,
-      checkIn: departDate,
-      checkOut: returnDate,
-      rooms,
-      adults,
-      children,
-      infants,
-      location: stayQuery,
-      locationLabel: stayQuery,
-      createdAt: new Date().toISOString(),
-      inquiryId,
-      quoteItemId: quoteItemIdFor(hotel.id, "hotel"),
-      contactName: extras?.contact?.name,
-      contactEmail: extras?.contact?.email,
-      contactPhone: extras?.contact?.phone,
-      specialRequests: extras?.specialRequests,
-      paymentMethod: extras?.paymentMethod,
-      travelers: extras?.travelers,
     });
     router.push("/book");
   }
@@ -757,36 +665,6 @@ export function ShopHomeClient() {
         searchCities={searchCities}
       />
 
-      {mode === "stays" && hotels.length > 0 ? (
-        <ShopHotelResults
-          destination={stayQuery}
-          stayQuery={stayQuery}
-          departDate={departDate}
-          returnDate={returnDate}
-          adults={adults}
-          children={children}
-          rooms={rooms}
-          nights={nights}
-          loading={loading}
-          hotels={hotelRows}
-          filters={hotelFilters}
-          facets={hotelFacets}
-          sortKey={hotelSortKey}
-          onFiltersChange={setHotelFilters}
-          onSortChange={setHotelSortKey}
-          onStayQueryChange={setStayQuery}
-          onStayPick={(item) => setStayQuery(item.title)}
-          onDepartDateChange={setDepartDate}
-          onReturnDateChange={setReturnDate}
-          onAdultsChange={setAdults}
-          onChildrenChange={setChildren}
-          onRoomsChange={setRooms}
-          onSearch={() => void runSearch()}
-          onOpenHotel={(hotel) => setHotelOpen(hotel)}
-          searchCities={searchCities}
-        />
-      ) : null}
-
       {mode === "flights" && flightResults.length > 0 ? (
         <ShopFlightResults
           flights={flights}
@@ -805,7 +683,7 @@ export function ShopHomeClient() {
         />
       ) : null}
 
-      {hasResults && !(mode === "stays" && hotels.length > 0) && mode !== "flights" ? (
+      {hasResults && mode !== "flights" ? (
         <section className="shop-results shop-results-block">
           <div className="shop-section-head">
             <div>
@@ -854,36 +732,6 @@ export function ShopHomeClient() {
             setDetailFlight(null);
             bookFlight(selected);
           }}
-        />
-      ) : null}
-
-      {hotelOpen ? (
-        <HotelDetailModal
-          hotel={{
-            ...hotelOpen,
-            matchingRates: hotelRows.find((h) => h.id === hotelOpen.id)?.matchingRates || [],
-            displayFromMinor:
-              hotelRows.find((h) => h.id === hotelOpen.id)?.displayFromMinor ||
-              hotelOpen.sellAmountMinor,
-          }}
-          nights={nights}
-          meta={{
-            stayQuery,
-            departDate,
-            returnDate,
-            rooms,
-            adults,
-            children,
-            infants,
-          }}
-          checkRatePath="/shop/checkrate-hotel"
-          fetchJson={shopFetch}
-          variant="shop"
-          onClose={() => setHotelOpen(null)}
-          onEnterGuestData={(rate) => bookHotel(hotelOpen, rate)}
-          onCheckout={({ rate, contact, specialRequests, paymentMethod, travelers }) =>
-            bookHotel(hotelOpen, rate, { contact, specialRequests, paymentMethod, travelers })
-          }
         />
       ) : null}
     </>

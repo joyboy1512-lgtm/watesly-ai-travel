@@ -14,11 +14,13 @@ import {
 import { formatDay } from "@/lib/flight-search";
 import { formatMoneyMinor } from "@/lib/format";
 import { ShopMockBanner } from "@/components/shop/ShopMockBanner";
+import { HotelCheckout } from "@/components/hotels/HotelCheckout";
 import {
   getShopSession,
   saveShopSession,
   shopFetch,
 } from "@/lib/shop-session";
+import type { HotelBookingDraft } from "@/lib/booking-draft";
 
 type Traveler = {
   title: string;
@@ -657,6 +659,7 @@ export default function PublicBookPage() {
   }
 
   const isFlight = draft?.serviceType === "flight";
+  const isHotel = draft?.serviceType === "hotel";
 
   if (!draft) return null;
 
@@ -719,14 +722,32 @@ export default function PublicBookPage() {
           submitting={submitting}
           onSubmit={() => void submit()}
         />
+      ) : isHotel ? (
+        <HotelCheckout
+          draft={draft as HotelBookingDraft}
+          travelers={travelers}
+          setTravelers={setTravelers}
+          email={email}
+          setEmail={setEmail}
+          phone={phone}
+          setPhone={setPhone}
+          name={name}
+          setName={setName}
+          specialRequests={specialRequests}
+          setSpecialRequests={setSpecialRequests}
+          paymentMethod={paymentMethod}
+          setPaymentMethod={setPaymentMethod}
+          error={error}
+          submitting={submitting}
+          onSubmit={() => void submit()}
+        />
       ) : (
         <section className="shop-panel">
+          <ShopMockBanner compact />
           <h1>إتمام الطلب</h1>
           <p>{draftTitle(draft)}</p>
           <p>
-            <strong>
-              {formatMoneyMinor(draftPrice(draft), draftCurrency(draft))}
-            </strong>
+            <strong>{formatMoneyMinor(draftPrice(draft), draftCurrency(draft))}</strong>
           </p>
           {error ? <p className="shop-error">{error}</p> : null}
           <div className="shop-form">
@@ -742,79 +763,13 @@ export default function PublicBookPage() {
               البريد
               <input value={email} onChange={(e) => setEmail(e.target.value)} />
             </label>
-            {travelers.map((traveler, idx) => (
-              <div key={idx} className="shop-form-row">
-                <label>
-                  المسافر {idx + 1}
-                  <input
-                    value={traveler.firstName}
-                    placeholder="الاسم الأول"
-                    onChange={(e) =>
-                      setTravelers((rows) =>
-                        rows.map((row, i) =>
-                          i === idx ? { ...row, firstName: e.target.value } : row,
-                        ),
-                      )
-                    }
-                  />
-                </label>
-                <label>
-                  العائلة
-                  <input
-                    value={traveler.lastName}
-                    onChange={(e) =>
-                      setTravelers((rows) =>
-                        rows.map((row, i) =>
-                          i === idx ? { ...row, lastName: e.target.value } : row,
-                        ),
-                      )
-                    }
-                  />
-                </label>
-              </div>
-            ))}
-            {draft.serviceType === "hotel" ? (
-              <label>
-                طلبات خاصة للفندق
-                <textarea
-                  value={specialRequests}
-                  onChange={(e) => setSpecialRequests(e.target.value)}
-                  placeholder="وصول متأخر، ملاحظات للفندق..."
-                  rows={3}
-                />
-              </label>
-            ) : null}
-            <div className="shop-payment-methods">
-              <p className="shop-kicker">طريقة الدفع</p>
-              <div className="shop-payment-grid">
-                {[
-                  { id: "knet", label: "كي نت", hint: "KNET" },
-                  { id: "visa", label: "فيزا", hint: "Visa / MC" },
-                  { id: "deema", label: "ديما", hint: "Deema" },
-                  { id: "linktap", label: "لينك تاب", hint: "LinkTap" },
-                ].map((opt) => (
-                  <button
-                    key={opt.id}
-                    type="button"
-                    className={`shop-payment-option${paymentMethod === opt.id ? " on" : ""}`}
-                    onClick={() => setPaymentMethod(opt.id)}
-                  >
-                    <strong>{opt.label}</strong>
-                    <small>{opt.hint}</small>
-                  </button>
-                ))}
-              </div>
-            </div>
-            <p className="shop-hint">
-              بعد تأكيد الطلب سيتم توجيهك لبوابة الدفع المختارة (كي نت / فيزا / ديما / لينك تاب).
-            </p>
             <button
               type="button"
               className="shop-btn shop-btn-checkout"
-              disabled={submitting || !paymentMethod}
+              disabled={submitting}
               onClick={() => void submit()}
             >
-              {submitting ? "جارٍ الحفظ..." : "إتمام الحجز والدفع"}
+              {submitting ? "جارٍ الحفظ..." : "إتمام الحجز"}
             </button>
           </div>
         </section>

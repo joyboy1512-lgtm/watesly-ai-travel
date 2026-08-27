@@ -1,15 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import "@/app/hotel-rich.css";
 import { HotelSearchCard } from "@/components/hotels/HotelSearchCard";
 import { ShopHotelFilters } from "@/components/shop/ShopHotelFilters";
 import { ShopHotelResultsBar } from "@/components/shop/ShopHotelResultsBar";
 import type { SuggestItem } from "@/components/shop/ShopAutocomplete";
 import {
+  computeHotelHighlights,
   type HotelOfferRow,
   type HotelFilterFacets,
   type HotelSearchFilters,
+  type HotelHighlightBadge,
 } from "@/lib/hotel-search";
 
 type HotelRow = HotelOfferRow & {
@@ -52,6 +54,15 @@ type Props = {
 export function ShopHotelResults(props: Props) {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const title = props.destination || props.stayQuery || "الإقامات";
+  const guests = props.adults + props.children;
+
+  const highlights = useMemo(() => computeHotelHighlights(props.hotels), [props.hotels]);
+
+  const badgeLabel = (badge: HotelHighlightBadge) => {
+    if (badge === "cheapest") return "الأقل سعرًا";
+    if (badge === "top_rated") return "الأعلى تقييمًا";
+    return "الأقرب للمركز";
+  };
 
   return (
     <section className="shop-hotel-results">
@@ -118,7 +129,11 @@ export function ShopHotelResults(props: Props) {
               key={hotel.id}
               hotel={hotel}
               nights={props.nights}
+              guests={guests}
+              rooms={props.rooms}
               variant="shop"
+              highlight={highlights.get(hotel.id)}
+              highlightLabel={highlights.get(hotel.id) ? badgeLabel(highlights.get(hotel.id)!) : undefined}
               onOpen={() => props.onOpenHotel(hotel)}
             />
           ))}

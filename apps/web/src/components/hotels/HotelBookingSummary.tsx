@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import {
+  formatHotelDay,
   formatPolicyDate,
   rateDisplayMinor,
   taxTypeLabelAr,
@@ -44,6 +45,7 @@ type Props = {
   onBack: () => void;
   onEnterGuestData: () => void;
   onCheckout?: (payload: CheckoutPayload) => void;
+  onContinueToReview?: () => void;
 };
 
 const PAYMENT_OPTIONS = [
@@ -60,16 +62,7 @@ function paymentLabel(type?: string) {
 }
 
 function formatDay(value?: string) {
-  if (!value) return "—";
-  try {
-    return new Date(value).toLocaleDateString("ar-SA", {
-      weekday: "short",
-      month: "short",
-      day: "numeric",
-    });
-  } catch {
-    return value;
-  }
+  return formatHotelDay(value) || "—";
 }
 
 function InfoColumns({ sections }: { sections: Array<{ title: string; items: string[] }> }) {
@@ -107,6 +100,7 @@ export function HotelBookingSummary({
   onBack,
   onEnterGuestData,
   onCheckout,
+  onContinueToReview,
 }: Props) {
   const [step, setStep] = useState<"summary" | "guest" | "payment">("summary");
   const [name, setName] = useState("");
@@ -143,6 +137,10 @@ export function HotelBookingSummary({
 
   function submitGuest() {
     if (!name.trim() || !phone.trim()) return;
+    if (onContinueToReview) {
+      onContinueToReview();
+      return;
+    }
     if (shopStyle && onCheckout) {
       setStep("payment");
       return;
@@ -382,9 +380,17 @@ export function HotelBookingSummary({
         <button
           type="button"
           className="btn hotel-checkout-btn"
-          onClick={() => (shopStyle ? setStep("guest") : onEnterGuestData())}
+          onClick={() => {
+            if (shopStyle && onContinueToReview) {
+              onContinueToReview();
+            } else if (shopStyle) {
+              setStep("guest");
+            } else {
+              onEnterGuestData();
+            }
+          }}
         >
-          إدخال البيانات
+          {shopStyle && onContinueToReview ? "متابعة للمراجعة" : "إدخال البيانات"}
         </button>
       </footer>
     </div>

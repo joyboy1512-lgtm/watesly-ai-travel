@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import "@/app/hotel-rich.css";
-import type { HotelRateOption } from "@/lib/hotel-search";
+import { formatHotelDay, type HotelRateOption } from "@/lib/hotel-search";
 import { type HotelOfferRow } from "@/lib/hotel-search";
 import { apiFetch } from "@/lib/api";
 import { formatMoneyMinor } from "@/lib/format";
@@ -25,7 +25,7 @@ type Props = {
   nights: number;
   meta: StayMeta;
   onClose: () => void;
-  onEnterGuestData: (rate: HotelRateOption) => void;
+  onEnterGuestData?: (rate: HotelRateOption) => void;
   onCheckout?: (payload: {
     rate: HotelRateOption;
     contact: { name: string; email: string; phone: string };
@@ -33,6 +33,10 @@ type Props = {
     paymentMethod: string;
     travelers: Array<{ firstName: string; lastName: string }>;
   }) => void;
+  onContinueToReview?: (
+    rate: HotelRateOption,
+    extras?: { priceChanged?: boolean; previousTotalMinor?: number },
+  ) => void;
   checkRatePath?: string;
   fetchJson?: typeof apiFetch;
   variant?: "default" | "shop";
@@ -47,16 +51,7 @@ type CheckRateResponse = {
 };
 
 function formatDay(value?: string) {
-  if (!value) return "—";
-  try {
-    return new Date(value).toLocaleDateString("ar-SA", {
-      weekday: "short",
-      month: "short",
-      day: "numeric",
-    });
-  } catch {
-    return value;
-  }
+  return formatHotelDay(value) || "—";
 }
 
 export function HotelDetailModal({
@@ -66,6 +61,7 @@ export function HotelDetailModal({
   onClose,
   onEnterGuestData,
   onCheckout,
+  onContinueToReview,
   checkRatePath = "/bookings/checkrate-hotel",
   fetchJson = apiFetch,
   variant = "default",
@@ -220,8 +216,17 @@ export function HotelDetailModal({
               setSelectedRate(null);
               setPriceChange(null);
             }}
-            onEnterGuestData={() => onEnterGuestData(selectedRate)}
+            onEnterGuestData={() => onEnterGuestData?.(selectedRate)}
             onCheckout={onCheckout}
+            onContinueToReview={
+              shopStyle && onContinueToReview
+                ? () =>
+                    onContinueToReview(selectedRate, {
+                      priceChanged: Boolean(priceChange),
+                      previousTotalMinor: priceChange?.fromMinor,
+                    })
+                : undefined
+            }
           />
         ) : (
           <>

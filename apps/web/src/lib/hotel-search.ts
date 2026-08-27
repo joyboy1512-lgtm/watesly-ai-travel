@@ -445,6 +445,53 @@ export function formatPolicyDate(iso?: string): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
+export type HotelHighlightBadge = "cheapest" | "top_rated" | "closest";
+
+export function computeHotelHighlights(
+  rows: Array<HotelOfferRow & { displayFromMinor: number }>,
+): Map<string, HotelHighlightBadge> {
+  const badges = new Map<string, HotelHighlightBadge>();
+  if (!rows.length) return badges;
+
+  let cheapestId = rows[0]!.id;
+  let cheapestPrice = rows[0]!.displayFromMinor;
+  let topRatedId = rows[0]!.id;
+  let topRating = hotelReviewScore(rows[0]!);
+  let closestId: string | null = null;
+  let closestKm = Infinity;
+
+  for (const row of rows) {
+    if (row.displayFromMinor < cheapestPrice) {
+      cheapestPrice = row.displayFromMinor;
+      cheapestId = row.id;
+    }
+    const rating = hotelReviewScore(row);
+    if (rating > topRating) {
+      topRating = rating;
+      topRatedId = row.id;
+    }
+    const km = hotelDistanceKm(row);
+    if (km != null && km < closestKm) {
+      closestKm = km;
+      closestId = row.id;
+    }
+  }
+
+  badges.set(cheapestId, "cheapest");
+  if (topRating > 0 && topRatedId !== cheapestId) {
+    badges.set(topRatedId, "top_rated");
+  } else if (topRating > 0 && topRatedId === cheapestId) {
+    badges.set(topRatedId, "top_rated");
+  }
+  if (closestId && closestKm < Infinity && closestId !== cheapestId && closestId !== topRatedId) {
+    badges.set(closestId, "closest");
+  }
+
+  return badges;
+}
+
+export { formatDay as formatHotelDay } from "@/lib/flight-search";
+
 export {
   BOARD_LABELS_AR,
   taxTypeLabelAr,

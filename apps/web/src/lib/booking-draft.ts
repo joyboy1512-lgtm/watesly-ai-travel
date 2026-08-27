@@ -85,6 +85,12 @@ export type HotelBookingDraft = {
   specialRequests?: string;
   paymentMethod?: string;
   travelers?: Array<{ firstName: string; lastName: string }>;
+  nights?: number;
+  totalMinor?: number;
+  validatedAt?: string;
+  priceChanged?: boolean;
+  previousTotalMinor?: number;
+  resultsReturnHref?: string;
 };
 
 export type BookingDraftTransfer = {

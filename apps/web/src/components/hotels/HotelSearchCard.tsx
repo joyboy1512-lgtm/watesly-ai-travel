@@ -1,6 +1,6 @@
 "use client";
 
-import type { HotelRateOption } from "@/lib/hotel-search";
+import type { HotelRateOption, HotelHighlightBadge } from "@/lib/hotel-search";
 import { formatMoneyMinor } from "@/lib/format";
 import { HotelLiveBadge } from "./HotelLiveBadge";
 
@@ -16,7 +16,11 @@ type HotelRow = {
 type Props = {
   hotel: HotelRow;
   nights: number;
+  guests?: number;
+  rooms?: number;
   variant?: "default" | "shop";
+  highlight?: HotelHighlightBadge;
+  highlightLabel?: string;
   onOpen: () => void;
 };
 
@@ -30,7 +34,16 @@ function formatRating(value: unknown, ranking?: unknown): string {
   return n >= 10 ? (n / 2).toFixed(1) : n.toFixed(1);
 }
 
-export function HotelSearchCard({ hotel, nights, variant = "default", onOpen }: Props) {
+export function HotelSearchCard({
+  hotel,
+  nights,
+  guests = 1,
+  rooms = 1,
+  variant = "default",
+  highlight,
+  highlightLabel,
+  onOpen,
+}: Props) {
   const name = String(hotel.details.name || "فندق");
   const stars = Number(hotel.details.stars || 0);
   const rating = formatRating(hotel.details.rating, hotel.details.ranking);
@@ -66,19 +79,26 @@ export function HotelSearchCard({ hotel, nights, variant = "default", onOpen }: 
   const mapLabel = variant === "shop" ? "عرض على الخريطة" : "الخريطة ↗";
   const isShop = variant === "shop";
 
+  const guestNote =
+    guests === 1 ? "مسافر واحد" : `${guests} مسافرين`;
+  const roomNote = rooms === 1 ? "غرفة واحدة" : `${rooms} غرف`;
+  const priceNote = isShop
+    ? `الإجمالي لـ ${nights} ${nights === 1 ? "ليلة" : "ليالي"} · ${guestNote} · ${roomNote}`
+    : undefined;
+
   return (
     <article className={`hotel-search-card${isShop ? " hotel-search-card-shop" : ""}`}>
       <div className="hotel-search-card-media">
         {typeof hotel.details.imageUrl === "string" && hotel.details.imageUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={String(hotel.details.imageUrl)} alt="" />
+          <img src={String(hotel.details.imageUrl)} alt={name} />
         ) : (
           <div className={`hotel-search-card-placeholder tone-${(stars % 3) + 1}`} />
         )}
-        {isShop ? (
-          <button type="button" className="hotel-search-card-save" aria-label="حفظ" disabled>
-            ♡
-          </button>
+        {highlight && highlightLabel ? (
+          <span className={`hotel-search-card-highlight hotel-highlight-${highlight}`}>
+            {highlightLabel}
+          </span>
         ) : null}
         {soldOut ? <span className="hotel-search-card-badge">غير متاح</span> : null}
       </div>
@@ -99,7 +119,7 @@ export function HotelSearchCard({ hotel, nights, variant = "default", onOpen }: 
             <div className="hotel-search-card-score">
               <strong>{rating}</strong>
               {reviewCount > 0 ? (
-                <small>{reviewCount.toLocaleString("ar")} مراجعة</small>
+                <small>{reviewCount} مراجعة</small>
               ) : null}
             </div>
           ) : null}
@@ -128,7 +148,7 @@ export function HotelSearchCard({ hotel, nights, variant = "default", onOpen }: 
             <strong>{rating}</strong>
             <span>
               {reviewCount > 0
-                ? `${reviewCount.toLocaleString("ar")} مراجعة`
+                ? `${reviewCount} مراجعة`
                 : "تقييم الضيوف"}
             </span>
           </div>
@@ -172,11 +192,9 @@ export function HotelSearchCard({ hotel, nights, variant = "default", onOpen }: 
                   {nights} {nights === 1 ? "ليلة" : "ليالي"} · {cheapest?.roomName || "غرفة"}
                 </small>
               ) : (
-                <small>
-                  {nights} {nights === 1 ? "ليلة" : "ليالي"}
-                </small>
+                <small>{priceNote}</small>
               )}
-              <strong>{formatMoneyMinor(hotel.displayFromMinor, hotel.currency)}</strong>
+              <strong>من {formatMoneyMinor(hotel.displayFromMinor, hotel.currency)}</strong>
               <em>{formatMoneyMinor(perNightMinor, hotel.currency)} / ليلة</em>
               {roomsLeft != null && roomsLeft > 0 ? (
                 <span className="hotel-rooms-left">متبقي {roomsLeft} غرفة</span>

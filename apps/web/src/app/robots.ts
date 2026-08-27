@@ -5,7 +5,7 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: "*",
       allow: "/",
-      disallow: ["/flights/results", "/book", "/dashboard/", "/account/"],
+      disallow: ["/flights/results", "/hotels/results", "/book", "/dashboard/", "/account/"],
     },
     sitemap: "https://www.weekendgate.com/sitemap.xml",
   };

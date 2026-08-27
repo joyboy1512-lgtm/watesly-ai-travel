@@ -6280,3 +6280,71 @@
     display: inline-flex;
   }
 }
+
+/* —— Hotel results page polish —— */
+.shop-hotel-results-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.shop-hotel-results-topbar {
+  margin-bottom: 0.25rem;
+}
+
+.shop-hotel-edit-bar label:first-child {
+  min-width: 10rem;
+}
+
+.hotel-search-card-highlight {
+  position: absolute;
+  top: 0.65rem;
+  inset-inline-start: 0.65rem;
+  z-index: 2;
+  padding: 0.25rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #fff;
+  background: #0f766e;
+}
+
+.hotel-highlight-cheapest {
+  background: #047857;
+}
+
+.hotel-highlight-top_rated {
+  background: #b45309;
+}
+
+.hotel-highlight-closest {
+  background: #1d4ed8;
+}
+
+.shop-hotel-review-stars {
+  color: #b8860b;
+  letter-spacing: 0.08em;
+  margin: 0.25rem 0 0.5rem;
+}
+
+.shop-hotel-review-location,
+.shop-hotel-review-room,
+.shop-hotel-review-note,
+.shop-hotel-review-price-change {
+  color: var(--shop-muted, #64748b);
+  margin: 0.35rem 0;
+}
+
+.shop-hotel-review-price-change {
+  color: #b45309;
+  font-weight: 600;
+}
+
+.shop-hotel-checkout-room {
+  margin: 0.35rem 0 0;
+  color: var(--shop-muted, #64748b);
+}
+
+.shop-flight-checkout-step.done {
+  opacity: 0.65;
+}

@@ -5,7 +5,6 @@ import { HERO_SLIDES } from "@/lib/shop-content";
 import { ShopAutocomplete, type SuggestItem } from "@/components/shop/ShopAutocomplete";
 import { ShopDateRangePicker } from "@/components/shop/ShopDateRangePicker";
 import { formatDay } from "@/lib/flight-search";
-import { formatDay } from "@/lib/flight-search";
 
 type Mode = "flights" | "stays" | "cars" | "activities";
 export type FlightTripType = "roundtrip" | "oneway" | "multicity";

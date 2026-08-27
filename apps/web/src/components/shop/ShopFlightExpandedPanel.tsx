@@ -12,6 +12,9 @@ import {
   type MockProviderOffer,
 } from "@/lib/flight-fare-mock";
 import { airlineNameAr } from "@/lib/flight-airlines";
+import {
+  airlineLogo,
+  cabinLabel,
   formatClock,
   formatDay,
   formatMinutesLabel,

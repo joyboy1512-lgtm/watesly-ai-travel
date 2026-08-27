@@ -6,9 +6,19 @@ import Link from "next/link";
 import { ShopFlightResults } from "@/components/shop/ShopFlightResults";
 import { ShopFlightExpandedPanel } from "@/components/shop/ShopFlightExpandedPanel";
 import { ShopFlightDetailModal } from "@/components/shop/ShopFlightDetailModal";
-import { composeFromPackage, type ComposedTrip } from "@/lib/flight-compose";
+import { ShopFlightSelectionBar } from "@/components/shop/ShopFlightSelectionBar";
+import {
+  composeFromLegs,
+  composeFromPackage,
+  tripReadyForSelection,
+  type ComposedTrip,
+} from "@/lib/flight-compose";
 import { computePriceBreakdown } from "@/lib/flight-fare-mock";
-import { legKey } from "@/lib/flight-leg-selection";
+import {
+  extractLeg,
+  findFlightForLeg,
+  legKey,
+} from "@/lib/flight-leg-selection";
 import {
   cabinLabel,
   collectFlightFacets,
@@ -84,6 +94,21 @@ export function ShopFlightResultsClient() {
 
   const summary = formatFlightSearchSummary(params);
 
+  const composedPreview = useMemo(() => {
+    if (!selectedOutboundKey) return null;
+    const outFlight = findFlightForLeg(flightsRaw, selectedOutboundKey, "outbound");
+    if (!outFlight) return null;
+    const outbound = extractLeg(outFlight, "outbound");
+    if (!outbound) return null;
+    let returnLeg = null;
+    if (selectedReturnKey) {
+      const retFlight = findFlightForLeg(flightsRaw, selectedReturnKey, "return");
+      if (retFlight) returnLeg = extractLeg(retFlight, "return");
+    }
+    return composeFromLegs(outbound, returnLeg);
+  }, [flightsRaw, selectedOutboundKey, selectedReturnKey]);
+
+  const selectionBarTrip = composedPreview;
   const expandedTripId = expandedTrip?.sourcePackageId
     ? `pkg-${expandedTrip.sourcePackageId}`
     : expandedTrip?.id || null;
@@ -273,6 +298,19 @@ export function ShopFlightResultsClient() {
     setLoadingFlightId(null);
   }
 
+  function toggleOutbound(flight: FlightOfferRow) {
+    const key = legKey(flight, "outbound");
+    setExpandedTrip(null);
+    setSelectedOutboundKey((prev) => (prev === key ? null : key));
+  }
+
+  function toggleReturn(flight: FlightOfferRow) {
+    const key = legKey(flight, "return");
+    if (!key) return;
+    setExpandedTrip(null);
+    setSelectedReturnKey((prev) => (prev === key ? null : key));
+  }
+
   /** Primary CTA — select full package (outbound + return together) */
   function handleSelectFlight(flight: FlightOfferRow) {
     const trip = composeFromPackage(flight);
@@ -288,6 +326,18 @@ export function ShopFlightResultsClient() {
   function handleViewDetails(flight: FlightOfferRow) {
     setExpandedTrip(null);
     setDetailsFlight(flight);
+  }
+
+  function handleBarSelect() {
+    if (!composedPreview || !tripReadyForSelection(composedPreview, isRoundTrip)) return;
+    void openTripPanel(composedPreview);
+  }
+
+  function clearSelection() {
+    setSelectedOutboundKey(null);
+    setSelectedReturnKey(null);
+    setExpandedTrip(null);
+    setDetailsFlight(null);
   }
 
   function buildDraftFlight(trip: ComposedTrip) {
@@ -511,12 +561,35 @@ export function ShopFlightResultsClient() {
             onResetFilters={() => setFilters(defaultFlightFilters())}
             onSelectFlight={handleSelectFlight}
             onViewDetails={handleViewDetails}
+            onToggleOutbound={toggleOutbound}
+            onToggleReturn={toggleReturn}
             selectedOutboundKey={selectedOutboundKey}
             selectedReturnKey={selectedReturnKey}
             expandedTripId={expandedTripId}
             loadingFlightId={loadingFlightId}
             pickStep="single"
             stepTitle={isRoundTrip ? "عروض الذهاب والعودة" : undefined}
+            enableMixMatch={isRoundTrip}
+            customTripSlot={
+              isRoundTrip && selectionBarTrip && (selectedOutboundKey || selectedReturnKey) ? (
+                <ShopFlightSelectionBar
+                  trip={selectionBarTrip}
+                  isRoundTrip={isRoundTrip}
+                  canProceed={tripReadyForSelection(selectionBarTrip, isRoundTrip)}
+                  loading={panelBusy}
+                  onSelectTrip={handleBarSelect}
+                  onClear={clearSelection}
+                  onClearOutbound={() => {
+                    setSelectedOutboundKey(null);
+                    setExpandedTrip(null);
+                  }}
+                  onClearReturn={() => {
+                    setSelectedReturnKey(null);
+                    setExpandedTrip(null);
+                  }}
+                />
+              ) : null
+            }
           />
         </>
       ) : null}

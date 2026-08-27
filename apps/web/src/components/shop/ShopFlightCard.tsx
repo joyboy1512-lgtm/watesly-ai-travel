@@ -33,6 +33,13 @@ type Props = {
   isHighlighted?: boolean;
   /** When picking a single leg in mix-match wizard */
   selectLabel?: string;
+  enableMixMatch?: boolean;
+  outboundKey?: string;
+  returnKey?: string;
+  selectedOutboundKey?: string | null;
+  selectedReturnKey?: string | null;
+  onToggleOutbound?: () => void;
+  onToggleReturn?: () => void;
 };
 
 const BADGE_LABEL: Record<"best" | "cheapest" | "fastest", string> = {
@@ -139,6 +146,9 @@ function LegBlock({
   stops,
   durationRaw,
   isReturn,
+  mixEnabled,
+  legSelected,
+  onPickLeg,
 }: {
   segs: FlightSeg[];
   details: Record<string, unknown>;
@@ -150,6 +160,9 @@ function LegBlock({
   stops: number;
   durationRaw: unknown;
   isReturn?: boolean;
+  mixEnabled?: boolean;
+  legSelected?: boolean;
+  onPickLeg?: () => void;
 }) {
   const first = segs[0];
   const code = segmentAirlineCode(first, packageCode);
@@ -176,9 +189,22 @@ function LegBlock({
 
   return (
     <div
-      className={`shop-ticket-leg-v2 kayak-leg shop-ticket-leg-p1${isReturn ? " is-return" : ""}`}
+      className={`shop-ticket-leg-v2 shop-ticket-leg-p1${mixEnabled ? " kayak-leg" : ""}${
+        isReturn ? " is-return" : ""
+      }${legSelected ? " is-leg-selected" : ""}`}
       dir="ltr"
     >
+      {mixEnabled ? (
+        <label className="shop-ticket-kayak-check">
+          <input
+            type="checkbox"
+            checked={Boolean(legSelected)}
+            onChange={() => onPickLeg?.()}
+            aria-label={isReturn ? "اختيار رحلة العودة" : "اختيار رحلة الذهاب"}
+          />
+        </label>
+      ) : null}
+
       <div className="shop-ticket-airline-col">
         <div className="shop-ticket-airline-logo">
           {logo ? (
@@ -244,6 +270,13 @@ export function ShopFlightCard({
   selectLoading = false,
   isHighlighted = false,
   selectLabel = "اختيار هذه الرحلة",
+  enableMixMatch = false,
+  outboundKey,
+  returnKey,
+  selectedOutboundKey = null,
+  selectedReturnKey = null,
+  onToggleOutbound,
+  onToggleReturn,
 }: Props) {
   const segs = getSegments(flight.details);
   const returnSegs = getReturnSegments(flight.details);
@@ -276,7 +309,9 @@ export function ShopFlightCard({
 
   const showOutbound = displayLeg === "both" || displayLeg === "outbound";
   const showReturn = displayLeg === "both" || displayLeg === "return";
-  const picked = isHighlighted || isExpanded;
+  const outSelected = Boolean(outboundKey && selectedOutboundKey === outboundKey);
+  const retSelected = Boolean(returnKey && selectedReturnKey === returnKey);
+  const picked = isHighlighted || isExpanded || outSelected || retSelected;
 
   const pax = Math.max(1, passengers);
   const priceNote =
@@ -318,6 +353,9 @@ export function ShopFlightCard({
               to={to}
               stops={stops}
               durationRaw={flight.details.durationMinutes ?? flight.details.duration}
+              mixEnabled={enableMixMatch}
+              legSelected={outSelected}
+              onPickLeg={onToggleOutbound}
             />
           ) : null}
 
@@ -333,6 +371,9 @@ export function ShopFlightCard({
               stops={returnStops}
               durationRaw={flight.details.returnDurationMinutes ?? flight.details.returnDuration}
               isReturn
+              mixEnabled={enableMixMatch}
+              legSelected={retSelected}
+              onPickLeg={onToggleReturn}
             />
           ) : null}
         </div>

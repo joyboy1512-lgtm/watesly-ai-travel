@@ -7,7 +7,6 @@ import { formatMoneyMinorCompact } from "@/lib/format";
 import {
   flightFiltersActive,
   formatMinutesLabel,
-  legKey,
   outboundLegKey,
   returnLegKey,
   summarizeFlightSortTabs,

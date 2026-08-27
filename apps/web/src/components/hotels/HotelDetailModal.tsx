@@ -1,13 +1,21 @@
 "use client";
 
 import { useState } from "react";
-import type { HotelRateOption } from "@/lib/hotel-search";
+import "@/app/hotel-rich.css";
+import { formatHotelDay, rateDisplayMinor, type HotelRateOption } from "@/lib/hotel-search";
 import { type HotelOfferRow } from "@/lib/hotel-search";
 import { apiFetch } from "@/lib/api";
 import { formatMoneyMinor } from "@/lib/format";
 import { HotelRoomAccordion } from "./HotelRoomAccordion";
 import { HotelBookingSummary } from "./HotelBookingSummary";
 import { HotelLiveBadge } from "./HotelLiveBadge";
+import { pickHotelHighlightFacilities } from "@/lib/hotel-facilities";
+import {
+  arabicAdultCount,
+  arabicChildCount,
+  arabicNightCount,
+  arabicRoomCount,
+} from "@/lib/hotel-occupancy";
 
 type StayMeta = {
   stayQuery: string;
@@ -24,7 +32,21 @@ type Props = {
   nights: number;
   meta: StayMeta;
   onClose: () => void;
-  onEnterGuestData: (rate: HotelRateOption) => void;
+  onEnterGuestData?: (rate: HotelRateOption) => void;
+  onCheckout?: (payload: {
+    rate: HotelRateOption;
+    contact: { name: string; email: string; phone: string };
+    specialRequests: string;
+    paymentMethod: string;
+    travelers: Array<{ firstName: string; lastName: string }>;
+  }) => void;
+  onContinueToReview?: (
+    rate: HotelRateOption,
+    extras?: { priceChanged?: boolean; previousTotalMinor?: number },
+  ) => void;
+  checkRatePath?: string;
+  fetchJson?: typeof apiFetch;
+  variant?: "default" | "shop";
 };
 
 type CheckRateResponse = {
@@ -36,25 +58,31 @@ type CheckRateResponse = {
 };
 
 function formatDay(value?: string) {
-  if (!value) return "—";
-  try {
-    return new Date(value).toLocaleDateString("ar-SA", {
-      weekday: "short",
-      month: "short",
-      day: "numeric",
-    });
-  } catch {
-    return value;
-  }
+  return formatHotelDay(value) || "—";
 }
 
-export function HotelDetailModal({ hotel, nights, meta, onClose, onEnterGuestData }: Props) {
+export function HotelDetailModal({
+  hotel,
+  nights,
+  meta,
+  onClose,
+  onEnterGuestData,
+  onCheckout,
+  onContinueToReview,
+  checkRatePath = "/bookings/checkrate-hotel",
+  fetchJson = apiFetch,
+  variant = "default",
+}: Props) {
+  const shopStyle = variant === "shop";
   const [descOpen, setDescOpen] = useState(false);
   const [selectedRate, setSelectedRate] = useState<HotelRateOption | null>(null);
   const [tab, setTab] = useState<"rooms" | "map" | "reviews" | "facilities" | "policies">(
     "rooms",
   );
   const [checkingRateKey, setCheckingRateKey] = useState<string | null>(null);
+  const [checkPhase, setCheckPhase] = useState<
+    "idle" | "checking" | "confirmed" | "changed" | "soldout" | "error"
+  >("idle");
   const [checkError, setCheckError] = useState("");
   const [priceChange, setPriceChange] = useState<{ fromMinor: number; toMinor: number } | null>(
     null,
@@ -62,15 +90,27 @@ export function HotelDetailModal({ hotel, nights, meta, onClose, onEnterGuestDat
 
   const name = String(hotel.details.name || "فندق");
   const stars = Number(hotel.details.stars || 0);
-  const rating = hotel.details.rating ? Number(hotel.details.rating) : 0;
+  const guestScore = Number(hotel.details.guestRatingScore);
+  const guestSource = String(hotel.details.guestRatingSource || "").trim();
+  const guestRating =
+    Number.isFinite(guestScore) && guestScore > 0 && guestSource
+      ? {
+          score: guestScore,
+          count: Number(hotel.details.guestReviewCount) || undefined,
+          source: guestSource,
+        }
+      : null;
   const imageUrl = typeof hotel.details.imageUrl === "string" ? hotel.details.imageUrl : "";
   const mapUrl = typeof hotel.details.mapUrl === "string" ? hotel.details.mapUrl : "";
   const poiDistances = Array.isArray(hotel.details.poiDistances)
     ? (hotel.details.poiDistances as Array<{ nameAr: string; label: string }>)
     : [];
-  const facilityLabels = Array.isArray(hotel.details.facilityLabels)
-    ? (hotel.details.facilityLabels as string[])
-    : [];
+  const facilityLabels = pickHotelHighlightFacilities(
+    Array.isArray(hotel.details.facilityLabels)
+      ? (hotel.details.facilityLabels as string[])
+      : [],
+    8,
+  );
   const description =
     typeof hotel.details.description === "string" ? hotel.details.description : "";
   const perNight = nights > 0 ? Math.round(hotel.displayFromMinor / nights) : hotel.displayFromMinor;
@@ -86,9 +126,10 @@ export function HotelDetailModal({ hotel, nights, meta, onClose, onEnterGuestDat
   async function handleBookRate(rate: HotelRateOption) {
     setCheckError("");
     setPriceChange(null);
+    setCheckPhase("checking");
     setCheckingRateKey(rate.rateKey);
     try {
-      const result = await apiFetch<CheckRateResponse>("/bookings/checkrate-hotel", {
+      const result = await fetchJson<CheckRateResponse>(checkRatePath, {
         method: "POST",
         timeoutMs: 35000,
         body: JSON.stringify({
@@ -112,7 +153,8 @@ export function HotelDetailModal({ hotel, nights, meta, onClose, onEnterGuestDat
         }),
       });
       if (!result.available) {
-        setCheckError("هذه التعرفة لم تعد متاحة. اختر غرفة أخرى أو أعد البحث.");
+        setCheckPhase("soldout");
+        setCheckError("انتهى التوفر لهذه التعرفة. اختر غرفة أخرى أو أعد البحث.");
         return;
       }
       const nextRate: HotelRateOption = {
@@ -122,22 +164,24 @@ export function HotelDetailModal({ hotel, nights, meta, onClose, onEnterGuestDat
       };
       if (result.priceChanged) {
         const toMinor = result.selectedRate
-          ? Math.round(
-              (result.selectedRate.net || rate.net) *
-                (hotel.currency === "KWD" || hotel.currency === "BHD" || hotel.currency === "OMR"
-                  ? 1000
-                  : 100) *
-                nights,
+          ? rateDisplayMinor(
+              { ...rate, ...(result.selectedRate || {}) },
+              hotel,
+              nights,
             )
           : hotel.displayFromMinor;
         setPriceChange({
           fromMinor: Number(result.previousCostMinor || hotel.sellAmountMinor),
           toMinor,
         });
+        setCheckPhase("changed");
+      } else {
+        setCheckPhase("confirmed");
       }
       setSelectedRate(nextRate);
     } catch (err) {
-      setCheckError(err instanceof Error ? err.message : "تعذر التحقق من السعر الحي");
+      setCheckPhase("error");
+      setCheckError(err instanceof Error ? err.message : "تعذر التحقق من السعر");
     } finally {
       setCheckingRateKey(null);
     }
@@ -146,32 +190,41 @@ export function HotelDetailModal({ hotel, nights, meta, onClose, onEnterGuestDat
   return (
     <div className="flight-modal-backdrop" onClick={onClose} role="presentation">
       <div
-        className="flight-modal hotel-detail-modal"
+        className={`flight-modal hotel-detail-modal${shopStyle ? " hotel-detail-modal-shop" : ""}`}
         role="dialog"
         aria-modal="true"
         aria-labelledby="hotel-detail-title"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="hotel-modal-toolbar">
-          <button type="button" className="flight-modal-close" aria-label="إغلاق" onClick={onClose}>
-            ×
-          </button>
-        </div>
+        <div className="hotel-modal-sticky-head">
+          <div className="hotel-modal-toolbar">
+            <button type="button" className="flight-modal-close" aria-label="إغلاق" onClick={onClose}>
+              ×
+            </button>
+          </div>
 
-        <div className="hotel-name-chip" title={name}>
-          <h2 id="hotel-detail-title">{name}</h2>
-          {stars > 0 ? (
-            <div className="hotel-gold-stars" aria-label={`${stars} نجوم`}>
-              {Array.from({ length: Math.min(5, stars) }, (_, i) => (
-                <span key={i}>★</span>
-              ))}
-            </div>
-          ) : null}
+          <div className="hotel-name-chip" title={name}>
+            <h2 id="hotel-detail-title">{name}</h2>
+            {stars > 0 ? (
+              <div className="hotel-gold-stars" aria-label={`${stars} نجوم`}>
+                {Array.from({ length: Math.min(5, stars) }, (_, i) => (
+                  <span key={i}>★</span>
+                ))}
+              </div>
+            ) : null}
+          </div>
         </div>
 
         <div className="hotel-modal-live">
           <HotelLiveBadge
             liveMode={Boolean(hotel.details.liveMode)}
+            sandbox={
+              hotel.details.source === "hotelbeds-sandbox" ||
+              hotel.details.source === "mock" ||
+              hotel.details.liveMode === false ||
+              String(hotel.details.sourceLabel || "").includes("Sandbox") ||
+              String(hotel.details.sourceLabel || "").includes("تجريب")
+            }
             sourceLabel={
               typeof hotel.details.sourceLabel === "string"
                 ? hotel.details.sourceLabel
@@ -184,6 +237,27 @@ export function HotelDetailModal({ hotel, nights, meta, onClose, onEnterGuestDat
           />
         </div>
 
+        {checkPhase === "checking" ? (
+          <div className="hotel-recheck-banner is-checking" role="status">
+            جاري إعادة التحقق من السعر والتوفر…
+          </div>
+        ) : null}
+        {checkPhase === "confirmed" && selectedRate ? (
+          <div className="hotel-recheck-banner is-ok" role="status">
+            تم تأكيد السعر
+          </div>
+        ) : null}
+        {checkPhase === "changed" && priceChange ? (
+          <div className="hotel-recheck-banner is-changed" role="status">
+            تغيّر السعر — راجع الملخص قبل المتابعة
+          </div>
+        ) : null}
+        {checkPhase === "soldout" ? (
+          <div className="hotel-recheck-banner is-soldout" role="alert">
+            انتهى التوفر لهذه التعرفة
+          </div>
+        ) : null}
+
         {selectedRate ? (
           <HotelBookingSummary
             hotel={hotel}
@@ -191,11 +265,23 @@ export function HotelDetailModal({ hotel, nights, meta, onClose, onEnterGuestDat
             nights={nights}
             meta={meta}
             priceChange={priceChange}
+            shopStyle={shopStyle}
             onBack={() => {
               setSelectedRate(null);
               setPriceChange(null);
+              setCheckPhase("idle");
             }}
-            onEnterGuestData={() => onEnterGuestData(selectedRate)}
+            onEnterGuestData={() => onEnterGuestData?.(selectedRate)}
+            onCheckout={onCheckout}
+            onContinueToReview={
+              shopStyle && onContinueToReview
+                ? () =>
+                    onContinueToReview(selectedRate, {
+                      priceChanged: Boolean(priceChange),
+                      previousTotalMinor: priceChange?.fromMinor,
+                    })
+                : undefined
+            }
           />
         ) : (
           <>
@@ -209,12 +295,11 @@ export function HotelDetailModal({ hotel, nights, meta, onClose, onEnterGuestDat
               <div className="hotel-detail-modal-summary">
                 <p>
                   {formatDay(meta.departDate)} → {formatDay(meta.returnDate)} · {nights}{" "}
-                  {nights === 1 ? "ليلة" : "ليالي"}
+                  {arabicNightCount(nights)}
                 </p>
                 <p>
-                  {meta.rooms} غرفة · {meta.adults} بالغ
-                  {meta.children ? ` · ${meta.children} طفل` : ""}
-                  {meta.infants ? ` · ${meta.infants} رضيع` : ""}
+                  {arabicRoomCount(meta.rooms)} · {arabicAdultCount(meta.adults)}
+                  {meta.children ? ` · ${arabicChildCount(meta.children)}` : ""}
                 </p>
                 {hotel.details.distanceToCenterLabel ? (
                   <p className="hotel-detail-distance">
@@ -230,10 +315,12 @@ export function HotelDetailModal({ hotel, nights, meta, onClose, onEnterGuestDat
                     ))}
                   </ul>
                 ) : null}
-                {rating > 0 ? (
+                {guestRating ? (
                   <p className="hotel-detail-rating">
-                    تقييم {rating.toFixed(1)}/10
-                    {hotel.details.ranking ? ` · ترتيب ${String(hotel.details.ranking)}` : ""}
+                    تقييم الضيوف {guestRating.score.toFixed(1)}
+                    {guestRating.count ? ` · ${guestRating.count} مراجعة` : ""}
+                    {" · "}
+                    {guestRating.source}
                   </p>
                 ) : null}
                 {mapUrl ? (
@@ -242,7 +329,7 @@ export function HotelDetailModal({ hotel, nights, meta, onClose, onEnterGuestDat
                   </a>
                 ) : null}
               </div>
-              <div className="hotel-detail-from">
+              <div className={`hotel-detail-from${shopStyle ? " hotel-detail-from-shop" : ""}`}>
                 <small>يبدأ من</small>
                 <strong>{formatMoneyMinor(perNight, hotel.currency)}</strong>
                 <em>/ ليلة</em>
@@ -306,6 +393,7 @@ export function HotelDetailModal({ hotel, nights, meta, onClose, onEnterGuestDat
                   hotel={hotel}
                   nights={nights}
                   checkingRateKey={checkingRateKey}
+                  shopStyle={shopStyle}
                   onBookRate={(rate) => void handleBookRate(rate)}
                 />
               </section>
@@ -346,24 +434,19 @@ export function HotelDetailModal({ hotel, nights, meta, onClose, onEnterGuestDat
             {tab === "reviews" ? (
               <section className="flight-modal-section hotel-tab-panel">
                 <h3>التقييمات</h3>
-                {rating > 0 ? (
+                {guestRating ? (
                   <div className="hotel-review-score">
-                    <strong>{rating.toFixed(1)}</strong>
+                    <strong>{guestRating.score.toFixed(1)}</strong>
                     <div>
-                      <span>تقييم Hotelbeds</span>
-                      {hotel.details.ranking != null ? (
-                        <small>الترتيب {String(hotel.details.ranking)} / 100</small>
-                      ) : null}
-                      {hotel.details.reviewCount ? (
-                        <small>
-                          {Number(hotel.details.reviewCount).toLocaleString("ar")} مؤشر تقييم
-                        </small>
+                      <span>مصدر: {guestRating.source}</span>
+                      {guestRating.count ? (
+                        <small>{guestRating.count} مراجعة</small>
                       ) : null}
                     </div>
                   </div>
                 ) : (
                   <p className="hint">
-                    لا يوفّر Hotelbeds Sandbox تقييمات نزلاء مفصّلة لهذا العقار بعد.
+                    لا يتوفر تقييم نزلاء موثوق من المزود لهذا العقار. يُعرض تصنيف النجوم الرسمي فقط.
                   </p>
                 )}
               </section>

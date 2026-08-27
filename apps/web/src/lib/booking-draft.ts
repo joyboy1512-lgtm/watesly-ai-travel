@@ -1,3 +1,7 @@
+import type { ComposedTrip } from "./flight-compose";
+import type { FlightPriceBreakdown, MockFareOption, MockProviderOffer } from "./flight-fare-mock";
+import type { SelectedLeg } from "./flight-leg-selection";
+
 export type BookingDraftFlight = {
   id: string;
   description: string;
@@ -19,6 +23,16 @@ export type BookingDraftHotelRate = {
   freeCancellation: boolean;
   allotment?: number;
   rateComments?: string;
+  cancellationFrom?: string;
+  taxes?: {
+    allIncluded?: boolean;
+    items: Array<{
+      type?: string;
+      amount: number;
+      currency: string;
+      included: boolean;
+    }>;
+  };
 };
 
 export type BookingDraftHotel = {
@@ -38,16 +52,45 @@ export type FlightBookingDraft = {
   destinationLabel: string;
   departDate: string;
   returnDate?: string;
-  tripType: "roundtrip" | "oneway";
+  tripType: "roundtrip" | "oneway" | "multicity";
   adults: number;
   children: number;
   infants?: number;
   cabinClass: string;
   createdAt: string;
-  /** Present when the offer originated from a live search + created Quote. */
   inquiryId?: string;
   quoteId?: string;
   quoteItemId?: string;
+  composedTrip?: ComposedTrip;
+  selectedOutbound?: SelectedLeg;
+  selectedReturn?: SelectedLeg | null;
+  selectedFare?: MockFareOption;
+  selectedProvider?: MockProviderOffer;
+  priceBreakdown?: FlightPriceBreakdown;
+  validatedAt?: string;
+  resultsReturnHref?: string;
+};
+
+export type HotelDraftPriceBreakdown = {
+  stayMinor: number;
+  includedTaxMinor: number;
+  excludedTaxMinor: number;
+  serviceFeeMinor: number;
+  payNowMinor: number;
+  payAtHotelMinor: number;
+  tripTotalMinor: number;
+  perNightMinor: number;
+  taxesIncluded: boolean;
+};
+
+export type HotelRoomGuestDraft = {
+  roomIndex: number;
+  isLead: boolean;
+  title: string;
+  firstName: string;
+  lastName: string;
+  type: "adult" | "child";
+  age?: number;
 };
 
 export type HotelBookingDraft = {
@@ -60,12 +103,28 @@ export type HotelBookingDraft = {
   adults: number;
   children: number;
   infants?: number;
+  childAges?: number[];
+  roomOccupancies?: Array<{ adults: number; childAges: number[] }>;
   location: string;
   locationLabel: string;
   createdAt: string;
   inquiryId?: string;
   quoteId?: string;
   quoteItemId?: string;
+  contactName?: string;
+  contactEmail?: string;
+  contactPhone?: string;
+  specialRequests?: string;
+  paymentMethod?: string;
+  travelers?: Array<{ firstName: string; lastName: string }>;
+  roomGuests?: HotelRoomGuestDraft[];
+  nights?: number;
+  totalMinor?: number;
+  priceBreakdown?: HotelDraftPriceBreakdown;
+  validatedAt?: string;
+  priceChanged?: boolean;
+  previousTotalMinor?: number;
+  resultsReturnHref?: string;
 };
 
 export type BookingDraftTransfer = {

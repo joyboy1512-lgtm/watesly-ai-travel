@@ -39,9 +39,10 @@ function normalizeChildrenAges(children: number, raw?: string): number[] {
     .split(",")
     .map((part) => Number(part.trim()))
     .filter((n) => Number.isFinite(n) && n >= 0 && n <= 17);
-  const ages = [...parsed];
-  while (ages.length < count) ages.push(6);
-  return ages.slice(0, count);
+  if (parsed.length < count) {
+    throw new Error("يجب تحديد عمر كل طفل قبل البحث عن الفنادق");
+  }
+  return parsed.slice(0, count);
 }
 
 function firstHbRate(hotel?: HbHotel): HbRate | undefined {
@@ -162,13 +163,36 @@ export class HotelbedsHotelProvider implements HotelProviderAdapter {
       filter.paymentType = params.paymentType;
     }
 
-    const payload: Record<string, unknown> = {
-      stay: {
-        checkIn: params.checkInDate,
-        checkOut: params.checkOutDate,
-        ...(shiftDays > 0 ? { shiftDays } : {}),
-      },
-      occupancies: [
+    const roomOccupancies = Array.isArray(params.roomOccupancies)
+      ? params.roomOccupancies.filter((r) => r && Math.max(1, r.adults || 0) >= 1)
+      : [];
+
+    let occupancies: Array<Record<string, unknown>>;
+    if (roomOccupancies.length > 0) {
+      occupancies = roomOccupancies.map((room) => {
+        const adults = Math.max(1, room.adults || 1);
+        const childAges = (room.childrenAges || [])
+          .map((a) => Number(a))
+          .filter((a) => Number.isFinite(a) && a >= 0 && a <= 17);
+        const childCount = Math.max(
+          0,
+          room.children != null ? Number(room.children) : childAges.length,
+        );
+        if (childCount > 0 && childAges.length < childCount) {
+          throw new Error("يجب تحديد عمر كل طفل في كل غرفة قبل البحث");
+        }
+        const agesForRoom = childAges.slice(0, childCount);
+        return {
+          rooms: 1,
+          adults,
+          children: agesForRoom.length,
+          ...(agesForRoom.length
+            ? { paxes: agesForRoom.map((age) => ({ type: "CH", age })) }
+            : {}),
+        };
+      });
+    } else {
+      occupancies = [
         {
           rooms,
           adults: Math.max(1, params.adults),
@@ -177,7 +201,16 @@ export class HotelbedsHotelProvider implements HotelProviderAdapter {
             ? { paxes: ages.map((age) => ({ type: "CH", age })) }
             : {}),
         },
-      ],
+      ];
+    }
+
+    const payload: Record<string, unknown> = {
+      stay: {
+        checkIn: params.checkInDate,
+        checkOut: params.checkOutDate,
+        ...(shiftDays > 0 ? { shiftDays } : {}),
+      },
+      occupancies,
       filter,
       language: "ENG",
       sourceMarket,

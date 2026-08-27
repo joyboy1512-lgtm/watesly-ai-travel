@@ -18,7 +18,7 @@ const PREFERRED: Array<{ match: RegExp; label: string }> = [
 ];
 
 const BLOCKED =
-  /visa|master\s*card|mastercard|american\s*express|amex|number of floors|طوابق|floors?|double rooms?|غرف\s*دوبل|credit card|بطاقة\s*ائتمان|payment/i;
+  /visa|master\s*card|mastercard|american\s*express|amex|number of floors|طوابق|floors?|double rooms?|غرف\s*دوبل|credit card|بطاقة\s*ائتمان|payment|suite|سوبيريور|superior|junior|جونيور|deluxe room|دوبلكس/i;
 
 export function pickHotelHighlightFacilities(
   labels: string[] | undefined,

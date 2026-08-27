@@ -17,6 +17,7 @@ import {
 } from "@/lib/hotel-search";
 import {
   buildHotelResultsHref,
+  encodeRoomOccupancies,
   formatHotelSearchSummary,
   hotelSearchPreferencesJson,
   nightsBetween,
@@ -153,13 +154,23 @@ export function ShopHotelResultsClient() {
           throw new Error("أدخل الوجهة وتواريخ الإقامة");
         }
         if (search.children > 0) {
-          const ages = String(search.childrenAges || "")
+          const occ = occupancyFromSearchParams(search);
+          const agesCsv =
+            String(search.childrenAges || "").trim() ||
+            occ.flatMap((r) => r.childAges).join(",");
+          const ages = agesCsv
             .split(",")
             .map((p) => p.trim())
             .filter(Boolean);
           if (ages.length < search.children) {
             throw new Error("حدد عمر كل طفل قبل البحث");
           }
+          // Ensure ages flow into preferences even if URL omitted childrenAges
+          search = {
+            ...search,
+            childrenAges: ages.slice(0, search.children).join(","),
+            occ: search.occ || encodeRoomOccupancies(occ),
+          };
         }
         setMessage("نقارن الأسعار من مزودي الفنادق…");
         const result = await shopFetch<{
@@ -263,7 +274,19 @@ export function ShopHotelResultsClient() {
 
   function applyEdit(e: FormEvent) {
     e.preventDefault();
-    const href = buildHotelResultsHref(draft);
+    let next = { ...draft };
+    if (next.children > 0) {
+      const ages = String(next.childrenAges || "")
+        .split(",")
+        .map((p) => p.trim())
+        .filter(Boolean);
+      while (ages.length < next.children) ages.push("8");
+      next = {
+        ...next,
+        childrenAges: ages.slice(0, next.children).join(","),
+      };
+    }
+    const href = buildHotelResultsHref(next);
     router.push(href);
     setEditOpen(false);
   }

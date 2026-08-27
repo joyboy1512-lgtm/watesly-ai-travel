@@ -632,7 +632,15 @@ export default function PublicBookPage() {
                   checkOut: draft.checkOut,
                   rooms: draft.rooms,
                 },
-                guests: travelers,
+                guests: roomGuests.map((g) => ({
+                  title: g.title,
+                  firstName: g.firstName,
+                  lastName: g.lastName,
+                  type: g.type,
+                  age: g.age,
+                  roomIndex: g.roomIndex,
+                  isLead: g.isLead,
+                })),
                 adults: draft.adults,
                 children: draft.children,
               }

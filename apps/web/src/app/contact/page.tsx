@@ -34,6 +34,9 @@ export default function ContactPage() {
         <li>
           <strong>ساعات العمل:</strong> {COMPANY_LEGAL.hoursAr}
         </li>
+        <li>
+          <strong>رقم الترخيص السياحي:</strong> {COMPANY_LEGAL.tourismLicense}
+        </li>
       </ul>
       <p>
         للاستفسار عن حجز، أرفق رقم حجز WeekendGate. يمكنك أيضًا استخدام صفحة{" "}

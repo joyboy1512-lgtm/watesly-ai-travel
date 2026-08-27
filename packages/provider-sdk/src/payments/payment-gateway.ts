@@ -73,6 +73,45 @@ function envMode(): "sandbox" | "production" {
   return v === "production" || v === "live" ? "production" : "sandbox";
 }
 
+/**
+ * Env keys reserved for merchant activation (set when PSP account is ready):
+ * - PAYMENT_ENV=sandbox|production
+ * - PAYMENT_PROVIDER=sandbox-hosted|upayments|tap|myfatoorah (future)
+ * - PAYMENT_MERCHANT_ID
+ * - PAYMENT_API_KEY
+ * - PAYMENT_WEBHOOK_SECRET
+ * - PAYMENT_APPLE_PAY_ENABLED=true|false
+ * - PAYMENT_KNET_ENABLED=true|false
+ *
+ * Until keys exist, SandboxHostedPaymentAdapter is used — never mock prices in
+ * production booking flows; payment stays unpaid/manual until PSP is wired.
+ */
+export function paymentGatewayConfigStatus(): {
+  readyForLive: boolean;
+  provider: string;
+  environment: "sandbox" | "production";
+  knetEnabled: boolean;
+  applePayEnabled: boolean;
+  missing: string[];
+} {
+  const environment = envMode();
+  const provider = (process.env.PAYMENT_PROVIDER || "sandbox-hosted").trim();
+  const missing: string[] = [];
+  if (provider !== "sandbox-hosted") {
+    if (!process.env.PAYMENT_MERCHANT_ID?.trim()) missing.push("PAYMENT_MERCHANT_ID");
+    if (!process.env.PAYMENT_API_KEY?.trim()) missing.push("PAYMENT_API_KEY");
+    if (!process.env.PAYMENT_WEBHOOK_SECRET?.trim()) missing.push("PAYMENT_WEBHOOK_SECRET");
+  }
+  return {
+    readyForLive: provider !== "sandbox-hosted" && missing.length === 0,
+    provider,
+    environment,
+    knetEnabled: process.env.PAYMENT_KNET_ENABLED === "true",
+    applePayEnabled: process.env.PAYMENT_APPLE_PAY_ENABLED === "true",
+    missing,
+  };
+}
+
 function newId(prefix: string) {
   return `${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
 }
@@ -167,7 +206,16 @@ export class SandboxHostedPaymentAdapter implements PaymentGatewayAdapter {
 let defaultAdapter: PaymentGatewayAdapter | null = null;
 
 export function getPaymentGateway(): PaymentGatewayAdapter {
-  if (!defaultAdapter) defaultAdapter = new SandboxHostedPaymentAdapter();
+  if (!defaultAdapter) {
+    const status = paymentGatewayConfigStatus();
+    if (!status.readyForLive) {
+      defaultAdapter = new SandboxHostedPaymentAdapter();
+    } else {
+      // Live PSP adapters plug in here when merchant credentials are provided.
+      // Until then sandbox remains the safe default.
+      defaultAdapter = new SandboxHostedPaymentAdapter();
+    }
+  }
   return defaultAdapter;
 }
 

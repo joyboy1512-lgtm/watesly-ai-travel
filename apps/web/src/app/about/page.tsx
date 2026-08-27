@@ -36,12 +36,10 @@ export default function AboutPage() {
         <li>
           <strong>ساعات العمل:</strong> {COMPANY_LEGAL.hoursAr}
         </li>
+        <li>
+          <strong>رقم الترخيص السياحي:</strong> {COMPANY_LEGAL.tourismLicense}
+        </li>
       </ul>
-      <p>
-        رقم الترخيص السياحي يُعرض في تذييل الموقع وصفحة التواصل فور اعتماده
-        رسميًا في السجلات التجارية — لا نعرض عبارة «يحدث قبل الإطلاق» في بيئة
-        الإنتاج.
-      </p>
     </LegalPageShell>
   );
 }

@@ -24,6 +24,12 @@ export default function PaymentPolicyPage() {
         آخر تسعير للحجز ونستخدم مفتاح Idempotency.
       </p>
       <p>
+        هيكل الدفع جاهز (Payment Intent + Idempotency + Webhook موقّع). عند توفر
+        حساب التاجر تُضبط المتغيرات: PAYMENT_MERCHANT_ID و PAYMENT_API_KEY و
+        PAYMENT_WEBHOOK_SECRET مع تفعيل KNET / Apple Pay. حتى ذلك الحين يبقى
+        الدفع في وضع إعداد آمن دون خصم حقيقي تلقائي.
+      </p>
+      <p>
         للاستفسار:{" "}
         <a href={`mailto:${COMPANY_LEGAL.supportEmail}`}>{COMPANY_LEGAL.supportEmail}</a>
       </p>

@@ -120,7 +120,11 @@ export function StoreFront({
               منصة حجز تابعة لـ{COMPANY_LEGAL.legalNameAr}: طيران، فنادق، نقل،
               وأنشطة.
             </p>
-            <p className="shop-footer-legal-meta">{COMPANY_LEGAL.addressAr}</p>
+            <p className="shop-footer-legal-meta">
+              {COMPANY_LEGAL.addressAr}
+              <br />
+              ترخيص سياحي رقم {COMPANY_LEGAL.tourismLicense}
+            </p>
           </div>
           <div>
             <strong>استكشف</strong>

@@ -4814,15 +4814,26 @@
 .shop-ticket-badges {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.25rem;
+  gap: 0.3rem;
   padding: 0.35rem 0.7rem 0;
+  align-items: center;
+  align-self: start;
+  height: auto;
 }
 
 .shop-ticket-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   border-radius: 6px;
-  padding: 0.15rem 0.45rem;
+  padding: 0.18rem 0.5rem;
   font-size: 0.72rem;
   font-weight: 800;
+  line-height: 1.2;
+  white-space: nowrap;
+  height: auto;
+  writing-mode: horizontal-tb;
+  flex: 0 0 auto;
 }
 
 .shop-ticket-badge-best {
@@ -5560,9 +5571,30 @@
 
 .shop-ticket-card-v2 {
   display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 0.75rem 1rem;
-  align-items: stretch;
+  grid-template-columns: minmax(0, 1fr) minmax(8.5rem, 10.5rem);
+  grid-template-areas:
+    "badges badges"
+    "body side";
+  gap: 0.45rem 0.85rem;
+  align-items: start;
+  padding: 0.55rem 0.7rem 0.65rem;
+  overflow: hidden;
+}
+
+.shop-ticket-card-v2 > .shop-ticket-badges {
+  grid-area: badges;
+  padding: 0;
+  margin: 0;
+}
+
+.shop-ticket-card-v2 > .shop-ticket-body-v2 {
+  grid-area: body;
+  min-width: 0;
+}
+
+.shop-ticket-card-v2 > .shop-ticket-side-v2 {
+  grid-area: side;
+  align-self: center;
 }
 
 .shop-ticket-body-v2 {
@@ -5640,6 +5672,7 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  max-width: 100%;
 }
 
 .shop-ticket-airline-text span {
@@ -5923,16 +5956,39 @@
 
 .shop-ticket-side-v2 {
   display: grid;
-  gap: 0.35rem;
+  gap: 0.3rem;
   align-content: center;
   justify-items: end;
-  min-width: 9.5rem;
+  min-width: 0;
+  max-width: 100%;
   border-inline-start: 1px solid var(--exp-border);
-  padding-inline-start: 0.85rem;
+  padding-inline-start: 0.75rem;
+  box-sizing: border-box;
+}
+
+.shop-ticket-side-v2 .shop-ticket-price {
+  font-size: 1.05rem;
+  text-align: end;
+  word-break: break-word;
+}
+
+.shop-ticket-side-v2 .shop-ticket-price-note {
+  text-align: end;
+  line-height: 1.3;
+}
+
+.shop-ticket-side-v2 .shop-ticket-details-btn {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .shop-ticket-details-btn.primary {
-  min-width: 7.5rem;
+  min-width: 0;
+  padding: 0.55rem 0.85rem;
 }
 
 .shop-flight-expanded-panel.has-sticky-foot {
@@ -6130,6 +6186,17 @@
 @media (max-width: 900px) {
   .shop-ticket-card-v2 {
     grid-template-columns: 1fr;
+    grid-template-areas:
+      "badges"
+      "body"
+      "side";
+    gap: 0.55rem;
+    padding: 0.65rem 0.7rem 0.75rem;
+  }
+
+  .shop-ticket-card-v2 > .shop-ticket-badges {
+    flex-direction: row;
+    flex-wrap: wrap;
   }
 
   .shop-ticket-leg-v2 {
@@ -6138,6 +6205,20 @@
       "airline airline"
       "dep arr"
       "path path";
+  }
+
+  .shop-ticket-leg-v2.kayak-leg {
+    grid-template-columns: 28px 1fr 1fr;
+    grid-template-areas:
+      "check airline airline"
+      "check dep arr"
+      "check path path";
+  }
+
+  .shop-ticket-leg-v2.kayak-leg .shop-ticket-kayak-check {
+    grid-area: check;
+    align-self: start;
+    padding-top: 0.35rem;
   }
 
   .shop-ticket-airline-col {
@@ -6163,6 +6244,20 @@
     border-top: 1px solid var(--exp-border);
     padding-top: 0.65rem;
     justify-items: stretch;
+    width: 100%;
+  }
+
+  .shop-ticket-side-v2 .shop-ticket-price,
+  .shop-ticket-side-v2 .shop-ticket-price-note {
+    text-align: start;
+  }
+
+  .shop-ticket-side-v2 .shop-ticket-bags {
+    justify-content: flex-start;
+  }
+
+  .shop-ticket-side-v2 .shop-ticket-details-btn {
+    width: 100%;
   }
 
   .exp-util-link.mobile-only {

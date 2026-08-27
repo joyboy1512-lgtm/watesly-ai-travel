@@ -1,5 +1,7 @@
 "use client";
 
+import "../../prc-suite.css";
+
 import { useEffect, useMemo, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { apiFetch } from "@/lib/api";

@@ -4,6 +4,7 @@ import { formatMoneyMinor } from "@/lib/format";
 import {
   airlineLogo,
   computeLegDurationMinutes,
+  durationMinutes,
   flightAirlineNameAr,
   formatClock,
   formatMinutesLabel,

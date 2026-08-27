@@ -22,6 +22,7 @@ export type FlightSeg = {
   airlineCode?: string;
   flightNumber?: string;
   aircraft?: string;
+  durationMinutes?: number;
 };
 
 export type DepartureBucket = "night" | "morning" | "afternoon" | "evening";
@@ -158,6 +159,8 @@ export function computeLegDurationMinutes(
       const parsed = parseTimeDiffMinutes(dep, arr);
       if (parsed != null && parsed > 0) return parsed;
     }
+    const summed = segs.reduce((sum, s) => sum + (Number(s.durationMinutes) || 0), 0);
+    if (summed > 0) return summed;
   }
   const mins = durationMinutes(fallbackRaw);
   return mins === Number.MAX_SAFE_INTEGER ? 0 : mins;

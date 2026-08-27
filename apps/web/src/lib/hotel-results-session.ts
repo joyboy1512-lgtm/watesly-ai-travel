@@ -2,7 +2,7 @@ import type { HotelSearchFilters } from "./hotel-search";
 
 const KEY = "watesly_hotel_results_session";
 
-export type HotelSortKey = "price_asc" | "price_desc" | "rating_desc";
+export type HotelSortKey = "price_asc" | "price_desc" | "rating_desc" | "best" | "distance";
 
 export type HotelResultsSession = {
   filters: HotelSearchFilters;

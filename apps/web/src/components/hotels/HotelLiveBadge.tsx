@@ -19,6 +19,7 @@ function formatRemaining(ms: number) {
 
 type Props = {
   liveMode?: boolean;
+  sandbox?: boolean;
   sourceLabel?: string;
   fetchedAt?: string;
   expiresAt?: string;
@@ -27,12 +28,14 @@ type Props = {
 
 export function HotelLiveBadge({
   liveMode,
+  sandbox,
   sourceLabel,
   fetchedAt,
   expiresAt,
   compact,
 }: Props) {
   const [now, setNow] = useState(() => Date.now());
+  const isSandbox = sandbox ?? !liveMode;
 
   useEffect(() => {
     if (!expiresAt) return;
@@ -46,9 +49,15 @@ export function HotelLiveBadge({
   const fetchedLabel = fetchedAt ? formatFetchedTime(fetchedAt) : null;
 
   return (
-    <div className={`hotel-live-badge${expired ? " is-expired" : ""}${compact ? " is-compact" : ""}`}>
-      <strong>{liveMode ? "عرض حي" : "عرض تجريبي"}</strong>
-      {sourceLabel ? <span>{sourceLabel}</span> : null}
+    <div
+      className={`hotel-live-badge${expired ? " is-expired" : ""}${compact ? " is-compact" : ""}${
+        isSandbox ? " is-sandbox" : ""
+      }`}
+    >
+      <strong>
+        {isSandbox ? "نتيجة تجريبية من Hotelbeds Sandbox" : "عرض حي"}
+      </strong>
+      {!isSandbox && sourceLabel ? <span>{sourceLabel}</span> : null}
       {fetchedLabel ? <span>جُلب {fetchedLabel}</span> : null}
       {remaining != null ? (
         <em suppressHydrationWarning>

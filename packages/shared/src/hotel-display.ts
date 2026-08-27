@@ -24,7 +24,13 @@ export type HotelRateOption = {
   roomName: string;
   boardCode: string;
   boardName: string;
+  /**
+   * Stay total in MAJOR currency units (not minor, not per-night).
+   * Hotelbeds `net` is the full-stay amount for the requested occupancy.
+   */
   net: number;
+  /** Explicit basis — defaults to "stay" when omitted. */
+  netBasis?: "stay" | "night";
   sellingRate?: number;
   currency: string;
   paymentType?: string;
@@ -132,6 +138,11 @@ export type HotelPropertyDetails = {
   roomImages?: Record<string, string>;
   facilityLabels?: string[];
   ranking?: number;
+  /** Official guest review score — only when provider supplies a real source. */
+  guestRatingScore?: number;
+  guestRatingScale?: 5 | 10;
+  guestReviewCount?: number;
+  guestRatingSource?: string;
   distanceToCenterKm?: number;
   distanceToCenterLabel?: string;
   poiDistances?: HotelPoiDistance[];
@@ -152,10 +163,10 @@ export type HotelPropertyDetails = {
 
 export const BOARD_LABELS_AR: Record<string, string> = {
   RO: "غرفة فقط",
-  BB: "إفطار",
+  BB: "شامل الإفطار",
   HB: "نصف إقامة",
   FB: "إقامة كاملة",
-  AI: "شامل كليًا",
+  AI: "شامل جميع الوجبات",
   SC: "خدمة ذاتية",
   DB: "إفطار وعشاء",
 };

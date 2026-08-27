@@ -125,9 +125,11 @@ export function enrichDetailsFromContent(input: {
     details.address = content.address.content;
   }
   if (content.ranking != null) {
+    // Hotelbeds Content `ranking` is an internal popularity index (≈1–100),
+    // NOT a guest review score. Store for sorting hints only — never invent reviews.
     details.ranking = content.ranking;
-    details.rating = Math.min(10, Math.max(1, content.ranking / 10));
-    details.reviewCount = Math.round(content.ranking * 42);
+    delete details.rating;
+    delete details.reviewCount;
   }
 
   if (searchCenter && Number.isFinite(hotelLat) && Number.isFinite(hotelLng)) {

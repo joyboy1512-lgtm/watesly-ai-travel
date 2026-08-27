@@ -128,8 +128,8 @@ export class MockHotelProvider implements HotelProviderAdapter {
           name: hotel.nameAr,
           nameEn: hotel.nameEn,
           stars: hotel.stars,
-          rating: hotel.rating,
-          reviewCount: hotel.reviewCount,
+          // Mock catalog ratings are synthetic — do not expose as guest reviews.
+          ranking: hotel.rating ? Math.round(hotel.rating * 10) : undefined,
           roomType: cheapest?.roomName || hotel.roomType,
           roomCode: cheapest?.roomCode,
           propertyType: hotel.propertyType,

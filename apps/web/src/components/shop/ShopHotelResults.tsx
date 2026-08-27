@@ -21,7 +21,7 @@ type HotelRow = HotelOfferRow & {
 
 type Facets = HotelFilterFacets;
 
-type SortKey = "price_asc" | "price_desc" | "rating_desc";
+type SortKey = "best" | "price_asc" | "rating_desc" | "distance";
 
 type Props = {
   destination: string;
@@ -92,24 +92,33 @@ export function ShopHotelResults(props: Props) {
         <div className="shop-hotel-results-sort">
           <button
             type="button"
+            className={props.sortKey === "best" ? "on" : undefined}
+            onClick={() => props.onSortChange("best")}
+          >
+            الأفضل
+          </button>
+          <button
+            type="button"
             className={props.sortKey === "price_asc" ? "on" : undefined}
             onClick={() => props.onSortChange("price_asc")}
           >
-            الأقل سعرًا
+            الأقل سعراً
           </button>
+          {props.hotels.some((h) => Number(h.details.guestRatingScore || 0) > 0) ? (
+            <button
+              type="button"
+              className={props.sortKey === "rating_desc" ? "on" : undefined}
+              onClick={() => props.onSortChange("rating_desc")}
+            >
+              الأعلى تقييماً
+            </button>
+          ) : null}
           <button
             type="button"
-            className={props.sortKey === "rating_desc" ? "on" : undefined}
-            onClick={() => props.onSortChange("rating_desc")}
+            className={props.sortKey === "distance" ? "on" : undefined}
+            onClick={() => props.onSortChange("distance")}
           >
-            الأعلى تقييمًا
-          </button>
-          <button
-            type="button"
-            className={props.sortKey === "price_desc" ? "on" : undefined}
-            onClick={() => props.onSortChange("price_desc")}
-          >
-            الأعلى سعرًا
+            الأقرب
           </button>
         </div>
       </div>

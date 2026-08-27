@@ -27,7 +27,7 @@ export function HotelBookReview({ booking }: Props) {
   function continueToGuests() {
     const { serviceType: _serviceType, ...payload } = booking;
     saveHotelDraft(payload);
-    router.push("/book");
+    router.push("/hotels/book/guests");
   }
 
   function backToResults() {
@@ -36,7 +36,7 @@ export function HotelBookReview({ booking }: Props) {
 
   return (
     <div className="shop-flight-review-page shop-hotel-review-page">
-      <ShopMockBanner />
+      <ShopMockBanner kind="hotel" />
       <header className="shop-flight-review-head">
         <h1>مراجعة الحجز</h1>
         <p>تأكّد من تفاصيل الإقامة والسعر قبل إدخال بيانات الضيوف</p>

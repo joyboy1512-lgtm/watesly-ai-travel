@@ -2901,6 +2901,26 @@
   font-size: 1.05rem;
   color: var(--exp-navy, #00375d);
 }
+.shop-hotel-filters-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+.shop-hotel-filters-title-row .shop-hotel-filters-title {
+  margin: 0;
+}
+.shop-hotel-filters-clear {
+  border: 0;
+  background: transparent;
+  color: var(--shop-accent, #0b6e4f);
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
 
 .shop-hotel-filter-block {
   display: flex;

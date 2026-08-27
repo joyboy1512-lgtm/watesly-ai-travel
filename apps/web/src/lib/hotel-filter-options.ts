@@ -26,6 +26,14 @@ export const PROPERTY_TYPE_OPTIONS = [
 
 export const FACILITY_OPTIONS = [
   { id: "pool", label: "مسبح" },
+  { id: "wifi", label: "واي فاي مجاني" },
+  { id: "parking", label: "موقف سيارات" },
+  { id: "accessibility", label: "مهيأ لذوي الإعاقة" },
+] as const;
+
+/** @deprecated kept for any legacy callers — shop UI uses FACILITY_OPTIONS */
+export const LEGACY_FACILITY_OPTIONS = [
+  { id: "pool", label: "مسبح" },
   { id: "parking", label: "موقف سيارات" },
   { id: "wifi", label: "واي فاي مجاني" },
   { id: "hot_tub", label: "حوض استحمام ساخن" },
@@ -125,16 +133,26 @@ export function hotelHasFacility(h: HotelLike, facilityId: string): boolean {
   const fac = hotelFacilities(h);
   if (fac.includes(facilityId)) return true;
   const labels = hotelFacilityLabels(h).join(" ").toLowerCase();
-  const text = hotelTextBlob(h);
-  if (facilityId === "hot_tub" || facilityId === "indoor_pool" || facilityId === "sauna") {
-    const keywords: Record<string, string[]> = {
-      hot_tub: ["jacuzzi", "hot tub", "جاكوزي", "حوض ساخن", "حوض استحمام ساخن"],
-      indoor_pool: ["indoor pool", "مسبح داخلي", "مسبح مغطى"],
-      sauna: ["sauna", "ساونا"],
-    };
-    return (keywords[facilityId] || []).some((k) => labels.includes(k) || text.includes(k));
-  }
-  return false;
+  const blob = hotelTextBlob(h);
+  const keywords: Record<string, string[]> = {
+    pool: ["pool", "مسبح", "swimming"],
+    wifi: ["wifi", "wi-fi", "واي فاي", "internet"],
+    parking: ["parking", "موقف", "garage"],
+    accessibility: [
+      "wheelchair",
+      "accessible",
+      "disability",
+      "disabled",
+      "إعاقة",
+      "ذوي الإعاقة",
+      "كراسي متحركة",
+      "مهيأ",
+    ],
+    hot_tub: ["jacuzzi", "hot tub", "جاكوزي", "حوض ساخن", "حوض استحمام ساخن"],
+    indoor_pool: ["indoor pool", "مسبح داخلي", "مسبح مغطى"],
+    sauna: ["sauna", "ساونا"],
+  };
+  return (keywords[facilityId] || []).some((k) => labels.includes(k) || blob.includes(k));
 }
 
 export function hotelHasRoomFacility(h: HotelLike, facilityId: string): boolean {
@@ -172,8 +190,9 @@ export function hotelDistanceKm(h: HotelLike): number | null {
 }
 
 export function hotelReviewScore(h: HotelLike): number {
-  const n = Number(h.details.rating || 0);
-  return Number.isFinite(n) ? n : 0;
+  // Only real guest scores — never Hotelbeds ranking or synthetic rating.
+  const n = Number(h.details.guestRatingScore ?? 0);
+  return Number.isFinite(n) && n > 0 ? n : 0;
 }
 
 export function hotelHasFreeCancellation(h: HotelLike): boolean {

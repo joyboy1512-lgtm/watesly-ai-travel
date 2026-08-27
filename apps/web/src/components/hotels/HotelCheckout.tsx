@@ -184,7 +184,7 @@ export function HotelCheckout({
           </section>
 
           <div className="shop-flight-checkout-nav">
-            <Link href={draft.resultsReturnHref || "/hotels/results"}>‹ رجوع</Link>
+            <Link href={"/hotels/book/review"}>‹ رجوع</Link>
             <button type="button" disabled={submitting || !paymentMethod} onClick={onSubmit}>
               {submitting ? "جارٍ الحفظ..." : "إتمام الحجز"}
             </button>

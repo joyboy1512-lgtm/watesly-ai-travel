@@ -29,6 +29,7 @@ import {
   type HotelSortKey,
 } from "@/lib/hotel-results-session";
 import { saveHotelDraft } from "@/lib/booking-draft";
+import { saveHotelSearchSession } from "@/lib/hotel-search-session";
 import { shopFetch } from "@/lib/shop-session";
 
 const HotelDetailModal = dynamic(
@@ -58,7 +59,7 @@ export function ShopHotelResultsClient() {
   const [inquiryId, setInquiryId] = useState("");
   const [quoteItems, setQuoteItems] = useState<QuoteItem[]>([]);
   const [filters, setFilters] = useState<HotelSearchFilters>(defaultHotelFilters());
-  const [sortKey, setSortKey] = useState<HotelSortKey>("price_asc");
+  const [sortKey, setSortKey] = useState<HotelSortKey>("best");
   const [editOpen, setEditOpen] = useState(false);
   const [draft, setDraft] = useState<HotelResultsSearchParams>(params);
   const [hotelOpen, setHotelOpen] = useState<HotelRow | null>(null);
@@ -231,12 +232,61 @@ export function ShopHotelResultsClient() {
       resultsReturnHref: resultsHref,
     });
     setHotelOpen(null);
-    router.push("/book/review");
+    router.push("/hotels/book/review");
+  }
+
+
+
+
+  function openHotel(hotel: HotelRow) {
+    persistSession();
+    saveHotelSearchSession({
+      hotels: hotelsRaw.map((h) => ({
+        id: h.id,
+        description: h.description,
+        sellAmountMinor: h.sellAmountMinor,
+        currency: h.currency,
+        details: h.details,
+      })),
+      filters: filters,
+      sortKey:
+        sortKey === "price_asc" ||
+        sortKey === "price_desc" ||
+        sortKey === "rating_desc" ||
+        sortKey === "best" ||
+        sortKey === "distance"
+          ? sortKey
+          : "price_asc",
+      meta: {
+        stayQuery: params.destination,
+        departDate: params.checkIn,
+        returnDate: params.checkOut,
+        rooms: params.rooms,
+        adults: params.adults,
+        children: params.children,
+        infants: params.infants,
+        destination: params.destinationLabel || params.destination,
+        nights: nights,
+      },
+      inquiryId: inquiryId || undefined,
+      quote: quoteItems.length
+        ? {
+            id: inquiryId || "quote",
+            items: quoteItems.map((item) => ({
+              id: item.id,
+              providerOfferRef: item.providerOfferRef,
+              serviceType: item.serviceType,
+            })),
+          }
+        : undefined,
+    });
+    const q = searchParams.toString();
+    router.push(`/hotels/${encodeURIComponent(hotel.id)}${q ? `?${q}` : ""}`);
   }
 
   return (
     <div className="shop-hotel-results-page">
-      <ShopMockBanner />
+      <ShopMockBanner kind="hotel" />
 
       <div className="shop-flight-results-topbar shop-hotel-results-topbar">
         <div className="shop-flight-results-topbar-inner">
@@ -396,32 +446,13 @@ export function ShopHotelResultsClient() {
               router.push(buildHotelResultsHref({ ...params, rooms: n }))
             }
             onSearch={() => router.push(buildHotelResultsHref(params))}
-            onOpenHotel={(hotel) => setHotelOpen(hotel)}
+            onOpenHotel={(hotel) => openHotel(hotel)}
             searchCities={searchCities}
           />
         </>
       )}
 
-      {hotelOpen ? (
-        <HotelDetailModal
-          hotel={hotelOpen}
-          nights={nights}
-          meta={{
-            stayQuery: params.destination,
-            departDate: params.checkIn,
-            returnDate: params.checkOut,
-            rooms: params.rooms,
-            adults: params.adults,
-            children: params.children,
-            infants: params.infants,
-          }}
-          checkRatePath="/shop/checkrate-hotel"
-          fetchJson={shopFetch}
-          variant="shop"
-          onClose={() => setHotelOpen(null)}
-          onContinueToReview={(rate, extras) => continueToReview(hotelOpen, rate, extras)}
-        />
-      ) : null}
+      {/* hotel detail opens on /hotels/[hotelId] */}
     </div>
   );
 }

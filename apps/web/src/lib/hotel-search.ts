@@ -235,7 +235,7 @@ export function groupRatesIntoRooms(rates: HotelRateOption[]): HotelRoomOption[]
 export function filterHotelOffers(
   hotels: HotelOfferRow[],
   filters: HotelSearchFilters,
-  sortKey: "price_asc" | "price_desc" | "rating_desc" | "best",
+  sortKey: "price_asc" | "price_desc" | "rating_desc" | "best" | "distance",
 ): Array<HotelOfferRow & { matchingRates: HotelRateOption[]; displayFromMinor: number }> {
   let list = [...hotels];
 
@@ -338,10 +338,27 @@ export function filterHotelOffers(
     HotelOfferRow & { matchingRates: HotelRateOption[]; displayFromMinor: number }
   >;
 
-  enriched.sort((a, b) => {
+    enriched.sort((a, b) => {
+    if (sortKey === "best") {
+      const score = (h: typeof a) => {
+        const rating = hotelReviewScore(h);
+        const stars = Number(h.details.stars || 0);
+        const price = Math.max(1, h.displayFromMinor);
+        return (rating * 12 + stars * 8) * 100000 / price;
+      };
+      return score(b) - score(a);
+    }
     if (sortKey === "price_desc") return b.displayFromMinor - a.displayFromMinor;
     if (sortKey === "rating_desc") {
-      return Number(b.details.rating || 0) - Number(a.details.rating || 0);
+      return hotelReviewScore(b) - hotelReviewScore(a);
+    }
+    if (sortKey === "distance") {
+      const da = hotelDistanceKm(a);
+      const db = hotelDistanceKm(b);
+      if (da == null && db == null) return a.displayFromMinor - b.displayFromMinor;
+      if (da == null) return 1;
+      if (db == null) return -1;
+      return da - db;
     }
     return a.displayFromMinor - b.displayFromMinor;
   });

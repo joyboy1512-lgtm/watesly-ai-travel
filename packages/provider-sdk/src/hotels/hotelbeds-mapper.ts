@@ -134,6 +134,7 @@ function mapRate(
     boardCode,
     boardName,
     net: convert(netRaw),
+    netBasis: "stay",
     sellingRate: Number.isFinite(selling) ? convert(selling as number) : undefined,
     currency: displayCurrency,
     paymentType: rate.paymentType,

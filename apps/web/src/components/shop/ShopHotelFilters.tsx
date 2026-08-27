@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import type { ReactNode } from "react";
+import { useState } from "react";
 import { ShopPriceRangeSlider } from "@/components/shop/ShopPriceRangeSlider";
 import {
-  BOARD_LABELS_AR,
+  defaultHotelFilters,
   type HotelFilterFacets,
   type HotelSearchFilters,
 } from "@/lib/hotel-search";
@@ -125,30 +126,6 @@ function ExpandableChecks({
   );
 }
 
-function Stepper({
-  label,
-  value,
-  onChange,
-}: {
-  label: string;
-  value: number;
-  onChange: (n: number) => void;
-}) {
-  return (
-    <div className="shop-hotel-filter-stepper">
-      <span>{label}</span>
-      <div className="exp-stepper">
-        <button type="button" onClick={() => onChange(Math.max(0, value - 1))}>
-          −
-        </button>
-        <strong>{value}</strong>
-        <button type="button" onClick={() => onChange(value + 1)}>
-          +
-        </button>
-      </div>
-    </div>
-  );
-}
 
 function FiltersPanel({
   filters,
@@ -159,125 +136,57 @@ function FiltersPanel({
   facets: HotelFilterFacets;
   onChange: (next: HotelSearchFilters) => void;
 }) {
+  const facilityOptions = (facets.facilities || []).filter((f) =>
+    ["pool", "wifi", "parking", "accessibility"].includes(f.id),
+  );
+  const hasGuestReviews = (facets.reviewScores || []).some((o) => o.count > 0);
+
   return (
     <aside className="shop-hotel-filters-panel">
-      <h3 className="shop-hotel-filters-title">تصفية حسب:</h3>
-
-      <FilterSection title="ابحث في النتائج">
-        <input
-          type="search"
-          value={filters.hotelQuery}
-          onChange={(e) => onChange({ ...filters, hotelQuery: e.target.value })}
-          placeholder="مثال: أريد مكاناً لديه تقييمات رائعة وإلغاء مجاني"
-        />
-      </FilterSection>
-
-      <FilterSection title="نطاق السعر (د.ك)">
-        <ShopPriceRangeSlider
-          min={0}
-          max={facets.priceMaxMajor}
-          value={filters.maxPrice ? Number(filters.maxPrice) : facets.priceMaxMajor}
-          onChange={(v) =>
-            onChange({
-              ...filters,
-              maxPrice: v >= facets.priceMaxMajor ? "" : String(v),
-            })
-          }
-        />
-      </FilterSection>
-
-      {facets.meals.length ? (
-        <FilterSection title="الوجبات">
-          <ExpandableChecks
-            name="meals"
-            options={facets.meals}
-            selected={filters.mealTypes || []}
-            onToggle={(id) =>
-              onChange({
-                ...filters,
-                mealTypes: toggleList(filters.mealTypes || [], id),
-                breakfast:
-                  id === "BB"
-                    ? !(filters.mealTypes || []).includes("BB")
-                    : filters.breakfast,
-              })
-            }
-          />
-        </FilterSection>
-      ) : null}
-
-      {facets.propertyTypes.length ? (
-        <FilterSection title="نوع مكان الإقامة">
-          <ExpandableChecks
-            name="propertyTypes"
-            options={facets.propertyTypes}
-            selected={filters.propertyTypes}
-            onToggle={(id) =>
-              onChange({ ...filters, propertyTypes: toggleList(filters.propertyTypes, id) })
-            }
-          />
-        </FilterSection>
-      ) : null}
-
-      <FilterSection title="غرف النوم والحمامات">
-        <Stepper
-          label="غرف النوم"
-          value={filters.minBedrooms || 0}
-          onChange={(n) => onChange({ ...filters, minBedrooms: n })}
-        />
-        <Stepper
-          label="الحمامات"
-          value={filters.minBathrooms || 0}
-          onChange={(n) => onChange({ ...filters, minBathrooms: n })}
-        />
-      </FilterSection>
-
-      {facets.facilities.length ? (
-        <FilterSection title="المرافق">
-          <ExpandableChecks
-            name="facilities"
-            options={facets.facilities}
-            selected={filters.facilities}
-            onToggle={(id) =>
-              onChange({ ...filters, facilities: toggleList(filters.facilities, id) })
-            }
-          />
-        </FilterSection>
-      ) : null}
-
-      {facets.roomFacilities.length ? (
-        <FilterSection title="مرافق الغرفة">
-          <ExpandableChecks
-            name="roomFacilities"
-            options={facets.roomFacilities}
-            selected={filters.roomFacilities || []}
-            onToggle={(id) =>
-              onChange({
-                ...filters,
-                roomFacilities: toggleList(filters.roomFacilities || [], id),
-              })
-            }
-          />
-        </FilterSection>
-      ) : null}
-
-      {facets.starRatings.length ? (
-        <FilterSection
-          title="تصنيف مكان الإقامة"
-          subtitle="اعثر على فنادق وبيوت عطلات بجودة عالية"
+      <div className="shop-hotel-filters-title-row">
+        <h3 className="shop-hotel-filters-title">تصفية حسب:</h3>
+        <button
+          type="button"
+          className="shop-hotel-filters-clear"
+          onClick={() => onChange(defaultHotelFilters())}
         >
+          مسح الكل
+        </button>
+      </div>
+
+      {facets.priceMaxMajor > 0 ? (
+        <FilterSection title="نطاق السعر (د.ك)">
+          <ShopPriceRangeSlider
+            min={0}
+            max={facets.priceMaxMajor}
+            value={filters.maxPrice ? Number(filters.maxPrice) : facets.priceMaxMajor}
+            onChange={(v) =>
+              onChange({
+                ...filters,
+                maxPrice: v >= facets.priceMaxMajor ? "" : String(v),
+              })
+            }
+          />
+        </FilterSection>
+      ) : null}
+
+      {(facets.starRatings || []).length ? (
+        <FilterSection title="النجوم">
           <ExpandableChecks
             name="starRatings"
             options={facets.starRatings}
             selected={filters.starRatings || []}
             onToggle={(id) =>
-              onChange({ ...filters, starRatings: toggleList(filters.starRatings || [], id) })
+              onChange({
+                ...filters,
+                starRatings: toggleList(filters.starRatings || [], id),
+              })
             }
           />
         </FilterSection>
       ) : null}
 
-      {facets.zonesWithCounts.length ? (
+      {(facets.zonesWithCounts || []).length ? (
         <FilterSection title="المنطقة">
           <FilterRadio
             name="shopZone"
@@ -295,48 +204,7 @@ function FiltersPanel({
         </FilterSection>
       ) : null}
 
-      {facets.bedTypes.length ? (
-        <FilterSection title="تفضيل السرير">
-          <ExpandableChecks
-            name="bedTypes"
-            options={facets.bedTypes}
-            selected={filters.bedTypes || []}
-            onToggle={(id) =>
-              onChange({ ...filters, bedTypes: toggleList(filters.bedTypes || [], id) })
-            }
-          />
-        </FilterSection>
-      ) : null}
-
-      {facets.reviewScores.length ? (
-        <FilterSection title="نقاط التقييم">
-          <FilterRadio
-            name="shopMinReview"
-            id="any"
-            label="الكل"
-            checked={filters.minReviewScore === "any"}
-            onSelect={() => onChange({ ...filters, minReviewScore: "any" })}
-          />
-          {facets.reviewScores.map((option) => (
-            <FilterRadio
-              key={option.id}
-              name="shopMinReview"
-              id={option.id}
-              label={option.label}
-              count={option.count}
-              checked={filters.minReviewScore === option.id}
-              onSelect={(id) =>
-                onChange({
-                  ...filters,
-                  minReviewScore: id as HotelSearchFilters["minReviewScore"],
-                })
-              }
-            />
-          ))}
-        </FilterSection>
-      ) : null}
-
-      {facets.distances.length ? (
+      {(facets.distances || []).length ? (
         <FilterSection title="المسافة من وسط المدينة">
           <FilterRadio
             name="shopDistance"
@@ -359,75 +227,11 @@ function FiltersPanel({
         </FilterSection>
       ) : null}
 
-      <FilterSection title="سياسة الحجز">
-        {facets.bookingPolicies.noPrepayment ? (
-          <FilterCheck
-            id="noPrepayment"
-            label="بدون دفعة مسبقة"
-            count={facets.bookingPolicies.noPrepayment}
-            checked={filters.noPrepayment}
-            onToggle={() => onChange({ ...filters, noPrepayment: !filters.noPrepayment })}
-          />
-        ) : null}
-        {facets.bookingPolicies.freeCancellation ? (
-          <FilterCheck
-            id="freeCancellation"
-            label="إلغاء مجاني"
-            count={facets.bookingPolicies.freeCancellation}
-            checked={filters.freeCancellation}
-            onToggle={() => onChange({ ...filters, freeCancellation: !filters.freeCancellation })}
-          />
-        ) : null}
-        {facets.bookingPolicies.onlinePayment ? (
-          <FilterCheck
-            id="onlinePayment"
-            label="يوفر خيار الدفع عبر الإنترنت"
-            count={facets.bookingPolicies.onlinePayment}
-            checked={Boolean(filters.onlinePayment)}
-            onToggle={() => onChange({ ...filters, onlinePayment: !filters.onlinePayment })}
-          />
-        ) : null}
-        {facets.bookingPolicies.bookableOnly ? (
-          <FilterCheck
-            id="bookableOnly"
-            label="متاح للحجز فقط"
-            count={facets.bookingPolicies.bookableOnly}
-            checked={filters.bookableOnly}
-            onToggle={() => onChange({ ...filters, bookableOnly: !filters.bookableOnly })}
-          />
-        ) : null}
-      </FilterSection>
-
-      {facets.brands.length ? (
-        <FilterSection title="علامات تجارية فندقية">
-          <ExpandableChecks
-            name="brands"
-            options={facets.brands}
-            selected={filters.brands || []}
-            onToggle={(id) => onChange({ ...filters, brands: toggleList(filters.brands || [], id) })}
-            initial={8}
-          />
-        </FilterSection>
-      ) : null}
-
-      {facets.landmarks.length ? (
-        <FilterSection title="المعالم">
-          <ExpandableChecks
-            name="landmarks"
-            options={facets.landmarks}
-            selected={filters.landmarks || []}
-            onToggle={(id) =>
-              onChange({ ...filters, landmarks: toggleList(filters.landmarks || [], id) })
-            }
-          />
-        </FilterSection>
-      ) : null}
-
       {facets.breakfastIncluded ? (
-        <FilterSection title="ميزات ذات تقييم عالٍ" subtitle="بناءً على تقييمات الضيوف">
+        <FilterSection title="الإفطار">
           <FilterCheck
             id="breakfast"
-            label="إفطار جيد جداً"
+            label="شامل الإفطار"
             count={facets.breakfastIncluded}
             checked={filters.breakfast}
             onToggle={() => onChange({ ...filters, breakfast: !filters.breakfast })}
@@ -435,27 +239,81 @@ function FiltersPanel({
         </FilterSection>
       ) : null}
 
-      {facets.boardCodes.length ? (
-        <FilterSection title="نوع الوجبات (تعرفة)">
-          <FilterRadio
-            name="shopBoardCode"
-            id=""
-            label="كل أنواع الوجبات"
-            checked={!filters.boardCode}
-            onSelect={() => onChange({ ...filters, boardCode: "", board: "" })}
+      {facets.bookingPolicies?.freeCancellation || facets.bookingPolicies?.noPrepayment ? (
+        <FilterSection title="سياسة الحجز">
+          {facets.bookingPolicies.freeCancellation ? (
+            <FilterCheck
+              id="freeCancellation"
+              label="إلغاء مجاني"
+              count={facets.bookingPolicies.freeCancellation}
+              checked={filters.freeCancellation}
+              onToggle={() =>
+                onChange({ ...filters, freeCancellation: !filters.freeCancellation })
+              }
+            />
+          ) : null}
+          {facets.bookingPolicies.noPrepayment ? (
+            <FilterCheck
+              id="noPrepayment"
+              label="الدفع في الفندق"
+              count={facets.bookingPolicies.noPrepayment}
+              checked={filters.noPrepayment}
+              onToggle={() => onChange({ ...filters, noPrepayment: !filters.noPrepayment })}
+            />
+          ) : null}
+        </FilterSection>
+      ) : null}
+
+      {(facets.propertyTypes || []).length ? (
+        <FilterSection title="نوع مكان الإقامة">
+          <ExpandableChecks
+            name="propertyTypes"
+            options={facets.propertyTypes}
+            selected={filters.propertyTypes}
+            onToggle={(id) =>
+              onChange({
+                ...filters,
+                propertyTypes: toggleList(filters.propertyTypes, id),
+              })
+            }
           />
-          {facets.boardCodes.map((code) => (
+        </FilterSection>
+      ) : null}
+
+      {facilityOptions.length ? (
+        <FilterSection title="المرافق">
+          <ExpandableChecks
+            name="facilities"
+            options={facilityOptions}
+            selected={filters.facilities}
+            onToggle={(id) =>
+              onChange({ ...filters, facilities: toggleList(filters.facilities, id) })
+            }
+          />
+        </FilterSection>
+      ) : null}
+
+      {hasGuestReviews ? (
+        <FilterSection title="تقييم الضيوف">
+          <FilterRadio
+            name="shopMinReview"
+            id="any"
+            label="الكل"
+            checked={filters.minReviewScore === "any"}
+            onSelect={() => onChange({ ...filters, minReviewScore: "any" })}
+          />
+          {facets.reviewScores.map((option) => (
             <FilterRadio
-              key={code}
-              name="shopBoardCode"
-              id={code}
-              label={BOARD_LABELS_AR[code as keyof typeof BOARD_LABELS_AR] || code}
-              checked={filters.boardCode === code}
+              key={option.id}
+              name="shopMinReview"
+              id={option.id}
+              label={option.label}
+              count={option.count}
+              checked={filters.minReviewScore === option.id}
               onSelect={(id) =>
                 onChange({
                   ...filters,
-                  boardCode: id,
-                  board: BOARD_LABELS_AR[id as keyof typeof BOARD_LABELS_AR] || id,
+                  minReviewScore: id as HotelSearchFilters["minReviewScore"],
                 })
               }
             />

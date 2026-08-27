@@ -5603,46 +5603,31 @@
   grid-template-areas:
     "badges badges"
     "body side";
-  gap: 0.35rem 0.7rem;
+  gap: 0.3rem 0.65rem;
   align-items: stretch;
-  padding: 0.5rem 0.65rem;
+  padding: 0.45rem 0.6rem;
   overflow: hidden;
+  background: #fff;
 }
 
-.shop-ticket-card-v2 > .shop-ticket-badges {
-  grid-area: badges;
-  padding: 0;
-  margin: 0;
-}
-
-.shop-ticket-card-v2 > .shop-ticket-body-v2 {
-  grid-area: body;
-  min-width: 0;
-}
-
-.shop-ticket-card-v2 > .shop-ticket-side-v2 {
-  grid-area: side;
-  align-self: stretch;
-}
-
-.shop-ticket-body-v2 {
-  min-width: 0;
+.shop-ticket-card-v2.shop-ticket-card-roundtrip {
+  background: #fff;
 }
 
 .shop-ticket-legs-v2 {
   display: grid;
-  gap: 0.35rem;
+  gap: 0.28rem;
 }
 
 .shop-ticket-leg-v2 {
   display: grid;
   grid-template-columns: minmax(140px, 1.1fr) 72px 1fr 72px;
-  gap: 0.5rem;
+  gap: 0.45rem;
   align-items: center;
-  padding: 0.4rem 0.55rem;
+  padding: 0.35rem 0.5rem;
   border: 1px solid var(--exp-border);
   border-radius: 8px;
-  background: #fff;
+  background: #fbfcfd;
 }
 
 .shop-ticket-leg-v2.kayak-leg {
@@ -6017,8 +6002,8 @@
 }
 
 .shop-ticket-side-v2 .shop-ticket-bags-text {
-  margin: 0.35rem 0 0;
-  padding-top: 0.35rem;
+  margin-top: auto;
+  padding-top: 0.4rem;
   border-top: 1px dashed rgba(15, 51, 64, 0.12);
   font-size: 0.72rem;
   gap: 0.12rem;

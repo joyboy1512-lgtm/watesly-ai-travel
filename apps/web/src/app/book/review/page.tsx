@@ -59,7 +59,8 @@ export default function BookReviewPage() {
     draft.flight.sellAmountMinor;
 
   function continueToTravelers() {
-    saveFlightDraft({ ...draft });
+    const { serviceType: _serviceType, ...payload } = draft;
+    saveFlightDraft(payload);
     router.push("/book");
   }
 

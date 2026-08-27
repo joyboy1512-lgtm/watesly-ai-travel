@@ -498,15 +498,19 @@ export function filterAndSortFlights(
 }
 
 export function flightFiltersActive(filters: FlightSearchFilters, directOnly = false) {
-  return (
-    directOnly ||
-    filters.stops !== "any" ||
-    filters.airlines.length > 0 ||
-    filters.departureTimes.length > 0 ||
-    filters.returnDepartureTimes.length > 0 ||
-    Boolean(filters.maxPrice) ||
-    Boolean(filters.maxDurationHours)
-  );
+  return countFlightFilters(filters, directOnly) > 0;
+}
+
+/** Number of active flight filter dimensions (for mobile toggle badge). */
+export function countFlightFilters(filters: FlightSearchFilters, directOnly = false) {
+  let n = 0;
+  if (directOnly || filters.stops !== "any") n += 1;
+  if (filters.airlines.length > 0) n += 1;
+  if (filters.departureTimes.length > 0) n += 1;
+  if (filters.returnDepartureTimes.length > 0) n += 1;
+  if (filters.maxPrice) n += 1;
+  if (filters.maxDurationHours) n += 1;
+  return n;
 }
 
 /** Total trip duration (outbound + return when present). */

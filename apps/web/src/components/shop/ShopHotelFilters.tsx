@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { useState } from "react";
 import { ShopPriceRangeSlider } from "@/components/shop/ShopPriceRangeSlider";
 import {
+  countHotelFilters,
   defaultHotelFilters,
   type HotelFilterFacets,
   type HotelSearchFilters,
@@ -382,8 +383,17 @@ export function ShopHotelFilters({
   searchDestinationCode,
   searchDestinationLabel,
 }: Props) {
+  const filterCount = countHotelFilters(filters);
   return (
     <div className="shop-hotel-filters">
+      {mobileOpen ? (
+        <button
+          type="button"
+          className="shop-filters-sheet-backdrop"
+          aria-label="إغلاق التصفية"
+          onClick={onMobileToggle}
+        />
+      ) : null}
       <button
         type="button"
         className="shop-hotel-filters-mobile-toggle"
@@ -391,8 +401,17 @@ export function ShopHotelFilters({
         aria-expanded={mobileOpen}
       >
         {mobileOpen ? "إخفاء التصفية" : "تصفية"}
+        {filterCount > 0 ? (
+          <span className="shop-filters-count-badge">{filterCount}</span>
+        ) : null}
       </button>
-      <div className={`shop-hotel-filters-drawer${mobileOpen ? " open" : ""}`}>
+      <div className={`shop-hotel-filters-drawer shop-filters-sheet${mobileOpen ? " open" : ""}`}>
+        <div className="shop-filters-sheet-head">
+          <strong>التصفية</strong>
+          <button type="button" onClick={onMobileToggle}>
+            تم
+          </button>
+        </div>
         <FiltersPanel
           filters={filters}
           facets={facets}

@@ -6584,3 +6584,228 @@
     display: none;
   }
 }
+
+/* ===== P5 — Mobile + desktop responsive polish ===== */
+
+@media (max-width: 720px) {
+  .exp-home-hero {
+    min-height: min(52vh, 420px) !important;
+    justify-content: flex-end;
+  }
+
+  .exp-home-content {
+    padding-bottom: 0.85rem;
+  }
+
+  .exp-form-bar .exp-search-submit,
+  .exp-unified-card .exp-search-link,
+  .exp-unified-card .exp-input-cell,
+  .exp-travelers-trigger {
+    min-height: 48px;
+  }
+
+  .exp-form-bar .exp-search-submit {
+    width: 100%;
+  }
+
+  .shop-assist {
+    bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+  }
+
+  .shop-flight-results-page .shop-assist,
+  .shop-hotel-results-page .shop-assist,
+  .shop-flight-checkout .shop-assist {
+    bottom: calc(5.25rem + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+.shop-filters-count-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.35rem;
+  height: 1.35rem;
+  margin-inline-start: 0.4rem;
+  padding: 0 0.35rem;
+  border-radius: 999px;
+  background: #0f3340;
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 800;
+  vertical-align: middle;
+}
+
+.shop-filters-sheet-backdrop {
+  display: none;
+}
+
+.shop-filters-sheet-head {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .shop-filters-sheet-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 540;
+    border: 0;
+    background: rgba(15, 23, 42, 0.45);
+  }
+
+  .shop-flight-filters-desktop.shop-filters-sheet,
+  .shop-hotel-filters-drawer.shop-filters-sheet {
+    display: none;
+  }
+
+  .shop-flight-filters-desktop.shop-filters-sheet.open,
+  .shop-hotel-filters-drawer.shop-filters-sheet.open {
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    inset-inline: 0;
+    bottom: 0;
+    z-index: 550;
+    max-height: min(88dvh, 88vh);
+    margin: 0;
+    padding: 0 0 calc(0.75rem + env(safe-area-inset-bottom, 0px));
+    background: #fff;
+    border-radius: 16px 16px 0 0;
+    box-shadow: 0 -12px 40px rgba(15, 23, 42, 0.2);
+    overflow: hidden;
+  }
+
+  .shop-filters-sheet-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.85rem 1rem;
+    border-bottom: 1px solid #e2e8f0;
+    flex-shrink: 0;
+  }
+
+  .shop-filters-sheet-head button {
+    border: 0;
+    background: #0f3340;
+    color: #fff;
+    font: inherit;
+    font-weight: 700;
+    border-radius: 8px;
+    padding: 0.45rem 0.9rem;
+    min-height: 40px;
+    cursor: pointer;
+  }
+
+  .shop-filters-sheet .shop-flight-filters-panel,
+  .shop-filters-sheet .shop-hotel-filters-panel {
+    position: static;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+    flex: 1;
+    max-height: none;
+    border: 0;
+    box-shadow: none;
+    border-radius: 0;
+  }
+
+  .shop-flight-sort-tabs,
+  .shop-hotel-results-sort,
+  .shop-flight-results-sort {
+    display: flex !important;
+    flex-wrap: nowrap;
+    gap: 0.45rem;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 0.25rem;
+    scrollbar-width: thin;
+  }
+
+  .shop-flight-sort-tabs > *,
+  .shop-hotel-results-sort > *,
+  .shop-flight-results-sort > * {
+    flex: 0 0 auto;
+  }
+
+  .shop-custom-trip-card {
+    position: sticky;
+    bottom: 0;
+    z-index: 40;
+    margin-top: 0.75rem;
+    padding-bottom: calc(0.65rem + env(safe-area-inset-bottom, 0px));
+    box-shadow: 0 -8px 28px rgba(15, 23, 42, 0.12);
+    background: #fff;
+  }
+
+  .shop-flight-checkout {
+    padding-bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px));
+  }
+
+  .shop-flight-checkout-nav {
+    position: fixed;
+    inset-inline: 0;
+    bottom: 0;
+    z-index: 45;
+    margin: 0;
+    padding: 0.75rem 1rem calc(0.75rem + env(safe-area-inset-bottom, 0px));
+    background: #fff;
+    border-top: 1px solid #e2e8f0;
+    box-shadow: 0 -8px 24px rgba(15, 23, 42, 0.1);
+  }
+
+  .shop-flight-checkout-nav button {
+    min-height: 48px;
+    flex: 1;
+  }
+
+  .shop-flight-checkout-summary details.shop-price-summary-mobile,
+  details.shop-price-summary-mobile {
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 0.65rem 0.85rem;
+    background: #fff;
+    margin-bottom: 0.85rem;
+  }
+
+  .shop-flight-price-card {
+    position: static;
+  }
+
+  .shop-ticket-list,
+  .shop-hotel-results-list,
+  .shop-flight-results-main {
+    min-width: 0;
+    overflow-x: clip;
+  }
+
+  .shop-ticket-card,
+  .hotel-search-card {
+    max-width: 100%;
+  }
+}
+
+@media (min-width: 901px) {
+  .shop-flight-filters-panel,
+  .shop-hotel-filters-panel {
+    position: sticky;
+    top: 0.75rem;
+    max-height: calc(100dvh - 1.5rem);
+    overflow: auto;
+  }
+
+  .shop-flight-price-card {
+    position: sticky;
+    top: 1rem;
+  }
+
+  .exp-home-hero {
+    min-height: min(68vh, 640px);
+  }
+}
+
+@media (max-width: 430px) {
+  .shop-ticket-side strong,
+  .hotel-search-card-price strong {
+    font-size: clamp(0.95rem, 4.2vw, 1.15rem);
+  }
+}

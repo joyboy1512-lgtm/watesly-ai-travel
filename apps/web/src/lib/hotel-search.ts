@@ -134,6 +134,40 @@ export const defaultHotelFilters = (): HotelSearchFilters => ({
   destinationCodeOnly: "",
 });
 
+/** Number of active hotel filter dimensions (for mobile toggle badge). */
+export function countHotelFilters(filters: HotelSearchFilters) {
+  const d = defaultHotelFilters();
+  let n = 0;
+  if (filters.hotelQuery.trim()) n += 1;
+  if (filters.minStars !== d.minStars) n += 1;
+  if (filters.minReviewScore !== d.minReviewScore) n += 1;
+  if (filters.board) n += 1;
+  if (filters.boardCode) n += 1;
+  if (filters.zone) n += 1;
+  if (filters.paymentType) n += 1;
+  if (filters.rateType) n += 1;
+  if (filters.freeCancellation) n += 1;
+  if (filters.breakfast) n += 1;
+  if (filters.noPrepayment) n += 1;
+  if (filters.propertyTypes.length) n += 1;
+  if (filters.facilities.length) n += 1;
+  if ((filters.roomFacilities?.length || 0) > 0) n += 1;
+  if ((filters.starRatings?.length || 0) > 0) n += 1;
+  if ((filters.mealTypes?.length || 0) > 0) n += 1;
+  if (filters.maxDistanceKm) n += 1;
+  if ((filters.landmarks?.length || 0) > 0) n += 1;
+  if ((filters.brands?.length || 0) > 0) n += 1;
+  if ((filters.bedTypes?.length || 0) > 0) n += 1;
+  if ((filters.minBedrooms || 0) > 0) n += 1;
+  if ((filters.minBathrooms || 0) > 0) n += 1;
+  if (filters.onlinePayment) n += 1;
+  if (filters.maxPrice) n += 1;
+  if (filters.refundableOnly) n += 1;
+  if (filters.bookableOnly) n += 1;
+  if (filters.destinationCodeOnly) n += 1;
+  return n;
+}
+
 function rateOptionsOf(h: HotelOfferRow): HotelRateOption[] {
   const raw = h.details.rateOptions;
   return Array.isArray(raw) ? (raw as HotelRateOption[]) : [];

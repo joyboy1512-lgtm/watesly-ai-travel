@@ -7,6 +7,7 @@ import type { ReactNode } from "react";
 import { formatMoneyMinorCompact } from "@/lib/format";
 import {
   flightFiltersActive,
+  countFlightFilters,
   formatMinutesLabel,
   outboundLegKey,
   returnLegKey,
@@ -50,6 +51,7 @@ type Props = {
 export function ShopFlightResults(props: Props) {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const active = flightFiltersActive(props.filters);
+  const filterCount = countFlightFilters(props.filters);
   const pickStep = props.pickStep || "single";
   const sortTabs = useMemo(
     () =>
@@ -107,17 +109,36 @@ export function ShopFlightResults(props: Props) {
         {active ? " · فلاتر مفعّلة" : ""}
       </div>
 
+      {filtersOpen ? (
+        <button
+          type="button"
+          className="shop-filters-sheet-backdrop"
+          aria-label="إغلاق الفلاتر"
+          onClick={() => setFiltersOpen(false)}
+        />
+      ) : null}
+
       <button
         type="button"
         className="shop-flight-filters-mobile-toggle"
         onClick={() => setFiltersOpen((v) => !v)}
       >
         {filtersOpen ? "إخفاء الفلاتر" : "الفلاتر"}
-        {active ? " · مفعّلة" : ""}
+        {filterCount > 0 ? (
+          <span className="shop-filters-count-badge">{filterCount}</span>
+        ) : null}
       </button>
 
       <div className="shop-flight-results-layout">
-        <aside className={`shop-flight-filters-desktop${filtersOpen ? " open" : ""}`}>
+        <aside
+          className={`shop-flight-filters-desktop shop-filters-sheet${filtersOpen ? " open" : ""}`}
+        >
+          <div className="shop-filters-sheet-head">
+            <strong>الفلاتر</strong>
+            <button type="button" onClick={() => setFiltersOpen(false)}>
+              تم
+            </button>
+          </div>
           <ShopFlightFilters
             filters={props.filters}
             facets={props.facets}

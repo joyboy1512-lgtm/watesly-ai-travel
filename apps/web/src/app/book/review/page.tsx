@@ -43,28 +43,29 @@ export default function BookReviewPage() {
     );
   }
 
-  const trip = draft.composedTrip;
-  const outbound = draft.selectedOutbound || trip?.outbound;
-  const returnLeg = draft.selectedReturn ?? trip?.return ?? null;
-  const fare = draft.selectedFare;
-  const provider = draft.selectedProvider;
-  const breakdown = draft.priceBreakdown;
-  const pax = draft.adults + draft.children;
+  const booking = draft;
+  const trip = booking.composedTrip;
+  const outbound = booking.selectedOutbound || trip?.outbound;
+  const returnLeg = booking.selectedReturn ?? trip?.return ?? null;
+  const fare = booking.selectedFare;
+  const provider = booking.selectedProvider;
+  const breakdown = booking.priceBreakdown;
+  const pax = booking.adults + booking.children;
 
   const totalMinor =
     breakdown?.totalMinor ??
     provider?.totalPriceMinor ??
     fare?.totalPriceMinor ??
-    draft.flight.sellAmountMinor;
+    booking.flight.sellAmountMinor;
 
   function continueToTravelers() {
-    const { serviceType: _serviceType, ...payload } = draft;
+    const { serviceType: _serviceType, ...payload } = booking;
     saveFlightDraft(payload);
     router.push("/book");
   }
 
   function backToResults() {
-    const href = draft.resultsReturnHref || "/flights/results";
+    const href = booking.resultsReturnHref || "/flights/results";
     router.push(href);
   }
 
@@ -80,13 +81,13 @@ export default function BookReviewPage() {
           <section className="shop-flight-review-card">
             <h2>ملخص الرحلة</h2>
             <p className="shop-flight-review-route">
-              {draft.originLabel || draft.origin} ↔ {draft.destinationLabel || draft.destination}
+              {booking.originLabel || booking.origin} ↔ {booking.destinationLabel || booking.destination}
             </p>
             <p className="shop-flight-review-dates">
-              {formatDay(draft.departDate)}
-              {draft.returnDate ? ` – ${formatDay(draft.returnDate)}` : ""}
+              {formatDay(booking.departDate)}
+              {booking.returnDate ? ` – ${formatDay(booking.returnDate)}` : ""}
               {" · "}
-              {pax} مسافر · {cabinLabel(draft.cabinClass)}
+              {pax} مسافر · {cabinLabel(booking.cabinClass)}
             </p>
 
             {outbound ? (
@@ -165,33 +166,33 @@ export default function BookReviewPage() {
                 <dt>السعر الأساسي</dt>
                 <dd>
                   {formatMoneyMinor(
-                    breakdown?.baseMinor ?? draft.flight.sellAmountMinor,
-                    draft.flight.currency,
+                    breakdown?.baseMinor ?? booking.flight.sellAmountMinor,
+                    booking.flight.currency,
                   )}
                 </dd>
               </div>
               <div>
                 <dt>الضرائب والرسوم</dt>
                 <dd>
-                  {formatMoneyMinor(breakdown?.taxesMinor ?? 0, draft.flight.currency)}
+                  {formatMoneyMinor(breakdown?.taxesMinor ?? 0, booking.flight.currency)}
                 </dd>
               </div>
               <div>
                 <dt>رسوم الخدمة</dt>
                 <dd>
-                  {formatMoneyMinor(breakdown?.serviceFeeMinor ?? 0, draft.flight.currency)}
+                  {formatMoneyMinor(breakdown?.serviceFeeMinor ?? 0, booking.flight.currency)}
                 </dd>
               </div>
               <div className="total">
                 <dt>الإجمالي</dt>
-                <dd>{formatMoneyMinor(totalMinor, draft.flight.currency)}</dd>
+                <dd>{formatMoneyMinor(totalMinor, booking.flight.currency)}</dd>
               </div>
             </dl>
 
             <p className="shop-flight-review-pax">
-              {draft.adults} بالغ
-              {draft.children ? ` · ${draft.children} طفل` : ""}
-              {draft.infants ? ` · ${draft.infants} رضيع` : ""}
+              {booking.adults} بالغ
+              {booking.children ? ` · ${booking.children} طفل` : ""}
+              {booking.infants ? ` · ${booking.infants} رضيع` : ""}
             </p>
           </section>
         </div>

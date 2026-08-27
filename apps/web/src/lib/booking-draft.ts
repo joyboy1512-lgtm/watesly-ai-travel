@@ -1,3 +1,7 @@
+import type { ComposedTrip } from "./flight-compose";
+import type { FlightPriceBreakdown, MockFareOption, MockProviderOffer } from "./flight-fare-mock";
+import type { SelectedLeg } from "./flight-leg-selection";
+
 export type BookingDraftFlight = {
   id: string;
   description: string;
@@ -38,7 +42,7 @@ export type FlightBookingDraft = {
   destinationLabel: string;
   departDate: string;
   returnDate?: string;
-  tripType: "roundtrip" | "oneway";
+  tripType: "roundtrip" | "oneway" | "multicity";
   adults: number;
   children: number;
   infants?: number;
@@ -48,6 +52,15 @@ export type FlightBookingDraft = {
   inquiryId?: string;
   quoteId?: string;
   quoteItemId?: string;
+  /** Mix-and-match composed trip (mock-ready for API swap). */
+  composedTrip?: ComposedTrip;
+  selectedOutbound?: SelectedLeg;
+  selectedReturn?: SelectedLeg | null;
+  selectedFare?: MockFareOption;
+  selectedProvider?: MockProviderOffer;
+  priceBreakdown?: FlightPriceBreakdown;
+  validatedAt?: string;
+  resultsReturnHref?: string;
 };
 
 export type HotelBookingDraft = {
@@ -66,6 +79,18 @@ export type HotelBookingDraft = {
   inquiryId?: string;
   quoteId?: string;
   quoteItemId?: string;
+  contactName?: string;
+  contactEmail?: string;
+  contactPhone?: string;
+  specialRequests?: string;
+  paymentMethod?: string;
+  travelers?: Array<{ firstName: string; lastName: string }>;
+  nights?: number;
+  totalMinor?: number;
+  validatedAt?: string;
+  priceChanged?: boolean;
+  previousTotalMinor?: number;
+  resultsReturnHref?: string;
 };
 
 export type BookingDraftTransfer = {

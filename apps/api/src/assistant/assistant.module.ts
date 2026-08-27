@@ -7,5 +7,6 @@ import { AssistantService } from "./assistant.service";
   imports: [AiModule],
   controllers: [AssistantController],
   providers: [AssistantService],
+  exports: [AssistantService],
 })
 export class AssistantModule {}

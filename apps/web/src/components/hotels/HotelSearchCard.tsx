@@ -1,6 +1,6 @@
 "use client";
 
-import type { HotelRateOption } from "@/lib/hotel-search";
+import type { HotelRateOption, HotelHighlightBadge } from "@/lib/hotel-search";
 import { formatMoneyMinor } from "@/lib/format";
 import { HotelLiveBadge } from "./HotelLiveBadge";
 
@@ -16,20 +16,38 @@ type HotelRow = {
 type Props = {
   hotel: HotelRow;
   nights: number;
+  guests?: number;
+  rooms?: number;
+  variant?: "default" | "shop";
+  highlight?: HotelHighlightBadge;
+  highlightLabel?: string;
   onOpen: () => void;
 };
 
-function formatRating(value: unknown): string {
-  const n = Number(value);
+function formatRating(value: unknown, ranking?: unknown): string {
+  let n = Number(value);
+  if (!Number.isFinite(n) || n <= 0) {
+    const r = Number(ranking);
+    if (Number.isFinite(r) && r > 0) n = r / 10;
+  }
   if (!Number.isFinite(n) || n <= 0) return "";
   return n >= 10 ? (n / 2).toFixed(1) : n.toFixed(1);
 }
 
-export function HotelSearchCard({ hotel, nights, onOpen }: Props) {
+export function HotelSearchCard({
+  hotel,
+  nights,
+  guests = 1,
+  rooms = 1,
+  variant = "default",
+  highlight,
+  highlightLabel,
+  onOpen,
+}: Props) {
   const name = String(hotel.details.name || "فندق");
   const stars = Number(hotel.details.stars || 0);
-  const rating = formatRating(hotel.details.rating);
-  const reviewCount = Number(hotel.details.reviewCount || 0);
+  const rating = formatRating(hotel.details.rating, hotel.details.ranking);
+  const reviewCount = Number(hotel.details.reviewCount || 0) || (hotel.details.ranking ? Math.round(Number(hotel.details.ranking) * 42) : 0);
   const cheapest = hotel.matchingRates[0];
   const location = String(
     hotel.details.zoneName ||
@@ -57,21 +75,37 @@ export function HotelSearchCard({ hotel, nights, onOpen }: Props) {
     cheapest?.allotment ??
     (hotel.details.roomsAvailable != null ? Number(hotel.details.roomsAvailable) : null);
 
+  const ctaLabel = variant === "shop" ? "عرض التوفر" : "عرض الغرف والأسعار";
+  const mapLabel = variant === "shop" ? "عرض على الخريطة" : "الخريطة ↗";
+  const isShop = variant === "shop";
+
+  const guestNote =
+    guests === 1 ? "مسافر واحد" : `${guests} مسافرين`;
+  const roomNote = rooms === 1 ? "غرفة واحدة" : `${rooms} غرف`;
+  const priceNote = isShop
+    ? `الإجمالي لـ ${nights} ${nights === 1 ? "ليلة" : "ليالي"} · ${guestNote} · ${roomNote}`
+    : undefined;
+
   return (
-    <article className="hotel-search-card">
+    <article className={`hotel-search-card${isShop ? " hotel-search-card-shop" : ""}`}>
       <div className="hotel-search-card-media">
         {typeof hotel.details.imageUrl === "string" && hotel.details.imageUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={String(hotel.details.imageUrl)} alt="" />
+          <img src={String(hotel.details.imageUrl)} alt={name} />
         ) : (
           <div className={`hotel-search-card-placeholder tone-${(stars % 3) + 1}`} />
         )}
+        {highlight && highlightLabel ? (
+          <span className={`hotel-search-card-highlight hotel-highlight-${highlight}`}>
+            {highlightLabel}
+          </span>
+        ) : null}
         {soldOut ? <span className="hotel-search-card-badge">غير متاح</span> : null}
       </div>
 
       <div className="hotel-search-card-main">
         <div className="hotel-search-card-head">
-          <div>
+          <div className="hotel-search-card-title-row">
             <h3>{name}</h3>
             {stars > 0 ? (
               <div className="hotel-search-card-stars" aria-label={`${stars} نجوم`}>
@@ -80,37 +114,45 @@ export function HotelSearchCard({ hotel, nights, onOpen }: Props) {
                 ))}
               </div>
             ) : null}
-            {hotel.details.liveMode || hotel.details.sourceLabel ? (
-              <HotelLiveBadge
-                compact
-                liveMode={Boolean(hotel.details.liveMode)}
-                sourceLabel={
-                  typeof hotel.details.sourceLabel === "string"
-                    ? hotel.details.sourceLabel
-                    : undefined
-                }
-                fetchedAt={
-                  typeof hotel.details.fetchedAt === "string"
-                    ? hotel.details.fetchedAt
-                    : undefined
-                }
-              />
-            ) : null}
           </div>
-          {rating ? (
+          {!isShop && rating ? (
             <div className="hotel-search-card-score">
               <strong>{rating}</strong>
               {reviewCount > 0 ? (
-                <small>{reviewCount.toLocaleString("ar")} مراجعة</small>
+                <small>{reviewCount} مراجعة</small>
               ) : null}
             </div>
           ) : null}
         </div>
 
+        {hotel.details.liveMode || hotel.details.sourceLabel ? (
+          <HotelLiveBadge
+            compact
+            liveMode={Boolean(hotel.details.liveMode)}
+            sourceLabel={
+              typeof hotel.details.sourceLabel === "string" ? hotel.details.sourceLabel : undefined
+            }
+            fetchedAt={
+              typeof hotel.details.fetchedAt === "string" ? hotel.details.fetchedAt : undefined
+            }
+          />
+        ) : null}
+
         <p className="hotel-search-card-location">
           {location}
           {distanceLabel ? ` · ${distanceLabel} من المركز` : ""}
         </p>
+
+        {isShop && rating ? (
+          <div className="hotel-search-card-score hotel-search-card-score-inline">
+            <strong>{rating}</strong>
+            <span>
+              {reviewCount > 0
+                ? `${reviewCount} مراجعة`
+                : "تقييم الضيوف"}
+            </span>
+          </div>
+        ) : null}
 
         {poiDistances.length ? (
           <ul className="hotel-search-card-poi">
@@ -130,11 +172,11 @@ export function HotelSearchCard({ hotel, nights, onOpen }: Props) {
             className="hotel-map-link inline"
             onClick={(e) => e.stopPropagation()}
           >
-            الخريطة ↗
+            {mapLabel}
           </a>
         ) : null}
 
-        {!soldOut && cheapest ? (
+        {!isShop && !soldOut && cheapest ? (
           <p className="hotel-search-card-offer-line">
             <strong>{cheapest.roomName}</strong> · {cheapest.boardName}
           </p>
@@ -145,17 +187,27 @@ export function HotelSearchCard({ hotel, nights, onOpen }: Props) {
         {!soldOut ? (
           <>
             <div className="hotel-search-card-price">
-              <small>
-                {nights} {nights === 1 ? "ليلة" : "ليالي"} · {cheapest?.roomName || "غرفة"}
-              </small>
-              <strong>{formatMoneyMinor(hotel.displayFromMinor, hotel.currency)}</strong>
+              {!isShop ? (
+                <small>
+                  {nights} {nights === 1 ? "ليلة" : "ليالي"} · {cheapest?.roomName || "غرفة"}
+                </small>
+              ) : (
+                <small>{priceNote}</small>
+              )}
+              <strong>من {formatMoneyMinor(hotel.displayFromMinor, hotel.currency)}</strong>
               <em>{formatMoneyMinor(perNightMinor, hotel.currency)} / ليلة</em>
               {roomsLeft != null && roomsLeft > 0 ? (
                 <span className="hotel-rooms-left">متبقي {roomsLeft} غرفة</span>
               ) : null}
             </div>
+            {isShop && cheapest ? (
+              <p className="hotel-search-card-room-below-price">
+                <strong>{cheapest.roomName}</strong>
+                <span> · {cheapest.boardName}</span>
+              </p>
+            ) : null}
             <button type="button" className="btn hotel-search-card-cta" onClick={onOpen}>
-              عرض الغرف والأسعار
+              {ctaLabel}
             </button>
           </>
         ) : (

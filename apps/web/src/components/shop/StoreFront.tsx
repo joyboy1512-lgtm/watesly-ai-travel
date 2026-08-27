@@ -10,6 +10,7 @@ import {
   type ShopCustomer,
 } from "@/lib/shop-session";
 import { WeekendGateLogo } from "@/components/shop/WeekendGateLogo";
+import { COMPANY_LEGAL } from "@watesly-travel/shared";
 
 const ShopAssistant = dynamic(
   () => import("@/components/shop/ShopAssistant").then((m) => m.ShopAssistant),
@@ -116,12 +117,10 @@ export function StoreFront({
           <div>
             <strong className="shop-footer-brand">{BRAND}</strong>
             <p>
-              منصة سفر كويتية: طيران، فنادق، نقل، وأنشطة. أثناء الاختبار تظهر
-              نتائج تجريبية بوضوح حتى اكتمال ربط المزوّدين.
+              منصة حجز تابعة لـ{COMPANY_LEGAL.legalNameAr}: طيران، فنادق، نقل،
+              وأنشطة.
             </p>
-            <p className="shop-footer-legal-meta">
-              بيانات الشركة والترخيص تُحدَّث قبل الإطلاق الرسمي
-            </p>
+            <p className="shop-footer-legal-meta">{COMPANY_LEGAL.addressAr}</p>
           </div>
           <div>
             <strong>استكشف</strong>
@@ -129,20 +128,24 @@ export function StoreFront({
             <Link href="/#offers">العروض</Link>
             <Link href="/#search">البحث</Link>
             <Link href="/chat">المساعد الذكي</Link>
+            <Link href="/bookings/manage">إدارة حجزي</Link>
           </div>
           <div>
             <strong>قانوني</strong>
             <Link href="/terms">الشروط والأحكام</Link>
             <Link href="/privacy">سياسة الخصوصية</Link>
             <Link href="/booking-policy">التعديل والإلغاء</Link>
+            <Link href="/payment-policy">سياسة الدفع</Link>
             <Link href="/about">من نحن</Link>
           </div>
           <div>
             <strong>تواصل</strong>
-            <span>+965 — يُعلن قريبًا</span>
-            <span>support@weekendgate.com</span>
-            <span>الكويت · GMT+3</span>
-            <span className="shop-footer-payments">وسائل الدفع تُفعَّل عند الإطلاق</span>
+            <a href={`tel:${COMPANY_LEGAL.phoneE164}`}>{COMPANY_LEGAL.phoneDisplay}</a>
+            <a href={COMPANY_LEGAL.whatsappUrl} target="_blank" rel="noreferrer">
+              واتساب {COMPANY_LEGAL.phoneDisplay}
+            </a>
+            <a href={`mailto:${COMPANY_LEGAL.supportEmail}`}>{COMPANY_LEGAL.supportEmail}</a>
+            <span>{COMPANY_LEGAL.hoursAr}</span>
           </div>
         </div>
         <p className="shop-footer-copy" suppressHydrationWarning>

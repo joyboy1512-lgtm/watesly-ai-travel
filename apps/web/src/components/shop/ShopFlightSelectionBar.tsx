@@ -162,7 +162,7 @@ export function ShopFlightSelectionBar({
           <strong className="shop-custom-trip-price">
             {formatMoneyMinor(trip.totalPriceMinor, trip.currency)}
           </strong>
-          <small>إجمالي الرحلة · شامل الضرائب</small>
+          <small>السعر الإجمالي · شامل الضرائب</small>
           <button
             type="button"
             className="shop-custom-trip-cta"

@@ -6169,12 +6169,28 @@
   gap: 0.45rem;
 }
 
-.shop-footer-legal-meta,
-.shop-footer-payments {
-  display: block;
-  margin-top: 0.45rem;
+.exp-util-static {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
   font-size: 0.82rem;
-  color: var(--exp-muted);
+  font-weight: 700;
+  color: var(--exp-navy);
+  padding: 0.25rem 0.45rem;
+}
+
+.shop-flight-mock-banner.compact {
+  margin: 0 0 0.85rem;
+  width: 100%;
+}
+
+.shop-legal-note {
+  background: #fff7e6;
+  border: 1px solid #fcd34d;
+  border-radius: 8px;
+  padding: 0.55rem 0.75rem;
+  color: #92400e;
+  font-size: 0.88rem;
 }
 
 @media (min-width: 901px) {

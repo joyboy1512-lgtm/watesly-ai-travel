@@ -225,7 +225,7 @@ export function ShopFlightExpandedPanel({
 
   const packageCode = trip.outbound.airlineCode;
   const fares = useMemo(() => buildFareOptions(trip, passengers), [trip, passengers]);
-  const selectedFare = fares.find((f) => f.id === selectedFareId) || fares[1] || fares[0];
+  const selectedFare = fares.find((f) => f.id === selectedFareId) || fares[0];
   const providers = useMemo(
     () => (selectedFare ? buildProviderOffers(trip, selectedFare) : []),
     [trip, selectedFare],
@@ -240,7 +240,9 @@ export function ShopFlightExpandedPanel({
 
   useEffect(() => {
     if (fares.length && !selectedFareId) {
-      setSelectedFareId(fares[1]?.id || fares[0]!.id);
+      // Default to Saver so the panel price matches the card "from" price
+      const saver = fares.find((f) => f.tierKey === "economy_saver") || fares[0];
+      setSelectedFareId(saver!.id);
     }
   }, [fares, selectedFareId]);
 
@@ -381,7 +383,7 @@ export function ShopFlightExpandedPanel({
                       {formatMoneyMinor(fare.perPassengerMinor, trip.currency)} / مسافر
                     </small>
                   ) : (
-                    <small className="shop-flight-fare-per-pax">إجمالي {passengers} مسافر</small>
+                    <small className="shop-flight-fare-per-pax">السعر الإجمالي لمسافر واحد</small>
                   )}
                   <ul className="shop-flight-fare-features">
                     <li>🎒 {fare.cabinBag}</li>
@@ -410,7 +412,10 @@ export function ShopFlightExpandedPanel({
 
           {selectedFare && providers.length ? (
             <section className="shop-flight-expanded-providers">
-              <h3>المزوّد (من الأرخص)</h3>
+              <h3>المزوّد (تجريبي · من الأرخص)</h3>
+              <p className="shop-flight-fares-hint">
+                أسماء المزوّدين أدناه للاختبار فقط وليست حجوزات حقيقية
+              </p>
               <div className="shop-flight-provider-list">
                 {providers.map((prov) => (
                   <label key={prov.id} className="shop-flight-provider-row selectable">

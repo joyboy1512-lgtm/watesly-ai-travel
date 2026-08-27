@@ -233,8 +233,8 @@ export function ShopFlightCard({
   const pax = Math.max(1, passengers);
   const priceNote =
     pax > 1
-      ? `إجمالي ${pax} مسافرين · شامل الضرائب`
-      : "إجمالي مسافر واحد · شامل الضرائب";
+      ? `يبدأ من · السعر الإجمالي لـ ${pax} مسافرين · شامل الضرائب`
+      : "يبدأ من · السعر الإجمالي لمسافر واحد · شامل الضرائب";
 
   return (
     <article
@@ -297,8 +297,7 @@ export function ShopFlightCard({
           {hasChecked ? <span title="حقيبة مسجّلة">✓ 🧳</span> : <span className="off">🧳</span>}
         </div>
         <strong className="shop-ticket-price">
-          {priceFrom ? "من " : ""}
-          {formatMoneyMinor(flight.sellAmountMinor, flight.currency)}
+          من {formatMoneyMinor(flight.sellAmountMinor, flight.currency)}
         </strong>
         <small className="shop-ticket-price-note">{priceNote}</small>
         <button

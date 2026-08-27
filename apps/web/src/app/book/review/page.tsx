@@ -18,6 +18,7 @@ import {
   stopsLabel,
 } from "@/lib/flight-search";
 import { formatMoneyMinor } from "@/lib/format";
+import { ShopMockBanner } from "@/components/shop/ShopMockBanner";
 
 export default function BookReviewPage() {
   const router = useRouter();
@@ -72,6 +73,7 @@ export default function BookReviewPage() {
   return (
     <StoreFront>
       <div className="shop-flight-review-page">
+        <ShopMockBanner />
         <header className="shop-flight-review-head">
           <h1>مراجعة الحجز</h1>
           <p>تأكّد من تفاصيل الرحلة والسعر قبل إدخال بيانات المسافرين</p>

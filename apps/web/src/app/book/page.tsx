@@ -13,6 +13,7 @@ import {
 } from "@/lib/booking-draft";
 import { formatDay } from "@/lib/flight-search";
 import { formatMoneyMinor } from "@/lib/format";
+import { ShopMockBanner } from "@/components/shop/ShopMockBanner";
 import {
   getShopSession,
   saveShopSession,
@@ -147,6 +148,7 @@ function FlightCheckout({
 
   return (
     <div className="shop-flight-checkout">
+      <ShopMockBanner compact />
       <div className="shop-flight-checkout-steps" aria-label="خطوات الحجز">
         {[
           "بياناتك",
@@ -662,11 +664,12 @@ export default function PublicBookPage() {
     <StoreFront>
       {bookingId ? (
         <section className="shop-panel">
+          <ShopMockBanner compact />
           <h1>تم حفظ طلبك</h1>
           <p>رقم الطلب: {bookingId}</p>
           <p className="shop-hint">
-            لم يُخصم أي مبلغ الآن. سيتواصل فريق WeekendGate لتأكيد الحجز وإتمام
-            الدفع.
+            هذه مرحلة اختبار — لم يُخصم أي مبلغ. سيتواصل فريق WeekendGate لتأكيد
+            الطلب عند تفعيل الحجز الحقيقي.
           </p>
           <Link className="shop-btn" href="/account">
             عرض رحلاتي
@@ -674,6 +677,7 @@ export default function PublicBookPage() {
         </section>
       ) : needLogin ? (
         <section className="shop-panel">
+          <ShopMockBanner compact />
           <h1>إتمام الطلب</h1>
           <p>{draftTitle(draft)}</p>
           {error ? <p className="shop-error">{error}</p> : null}

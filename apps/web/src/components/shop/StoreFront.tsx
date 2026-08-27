@@ -77,25 +77,18 @@ export function StoreFront({
             <Link href="/contact" className="exp-util-link mobile-only">
               تواصل معنا
             </Link>
-            <label className="exp-util-item">
+            <span className="exp-util-static" title="العملة المتاحة حاليًا">
               <span className="exp-util-icon" aria-hidden>
                 💱
               </span>
-              <select defaultValue="KWD" aria-label="العملة">
-                <option value="KWD">KWD</option>
-                <option value="USD">USD</option>
-                <option value="EUR">EUR</option>
-              </select>
-            </label>
-            <label className="exp-util-item">
+              KWD
+            </span>
+            <span className="exp-util-static" title="اللغة المتاحة حاليًا">
               <span className="exp-util-icon" aria-hidden>
                 🌐
               </span>
-              <select defaultValue="ar" aria-label="اللغة">
-                <option value="ar">العربية</option>
-                <option value="en">English</option>
-              </select>
-            </label>
+              العربية
+            </span>
             {customer ? (
               <>
                 <Link href="/account" className="exp-util-link">
@@ -127,7 +120,7 @@ export function StoreFront({
               نتائج تجريبية بوضوح حتى اكتمال ربط المزوّدين.
             </p>
             <p className="shop-footer-legal-meta">
-              WeekendGate Travel · ترخيص تجاري: 123456 · CR: KW-2024-001
+              بيانات الشركة والترخيص تُحدَّث قبل الإطلاق الرسمي
             </p>
           </div>
           <div>
@@ -146,10 +139,10 @@ export function StoreFront({
           </div>
           <div>
             <strong>تواصل</strong>
-            <span>+965 2222 0000</span>
+            <span>+965 — يُعلن قريبًا</span>
             <span>support@weekendgate.com</span>
             <span>الكويت · GMT+3</span>
-            <span className="shop-footer-payments">K-Net · Visa · Mastercard</span>
+            <span className="shop-footer-payments">وسائل الدفع تُفعَّل عند الإطلاق</span>
           </div>
         </div>
         <p className="shop-footer-copy" suppressHydrationWarning>

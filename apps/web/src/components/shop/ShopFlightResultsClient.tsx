@@ -190,7 +190,7 @@ export function ShopFlightResultsClient() {
           );
         }
         setFlightsRaw(combined);
-        setMessage(`تم جلب ${combined.length} رحلة عبر ${search.legs.length} مسارات (${providerName})`);
+        setMessage(`تم جلب ${combined.length} رحلة تجريبية عبر ${search.legs.length} مسارات (${providerName})`);
       } else {
         if (!search.origin || !search.destination || !search.departDate) {
           throw new Error("أدخل المغادرة والوجهة والتاريخ");
@@ -222,10 +222,10 @@ export function ShopFlightResultsClient() {
         const directCount = rows.filter((f) => packageMaxStops(f) === 0).length;
         setMessage(
           search.tripType === "roundtrip" && hasReturns
-            ? `تم جلب ${rows.length} عرض عبر ${result.providerName || "المزوّد"}`
+            ? `تم جلب ${rows.length} عروض تجريبية عبر ${result.providerName || "المزوّد"}`
             : search.directOnly
-              ? `تم جلب ${rows.length} رحلة — ${directCount} مباشرة`
-              : `تم جلب ${rows.length} رحلة عبر ${result.providerName || "المزوّد"}`,
+              ? `تم جلب ${rows.length} رحلة تجريبية — ${directCount} مباشرة`
+              : `تم جلب ${rows.length} رحلة تجريبية عبر ${result.providerName || "المزوّد"}`,
         );
       }
     } catch (err) {
@@ -307,7 +307,7 @@ export function ShopFlightResultsClient() {
     setLoadingFlightId(null);
   }
 
-  function handleSelectFlight(flight: FlightOfferRow) {
+  function handleViewDetails(flight: FlightOfferRow) {
     const trip = composeFromPackage(flight);
     if (!trip) return;
 
@@ -316,8 +316,7 @@ export function ShopFlightResultsClient() {
       return;
     }
 
-    setSelectedOutboundKey(trip.outbound.key);
-    if (trip.return) setSelectedReturnKey(trip.return.key);
+    // Open details only — do not auto-check mix-match legs
     void openTripPanel(trip, flight.id);
   }
 
@@ -551,7 +550,7 @@ export function ShopFlightResultsClient() {
             onFiltersChange={setFilters}
             onSortChange={setSortKey}
             onResetFilters={() => setFilters(defaultFlightFilters())}
-            onSelectFlight={handleSelectFlight}
+            onSelectFlight={handleViewDetails}
             onToggleOutbound={toggleOutbound}
             onToggleReturn={toggleReturn}
             selectedOutboundKey={selectedOutboundKey}

@@ -9,23 +9,26 @@ export const metadata: Metadata = {
 export default function ContactPage() {
   return (
     <LegalPageShell title="تواصل معنا">
+      <p className="shop-legal-note">
+        بيانات الاتصال أدناه مؤقتة أثناء مرحلة الاختبار وسيتم تحديثها قبل الإطلاق.
+      </p>
       <ul className="shop-contact-list">
         <li>
-          <strong>الهاتف:</strong> +965 2222 0000
+          <strong>الهاتف:</strong> يُعلن قريبًا
         </li>
         <li>
           <strong>البريد:</strong> support@weekendgate.com
         </li>
         <li>
-          <strong>العنوان:</strong> الكويت — شارع الخليج، برج WeekendGate
+          <strong>العنوان:</strong> الكويت
         </li>
         <li>
-          <strong>ساعات الدعم:</strong> 24/7 عبر المساعد الذكي
+          <strong>ساعات الدعم:</strong> عبر المساعد الذكي داخل الموقع
         </li>
       </ul>
       <p>
-        للاستفسارات العاجلة عن حجز قائم، يرجى تجهيز رقم الطلب أو رقم الجوال
-        المستخدم في البحث.
+        للاستفسارات أثناء الاختبار، استخدم المساعد الذكي أو البريد الإلكتروني
+        أعلاه مع رقم الطلب إن وُجد.
       </p>
     </LegalPageShell>
   );

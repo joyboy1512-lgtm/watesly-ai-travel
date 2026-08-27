@@ -116,9 +116,9 @@ const TIER_DEFS: Array<{
 ];
 
 const MOCK_PROVIDERS = [
-  { key: "weekendgate", name: "WeekendGate Direct" },
-  { key: "skyhub", name: "SkyHub Travel" },
-  { key: "gulfconnect", name: "Gulf Connect" },
+  { key: "weekendgate", name: "WeekendGate Direct (تجريبي)" },
+  { key: "skyhub", name: "SkyHub Travel (تجريبي)" },
+  { key: "gulfconnect", name: "Gulf Connect (تجريبي)" },
 ];
 
 function tierPrice(baseMinor: number, multiplier: number) {

@@ -1,6 +1,7 @@
 "use client";
 
 import "../../prc-suite.css";
+import "../../customers-crm.css";
 
 import { useEffect, useMemo, useState } from "react";
 import { AppShell } from "@/components/AppShell";

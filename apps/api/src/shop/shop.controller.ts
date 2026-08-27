@@ -222,6 +222,39 @@ export class ShopController {
     return this.shop.deleteTraveler(customer, id);
   }
 
+  @Post("bookings/lookup")
+  lookupBooking(
+    @Body() body: { bookingRef?: string; contact?: string },
+  ) {
+    return this.shop.lookupBooking(body);
+  }
+
+  @Post("payments/intent")
+  @UseGuards(CustomerAuthGuard)
+  createPaymentIntent(
+    @CurrentCustomer() customer: ShopCustomer,
+    @Body()
+    body: {
+      bookingId?: string;
+      amountMinor?: number;
+      currency?: string;
+      method?: "hosted_card" | "knet" | "apple_pay" | "manual";
+      idempotencyKey?: string;
+      returnUrl?: string;
+      cancelUrl?: string;
+    },
+  ) {
+    return this.shop.createPaymentIntent(customer, body);
+  }
+
+  @Post("payments/webhook")
+  paymentWebhook(
+    @Body() body: Record<string, unknown>,
+    // Nest may parse JSON already — adapter still requires raw verification in real PSP
+  ) {
+    return this.shop.handlePaymentWebhook(body);
+  }
+
   @Get("bookings")
   @UseGuards(CustomerAuthGuard)
   bookings(@CurrentCustomer() customer: ShopCustomer) {

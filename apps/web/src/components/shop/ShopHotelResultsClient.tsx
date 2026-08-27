@@ -32,6 +32,7 @@ import {
   type HotelSortKey,
 } from "@/lib/hotel-results-session";
 import { saveHotelDraft } from "@/lib/booking-draft";
+import { trackFunnel } from "@/lib/funnel-analytics";
 import {
   arabicGuestCount,
   arabicNightCount,
@@ -137,6 +138,7 @@ export function ShopHotelResultsClient() {
       setMessage("");
       setHotelsRaw([]);
       setHotelOpen(null);
+      trackFunnel({ event: "search_submit", service: "hotel" });
 
       const href = buildHotelResultsHref(search);
       if (!shouldRestoreHotelResultsSession(href)) {
@@ -258,10 +260,17 @@ export function ShopHotelResultsClient() {
         setMessage(
           `تم جلب ${result.hotels?.length || 0} إقامة عبر ${result.providerName || "المزوّد"}`,
         );
+        trackFunnel({
+          event: "results_loaded",
+          service: "hotel",
+          provider: result.providerName,
+          meta: { count: result.hotels?.length || 0 },
+        });
       } catch (err) {
         if (gen !== searchGenRef.current) return;
         if (controller.signal.aborted) return;
         const raw = err instanceof Error ? err.message : "فشل البحث";
+        trackFunnel({ event: "search_failed", service: "hotel", errorCode: "SEARCH" });
         // Prefer stale session results when provider quota is exhausted
         if (
           cacheMatches &&

@@ -1,28 +1,46 @@
 import type { Metadata } from "next";
+import { COMPANY_LEGAL } from "@watesly-travel/shared";
 import { LegalPageShell } from "@/components/shop/LegalPageShell";
 
 export const metadata: Metadata = {
   title: "من نحن | WeekendGate",
-  description: "تعرف على WeekendGate — منصة سفر كويتية لحجز الطيران والفنادق والنقل.",
+  description: `${COMPANY_LEGAL.legalNameAr} — منصة WeekendGate لحجز الطيران والفنادق.`,
 };
 
 export default function AboutPage() {
   return (
     <LegalPageShell title="من نحن">
       <p>
-        WeekendGate منصة سفر كويتية تساعدك على البحث عن رحلات الطيران والإقامة
-        والنقل والأنشطة في تجربة واحدة مبسّطة.
+        <strong>{COMPANY_LEGAL.brandName}</strong> منصة حجز تابعة لـ
+        {COMPANY_LEGAL.legalNameAr}. نساعد المسافرين من الكويت على البحث عن
+        رحلات الطيران والإقامة والنقل والأنشطة في تجربة واحدة مبسّطة.
       </p>
-      <p>
-        نعمل حاليًا على ربط مزوّدين حقيقيين للطيران والفنادق. أثناء مرحلة
-        الاختبار، قد تظهر نتائج تجريبية بوضوح في واجهة البحث.
-      </p>
-      <h2>رؤيتنا</h2>
-      <p>أن تكون كل رحلتك تبدأ من مكان واحد — ببحث واضح، أسعار شفافة، ودعم بشري عند الحاجة.</p>
+      <p>{COMPANY_LEGAL.roleClarificationAr}</p>
       <h2>البيانات القانونية</h2>
+      <ul>
+        <li>
+          <strong>الشركة:</strong> {COMPANY_LEGAL.legalNameAr}
+        </li>
+        <li>
+          <strong>العنوان:</strong> {COMPANY_LEGAL.addressAr}
+        </li>
+        <li>
+          <strong>الهاتف:</strong> {COMPANY_LEGAL.phoneDisplay}
+        </li>
+        <li>
+          <strong>واتساب:</strong> {COMPANY_LEGAL.phoneDisplay}
+        </li>
+        <li>
+          <strong>البريد:</strong> {COMPANY_LEGAL.supportEmail}
+        </li>
+        <li>
+          <strong>ساعات العمل:</strong> {COMPANY_LEGAL.hoursAr}
+        </li>
+      </ul>
       <p>
-        رقم الترخيص والعنوان التجاري سيُعرضان بشكل رسمي قبل الإطلاق. أثناء
-        الاختبار تُعرض بيانات مؤقتة فقط.
+        رقم الترخيص السياحي يُعرض في تذييل الموقع وصفحة التواصل فور اعتماده
+        رسميًا في السجلات التجارية — لا نعرض عبارة «يحدث قبل الإطلاق» في بيئة
+        الإنتاج.
       </p>
     </LegalPageShell>
   );

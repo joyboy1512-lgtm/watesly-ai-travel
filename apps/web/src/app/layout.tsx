@@ -1,3 +1,4 @@
+import { COMPANY_LEGAL } from "@watesly-travel/shared";
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 import "./globals.css";
@@ -23,6 +24,10 @@ export const metadata: Metadata = {
     title: "WeekendGate — احجز طيران وفنادق",
     description: "منصة سفر كويتية — طيران، فنادق، نقل، وأنشطة.",
   },
+  robots: {
+    index: process.env.NEXT_PUBLIC_SITE_ENV !== "staging",
+    follow: process.env.NEXT_PUBLIC_SITE_ENV !== "staging",
+  },
 };
 
 export const viewport: Viewport = {
@@ -35,14 +40,17 @@ export const viewport: Viewport = {
 const organizationJsonLd = {
   "@context": "https://schema.org",
   "@type": "TravelAgency",
-  name: "WeekendGate",
+  name: COMPANY_LEGAL.brandName,
+  legalName: COMPANY_LEGAL.legalNameAr,
   url: SITE_URL,
   logo: `${SITE_URL}/weekendgate-mark.png`,
-  telephone: "+965-2222-0000",
+  telephone: COMPANY_LEGAL.phoneE164,
+  email: COMPANY_LEGAL.supportEmail,
   address: {
     "@type": "PostalAddress",
+    streetAddress: COMPANY_LEGAL.addressAr,
+    addressLocality: "حولي",
     addressCountry: "KW",
-    addressLocality: "Kuwait City",
   },
   areaServed: "KW",
 };

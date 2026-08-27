@@ -1,23 +1,24 @@
 import type { MetadataRoute } from "next";
 
-const BASE = "https://www.weekendgate.com";
-
 export default function sitemap(): MetadataRoute.Sitemap {
-  const pages = [
+  const base = "https://www.weekendgate.com";
+  const paths = [
     "",
     "/about",
-    "/booking-policy",
-    "/faq",
     "/contact",
-    "/terms",
+    "/faq",
     "/privacy",
-    "/chat",
-    "/account/login",
+    "/terms",
+    "/booking-policy",
+    "/payment-policy",
+    "/flights/results",
+    "/hotels/results",
   ];
-  return pages.map((path) => ({
-    url: `${BASE}${path}`,
-    lastModified: new Date(),
-    changeFrequency: path === "" ? "weekly" : "monthly",
-    priority: path === "" ? 1 : 0.6,
+  const now = new Date();
+  return paths.map((path) => ({
+    url: `${base}${path}`,
+    lastModified: now,
+    changeFrequency: path === "" ? "daily" : "weekly",
+    priority: path === "" ? 1 : 0.7,
   }));
 }

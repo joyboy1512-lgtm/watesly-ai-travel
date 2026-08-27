@@ -874,6 +874,124 @@ export class ShopService {
     };
   }
 
+  async lookupBooking(body: { bookingRef?: string; contact?: string }) {
+    const ref = String(body.bookingRef || "").trim();
+    const contact = String(body.contact || "").trim().toLowerCase();
+    if (ref.length < 4 || contact.length < 4) {
+      throw new BadRequestException("أدخل رقم الحجز وبيانات التواصل");
+    }
+    const org = await this.orgs.resolve();
+    const phoneNorm = normalizeShopPhone(contact);
+    const row = await this.prisma.booking.findFirst({
+      where: {
+        organizationId: org.id,
+        OR: [{ id: ref }, { id: { startsWith: ref } }],
+      },
+      include: {
+        quote: { include: { items: true } },
+        payments: true,
+      },
+    });
+    if (!row) throw new BadRequestException("لم يتم العثور على الحجز");
+    const pd = (row.passengerDetails || {}) as Record<string, unknown>;
+    const contactInfo = (pd.contact || {}) as { email?: string; phone?: string };
+    const email = String(contactInfo.email || pd.email || "").toLowerCase();
+    const phone = normalizeShopPhone(String(contactInfo.phone || pd.phone || ""));
+    const contactOk =
+      (email && email === contact) ||
+      (phone && (phone === phoneNorm || phone.endsWith(contact.replace(/\D/g, ""))));
+    if (!contactOk) {
+      throw new BadRequestException("بيانات التواصل لا تطابق الحجز");
+    }
+    return {
+      id: row.id,
+      weekendgateRef: String(pd.weekendgateRef || row.id),
+      providerRef: String(pd.providerBookingRef || pd.pnr || "") || undefined,
+      status: row.status,
+      paymentStatus: row.payments[0]?.status || "unpaid",
+      paymentMethod: row.payments[0]?.method,
+      description: row.quote?.items[0]?.description || "حجز",
+      totalSellAmount: row.totalSellAmount,
+      currency: row.quote?.currency || "KWD",
+      createdAt: row.createdAt,
+      timeline: [
+        { at: row.createdAt.toISOString(), label: "تم إنشاء الطلب" },
+        ...(row.status === "confirmed"
+          ? [{ at: (row.updatedAt || row.createdAt).toISOString(), label: "تم التأكيد" }]
+          : []),
+      ],
+    };
+  }
+
+  async createPaymentIntent(
+    customer: ShopCustomer,
+    body: {
+      bookingId?: string;
+      amountMinor?: number;
+      currency?: string;
+      method?: "hosted_card" | "knet" | "apple_pay" | "manual";
+      idempotencyKey?: string;
+      returnUrl?: string;
+      cancelUrl?: string;
+    },
+  ) {
+    const bookingId = String(body.bookingId || "").trim();
+    if (!bookingId) throw new BadRequestException("bookingId مطلوب");
+    const booking = await this.prisma.booking.findFirst({
+      where: {
+        id: bookingId,
+        organizationId: customer.organizationId,
+        customerId: customer.id,
+      },
+      include: { quote: true, payments: true },
+    });
+    if (!booking) throw new BadRequestException("الحجز غير موجود");
+
+    const amountMinor = Number(body.amountMinor ?? booking.totalSellAmount);
+    if (!Number.isFinite(amountMinor) || amountMinor <= 0) {
+      throw new BadRequestException("مبلغ الدفع غير صالح");
+    }
+    if (Math.round(amountMinor) !== Math.round(Number(booking.totalSellAmount))) {
+      throw new BadRequestException("مبلغ الدفع لا يطابق آخر تسعير للحجز");
+    }
+
+    const { getPaymentGateway } = await import("@watesly-travel/provider-sdk");
+    const gateway = getPaymentGateway();
+    const intent = await gateway.createIntent({
+      amountMinor: Math.round(amountMinor),
+      currency: (body.currency || booking.quote?.currency || "KWD").toUpperCase(),
+      bookingId: booking.id,
+      weekendgateRef: booking.id,
+      customerEmail: customer.email || undefined,
+      customerPhone: customer.phone,
+      method: body.method || "hosted_card",
+      idempotencyKey: String(body.idempotencyKey || `book:${booking.id}:${amountMinor}`),
+      returnUrl: body.returnUrl || "https://www.weekendgate.com/bookings/manage",
+      cancelUrl: body.cancelUrl || "https://www.weekendgate.com/bookings/manage",
+    });
+    return {
+      intent,
+      note:
+        gateway.environment === "sandbox"
+          ? "وضع Sandbox — لا يتم خصم حقيقي. التأكيد يعتمد على Webhook موقّع وليس على Redirect فقط."
+          : undefined,
+    };
+  }
+
+  async handlePaymentWebhook(body: Record<string, unknown>) {
+    const { getPaymentGateway } = await import("@watesly-travel/provider-sdk");
+    const gateway = getPaymentGateway();
+    const event = await gateway.verifyAndParseWebhook(
+      { "x-weekendgate-signature": "sandbox" },
+      JSON.stringify(body),
+    );
+    // Redirect alone is never enough — webhook drives status
+    if (event.status === "captured" || event.status === "authorized") {
+      return { ok: true, status: event.status, intentId: event.intentId };
+    }
+    return { ok: true, status: event.status, intentId: event.intentId };
+  }
+
   async assistantChat(customer: ShopCustomer, body: { message?: string }) {
     const text = String(body.message || "").trim();
     if (!text) throw new BadRequestException("نص الرسالة مطلوب");

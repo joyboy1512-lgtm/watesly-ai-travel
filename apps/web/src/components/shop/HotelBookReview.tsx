@@ -47,8 +47,6 @@ export function HotelBookReview({ booking }: Props) {
   const bd = booking.priceBreakdown;
   const payNow = bd?.payNowMinor ?? booking.totalMinor ?? booking.hotel.sellAmountMinor;
   const payAtHotel = bd?.payAtHotelMinor ?? 0;
-  const tripTotal = bd?.tripTotalMinor ?? payNow + payAtHotel;
-  const perNight = bd?.perNightMinor ?? Math.round(payNow / Math.max(1, nights));
   const roomLabel = rate
     ? translateRoomNameAr(rate.roomName).ar
     : "غرفة";

@@ -123,14 +123,13 @@ export function HotelDetailModal({
   const hasFreeCancel = hotel.matchingRates.some((r) => r.freeCancellation);
   const payHotel = hotel.matchingRates.some((r) => r.paymentType === "AT_HOTEL");
   const payWeb = hotel.matchingRates.some((r) => r.paymentType === "AT_WEB");
-  const gallery = Array.isArray(hotel.details.images)
-    ? (hotel.details.images as Array<{ url?: string }>).map((i) => i.url).filter(Boolean) as string[]
-    : [];
   const galleryObjects = Array.isArray(hotel.details.images)
     ? (hotel.details.images as Array<{ url?: string; roomCode?: string; type?: string }>)
         .filter((i) => i.url)
         .map((i) => ({ url: String(i.url), roomCode: i.roomCode, type: i.type }))
-    : gallery.map((url) => ({ url }));
+    : imageUrl
+      ? [{ url: imageUrl }]
+      : [];
 
   async function handleBookRate(rate: HotelRateOption) {
     setCheckError("");

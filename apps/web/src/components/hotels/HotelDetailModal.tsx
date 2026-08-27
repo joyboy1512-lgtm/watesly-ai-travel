@@ -78,7 +78,7 @@ export function HotelDetailModal({
   const shopStyle = variant === "shop";
   const [descOpen, setDescOpen] = useState(false);
   const [selectedRate, setSelectedRate] = useState<HotelRateOption | null>(null);
-  const [tab, setTab] = useState<"rooms" | "map" | "reviews" | "facilities" | "policies">(
+  const [tab, setTab] = useState<"photos" | "rooms" | "map" | "reviews" | "facilities" | "policies">(
     "rooms",
   );
   const [checkingRateKey, setCheckingRateKey] = useState<string | null>(null);
@@ -253,6 +253,29 @@ export function HotelDetailModal({
               </div>
             ) : null}
           </div>
+          {shopStyle ? (
+            <div className="hotel-modal-sticky-meta">
+              <p>
+                {[
+                  String(hotel.details.destinationName || hotel.details.location || ""),
+                  String(hotel.details.zoneName || hotel.details.neighborhood || ""),
+                ]
+                  .filter(Boolean)
+                  .join(" · ") || "—"}
+              </p>
+              <div className="hotel-modal-sticky-price">
+                <strong>{formatMoneyMinor(hotel.displayFromMinor, hotel.currency)}</strong>
+                <small>التكلفة الكلية · يبدأ من</small>
+                <button
+                  type="button"
+                  className="btn hotel-choose-room-cta"
+                  onClick={() => setTab("rooms")}
+                >
+                  اختر غرفتك
+                </button>
+              </div>
+            </div>
+          ) : null}
         </div>
 
         <div className="hotel-modal-live">
@@ -442,14 +465,15 @@ export function HotelDetailModal({
               </section>
             ) : null}
 
-            <nav className="hotel-detail-tabs" aria-label="أقسام الفندق">
+            <nav className="hotel-detail-tabs hotel-detail-tabs-sticky" aria-label="أقسام الفندق">
               {(
                 [
-                  ["rooms", "الغرف"],
+                  ["photos", "الصور"],
+                  ["rooms", "الغرف والأسعار"],
                   ["map", "الموقع"],
-                  ["reviews", "التقييمات"],
                   ["facilities", "المرافق"],
-                  ["policies", "سياسات مكان الإقامة"],
+                  ["reviews", "التقييمات"],
+                  ["policies", "السياسات"],
                 ] as const
               ).map(([id, label]) => (
                 <button
@@ -465,6 +489,28 @@ export function HotelDetailModal({
 
             {checkError && checkPhase === "idle" ? (
               <p className="hotel-check-error">{checkError}</p>
+            ) : null}
+
+            {tab === "photos" ? (
+              <section className="flight-modal-section hotel-tab-panel">
+                <HotelGallery
+                  images={
+                    Array.isArray(hotel.details.images)
+                      ? (hotel.details.images as Array<{ url?: string; roomCode?: string; type?: string }>)
+                          .filter((img) => img.url)
+                          .map((img) => ({
+                            url: String(img.url),
+                            roomCode: img.roomCode,
+                            type: img.type,
+                          }))
+                      : []
+                  }
+                  hotelName={name}
+                  heroUrl={
+                    typeof hotel.details.imageUrl === "string" ? hotel.details.imageUrl : undefined
+                  }
+                />
+              </section>
             ) : null}
 
             {tab === "rooms" ? (

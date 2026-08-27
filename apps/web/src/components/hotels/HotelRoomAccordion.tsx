@@ -42,6 +42,15 @@ function cancellationSummary(rate: HotelRateOption) {
   if (rate.freeCancellation) {
     const first = rate.cancellationPolicies.find((p) => Number(p.amount) === 0);
     if (first?.from) {
+      const deadline = new Date(first.from);
+      const now = Date.now();
+      if (Number.isFinite(deadline.getTime()) && deadline.getTime() <= now) {
+        return {
+          text: "غير قابل للاسترداد الآن",
+          deadline: "انتهت فترة الإلغاء المجاني",
+          good: false,
+        };
+      }
       return {
         text: "إلغاء مجاني",
         deadline: `حتى ${formatPolicyDate(first.from)} (توقيت الكويت)`,
@@ -57,8 +66,9 @@ function cancellationSummary(rate: HotelRateOption) {
       Number.isFinite(fee) && fee > 0
         ? ` · رسوم ${fee} ${rate.currency}`
         : "";
+    const partial = Number.isFinite(fee) && fee > 0;
     return {
-      text: "غير قابل للاسترداد",
+      text: partial ? "استرداد جزئي" : "غير قابل للاسترداد",
       deadline: `من تاريخ ${formatPolicyDate(first.from)}${feeLabel}`,
       good: false,
     };
@@ -227,6 +237,23 @@ export function HotelRoomAccordion({
                         <strong>{formatMoneyMinor(totalMinor, hotel.currency)}</strong>
                         <small>{nightlyHint(rate, nights, perNightMinor, hotel.currency)}</small>
                         {taxes ? <small>{taxes}</small> : null}
+                        {rate.dailyRates && rate.dailyRates.length > 1 ? (
+                          <details className="hotel-rate-daily">
+                            <summary>تفصيل السعر اليومي</summary>
+                            <ul>
+                              {rate.dailyRates.map((day, i) => (
+                                <li key={`${day.date || i}`}>
+                                  <span>{day.date || `ليلة ${i + 1}`}</span>
+                                  <em>
+                                    {day.net != null
+                                      ? `${day.net} ${rate.currency}`
+                                      : "—"}
+                                  </em>
+                                </li>
+                              ))}
+                            </ul>
+                          </details>
+                        ) : null}
                       </div>
                       <button
                         type="button"

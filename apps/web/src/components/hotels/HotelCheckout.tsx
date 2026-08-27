@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import type { Dispatch, SetStateAction } from "react";
-import { formatHotelDay, rateDisplayMinor } from "@/lib/hotel-search";
+import { formatHotelDay } from "@/lib/hotel-search";
 import { formatMoneyMinor } from "@/lib/format";
 import { ShopMockBanner } from "@/components/shop/ShopMockBanner";
 import type { HotelBookingDraft } from "@/lib/booking-draft";
@@ -66,8 +66,7 @@ export function HotelCheckout({
   const guests = draft.adults + draft.children;
   const hotelName = String(draft.hotel.details.name || draft.hotel.description || "فندق");
   const totalMinor =
-    draft.totalMinor ??
-    (rate ? rateDisplayMinor(rate, draft.hotel, nights) : draft.hotel.sellAmountMinor);
+    draft.totalMinor ?? draft.hotel.sellAmountMinor;
   const dateLabel = [formatHotelDay(draft.checkIn), formatHotelDay(draft.checkOut)]
     .filter(Boolean)
     .join(" – ");

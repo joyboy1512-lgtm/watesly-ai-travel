@@ -6,7 +6,7 @@ import {
   saveHotelDraft,
   type HotelBookingDraft,
 } from "@/lib/booking-draft";
-import { formatHotelDay, formatPolicyDate, rateDisplayMinor } from "@/lib/hotel-search";
+import { formatHotelDay, formatPolicyDate } from "@/lib/hotel-search";
 import { formatMoneyMinor } from "@/lib/format";
 import { ShopMockBanner } from "@/components/shop/ShopMockBanner";
 
@@ -21,9 +21,7 @@ export function HotelBookReview({ booking }: Props) {
   const guests = booking.adults + booking.children;
   const hotelName = String(booking.hotel.details.name || booking.hotel.description || "فندق");
   const stars = Number(booking.hotel.details.stars || 0);
-  const totalMinor =
-    booking.totalMinor ??
-    (rate ? rateDisplayMinor(rate, booking.hotel, nights) : booking.hotel.sellAmountMinor);
+  const totalMinor = booking.totalMinor ?? booking.hotel.sellAmountMinor;
   const perNight = nights > 0 ? Math.round(totalMinor / nights) : totalMinor;
 
   function continueToGuests() {
@@ -76,9 +74,6 @@ export function HotelBookReview({ booking }: Props) {
               </p>
               <small>
                 {rate.freeCancellation ? "إلغاء مجاني*" : "غير قابل للاسترداد"}
-                {rate.cancellationPolicies[0]?.from
-                  ? ` · حتى ${formatPolicyDate(rate.cancellationPolicies[0].from)}`
-                  : ""}
               </small>
             </article>
           ) : null}

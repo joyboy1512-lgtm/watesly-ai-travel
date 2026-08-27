@@ -62,11 +62,20 @@ function buildReturnSegments(
   returnDate: string,
   airlineCode: string,
   seed: number,
-): Array<Record<string, unknown>> {
+): { segments: Array<Record<string, unknown>>; durationMinutes: number } {
+  const airline = MOCK_AIRLINES[airlineCode] || {
+    code: airlineCode,
+    name: airlineCode,
+    nameAr: airlineCode,
+  };
   const segs = [...outbound].reverse();
-  return segs.map((s, index) => {
+  let firstDepartOffset = 0;
+  let lastArriveOffset = 0;
+  const segments = segs.map((s, index) => {
     const departOffset = (10 + index * 3) * 60 + (seed % 40);
     const duration = 180 + (seed % 60);
+    if (index === 0) firstDepartOffset = departOffset;
+    lastArriveOffset = departOffset + duration;
     const dep = addMinutesToIsoDate(returnDate, departOffset);
     const arr = addMinutesToIsoDate(returnDate, departOffset + duration);
     return {
@@ -78,9 +87,15 @@ function buildReturnSegments(
       departTime: dep.clock,
       arriveTime: arr.clock,
       flightNumber: `${airlineCode}${500 + (seed % 400) + index}`,
-      airline: s.airline || MOCK_AIRLINES[airlineCode]?.name || airlineCode,
+      airline: airline.nameAr,
+      airlineCode,
+      durationMinutes: duration,
     };
   });
+  return {
+    segments,
+    durationMinutes: Math.max(60, lastArriveOffset - firstDepartOffset),
+  };
 }
 
 export class MockFlightProvider implements FlightProviderAdapter {
@@ -150,7 +165,9 @@ export class MockFlightProvider implements FlightProviderAdapter {
           departTime: dep.clock,
           arriveTime: arr.clock,
           flightNumber: `${segTpl.flightNumberPrefix}${100 + ((seed + index * 17 + segIndex * 3) % 800)}`,
-          airline: airline.name,
+          airline: airline.nameAr,
+          airlineCode: airline.code,
+          durationMinutes: safeDuration,
         };
       });
 
@@ -184,7 +201,7 @@ export class MockFlightProvider implements FlightProviderAdapter {
         ? `MOCK-FLT-${scenarioTag}-${destination}-${index}`
         : `MOCK-FLT-${tpl.id.toUpperCase()}-${destination}-${(seed + index).toString(16).toUpperCase()}`;
 
-      const returnSegments =
+      const returnBuilt =
         isRoundTrip && params.returnDate
           ? buildReturnSegments(
               segments,
@@ -192,7 +209,9 @@ export class MockFlightProvider implements FlightProviderAdapter {
               tpl.airlineCode,
               seed + index,
             )
-          : [];
+          : null;
+      const returnSegments = returnBuilt?.segments || [];
+      const returnDurationMinutes = returnBuilt?.durationMinutes || 0;
 
       const destLabel =
         MOCK_DESTINATION_LABELS[destination] || destination;
@@ -225,6 +244,12 @@ export class MockFlightProvider implements FlightProviderAdapter {
           segments,
           returnSegments,
           returnDate: params.returnDate ?? null,
+          returnDuration:
+            returnDurationMinutes > 0
+              ? minutesToDuration(returnDurationMinutes)
+              : null,
+          returnDurationMinutes: returnDurationMinutes || null,
+          returnStops: Math.max(0, returnSegments.length - 1),
           tripType: isRoundTrip ? "roundtrip" : "oneway",
           destinationLabel: destLabel,
           fare: {

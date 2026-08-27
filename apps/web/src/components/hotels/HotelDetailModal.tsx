@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import "@/app/hotel-rich.css";
 import type { HotelRateOption } from "@/lib/hotel-search";
 import { type HotelOfferRow } from "@/lib/hotel-search";
 import { apiFetch } from "@/lib/api";
@@ -25,6 +26,16 @@ type Props = {
   meta: StayMeta;
   onClose: () => void;
   onEnterGuestData: (rate: HotelRateOption) => void;
+  onCheckout?: (payload: {
+    rate: HotelRateOption;
+    contact: { name: string; email: string; phone: string };
+    specialRequests: string;
+    paymentMethod: string;
+    travelers: Array<{ firstName: string; lastName: string }>;
+  }) => void;
+  checkRatePath?: string;
+  fetchJson?: typeof apiFetch;
+  variant?: "default" | "shop";
 };
 
 type CheckRateResponse = {
@@ -48,7 +59,18 @@ function formatDay(value?: string) {
   }
 }
 
-export function HotelDetailModal({ hotel, nights, meta, onClose, onEnterGuestData }: Props) {
+export function HotelDetailModal({
+  hotel,
+  nights,
+  meta,
+  onClose,
+  onEnterGuestData,
+  onCheckout,
+  checkRatePath = "/bookings/checkrate-hotel",
+  fetchJson = apiFetch,
+  variant = "default",
+}: Props) {
+  const shopStyle = variant === "shop";
   const [descOpen, setDescOpen] = useState(false);
   const [selectedRate, setSelectedRate] = useState<HotelRateOption | null>(null);
   const [tab, setTab] = useState<"rooms" | "map" | "reviews" | "facilities" | "policies">(
@@ -88,7 +110,7 @@ export function HotelDetailModal({ hotel, nights, meta, onClose, onEnterGuestDat
     setPriceChange(null);
     setCheckingRateKey(rate.rateKey);
     try {
-      const result = await apiFetch<CheckRateResponse>("/bookings/checkrate-hotel", {
+      const result = await fetchJson<CheckRateResponse>(checkRatePath, {
         method: "POST",
         timeoutMs: 35000,
         body: JSON.stringify({
@@ -146,27 +168,29 @@ export function HotelDetailModal({ hotel, nights, meta, onClose, onEnterGuestDat
   return (
     <div className="flight-modal-backdrop" onClick={onClose} role="presentation">
       <div
-        className="flight-modal hotel-detail-modal"
+        className={`flight-modal hotel-detail-modal${shopStyle ? " hotel-detail-modal-shop" : ""}`}
         role="dialog"
         aria-modal="true"
         aria-labelledby="hotel-detail-title"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="hotel-modal-toolbar">
-          <button type="button" className="flight-modal-close" aria-label="إغلاق" onClick={onClose}>
-            ×
-          </button>
-        </div>
+        <div className="hotel-modal-sticky-head">
+          <div className="hotel-modal-toolbar">
+            <button type="button" className="flight-modal-close" aria-label="إغلاق" onClick={onClose}>
+              ×
+            </button>
+          </div>
 
-        <div className="hotel-name-chip" title={name}>
-          <h2 id="hotel-detail-title">{name}</h2>
-          {stars > 0 ? (
-            <div className="hotel-gold-stars" aria-label={`${stars} نجوم`}>
-              {Array.from({ length: Math.min(5, stars) }, (_, i) => (
-                <span key={i}>★</span>
-              ))}
-            </div>
-          ) : null}
+          <div className="hotel-name-chip" title={name}>
+            <h2 id="hotel-detail-title">{name}</h2>
+            {stars > 0 ? (
+              <div className="hotel-gold-stars" aria-label={`${stars} نجوم`}>
+                {Array.from({ length: Math.min(5, stars) }, (_, i) => (
+                  <span key={i}>★</span>
+                ))}
+              </div>
+            ) : null}
+          </div>
         </div>
 
         <div className="hotel-modal-live">
@@ -191,11 +215,13 @@ export function HotelDetailModal({ hotel, nights, meta, onClose, onEnterGuestDat
             nights={nights}
             meta={meta}
             priceChange={priceChange}
+            shopStyle={shopStyle}
             onBack={() => {
               setSelectedRate(null);
               setPriceChange(null);
             }}
             onEnterGuestData={() => onEnterGuestData(selectedRate)}
+            onCheckout={onCheckout}
           />
         ) : (
           <>
@@ -242,7 +268,7 @@ export function HotelDetailModal({ hotel, nights, meta, onClose, onEnterGuestDat
                   </a>
                 ) : null}
               </div>
-              <div className="hotel-detail-from">
+              <div className={`hotel-detail-from${shopStyle ? " hotel-detail-from-shop" : ""}`}>
                 <small>يبدأ من</small>
                 <strong>{formatMoneyMinor(perNight, hotel.currency)}</strong>
                 <em>/ ليلة</em>
@@ -306,6 +332,7 @@ export function HotelDetailModal({ hotel, nights, meta, onClose, onEnterGuestDat
                   hotel={hotel}
                   nights={nights}
                   checkingRateKey={checkingRateKey}
+                  shopStyle={shopStyle}
                   onBookRate={(rate) => void handleBookRate(rate)}
                 />
               </section>

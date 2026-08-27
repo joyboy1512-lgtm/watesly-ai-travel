@@ -183,7 +183,7 @@ export class HotelbedsHotelProvider implements HotelProviderAdapter {
       console.info(
         `[hotelbeds-availability] cache-hit ageMs=${Math.round(cacheAge)} hotels=${cached.offers.length}`,
       );
-      return cached.offers.map((offer) => ({ ...offer, details: { ...offer.details } }));
+      return cached.offers.map((offer) => ({ ...offer }));
     }
 
     const hotelCodeRaw = String(params.hotelCode || "").trim();
@@ -318,7 +318,6 @@ export class HotelbedsHotelProvider implements HotelProviderAdapter {
         );
         return cached.offers.map((offer) => ({
           ...offer,
-          details: { ...offer.details },
         }));
       }
       // One retry on timeout/network only — never retry quota/auth

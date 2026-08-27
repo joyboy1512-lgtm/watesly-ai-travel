@@ -33,8 +33,8 @@ type Props = {
   onSortChange: (key: FlightSortKey) => void;
   onResetFilters: () => void;
   onSelectFlight: (flight: FlightOfferRow) => void;
-  onToggleOutbound: (flight: FlightOfferRow) => void;
-  onToggleReturn: (flight: FlightOfferRow) => void;
+  onToggleOutbound?: (flight: FlightOfferRow) => void;
+  onToggleReturn?: (flight: FlightOfferRow) => void;
   selectedOutboundKey?: string | null;
   selectedReturnKey?: string | null;
   expandedTripId?: string | null;
@@ -144,8 +144,8 @@ export function ShopFlightResults(props: Props) {
                   returnKey={retKey}
                   selectedOutboundKey={props.selectedOutboundKey}
                   selectedReturnKey={props.selectedReturnKey}
-                  onToggleOutbound={() => props.onToggleOutbound(flight)}
-                  onToggleReturn={() => props.onToggleReturn(flight)}
+                  onToggleOutbound={() => props.onToggleOutbound?.(flight)}
+                  onToggleReturn={() => props.onToggleReturn?.(flight)}
                   isExpanded={isExpanded}
                   selectLoading={props.loadingFlightId === flight.id}
                   isHighlighted={

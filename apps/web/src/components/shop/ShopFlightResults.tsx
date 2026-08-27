@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { ShopFlightCard, type FlightCardDisplayLeg } from "@/components/shop/ShopFlightCard";
 import { ShopFlightFilters } from "@/components/shop/ShopFlightFilters";
+import type { ReactNode } from "react";
 import { formatMoneyMinorCompact } from "@/lib/format";
 import {
   flightFiltersActive,
@@ -43,6 +44,8 @@ type Props = {
   loadingFlightId?: string | null;
   pickStep?: FlightPickStep;
   stepTitle?: string;
+  /** Kayak-style custom trip card pinned above the list */
+  customTripSlot?: ReactNode;
 };
 
 export function ShopFlightResults(props: Props) {
@@ -121,6 +124,7 @@ export function ShopFlightResults(props: Props) {
 
         <div className="shop-flight-results-main">
           <div className="shop-ticket-list">
+            {props.customTripSlot || null}
             {props.flights.map((flight) => {
               const badges: Array<"best" | "cheapest" | "fastest"> = [];
               if (flight.id === bestId) badges.push("best");

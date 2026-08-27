@@ -560,19 +560,28 @@ export function ShopFlightResultsClient() {
             loadingFlightId={loadingFlightId}
             pickStep="single"
             enableMixMatch={isRoundTrip}
+            customTripSlot={
+              isRoundTrip && selectionBarTrip && (selectedOutboundKey || selectedReturnKey) ? (
+                <ShopFlightSelectionBar
+                  trip={selectionBarTrip}
+                  isRoundTrip={isRoundTrip}
+                  canProceed={tripReadyForSelection(selectionBarTrip, isRoundTrip)}
+                  loading={panelBusy}
+                  onSelectTrip={handleBarSelect}
+                  onClear={clearSelection}
+                  onClearOutbound={() => {
+                    setSelectedOutboundKey(null);
+                    setExpandedTrip(null);
+                  }}
+                  onClearReturn={() => {
+                    setSelectedReturnKey(null);
+                    setExpandedTrip(null);
+                  }}
+                />
+              ) : null
+            }
           />
         </>
-      ) : null}
-
-      {isRoundTrip && selectionBarTrip && (selectedOutboundKey || selectedReturnKey) ? (
-        <ShopFlightSelectionBar
-          trip={selectionBarTrip}
-          isRoundTrip={isRoundTrip}
-          canProceed={tripReadyForSelection(selectionBarTrip, isRoundTrip)}
-          loading={panelBusy}
-          onSelectTrip={handleBarSelect}
-          onClear={clearSelection}
-        />
       ) : null}
 
       {expandedTrip ? (

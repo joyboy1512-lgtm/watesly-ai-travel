@@ -56,12 +56,7 @@ function dayOffsetLabel(departAt?: string, arriveAt?: string) {
   return `+${diff}`;
 }
 
-function legDurationLabel(
-  segs: FlightSeg[],
-  fallbackRaw: unknown,
-  depRaw: string,
-  arrRaw: string,
-) {
+function legDurationLabel(segs: FlightSeg[], fallbackRaw: unknown) {
   const mins = computeLegDurationMinutes(segs, fallbackRaw);
   if (mins > 0) return formatMinutesLabel(mins);
   if (typeof fallbackRaw === "string" && fallbackRaw) return fallbackRaw;
@@ -105,7 +100,7 @@ function LegBlock({
     .map((s) => s.flightNumber)
     .filter(Boolean)
     .join(" · ");
-  const duration = legDurationLabel(segs, durationRaw, depRaw, arrRaw);
+  const duration = legDurationLabel(segs, durationRaw);
   const offset = dayOffsetLabel(
     depRaw.includes("T") ? depRaw : undefined,
     arrRaw.includes("T") ? arrRaw : undefined,
@@ -113,11 +108,22 @@ function LegBlock({
 
   return (
     <div
-      className={`shop-ticket-leg-v2${isReturn ? " is-return" : ""}${
+      className={`shop-ticket-leg-v2 kayak-leg${isReturn ? " is-return" : ""}${
         legSelected ? " is-leg-selected" : ""
       }`}
       dir="ltr"
     >
+      {mixEnabled ? (
+        <label className="shop-ticket-kayak-check">
+          <input
+            type="checkbox"
+            checked={Boolean(legSelected)}
+            onChange={() => onPickLeg?.()}
+            aria-label={isReturn ? "اختيار رحلة العودة" : "اختيار رحلة الذهاب"}
+          />
+        </label>
+      ) : null}
+
       <div className="shop-ticket-airline-col">
         <div className="shop-ticket-airline-logo">
           {logo ? (
@@ -131,16 +137,6 @@ function LegBlock({
           <strong>{name}</strong>
           <span>{flightNo || code}</span>
         </div>
-        {mixEnabled ? (
-          <button
-            type="button"
-            className={`shop-ticket-leg-pick${legSelected ? " on" : ""}`}
-            onClick={onPickLeg}
-          >
-            {legSelected ? "✓ " : ""}
-            {isReturn ? "اختر للعودة" : "اختر للذهاب"}
-          </button>
-        ) : null}
       </div>
 
       <div className="shop-ticket-time">

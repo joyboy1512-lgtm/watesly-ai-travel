@@ -5502,8 +5502,8 @@
   padding: 3rem 1rem;
 }
 
-.shop-flight-results-page:has(.shop-flight-selection-bar) {
-  padding-bottom: 6rem;
+.shop-flight-results-page:has(.shop-custom-trip-card) {
+  padding-bottom: 2.5rem;
 }
 
 @media (min-width: 901px) {
@@ -5585,6 +5585,24 @@
   background: #fff;
 }
 
+.shop-ticket-leg-v2.kayak-leg {
+  grid-template-columns: 28px minmax(130px, 1.1fr) 72px 1fr 72px;
+}
+
+.shop-ticket-kayak-check {
+  display: grid;
+  place-items: center;
+  margin: 0;
+  cursor: pointer;
+}
+
+.shop-ticket-kayak-check input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--exp-blue);
+  cursor: pointer;
+}
+
 .shop-ticket-leg-v2.is-return {
   background: #fafbfd;
 }
@@ -5649,6 +5667,253 @@
   background: var(--exp-blue);
   color: #fff;
   border-color: var(--exp-blue);
+}
+
+/* —— Kayak custom trip card (above results) —— */
+.shop-custom-trip-card {
+  background: #fff;
+  border: 2px solid var(--exp-blue);
+  border-radius: 14px;
+  padding: 0.85rem 1rem;
+  margin-bottom: 0.85rem;
+  box-shadow: 0 8px 24px rgba(26, 86, 219, 0.12);
+  animation: shop-custom-trip-in 0.28s ease;
+}
+
+@keyframes shop-custom-trip-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.shop-custom-trip-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.shop-custom-trip-badge {
+  display: inline-block;
+  background: #e8f1ff;
+  color: var(--exp-blue);
+  border-radius: 6px;
+  padding: 0.2rem 0.55rem;
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.shop-custom-trip-head p {
+  margin: 0.3rem 0 0;
+  font-size: 0.8rem;
+  color: var(--exp-muted);
+}
+
+.shop-custom-trip-clear {
+  border: 1px solid var(--exp-border);
+  background: #fff;
+  color: var(--exp-muted);
+  border-radius: 999px;
+  padding: 0.4rem 0.75rem;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.shop-custom-trip-body {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 1rem;
+  align-items: center;
+}
+
+.shop-custom-trip-legs {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.shop-custom-trip-leg {
+  position: relative;
+  display: grid;
+  grid-template-columns: 48px 1fr;
+  gap: 0.45rem 0.65rem;
+  align-items: center;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid var(--exp-border);
+  border-radius: 10px;
+  background: #f8fafc;
+}
+
+.shop-custom-trip-leg.empty {
+  border-style: dashed;
+  background: #fff;
+}
+
+.shop-custom-trip-leg-label {
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: var(--exp-blue);
+}
+
+.shop-custom-trip-empty {
+  margin: 0;
+  grid-column: 2;
+  font-size: 0.85rem;
+  color: #b45309;
+  font-weight: 700;
+}
+
+.shop-custom-trip-leg-main {
+  grid-column: 2;
+  display: grid;
+  gap: 0.2rem;
+}
+
+.shop-custom-trip-airline {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.78rem;
+  color: var(--exp-navy);
+  font-weight: 700;
+}
+
+.shop-custom-trip-airline img {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+}
+
+.shop-ticket-logo-fallback.small {
+  width: 28px;
+  height: 28px;
+  font-size: 0.7rem;
+}
+
+.shop-custom-trip-times {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: var(--exp-navy);
+}
+
+.shop-custom-trip-times strong {
+  font-size: 0.95rem;
+}
+
+.shop-custom-trip-dash {
+  font-size: 0.72rem;
+  color: var(--exp-muted);
+}
+
+.shop-custom-trip-airports {
+  display: flex;
+  justify-content: space-between;
+  max-width: 220px;
+  font-size: 0.75rem;
+  color: var(--exp-muted);
+}
+
+.shop-custom-trip-x {
+  position: absolute;
+  inset-inline-end: 0.35rem;
+  inset-block-start: 0.35rem;
+  width: 1.5rem;
+  height: 1.5rem;
+  border: 0;
+  border-radius: 50%;
+  background: #eef2f8;
+  color: var(--exp-muted);
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.shop-custom-trip-side {
+  display: grid;
+  gap: 0.35rem;
+  justify-items: end;
+  min-width: 9.5rem;
+}
+
+.shop-custom-trip-price {
+  font-size: 1.2rem;
+  color: var(--exp-navy);
+}
+
+.shop-custom-trip-side small {
+  font-size: 0.72rem;
+  color: var(--exp-muted);
+  text-align: end;
+}
+
+.shop-custom-trip-cta {
+  border: 0;
+  background: var(--exp-navy);
+  color: #fff;
+  border-radius: 999px;
+  padding: 0.65rem 1.1rem;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.shop-custom-trip-cta:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+@media (max-width: 900px) {
+  .shop-custom-trip-body {
+    grid-template-columns: 1fr;
+  }
+
+  .shop-custom-trip-side {
+    justify-items: stretch;
+    border-top: 1px solid var(--exp-border);
+    padding-top: 0.65rem;
+  }
+
+  .shop-custom-trip-side small {
+    text-align: start;
+  }
+
+  .shop-ticket-leg-v2.kayak-leg {
+    grid-template-columns: 28px 1fr 1fr;
+    grid-template-areas:
+      "check airline airline"
+      "check dep arr"
+      "check path path";
+  }
+
+  .shop-ticket-leg-v2.kayak-leg .shop-ticket-kayak-check {
+    grid-area: check;
+  }
+
+  .shop-ticket-leg-v2.kayak-leg .shop-ticket-airline-col {
+    grid-area: airline;
+  }
+
+  .shop-ticket-leg-v2.kayak-leg .shop-ticket-time:not(.end) {
+    grid-area: dep;
+  }
+
+  .shop-ticket-leg-v2.kayak-leg .shop-ticket-time.end {
+    grid-area: arr;
+  }
+
+  .shop-ticket-leg-v2.kayak-leg .shop-ticket-path {
+    grid-area: path;
+  }
 }
 
 .shop-ticket-meta-stops.direct {

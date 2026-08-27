@@ -40,6 +40,7 @@ import {
   getHotelSearchSession,
   saveHotelSearchSession,
 } from "@/lib/hotel-search-session";
+import { humanizeHotelSearchError } from "@/lib/hotel-search-errors";
 import { shopFetch } from "@/lib/shop-session";
 
 const HotelDetailModal = dynamic(
@@ -76,6 +77,8 @@ export function ShopHotelResultsClient() {
 
   const restoredRef = useRef(false);
   const sessionSaveRef = useRef<number | null>(null);
+  const searchAbortRef = useRef<AbortController | null>(null);
+  const searchGenRef = useRef(0);
 
   useEffect(() => {
     setDraft(params);
@@ -107,6 +110,11 @@ export function ShopHotelResultsClient() {
 
   const runSearch = useCallback(
     async (search: HotelResultsSearchParams) => {
+      searchAbortRef.current?.abort();
+      const controller = new AbortController();
+      searchAbortRef.current = controller;
+      const gen = ++searchGenRef.current;
+
       setLoading(true);
       setError("");
       setMessage("");
@@ -120,11 +128,13 @@ export function ShopHotelResultsClient() {
         restoredRef.current = false;
       }
 
-      // Reuse short-lived cached results when returning from hotel detail
+      // Reuse short-lived cached results for same stay (avoids burning sandbox quota)
       const cached = getHotelSearchSession();
-      const cacheFresh =
-        cached &&
-        Date.now() - new Date(cached.savedAt).getTime() < 12 * 60 * 1000 &&
+      const cacheAgeMs = cached
+        ? Date.now() - new Date(cached.savedAt).getTime()
+        : Number.POSITIVE_INFINITY;
+      const cacheMatches =
+        !!cached &&
         cached.meta.stayQuery === search.destination &&
         cached.meta.departDate === search.checkIn &&
         cached.meta.returnDate === search.checkOut &&
@@ -133,8 +143,9 @@ export function ShopHotelResultsClient() {
         cached.meta.rooms === search.rooms &&
         Array.isArray(cached.hotels) &&
         cached.hotels.length > 0;
+      const cacheFresh = cacheMatches && cacheAgeMs < 12 * 60 * 1000;
 
-      if (cacheFresh && shouldRestoreHotelResultsSession(href)) {
+      if (cacheFresh) {
         setInquiryId(cached!.inquiryId || "");
         setQuoteItems(
           (cached!.quote?.items || []).map((item) => ({
@@ -181,6 +192,7 @@ export function ShopHotelResultsClient() {
         }>("/shop/search-hotels", {
           method: "POST",
           timeoutMs: 60000,
+          signal: controller.signal,
           body: JSON.stringify({
             destination: search.destination,
             checkIn: search.checkIn,
@@ -193,6 +205,7 @@ export function ShopHotelResultsClient() {
             preferences: hotelSearchPreferencesJson(search),
           }),
         });
+        if (gen !== searchGenRef.current) return;
         setInquiryId(result.inquiryId);
         setQuoteItems(result.quoteItems || []);
         setHotelsRaw(result.hotels || []);
@@ -229,10 +242,34 @@ export function ShopHotelResultsClient() {
           `تم جلب ${result.hotels?.length || 0} إقامة عبر ${result.providerName || "المزوّد"}`,
         );
       } catch (err) {
-        setError(err instanceof Error ? err.message : "فشل البحث");
-        setMessage("");
+        if (gen !== searchGenRef.current) return;
+        if (controller.signal.aborted) return;
+        const raw = err instanceof Error ? err.message : "فشل البحث";
+        // Prefer stale session results when provider quota is exhausted
+        if (
+          cacheMatches &&
+          cacheAgeMs < 60 * 60 * 1000 &&
+          /quota|تجاوز حد طلبات/i.test(raw)
+        ) {
+          setInquiryId(cached!.inquiryId || "");
+          setQuoteItems(
+            (cached!.quote?.items || []).map((item) => ({
+              id: item.id,
+              providerOfferRef: item.providerOfferRef,
+              serviceType: item.serviceType,
+            })),
+          );
+          setHotelsRaw(cached!.hotels as HotelOfferRow[]);
+          setMessage(
+            `عرض ${cached!.hotels.length} نتيجة محفوظة (مزود الفنادق بلغ حد الطلبات مؤقتًا)`,
+          );
+          setError("");
+        } else {
+          setError(humanizeHotelSearchError(raw));
+          setMessage("");
+        }
       } finally {
-        setLoading(false);
+        if (gen === searchGenRef.current) setLoading(false);
       }
     },
     [],
@@ -240,6 +277,9 @@ export function ShopHotelResultsClient() {
 
   useEffect(() => {
     void runSearch(params);
+    return () => {
+      searchAbortRef.current?.abort();
+    };
   }, [params, runSearch]);
 
   useEffect(() => {

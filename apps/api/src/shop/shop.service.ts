@@ -334,9 +334,11 @@ export class ShopService {
         hotelError: result.hotelError,
       };
     } catch (err) {
-      throw new BadRequestException(
-        err instanceof Error ? err.message : "تعذر البحث عن الفنادق",
-      );
+      const raw = err instanceof Error ? err.message : "تعذر البحث عن الفنادق";
+      const message = /quota has been exceeded/i.test(raw)
+        ? "تم تجاوز حد طلبات مزود الفنادق التجريبي مؤقتًا. أعد المحاولة بعد قليل."
+        : raw;
+      throw new BadRequestException(message);
     }
   }
 

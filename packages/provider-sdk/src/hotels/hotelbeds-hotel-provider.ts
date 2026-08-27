@@ -32,6 +32,52 @@ import {
   hotelbedsSourceMarket,
 } from "./hotelbeds-currency";
 
+const SEARCH_CACHE_TTL_MS = 8 * 60 * 1000;
+const SEARCH_STALE_TTL_MS = 60 * 60 * 1000;
+
+type SearchCacheEntry = {
+  offers: HotelOffer[];
+  savedAt: number;
+};
+
+const hotelSearchCache = new Map<string, SearchCacheEntry>();
+
+function humanizeHotelbedsError(message: string): string {
+  const m = String(message || "").trim();
+  if (/quota has been exceeded/i.test(m)) {
+    return "تم تجاوز حد طلبات مزود الفنادق التجريبي مؤقتًا. أعد المحاولة بعد قليل.";
+  }
+  if (/too many requests|rate limit/i.test(m)) {
+    return "طلبات كثيرة جدًا على مزود الفنادق. انتظر لحظات ثم أعد المحاولة.";
+  }
+  return m || "تعذر الاتصال بمزود الفنادق";
+}
+
+function isQuotaError(message: string): boolean {
+  return /quota has been exceeded|too many requests|rate limit/i.test(message);
+}
+
+function searchCacheKey(params: HotelSearchParams): string {
+  return JSON.stringify({
+    location: String(params.location || "").trim().toLowerCase(),
+    hotelCode: String(params.hotelCode || "").trim(),
+    checkIn: params.checkInDate,
+    checkOut: params.checkOutDate,
+    rooms: params.rooms || 1,
+    adults: params.adults,
+    children: params.children || 0,
+    childrenAges: String(params.childrenAges || ""),
+    roomOccupancies: params.roomOccupancies || null,
+    currency: params.currency || "",
+    maxHotels: params.maxHotels ?? 30,
+    radiusKm: params.radiusKm || 25,
+    boardCode: params.boardCode || "",
+    paymentType: params.paymentType || "",
+    minStars: params.minStars || null,
+    maxStars: params.maxStars || null,
+  });
+}
+
 function normalizeChildrenAges(children: number, raw?: string): number[] {
   const count = Math.max(0, children);
   if (count === 0) return [];
@@ -91,9 +137,11 @@ export class HotelbedsHotelProvider implements HotelProviderAdapter {
     if (!response.ok) {
       const err = json as { error?: { message?: string }; message?: string };
       throw new Error(
-        err.error?.message ||
-          err.message ||
-          `Hotelbeds HTTP ${response.status}`,
+        humanizeHotelbedsError(
+          err.error?.message ||
+            err.message ||
+            `Hotelbeds HTTP ${response.status}`,
+        ),
       );
     }
     return json;
@@ -128,6 +176,16 @@ export class HotelbedsHotelProvider implements HotelProviderAdapter {
   }
 
   async searchHotels(params: HotelSearchParams): Promise<HotelOffer[]> {
+    const cacheKey = searchCacheKey(params);
+    const cached = hotelSearchCache.get(cacheKey);
+    const cacheAge = cached ? Date.now() - cached.savedAt : Number.POSITIVE_INFINITY;
+    if (cached && cacheAge < SEARCH_CACHE_TTL_MS) {
+      console.info(
+        `[hotelbeds-availability] cache-hit ageMs=${Math.round(cacheAge)} hotels=${cached.offers.length}`,
+      );
+      return cached.offers.map((offer) => ({ ...offer, details: { ...offer.details } }));
+    }
+
     const hotelCodeRaw = String(params.hotelCode || "").trim();
     const hotelCodeNum = hotelCodeRaw
       ? Number(hotelCodeRaw.replace(/^hb-/i, ""))
@@ -249,13 +307,22 @@ export class HotelbedsHotelProvider implements HotelProviderAdapter {
         `[hotelbeds-availability] ok hotels=${hotelsFromHotelbedsPayload(result).length} ms=${Date.now() - availStarted}`,
       );
     } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
       console.warn(
         `[hotelbeds-availability] fail ms=${Date.now() - availStarted}`,
-        err instanceof Error ? err.message : err,
+        msg,
       );
-      // One retry on timeout/network
-      const msg = err instanceof Error ? err.message : String(err);
-      if (/timeout|abort|network|ECONN|fetch/i.test(msg)) {
+      if (isQuotaError(msg) && cached && cacheAge < SEARCH_STALE_TTL_MS) {
+        console.info(
+          `[hotelbeds-availability] stale-cache after quota ageMs=${Math.round(cacheAge)} hotels=${cached.offers.length}`,
+        );
+        return cached.offers.map((offer) => ({
+          ...offer,
+          details: { ...offer.details },
+        }));
+      }
+      // One retry on timeout/network only — never retry quota/auth
+      if (/timeout|abort|network|ECONN|fetch/i.test(msg) && !isQuotaError(msg)) {
         const retryStarted = Date.now();
         result = await this.request<HbAvailabilityResponse>(
           "/hotel-api/1.0/hotels",
@@ -265,7 +332,7 @@ export class HotelbedsHotelProvider implements HotelProviderAdapter {
           `[hotelbeds-availability] retry ok ms=${Date.now() - retryStarted}`,
         );
       } else {
-        throw err;
+        throw err instanceof Error ? err : new Error(humanizeHotelbedsError(msg));
       }
     }
 
@@ -302,7 +369,16 @@ export class HotelbedsHotelProvider implements HotelProviderAdapter {
       if (offer) offers.push(offer);
     }
 
-    return offers.sort((a, b) => a.costAmountMinor - b.costAmountMinor);
+    const sorted = offers.sort((a, b) => a.costAmountMinor - b.costAmountMinor);
+    hotelSearchCache.set(cacheKey, { offers: sorted, savedAt: Date.now() });
+    // Bound memory: drop oldest when oversized
+    if (hotelSearchCache.size > 40) {
+      const oldest = [...hotelSearchCache.entries()].sort(
+        (a, b) => a[1].savedAt - b[1].savedAt,
+      )[0];
+      if (oldest) hotelSearchCache.delete(oldest[0]);
+    }
+    return sorted;
   }
 
   async fetchRateComments(

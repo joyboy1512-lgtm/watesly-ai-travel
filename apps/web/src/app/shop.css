@@ -4648,7 +4648,8 @@
   }
 }
 
-.shop-flight-results-error button {
+.shop-flight-results-error button,
+.shop-flight-results-error .shop-btn {
   margin-top: 0.75rem;
   border: 0;
   background: var(--exp-navy);
@@ -4658,6 +4659,13 @@
   font: inherit;
   font-weight: 700;
   cursor: pointer;
+  box-shadow: none;
+  text-decoration: none;
+}
+
+.shop-flight-results-error .shop-btn:hover {
+  color: #fff;
+  transform: none;
 }
 
 .shop-flight-results-status {

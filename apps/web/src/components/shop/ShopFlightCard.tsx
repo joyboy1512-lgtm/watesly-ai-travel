@@ -59,7 +59,17 @@ function dayOffsetLabel(departAt?: string, arriveAt?: string) {
 function legDurationLabel(segs: FlightSeg[], fallbackRaw: unknown) {
   const mins = computeLegDurationMinutes(segs, fallbackRaw);
   if (mins > 0) return formatMinutesLabel(mins);
-  if (typeof fallbackRaw === "string" && fallbackRaw) return fallbackRaw;
+  // HH:MM mock strings (e.g. "03:26") — show as Arabic duration
+  if (typeof fallbackRaw === "string") {
+    const fromColon = durationMinutes(fallbackRaw);
+    if (fromColon !== Number.MAX_SAFE_INTEGER && fromColon > 0) {
+      return formatMinutesLabel(fromColon);
+    }
+    if (fallbackRaw.trim()) return fallbackRaw;
+  }
+  if (typeof fallbackRaw === "number" && fallbackRaw > 0) {
+    return formatMinutesLabel(fallbackRaw);
+  }
   return "—";
 }
 

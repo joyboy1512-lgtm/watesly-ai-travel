@@ -62,16 +62,20 @@ function buildReturnSegments(
   returnDate: string,
   airlineCode: string,
   seed: number,
-): Array<Record<string, unknown>> {
+): { segments: Array<Record<string, unknown>>; durationMinutes: number } {
   const airline = MOCK_AIRLINES[airlineCode] || {
     code: airlineCode,
     name: airlineCode,
     nameAr: airlineCode,
   };
   const segs = [...outbound].reverse();
-  return segs.map((s, index) => {
+  let firstDepartOffset = 0;
+  let lastArriveOffset = 0;
+  const segments = segs.map((s, index) => {
     const departOffset = (10 + index * 3) * 60 + (seed % 40);
     const duration = 180 + (seed % 60);
+    if (index === 0) firstDepartOffset = departOffset;
+    lastArriveOffset = departOffset + duration;
     const dep = addMinutesToIsoDate(returnDate, departOffset);
     const arr = addMinutesToIsoDate(returnDate, departOffset + duration);
     return {
@@ -85,8 +89,13 @@ function buildReturnSegments(
       flightNumber: `${airlineCode}${500 + (seed % 400) + index}`,
       airline: airline.nameAr,
       airlineCode,
+      durationMinutes: duration,
     };
   });
+  return {
+    segments,
+    durationMinutes: Math.max(60, lastArriveOffset - firstDepartOffset),
+  };
 }
 
 export class MockFlightProvider implements FlightProviderAdapter {
@@ -158,6 +167,7 @@ export class MockFlightProvider implements FlightProviderAdapter {
           flightNumber: `${segTpl.flightNumberPrefix}${100 + ((seed + index * 17 + segIndex * 3) % 800)}`,
           airline: airline.nameAr,
           airlineCode: airline.code,
+          durationMinutes: safeDuration,
         };
       });
 
@@ -191,7 +201,7 @@ export class MockFlightProvider implements FlightProviderAdapter {
         ? `MOCK-FLT-${scenarioTag}-${destination}-${index}`
         : `MOCK-FLT-${tpl.id.toUpperCase()}-${destination}-${(seed + index).toString(16).toUpperCase()}`;
 
-      const returnSegments =
+      const returnBuilt =
         isRoundTrip && params.returnDate
           ? buildReturnSegments(
               segments,
@@ -199,18 +209,9 @@ export class MockFlightProvider implements FlightProviderAdapter {
               tpl.airlineCode,
               seed + index,
             )
-          : [];
-
-      let returnDurationMinutes = 0;
-      if (returnSegments.length) {
-        const retFirst = returnSegments[0] as { departAt?: string };
-        const retLast = returnSegments[returnSegments.length - 1] as { arriveAt?: string };
-        const start = new Date(String(retFirst.departAt)).getTime();
-        const end = new Date(String(retLast.arriveAt)).getTime();
-        if (Number.isFinite(start) && Number.isFinite(end) && end > start) {
-          returnDurationMinutes = Math.round((end - start) / 60000);
-        }
-      }
+          : null;
+      const returnSegments = returnBuilt?.segments || [];
+      const returnDurationMinutes = returnBuilt?.durationMinutes || 0;
 
       const destLabel =
         MOCK_DESTINATION_LABELS[destination] || destination;

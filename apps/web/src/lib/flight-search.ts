@@ -152,18 +152,42 @@ export function computeLegDurationMinutes(
   if (segs.length) {
     const first = segs[0];
     const last = segs[segs.length - 1];
-    const dep = first?.departAt || first?.departTime;
-    const arr = last?.arriveAt || last?.arriveTime;
+    const dep = first?.departAt || first?.departTime || "";
+    const arr = last?.arriveAt || last?.arriveTime || "";
     if (dep && arr) {
-      const a = new Date(dep).getTime();
-      const b = new Date(arr).getTime();
-      if (Number.isFinite(a) && Number.isFinite(b) && b > a) {
-        return Math.round((b - a) / 60000);
-      }
+      const parsed = parseTimeDiffMinutes(dep, arr);
+      if (parsed != null && parsed > 0) return parsed;
     }
   }
   const mins = durationMinutes(fallbackRaw);
   return mins === Number.MAX_SAFE_INTEGER ? 0 : mins;
+}
+
+/** Diff two timestamps or HH:MM clocks; overnight arrivals supported. */
+function parseTimeDiffMinutes(depart: string, arrive: string): number | null {
+  const a = Date.parse(depart.includes("T") || depart.includes("-") ? depart : `1970-01-01T${normalizeClock(depart)}`);
+  const b = Date.parse(arrive.includes("T") || arrive.includes("-") ? arrive : `1970-01-01T${normalizeClock(arrive)}`);
+  if (Number.isFinite(a) && Number.isFinite(b)) {
+    let diff = Math.round((b - a) / 60000);
+    if (diff < 0 && !depart.includes("T") && !depart.includes("-")) {
+      diff += 24 * 60; // clock-only overnight
+    }
+    return diff > 0 ? diff : null;
+  }
+
+  const dc = normalizeClock(depart).match(/^(\d{2}):(\d{2})/);
+  const ac = normalizeClock(arrive).match(/^(\d{2}):(\d{2})/);
+  if (!dc || !ac) return null;
+  let mins =
+    Number(ac[1]) * 60 + Number(ac[2]) - (Number(dc[1]) * 60 + Number(dc[2]));
+  if (mins < 0) mins += 24 * 60;
+  return mins > 0 ? mins : null;
+}
+
+function normalizeClock(value: string) {
+  const m = value.match(/(\d{1,2}):(\d{2})/);
+  if (!m) return value;
+  return `${m[1]!.padStart(2, "0")}:${m[2]}:00`;
 }
 
 export function majorToMinor(major: number, currency: string) {

@@ -321,5 +321,5 @@ export function addMinutesToIsoDate(date: string, minutes: number): {
   const hh = String(base.getUTCHours()).padStart(2, "0");
   const mm = String(base.getUTCMinutes()).padStart(2, "0");
   const ymd = `${base.getUTCFullYear()}-${String(base.getUTCMonth() + 1).padStart(2, "0")}-${String(base.getUTCDate()).padStart(2, "0")}`;
-  return { isoLocal: `${ymd}T${hh}:${mm}`, clock: `${hh}:${mm}` };
+  return { isoLocal: `${ymd}T${hh}:${mm}:00`, clock: `${hh}:${mm}` };
 }

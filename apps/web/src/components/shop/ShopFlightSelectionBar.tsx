@@ -104,7 +104,7 @@ export function ShopFlightSelectionBar({
   onClearReturn,
 }: Props) {
   const missingReturn = isRoundTrip && !trip.return;
-  const title = trip.isMixMatch || missingReturn ? "رحلة مخصصة" : "رحلتك المختارة";
+  const title = "رحلة مخصصة";
 
   return (
     <article className="shop-custom-trip-card" role="region" aria-label="رحلة مخصصة">

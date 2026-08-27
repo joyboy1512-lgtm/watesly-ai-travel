@@ -1,5 +1,7 @@
 /** Rich hotel display model — provider-agnostic UI shape. */
 
+import { normalizeBoardLabelAr, normalizePaymentTypeAr } from "./provider-content-ar";
+
 export type HotelBoardCode =
   | "RO"
   | "BB"
@@ -173,14 +175,15 @@ export const BOARD_LABELS_AR: Record<string, string> = {
 
 export function boardLabelAr(code?: string, name?: string): string {
   if (code && BOARD_LABELS_AR[code]) return BOARD_LABELS_AR[code];
+  const fromCentral = normalizeBoardLabelAr(code || name).ar;
+  if (fromCentral && fromCentral !== (code || name)) return fromCentral;
   if (name?.trim()) return name.trim();
   return code || "—";
 }
 
 export function paymentTypeLabelAr(type?: string): string {
-  if (type === "AT_HOTEL") return "الدفع في الفندق";
-  if (type === "AT_WEB") return "الدفع أونلاين";
-  return type || "—";
+  const ar = normalizePaymentTypeAr(type).ar;
+  return ar || type || "—";
 }
 
 export function taxTypeLabelAr(type?: string): string {

@@ -1,5 +1,16 @@
 /** Per-room hotel occupancy for search and booking. */
 
+import {
+  arabicAdultCount as sharedAdult,
+  arabicChildCount as sharedChild,
+  arabicGuestCount as sharedGuest,
+  arabicNightCount as sharedNight,
+  arabicRoomCount as sharedRoom,
+  arabicTravelerCount as sharedTraveler,
+  arabicNightWord,
+  arabicRoomWord,
+} from "@watesly-travel/shared";
+
 export type HotelRoomOccupancyInput = {
   adults: number;
   /** Ages 0–17 for each child in this room. Length = children count. */
@@ -76,33 +87,10 @@ export function setRoomCount(state: HotelOccupancyState, count: number): HotelOc
   return { rooms };
 }
 
-export function arabicGuestCount(n: number) {
-  if (n === 1) return "ضيف واحد";
-  if (n === 2) return "ضيفان";
-  return `${n} ضيوف`;
-}
-
-export function arabicNightCount(n: number) {
-  if (n === 1) return "ليلة واحدة";
-  if (n === 2) return "ليلتان";
-  return `${n} ليالٍ`;
-}
-
-export function arabicAdultCount(n: number) {
-  if (n === 1) return "بالغ واحد";
-  if (n === 2) return "بالغان";
-  return `${n} بالغين`;
-}
-
-export function arabicChildCount(n: number) {
-  if (n === 0) return "";
-  if (n === 1) return "طفل واحد";
-  if (n === 2) return "طفلان";
-  return `${n} أطفال`;
-}
-
-export function arabicRoomCount(n: number) {
-  if (n === 1) return "غرفة واحدة";
-  if (n === 2) return "غرفتان";
-  return `${n} غرف`;
-}
+export const arabicGuestCount = sharedGuest;
+export const arabicNightCount = sharedNight;
+export const arabicAdultCount = sharedAdult;
+export const arabicChildCount = sharedChild;
+export const arabicRoomCount = sharedRoom;
+export const arabicTravelerCount = sharedTraveler;
+export { arabicNightWord, arabicRoomWord };

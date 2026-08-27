@@ -7,6 +7,7 @@ export * from "./hotel-display";
 export * from "./hotel-money";
 export * from "./hotel-offer-normalizer";
 export * from "./hotel-env";
+export * from "./provider-content-ar";
 export * from "./transfer-display";
 export * from "./activity-display";
 export * from "./chat-attach";

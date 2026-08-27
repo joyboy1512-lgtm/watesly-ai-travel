@@ -35,7 +35,7 @@ type Props = {
   onSortChange: (key: FlightSortKey) => void;
   onResetFilters: () => void;
   onSelectFlight: (flight: FlightOfferRow) => void;
-  onViewDetails: (flight: FlightOfferRow) => void;
+  onViewDetails?: (flight: FlightOfferRow) => void;
   selectedOutboundKey?: string | null;
   selectedReturnKey?: string | null;
   expandedTripId?: string | null;
@@ -157,7 +157,9 @@ export function ShopFlightResults(props: Props) {
                   }
                   selectLabel={selectLabel}
                   onSelectFlight={() => props.onSelectFlight(flight)}
-                  onViewDetails={() => props.onViewDetails(flight)}
+                  onViewDetails={() =>
+                    (props.onViewDetails ?? props.onSelectFlight)(flight)
+                  }
                 />
               );
             })}

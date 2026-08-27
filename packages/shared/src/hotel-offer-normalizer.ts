@@ -127,10 +127,11 @@ export function translateFacilityLabelAr(label: string): string {
   let out = String(label || "").trim();
   if (!out) return out;
 
-  // Fix known bad Arabic copy first
+  // Fix known bad Arabic copy first — use inclusive accessibility phrasing
   out = out
-    .replace(/مجهز للكراسي المدولبه\s*-?\s*لمتحدي الاعاقه/gi, "مهيأ لاستخدام الكراسي المتحركة")
-    .replace(/مجهز للكراسي المدولبه/gi, "مهيأ لاستخدام الكراسي المتحركة")
+    .replace(/مجهز للكراسي المدولبه\s*-?\s*لمتحدي الاعاقه/gi, "مرافق مهيأة لسهولة الوصول")
+    .replace(/مجهز للكراسي المدولبه/gi, "مرافق مهيأة لسهولة الوصول")
+    .replace(/مهيأ لاستخدام الكراسي المتحركة/gi, "مرافق مهيأة لسهولة الوصول")
     .replace(/لمتحدي الاعاقه/gi, "")
     .replace(/دوره المياه/gi, "دورة المياه")
     .replace(/دورة المياة/gi, "دورة المياه");
@@ -138,10 +139,10 @@ export function translateFacilityLabelAr(label: string): string {
   const map: Record<string, string> = {
     Bathroom: "دورة المياه",
     bathroom: "دورة المياه",
-    "Wheelchair accessible": "مهيأ لاستخدام الكراسي المتحركة",
-    "Adapted rooms": "مهيأ لاستخدام الكراسي المتحركة",
-    "Adapted for disabled": "مهيأ لاستخدام الكراسي المتحركة",
-    Wheelchair: "مهيأ لاستخدام الكراسي المتحركة",
+    "Wheelchair accessible": "مرافق مهيأة لسهولة الوصول",
+    "Adapted rooms": "مرافق مهيأة لسهولة الوصول",
+    "Adapted for disabled": "مرافق مهيأة لسهولة الوصول",
+    Wheelchair: "مرافق مهيأة لسهولة الوصول",
     Pool: "مسبح",
     WiFi: "واي فاي",
     Wifi: "واي فاي",
@@ -155,10 +156,10 @@ export function translateFacilityLabelAr(label: string): string {
 
   return out
     .replace(/Bathroom/gi, "دورة المياه")
-    .replace(/Wheelchair\s*accessible/gi, "مهيأ لاستخدام الكراسي المتحركة")
-    .replace(/Adapted for disabled/gi, "مهيأ لاستخدام الكراسي المتحركة")
-    .replace(/Wheelchair/gi, "مهيأ لاستخدام الكراسي المتحركة")
-    .replace(/\bdisabled\b/gi, "ذوي الإعاقة")
+    .replace(/Wheelchair\s*accessible/gi, "مرافق مهيأة لسهولة الوصول")
+    .replace(/Adapted for disabled/gi, "مرافق مهيأة لسهولة الوصول")
+    .replace(/Wheelchair/gi, "مرافق مهيأة لسهولة الوصول")
+    .replace(/\bdisabled\b/gi, "سهولة الوصول")
     .replace(/\s{2,}/g, " ")
     .trim();
 }

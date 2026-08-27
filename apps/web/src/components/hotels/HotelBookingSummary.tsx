@@ -244,8 +244,8 @@ export function HotelBookingSummary({
             <small>المبلغ الإجمالي</small>
             <strong>{formatMoneyMinor(totalMinor, hotel.currency)}</strong>
             <em>
-              {formatMoneyMinor(perNight, hotel.currency)} / ليلة · {nights}{" "}
-              {nights === 1 ? "ليلة" : "ليالي"}
+              {formatMoneyMinor(perNight, hotel.currency)} / ليلة · {arabicNightCount(nights)}
+              
             </em>
           </div>
           <div className="hotel-selected-price-meta">
@@ -342,8 +342,8 @@ export function HotelBookingSummary({
             <small>السعر المختار</small>
             <strong>{formatMoneyMinor(totalMinor, hotel.currency)}</strong>
             <em>
-              {formatMoneyMinor(perNight, hotel.currency)} / ليلة · {nights}{" "}
-              {nights === 1 ? "ليلة" : "ليالي"}
+              {formatMoneyMinor(perNight, hotel.currency)} / ليلة · {arabicNightCount(nights)}
+              
             </em>
           </div>
           <div className="hotel-selected-price-meta">
@@ -461,8 +461,8 @@ export function HotelBookingSummary({
           <div className="hotel-booking-preview-price">
             <strong>{formatMoneyMinor(totalMinor, hotel.currency)}</strong>
             <small>
-              {formatMoneyMinor(perNight, hotel.currency)} / ليلة · {nights}{" "}
-              {nights === 1 ? "ليلة" : "ليالي"}
+              {formatMoneyMinor(perNight, hotel.currency)} / ليلة · {arabicNightCount(nights)}
+              
             </small>
           </div>
         ) : null}

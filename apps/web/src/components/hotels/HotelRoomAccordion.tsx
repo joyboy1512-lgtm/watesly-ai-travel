@@ -1,7 +1,10 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { translateRoomNameAr } from "@watesly-travel/shared";
+import {
+  normalizePaymentTypeAr,
+  translateRoomNameAr,
+} from "@watesly-travel/shared";
 import {
   formatPolicyDate,
   groupRatesIntoRooms,
@@ -23,9 +26,7 @@ type Props = {
 };
 
 function paymentLabel(type?: string) {
-  if (type === "AT_HOTEL") return "ادفع في الفندق";
-  if (type === "AT_WEB") return "ادفع أونلاين";
-  return type || "—";
+  return normalizePaymentTypeAr(type).ar || "—";
 }
 
 function occupancyLabel(room: HotelRoomOption) {
@@ -83,7 +84,7 @@ function nightlyHint(rate: HotelRateOption, nights: number, perNightMinor: numbe
     const label = first?.date ? `ليلة ${first.date}` : "لليلة الأولى";
     return `${first?.net} ${rate.currency} ${label}`;
   }
-  return `${formatMoneyMinor(perNightMinor, currency)} / ليلة · ${nights} ${nights === 1 ? "ليلة" : "ليالي"}`;
+  return `${formatMoneyMinor(perNightMinor, currency)} / ليلة · ${arabicNightCount(nights)}`;
 }
 
 function taxHint(rate: HotelRateOption) {

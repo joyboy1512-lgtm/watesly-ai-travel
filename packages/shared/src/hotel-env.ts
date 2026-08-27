@@ -5,12 +5,21 @@
 
 export type HotelEnvironmentMode = "sandbox" | "production";
 
+function envGet(key: string): string | undefined {
+  try {
+    const g = globalThis as { process?: { env?: Record<string, string | undefined> } };
+    return g.process?.env?.[key];
+  } catch {
+    return undefined;
+  }
+}
+
 export function resolveHotelEnvironmentMode(input?: {
   hotelbedsBaseUrl?: string | null;
   hotelProvider?: string | null;
   explicitMode?: string | null;
 }): HotelEnvironmentMode {
-  const explicit = (input?.explicitMode || process.env.HOTEL_ENV_MODE || "")
+  const explicit = (input?.explicitMode || envGet("HOTEL_ENV_MODE") || "")
     .trim()
     .toLowerCase();
   if (explicit === "production" || explicit === "prod" || explicit === "live") {
@@ -22,13 +31,13 @@ export function resolveHotelEnvironmentMode(input?: {
 
   const base =
     input?.hotelbedsBaseUrl ||
-    process.env.HOTELBEDS_BASE_URL ||
+    envGet("HOTELBEDS_BASE_URL") ||
     "https://api.test.hotelbeds.com";
   if (/test\.hotelbeds\.com/i.test(base) || /sandbox/i.test(base)) {
     return "sandbox";
   }
 
-  const provider = (input?.hotelProvider || process.env.HOTEL_PROVIDER || "mock")
+  const provider = (input?.hotelProvider || envGet("HOTEL_PROVIDER") || "mock")
     .trim()
     .toLowerCase();
   if (provider === "mock") return "sandbox";

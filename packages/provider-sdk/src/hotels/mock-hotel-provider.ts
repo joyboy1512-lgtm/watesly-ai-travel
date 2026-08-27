@@ -147,7 +147,6 @@ export class MockHotelProvider implements HotelProviderAdapter {
           distanceToCenterKm: dist?.distanceToCenterKm,
           distanceToCenterLabel: dist?.distanceToCenterLabel,
           poiDistances: dist?.poiDistances,
-          ranking: Math.round(hotel.rating * 10),
           facilityLabels: hotel.facilities.map((f) =>
             f === "wifi" ? "واي‑فاي" : f === "parking" ? "موقف" : f === "pool" ? "مسبح" : f === "spa" ? "سبا" : f === "gym" ? "جيم" : f,
           ),

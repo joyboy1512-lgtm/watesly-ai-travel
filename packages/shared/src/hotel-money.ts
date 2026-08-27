@@ -14,8 +14,7 @@ import {
   currencyMinorFactor,
   formatMoneyMinorShared,
 } from "./currency";
-
-export type MoneyMinor = number;
+import type { MoneyMinor } from "./types";
 
 export type HotelNetBasis = "stay" | "night";
 

@@ -21,7 +21,7 @@ type HotelRow = HotelOfferRow & {
 
 type Facets = HotelFilterFacets;
 
-type SortKey = "best" | "price_asc" | "rating_desc" | "distance";
+type SortKey = "best" | "price_asc" | "price_desc" | "rating_desc" | "distance";
 
 type Props = {
   destination: string;

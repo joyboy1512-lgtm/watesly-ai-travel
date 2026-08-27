@@ -48,6 +48,13 @@ export function StoreFront({
             <WeekendGateLogo />
           </Link>
 
+          <nav className="exp-header-links" aria-label="روابط رئيسية">
+            <Link href="/about">من نحن</Link>
+            <Link href="/booking-policy">سياسة الحجز</Link>
+            <Link href="/faq">الأسئلة الشائعة</Link>
+            <Link href="/contact">تواصل معنا</Link>
+          </nav>
+
           <button
             type="button"
             className="shop-menu-toggle exp-menu-toggle exp-menu-toggle-dark"
@@ -58,8 +65,22 @@ export function StoreFront({
           </button>
 
           <nav className={`exp-util-nav${menuOpen ? " open" : ""}`}>
+            <Link href="/about" className="exp-util-link mobile-only">
+              من نحن
+            </Link>
+            <Link href="/booking-policy" className="exp-util-link mobile-only">
+              سياسة الحجز
+            </Link>
+            <Link href="/faq" className="exp-util-link mobile-only">
+              الأسئلة الشائعة
+            </Link>
+            <Link href="/contact" className="exp-util-link mobile-only">
+              تواصل معنا
+            </Link>
             <label className="exp-util-item">
-              <span className="exp-util-icon" aria-hidden>💱</span>
+              <span className="exp-util-icon" aria-hidden>
+                💱
+              </span>
               <select defaultValue="KWD" aria-label="العملة">
                 <option value="KWD">KWD</option>
                 <option value="USD">USD</option>
@@ -67,18 +88,14 @@ export function StoreFront({
               </select>
             </label>
             <label className="exp-util-item">
-              <span className="exp-util-icon" aria-hidden>🌐</span>
+              <span className="exp-util-icon" aria-hidden>
+                🌐
+              </span>
               <select defaultValue="ar" aria-label="اللغة">
                 <option value="ar">العربية</option>
                 <option value="en">English</option>
               </select>
             </label>
-            <Link href="/chat" className="exp-util-link">
-              اتصل بنا
-            </Link>
-            <Link href="/chat" className="exp-util-link">
-              الدعم
-            </Link>
             {customer ? (
               <>
                 <Link href="/account" className="exp-util-link">
@@ -106,8 +123,11 @@ export function StoreFront({
           <div>
             <strong className="shop-footer-brand">{BRAND}</strong>
             <p>
-              منصة سفر كاملة: طيران، فنادق، نقل، وأنشطة — بأسعار حية وخدمة
-              شخصية من فريق الحجوزات.
+              منصة سفر كويتية: طيران، فنادق، نقل، وأنشطة. أثناء الاختبار تظهر
+              نتائج تجريبية بوضوح حتى اكتمال ربط المزوّدين.
+            </p>
+            <p className="shop-footer-legal-meta">
+              WeekendGate Travel · ترخيص تجاري: 123456 · CR: KW-2024-001
             </p>
           </div>
           <div>
@@ -118,19 +138,21 @@ export function StoreFront({
             <Link href="/chat">المساعد الذكي</Link>
           </div>
           <div>
-            <strong>حسابك</strong>
-            <Link href="/account/login">تسجيل الدخول</Link>
-            <Link href="/account">رحلاتي</Link>
-            <Link href="/book">إتمام طلب</Link>
+            <strong>قانوني</strong>
+            <Link href="/terms">الشروط والأحكام</Link>
+            <Link href="/privacy">سياسة الخصوصية</Link>
+            <Link href="/booking-policy">التعديل والإلغاء</Link>
+            <Link href="/about">من نحن</Link>
           </div>
           <div>
             <strong>تواصل</strong>
+            <span>+965 2222 0000</span>
+            <span>support@weekendgate.com</span>
             <span>الكويت · GMT+3</span>
-            <span>دعم 24/7 عبر المساعد</span>
-            <span>حجز آمن · بدون دفع فوري</span>
+            <span className="shop-footer-payments">K-Net · Visa · Mastercard</span>
           </div>
         </div>
-        <p className="shop-footer-copy">
+        <p className="shop-footer-copy" suppressHydrationWarning>
           © {new Date().getFullYear()} {BRAND}. جميع الحقوق محفوظة.
         </p>
       </footer>

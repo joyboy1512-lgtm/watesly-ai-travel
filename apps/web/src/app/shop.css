@@ -5531,3 +5531,376 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* —— Flight card v2 + polish —— */
+.shop-flight-results-h1 {
+  width: min(1200px, calc(100% - 2rem));
+  margin: 0.85rem auto 0;
+  font-size: 1.15rem;
+  color: var(--exp-navy);
+}
+
+.shop-flight-mock-banner {
+  width: min(1200px, calc(100% - 2rem));
+  margin: 0 auto 0.75rem;
+  padding: 0.65rem 0.85rem;
+  border-radius: 10px;
+  background: #fff7e6;
+  border: 1px solid #fcd34d;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.75rem;
+  font-size: 0.85rem;
+  color: #92400e;
+}
+
+.shop-flight-mock-banner strong {
+  color: #78350f;
+}
+
+.shop-ticket-card-v2 {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.75rem 1rem;
+  align-items: stretch;
+}
+
+.shop-ticket-body-v2 {
+  min-width: 0;
+}
+
+.shop-ticket-legs-v2 {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.shop-ticket-leg-v2 {
+  display: grid;
+  grid-template-columns: minmax(140px, 1.1fr) 72px 1fr 72px;
+  gap: 0.65rem;
+  align-items: center;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid var(--exp-border);
+  border-radius: 10px;
+  background: #fff;
+}
+
+.shop-ticket-leg-v2.is-return {
+  background: #fafbfd;
+}
+
+.shop-ticket-leg-v2.is-leg-selected {
+  border-color: var(--exp-blue);
+  box-shadow: inset 0 0 0 1px var(--exp-blue);
+  background: #eef5ff;
+}
+
+.shop-ticket-airline-col {
+  display: grid;
+  grid-template-columns: 40px 1fr;
+  gap: 0.45rem;
+  align-items: center;
+  min-width: 0;
+}
+
+.shop-ticket-airline-logo img,
+.shop-ticket-airline-logo .shop-ticket-logo-fallback {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  border-radius: 8px;
+}
+
+.shop-ticket-airline-text {
+  min-width: 0;
+}
+
+.shop-ticket-airline-text strong {
+  display: block;
+  font-size: 0.82rem;
+  color: var(--exp-navy);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.shop-ticket-airline-text span {
+  display: block;
+  font-size: 0.72rem;
+  color: var(--exp-muted);
+}
+
+.shop-ticket-leg-pick {
+  grid-column: 1 / -1;
+  border: 1px dashed var(--exp-border);
+  background: #fff;
+  color: var(--exp-blue);
+  border-radius: 999px;
+  padding: 0.3rem 0.65rem;
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: pointer;
+  justify-self: start;
+}
+
+.shop-ticket-leg-pick.on {
+  border-style: solid;
+  background: var(--exp-blue);
+  color: #fff;
+  border-color: var(--exp-blue);
+}
+
+.shop-ticket-meta-stops.direct {
+  color: #047857;
+  font-weight: 800;
+}
+
+.shop-ticket-side-v2 {
+  display: grid;
+  gap: 0.35rem;
+  align-content: center;
+  justify-items: end;
+  min-width: 9.5rem;
+  border-inline-start: 1px solid var(--exp-border);
+  padding-inline-start: 0.85rem;
+}
+
+.shop-ticket-details-btn.primary {
+  min-width: 7.5rem;
+}
+
+.shop-flight-expanded-panel.has-sticky-foot {
+  display: flex;
+  flex-direction: column;
+}
+
+.shop-flight-expanded-panel.has-sticky-foot .shop-flight-expanded-body {
+  flex: 1;
+  overflow: auto;
+  padding-bottom: 0.5rem;
+}
+
+.shop-flight-expanded-foot.sticky {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  box-shadow: 0 -6px 20px rgba(15, 35, 70, 0.08);
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.shop-flight-expanded-foot-breakdown {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem 1rem;
+  flex: 1;
+}
+
+.shop-flight-expanded-foot-breakdown div {
+  display: grid;
+  gap: 0.1rem;
+  font-size: 0.78rem;
+}
+
+.shop-flight-expanded-foot-breakdown span {
+  color: var(--exp-muted);
+}
+
+.shop-flight-expanded-foot-breakdown em {
+  font-style: normal;
+  font-weight: 700;
+  color: var(--exp-navy);
+}
+
+.shop-flight-expanded-foot-breakdown .total strong {
+  font-size: 1.05rem;
+  color: var(--exp-navy);
+}
+
+.shop-flight-expanded-continue-btn {
+  border: 0;
+  background: var(--exp-navy);
+  color: #fff;
+  border-radius: 999px;
+  padding: 0.75rem 1.25rem;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.shop-flight-leg-baggage {
+  list-style: none;
+  margin: 0.55rem 0 0;
+  padding: 0.55rem 0 0;
+  border-top: 1px dashed var(--exp-border);
+  font-size: 0.78rem;
+  color: var(--exp-muted);
+  display: grid;
+  gap: 0.25rem;
+}
+
+.shop-flight-fares-hint {
+  margin: -0.35rem 0 0.65rem;
+  font-size: 0.82rem;
+  color: var(--exp-muted);
+}
+
+.shop-flight-provider-row.selectable {
+  cursor: pointer;
+}
+
+.shop-flight-expanded-status.warn button.ghost {
+  background: transparent;
+  color: var(--exp-navy);
+  border: 1px solid var(--exp-border);
+  margin-inline-start: 0.45rem;
+}
+
+/* —— Homepage + header polish —— */
+.exp-home-hero {
+  min-height: min(72vh, 680px);
+}
+
+.exp-search-submit {
+  padding: 0.85rem 1.55rem !important;
+  font-size: 1.02rem !important;
+  font-weight: 800 !important;
+}
+
+.exp-header-links {
+  display: none;
+  gap: 0.85rem;
+  align-items: center;
+  margin-inline: auto 0.5rem;
+}
+
+.exp-header-links a {
+  color: var(--exp-navy);
+  text-decoration: none;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.exp-header-links a:hover {
+  color: var(--exp-blue);
+}
+
+.exp-util-link.mobile-only {
+  display: none;
+}
+
+.wg-logo-single .wg-logo-mark {
+  display: none;
+}
+
+/* —— Legal pages —— */
+.shop-legal-page {
+  width: min(760px, calc(100% - 2rem));
+  margin: 1.5rem auto 3rem;
+  background: #fff;
+  border: 1px solid var(--exp-border);
+  border-radius: 14px;
+  padding: 1.25rem 1.35rem;
+}
+
+.shop-legal-page h1 {
+  margin: 0 0 1rem;
+  color: var(--exp-navy);
+}
+
+.shop-legal-body h2 {
+  margin: 1rem 0 0.45rem;
+  font-size: 1rem;
+  color: var(--exp-navy);
+}
+
+.shop-legal-body p,
+.shop-legal-body li {
+  color: var(--exp-muted);
+  line-height: 1.7;
+}
+
+.shop-legal-back a {
+  color: var(--exp-blue);
+  font-weight: 600;
+}
+
+.shop-faq-item {
+  border: 1px solid var(--exp-border);
+  border-radius: 10px;
+  padding: 0.65rem 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.shop-faq-item summary {
+  cursor: pointer;
+  font-weight: 700;
+  color: var(--exp-navy);
+}
+
+.shop-contact-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 1rem;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.shop-footer-legal-meta,
+.shop-footer-payments {
+  display: block;
+  margin-top: 0.45rem;
+  font-size: 0.82rem;
+  color: var(--exp-muted);
+}
+
+@media (min-width: 901px) {
+  .exp-header-links {
+    display: flex;
+  }
+}
+
+@media (max-width: 900px) {
+  .shop-ticket-card-v2 {
+    grid-template-columns: 1fr;
+  }
+
+  .shop-ticket-leg-v2 {
+    grid-template-columns: 1fr 1fr;
+    grid-template-areas:
+      "airline airline"
+      "dep arr"
+      "path path";
+  }
+
+  .shop-ticket-airline-col {
+    grid-area: airline;
+  }
+
+  .shop-ticket-leg-v2 .shop-ticket-time:not(.end) {
+    grid-area: dep;
+  }
+
+  .shop-ticket-leg-v2 .shop-ticket-time.end {
+    grid-area: arr;
+    text-align: end;
+  }
+
+  .shop-ticket-leg-v2 .shop-ticket-path {
+    grid-area: path;
+  }
+
+  .shop-ticket-side-v2 {
+    border-inline-start: 0;
+    padding-inline-start: 0;
+    border-top: 1px solid var(--exp-border);
+    padding-top: 0.65rem;
+    justify-items: stretch;
+  }
+
+  .exp-util-link.mobile-only {
+    display: inline-flex;
+  }
+}

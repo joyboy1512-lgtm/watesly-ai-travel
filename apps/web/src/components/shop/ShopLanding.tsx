@@ -39,7 +39,7 @@ export function ShopLanding({ onPickDestination, onPickOffer }: Props) {
         <div className="shop-section-head">
           <div>
             <p className="shop-kicker">وجهات مميزة</p>
-            <h2>اكتشف العالم من ماء البحر</h2>
+            <h2>اكتشف العالم بطريقتك</h2>
             <p className="shop-lead">
               وجهات مختارة بصور حقيقية وتقييمات مسافرين — اضغط على أي وجهة لملء
               البحث فوراً.
@@ -67,7 +67,7 @@ export function ShopLanding({ onPickDestination, onPickOffer }: Props) {
                 </div>
                 <div className="shop-dest-meta">
                   <Stars value={dest.rating} />
-                  <small>{dest.reviews.toLocaleString("ar-KW")} تقييم</small>
+                  <small>{dest.reviews.toString()} تقييم</small>
                   <strong>{dest.fromPrice}</strong>
                 </div>
               </div>
@@ -126,12 +126,12 @@ export function ShopLanding({ onPickDestination, onPickOffer }: Props) {
         <div className="shop-section-head">
           <div>
             <p className="shop-kicker">آراء المسافرين</p>
-            <h2>تقييمات حقيقية من عملائنا</h2>
+            <h2>آراء مسافرين</h2>
           </div>
           <div className="shop-rating-summary">
             <strong>4.9</strong>
             <Stars value={5} />
-            <span>من أكثر من 3,000 تقييم</span>
+            <span>أمثلة من تجارب مستخدمين</span>
           </div>
         </div>
         <div className="shop-review-grid">
@@ -139,7 +139,7 @@ export function ShopLanding({ onPickDestination, onPickOffer }: Props) {
             <article key={review.id} className="shop-review-card">
               <div className="shop-review-top">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={review.avatar} alt="" />
+                <img src={review.avatar} alt={review.name} />
                 <div>
                   <strong>{review.name}</strong>
                   <span>{review.city}</span>

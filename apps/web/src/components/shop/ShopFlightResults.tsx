@@ -29,9 +29,12 @@ type Props = {
   destination: string;
   originLabel: string;
   destinationLabel: string;
+  passengers?: number;
   onFiltersChange: (next: FlightSearchFilters) => void;
   onSortChange: (key: FlightSortKey) => void;
   onResetFilters: () => void;
+  passengers?: number;
+  enableMixMatch?: boolean;
   onSelectFlight: (flight: FlightOfferRow) => void;
   onToggleOutbound?: (flight: FlightOfferRow) => void;
   onToggleReturn?: (flight: FlightOfferRow) => void;
@@ -140,6 +143,8 @@ export function ShopFlightResults(props: Props) {
                   badges={badges}
                   displayLeg={displayLeg}
                   priceFrom={pickStep === "outbound"}
+                  passengers={props.passengers}
+                  enableMixMatch={enableMix && props.enableMixMatch !== false}
                   outboundKey={outKey}
                   returnKey={retKey}
                   selectedOutboundKey={props.selectedOutboundKey}

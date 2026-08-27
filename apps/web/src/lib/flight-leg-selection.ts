@@ -1,10 +1,12 @@
 import {
-  durationMinutes,
+  computeLegDurationMinutes,
+  flightAirlineNameAr,
   formatMinutesLabel,
   getReturnSegments,
   getSegments,
   outboundLegKey,
   returnLegKey,
+  segmentAirlineCode,
   type FlightOfferRow,
   type FlightSeg,
 } from "./flight-search";
@@ -49,31 +51,6 @@ export function allocateLegPriceMinor(flight: FlightOfferRow, kind: LegKind): nu
     : Math.round(total * (1 - OUTBOUND_SHARE));
 }
 
-function legDuration(segs: FlightSeg[], fallbackRaw: unknown): number {
-  if (segs.length >= 2) {
-    const first = segs[0];
-    const last = segs[segs.length - 1];
-    const computed = durationMinutes(
-      fallbackRaw ??
-        (first?.departAt && last?.arriveAt
-          ? undefined
-          : undefined),
-    );
-    if (computed !== Number.MAX_SAFE_INTEGER) return computed;
-    const dep = first?.departAt || first?.departTime;
-    const arr = last?.arriveAt || last?.arriveTime;
-    if (dep && arr) {
-      const a = new Date(dep).getTime();
-      const b = new Date(arr).getTime();
-      if (Number.isFinite(a) && Number.isFinite(b) && b > a) {
-        return Math.round((b - a) / 60000);
-      }
-    }
-  }
-  const mins = durationMinutes(fallbackRaw);
-  return mins === Number.MAX_SAFE_INTEGER ? 0 : mins;
-}
-
 export function extractLeg(flight: FlightOfferRow, kind: LegKind): SelectedLeg | null {
   const segs =
     kind === "outbound" ? getSegments(flight.details) : getReturnSegments(flight.details);
@@ -84,21 +61,16 @@ export function extractLeg(flight: FlightOfferRow, kind: LegKind): SelectedLeg |
   const stops =
     kind === "outbound"
       ? Number(flight.details.stops ?? Math.max(0, segs.length - 1))
-      : Math.max(0, segs.length - 1);
+      : Number(flight.details.returnStops ?? Math.max(0, segs.length - 1));
 
   const durationRaw =
     kind === "outbound"
       ? flight.details.durationMinutes ?? flight.details.duration
-      : flight.details.returnDuration;
+      : flight.details.returnDurationMinutes ?? flight.details.returnDuration;
 
-  const durMins = legDuration(segs, durationRaw);
-  const code = String(
-    kind === "outbound"
-      ? flight.details.airlineCode || first?.airline || ""
-      : first?.airline || flight.details.airlineCode || "",
-  )
-    .slice(0, 2)
-    .toUpperCase();
+  const durMins = computeLegDurationMinutes(segs, durationRaw);
+  const packageCode = String(flight.details.airlineCode || "");
+  const code = segmentAirlineCode(first, packageCode);
 
   const depAt = String(
     first?.departAt || first?.departTime || (kind === "outbound" ? flight.details.departAt : ""),
@@ -117,11 +89,7 @@ export function extractLeg(flight: FlightOfferRow, kind: LegKind): SelectedLeg |
     sourceOfferRef: String(flight.details.originalOfferId || flight.id),
     segments: segs,
     airlineCode: code,
-    airlineName: String(
-      kind === "outbound"
-        ? flight.details.airlineAr || flight.details.airline || code
-        : first?.airline || flight.details.airlineAr || flight.details.airline || code,
-    ),
+    airlineName: flightAirlineNameAr(flight.details, first, kind === "return" ? "return" : "out"),
     stops,
     durationMinutes: durMins,
     durationLabel: durMins ? formatMinutesLabel(durMins) : String(durationRaw || "—"),
@@ -137,7 +105,7 @@ export function extractLeg(flight: FlightOfferRow, kind: LegKind): SelectedLeg |
     flightNumbers: segs
       .map((s) => s.flightNumber)
       .filter(Boolean)
-      .join(" / "),
+      .join(" · "),
   };
 }
 

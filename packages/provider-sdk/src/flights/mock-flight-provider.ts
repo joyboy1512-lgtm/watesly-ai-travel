@@ -63,6 +63,11 @@ function buildReturnSegments(
   airlineCode: string,
   seed: number,
 ): Array<Record<string, unknown>> {
+  const airline = MOCK_AIRLINES[airlineCode] || {
+    code: airlineCode,
+    name: airlineCode,
+    nameAr: airlineCode,
+  };
   const segs = [...outbound].reverse();
   return segs.map((s, index) => {
     const departOffset = (10 + index * 3) * 60 + (seed % 40);
@@ -78,7 +83,8 @@ function buildReturnSegments(
       departTime: dep.clock,
       arriveTime: arr.clock,
       flightNumber: `${airlineCode}${500 + (seed % 400) + index}`,
-      airline: s.airline || MOCK_AIRLINES[airlineCode]?.name || airlineCode,
+      airline: airline.nameAr,
+      airlineCode,
     };
   });
 }
@@ -150,7 +156,8 @@ export class MockFlightProvider implements FlightProviderAdapter {
           departTime: dep.clock,
           arriveTime: arr.clock,
           flightNumber: `${segTpl.flightNumberPrefix}${100 + ((seed + index * 17 + segIndex * 3) % 800)}`,
-          airline: airline.name,
+          airline: airline.nameAr,
+          airlineCode: airline.code,
         };
       });
 
@@ -194,6 +201,17 @@ export class MockFlightProvider implements FlightProviderAdapter {
             )
           : [];
 
+      let returnDurationMinutes = 0;
+      if (returnSegments.length) {
+        const retFirst = returnSegments[0] as { departAt?: string };
+        const retLast = returnSegments[returnSegments.length - 1] as { arriveAt?: string };
+        const start = new Date(String(retFirst.departAt)).getTime();
+        const end = new Date(String(retLast.arriveAt)).getTime();
+        if (Number.isFinite(start) && Number.isFinite(end) && end > start) {
+          returnDurationMinutes = Math.round((end - start) / 60000);
+        }
+      }
+
       const destLabel =
         MOCK_DESTINATION_LABELS[destination] || destination;
       const tripLabel = isRoundTrip ? "ذهاب وعودة" : "ذهاب فقط";
@@ -225,6 +243,12 @@ export class MockFlightProvider implements FlightProviderAdapter {
           segments,
           returnSegments,
           returnDate: params.returnDate ?? null,
+          returnDuration:
+            returnDurationMinutes > 0
+              ? minutesToDuration(returnDurationMinutes)
+              : null,
+          returnDurationMinutes: returnDurationMinutes || null,
+          returnStops: Math.max(0, returnSegments.length - 1),
           tripType: isRoundTrip ? "roundtrip" : "oneway",
           destinationLabel: destLabel,
           fare: {

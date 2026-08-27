@@ -1,3 +1,6 @@
+import { currencyMinorFactor } from "@watesly-travel/shared";
+import { airlineNameAr, normalizeAirlineCode } from "./flight-airlines";
+
 export type FlightOfferRow = {
   id: string;
   description: string;
@@ -16,6 +19,7 @@ export type FlightSeg = {
   arriveTime?: string;
   date?: string;
   airline?: string;
+  airlineCode?: string;
   flightNumber?: string;
   aircraft?: string;
 };
@@ -83,24 +87,91 @@ export function formatClock(value?: string | null) {
   return value;
 }
 
+const AR_WEEKDAYS = ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
+const AR_MONTHS = [
+  "يناير",
+  "فبراير",
+  "مارس",
+  "أبريل",
+  "مايو",
+  "يونيو",
+  "يوليو",
+  "أغسطس",
+  "سبتمبر",
+  "أكتوبر",
+  "نوفمبر",
+  "ديسمبر",
+];
+
 export function formatDay(value?: string | null) {
   if (!value) return "";
   const d = value.slice(0, 10);
   if (!/^\d{4}-\d{2}-\d{2}$/.test(d)) return "";
-  try {
-    return new Date(`${d}T12:00:00`).toLocaleDateString("ar-KW", {
-      weekday: "short",
-      month: "short",
-      day: "numeric",
-    });
-  } catch {
-    return d;
-  }
+  const [y, m, day] = d.split("-").map(Number);
+  const utc = new Date(Date.UTC(y!, m! - 1, day!));
+  return `${AR_WEEKDAYS[utc.getUTCDay()]} ${day} ${AR_MONTHS[m! - 1]}`;
 }
 
-export function airlineLogo(code?: string | null) {
-  if (!code || code.length !== 2) return null;
-  return `https://pics.avs.io/80/80/${code.toUpperCase()}.png`;
+export function airlineLogo(code?: string | null, size = 80) {
+  const c = normalizeAirlineCode(code);
+  if (!c || c.length !== 2) return null;
+  return `https://pics.avs.io/${size}/${size}/${c}.png`;
+}
+
+export function segmentAirlineCode(
+  seg?: FlightSeg | null,
+  packageCode?: string | null,
+): string {
+  if (!seg) return normalizeAirlineCode(packageCode);
+  const fromSeg = normalizeAirlineCode(seg.airlineCode || seg.airline);
+  if (fromSeg.length === 2) return fromSeg;
+  const fromFn = seg.flightNumber?.match(/^([A-Z0-9]{2})/i)?.[1];
+  if (fromFn) return fromFn.toUpperCase();
+  return normalizeAirlineCode(packageCode);
+}
+
+export function flightAirlineNameAr(
+  details: Record<string, unknown>,
+  seg?: FlightSeg | null,
+  leg: "out" | "return" = "out",
+): string {
+  const packageCode = String(details.airlineCode || "");
+  const code = segmentAirlineCode(seg, packageCode);
+  const segName = seg?.airline;
+  if (leg === "out") {
+    return airlineNameAr(code, String(details.airlineAr || details.airline || segName || code));
+  }
+  return airlineNameAr(code, String(details.airlineAr || segName || details.airline || code));
+}
+
+/** Compute leg duration in minutes from segment timestamps or fallback. */
+export function computeLegDurationMinutes(
+  segs: FlightSeg[],
+  fallbackRaw?: unknown,
+): number {
+  if (segs.length) {
+    const first = segs[0];
+    const last = segs[segs.length - 1];
+    const dep = first?.departAt || first?.departTime;
+    const arr = last?.arriveAt || last?.arriveTime;
+    if (dep && arr) {
+      const a = new Date(dep).getTime();
+      const b = new Date(arr).getTime();
+      if (Number.isFinite(a) && Number.isFinite(b) && b > a) {
+        return Math.round((b - a) / 60000);
+      }
+    }
+  }
+  const mins = durationMinutes(fallbackRaw);
+  return mins === Number.MAX_SAFE_INTEGER ? 0 : mins;
+}
+
+export function majorToMinor(major: number, currency: string) {
+  return Math.round(major * currencyMinorFactor(currency));
+}
+
+export function minorToMajor(minor: number, currency: string) {
+  return minor / currencyMinorFactor(currency);
 }
 
 export function cabinLabel(cabin?: string | null) {
@@ -247,8 +318,9 @@ export function packageMaxStops(flight: FlightOfferRow) {
 function scoreBest(a: FlightOfferRow) {
   const stops = packageMaxStops(a);
   const mins = totalTripDurationMinutes(a);
+  const factor = currencyMinorFactor(a.currency || "KWD");
   return (
-    a.sellAmountMinor / 100 +
+    a.sellAmountMinor / factor +
     stops * 120 +
     (mins === Number.MAX_SAFE_INTEGER ? 9999 : mins) * 0.8
   );
@@ -310,7 +382,10 @@ export function collectFlightFacets(flights: FlightOfferRow[]) {
   }
 
   const priceMaxMajor = Math.ceil(
-    flights.reduce((m, f) => Math.max(m, f.sellAmountMinor), 0) / 100,
+    minorToMajor(
+      flights.reduce((m, f) => Math.max(m, f.sellAmountMinor), 0),
+      currency,
+    ),
   );
   const durationMaxHours = Math.ceil(
     flights.reduce((m, f) => {
@@ -349,7 +424,8 @@ export function filterAndSortFlights(
     );
   }
   if (filters.maxPrice) {
-    const max = Number(filters.maxPrice) * 100;
+    const currency = flights[0]?.currency || "KWD";
+    const max = majorToMinor(Number(filters.maxPrice), currency);
     if (Number.isFinite(max)) list = list.filter((f) => f.sellAmountMinor <= max);
   }
   if (filters.maxDurationHours) {

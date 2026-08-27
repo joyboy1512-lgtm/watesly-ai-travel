@@ -528,6 +528,13 @@ export function ShopFlightResultsClient() {
 
       {!loading && !error ? (
         <>
+          <div className="shop-flight-mock-banner" role="status">
+            <strong>نتائج تجريبية</strong>
+            <span>
+              الأسعار والرحلات المعروضة للاختبار فقط — سيتم استبدالها بعروض حية عند ربط
+              مزوّد الطيران.
+            </span>
+          </div>
           {message ? <p className="shop-flight-results-status">{message}</p> : null}
 
           <ShopFlightResults
@@ -540,6 +547,7 @@ export function ShopFlightResultsClient() {
             destination={params.destination}
             originLabel={params.originLabel}
             destinationLabel={params.destinationLabel}
+            passengers={passengers}
             onFiltersChange={setFilters}
             onSortChange={setSortKey}
             onResetFilters={() => setFilters(defaultFlightFilters())}

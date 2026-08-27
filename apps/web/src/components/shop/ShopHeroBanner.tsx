@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, type ReactNode } from "react";
 import { HERO_SLIDES } from "@/lib/shop-content";
 import { ShopAutocomplete, type SuggestItem } from "@/components/shop/ShopAutocomplete";
 import { ShopDateRangePicker } from "@/components/shop/ShopDateRangePicker";
+import { formatDay } from "@/lib/flight-search";
 
 type Mode = "flights" | "stays" | "cars" | "activities";
 export type FlightTripType = "roundtrip" | "oneway" | "multicity";
@@ -149,18 +150,7 @@ function formatTimeShort(t: string) {
   return `${h12}:${m} ${suffix}`;
 }
 
-function formatDateDisplay(iso: string) {
-  if (!iso) return "اختر تاريخ";
-  const d = new Date(iso + "T12:00:00");
-  if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleDateString("ar-KW", {
-    weekday: "short",
-    day: "numeric",
-    month: "short",
-  });
-}
-
-function DatePick({
+import { formatDay } from "@/lib/flight-search";
   value,
   onChange,
   label,
@@ -194,7 +184,7 @@ function DatePick({
   return (
     <div className="exp-date-pick">
       <button type="button" className="exp-date-btn" onClick={openPicker} aria-label={label}>
-        {mounted ? formatDateDisplay(value) : value || "اختر تاريخ"}
+        {mounted ? (value ? formatDay(value) : "اختر تاريخ") : value || "اختر تاريخ"}
       </button>
       <input
         ref={inputRef}
@@ -806,7 +796,7 @@ export function ShopHeroBanner(props: Props) {
           {props.message ? <p className="shop-status exp-dialog-msg">{props.message}</p> : null}
         </div>
 
-        <h1 className="exp-home-tagline">مكان واحد تذهب إليه لتذهب إلى أي مكان</h1>
+        <h1 className="exp-home-tagline">كل رحلتك تبدأ من مكان واحد</h1>
       </div>
     </section>
   );

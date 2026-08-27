@@ -45,6 +45,8 @@ export type RevalidateSuccess = {
   provider: MockProviderOffer;
   breakdown: FlightPriceBreakdown;
   validatedAt: string;
+  priceChanged?: boolean;
+  previousTotalMinor?: number;
 };
 
 export type RevalidateFailure = {
@@ -206,7 +208,7 @@ export async function revalidateMockOffer(
   }
 
   const providers = buildProviderOffers(trip, fare);
-  const provider = providers.find((p) => p.id === providerId);
+  let provider = providers.find((p) => p.id === providerId);
   if (!provider) {
     return {
       ok: false,
@@ -215,11 +217,23 @@ export async function revalidateMockOffer(
     };
   }
 
+  const previousTotalMinor = provider.totalPriceMinor;
+  let priceChanged = false;
+  if (Math.random() < 0.08) {
+    provider = {
+      ...provider,
+      totalPriceMinor: Math.round(provider.totalPriceMinor * 1.035),
+    };
+    priceChanged = true;
+  }
+
   return {
     ok: true,
     fare,
     provider,
     breakdown: computePriceBreakdown(provider.totalPriceMinor, trip.currency),
     validatedAt: new Date().toISOString(),
+    priceChanged,
+    previousTotalMinor: priceChanged ? previousTotalMinor : undefined,
   };
 }

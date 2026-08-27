@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { currencyExponent } from "@watesly-travel/shared";
 import { formatMoneyMinor } from "@/lib/format";
 import {
   DEPARTURE_BUCKETS,
@@ -239,7 +240,8 @@ export function ShopFlightFilters({
           }
         />
         <small>
-          حتى {priceValue} {facets.stops.currency} للبالغ
+          حتى {priceValue.toFixed(currencyExponent(facets.stops.currency))}{" "}
+          {facets.stops.currency} · إجمالي الرحلة
         </small>
       </div>
     </aside>

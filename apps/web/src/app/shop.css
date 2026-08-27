@@ -6572,7 +6572,7 @@
 }
 
 .shop-ticket-leg-p1 .shop-ticket-kayak-check {
-  display: none;
+  display: grid;
 }
 
 @media (max-width: 720px) {

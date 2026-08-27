@@ -37,6 +37,8 @@ type Props = {
   onResetFilters: () => void;
   onSelectFlight: (flight: FlightOfferRow) => void;
   onViewDetails?: (flight: FlightOfferRow) => void;
+  onToggleOutbound?: (flight: FlightOfferRow) => void;
+  onToggleReturn?: (flight: FlightOfferRow) => void;
   selectedOutboundKey?: string | null;
   selectedReturnKey?: string | null;
   expandedTripId?: string | null;
@@ -44,6 +46,7 @@ type Props = {
   pickStep?: FlightPickStep;
   stepTitle?: string;
   selectLabel?: string;
+  enableMixMatch?: boolean;
   /** Sticky / pinned custom trip summary above the list */
   customTripSlot?: ReactNode;
 };
@@ -177,6 +180,13 @@ export function ShopFlightResults(props: Props) {
                     props.selectedOutboundKey === outKey || props.selectedReturnKey === retKey
                   }
                   selectLabel={selectLabel}
+                  enableMixMatch={Boolean(props.enableMixMatch)}
+                  outboundKey={outKey}
+                  returnKey={retKey || undefined}
+                  selectedOutboundKey={props.selectedOutboundKey}
+                  selectedReturnKey={props.selectedReturnKey}
+                  onToggleOutbound={() => props.onToggleOutbound?.(flight)}
+                  onToggleReturn={() => props.onToggleReturn?.(flight)}
                   onSelectFlight={() => props.onSelectFlight(flight)}
                   onViewDetails={() =>
                     (props.onViewDetails ?? props.onSelectFlight)(flight)

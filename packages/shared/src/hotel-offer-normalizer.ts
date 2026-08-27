@@ -5,6 +5,7 @@
 
 import type { HotelPropertyDetails, HotelRateOption, HotelRoomOption } from "./hotel-display";
 import { boardLabelAr, paymentTypeLabelAr } from "./hotel-display";
+import type { MoneyMinor } from "./types";
 import {
   buildHotelPriceBreakdown,
   sellMinorForStayNet,
@@ -12,7 +13,6 @@ import {
   type HotelNetBasis,
   type HotelPriceBreakdown,
   type HotelPriceRejectReason,
-  type MoneyMinor,
 } from "./hotel-money";
 
 export type NormalizedGuestRating = {

@@ -1,5 +1,13 @@
 "use client";
 
+import { Suspense, useEffect, useMemo, useState } from "react";
+import dynamic from "next/dynamic";
+import Link from "next/link";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
+import "../../shop.css";
+import { StoreFront } from "@/components/shop/StoreFront";
+import { ShopMockBanner } from "@/components/shop/ShopMockBanner";
+import { saveHotelDraft } from "@/lib/booking-draft";
 import {
   defaultHotelFilters,
   filterHotelOffers,
@@ -7,6 +15,15 @@ import {
   type HotelOfferRow,
   type HotelRateOption,
 } from "@/lib/hotel-search";
+import {
+  buildHotelResultsHref,
+  nightsBetween,
+  parseHotelResultsSearch,
+} from "@/lib/hotel-results-url";
+import {
+  getHotelSearchSession,
+  resolveQuoteItemId,
+} from "@/lib/hotel-search-session";
 import { shopFetch } from "@/lib/shop-session";
 
 const HotelDetailModal = dynamic(
@@ -115,6 +132,7 @@ function HotelDetailInner() {
   ) {
     if (!hotel) return;
     const totalMinor = rateDisplayMinor(rate, hotel, meta.nights);
+    if (!totalMinor) return;
     saveHotelDraft({
       hotel: {
         id: hotel.id,
@@ -123,7 +141,20 @@ function HotelDetailInner() {
         currency: hotel.currency,
         details: hotel.details,
       },
-      selectedRate: rate,
+      selectedRate: {
+        rateKey: rate.rateKey,
+        rateType: rate.rateType,
+        roomCode: rate.roomCode,
+        roomName: rate.roomName,
+        boardCode: rate.boardCode,
+        boardName: rate.boardName,
+        net: rate.net,
+        currency: rate.currency,
+        paymentType: rate.paymentType,
+        freeCancellation: rate.freeCancellation,
+        allotment: rate.allotment,
+        rateComments: rate.rateComments,
+      },
       checkIn: meta.departDate,
       checkOut: meta.returnDate,
       rooms: meta.rooms,

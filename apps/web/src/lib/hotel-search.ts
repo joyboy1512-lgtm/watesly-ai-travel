@@ -1,4 +1,11 @@
 import {
+  displayFromMinorForOffer,
+  sellMinorForStayNet,
+  taxTypeLabelAr,
+  validateHotelSellPrice,
+  BOARD_LABELS_AR,
+} from "@watesly-travel/shared";
+import {
   BED_TYPE_OPTIONS,
   BRAND_PATTERNS,
   countOptions,
@@ -192,21 +199,31 @@ function matchingRates(h: HotelOfferRow, filters: HotelSearchFilters): HotelRate
   return rates.sort((a, b) => a.net - b.net);
 }
 
-function currencyExponent(currency: string): number {
-  return currency === "KWD" || currency === "BHD" || currency === "OMR" ? 1000 : 100;
-}
-
+/**
+ * Display sell amount for a rate.
+ * `rate.net` is stay-total MAJOR units — do NOT multiply by nights again,
+ * and do NOT divide sellAmountMinor by major minRate (that re-applies ×1000).
+ */
 export function rateDisplayMinor(
   rate: HotelRateOption,
   offer: HotelOfferRow,
-  nights?: number,
+  _nights?: number,
 ): number {
-  const n = (nights ?? Number(offer.details.nights || 1)) || 1;
-  const costMinor = Math.round(rate.net * currencyExponent(offer.currency) * n);
-  const ratio =
-    offer.sellAmountMinor /
-    Math.max(1, Number(offer.details.minRate || rate.net));
-  return Math.round(costMinor * ratio) || offer.sellAmountMinor;
+  const ref = Number(offer.details.minRate || rate.net);
+  const display = sellMinorForStayNet({
+    rateNetMajor: rate.net,
+    currency: offer.currency,
+    sellAmountMinor: offer.sellAmountMinor,
+    costAmountMinor: offer.costAmountMinor,
+    referenceNetMajor: ref,
+  });
+  const nights = Math.max(1, Number(offer.details.nights || _nights || 1));
+  const validation = validateHotelSellPrice({
+    totalMinor: display,
+    currency: offer.currency,
+    nights,
+  });
+  return validation.ok ? validation.totalMinor : 0;
 }
 
 export function groupRatesIntoRooms(rates: HotelRateOption[]): HotelRoomOption[] {
@@ -315,23 +332,37 @@ export function filterHotelOffers(
       const allRates = rateOptionsOf(h);
       const rates = matchingRates(h, filters);
       if (allRates.length && !rates.length) return null;
+      const nights = Number(h.details.nights || 1) || 1;
       if (!allRates.length) {
+        const priced = displayFromMinorForOffer({
+          sellAmountMinor: h.sellAmountMinor,
+          costAmountMinor: h.costAmountMinor,
+          currency: h.currency,
+          nights,
+          minRateMajor: Number(h.details.minRate) || undefined,
+        });
+        if (!priced.valid) return null;
         return {
           ...h,
           matchingRates: [] as HotelRateOption[],
-          displayFromMinor: h.sellAmountMinor,
+          displayFromMinor: priced.displayFromMinor,
         };
       }
       const cheapest = rates[0] || allRates[0];
       if (!cheapest) return null;
-      const nights = Number(h.details.nights || 1) || 1;
-      const costMinor = Math.round(cheapest.net * (h.currency === "KWD" ? 1000 : 100) * nights);
-      const ratio = h.sellAmountMinor / Math.max(1, h.details.minRate ? Number(h.details.minRate) : cheapest.net);
-      const displayFromMinor = Math.round(costMinor * ratio);
+      const priced = displayFromMinorForOffer({
+        sellAmountMinor: h.sellAmountMinor,
+        costAmountMinor: h.costAmountMinor,
+        currency: h.currency,
+        nights,
+        minRateMajor: Number(h.details.minRate) || cheapest.net,
+        rateNetMajor: cheapest.net,
+      });
+      if (!priced.valid) return null;
       return {
         ...h,
         matchingRates: rates.length ? rates : rateOptionsOf(h),
-        displayFromMinor: displayFromMinor || h.sellAmountMinor,
+        displayFromMinor: priced.displayFromMinor,
       };
     })
     .filter(Boolean) as Array<
@@ -509,7 +540,4 @@ export function computeHotelHighlights(
 
 export { formatDay as formatHotelDay } from "@/lib/flight-search";
 
-export {
-  BOARD_LABELS_AR,
-  taxTypeLabelAr,
-} from "@watesly-travel/shared";
+export { BOARD_LABELS_AR, taxTypeLabelAr };

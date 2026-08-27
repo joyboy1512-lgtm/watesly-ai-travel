@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import "@/app/hotel-rich.css";
-import { formatHotelDay, type HotelRateOption } from "@/lib/hotel-search";
+import { formatHotelDay, rateDisplayMinor, type HotelRateOption } from "@/lib/hotel-search";
 import { type HotelOfferRow } from "@/lib/hotel-search";
 import { apiFetch } from "@/lib/api";
 import { formatMoneyMinor } from "@/lib/format";
@@ -80,7 +80,16 @@ export function HotelDetailModal({
 
   const name = String(hotel.details.name || "فندق");
   const stars = Number(hotel.details.stars || 0);
-  const rating = hotel.details.rating ? Number(hotel.details.rating) : 0;
+  const guestScore = Number(hotel.details.guestRatingScore);
+  const guestSource = String(hotel.details.guestRatingSource || "").trim();
+  const guestRating =
+    Number.isFinite(guestScore) && guestScore > 0 && guestSource
+      ? {
+          score: guestScore,
+          count: Number(hotel.details.guestReviewCount) || undefined,
+          source: guestSource,
+        }
+      : null;
   const imageUrl = typeof hotel.details.imageUrl === "string" ? hotel.details.imageUrl : "";
   const mapUrl = typeof hotel.details.mapUrl === "string" ? hotel.details.mapUrl : "";
   const poiDistances = Array.isArray(hotel.details.poiDistances)
@@ -140,12 +149,10 @@ export function HotelDetailModal({
       };
       if (result.priceChanged) {
         const toMinor = result.selectedRate
-          ? Math.round(
-              (result.selectedRate.net || rate.net) *
-                (hotel.currency === "KWD" || hotel.currency === "BHD" || hotel.currency === "OMR"
-                  ? 1000
-                  : 100) *
-                nights,
+          ? rateDisplayMinor(
+              { ...rate, ...(result.selectedRate || {}) },
+              hotel,
+              nights,
             )
           : hotel.displayFromMinor;
         setPriceChange({
@@ -261,10 +268,12 @@ export function HotelDetailModal({
                     ))}
                   </ul>
                 ) : null}
-                {rating > 0 ? (
+                {guestRating ? (
                   <p className="hotel-detail-rating">
-                    تقييم {rating.toFixed(1)}/10
-                    {hotel.details.ranking ? ` · ترتيب ${String(hotel.details.ranking)}` : ""}
+                    تقييم الضيوف {guestRating.score.toFixed(1)}
+                    {guestRating.count ? ` · ${guestRating.count} مراجعة` : ""}
+                    {" · "}
+                    {guestRating.source}
                   </p>
                 ) : null}
                 {mapUrl ? (
@@ -378,24 +387,19 @@ export function HotelDetailModal({
             {tab === "reviews" ? (
               <section className="flight-modal-section hotel-tab-panel">
                 <h3>التقييمات</h3>
-                {rating > 0 ? (
+                {guestRating ? (
                   <div className="hotel-review-score">
-                    <strong>{rating.toFixed(1)}</strong>
+                    <strong>{guestRating.score.toFixed(1)}</strong>
                     <div>
-                      <span>تقييم Hotelbeds</span>
-                      {hotel.details.ranking != null ? (
-                        <small>الترتيب {String(hotel.details.ranking)} / 100</small>
-                      ) : null}
-                      {hotel.details.reviewCount ? (
-                        <small>
-                          {Number(hotel.details.reviewCount).toLocaleString("ar")} مؤشر تقييم
-                        </small>
+                      <span>مصدر: {guestRating.source}</span>
+                      {guestRating.count ? (
+                        <small>{guestRating.count} مراجعة</small>
                       ) : null}
                     </div>
                   </div>
                 ) : (
                   <p className="hint">
-                    لا يوفّر Hotelbeds Sandbox تقييمات نزلاء مفصّلة لهذا العقار بعد.
+                    لا يتوفر تقييم نزلاء موثوق من المزود لهذا العقار. يُعرض تصنيف النجوم الرسمي فقط.
                   </p>
                 )}
               </section>

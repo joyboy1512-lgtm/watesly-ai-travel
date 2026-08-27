@@ -15,6 +15,9 @@ type Props = {
   onChange: (next: HotelSearchFilters) => void;
   mobileOpen: boolean;
   onMobileToggle: () => void;
+  /** e.g. DXB — enables "داخل الوجهة فقط" filter */
+  searchDestinationCode?: string;
+  searchDestinationLabel?: string;
 };
 
 function toggleList(values: string[], id: string): string[] {
@@ -131,15 +134,21 @@ function FiltersPanel({
   filters,
   facets,
   onChange,
+  searchDestinationCode,
+  searchDestinationLabel,
 }: {
   filters: HotelSearchFilters;
   facets: HotelFilterFacets;
   onChange: (next: HotelSearchFilters) => void;
+  searchDestinationCode?: string;
+  searchDestinationLabel?: string;
 }) {
   const facilityOptions = (facets.facilities || []).filter((f) =>
     ["pool", "wifi", "parking", "accessibility"].includes(f.id),
   );
   const hasGuestReviews = (facets.reviewScores || []).some((o) => o.count > 0);
+  const destCode = (searchDestinationCode || "").trim().toUpperCase();
+  const destLabel = searchDestinationLabel || destCode;
 
   return (
     <aside className="shop-hotel-filters-panel">
@@ -153,6 +162,23 @@ function FiltersPanel({
           مسح الكل
         </button>
       </div>
+
+      {destCode ? (
+        <FilterSection title="المدينة">
+          <FilterCheck
+            id="destinationOnly"
+            label={`داخل ${destLabel} فقط`}
+            checked={filters.destinationCodeOnly === destCode}
+            onToggle={() =>
+              onChange({
+                ...filters,
+                destinationCodeOnly:
+                  filters.destinationCodeOnly === destCode ? "" : destCode,
+              })
+            }
+          />
+        </FilterSection>
+      ) : null}
 
       {facets.priceMaxMajor > 0 ? (
         <FilterSection title="نطاق السعر (د.ك)">
@@ -239,8 +265,11 @@ function FiltersPanel({
         </FilterSection>
       ) : null}
 
-      {facets.bookingPolicies?.freeCancellation || facets.bookingPolicies?.noPrepayment ? (
-        <FilterSection title="سياسة الحجز">
+      {facets.bookingPolicies?.freeCancellation ||
+      facets.bookingPolicies?.noPrepayment ||
+      facets.bookingPolicies?.onlinePayment ||
+      facets.bookingPolicies?.bookableOnly ? (
+        <FilterSection title="سياسة الحجز والدفع">
           {facets.bookingPolicies.freeCancellation ? (
             <FilterCheck
               id="freeCancellation"
@@ -259,6 +288,26 @@ function FiltersPanel({
               count={facets.bookingPolicies.noPrepayment}
               checked={filters.noPrepayment}
               onToggle={() => onChange({ ...filters, noPrepayment: !filters.noPrepayment })}
+            />
+          ) : null}
+          {facets.bookingPolicies.onlinePayment ? (
+            <FilterCheck
+              id="onlinePayment"
+              label="الدفع الآن (أونلاين)"
+              count={facets.bookingPolicies.onlinePayment}
+              checked={Boolean(filters.onlinePayment)}
+              onToggle={() =>
+                onChange({ ...filters, onlinePayment: !filters.onlinePayment })
+              }
+            />
+          ) : null}
+          {facets.bookingPolicies.bookableOnly ? (
+            <FilterCheck
+              id="bookableOnly"
+              label="المتاح للحجز فقط"
+              count={facets.bookingPolicies.bookableOnly}
+              checked={filters.bookableOnly}
+              onToggle={() => onChange({ ...filters, bookableOnly: !filters.bookableOnly })}
             />
           ) : null}
         </FilterSection>
@@ -330,6 +379,8 @@ export function ShopHotelFilters({
   onChange,
   mobileOpen,
   onMobileToggle,
+  searchDestinationCode,
+  searchDestinationLabel,
 }: Props) {
   return (
     <div className="shop-hotel-filters">
@@ -342,10 +393,22 @@ export function ShopHotelFilters({
         {mobileOpen ? "إخفاء التصفية" : "تصفية"}
       </button>
       <div className={`shop-hotel-filters-drawer${mobileOpen ? " open" : ""}`}>
-        <FiltersPanel filters={filters} facets={facets} onChange={onChange} />
+        <FiltersPanel
+          filters={filters}
+          facets={facets}
+          onChange={onChange}
+          searchDestinationCode={searchDestinationCode}
+          searchDestinationLabel={searchDestinationLabel}
+        />
       </div>
       <div className="shop-hotel-filters-desktop">
-        <FiltersPanel filters={filters} facets={facets} onChange={onChange} />
+        <FiltersPanel
+          filters={filters}
+          facets={facets}
+          onChange={onChange}
+          searchDestinationCode={searchDestinationCode}
+          searchDestinationLabel={searchDestinationLabel}
+        />
       </div>
     </div>
   );

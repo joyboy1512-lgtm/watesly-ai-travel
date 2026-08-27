@@ -10,6 +10,7 @@ export type HotelResultsSession = {
   scrollY: number;
   openHotelId: string | null;
   returnHref: string;
+  visibleCount?: number;
   savedAt: string;
 };
 

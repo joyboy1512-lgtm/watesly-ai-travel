@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import "@/app/hotel-rich.css";
 import { HotelSearchCard } from "@/components/hotels/HotelSearchCard";
+import { HotelResultsMap } from "@/components/hotels/HotelResultsMap";
 import { ShopHotelFilters } from "@/components/shop/ShopHotelFilters";
 import { ShopHotelResultsBar } from "@/components/shop/ShopHotelResultsBar";
 import type { SuggestItem } from "@/components/shop/ShopAutocomplete";
@@ -51,20 +52,56 @@ type Props = {
   onSearch: () => void;
   onOpenHotel: (hotel: HotelRow) => void;
   searchCities: (q: string) => Promise<SuggestItem[]>;
+  searchDestinationCode?: string;
+  initialVisibleCount?: number;
+  onVisibleCountChange?: (n: number) => void;
 };
 
 export function ShopHotelResults(props: Props) {
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const [mapOpen, setMapOpen] = useState(false);
+  const [mapHotelId, setMapHotelId] = useState<string | null>(null);
+  const [visibleCount, setVisibleCount] = useState(props.initialVisibleCount || PAGE_SIZE);
   const title = props.destination || props.stayQuery || "الإقامات";
   const guests = props.adults + props.children;
 
   useEffect(() => {
-    setVisibleCount(PAGE_SIZE);
-  }, [props.hotels, props.sortKey, props.filters]);
+    setVisibleCount(props.initialVisibleCount || PAGE_SIZE);
+  }, [props.hotels, props.sortKey, props.filters, props.initialVisibleCount]);
+
+  useEffect(() => {
+    props.onVisibleCountChange?.(visibleCount);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- notify parent of page size only
+  }, [visibleCount]);
 
   const highlights = useMemo(() => computeHotelHighlights(props.hotels), [props.hotels]);
   const visibleHotels = props.hotels.slice(0, visibleCount);
+  const mapPins = useMemo(
+    () =>
+      props.hotels
+        .map((h) => {
+          const lat = Number(h.details.latitude);
+          const lng = Number(h.details.longitude);
+          if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+          return {
+            id: h.id,
+            name: String(h.details.name || h.description || "فندق"),
+            lat,
+            lng,
+            priceMinor: h.displayFromMinor,
+            currency: h.currency,
+          };
+        })
+        .filter(Boolean) as Array<{
+        id: string;
+        name: string;
+        lat: number;
+        lng: number;
+        priceMinor: number;
+        currency: string;
+      }>,
+    [props.hotels],
+  );
 
   const badgeLabel = (badge: HotelHighlightBadge) => {
     if (badge === "cheapest") return "الأقل سعرًا";
@@ -112,6 +149,13 @@ export function ShopHotelResults(props: Props) {
           >
             الأقل سعراً
           </button>
+          <button
+            type="button"
+            className={props.sortKey === "price_desc" ? "on" : undefined}
+            onClick={() => props.onSortChange("price_desc")}
+          >
+            الأعلى سعراً
+          </button>
           {props.hotels.some((h) => Number(h.details.guestRatingScore || 0) > 0) ? (
             <button
               type="button"
@@ -128,8 +172,32 @@ export function ShopHotelResults(props: Props) {
           >
             الأقرب
           </button>
+          {mapPins.length ? (
+            <button
+              type="button"
+              className={mapOpen ? "on" : undefined}
+              onClick={() => setMapOpen((v) => !v)}
+            >
+              {mapOpen ? "إخفاء الخريطة" : "الخريطة"}
+            </button>
+          ) : null}
         </div>
       </div>
+
+      {mapOpen && mapPins.length ? (
+        <HotelResultsMap
+          pins={mapPins}
+          selectedId={mapHotelId || visibleHotels[0]?.id}
+          onSelect={(id) => {
+            setMapHotelId(id);
+            const row = props.hotels.find((h) => h.id === id);
+            if (row) {
+              const el = document.getElementById(`hotel-card-${id}`);
+              el?.scrollIntoView({ behavior: "smooth", block: "center" });
+            }
+          }}
+        />
+      ) : null}
 
       <div className="shop-hotel-results-layout">
         <ShopHotelFilters
@@ -138,6 +206,8 @@ export function ShopHotelResults(props: Props) {
           onChange={props.onFiltersChange}
           mobileOpen={filtersOpen}
           onMobileToggle={() => setFiltersOpen((v) => !v)}
+          searchDestinationCode={props.searchDestinationCode}
+          searchDestinationLabel={props.destination}
         />
 
         <div className="shop-hotel-results-list">
@@ -151,19 +221,24 @@ export function ShopHotelResults(props: Props) {
           ) : null}
           {!props.loading
             ? visibleHotels.map((hotel) => (
-                <HotelSearchCard
+                <div
                   key={hotel.id}
-                  hotel={hotel}
-                  nights={props.nights}
-                  guests={guests}
-                  rooms={props.rooms}
-                  variant="shop"
-                  highlight={highlights.get(hotel.id)}
-                  highlightLabel={
-                    highlights.get(hotel.id) ? badgeLabel(highlights.get(hotel.id)!) : undefined
-                  }
-                  onOpen={() => props.onOpenHotel(hotel)}
-                />
+                  id={`hotel-card-${hotel.id}`}
+                  onMouseEnter={() => setMapHotelId(hotel.id)}
+                >
+                  <HotelSearchCard
+                    hotel={hotel}
+                    nights={props.nights}
+                    guests={guests}
+                    rooms={props.rooms}
+                    variant="shop"
+                    highlight={highlights.get(hotel.id)}
+                    highlightLabel={
+                      highlights.get(hotel.id) ? badgeLabel(highlights.get(hotel.id)!) : undefined
+                    }
+                    onOpen={() => props.onOpenHotel(hotel)}
+                  />
+                </div>
               ))
             : null}
           {!props.loading && visibleCount < props.hotels.length ? (

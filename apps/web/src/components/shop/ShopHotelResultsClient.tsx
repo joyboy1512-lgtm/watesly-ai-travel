@@ -40,8 +40,18 @@ import {
   getHotelSearchSession,
   saveHotelSearchSession,
 } from "@/lib/hotel-search-session";
-import { humanizeHotelSearchError } from "@/lib/hotel-search-errors";
 import { shopFetch } from "@/lib/shop-session";
+import { humanizeHotelSearchError } from "@/lib/hotel-search-errors";
+
+function inferHotelDestinationCode(destination: string): string {
+  const q = destination.trim().toLowerCase();
+  if (!q) return "";
+  if (/^dxb$/i.test(q) || q.includes("دبي") || q.includes("dubai")) return "DXB";
+  if (/^shj$/i.test(q) || q.includes("شارقة") || q.includes("sharjah")) return "SHJ";
+  if (/^auh$/i.test(q) || q.includes("أبوظبي") || q.includes("abu dhabi")) return "AUH";
+  if (/^[a-z]{3}$/i.test(destination.trim())) return destination.trim().toUpperCase();
+  return "";
+}
 
 const HotelDetailModal = dynamic(
   () => import("@/components/hotels/HotelDetailModal").then((m) => m.HotelDetailModal),
@@ -74,6 +84,7 @@ export function ShopHotelResultsClient() {
   const [editOpen, setEditOpen] = useState(false);
   const [draft, setDraft] = useState<HotelResultsSearchParams>(params);
   const [hotelOpen, setHotelOpen] = useState<HotelRow | null>(null);
+  const [visibleCount, setVisibleCount] = useState(12);
 
   const restoredRef = useRef(false);
   const sessionSaveRef = useRef<number | null>(null);
@@ -97,8 +108,9 @@ export function ShopHotelResultsClient() {
       scrollY: typeof window !== "undefined" ? window.scrollY : 0,
       openHotelId: hotelOpen?.id || null,
       returnHref: resultsHref,
+      visibleCount,
     });
-  }, [filters, sortKey, hotelOpen, resultsHref]);
+  }, [filters, sortKey, hotelOpen, resultsHref, visibleCount]);
 
   useEffect(() => {
     if (sessionSaveRef.current) window.clearTimeout(sessionSaveRef.current);
@@ -290,6 +302,9 @@ export function ShopHotelResultsClient() {
     restoredRef.current = true;
     setFilters(saved.filters);
     setSortKey(saved.sortKey);
+    if (saved.visibleCount && saved.visibleCount > 0) {
+      setVisibleCount(saved.visibleCount);
+    }
     if (saved.openHotelId) {
       const row = filterHotelOffers(hotelsRaw, saved.filters, saved.sortKey).find(
         (h) => h.id === saved.openHotelId,
@@ -618,6 +633,9 @@ export function ShopHotelResultsClient() {
             sortKey={sortKey}
             onFiltersChange={setFilters}
             onSortChange={setSortKey}
+            searchDestinationCode={inferHotelDestinationCode(params.destination)}
+            initialVisibleCount={visibleCount}
+            onVisibleCountChange={setVisibleCount}
             onStayQueryChange={(text) =>
               router.push(buildHotelResultsHref({ ...params, destination: text, destinationLabel: text }))
             }

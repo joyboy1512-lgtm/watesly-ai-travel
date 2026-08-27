@@ -69,17 +69,42 @@ export function HotelSearchCard({
   const stars = Number(hotel.details.stars || 0);
   const guest = guestRatingOf(hotel.details);
   const cheapest = hotel.matchingRates[0];
-  const location = String(
-    hotel.details.zoneName ||
-      hotel.details.neighborhood ||
-      hotel.details.location ||
-      hotel.details.address ||
-      "—",
-  );
+  const city = String(
+    hotel.details.destinationName || hotel.details.location || "",
+  ).trim();
+  const zone = String(
+    hotel.details.zoneName || hotel.details.neighborhood || "",
+  ).trim();
+  const locationParts = [city, zone].filter(Boolean);
+  const location =
+    locationParts.length > 0
+      ? locationParts.join(" · ")
+      : String(hotel.details.address || "—");
   const mapUrl = typeof hotel.details.mapUrl === "string" ? hotel.details.mapUrl : "";
   const distanceLabel = hotel.details.distanceToCenterLabel
     ? String(hotel.details.distanceToCenterLabel)
     : "";
+  const poiDistances = Array.isArray(hotel.details.poiDistances)
+    ? (hotel.details.poiDistances as Array<{ label?: string; distanceKm?: number }>)
+    : [];
+  const landmarkHint = poiDistances[0]?.label
+    ? `${poiDistances[0].label}${
+        poiDistances[0].distanceKm != null
+          ? ` · ${Number(poiDistances[0].distanceKm).toFixed(1)} كم`
+          : ""
+      }`
+    : "";
+  const imageUrl =
+    typeof hotel.details.imageUrl === "string" ? hotel.details.imageUrl : "";
+  const galleryUrls = Array.isArray(hotel.details.images)
+    ? (hotel.details.images as Array<{ url?: string } | string>)
+        .map((img) => (typeof img === "string" ? img : img.url || ""))
+        .filter(Boolean)
+        .slice(0, 4)
+    : [];
+  if (imageUrl && !galleryUrls.includes(imageUrl)) {
+    galleryUrls.unshift(imageUrl);
+  }
   const facilities = pickHotelHighlightFacilities(
     Array.isArray(hotel.details.facilityLabels)
       ? (hotel.details.facilityLabels as string[])
@@ -111,8 +136,6 @@ export function HotelSearchCard({
   const roomNameAr = cheapest ? translateRoomNameAr(cheapest.roomName).ar : "غرفة";
   const taxesNote =
     cheapest?.taxes?.allIncluded === false ? "ضرائب غير مشمولة" : "شامل الضرائب";
-  const imageUrl =
-    typeof hotel.details.imageUrl === "string" ? hotel.details.imageUrl : "";
   const priceBreakdown =
     cheapest && hotel.displayFromMinor > 0
       ? buildHotelDraftPriceBreakdown(
@@ -142,11 +165,24 @@ export function HotelSearchCard({
     <article className={`hotel-search-card${isShop ? " hotel-search-card-shop" : ""}`}>
       <div className="hotel-search-card-media">
         <HotelMediaImage
-          src={imageUrl}
+          src={imageUrl || galleryUrls[0]}
           alt={name}
           preferMedium
           className="hotel-search-card-photo"
         />
+        {galleryUrls.length > 1 ? (
+          <div className="hotel-search-card-thumbs" aria-hidden>
+            {galleryUrls.slice(0, 4).map((src) => (
+              <HotelMediaImage
+                key={src}
+                src={src}
+                alt=""
+                preferMedium
+                className="hotel-search-card-thumb"
+              />
+            ))}
+          </div>
+        ) : null}
         {highlight && highlightLabel ? (
           <span className={`hotel-search-card-highlight hotel-highlight-${highlight}`}>
             {highlightLabel}
@@ -190,7 +226,20 @@ export function HotelSearchCard({
         <p className="hotel-search-card-location">
           {location}
           {distanceLabel ? ` · ${distanceLabel} من المركز` : ""}
+          {landmarkHint ? ` · قرب ${landmarkHint}` : ""}
         </p>
+
+        <div className="hotel-search-card-badges">
+          {cheapest?.freeCancellation ? (
+            <span className="hotel-chip good">إلغاء مجاني</span>
+          ) : null}
+          {cheapest && /^(BB|HB|FB|AI)/i.test(String(cheapest.boardCode || "")) ? (
+            <span className="hotel-chip">شامل الإفطار</span>
+          ) : null}
+          {allotment != null && allotment > 0 && allotment <= 5 ? (
+            <span className="hotel-chip warn">متبقي {allotment} غرفة</span>
+          ) : null}
+        </div>
 
         {isShop && guest ? (
           <div className="hotel-search-card-score hotel-search-card-score-inline">

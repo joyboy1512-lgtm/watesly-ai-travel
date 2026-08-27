@@ -100,6 +100,8 @@ export type HotelSearchFilters = {
   maxPrice: string;
   refundableOnly: boolean;
   bookableOnly: boolean;
+  /** Keep hotels whose destinationCode matches the searched destination (e.g. DXB only). */
+  destinationCodeOnly?: string;
 };
 
 export const defaultHotelFilters = (): HotelSearchFilters => ({
@@ -129,6 +131,7 @@ export const defaultHotelFilters = (): HotelSearchFilters => ({
   maxPrice: "",
   refundableOnly: false,
   bookableOnly: false,
+  destinationCodeOnly: "",
 });
 
 function rateOptionsOf(h: HotelOfferRow): HotelRateOption[] {
@@ -325,6 +328,13 @@ export function filterHotelOffers(
   }
   if (filters.freeCancellation) {
     list = list.filter((h) => hotelHasFreeCancellation(h));
+  }
+  if (filters.destinationCodeOnly?.trim()) {
+    const code = filters.destinationCodeOnly.trim().toUpperCase();
+    list = list.filter((h) => {
+      const dest = String(h.details.destinationCode || "").toUpperCase();
+      return dest === code;
+    });
   }
 
   const enriched = list

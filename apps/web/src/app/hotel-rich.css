@@ -2404,3 +2404,122 @@
   font-size: 0.88rem;
   line-height: 1.45;
 }
+
+/* P2 hotel results card + map */
+.hotel-search-card-thumbs {
+  display: flex;
+  gap: 0.25rem;
+  padding: 0.35rem 0.4rem 0.45rem;
+  overflow-x: auto;
+}
+
+.hotel-search-card-thumb {
+  width: 52px;
+  height: 40px;
+  border-radius: 6px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.hotel-search-card-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.hotel-search-card-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin: 0.35rem 0 0.15rem;
+}
+
+.hotel-chip {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0.2rem 0.55rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  background: #eef2ff;
+  color: #1e3a8a;
+}
+
+.hotel-chip.good {
+  background: #ecfdf5;
+  color: #047857;
+}
+
+.hotel-chip.warn {
+  background: #fff7ed;
+  color: #c2410c;
+}
+
+.shop-hotel-map {
+  width: min(1200px, calc(100% - 2rem));
+  margin: 0 auto 1rem;
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 0.75rem;
+  background: #fff;
+  border: 1px solid var(--exp-border, #e2e8f0);
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.shop-hotel-map-frame {
+  width: 100%;
+  min-height: 280px;
+  border: 0;
+}
+
+.shop-hotel-map-pins {
+  list-style: none;
+  margin: 0;
+  padding: 0.65rem;
+  max-height: 280px;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.shop-hotel-map-pins button {
+  width: 100%;
+  text-align: right;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  border-radius: 10px;
+  padding: 0.45rem 0.6rem;
+  font: inherit;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.shop-hotel-map-pins button.on {
+  border-color: #0f172a;
+  background: #f8fafc;
+}
+
+.shop-hotel-map-pins strong {
+  font-size: 0.9rem;
+}
+
+.shop-hotel-map-pins span {
+  font-size: 0.78rem;
+  color: #64748b;
+}
+
+.shop-hotel-map-empty {
+  width: min(1200px, calc(100% - 2rem));
+  margin: 0 auto 1rem;
+  color: #64748b;
+}
+
+@media (max-width: 900px) {
+  .shop-hotel-map {
+    grid-template-columns: 1fr;
+  }
+}

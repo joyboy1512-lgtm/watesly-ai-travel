@@ -7,8 +7,13 @@ import {
   Patch,
   Post,
   Query,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
+  BadRequestException,
 } from "@nestjs/common";
+import { FileInterceptor } from "@nestjs/platform-express";
+import { memoryStorage } from "multer";
 import { Public } from "../auth/decorators";
 import {
   CustomerAuthGuard,
@@ -18,6 +23,7 @@ import {
   type ShopCustomer,
 } from "./shop-auth";
 import { ShopService } from "./shop.service";
+import { VOICE_MAX_BYTES } from "@watesly-travel/ai-core";
 
 @Controller("shop")
 @Public()
@@ -310,6 +316,44 @@ export class ShopController {
     @Body() body: { message?: string },
   ) {
     return this.shop.assistantChat(customer, body);
+  }
+
+  @Post("assistant/voice")
+  @UseGuards(CustomerAuthGuard)
+  @UseInterceptors(
+    FileInterceptor("audio", {
+      storage: memoryStorage(),
+      limits: { fileSize: VOICE_MAX_BYTES },
+    }),
+  )
+  async assistantVoice(
+    @CurrentCustomer() customer: ShopCustomer,
+    @UploadedFile() file: Express.Multer.File,
+    @Body() body: { durationSec?: string },
+  ) {
+    if (!file?.buffer?.length) {
+      throw new BadRequestException("أرفق تسجيلاً صوتياً");
+    }
+    const durationSec = body?.durationSec ? Number(body.durationSec) : undefined;
+    return this.shop.assistantVoiceTranscribe(customer, file, durationSec);
+  }
+
+  @Post("assistant/voice/confirm")
+  @UseGuards(CustomerAuthGuard)
+  assistantVoiceConfirm(
+    @CurrentCustomer() customer: ShopCustomer,
+    @Body() body: { transcript?: string },
+  ) {
+    return this.shop.assistantVoiceConfirm(customer, body);
+  }
+
+  @Post("assistant/tts")
+  @UseGuards(CustomerAuthGuard)
+  assistantTts(
+    @CurrentCustomer() customer: ShopCustomer,
+    @Body() body: { text?: string },
+  ) {
+    return this.shop.assistantTts(customer, body);
   }
 
   @Get("assistant/thread")

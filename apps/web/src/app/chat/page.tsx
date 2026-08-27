@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { ChatOfferBody } from "@/components/ChatOfferBody";
 import { StoreFront } from "@/components/shop/StoreFront";
+import { ShopVoiceComposer } from "@/components/shop/ShopVoiceComposer";
 import {
   getShopSession,
   saveShopSession,
@@ -28,6 +29,8 @@ export default function PublicChatPage() {
     },
   ]);
   const logRef = useRef<HTMLDivElement>(null);
+
+  const [pendingTranscript, setPendingTranscript] = useState<string | null>(null);
 
   useEffect(() => {
     const session = getShopSession();
@@ -85,13 +88,10 @@ export default function PublicChatPage() {
     }
   }
 
-  async function onSubmit(e: FormEvent) {
-    e.preventDefault();
-    const message = text.trim();
+  async function sendMessage(message: string) {
     if (!message || busy || !unlocked) return;
     setBusy(true);
     setError("");
-    setText("");
     setMessages((prev) => [
       ...prev,
       { id: `u-${Date.now()}`, role: "user", content: message },
@@ -102,6 +102,43 @@ export default function PublicChatPage() {
         body: JSON.stringify({ message }),
         timeoutMs: 90000,
       });
+      setMessages((prev) => [
+        ...prev,
+        { id: `a-${Date.now()}`, role: "assistant", content: result.message },
+      ]);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "تعذر الرد");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function onSubmit(e: FormEvent) {
+    e.preventDefault();
+    const message = text.trim();
+    setText("");
+    await sendMessage(message);
+  }
+
+  async function confirmVoice() {
+    const transcript = (pendingTranscript || "").trim();
+    if (!transcript) return;
+    setPendingTranscript(null);
+    setBusy(true);
+    setError("");
+    setMessages((prev) => [
+      ...prev,
+      { id: `u-v-${Date.now()}`, role: "user", content: `🎤 ${transcript}` },
+    ]);
+    try {
+      const result = await shopFetch<{ message: string }>(
+        "/shop/assistant/voice/confirm",
+        {
+          method: "POST",
+          body: JSON.stringify({ transcript }),
+          timeoutMs: 90000,
+        },
+      );
       setMessages((prev) => [
         ...prev,
         { id: `a-${Date.now()}`, role: "assistant", content: result.message },
@@ -155,6 +192,43 @@ export default function PublicChatPage() {
               ))}
               {busy ? <p className="ta-typing">جارٍ البحث والرد...</p> : null}
             </div>
+            {pendingTranscript ? (
+              <div className="shop-voice-confirm">
+                <strong>راجع النص قبل التنفيذ</strong>
+                <textarea
+                  value={pendingTranscript}
+                  onChange={(e) => setPendingTranscript(e.target.value)}
+                  rows={3}
+                />
+                <div className="shop-voice-review-actions">
+                  <button type="button" className="shop-btn" onClick={() => void confirmVoice()}>
+                    تأكيد وإرسال
+                  </button>
+                  <button
+                    type="button"
+                    className="shop-btn ghost"
+                    onClick={() => setPendingTranscript(null)}
+                  >
+                    إلغاء
+                  </button>
+                </div>
+              </div>
+            ) : null}
+            <ShopVoiceComposer
+              disabled={busy || Boolean(pendingTranscript)}
+              onError={setError}
+              onTranscriptReady={(transcript, meta) => {
+                if (!transcript) {
+                  setError(meta.messageAr || "الصوت غير واضح، حاول مرة أخرى");
+                  return;
+                }
+                if (meta.needsConfirm) {
+                  setPendingTranscript(transcript);
+                  return;
+                }
+                void sendMessage(transcript);
+              }}
+            />
             <form className="ta-composer" onSubmit={onSubmit}>
               <textarea
                 value={text}

@@ -10,6 +10,7 @@ import { PrismaService } from "../prisma/prisma.service";
 import { BookingsService } from "../bookings/bookings.service";
 import { BotPipelineService } from "../pipeline/bot-pipeline.service";
 import { AssistantService } from "../assistant/assistant.service";
+import { VoiceAssistantService } from "../assistant/voice-assistant.service";
 import { PublicOrgService } from "./public-org";
 import type { CustomerJwtPayload, ShopCustomer } from "./shop-auth";
 
@@ -48,6 +49,7 @@ export class ShopService {
     private readonly bookings: BookingsService,
     private readonly pipeline: BotPipelineService,
     private readonly assistant: AssistantService,
+    private readonly voice: VoiceAssistantService,
   ) {}
 
   bootstrap() {
@@ -1011,5 +1013,40 @@ export class ShopService {
       externalRef: `customer:${customer.id}`,
       createIfMissing: false,
     });
+  }
+
+  async assistantVoiceTranscribe(
+    customer: ShopCustomer,
+    file: { buffer: Buffer; originalname?: string; mimetype?: string },
+    durationSec?: number,
+  ) {
+    return this.voice.transcribeUpload({
+      organizationId: customer.organizationId,
+      customerKey: customer.id,
+      buffer: file.buffer,
+      filename: file.originalname,
+      mimeType: file.mimetype,
+      durationSec,
+    });
+  }
+
+  async assistantVoiceConfirm(
+    customer: ShopCustomer,
+    body: { transcript?: string },
+  ) {
+    const text = String(body.transcript || "").trim();
+    if (!text) throw new BadRequestException("راجع النص الصوتي قبل الإرسال");
+    return this.voice.chatFromTranscript({
+      organizationId: customer.organizationId,
+      channel: "web_chat",
+      text,
+      contactId: customer.contactId || undefined,
+      externalRef: `customer:${customer.id}`,
+    });
+  }
+
+  async assistantTts(customer: ShopCustomer, body: { text?: string }) {
+    void customer;
+    return this.voice.synthesizeReply(String(body.text || ""));
   }
 }

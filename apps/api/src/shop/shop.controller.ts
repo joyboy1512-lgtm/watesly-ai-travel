@@ -356,6 +356,14 @@ export class ShopController {
     return this.shop.assistantTts(customer, body);
   }
 
+  @Post("passport-scan")
+  @UseGuards(CustomerAuthGuard)
+  passportScan(
+    @Body() body: { imageBase64?: string; mimeType?: string },
+  ) {
+    return this.shop.passportScan(body);
+  }
+
   @Get("assistant/thread")
   @UseGuards(CustomerAuthGuard)
   assistantThread(@CurrentCustomer() customer: ShopCustomer) {

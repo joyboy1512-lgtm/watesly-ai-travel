@@ -4443,6 +4443,68 @@
   cursor: pointer;
 }
 
+.shop-passport-file-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.shop-passport-scan-banner {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 0.85rem;
+  border-radius: 10px;
+  border: 1px solid rgba(0, 113, 194, 0.25);
+  background: linear-gradient(135deg, rgba(0, 113, 194, 0.06), rgba(0, 37, 93, 0.05));
+}
+
+.shop-passport-scan-banner strong {
+  display: block;
+  color: var(--exp-navy);
+  margin-bottom: 0.15rem;
+  font-size: 0.88rem;
+}
+
+.shop-passport-scan-banner p {
+  margin: 0;
+  color: var(--exp-muted);
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+
+.shop-passport-scan-btn {
+  border: 0;
+  border-radius: 999px;
+  background: var(--exp-navy);
+  color: #fff;
+  font: inherit;
+  font-weight: 700;
+  font-size: 0.82rem;
+  padding: 0.55rem 0.95rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.shop-passport-scan-btn:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+
+.shop-passport-scan-hint {
+  margin: 0;
+  padding: 0.55rem 0.75rem;
+  border-radius: 8px;
+  background: #eef5ff;
+  color: #1e40af;
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
 @media (max-width: 900px) {
   .shop-flight-results-layout,
   .shop-flight-checkout-layout {

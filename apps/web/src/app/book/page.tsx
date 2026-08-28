@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { FormEvent, useEffect, useState, type Dispatch, type SetStateAction } from "react";
+import { FormEvent, useEffect, useRef, useState, type Dispatch, type SetStateAction } from "react";
 import "../shop.css";
 import { StoreFront } from "@/components/shop/StoreFront";
 import {
@@ -115,6 +115,21 @@ function splitBirthDate(iso: string) {
   return { y: y || "", m: m || "", d: d || "" };
 }
 
+function titleToGender(title?: string) {
+  if (title === "ms" || title === "mrs") return "female";
+  if (title === "mr") return "male";
+  return "";
+}
+
+function readFileAsDataUrl(file: File) {
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result || ""));
+    reader.onerror = () => reject(new Error("تعذر قراءة الصورة"));
+    reader.readAsDataURL(file);
+  });
+}
+
 function joinBirthDate(y: string, m: string, d: string) {
   if (!y || !m || !d) return "";
   return `${y.padStart(4, "0")}-${m.padStart(2, "0")}-${d.padStart(2, "0")}`;
@@ -163,6 +178,10 @@ function FlightCheckout({
   onSubmit: () => void;
 }) {
   const [editIndex, setEditIndex] = useState<number | null>(null);
+  const [dobDraft, setDobDraft] = useState({ y: "", m: "", d: "" });
+  const [scanning, setScanning] = useState(false);
+  const [scanHint, setScanHint] = useState("");
+  const passportInputRef = useRef<HTMLInputElement | null>(null);
   const baggage = (draft.flight.details.baggage || {}) as Record<string, string>;
   const tripLabel =
     draft.tripType === "roundtrip"
@@ -179,13 +198,83 @@ function FlightCheckout({
     .join(" – ");
 
   const editing = editIndex != null ? travelers[editIndex] : null;
-  const dob = splitBirthDate(editing?.birthDate || "");
+
+  useEffect(() => {
+    if (editIndex == null) return;
+    setDobDraft(splitBirthDate(travelers[editIndex]?.birthDate || ""));
+    setScanHint("");
+  }, [editIndex]);
 
   function updateEditing(patch: Partial<Traveler>) {
     if (editIndex == null) return;
     setTravelers((rows) =>
       rows.map((row, i) => (i === editIndex ? { ...row, ...patch } : row)),
     );
+  }
+
+  function updateDobPart(part: Partial<{ y: string; m: string; d: string }>) {
+    const next = { ...dobDraft, ...part };
+    setDobDraft(next);
+    updateEditing({ birthDate: joinBirthDate(next.y, next.m, next.d) });
+  }
+
+  function openPassportPicker() {
+    setScanHint("");
+    passportInputRef.current?.click();
+  }
+
+  async function onPassportSelected(file?: File | null) {
+    if (!file || editIndex == null) return;
+    if (!file.type.startsWith("image/")) {
+      setScanHint("اختر صورة جواز سفر (JPG أو PNG)");
+      return;
+    }
+    if (file.size > 6 * 1024 * 1024) {
+      setScanHint("حجم الصورة كبير. استخدم صورة أصغر من 6MB");
+      return;
+    }
+
+    setScanning(true);
+    setScanHint("جارٍ تحليل صورة الجواز...");
+    try {
+      const dataUrl = await readFileAsDataUrl(file);
+      const comma = dataUrl.indexOf(",");
+      const imageBase64 = comma >= 0 ? dataUrl.slice(comma + 1) : dataUrl;
+      const result = await shopFetch<{
+        fields: Partial<Traveler & { title?: string }>;
+        confidence: number;
+        notes?: string;
+      }>("/shop/passport-scan", {
+        method: "POST",
+        body: JSON.stringify({
+          imageBase64,
+          mimeType: file.type || "image/jpeg",
+        }),
+      });
+
+      const f = result.fields || {};
+      const gender = titleToGender(f.title) || editing?.gender || "";
+      const patch: Partial<Traveler> = {
+        ...(f.firstName ? { firstName: f.firstName } : {}),
+        ...(f.lastName ? { lastName: f.lastName } : {}),
+        ...(f.birthDate ? { birthDate: f.birthDate } : {}),
+        ...(f.nationality ? { nationality: f.nationality } : {}),
+        ...(f.passportNumber ? { passportNumber: f.passportNumber } : {}),
+        ...(gender ? { gender, title: gender === "female" ? "ms" : "mr" } : {}),
+      };
+      updateEditing(patch);
+      if (f.birthDate) setDobDraft(splitBirthDate(f.birthDate));
+      const pct = Math.round((result.confidence || 0) * 100);
+      setScanHint(
+        result.notes ||
+          `تم ملء البيانات من الصورة${pct ? ` · ثقة تقريبية ${pct}%` : ""}. راجعها قبل الحفظ.`,
+      );
+    } catch (err) {
+      setScanHint(err instanceof Error ? err.message : "فشل مسح الجواز");
+    } finally {
+      setScanning(false);
+      if (passportInputRef.current) passportInputRef.current.value = "";
+    }
   }
 
   return (
@@ -336,6 +425,14 @@ function FlightCheckout({
           onClick={() => setEditIndex(null)}
           role="presentation"
         >
+          <input
+            ref={passportInputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            capture="environment"
+            className="shop-passport-file-input"
+            onChange={(e) => void onPassportSelected(e.target.files?.[0])}
+          />
           <div
             className="shop-traveler-modal"
             role="dialog"
@@ -353,6 +450,26 @@ function FlightCheckout({
                 ×
               </button>
             </div>
+
+            <div className="shop-passport-scan-banner">
+              <div>
+                <strong>مسح جواز السفر بالصورة</strong>
+                <p>
+                  ارفع صورة واضحة لصفحة الجواز لملء الاسم وتاريخ الميلاد والجنسية
+                  تلقائيًا.
+                </p>
+              </div>
+              <button
+                type="button"
+                className="shop-passport-scan-btn"
+                onClick={openPassportPicker}
+                disabled={scanning}
+              >
+                {scanning ? "جارٍ التحليل..." : "رفع صورة الجواز"}
+              </button>
+            </div>
+            {scanHint ? <p className="shop-passport-scan-hint">{scanHint}</p> : null}
+
             <label>
               الاسم الأول
               <input
@@ -390,12 +507,8 @@ function FlightCheckout({
               تاريخ الميلاد
               <div className="shop-traveler-dob">
                 <select
-                  value={dob.m}
-                  onChange={(e) =>
-                    updateEditing({
-                      birthDate: joinBirthDate(dob.y, e.target.value, dob.d),
-                    })
-                  }
+                  value={dobDraft.m}
+                  onChange={(e) => updateDobPart({ m: e.target.value })}
                 >
                   <option value="">الشهر</option>
                   {MONTHS.map((m) => (
@@ -408,22 +521,18 @@ function FlightCheckout({
                   inputMode="numeric"
                   placeholder="يوم"
                   maxLength={2}
-                  value={dob.d}
+                  value={dobDraft.d}
                   onChange={(e) =>
-                    updateEditing({
-                      birthDate: joinBirthDate(dob.y, dob.m, e.target.value.replace(/\D/g, "")),
-                    })
+                    updateDobPart({ d: e.target.value.replace(/\D/g, "") })
                   }
                 />
                 <input
                   inputMode="numeric"
                   placeholder="سنة"
                   maxLength={4}
-                  value={dob.y}
+                  value={dobDraft.y}
                   onChange={(e) =>
-                    updateEditing({
-                      birthDate: joinBirthDate(e.target.value.replace(/\D/g, ""), dob.m, dob.d),
-                    })
+                    updateDobPart({ y: e.target.value.replace(/\D/g, "") })
                   }
                 />
               </div>

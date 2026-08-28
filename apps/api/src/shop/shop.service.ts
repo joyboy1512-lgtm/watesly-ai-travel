@@ -1049,4 +1049,14 @@ export class ShopService {
     void customer;
     return this.voice.synthesizeReply(String(body.text || ""));
   }
+
+  async passportScan(body: { imageBase64?: string; mimeType?: string }) {
+    const { extractPassportFromImage } = await import("@watesly-travel/ai-core");
+    const imageBase64 = String(body.imageBase64 || "").trim();
+    const mimeType = String(body.mimeType || "image/jpeg").trim();
+    if (!imageBase64) {
+      throw new BadRequestException("صورة الجواز مطلوبة");
+    }
+    return extractPassportFromImage({ imageBase64, mimeType });
+  }
 }

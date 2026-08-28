@@ -246,6 +246,7 @@ function FlightCheckout({
         notes?: string;
       }>("/shop/passport-scan", {
         method: "POST",
+        timeoutMs: 60000,
         body: JSON.stringify({
           imageBase64,
           mimeType: file.type || "image/jpeg",
@@ -253,6 +254,16 @@ function FlightCheckout({
       });
 
       const f = result.fields || {};
+      const filled = Boolean(
+        f.firstName || f.lastName || f.birthDate || f.passportNumber,
+      );
+      if (!filled) {
+        setScanHint(
+          result.notes ||
+            "تعذر قراءة بيانات كافية من الصورة. جرّب صورة أوضح لصفحة الجواز (الوجه الأمامي مع السطر السفلي).",
+        );
+        return;
+      }
       const gender = titleToGender(f.title) || editing?.gender || "";
       const patch: Partial<Traveler> = {
         ...(f.firstName ? { firstName: f.firstName } : {}),

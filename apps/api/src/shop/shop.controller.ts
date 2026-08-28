@@ -358,6 +358,7 @@ export class ShopController {
 
   @Post("passport-scan")
   @UseGuards(CustomerAuthGuard)
+  @OptionalCustomer()
   passportScan(
     @Body() body: { imageBase64?: string; mimeType?: string },
   ) {

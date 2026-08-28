@@ -151,10 +151,20 @@ function aiConfig() {
   ).replace(/\/$/, "");
   const model =
     process.env.AI_VISION_MODEL ||
+    process.env.OPENAI_VISION_MODEL ||
+    process.env.OPENAI_MODEL ||
     process.env.AI_MODEL ||
     "gpt-4o-mini";
-  const timeoutMs = Number(process.env.AI_TIMEOUT_MS || 30000);
+  const timeoutMs = Number(process.env.AI_TIMEOUT_MS || 45000);
   return { apiKey, baseUrl, model, timeoutMs };
+}
+
+function completionLimitBody(model: string, tokens: number) {
+  // Newer OpenAI/Cursor models reject max_tokens on chat/completions.
+  if (/gpt-5|o[134]|gpt-4\.1/i.test(model)) {
+    return { max_completion_tokens: tokens };
+  }
+  return { max_tokens: tokens };
 }
 
 /**
@@ -220,7 +230,7 @@ Use empty string for unknown fields. Do not invent values.`;
       body: JSON.stringify({
         model,
         temperature: 0,
-        max_tokens: Number(process.env.AI_MAX_OUTPUT_TOKENS || 800),
+        ...completionLimitBody(model, Number(process.env.AI_MAX_OUTPUT_TOKENS || 800)),
         messages: [
           {
             role: "user",

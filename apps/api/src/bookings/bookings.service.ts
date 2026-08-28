@@ -44,6 +44,7 @@ export type BookingDraftStayInput = {
 export type CreateFromDraftInput = {
   organizationId: string;
   actorUserId?: string;
+  customerId?: string;
   canManagePayments: boolean;
   serviceType: "flight" | "hotel" | "transfer" | "activity";
   inquiryId?: string;
@@ -484,13 +485,26 @@ export class BookingsService {
 
     const booking = await this.prisma.booking.update({
       where: { id: bookingId },
-      data: { passengerDetails: asJson(passengerDetails) },
+      data: {
+        passengerDetails: asJson(passengerDetails),
+        ...(input.customerId ? { customerId: input.customerId } : {}),
+      },
       include: {
         quote: { include: { items: true } },
         bookingRequest: true,
         payments: true,
       },
     });
+
+    if (input.customerId) {
+      await this.prisma.travelInquiry.updateMany({
+        where: {
+          id: booking.quote.inquiryId,
+          organizationId: input.organizationId,
+        },
+        data: { customerId: input.customerId },
+      });
+    }
 
     // Keep CRM contact in sync (Saffat-style: bookings feed customers).
     const phone = input.contact?.phone?.trim();
@@ -530,18 +544,24 @@ export class BookingsService {
     }
 
     let payment = null;
-    if (input.payment && input.canManagePayments) {
-      payment = await this.prisma.payment.create({
-        data: {
-          organizationId: input.organizationId,
-          bookingId: booking.id,
-          amount: booking.totalSellAmount,
-          currency: booking.quote?.currency || "KWD",
-          method: input.payment.method || "manual",
-          status: input.payment.status || "paid",
-          recordedByUserId: input.actorUserId,
-        },
-      });
+    if (input.payment) {
+      const unpaid =
+        input.payment.status === "unpaid" || input.payment.status === "pending";
+      if (input.canManagePayments || unpaid) {
+        payment = await this.prisma.payment.create({
+          data: {
+            organizationId: input.organizationId,
+            bookingId: booking.id,
+            amount: booking.totalSellAmount,
+            currency: booking.quote?.currency || "KWD",
+            method: input.payment.method || "manual",
+            status: unpaid ? input.payment.status || "unpaid" : input.payment.status || "paid",
+            recordedByUserId: input.canManagePayments
+              ? input.actorUserId
+              : undefined,
+          },
+        });
+      }
     }
 
     await this.audit.log({
@@ -593,7 +613,8 @@ export class BookingsService {
       (await this.prisma.travelInquiry.create({
         data: {
           organizationId: input.organizationId,
-          source: "direct",
+          customerId: input.customerId,
+          source: input.customerId ? "web_shop" : "direct",
           status: "quoted",
           origin,
           destination,
@@ -659,6 +680,7 @@ export class BookingsService {
         organizationId: input.organizationId,
         bookingRequestId: bookingRequest.id,
         quoteId: quote.id,
+        customerId: input.customerId,
         status: "on_hold",
         totalCostAmount: costAmount,
         totalSellAmount: sellAmount,

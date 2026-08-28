@@ -1,6 +1,13 @@
 "use client";
 
+import { useState } from "react";
 import {
+  buildHotelPriceBreakdown,
+  hotelMajorToMinor,
+  translateRoomNameAr,
+} from "@watesly-travel/shared";
+import {
+  formatHotelDay,
   formatPolicyDate,
   rateDisplayMinor,
   taxTypeLabelAr,
@@ -9,6 +16,15 @@ import {
   type HotelRoomOption,
 } from "@/lib/hotel-search";
 import { formatMoneyMinor } from "@/lib/format";
+import { summarizeRateCommentsAr } from "@/lib/hotel-rate-comments";
+import {
+  arabicAdultCount,
+  arabicChildCount,
+  arabicNightCount,
+  arabicRoomCount,
+} from "@/lib/hotel-occupancy";
+import { HotelPricePanel } from "./HotelPricePanel";
+import type { HotelDraftPriceBreakdown } from "@/lib/booking-draft";
 
 type StayMeta = {
   stayQuery: string;
@@ -25,15 +41,33 @@ type PriceChange = {
   toMinor: number;
 };
 
+type CheckoutPayload = {
+  rate: HotelRateOption;
+  contact: { name: string; email: string; phone: string };
+  specialRequests: string;
+  paymentMethod: string;
+  travelers: Array<{ firstName: string; lastName: string }>;
+};
+
 type Props = {
   hotel: HotelOfferRow & { matchingRates: HotelRateOption[]; displayFromMinor: number };
   rate: HotelRateOption;
   nights: number;
   meta: StayMeta;
   priceChange?: PriceChange | null;
+  shopStyle?: boolean;
   onBack: () => void;
   onEnterGuestData: () => void;
+  onCheckout?: (payload: CheckoutPayload) => void;
+  onContinueToReview?: () => void;
 };
+
+const PAYMENT_OPTIONS = [
+  { id: "knet", label: "كي نت", hint: "KNET" },
+  { id: "visa", label: "فيزا / ماستركارد", hint: "Visa" },
+  { id: "deema", label: "ديما", hint: "Deema" },
+  { id: "linktap", label: "لينك تاب", hint: "LinkTap" },
+] as const;
 
 function paymentLabel(type?: string) {
   if (type === "AT_HOTEL") return "الدفع في الفندق";
@@ -42,16 +76,32 @@ function paymentLabel(type?: string) {
 }
 
 function formatDay(value?: string) {
-  if (!value) return "—";
-  try {
-    return new Date(value).toLocaleDateString("ar-SA", {
-      weekday: "short",
-      month: "short",
-      day: "numeric",
-    });
-  } catch {
-    return value;
-  }
+  return formatHotelDay(value) || "—";
+}
+
+function InfoColumns({ sections }: { sections: Array<{ title: string; items: string[] }> }) {
+  const tiles = sections.filter((s) => s.items.length);
+  if (!tiles.length) return null;
+  const rows: Array<typeof tiles> = [];
+  for (let i = 0; i < tiles.length; i += 3) rows.push(tiles.slice(i, i + 3));
+  return (
+    <div className="hotel-info-columns">
+      {rows.map((row, ri) => (
+        <div key={ri} className="hotel-info-columns-row">
+          {row.map((col) => (
+            <div key={col.title} className="hotel-info-col">
+              <h4>{col.title}</h4>
+              <ul>
+                {col.items.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+      ))}
+    </div>
+  );
 }
 
 export function HotelBookingSummary({
@@ -60,10 +110,23 @@ export function HotelBookingSummary({
   nights,
   meta,
   priceChange,
+  shopStyle,
   onBack,
   onEnterGuestData,
+  onCheckout,
+  onContinueToReview,
 }: Props) {
-  const name = String(hotel.details.name || "فندق");
+  const [step, setStep] = useState<"summary" | "guest" | "payment">("summary");
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [specialRequests, setSpecialRequests] = useState("");
+  const [travelerFirst, setTravelerFirst] = useState("");
+  const [travelerLast, setTravelerLast] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState<string | null>(null);
+  const [showOriginalComments, setShowOriginalComments] = useState(false);
+
+  const hotelName = String(hotel.details.name || "فندق");
   const totalMinor = rateDisplayMinor(rate, hotel, nights);
   const perNight = nights > 0 ? Math.round(totalMinor / nights) : totalMinor;
   const rooms = Array.isArray(hotel.details.rooms)
@@ -77,15 +140,227 @@ export function HotelBookingSummary({
   const roomImage = roomMeta?.imageUrl;
   const cancelPolicy = rate.cancellationPolicies[0];
   const taxItems = rate.taxes?.items || [];
+  const roomName = translateRoomNameAr(rate.roomName);
+  const comments = summarizeRateCommentsAr(rate.rateComments);
+  const breakdown = buildHotelPriceBreakdown({
+    stayNetMajor: rate.net,
+    currency: hotel.currency,
+    nights,
+    rooms: rate.rooms,
+    sellAmountMinor: totalMinor || hotel.sellAmountMinor,
+    costAmountMinor: hotel.costAmountMinor,
+    dailyRates: rate.dailyRates,
+    taxes: rate.taxes,
+    netBasis: rate.netBasis || "stay",
+  });
+
+  const panelBreakdown: HotelDraftPriceBreakdown = {
+    stayMinor: breakdown.baseMinor,
+    includedTaxMinor: breakdown.includedTaxMinor,
+    excludedTaxMinor: breakdown.excludedTaxMinor,
+    serviceFeeMinor: breakdown.serviceFeeMinor,
+    payNowMinor: breakdown.payNowMinor,
+    payAtHotelMinor: breakdown.payAtHotelMinor,
+    tripTotalMinor: breakdown.tripTotalMinor,
+    perNightMinor: breakdown.perNightMinor,
+    taxesIncluded: breakdown.taxesIncluded,
+  };
+
+  const infoSections = [
+    { title: "خدمات الغرفة", items: roomFacilities },
+    { title: "مرافق الفندق", items: hotelFacilities.slice(0, 9) },
+    ...(comments.summaryAr
+      ? [
+          {
+            title: "شروط التعرفة",
+            items: [
+              comments.summaryAr,
+              ...(showOriginalComments && comments.original
+                ? [`النص الأصلي: ${comments.original}`]
+                : []),
+            ],
+          },
+        ]
+      : []),
+    ...(rate.promotions?.length
+      ? [{ title: "عروض", items: rate.promotions.map((p) => p.name || p.remark || "").filter(Boolean) }]
+      : []),
+  ];
+
+  function cancelPolicyText() {
+    if (rate.freeCancellation) {
+      if (cancelPolicy?.from) {
+        return `إلغاء مجاني حتى ${formatPolicyDate(cancelPolicy.from)} (توقيت الكويت)`;
+      }
+      return "إلغاء مجاني*";
+    }
+    if (cancelPolicy?.from) {
+      const amountMinor = hotelMajorToMinor(Number(cancelPolicy.amount) || 0, hotel.currency);
+      const fee =
+        amountMinor > 0
+          ? ` · رسوم الإلغاء ${formatMoneyMinor(amountMinor, hotel.currency)}`
+          : "";
+      return `هذا الحجز غير قابل للاسترداد من تاريخ ${formatPolicyDate(cancelPolicy.from)}${fee}`;
+    }
+    return "غير قابل للاسترداد";
+  }
+
+  function submitGuest() {
+    if (!name.trim() || !phone.trim()) return;
+    if (onContinueToReview) {
+      onContinueToReview();
+      return;
+    }
+    if (shopStyle && onCheckout) {
+      setStep("payment");
+      return;
+    }
+    onEnterGuestData();
+  }
+
+  function submitPayment() {
+    if (!paymentMethod) return;
+    if (onCheckout) {
+      onCheckout({
+        rate,
+        contact: { name, email, phone },
+        specialRequests,
+        paymentMethod,
+        travelers: [{ firstName: travelerFirst || name.split(" ")[0] || "", lastName: travelerLast || name.split(" ").slice(1).join(" ") || "" }],
+      });
+      return;
+    }
+    onEnterGuestData();
+  }
+
+  if (step === "payment" && shopStyle) {
+    return (
+      <div className={`hotel-booking-summary${shopStyle ? " hotel-booking-summary-shop" : ""}`}>
+        <button type="button" className="hotel-summary-back" onClick={() => setStep("guest")}>
+          ← العودة لبيانات الحجز
+        </button>
+        <div className="hotel-selected-price-card">
+          <div className="hotel-selected-price-main">
+            <small>المبلغ الإجمالي</small>
+            <strong>{formatMoneyMinor(totalMinor, hotel.currency)}</strong>
+            <em>
+              {formatMoneyMinor(perNight, hotel.currency)} / ليلة · {arabicNightCount(nights)}
+              
+            </em>
+          </div>
+          <div className="hotel-selected-price-meta">
+            <span>{hotelName}</span>
+            <span>
+              {roomName.ar} · {rate.boardName}
+            </span>
+          </div>
+        </div>
+        <h3>اختر طريقة الدفع</h3>
+        <div className="hotel-payment-methods">
+          {PAYMENT_OPTIONS.map((opt) => (
+            <button
+              key={opt.id}
+              type="button"
+              className={`hotel-payment-method${paymentMethod === opt.id ? " on" : ""}`}
+              onClick={() => setPaymentMethod(opt.id)}
+            >
+              <strong>{opt.label}</strong>
+              <small>{opt.hint}</small>
+            </button>
+          ))}
+        </div>
+        <footer className="hotel-summary-foot hotel-summary-foot-shop">
+          <button
+            type="button"
+            className="btn hotel-checkout-btn"
+            disabled={!paymentMethod}
+            onClick={submitPayment}
+          >
+            متابعة الدفع
+          </button>
+        </footer>
+      </div>
+    );
+  }
+
+  if (step === "guest" && shopStyle) {
+    return (
+      <div className={`hotel-booking-summary${shopStyle ? " hotel-booking-summary-shop" : ""}`}>
+        <button type="button" className="hotel-summary-back" onClick={() => setStep("summary")}>
+          ← العودة للتفاصيل
+        </button>
+        <div className="hotel-guest-card">
+          <h3>بيانات الحجز</h3>
+          <label>
+            الاسم الكامل
+            <input value={name} onChange={(e) => setName(e.target.value)} placeholder="اسم صاحب الحجز" />
+          </label>
+          <label>
+            الجوال
+            <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+965..." />
+          </label>
+          <label>
+            البريد الإلكتروني
+            <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="email@example.com" />
+          </label>
+          <div className="hotel-guest-card-row">
+            <label>
+              اسم المسافر
+              <input value={travelerFirst} onChange={(e) => setTravelerFirst(e.target.value)} />
+            </label>
+            <label>
+              العائلة
+              <input value={travelerLast} onChange={(e) => setTravelerLast(e.target.value)} />
+            </label>
+          </div>
+          <label>
+            طلبات خاصة للفندق
+            <textarea
+              value={specialRequests}
+              onChange={(e) => setSpecialRequests(e.target.value)}
+              placeholder="مثال: وصول متأخر، غرفة هادئة، سرير إضافي..."
+              rows={3}
+            />
+          </label>
+          <button type="button" className="btn hotel-checkout-btn" onClick={submitGuest}>
+            متابعة للدفع
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="hotel-booking-summary">
+    <div className={`hotel-booking-summary${shopStyle ? " hotel-booking-summary-shop" : ""}`}>
       <button type="button" className="hotel-summary-back" onClick={onBack}>
         ← العودة لاختيار الغرفة
       </button>
 
-      <h3>تفاصيل الحجز</h3>
-      <p className="hotel-summary-sub">{name}</p>
+      {shopStyle ? (
+        <div className="hotel-selected-price-card">
+          <div className="hotel-selected-price-main">
+            <small>السعر المختار</small>
+            <strong>{formatMoneyMinor(totalMinor, hotel.currency)}</strong>
+            <em>
+              {formatMoneyMinor(perNight, hotel.currency)} / ليلة · {arabicNightCount(nights)}
+              
+            </em>
+          </div>
+          <div className="hotel-selected-price-meta">
+            <span>{hotelName}</span>
+            <span>
+              {roomName.ar} · {rate.boardName}
+            </span>
+          </div>
+        </div>
+      ) : null}
+
+      {!shopStyle ? (
+        <>
+          <h3>تفاصيل الحجز</h3>
+          <p className="hotel-summary-sub">{hotelName}</p>
+        </>
+      ) : null}
 
       {priceChange ? (
         <div className="hotel-price-change">
@@ -111,21 +386,19 @@ export function HotelBookingSummary({
         </div>
         <div>
           <span>المدة</span>
-          <strong>
-            {nights} {nights === 1 ? "ليلة" : "ليالي"}
-          </strong>
+          <strong>{arabicNightCount(nights)}</strong>
         </div>
         <div>
           <span>النزلاء</span>
           <strong>
-            {meta.rooms} غرفة · {meta.adults} بالغ
-            {meta.children ? ` · ${meta.children} طفل` : ""}
-            {meta.infants ? ` · ${meta.infants} رضيع` : ""}
+            {arabicRoomCount(meta.rooms)} · {arabicAdultCount(meta.adults)}
+            {meta.children ? ` · ${arabicChildCount(meta.children)}` : ""}
           </strong>
         </div>
         <div>
           <span>نوع الغرفة</span>
-          <strong>{rate.roomName}</strong>
+          <strong>{roomName.ar}</strong>
+          {roomName.original ? <small>{roomName.original}</small> : null}
         </div>
         <div>
           <span>الوجبات</span>
@@ -137,81 +410,25 @@ export function HotelBookingSummary({
         </div>
         <div>
           <span>سياسة الإلغاء</span>
-          <strong>
-            {rate.freeCancellation ? "إلغاء مجاني*" : "غير قابل للاسترداد"}
-          </strong>
-          {cancelPolicy?.from ? (
-            <small>حتى {formatPolicyDate(cancelPolicy.from)}</small>
-          ) : null}
+          <strong>{cancelPolicyText()}</strong>
         </div>
-        {rate.allotment != null ? (
-          <div>
-            <span>الغرف المتبقية</span>
-            <strong>{rate.allotment}</strong>
-          </div>
-        ) : null}
-        {roomMeta?.occupancy?.maxAdults || roomMeta?.occupancy?.maxPax ? (
-          <div>
-            <span>سعة الغرفة</span>
-            <strong>
-              {roomMeta.occupancy.maxAdults
-                ? `${roomMeta.occupancy.maxAdults} بالغ`
-                : ""}
-              {roomMeta.occupancy.maxChildren
-                ? ` · ${roomMeta.occupancy.maxChildren} طفل`
-                : ""}
-              {roomMeta.occupancy.maxPax ? ` · حتى ${roomMeta.occupancy.maxPax}` : ""}
-            </strong>
-          </div>
-        ) : null}
       </div>
 
-      {roomMeta?.description ? (
-        <p className="hotel-room-desc">{roomMeta.description}</p>
-      ) : null}
-
-      {rate.dailyRates?.length ? (
-        <div className="hotel-price-break">
-          <h3>سعر كل ليلة</h3>
-          <ul>
-            {rate.dailyRates.map((d, i) => (
-              <li key={`${d.date || d.offset || i}`}>
-                <span>{d.date || `ليلة ${i + 1}`}</span>
-                <strong>
-                  {d.net != null ? `${d.net} ${rate.currency}` : "—"}
-                </strong>
-              </li>
-            ))}
-          </ul>
-        </div>
-      ) : (
-        <div className="hotel-price-break">
-          <h3>تفصيل السعر</h3>
-          <ul>
-            <li>
-              <span>لليلة الواحدة</span>
-              <strong>{formatMoneyMinor(perNight, hotel.currency)}</strong>
-            </li>
-            <li>
-              <span>
-                الإجمالي ({nights} {nights === 1 ? "ليلة" : "ليالي"})
-              </span>
-              <strong>{formatMoneyMinor(totalMinor, hotel.currency)}</strong>
-            </li>
-          </ul>
-        </div>
-      )}
-
-      {rate.sellingRate && rate.sellingRate !== rate.net ? (
-        <p className="hint">
-          صافي المزود {rate.net} {rate.currency} · سعر البيع المقترح {rate.sellingRate}{" "}
-          {rate.currency}
-        </p>
-      ) : null}
+      <div className="hotel-price-break">
+        <h3>تفاصيل السعر</h3>
+        <HotelPricePanel
+          currency={hotel.currency}
+          nights={nights}
+          breakdown={panelBreakdown}
+          roomLabel={roomName.ar}
+          boardLabel={rate.boardName}
+          variant="full"
+        />
+      </div>
 
       {taxItems.length ? (
         <div className="hotel-price-break">
-          <h3>الضرائب والرسوم</h3>
+          <h3>تفصيل الضرائب</h3>
           <ul>
             {taxItems.map((t, i) => (
               <li key={`${t.type || i}-${t.amount}`}>
@@ -226,58 +443,43 @@ export function HotelBookingSummary({
             ))}
           </ul>
         </div>
-      ) : (
-        <p className="hint">السعر المعروض يشمل الضرائب حسب رد Hotelbeds.</p>
-      )}
-
-      {rate.rateComments ? (
-        <div className="hotel-rate-comments">
-          <h3>شروط التعرفة</h3>
-          <p>{rate.rateComments}</p>
-        </div>
       ) : null}
 
-      {roomFacilities.length ? (
-        <div className="hotel-booking-preview-services">
-          <h3>خدمات الغرفة</h3>
-          <ul>
-            {roomFacilities.map((f) => (
-              <li key={f}>{f}</li>
-            ))}
-          </ul>
-        </div>
+      <InfoColumns sections={infoSections} />
+      {comments.original && comments.summaryAr !== comments.original ? (
+        <button
+          type="button"
+          className="hotel-desc-more"
+          onClick={() => setShowOriginalComments((v) => !v)}
+        >
+          {showOriginalComments ? "إخفاء النص الأصلي" : "عرض النص الأصلي لشروط التعرفة"}
+        </button>
       ) : null}
 
-      {hotelFacilities.length ? (
-        <div className="hotel-booking-preview-services">
-          <h3>مرافق الفندق</h3>
-          <ul>
-            {hotelFacilities.slice(0, 8).map((f) => (
-              <li key={f}>{f}</li>
-            ))}
-          </ul>
-        </div>
-      ) : null}
-
-      {rate.promotions?.length ? (
-        <div className="hotel-booking-preview-promo">
-          {rate.promotions.map((p, i) => (
-            <p key={i}>{p.name || p.remark}</p>
-          ))}
-        </div>
-      ) : null}
-
-      <footer className="hotel-summary-foot">
-        <div className="hotel-booking-preview-price">
-          <strong>{formatMoneyMinor(totalMinor, hotel.currency)}</strong>
-          <small>
-            {formatMoneyMinor(perNight, hotel.currency)} / ليلة · {nights}{" "}
-            {nights === 1 ? "ليلة" : "ليالي"}
-            {rate.taxes?.allIncluded !== false ? " · شامل الضرائب" : ""}
-          </small>
-        </div>
-        <button type="button" className="btn" onClick={onEnterGuestData}>
-          إدخال البيانات
+      <footer className={`hotel-summary-foot${shopStyle ? " hotel-summary-foot-shop" : ""}`}>
+        {!shopStyle ? (
+          <div className="hotel-booking-preview-price">
+            <strong>{formatMoneyMinor(totalMinor, hotel.currency)}</strong>
+            <small>
+              {formatMoneyMinor(perNight, hotel.currency)} / ليلة · {arabicNightCount(nights)}
+              
+            </small>
+          </div>
+        ) : null}
+        <button
+          type="button"
+          className="btn hotel-checkout-btn"
+          onClick={() => {
+            if (shopStyle && onContinueToReview) {
+              onContinueToReview();
+            } else if (shopStyle) {
+              setStep("guest");
+            } else {
+              onEnterGuestData();
+            }
+          }}
+        >
+          {shopStyle && onContinueToReview ? "متابعة للمراجعة" : "إدخال البيانات"}
         </button>
       </footer>
     </div>

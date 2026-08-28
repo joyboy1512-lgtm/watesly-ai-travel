@@ -2,6 +2,10 @@
 
 import { useMemo, useState } from "react";
 import {
+  normalizePaymentTypeAr,
+  translateRoomNameAr,
+} from "@watesly-travel/shared";
+import {
   formatPolicyDate,
   groupRatesIntoRooms,
   rateDisplayMinor,
@@ -10,18 +14,19 @@ import {
   type HotelRoomOption,
 } from "@/lib/hotel-search";
 import { formatMoneyMinor } from "@/lib/format";
+import { arabicNightCount } from "@/lib/hotel-occupancy";
+import { HotelMediaImage } from "@/components/hotels/HotelMediaImage";
 
 type Props = {
   hotel: HotelOfferRow & { matchingRates: HotelRateOption[]; displayFromMinor: number };
   nights: number;
   checkingRateKey?: string | null;
+  shopStyle?: boolean;
   onBookRate: (rate: HotelRateOption) => void;
 };
 
 function paymentLabel(type?: string) {
-  if (type === "AT_HOTEL") return "ادفع في الفندق";
-  if (type === "AT_WEB") return "ادفع أونلاين";
-  return type || "—";
+  return normalizePaymentTypeAr(type).ar || "—";
 }
 
 function occupancyLabel(room: HotelRoomOption) {
@@ -38,15 +43,34 @@ function cancellationSummary(rate: HotelRateOption) {
   if (rate.freeCancellation) {
     const first = rate.cancellationPolicies.find((p) => Number(p.amount) === 0);
     if (first?.from) {
-      return { text: "إلغاء مجاني", deadline: `حتى ${formatPolicyDate(first.from)}`, good: true };
+      const deadline = new Date(first.from);
+      const now = Date.now();
+      if (Number.isFinite(deadline.getTime()) && deadline.getTime() <= now) {
+        return {
+          text: "غير قابل للاسترداد الآن",
+          deadline: "انتهت فترة الإلغاء المجاني",
+          good: false,
+        };
+      }
+      return {
+        text: "إلغاء مجاني",
+        deadline: `حتى ${formatPolicyDate(first.from)} (توقيت الكويت)`,
+        good: true,
+      };
     }
     return { text: "إلغاء مجاني*", deadline: "حسب سياسة الفندق", good: true };
   }
   const first = rate.cancellationPolicies[0];
   if (first?.from) {
+    const fee = Number(first.amount);
+    const feeLabel =
+      Number.isFinite(fee) && fee > 0
+        ? ` · رسوم ${fee} ${rate.currency}`
+        : "";
+    const partial = Number.isFinite(fee) && fee > 0;
     return {
-      text: "غير قابل للاسترداد",
-      deadline: `من ${formatPolicyDate(first.from)}`,
+      text: partial ? "استرداد جزئي" : "غير قابل للاسترداد",
+      deadline: `من تاريخ ${formatPolicyDate(first.from)}${feeLabel}`,
       good: false,
     };
   }
@@ -60,7 +84,7 @@ function nightlyHint(rate: HotelRateOption, nights: number, perNightMinor: numbe
     const label = first?.date ? `ليلة ${first.date}` : "لليلة الأولى";
     return `${first?.net} ${rate.currency} ${label}`;
   }
-  return `${formatMoneyMinor(perNightMinor, currency)} / ليلة · ${nights} ${nights === 1 ? "ليلة" : "ليالي"}`;
+  return `${formatMoneyMinor(perNightMinor, currency)} / ليلة · ${arabicNightCount(nights)}`;
 }
 
 function taxHint(rate: HotelRateOption) {
@@ -74,7 +98,13 @@ function taxHint(rate: HotelRateOption) {
   return "شامل الضرائب";
 }
 
-export function HotelRoomAccordion({ hotel, nights, checkingRateKey, onBookRate }: Props) {
+export function HotelRoomAccordion({
+  hotel,
+  nights,
+  checkingRateKey,
+  shopStyle,
+  onBookRate,
+}: Props) {
   const rooms = useMemo(() => {
     const raw = hotel.details.rooms;
     const fromDetails = Array.isArray(raw) ? (raw as HotelRoomOption[]) : [];
@@ -98,30 +128,26 @@ export function HotelRoomAccordion({ hotel, nights, checkingRateKey, onBookRate 
   }
 
   return (
-    <div className="hotel-room-accordion">
+    <div className={`hotel-room-accordion${shopStyle ? " hotel-room-accordion-shop" : ""}`}>
       <header className="hotel-room-accordion-head">
         <h2>اختر نوع الغرفة</h2>
         <p>
-          {rooms.length} {rooms.length === 1 ? "نوع" : "أنواع"} ·{" "}
-          {hotel.matchingRates.length}{" "}
-          {hotel.matchingRates.length === 1 ? "سعر" : "أسعار"} · {nights}{" "}
-          {nights === 1 ? "ليلة" : "ليالي"}
+          {rooms.length} {rooms.length === 1 ? "نوع" : "أنواع"} · {hotel.matchingRates.length}{" "}
+          {hotel.matchingRates.length === 1 ? "سعر" : "أسعار"} · {arabicNightCount(nights)}
         </p>
       </header>
 
       {rooms.map((room) => {
         const open = openCode === room.code;
         const cheapest = room.rates[0];
-        const fromMinor = cheapest
-          ? rateDisplayMinor(cheapest, hotel, nights)
-          : hotel.displayFromMinor;
+        const fromMinor = cheapest ? rateDisplayMinor(cheapest, hotel, nights) : hotel.displayFromMinor;
         const perNight = nights > 0 ? Math.round(fromMinor / nights) : fromMinor;
         const occ = occupancyLabel(room);
 
         return (
           <section
             key={room.code || room.name}
-            className={`hotel-room-panel${open ? " is-open" : ""}`}
+            className={`hotel-room-panel${open ? " is-open" : ""}${shopStyle && open ? " is-open-shop" : ""}`}
           >
             <button
               type="button"
@@ -129,15 +155,22 @@ export function HotelRoomAccordion({ hotel, nights, checkingRateKey, onBookRate 
               aria-expanded={open}
               onClick={() => setOpenCode(open ? null : room.code)}
             >
-              {room.imageUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={room.imageUrl} alt="" className="hotel-room-thumb" />
-              ) : null}
+              <HotelMediaImage
+                src={room.imageUrl}
+                alt=""
+                className="hotel-room-thumb"
+                preferMedium
+                compactEmpty
+              />
               <div className="hotel-room-panel-title">
-                <strong>{room.name}</strong>
+                <strong>{translateRoomNameAr(room.name).ar}</strong>
+                {translateRoomNameAr(room.name).original ? (
+                  <small className="hotel-room-original-name">
+                    {translateRoomNameAr(room.name).original}
+                  </small>
+                ) : null}
                 <span>
-                  {room.rates.length}{" "}
-                  {room.rates.length === 1 ? "خيار إقامة" : "خيارات إقامة"}
+                  {room.rates.length} {room.rates.length === 1 ? "خيار إقامة" : "خيارات إقامة"}
                   {occ ? ` · ${occ}` : ""}
                 </span>
                 {room.facilities?.length ? (
@@ -156,14 +189,17 @@ export function HotelRoomAccordion({ hotel, nights, checkingRateKey, onBookRate 
 
             {open ? (
               <div className="hotel-room-panel-body">
-                {room.description ? (
-                  <p className="hotel-room-desc">{room.description}</p>
-                ) : null}
+                {room.description ? <p className="hotel-room-desc">{room.description}</p> : null}
                 {room.images && room.images.length > 1 ? (
                   <div className="hotel-room-gallery">
                     {room.images.slice(0, 6).map((src) => (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img key={src} src={src} alt="" />
+                      <HotelMediaImage
+                        key={src}
+                        src={src}
+                        alt=""
+                        className="hotel-room-gallery-item"
+                        preferMedium
+                      />
                     ))}
                   </div>
                 ) : null}
@@ -176,8 +212,7 @@ export function HotelRoomAccordion({ hotel, nights, checkingRateKey, onBookRate 
                 ) : null}
                 {room.rates.map((rate: HotelRateOption) => {
                   const totalMinor = rateDisplayMinor(rate, hotel, nights);
-                  const perNightMinor =
-                    nights > 0 ? Math.round(totalMinor / nights) : totalMinor;
+                  const perNightMinor = nights > 0 ? Math.round(totalMinor / nights) : totalMinor;
                   const cancel = cancellationSummary(rate);
                   const taxes = taxHint(rate);
                   const busy = checkingRateKey === rate.rateKey;
@@ -203,22 +238,34 @@ export function HotelRoomAccordion({ hotel, nights, checkingRateKey, onBookRate 
                         <strong>{formatMoneyMinor(totalMinor, hotel.currency)}</strong>
                         <small>{nightlyHint(rate, nights, perNightMinor, hotel.currency)}</small>
                         {taxes ? <small>{taxes}</small> : null}
-                        {rate.sellingRate && rate.sellingRate !== rate.net ? (
-                          <small>
-                            صافي {rate.net} · بيع {rate.sellingRate} {rate.currency}
-                          </small>
+                        {rate.dailyRates && rate.dailyRates.length > 1 ? (
+                          <details className="hotel-rate-daily">
+                            <summary>تفصيل السعر اليومي</summary>
+                            <ul>
+                              {rate.dailyRates.map((day, i) => (
+                                <li key={`${day.date || i}`}>
+                                  <span>{day.date || `ليلة ${i + 1}`}</span>
+                                  <em>
+                                    {day.net != null
+                                      ? `${day.net} ${rate.currency}`
+                                      : "—"}
+                                  </em>
+                                </li>
+                              ))}
+                            </ul>
+                          </details>
                         ) : null}
                       </div>
                       <button
                         type="button"
-                        className="btn hotel-rate-book-btn"
+                        className={`btn hotel-rate-book-btn${shopStyle ? " hotel-rate-book-btn-shop" : ""}`}
                         disabled={Boolean(checkingRateKey)}
                         onClick={(e) => {
                           e.stopPropagation();
                           onBookRate(rate);
                         }}
                       >
-                        {busy ? "جاري التحقق..." : "احجز"}
+                        {busy ? "جاري إعادة التحقق من السعر…" : "احجز"}
                       </button>
                     </article>
                   );

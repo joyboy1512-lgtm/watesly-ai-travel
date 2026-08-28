@@ -128,8 +128,8 @@ export class MockHotelProvider implements HotelProviderAdapter {
           name: hotel.nameAr,
           nameEn: hotel.nameEn,
           stars: hotel.stars,
-          rating: hotel.rating,
-          reviewCount: hotel.reviewCount,
+          // Mock catalog ratings are synthetic — do not expose as guest reviews.
+          ranking: hotel.rating ? Math.round(hotel.rating * 10) : undefined,
           roomType: cheapest?.roomName || hotel.roomType,
           roomCode: cheapest?.roomCode,
           propertyType: hotel.propertyType,
@@ -147,7 +147,6 @@ export class MockHotelProvider implements HotelProviderAdapter {
           distanceToCenterKm: dist?.distanceToCenterKm,
           distanceToCenterLabel: dist?.distanceToCenterLabel,
           poiDistances: dist?.poiDistances,
-          ranking: Math.round(hotel.rating * 10),
           facilityLabels: hotel.facilities.map((f) =>
             f === "wifi" ? "واي‑فاي" : f === "parking" ? "موقف" : f === "pool" ? "مسبح" : f === "spa" ? "سبا" : f === "gym" ? "جيم" : f,
           ),

@@ -407,14 +407,15 @@ export function ShopFlightCard({
             التفاصيل والشروط
           </button>
         </div>
-        <div className="shop-ticket-bags shop-ticket-bags-text">
-          <span className={hasCabin ? "" : "off"}>
-            🎒 {hasCabin ? cabinBag : "مقصورة حسب الفئة"}
-          </span>
-          <span className={hasChecked ? "" : "off"}>
-            🧳 {hasChecked ? checkedBag : "مسجّلة حسب الفئة"}
-          </span>
-        </div>
+      </div>
+
+      <div className="shop-ticket-bags shop-ticket-bags-text shop-ticket-card-footer">
+        <span className={hasCabin ? "" : "off"}>
+          🎒 {hasCabin ? cabinBag : "مقصورة حسب الفئة"}
+        </span>
+        <span className={hasChecked ? "" : "off"}>
+          🧳 {hasChecked ? checkedBag : "مسجّلة حسب الفئة"}
+        </span>
       </div>
     </article>
   );

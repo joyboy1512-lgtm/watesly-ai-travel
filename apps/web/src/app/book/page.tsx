@@ -174,6 +174,8 @@ function FlightCheckout({
   const [scanning, setScanning] = useState(false);
   const [scanHint, setScanHint] = useState("");
   const passportInputRef = useRef<HTMLInputElement | null>(null);
+  const scanTargetRef = useRef<number>(0);
+  const ignoreBackdropCloseRef = useRef(false);
   const baggage = (draft.flight.details.baggage || {}) as Record<string, string>;
   const tripLabel =
     draft.tripType === "roundtrip"
@@ -211,21 +213,41 @@ function FlightCheckout({
   }
 
   function openPassportPicker() {
+    if (editIndex == null) return;
+    scanTargetRef.current = editIndex;
     setScanHint("");
+    // Native file/camera dialog can fire a click on the backdrop when it closes.
+    ignoreBackdropCloseRef.current = true;
+    window.setTimeout(() => {
+      ignoreBackdropCloseRef.current = false;
+    }, 1200);
     passportInputRef.current?.click();
   }
 
+  function closeTravelerModal() {
+    if (scanning || ignoreBackdropCloseRef.current) return;
+    setEditIndex(null);
+  }
+
   async function onPassportSelected(file?: File | null) {
-    if (!file || editIndex == null) return;
-    if (!file.type.startsWith("image/")) {
+    const targetIndex = scanTargetRef.current;
+    if (!file) return;
+    const looksImage =
+      file.type.startsWith("image/") ||
+      /\.(jpe?g|png|webp|heic|heif)$/i.test(file.name || "");
+    if (!looksImage) {
+      setEditIndex(targetIndex);
       setScanHint("اختر صورة جواز سفر (JPG أو PNG)");
       return;
     }
     if (file.size > 6 * 1024 * 1024) {
+      setEditIndex(targetIndex);
       setScanHint("حجم الصورة كبير. استخدم صورة أصغر من 6MB");
       return;
     }
 
+    // Keep modal open while scanning (file dialog may have closed it).
+    setEditIndex(targetIndex);
     setScanning(true);
     setScanHint("جارٍ ضغط الصورة...");
     try {
@@ -248,6 +270,7 @@ function FlightCheckout({
       const filled = Boolean(
         f.firstName || f.lastName || f.birthDate || f.passportNumber,
       );
+      setEditIndex(targetIndex);
       if (!filled) {
         setScanHint(
           result.notes ||
@@ -255,16 +278,27 @@ function FlightCheckout({
         );
         return;
       }
-      const gender = titleToGender(f.title) || editing?.gender || "";
-      const patch: Partial<Traveler> = {
-        ...(f.firstName ? { firstName: f.firstName } : {}),
-        ...(f.lastName ? { lastName: f.lastName } : {}),
-        ...(f.birthDate ? { birthDate: f.birthDate } : {}),
-        ...(f.nationality ? { nationality: f.nationality } : {}),
-        ...(f.passportNumber ? { passportNumber: f.passportNumber } : {}),
-        ...(gender ? { gender, title: gender === "female" ? "ms" : "mr" } : {}),
-      };
-      updateEditing(patch);
+      const gender =
+        titleToGender(f.title) ||
+        travelers[targetIndex]?.gender ||
+        "";
+      setTravelers((rows) =>
+        rows.map((row, i) =>
+          i === targetIndex
+            ? {
+                ...row,
+                ...(f.firstName ? { firstName: f.firstName } : {}),
+                ...(f.lastName ? { lastName: f.lastName } : {}),
+                ...(f.birthDate ? { birthDate: f.birthDate } : {}),
+                ...(f.nationality ? { nationality: f.nationality } : {}),
+                ...(f.passportNumber ? { passportNumber: f.passportNumber } : {}),
+                ...(gender
+                  ? { gender, title: gender === "female" ? "ms" : "mr" }
+                  : {}),
+              }
+            : row,
+        ),
+      );
       if (f.birthDate) setDobDraft(splitBirthDate(f.birthDate));
       const pct = Math.round((result.confidence || 0) * 100);
       setScanHint(
@@ -272,9 +306,11 @@ function FlightCheckout({
           `تم ملء البيانات من الصورة${pct ? ` · ثقة تقريبية ${pct}%` : ""}. راجعها قبل الحفظ.`,
       );
     } catch (err) {
+      setEditIndex(targetIndex);
       setScanHint(err instanceof Error ? err.message : "فشل مسح الجواز");
     } finally {
       setScanning(false);
+      ignoreBackdropCloseRef.current = false;
       if (passportInputRef.current) passportInputRef.current.value = "";
     }
   }
@@ -421,20 +457,21 @@ function FlightCheckout({
         </aside>
       </div>
 
+      <input
+        ref={passportInputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/webp"
+        capture="environment"
+        className="shop-passport-file-input"
+        onChange={(e) => void onPassportSelected(e.target.files?.[0])}
+      />
+
       {editing && editIndex != null ? (
         <div
           className="shop-traveler-modal-backdrop"
-          onClick={() => setEditIndex(null)}
+          onClick={closeTravelerModal}
           role="presentation"
         >
-          <input
-            ref={passportInputRef}
-            type="file"
-            accept="image/jpeg,image/png,image/webp"
-            capture="environment"
-            className="shop-passport-file-input"
-            onChange={(e) => void onPassportSelected(e.target.files?.[0])}
-          />
           <div
             className="shop-traveler-modal"
             role="dialog"

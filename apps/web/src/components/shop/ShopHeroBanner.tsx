@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, type ReactNode, type CSSProperties } from "react";
+import { useState, useRef, useEffect, type ReactNode } from "react";
 import { HERO_SLIDES } from "@/lib/shop-content";
 import { ShopAutocomplete, type SuggestItem } from "@/components/shop/ShopAutocomplete";
 import { ShopDateRangePicker } from "@/components/shop/ShopDateRangePicker";
@@ -214,9 +214,6 @@ function DatePick({
 export function ShopHeroBanner(props: Props) {
   const [travelersOpen, setTravelersOpen] = useState(false);
   const [occError, setOccError] = useState("");
-  const [popStyle, setPopStyle] = useState<CSSProperties>({});
-  const travelersCellRef = useRef<HTMLDivElement | null>(null);
-  const travelersPopRef = useRef<HTMLDivElement | null>(null);
   const heroSlide = HERO_SLIDES[0];
   const heroImage = heroSlide?.image;
   const infants = props.infants ?? 0;
@@ -232,55 +229,6 @@ export function ShopHeroBanner(props: Props) {
         } غرفة`
       : `${props.adults + props.children + infants} مسافر`;
 
-  useEffect(() => {
-    if (!travelersOpen) return;
-
-    function placePop() {
-      const trigger = travelersCellRef.current;
-      const pop = travelersPopRef.current;
-      if (!trigger || !pop) return;
-      const rect = trigger.getBoundingClientRect();
-      const popH = pop.offsetHeight || 220;
-      const popW = Math.max(pop.offsetWidth || 280, 280);
-      const gap = 8;
-      const spaceAbove = rect.top;
-      const spaceBelow = window.innerHeight - rect.bottom;
-      const openUp = spaceAbove >= popH + gap || spaceAbove > spaceBelow;
-      let top = openUp ? rect.top - popH - gap : rect.bottom + gap;
-      top = Math.max(8, Math.min(top, window.innerHeight - popH - 8));
-      // RTL: align to the inline-start (right) edge of the trigger
-      let left = rect.right - popW;
-      left = Math.max(8, Math.min(left, window.innerWidth - popW - 8));
-      setPopStyle({
-        position: "fixed",
-        top,
-        left,
-        right: "auto",
-        bottom: "auto",
-        width: popW,
-        zIndex: 5000,
-      });
-    }
-
-    placePop();
-    const raf = window.requestAnimationFrame(placePop);
-    function onDoc(e: MouseEvent) {
-      const t = e.target as Node;
-      if (travelersCellRef.current?.contains(t)) return;
-      if (travelersPopRef.current?.contains(t)) return;
-      setTravelersOpen(false);
-    }
-    window.addEventListener("resize", placePop);
-    window.addEventListener("scroll", placePop, true);
-    document.addEventListener("mousedown", onDoc);
-    return () => {
-      window.cancelAnimationFrame(raf);
-      window.removeEventListener("resize", placePop);
-      window.removeEventListener("scroll", placePop, true);
-      document.removeEventListener("mousedown", onDoc);
-    };
-  }, [travelersOpen, props.adults, props.children, infants, props.mode, props.stayOccupancy]);
-
   function updateStayOccupancy(next: HotelOccupancyState) {
     props.onStayOccupancyChange?.(next);
     const totals = occupancyTotals(next);
@@ -290,16 +238,97 @@ export function ShopHeroBanner(props: Props) {
     setOccError(validateOccupancy(next) || "");
   }
 
-  function renderStayOccupancyPop() {
+  function renderFlightTravelersPanel() {
+    return (
+      <div className="exp-travelers-panel" role="dialog" aria-label="عدد المسافرين">
+        <div className="exp-travelers-row">
+          <span>
+            بالغون
+            <small className="exp-traveler-hint">12 سنة فأكثر</small>
+          </span>
+          <div className="exp-stepper">
+            <button
+              type="button"
+              aria-label="تقليل البالغين"
+              onClick={() => props.onAdultsChange(Math.max(1, props.adults - 1))}
+            >
+              −
+            </button>
+            <strong>{props.adults}</strong>
+            <button
+              type="button"
+              aria-label="زيادة البالغين"
+              onClick={() => props.onAdultsChange(Math.min(9, props.adults + 1))}
+            >
+              +
+            </button>
+          </div>
+        </div>
+        <div className="exp-travelers-row">
+          <span>
+            أطفال
+            <small className="exp-traveler-hint">2 – 11 سنة</small>
+          </span>
+          <div className="exp-stepper">
+            <button
+              type="button"
+              aria-label="تقليل الأطفال"
+              onClick={() => props.onChildrenChange(Math.max(0, props.children - 1))}
+            >
+              −
+            </button>
+            <strong>{props.children}</strong>
+            <button
+              type="button"
+              aria-label="زيادة الأطفال"
+              onClick={() => props.onChildrenChange(Math.min(8, props.children + 1))}
+            >
+              +
+            </button>
+          </div>
+        </div>
+        <div className="exp-travelers-row">
+          <span>
+            رضع
+            <small className="exp-traveler-hint">أقل من سنتين</small>
+          </span>
+          <div className="exp-stepper">
+            <button
+              type="button"
+              aria-label="تقليل الرضع"
+              onClick={() => props.onInfantsChange?.(Math.max(0, infants - 1))}
+            >
+              −
+            </button>
+            <strong>{infants}</strong>
+            <button
+              type="button"
+              aria-label="زيادة الرضع"
+              onClick={() =>
+                props.onInfantsChange?.(Math.min(props.adults, infants + 1))
+              }
+            >
+              +
+            </button>
+          </div>
+        </div>
+        <button
+          type="button"
+          className="exp-pop-done"
+          onClick={() => setTravelersOpen(false)}
+        >
+          تم
+        </button>
+      </div>
+    );
+  }
+
+  function renderStayOccupancyPanel() {
     const state = props.stayOccupancy || {
       rooms: [{ adults: props.adults, childAges: Array.from({ length: props.children }, () => 8) }],
     };
     return (
-      <div
-        ref={travelersPopRef}
-        className="exp-travelers-pop exp-occupancy-pop exp-travelers-pop-fixed"
-        style={popStyle}
-      >
+      <div className="exp-travelers-panel exp-occupancy-panel" role="dialog" aria-label="الغرف والمسافرون">
         <div className="exp-travelers-row">
           <span>عدد الغرف</span>
           <div className="exp-stepper">
@@ -438,6 +467,29 @@ export function ShopHeroBanner(props: Props) {
     );
   }
 
+  function renderTravelersPanel() {
+    if (!travelersOpen) return null;
+    return props.mode === "stays"
+      ? renderStayOccupancyPanel()
+      : renderFlightTravelersPanel();
+  }
+
+  function renderTravelersCell() {
+    return (
+      <div className="exp-input-cell exp-cell-travelers">
+        <button
+          type="button"
+          className={`exp-travelers-trigger${travelersOpen ? " open" : ""}`}
+          aria-expanded={travelersOpen}
+          onClick={() => setTravelersOpen((v) => !v)}
+        >
+          <span className="exp-cell-label">المسافرون</span>
+          <strong>{travelerSummary}</strong>
+        </button>
+      </div>
+    );
+  }
+
   function swapLegAirports(legId: string) {
     const leg = props.flightLegs.find((row) => row.id === legId);
     if (!leg) return;
@@ -447,114 +499,6 @@ export function ShopHeroBanner(props: Props) {
       destination: leg.origin,
       destinationLabel: leg.originLabel,
     });
-  }
-
-  function renderTravelersCell() {
-    return (
-      <div className="exp-input-cell exp-cell-travelers" ref={travelersCellRef}>
-        <button
-          type="button"
-          className="exp-travelers-trigger"
-          aria-expanded={travelersOpen}
-          onClick={() => setTravelersOpen((v) => !v)}
-        >
-          <span className="exp-cell-label">المسافرون</span>
-          <strong>{travelerSummary}</strong>
-        </button>
-        {travelersOpen ? (
-          props.mode === "stays" ? (
-            renderStayOccupancyPop()
-          ) : (
-            <div
-              ref={travelersPopRef}
-              className="exp-travelers-pop exp-travelers-pop-fixed"
-              style={popStyle}
-            >
-              <div className="exp-travelers-row">
-                <span>
-                  بالغون
-                  <small className="exp-traveler-hint">12 سنة فأكثر</small>
-                </span>
-                <div className="exp-stepper">
-                  <button
-                    type="button"
-                    aria-label="تقليل البالغين"
-                    onClick={() => props.onAdultsChange(Math.max(1, props.adults - 1))}
-                  >
-                    −
-                  </button>
-                  <strong>{props.adults}</strong>
-                  <button
-                    type="button"
-                    aria-label="زيادة البالغين"
-                    onClick={() => props.onAdultsChange(Math.min(9, props.adults + 1))}
-                  >
-                    +
-                  </button>
-                </div>
-              </div>
-              <div className="exp-travelers-row">
-                <span>
-                  أطفال
-                  <small className="exp-traveler-hint">2 – 11 سنة</small>
-                </span>
-                <div className="exp-stepper">
-                  <button
-                    type="button"
-                    aria-label="تقليل الأطفال"
-                    onClick={() => props.onChildrenChange(Math.max(0, props.children - 1))}
-                  >
-                    −
-                  </button>
-                  <strong>{props.children}</strong>
-                  <button
-                    type="button"
-                    aria-label="زيادة الأطفال"
-                    onClick={() => props.onChildrenChange(Math.min(8, props.children + 1))}
-                  >
-                    +
-                  </button>
-                </div>
-              </div>
-              <div className="exp-travelers-row">
-                <span>
-                  رضع
-                  <small className="exp-traveler-hint">أقل من سنتين</small>
-                </span>
-                <div className="exp-stepper">
-                  <button
-                    type="button"
-                    aria-label="تقليل الرضع"
-                    onClick={() =>
-                      props.onInfantsChange?.(Math.max(0, infants - 1))
-                    }
-                  >
-                    −
-                  </button>
-                  <strong>{infants}</strong>
-                  <button
-                    type="button"
-                    aria-label="زيادة الرضع"
-                    onClick={() =>
-                      props.onInfantsChange?.(Math.min(props.adults, infants + 1))
-                    }
-                  >
-                    +
-                  </button>
-                </div>
-              </div>
-              <button
-                type="button"
-                className="exp-pop-done"
-                onClick={() => setTravelersOpen(false)}
-              >
-                تم
-              </button>
-            </div>
-          )
-        ) : null}
-      </div>
-    );
   }
 
   const isMulticity = props.tripType === "multicity";
@@ -809,6 +753,7 @@ export function ShopHeroBanner(props: Props) {
                 </button>
               </div>
               )}
+              {renderTravelersPanel()}
             </>
           ) : (
             <>
@@ -1003,6 +948,7 @@ export function ShopHeroBanner(props: Props) {
               {props.loading ? "..." : "بحث"}
             </button>
             </div>
+            {renderTravelersPanel()}
             </>
           )}
           </div>

@@ -1332,10 +1332,28 @@
   gap: 0.65rem;
 }
 
-.exp-travelers-pop-fixed {
-  /* Position is set via inline style (fixed) so parents cannot clip it */
-  inset: auto;
-  max-height: min(75vh, 480px);
+.exp-travelers-panel {
+  background: #fff;
+  border: 1px solid var(--exp-border);
+  border-radius: 12px;
+  padding: 0.85rem 1rem;
+  display: grid;
+  gap: 0.7rem;
+  box-shadow: 0 8px 24px rgba(13, 16, 35, 0.12);
+  width: 100%;
+  max-width: 420px;
+  margin-inline-start: auto;
+}
+
+.exp-occupancy-panel {
+  max-width: 480px;
+  max-height: min(60vh, 520px);
+  overflow-y: auto;
+}
+
+.exp-travelers-trigger.open {
+  border-color: var(--exp-blue);
+  box-shadow: 0 0 0 2px rgba(22, 104, 227, 0.2);
 }
 
 .exp-traveler-hint {

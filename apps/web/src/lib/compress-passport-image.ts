@@ -1,8 +1,8 @@
 /** Resize/compress passport photos before OCR upload (faster upload + AI). */
 export async function compressPassportImage(
   file: File,
-  maxWidth = 1280,
-  quality = 0.82,
+  maxWidth = 1600,
+  quality = 0.88,
 ): Promise<{ base64: string; mimeType: string }> {
   try {
     const bitmap = await createImageBitmap(file);

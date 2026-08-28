@@ -70,6 +70,7 @@ type Traveler = {
   birthDate: string;
   nationality: string;
   passportNumber: string;
+  passportExpiry: string;
   gender: string;
 };
 
@@ -81,8 +82,19 @@ function emptyTraveler(): Traveler {
     birthDate: "",
     nationality: "KW",
     passportNumber: "",
+    passportExpiry: "",
     gender: "",
   };
+}
+
+function titleLabel(title?: string, gender?: string) {
+  if (title === "mrs" || title === "ms" || gender === "female") return "Mrs";
+  if (title === "mr" || gender === "male") return "Mr";
+  return "";
+}
+
+function genderToTitle(gender: string) {
+  return gender === "female" ? "mrs" : gender === "male" ? "mr" : "mr";
 }
 
 function draftPrice(draft: BookingDraft) {
@@ -107,7 +119,14 @@ function draftTitle(draft: BookingDraft) {
 }
 
 function travelerComplete(t: Traveler) {
-  return Boolean(t.firstName.trim() && t.lastName.trim() && t.gender && t.birthDate);
+  return Boolean(
+    t.firstName.trim() &&
+      t.lastName.trim() &&
+      t.gender &&
+      t.birthDate &&
+      t.passportNumber.trim() &&
+      t.passportExpiry,
+  );
 }
 
 function splitBirthDate(iso: string) {
@@ -282,24 +301,34 @@ function FlightCheckout({
         titleToGender(f.title) ||
         travelers[targetIndex]?.gender ||
         "";
+      const title = gender
+        ? genderToTitle(gender)
+        : f.title === "mrs" || f.title === "ms"
+          ? "mrs"
+          : f.title === "mr"
+            ? "mr"
+            : travelers[targetIndex]?.title || "mr";
       setTravelers((rows) =>
         rows.map((row, i) =>
           i === targetIndex
             ? {
                 ...row,
-                ...(f.firstName ? { firstName: f.firstName } : {}),
-                ...(f.lastName ? { lastName: f.lastName } : {}),
-                ...(f.birthDate ? { birthDate: f.birthDate } : {}),
-                ...(f.nationality ? { nationality: f.nationality } : {}),
-                ...(f.passportNumber ? { passportNumber: f.passportNumber } : {}),
-                ...(gender
-                  ? { gender, title: gender === "female" ? "ms" : "mr" }
+                ...(f.firstName ? { firstName: String(f.firstName).trim() } : {}),
+                ...(f.lastName ? { lastName: String(f.lastName).trim() } : {}),
+                ...(f.birthDate ? { birthDate: String(f.birthDate).slice(0, 10) } : {}),
+                ...(f.nationality ? { nationality: String(f.nationality).toUpperCase() } : {}),
+                ...(f.passportNumber
+                  ? { passportNumber: String(f.passportNumber).replace(/\s+/g, "").toUpperCase() }
                   : {}),
+                ...(f.passportExpiry
+                  ? { passportExpiry: String(f.passportExpiry).slice(0, 10) }
+                  : {}),
+                ...(gender ? { gender, title } : f.title ? { title } : {}),
               }
             : row,
         ),
       );
-      if (f.birthDate) setDobDraft(splitBirthDate(f.birthDate));
+      if (f.birthDate) setDobDraft(splitBirthDate(String(f.birthDate).slice(0, 10)));
       const pct = Math.round((result.confidence || 0) * 100);
       setScanHint(
         result.notes ||
@@ -364,6 +393,7 @@ function FlightCheckout({
                       </strong>
                       {done ? (
                         <p className="shop-hint" style={{ margin: 0 }}>
+                          {titleLabel(traveler.title, traveler.gender)}{" "}
                           {traveler.firstName} {traveler.lastName}
                         </p>
                       ) : null}
@@ -510,6 +540,27 @@ function FlightCheckout({
             {scanHint ? <p className="shop-passport-scan-hint">{scanHint}</p> : null}
 
             <label>
+              نوع المسافر / اللقب
+              <select
+                value={editing.gender}
+                onChange={(e) => {
+                  const gender = e.target.value;
+                  updateEditing({
+                    gender,
+                    title: genderToTitle(gender),
+                  });
+                }}
+              >
+                <option value="">اختر</option>
+                <option value="male">ذكر · Mr</option>
+                <option value="female">أنثى · Mrs</option>
+              </select>
+              <small>
+                يظهر مع الاسم كـ{" "}
+                {titleLabel(editing.title, editing.gender) || "Mr / Mrs"}
+              </small>
+            </label>
+            <label>
               الاسم الأول
               <input
                 value={editing.firstName}
@@ -524,23 +575,6 @@ function FlightCheckout({
                 onChange={(e) => updateEditing({ lastName: e.target.value })}
               />
               <small>أدخل الاسم كما هو مكتوب في وثيقة السفر</small>
-            </label>
-            <label>
-              الجنس كما في وثيقة السفر
-              <select
-                value={editing.gender}
-                onChange={(e) => {
-                  const gender = e.target.value;
-                  updateEditing({
-                    gender,
-                    title: gender === "female" ? "ms" : "mr",
-                  });
-                }}
-              >
-                <option value="">اختر</option>
-                <option value="male">ذكر</option>
-                <option value="female">أنثى</option>
-              </select>
             </label>
             <label>
               تاريخ الميلاد
@@ -575,6 +609,27 @@ function FlightCheckout({
                   }
                 />
               </div>
+            </label>
+            <label>
+              رقم الجواز
+              <input
+                value={editing.passportNumber}
+                onChange={(e) =>
+                  updateEditing({
+                    passportNumber: e.target.value.replace(/\s+/g, "").toUpperCase(),
+                  })
+                }
+                placeholder="كما في الجواز"
+                autoCapitalize="characters"
+              />
+            </label>
+            <label>
+              تاريخ انتهاء الجواز
+              <input
+                type="date"
+                value={editing.passportExpiry || ""}
+                onChange={(e) => updateEditing({ passportExpiry: e.target.value })}
+              />
             </label>
             <div className="shop-traveler-modal-foot">
               <button type="button" onClick={() => setEditIndex(null)}>
@@ -665,6 +720,7 @@ export default function PublicBookPage() {
         birthDate?: string | null;
         nationality?: string | null;
         passportNumber?: string | null;
+        passportExpiry?: string | null;
       }>;
     }>("/shop/me")
       .then((me) => {
@@ -673,14 +729,17 @@ export default function PublicBookPage() {
           prev.map((row, idx) => {
             const saved = me.travelers[idx];
             if (!saved) return row;
+            const gender =
+              saved.title === "ms" || saved.title === "mrs" ? "female" : "male";
             return {
-              title: saved.title || "mr",
+              title: saved.title === "ms" ? "mrs" : saved.title || "mr",
               firstName: saved.firstName,
               lastName: saved.lastName,
               birthDate: saved.birthDate?.slice(0, 10) || "",
               nationality: saved.nationality || "KW",
               passportNumber: saved.passportNumber || "",
-              gender: saved.title === "ms" || saved.title === "mrs" ? "female" : "male",
+              passportExpiry: saved.passportExpiry?.slice(0, 10) || "",
+              gender,
             };
           }),
         );

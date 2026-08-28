@@ -167,6 +167,33 @@ function completionLimitBody(model: string, tokens: number) {
   return { max_tokens: tokens };
 }
 
+function chatCompletionBody(model: string, prompt: string, mime: string, rawBase64: string) {
+  const tokens = Number(process.env.AI_MAX_OUTPUT_TOKENS || 800);
+  const body: Record<string, unknown> = {
+    model,
+    ...completionLimitBody(model, tokens),
+    messages: [
+      {
+        role: "user",
+        content: [
+          { type: "text", text: prompt },
+          {
+            type: "image_url",
+            image_url: {
+              url: `data:${mime};base64,${rawBase64}`,
+            },
+          },
+        ],
+      },
+    ],
+  };
+  // gpt-5+ on Cursor/OpenAI only supports default temperature.
+  if (!/gpt-5|o[134]|gpt-4\.1/i.test(model)) {
+    body.temperature = 0;
+  }
+  return body;
+}
+
 /**
  * Extract passport fields from an image using a vision-capable LLM.
  * Falls back to MRZ parsing from any returned text.
@@ -227,25 +254,7 @@ Use empty string for unknown fields. Do not invent values.`;
         "Content-Type": "application/json",
       },
       signal: controller.signal,
-      body: JSON.stringify({
-        model,
-        temperature: 0,
-        ...completionLimitBody(model, Number(process.env.AI_MAX_OUTPUT_TOKENS || 800)),
-        messages: [
-          {
-            role: "user",
-            content: [
-              { type: "text", text: prompt },
-              {
-                type: "image_url",
-                image_url: {
-                  url: `data:${mime};base64,${rawBase64}`,
-                },
-              },
-            ],
-          },
-        ],
-      }),
+      body: JSON.stringify(chatCompletionBody(model, prompt, mime, rawBase64)),
     });
 
     if (!response.ok) {

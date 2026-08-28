@@ -640,6 +640,7 @@ export function ShopHomeClient() {
         dropoffTime={dropoffTime}
         adults={adults}
         children={children}
+        infants={infants}
         rooms={rooms}
         onOriginClear={(text) => {
           setOrigin("");
@@ -673,6 +674,7 @@ export function ShopHomeClient() {
         onDropoffTimeChange={setDropoffTime}
         onAdultsChange={setAdults}
         onChildrenChange={setChildren}
+        onInfantsChange={setInfants}
         onRoomsChange={setRooms}
         stayOccupancy={stayOccupancy}
         onStayOccupancyChange={setStayOccupancy}

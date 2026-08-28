@@ -61,6 +61,7 @@ type Props = {
   dropoffTime: string;
   adults: number;
   children: number;
+  infants?: number;
   rooms: number;
   /** Per-room occupancy for hotel search (required for children ages). */
   stayOccupancy?: HotelOccupancyState;
@@ -79,6 +80,7 @@ type Props = {
   onDropoffTimeChange: (v: string) => void;
   onAdultsChange: (n: number) => void;
   onChildrenChange: (n: number) => void;
+  onInfantsChange?: (n: number) => void;
   onRoomsChange: (n: number) => void;
   onSearch: () => void;
   loading: boolean;
@@ -214,6 +216,7 @@ export function ShopHeroBanner(props: Props) {
   const [occError, setOccError] = useState("");
   const heroSlide = HERO_SLIDES[0];
   const heroImage = heroSlide?.image;
+  const infants = props.infants ?? 0;
 
   const stayTotals = props.stayOccupancy
     ? occupancyTotals(props.stayOccupancy)
@@ -224,7 +227,7 @@ export function ShopHeroBanner(props: Props) {
       ? `${(stayTotals?.adults ?? props.adults) + (stayTotals?.children ?? props.children)} مسافر · ${
           stayTotals?.rooms ?? props.rooms
         } غرفة`
-      : `${props.adults + props.children} مسافر`;
+      : `${props.adults + props.children + infants} مسافر`;
 
   function updateStayOccupancy(next: HotelOccupancyState) {
     props.onStayOccupancyChange?.(next);
@@ -235,12 +238,97 @@ export function ShopHeroBanner(props: Props) {
     setOccError(validateOccupancy(next) || "");
   }
 
-  function renderStayOccupancyPop() {
+  function renderFlightTravelersPanel() {
+    return (
+      <div className="exp-travelers-panel" role="dialog" aria-label="عدد المسافرين">
+        <div className="exp-travelers-row">
+          <span>
+            بالغون
+            <small className="exp-traveler-hint">12 سنة فأكثر</small>
+          </span>
+          <div className="exp-stepper">
+            <button
+              type="button"
+              aria-label="تقليل البالغين"
+              onClick={() => props.onAdultsChange(Math.max(1, props.adults - 1))}
+            >
+              −
+            </button>
+            <strong>{props.adults}</strong>
+            <button
+              type="button"
+              aria-label="زيادة البالغين"
+              onClick={() => props.onAdultsChange(Math.min(9, props.adults + 1))}
+            >
+              +
+            </button>
+          </div>
+        </div>
+        <div className="exp-travelers-row">
+          <span>
+            أطفال
+            <small className="exp-traveler-hint">2 – 11 سنة</small>
+          </span>
+          <div className="exp-stepper">
+            <button
+              type="button"
+              aria-label="تقليل الأطفال"
+              onClick={() => props.onChildrenChange(Math.max(0, props.children - 1))}
+            >
+              −
+            </button>
+            <strong>{props.children}</strong>
+            <button
+              type="button"
+              aria-label="زيادة الأطفال"
+              onClick={() => props.onChildrenChange(Math.min(8, props.children + 1))}
+            >
+              +
+            </button>
+          </div>
+        </div>
+        <div className="exp-travelers-row">
+          <span>
+            رضع
+            <small className="exp-traveler-hint">أقل من سنتين</small>
+          </span>
+          <div className="exp-stepper">
+            <button
+              type="button"
+              aria-label="تقليل الرضع"
+              onClick={() => props.onInfantsChange?.(Math.max(0, infants - 1))}
+            >
+              −
+            </button>
+            <strong>{infants}</strong>
+            <button
+              type="button"
+              aria-label="زيادة الرضع"
+              onClick={() =>
+                props.onInfantsChange?.(Math.min(props.adults, infants + 1))
+              }
+            >
+              +
+            </button>
+          </div>
+        </div>
+        <button
+          type="button"
+          className="exp-pop-done"
+          onClick={() => setTravelersOpen(false)}
+        >
+          تم
+        </button>
+      </div>
+    );
+  }
+
+  function renderStayOccupancyPanel() {
     const state = props.stayOccupancy || {
       rooms: [{ adults: props.adults, childAges: Array.from({ length: props.children }, () => 8) }],
     };
     return (
-      <div className="exp-travelers-pop exp-occupancy-pop">
+      <div className="exp-travelers-panel exp-occupancy-panel" role="dialog" aria-label="الغرف والمسافرون">
         <div className="exp-travelers-row">
           <span>عدد الغرف</span>
           <div className="exp-stepper">
@@ -379,6 +467,29 @@ export function ShopHeroBanner(props: Props) {
     );
   }
 
+  function renderTravelersPanel() {
+    if (!travelersOpen) return null;
+    return props.mode === "stays"
+      ? renderStayOccupancyPanel()
+      : renderFlightTravelersPanel();
+  }
+
+  function renderTravelersCell() {
+    return (
+      <div className="exp-input-cell exp-cell-travelers">
+        <button
+          type="button"
+          className={`exp-travelers-trigger${travelersOpen ? " open" : ""}`}
+          aria-expanded={travelersOpen}
+          onClick={() => setTravelersOpen((v) => !v)}
+        >
+          <span className="exp-cell-label">المسافرون</span>
+          <strong>{travelerSummary}</strong>
+        </button>
+      </div>
+    );
+  }
+
   function swapLegAirports(legId: string) {
     const leg = props.flightLegs.find((row) => row.id === legId);
     if (!leg) return;
@@ -388,62 +499,6 @@ export function ShopHeroBanner(props: Props) {
       destination: leg.origin,
       destinationLabel: leg.originLabel,
     });
-  }
-
-  function renderTravelersCell() {
-    return (
-      <div className="exp-input-cell exp-cell-travelers">
-        <button
-          type="button"
-          className="exp-travelers-trigger"
-          onClick={() => setTravelersOpen((v) => !v)}
-        >
-          <span className="exp-cell-label">المسافرون</span>
-          <strong>{travelerSummary}</strong>
-        </button>
-        {travelersOpen ? (
-          props.mode === "stays" ? (
-            renderStayOccupancyPop()
-          ) : (
-            <div className="exp-travelers-pop">
-              <div className="exp-travelers-row">
-                <span>بالغون</span>
-                <div className="exp-stepper">
-                  <button
-                    type="button"
-                    onClick={() => props.onAdultsChange(Math.max(1, props.adults - 1))}
-                  >
-                    −
-                  </button>
-                  <strong>{props.adults}</strong>
-                  <button type="button" onClick={() => props.onAdultsChange(props.adults + 1)}>
-                    +
-                  </button>
-                </div>
-              </div>
-              <div className="exp-travelers-row">
-                <span>أطفال</span>
-                <div className="exp-stepper">
-                  <button
-                    type="button"
-                    onClick={() => props.onChildrenChange(Math.max(0, props.children - 1))}
-                  >
-                    −
-                  </button>
-                  <strong>{props.children}</strong>
-                  <button type="button" onClick={() => props.onChildrenChange(props.children + 1)}>
-                    +
-                  </button>
-                </div>
-              </div>
-              <button type="button" className="exp-pop-done" onClick={() => setTravelersOpen(false)}>
-                تم
-              </button>
-            </div>
-          )
-        ) : null}
-      </div>
-    );
   }
 
   const isMulticity = props.tripType === "multicity";
@@ -698,6 +753,7 @@ export function ShopHeroBanner(props: Props) {
                 </button>
               </div>
               )}
+              {renderTravelersPanel()}
             </>
           ) : (
             <>
@@ -892,6 +948,7 @@ export function ShopHeroBanner(props: Props) {
               {props.loading ? "..." : "بحث"}
             </button>
             </div>
+            {renderTravelersPanel()}
             </>
           )}
           </div>

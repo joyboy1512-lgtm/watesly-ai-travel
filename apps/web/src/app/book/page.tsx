@@ -21,6 +21,7 @@ import {
   shopFetch,
 } from "@/lib/shop-session";
 import type { HotelBookingDraft, HotelRoomGuestDraft } from "@/lib/booking-draft";
+import { compressPassportImage } from "@/lib/compress-passport-image";
 
 function buildHotelRoomGuests(draft: HotelBookingDraft): HotelRoomGuestDraft[] {
   if (draft.roomGuests?.length) return draft.roomGuests;
@@ -119,15 +120,6 @@ function titleToGender(title?: string) {
   if (title === "ms" || title === "mrs") return "female";
   if (title === "mr") return "male";
   return "";
-}
-
-function readFileAsDataUrl(file: File) {
-  return new Promise<string>((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(String(reader.result || ""));
-    reader.onerror = () => reject(new Error("تعذر قراءة الصورة"));
-    reader.readAsDataURL(file);
-  });
 }
 
 function joinBirthDate(y: string, m: string, d: string) {
@@ -235,21 +227,20 @@ function FlightCheckout({
     }
 
     setScanning(true);
-    setScanHint("جارٍ تحليل صورة الجواز...");
+    setScanHint("جارٍ ضغط الصورة...");
     try {
-      const dataUrl = await readFileAsDataUrl(file);
-      const comma = dataUrl.indexOf(",");
-      const imageBase64 = comma >= 0 ? dataUrl.slice(comma + 1) : dataUrl;
+      const { base64: imageBase64, mimeType } = await compressPassportImage(file);
+      setScanHint("جارٍ تحليل صورة الجواز...");
       const result = await shopFetch<{
         fields: Partial<Traveler & { title?: string }>;
         confidence: number;
         notes?: string;
       }>("/shop/passport-scan", {
         method: "POST",
-        timeoutMs: 60000,
+        timeoutMs: 45000,
         body: JSON.stringify({
           imageBase64,
-          mimeType: file.type || "image/jpeg",
+          mimeType,
         }),
       });
 

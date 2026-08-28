@@ -152,10 +152,8 @@ function aiConfig() {
   const model =
     process.env.AI_VISION_MODEL ||
     process.env.OPENAI_VISION_MODEL ||
-    process.env.OPENAI_MODEL ||
-    process.env.AI_MODEL ||
     "gpt-4o-mini";
-  const timeoutMs = Number(process.env.AI_TIMEOUT_MS || 45000);
+  const timeoutMs = Number(process.env.AI_TIMEOUT_MS || 30000);
   return { apiKey, baseUrl, model, timeoutMs };
 }
 
@@ -168,7 +166,7 @@ function completionLimitBody(model: string, tokens: number) {
 }
 
 function chatCompletionBody(model: string, prompt: string, mime: string, rawBase64: string) {
-  const tokens = Number(process.env.AI_MAX_OUTPUT_TOKENS || 800);
+  const tokens = Number(process.env.AI_PASSPORT_MAX_TOKENS || 400);
   const body: Record<string, unknown> = {
     model,
     ...completionLimitBody(model, tokens),
@@ -181,6 +179,7 @@ function chatCompletionBody(model: string, prompt: string, mime: string, rawBase
             type: "image_url",
             image_url: {
               url: `data:${mime};base64,${rawBase64}`,
+              detail: "low",
             },
           },
         ],
@@ -227,21 +226,9 @@ export async function extractPassportFromImage(
     };
   }
 
-  const prompt = `You are a passport MRZ/OCR assistant for a travel booking system.
-Read the passport image carefully (visual zone and MRZ if visible).
-Return ONLY valid JSON with these keys:
-{
-  "firstName": string,
-  "lastName": string,
-  "birthDate": "YYYY-MM-DD",
-  "nationality": "ISO3 like SAU or 2-letter like SA if that is what appears",
-  "passportNumber": string,
-  "passportExpiry": "YYYY-MM-DD",
-  "sex": "M or F",
-  "mrzText": "optional raw MRZ lines",
-  "confidence": number between 0 and 1
-}
-Use empty string for unknown fields. Do not invent values.`;
+  const prompt = `Read this passport image (visual zone + MRZ). Return ONLY JSON:
+{"firstName":"","lastName":"","birthDate":"YYYY-MM-DD","nationality":"","passportNumber":"","passportExpiry":"YYYY-MM-DD","sex":"M|F","mrzText":"","confidence":0.9}
+Empty string for unknown fields. Do not invent values.`;
 
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);

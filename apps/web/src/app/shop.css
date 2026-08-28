@@ -187,7 +187,8 @@
   min-height: calc(100svh - 72px);
   min-height: calc(100dvh - 72px);
   margin-bottom: 0;
-  overflow: hidden;
+  /* Allow travelers/date popovers to escape the hero (was clipping "تم") */
+  overflow: visible;
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
@@ -323,6 +324,7 @@
   gap: 0.75rem;
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
+  overflow: visible;
 }
 
 .exp-pill-tabs-inset {
@@ -500,6 +502,12 @@
   gap: 0.12rem;
   border-color: rgba(255, 255, 255, 0.92);
   box-shadow: 0 2px 10px rgba(13, 16, 35, 0.08);
+  overflow: visible;
+}
+
+.exp-unified-card .exp-cell-travelers,
+.exp-unified-card .exp-form-row {
+  overflow: visible;
 }
 
 .exp-unified-card .exp-cell-label,
@@ -1306,10 +1314,16 @@
 
 .exp-travelers-pop {
   position: absolute;
-  z-index: 200;
-  top: calc(100% + 4px);
+  z-index: 400;
+  /* Open upward so the full list (incl. Done) stays visible above the hero edge */
+  top: auto;
+  bottom: calc(100% + 6px);
   inset-inline-start: 0;
-  min-width: 240px;
+  min-width: 260px;
+  max-height: min(70vh, 420px);
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   padding: 0.75rem;
   background: #fff;
   border: 1px solid var(--exp-border);

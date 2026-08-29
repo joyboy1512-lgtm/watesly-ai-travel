@@ -46,8 +46,7 @@ export const SHOP_DESTINATIONS: ShopDestination[] = [
     country: "الإمارات",
     code: "DXB",
     tag: "الأكثر طلباً",
-    image:
-      "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&w=900&q=80",
+    image: "/media/destinations/dubai.jpg?v=1",
     fromPrice: "من 89 د.ك",
     rating: 4.9,
     reviews: 1240,
@@ -58,8 +57,7 @@ export const SHOP_DESTINATIONS: ShopDestination[] = [
     country: "تركيا",
     code: "IST",
     tag: "ثقافة وتاريخ",
-    image:
-      "https://images.unsplash.com/photo-1524231757912-21f4fe3a7200?auto=format&fit=crop&w=900&q=80",
+    image: "/media/destinations/istanbul.jpg?v=1",
     fromPrice: "من 72 د.ك",
     rating: 4.8,
     reviews: 980,
@@ -70,8 +68,7 @@ export const SHOP_DESTINATIONS: ShopDestination[] = [
     country: "جزر المحيط",
     code: "MLE",
     tag: "شاطئ واسترخاء",
-    image:
-      "https://images.unsplash.com/photo-1514282401047-d79ba59a82fa?auto=format&fit=crop&w=900&q=80",
+    image: "/media/destinations/maldives.jpg?v=1",
     fromPrice: "من 210 د.ك",
     rating: 5,
     reviews: 640,
@@ -82,8 +79,7 @@ export const SHOP_DESTINATIONS: ShopDestination[] = [
     country: "بريطانيا",
     code: "LHR",
     tag: "عائلات",
-    image:
-      "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?auto=format&fit=crop&w=900&q=80",
+    image: "/media/destinations/london.jpg?v=1",
     fromPrice: "من 145 د.ك",
     rating: 4.7,
     reviews: 720,
@@ -94,8 +90,7 @@ export const SHOP_DESTINATIONS: ShopDestination[] = [
     country: "فرنسا",
     code: "CDG",
     tag: "رومانسية",
-    image:
-      "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=900&q=80",
+    image: "/media/destinations/paris.jpg?v=1",
     fromPrice: "من 138 د.ك",
     rating: 4.8,
     reviews: 860,
@@ -106,8 +101,7 @@ export const SHOP_DESTINATIONS: ShopDestination[] = [
     country: "قطر",
     code: "DOH",
     tag: "قريبة من الكويت",
-    image:
-      "https://images.unsplash.com/photo-1580418827493-f2b062c0a640?auto=format&fit=crop&w=900&q=80",
+    image: "/media/destinations/doha.jpg?v=1",
     fromPrice: "من 45 د.ك",
     rating: 4.9,
     reviews: 510,
@@ -120,8 +114,7 @@ export const SHOP_OFFERS: ShopOffer[] = [
     title: "إقامة 3 ليالٍ في دبي",
     subtitle: "فندق 5 نجوم + إفطار",
     badge: "عرض فندقي",
-    image:
-      "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=900&q=80",
+    image: "/media/offers/hotel.jpg?v=1",
     priceLabel: "من 185 د.ك",
     mode: "stays",
     destination: "دبي",
@@ -131,8 +124,7 @@ export const SHOP_OFFERS: ShopOffer[] = [
     title: "الكويت ↔ دبي",
     subtitle: "ذهاب وعودة · اقتصادية",
     badge: "طيران",
-    image:
-      "https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&w=900&q=80",
+    image: "/media/offers/flight.jpg?v=1",
     priceLabel: "من 89 د.ك",
     mode: "flights",
     code: "DXB",
@@ -143,8 +135,7 @@ export const SHOP_OFFERS: ShopOffer[] = [
     title: "نقل VIP من المطار",
     subtitle: "KWI → فندقك في الكويت",
     badge: "نقل",
-    image:
-      "https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?auto=format&fit=crop&w=900&q=80",
+    image: "/media/offers/transfer.jpg?v=1",
     priceLabel: "من 18 د.ك",
     mode: "cars",
     destination: "الكويت",
@@ -154,8 +145,7 @@ export const SHOP_OFFERS: ShopOffer[] = [
     title: "جولة بحرية وغروب",
     subtitle: "دبي · 3 ساعات",
     badge: "نشاط",
-    image:
-      "https://images.unsplash.com/photo-1544551763-77a415ccc845?auto=format&fit=crop&w=900&q=80",
+    image: "/media/offers/boat-sunset.jpg?v=1",
     priceLabel: "من 32 د.ك",
     mode: "activities",
     code: "DXB",

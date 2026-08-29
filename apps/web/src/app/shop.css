@@ -2145,6 +2145,7 @@
   height: 200px;
   object-fit: cover;
   display: block;
+  background: linear-gradient(135deg, #dbeafe 0%, #e2e8f0 100%);
 }
 
 .shop-dest-tag,

@@ -58,7 +58,20 @@ export function ShopLanding({ onPickDestination, onPickOffer }: Props) {
               onClick={() => onPickDestination(dest)}
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={dest.image} alt={dest.name} loading="lazy" />
+              <img
+                src={dest.image}
+                alt={dest.name}
+                loading="lazy"
+                onError={(e) => {
+                  const el = e.currentTarget;
+                  el.onerror = null;
+                  el.src =
+                    "data:image/svg+xml," +
+                    encodeURIComponent(
+                      `<svg xmlns="http://www.w3.org/2000/svg" width="900" height="600"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#bfdbfe"/><stop offset="1" stop-color="#e2e8f0"/></linearGradient></defs><rect width="100%" height="100%" fill="url(#g)"/><text x="50%" y="50%" text-anchor="middle" fill="#334155" font-size="36" font-family="Arial">${dest.name}</text></svg>`,
+                    );
+                }}
+              />
               <span className="shop-dest-tag">{dest.tag}</span>
               <div className="shop-dest-body">
                 <div>
@@ -92,7 +105,20 @@ export function ShopLanding({ onPickDestination, onPickOffer }: Props) {
               onClick={() => onPickOffer(offer)}
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={offer.image} alt={offer.title} loading="lazy" />
+              <img
+                src={offer.image}
+                alt={offer.title}
+                loading="lazy"
+                onError={(e) => {
+                  const el = e.currentTarget;
+                  el.onerror = null;
+                  el.src =
+                    "data:image/svg+xml," +
+                    encodeURIComponent(
+                      `<svg xmlns="http://www.w3.org/2000/svg" width="900" height="600"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#bfdbfe"/><stop offset="1" stop-color="#e2e8f0"/></linearGradient></defs><rect width="100%" height="100%" fill="url(#g)"/><text x="50%" y="50%" text-anchor="middle" fill="#334155" font-size="28" font-family="Arial">${offer.badge}</text></svg>`,
+                    );
+                }}
+              />
               <span className="shop-offer-badge">{offer.badge}</span>
               <div className="shop-offer-body">
                 <h3>{offer.title}</h3>

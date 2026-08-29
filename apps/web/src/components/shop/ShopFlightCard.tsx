@@ -409,7 +409,7 @@ export function ShopFlightCard({
         </div>
       </div>
 
-      <div className="shop-ticket-bags shop-ticket-bags-text shop-ticket-card-footer">
+      <div className="shop-ticket-bags shop-ticket-bags-text shop-ticket-card-footer" aria-label="الأمتعة">
         <span className={hasCabin ? "" : "off"}>
           🎒 {hasCabin ? cabinBag : "مقصورة حسب الفئة"}
         </span>

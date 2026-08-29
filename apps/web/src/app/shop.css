@@ -3668,7 +3668,7 @@
 
 .shop-ticket-card.is-picked {
   border-color: var(--exp-blue, #1668e3);
-  box-shadow: 0 0 0 1px var(--exp-blue, #1668e3);
+  box-shadow: inset 0 -3px 0 var(--exp-blue, #1668e3), 0 0 0 1px var(--exp-blue, #1668e3);
 }
 
 .shop-ticket-card-roundtrip .shop-ticket-body {
@@ -5715,13 +5715,21 @@
     "footer footer";
   gap: 0.25rem 0.65rem;
   align-items: stretch;
-  padding: 0.45rem 0.6rem 0.3rem;
+  padding: 0.45rem 0.6rem 0.55rem;
   overflow: hidden;
   background: #fff;
+  border: 1px solid var(--exp-blue, #1668e3);
+  box-shadow: inset 0 -3px 0 var(--exp-blue, #1668e3);
 }
 
 .shop-ticket-card-v2.shop-ticket-card-roundtrip {
   background: #fff;
+}
+
+.shop-ticket-card-v2.is-picked,
+.shop-ticket-card-v2.is-expanded {
+  border-color: var(--exp-blue, #1668e3);
+  box-shadow: inset 0 -3px 0 var(--exp-blue, #1668e3), 0 0 0 1px rgba(22, 104, 227, 0.2);
 }
 
 .shop-ticket-card-v2 > .shop-ticket-badges {
@@ -6142,7 +6150,7 @@
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
-  justify-content: center;
+  justify-content: flex-start;
   align-items: center;
   gap: 0.35rem 1rem;
   padding-top: 0.3rem;
@@ -6150,6 +6158,11 @@
   border-top: 1px dashed rgba(15, 51, 64, 0.12);
   font-size: 0.72rem;
   color: #334155;
+  text-align: start;
+}
+
+.shop-ticket-card-footer.shop-ticket-bags-text span {
+  text-align: start;
 }
 
 .shop-ticket-side-v2 .shop-ticket-details-btn {
@@ -6393,7 +6406,11 @@
       "side"
       "footer";
     gap: 0.45rem;
-    padding: 0.6rem 0.7rem 0.45rem;
+    padding: 0.6rem 0.7rem 0.55rem;
+  }
+
+  .shop-ticket-card-footer.shop-ticket-bags-text {
+    justify-content: flex-start;
   }
 
   .shop-ticket-card-v2 > .shop-ticket-badges {
@@ -6453,10 +6470,6 @@
   .shop-ticket-side-v2 .shop-ticket-price,
   .shop-ticket-side-v2 .shop-ticket-price-note {
     text-align: center;
-  }
-
-  .shop-ticket-card-footer.shop-ticket-bags-text {
-    justify-content: center;
   }
 
   .shop-ticket-side-v2 .shop-ticket-details-btn {
@@ -6715,6 +6728,11 @@
   font-size: 0.74rem;
   color: #334155;
   margin-bottom: 0;
+}
+
+.shop-ticket-card.shop-ticket-card-v2 {
+  border: 1px solid var(--exp-blue, #1668e3);
+  box-shadow: inset 0 -3px 0 var(--exp-blue, #1668e3);
 }
 
 .shop-ticket-bags-text .off {

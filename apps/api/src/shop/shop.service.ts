@@ -982,16 +982,93 @@ export class ShopService {
 
   async handlePaymentWebhook(body: Record<string, unknown>) {
     const { getPaymentGateway } = await import("@watesly-travel/provider-sdk");
+    const { normalizeShopPaymentStatus } = await import("@watesly-travel/shared");
     const gateway = getPaymentGateway();
     const event = await gateway.verifyAndParseWebhook(
       { "x-weekendgate-signature": "sandbox" },
       JSON.stringify(body),
     );
-    // Redirect alone is never enough — webhook drives status
-    if (event.status === "captured" || event.status === "authorized") {
-      return { ok: true, status: event.status, intentId: event.intentId };
+    // Redirect alone is never enough — webhook drives Payment.status
+    const shopStatus = normalizeShopPaymentStatus(event.status);
+    const intent = await gateway.getIntent(event.intentId);
+    const bookingId =
+      intent?.bookingId ||
+      String(body.bookingId || body.weekendgateRef || "").trim() ||
+      null;
+
+    if (
+      bookingId &&
+      (shopStatus === "paid" ||
+        event.status === "captured" ||
+        event.status === "authorized")
+    ) {
+      const booking = await this.prisma.booking.findFirst({
+        where: { id: bookingId },
+        include: { payments: true, quote: true },
+      });
+      if (booking) {
+        const paidStatus = normalizeShopPaymentStatus(
+          event.status === "authorized" ? "paid" : event.status,
+        );
+        if (booking.payments.length) {
+          await this.prisma.payment.updateMany({
+            where: { bookingId: booking.id },
+            data: {
+              status: paidStatus,
+              reference: event.providerRef || event.intentId,
+              method: intent?.method || booking.payments[0]?.method || "hosted_card",
+            },
+          });
+        } else {
+          await this.prisma.payment.create({
+            data: {
+              organizationId: booking.organizationId,
+              bookingId: booking.id,
+              status: paidStatus,
+              method: intent?.method || "hosted_card",
+              amount: event.amountMinor ?? booking.totalSellAmount,
+              currency:
+                event.currency ||
+                booking.quote?.currency ||
+                intent?.currency ||
+                "KWD",
+              reference: event.providerRef || event.intentId,
+            },
+          });
+        }
+        if (
+          paidStatus === "paid" &&
+          booking.status !== "issued" &&
+          booking.status !== "completed" &&
+          booking.status !== "cancelled"
+        ) {
+          await this.prisma.booking.update({
+            where: { id: booking.id },
+            data: {
+              status:
+                booking.status === "draft" || booking.status === "on_hold"
+                  ? "on_hold"
+                  : booking.status,
+            },
+          });
+        }
+      }
+    } else if (
+      bookingId &&
+      (shopStatus === "failed" ||
+        shopStatus === "refunded" ||
+        shopStatus === "partially_refunded")
+    ) {
+      await this.prisma.payment.updateMany({
+        where: { bookingId },
+        data: {
+          status: shopStatus,
+          reference: event.providerRef || event.intentId,
+        },
+      });
     }
-    return { ok: true, status: event.status, intentId: event.intentId };
+
+    return { ok: true, status: shopStatus, intentId: event.intentId, bookingId };
   }
 
   async assistantChat(customer: ShopCustomer, body: { message?: string }) {

@@ -14,6 +14,8 @@ import {
   pointsEarnedFromSpend,
   shouldFirePriceAlert,
   isPlatformEnabled,
+  getInventoryMode,
+  isLiveBookingReady,
 } from "./index";
 
 describe("platform trip builder", () => {
@@ -86,5 +88,15 @@ describe("platform feature flag", () => {
   it("is off by default", () => {
     assert.equal(isPlatformEnabled({}), false);
     assert.equal(isPlatformEnabled({ NEXT_PUBLIC_WG_PLATFORM: "1" }), true);
+  });
+});
+
+describe("inventory mode", () => {
+  it("defaults to mock/sandbox not live-ready", () => {
+    const mode = getInventoryMode();
+    assert.equal(mode.flightProvider, "mock");
+    assert.equal(mode.hotelProvider, "mock");
+    assert.equal(mode.paymentEnv, "sandbox");
+    assert.equal(isLiveBookingReady(), false);
   });
 });

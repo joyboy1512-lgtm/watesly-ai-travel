@@ -288,7 +288,7 @@
   padding: 0.7rem 1.15rem;
   border-radius: 10px;
   background: #00255d;
-  color: #fff !important;
+  color: #fff;
   font-weight: 800;
   text-decoration: none;
   white-space: nowrap;
@@ -2323,13 +2323,13 @@
 .shop-feature-card h3 {
   margin: 0 0 0.35rem;
   font-size: 1rem;
-  color: var(--sea-800);
+  color: #00255d;
 }
 
 .shop-feature-card p {
   margin: 0;
   font-size: 0.86rem;
-  color: var(--sea-muted);
+  color: #475569;
   line-height: 1.6;
 }
 
@@ -6412,30 +6412,31 @@
   width: min(760px, calc(100% - 2rem));
   margin: 1.5rem auto 3rem;
   background: #fff;
-  border: 1px solid var(--exp-border);
+  border: 1px solid var(--exp-border, #dcdee5);
   border-radius: 14px;
   padding: 1.25rem 1.35rem;
+  color: #191e3b;
 }
 
 .shop-legal-page h1 {
   margin: 0 0 1rem;
-  color: var(--exp-navy);
+  color: #00255d;
 }
 
 .shop-legal-body h2 {
   margin: 1rem 0 0.45rem;
   font-size: 1rem;
-  color: var(--exp-navy);
+  color: #00255d;
 }
 
 .shop-legal-body p,
 .shop-legal-body li {
-  color: var(--exp-muted);
+  color: #475569;
   line-height: 1.7;
 }
 
 .shop-legal-back a {
-  color: var(--exp-blue);
+  color: #1668e3;
   font-weight: 600;
 }
 

@@ -12,7 +12,8 @@ export type PaymentIntentStatus =
   | "failed"
   | "cancelled"
   | "expired"
-  | "refunded";
+  | "refunded"
+  | "partially_refunded";
 
 export type CreatePaymentIntentInput = {
   amountMinor: number;

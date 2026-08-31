@@ -10,6 +10,8 @@ import {
   type ShopDestination,
   type ShopOffer,
 } from "@/lib/shop-content";
+import { DESTINATION_GUIDES, WEEKEND_DEALS } from "@watesly-travel/shared";
+import { platformEnabled } from "@/lib/platform-flags";
 
 type Props = {
   onPickDestination: (dest: ShopDestination) => void;
@@ -28,10 +30,41 @@ function Stars({ value }: { value: number }) {
   );
 }
 
+function guideToShopDest(slug: string): ShopDestination | null {
+  const g = DESTINATION_GUIDES.find((d) => d.slug === slug);
+  if (!g) return null;
+  return {
+    id: g.slug,
+    name: g.nameAr,
+    country: g.countryAr,
+    code: g.airportCode,
+    tag: g.flag,
+    image: g.image,
+    fromPrice: g.costHintAr.replace(/^[^~]*~?/, "من ").slice(0, 24) || "عرض خاص",
+    rating: 4.9,
+    reviews: 500,
+  };
+}
+
 export function ShopLanding({ onPickDestination, onPickOffer }: Props) {
   const footerStats = SHOP_STATS.filter(
     (row) => row.label !== "مسافر سعيد" && row.label !== "تقييم العملاء",
   );
+  const platformOn = platformEnabled();
+  const destCards = platformOn
+    ? DESTINATION_GUIDES.map((g) => ({
+        slug: g.slug,
+        name: g.nameAr,
+        country: g.countryAr,
+        flag: g.flag,
+        image: g.image,
+        tag: g.bestTimeAr.slice(0, 28),
+        fromPrice: g.costHintAr.match(/~\s*(\d+)/)?.[1]
+          ? `من ${g.costHintAr.match(/~\s*(\d+)/)?.[1]} د.ك`
+          : "عرض خاص",
+        shop: guideToShopDest(g.slug),
+      }))
+    : null;
 
   return (
     <div className="shop-landing">
@@ -41,92 +74,138 @@ export function ShopLanding({ onPickDestination, onPickOffer }: Props) {
             <p className="shop-kicker">وجهات مميزة</p>
             <h2>اكتشف العالم بطريقتك</h2>
             <p className="shop-lead">
-              وجهات مختارة بصور حقيقية وتقييمات مسافرين — اضغط على أي وجهة لملء
-              البحث فوراً.
+              {platformOn
+                ? "وجهات مختارة بصفحات كاملة — افتح الوجهة أو املأ محرك البحث فوراً."
+                : "وجهات مختارة بصور حقيقية وتقييمات مسافرين — اضغط على أي وجهة لملء البحث فوراً."}
             </p>
           </div>
-          <Link href="/#search" className="shop-btn-ghost">
-            ابحث الآن
-          </Link>
+          {platformOn ? (
+            <Link href="/destinations" className="shop-btn-ghost">
+              كل الوجهات
+            </Link>
+          ) : (
+            <Link href="/#search" className="shop-btn-ghost">
+              ابحث الآن
+            </Link>
+          )}
         </div>
         <div className="shop-dest-grid">
-          {SHOP_DESTINATIONS.map((dest) => (
-            <button
-              key={dest.id}
-              type="button"
-              className="shop-dest-card"
-              onClick={() => onPickDestination(dest)}
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={dest.image}
-                alt={dest.name}
-                loading="lazy"
-                onError={(e) => {
-                  const el = e.currentTarget;
-                  el.onerror = null;
-                  el.src =
-                    "data:image/svg+xml," +
-                    encodeURIComponent(
-                      `<svg xmlns="http://www.w3.org/2000/svg" width="900" height="600"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#bfdbfe"/><stop offset="1" stop-color="#e2e8f0"/></linearGradient></defs><rect width="100%" height="100%" fill="url(#g)"/><text x="50%" y="50%" text-anchor="middle" fill="#334155" font-size="36" font-family="Arial">${dest.name}</text></svg>`,
-                    );
-                }}
-              />
-              <span className="shop-dest-tag">{dest.tag}</span>
-              <div className="shop-dest-body">
-                <div>
-                  <h3>{dest.name}</h3>
-                  <p>{dest.country}</p>
+          {platformOn && destCards
+            ? destCards.map((dest) => (
+                <div key={dest.slug} className="shop-dest-card" style={{ padding: 0, display: "grid" }}>
+                  <Link
+                    href={`/destinations/${dest.slug}`}
+                    style={{ textDecoration: "none", color: "inherit", display: "block" }}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={dest.image} alt={dest.name} loading="lazy" />
+                    <span className="shop-dest-tag">
+                      {dest.flag} {dest.name}
+                    </span>
+                    <div className="shop-dest-body">
+                      <div>
+                        <h3>
+                          {dest.flag} {dest.name}
+                        </h3>
+                        <p>{dest.country}</p>
+                      </div>
+                      <div className="shop-dest-meta">
+                        <Stars value={4.9} />
+                        <small>{dest.tag}</small>
+                        <strong>{dest.fromPrice}</strong>
+                      </div>
+                    </div>
+                  </Link>
+                  {dest.shop ? (
+                    <button
+                      type="button"
+                      className="shop-btn-ghost"
+                      style={{ margin: "0.5rem 0.75rem 0.75rem" }}
+                      onClick={() => onPickDestination(dest.shop!)}
+                    >
+                      املأ البحث
+                    </button>
+                  ) : null}
                 </div>
-                <div className="shop-dest-meta">
-                  <Stars value={dest.rating} />
-                  <small>{dest.reviews.toString()} تقييم</small>
-                  <strong>{dest.fromPrice}</strong>
-                </div>
-              </div>
-            </button>
-          ))}
+              ))
+            : SHOP_DESTINATIONS.map((dest) => (
+                <button
+                  key={dest.id}
+                  type="button"
+                  className="shop-dest-card"
+                  onClick={() => onPickDestination(dest)}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={dest.image} alt={dest.name} loading="lazy" />
+                  <span className="shop-dest-tag">{dest.tag}</span>
+                  <div className="shop-dest-body">
+                    <div>
+                      <h3>{dest.name}</h3>
+                      <p>{dest.country}</p>
+                    </div>
+                    <div className="shop-dest-meta">
+                      <Stars value={dest.rating} />
+                      <small>{dest.reviews.toString()} تقييم</small>
+                      <strong>{dest.fromPrice}</strong>
+                    </div>
+                  </div>
+                </button>
+              ))}
         </div>
       </section>
 
       <section className="shop-section shop-section-soft" id="offers">
         <div className="shop-section-head">
           <div>
-            <p className="shop-kicker">عروض الأسبوع</p>
-            <h2>باقات جاهزة بأسعار تبدأ من</h2>
+            <p className="shop-kicker">{platformOn ? "Weekend Deals" : "عروض الأسبوع"}</p>
+            <h2>{platformOn ? "عروض نهاية الأسبوع من الكويت" : "باقات جاهزة بأسعار تبدأ من"}</h2>
           </div>
+          {platformOn ? (
+            <Link href="/deals" className="shop-btn-ghost">
+              كل العروض
+            </Link>
+          ) : null}
         </div>
         <div className="shop-offer-grid">
-          {SHOP_OFFERS.map((offer) => (
-            <button
-              key={offer.id}
-              type="button"
-              className="shop-offer-card"
-              onClick={() => onPickOffer(offer)}
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={offer.image}
-                alt={offer.title}
-                loading="lazy"
-                onError={(e) => {
-                  const el = e.currentTarget;
-                  el.onerror = null;
-                  el.src =
-                    "data:image/svg+xml," +
-                    encodeURIComponent(
-                      `<svg xmlns="http://www.w3.org/2000/svg" width="900" height="600"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#bfdbfe"/><stop offset="1" stop-color="#e2e8f0"/></linearGradient></defs><rect width="100%" height="100%" fill="url(#g)"/><text x="50%" y="50%" text-anchor="middle" fill="#334155" font-size="28" font-family="Arial">${offer.badge}</text></svg>`,
-                    );
-                }}
-              />
-              <span className="shop-offer-badge">{offer.badge}</span>
-              <div className="shop-offer-body">
-                <h3>{offer.title}</h3>
-                <p>{offer.subtitle}</p>
-                <strong>{offer.priceLabel}</strong>
-              </div>
-            </button>
-          ))}
+          {platformOn
+            ? WEEKEND_DEALS.filter((d) => d.active)
+                .slice(0, 4)
+                .map((deal) => (
+                  <Link
+                    key={deal.id}
+                    href={`/deals/${deal.slug}`}
+                    className="shop-offer-card"
+                    style={{ textDecoration: "none", color: "inherit" }}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={deal.image} alt={deal.titleAr} loading="lazy" />
+                    <span className="shop-offer-badge">{deal.countryFlag} عرض</span>
+                    <div className="shop-offer-body">
+                      <h3>{deal.titleAr}</h3>
+                      <p>{deal.descriptionAr}</p>
+                      <strong>
+                        {(deal.salePriceMinor / 1000).toFixed(0)} {deal.currency}
+                      </strong>
+                    </div>
+                  </Link>
+                ))
+            : SHOP_OFFERS.map((offer) => (
+                <button
+                  key={offer.id}
+                  type="button"
+                  className="shop-offer-card"
+                  onClick={() => onPickOffer(offer)}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={offer.image} alt={offer.title} loading="lazy" />
+                  <span className="shop-offer-badge">{offer.badge}</span>
+                  <div className="shop-offer-body">
+                    <h3>{offer.title}</h3>
+                    <p>{offer.subtitle}</p>
+                    <strong>{offer.priceLabel}</strong>
+                  </div>
+                </button>
+              ))}
         </div>
       </section>
 
@@ -182,16 +261,33 @@ export function ShopLanding({ onPickDestination, onPickOffer }: Props) {
       <section className="shop-cta-banner">
         <div>
           <p className="shop-kicker light">جاهز للانطلاق؟</p>
-          <h2>خطّط رحلتك مع مساعد WeekendGate</h2>
-          <p>أدخل جوالك وابدأ محادثة ذكية — أو ابحث مباشرة من الأعلى.</p>
+          <h2>{platformOn ? "ابدأ من البحث أو رحّلتي" : "خطّط رحلتك مع مساعد WeekendGate"}</h2>
+          <p>
+            {platformOn
+              ? "استخدم محرك البحث أعلاه ثم اضغط «ابدأ بناء رحلتي»، أو تصفّح الوجهات والعروض."
+              : "أدخل جوالك وابدأ محادثة ذكية — أو ابحث مباشرة من الأعلى."}
+          </p>
         </div>
         <div className="shop-cta-actions">
-          <Link href="/chat" className="shop-btn shop-btn-light">
-            تحدث مع المساعد
-          </Link>
-          <Link href="/#search" className="shop-btn-ghost shop-btn-ghost-light">
-            ابحث عن رحلة
-          </Link>
+          {platformOn ? (
+            <>
+              <Link href="/#search" className="shop-btn shop-btn-light">
+                محرك البحث
+              </Link>
+              <Link href="/destinations" className="shop-btn-ghost shop-btn-ghost-light">
+                الوجهات
+              </Link>
+            </>
+          ) : (
+            <>
+              <Link href="/chat" className="shop-btn shop-btn-light">
+                تحدث مع المساعد
+              </Link>
+              <Link href="/#search" className="shop-btn-ghost shop-btn-ghost-light">
+                ابحث عن رحلة
+              </Link>
+            </>
+          )}
         </div>
       </section>
 

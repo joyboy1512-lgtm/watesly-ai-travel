@@ -3,13 +3,16 @@
 import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
 import "../shop.css";
+import "../platform.css";
 import { StoreFront } from "@/components/shop/StoreFront";
+import { AccountSubnav } from "@/components/platform/AccountSubnav";
 import { formatMoneyMinor } from "@/lib/format";
 import {
   clearShopSession,
   getShopSession,
   shopFetch,
 } from "@/lib/shop-session";
+import { platformEnabled } from "@/lib/platform-flags";
 
 type Traveler = {
   id: string;
@@ -106,6 +109,11 @@ export default function AccountPage() {
 
   return (
     <StoreFront>
+      {platformEnabled() ? (
+        <div className="wg-platform" style={{ paddingBottom: 0 }}>
+          <AccountSubnav />
+        </div>
+      ) : null}
       <section className="shop-panel">
         <h1>حسابي</h1>
         {error ? <p className="shop-error">{error}</p> : null}

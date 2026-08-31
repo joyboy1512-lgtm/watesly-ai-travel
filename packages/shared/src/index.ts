@@ -15,3 +15,4 @@ export * from "./assistant-safety";
 export * from "./transfer-display";
 export * from "./activity-display";
 export * from "./chat-attach";
+export * from "./platform";

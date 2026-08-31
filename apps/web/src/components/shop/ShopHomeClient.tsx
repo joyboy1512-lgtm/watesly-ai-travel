@@ -22,6 +22,7 @@ import { ShopLanding } from "@/components/shop/ShopLanding";
 import { ShopHeroBanner, type FlightLeg, type FlightTripType } from "@/components/shop/ShopHeroBanner";
 import type { ShopDestination, ShopOffer } from "@/lib/shop-content";
 import { openFlightResultsInNewTab } from "@/lib/flight-results-url";
+import { platformEnabled } from "@/lib/platform-flags";
 import {
   encodeRoomOccupancies,
   openHotelResultsInNewTab,
@@ -596,6 +597,66 @@ export function ShopHomeClient() {
     scrollToSearch();
   }
 
+  const tripBuilderHref = useMemo(() => {
+    if (!platformEnabled()) return undefined;
+    const q = new URLSearchParams();
+    q.set("fromSearch", "1");
+    if (mode === "flights") {
+      const o = tripType === "multicity" ? flightLegs[0]?.origin || origin : origin;
+      const d =
+        tripType === "multicity" ? flightLegs[0]?.destination || destination : destination;
+      const oLabel =
+        tripType === "multicity" ? flightLegs[0]?.originLabel || originLabel : originLabel;
+      const dLabel =
+        tripType === "multicity"
+          ? flightLegs[0]?.destinationLabel || destinationLabel
+          : destinationLabel;
+      const dep =
+        tripType === "multicity" ? flightLegs[0]?.departDate || departDate : departDate;
+      if (o) q.set("origin", o);
+      if (oLabel) q.set("originLabel", oLabel);
+      if (d) q.set("destination", d);
+      if (dLabel) q.set("destinationLabel", dLabel);
+      if (dep) q.set("departDate", dep);
+      if (tripType === "roundtrip" && returnDate) q.set("returnDate", returnDate);
+      q.set("tripType", tripType);
+      q.set("adults", String(adults));
+      q.set("children", String(children));
+      q.set("infants", String(infants));
+      q.set("cabinClass", cabinClass);
+      if (directOnly) q.set("directOnly", "1");
+    } else if (mode === "stays") {
+      if (stayQuery) q.set("hotelQuery", stayQuery);
+      if (departDate) q.set("checkIn", departDate);
+      if (returnDate) q.set("checkOut", returnDate);
+      q.set("adults", String(adults));
+      q.set("rooms", String(rooms));
+    } else {
+      if (origin) q.set("origin", origin);
+      if (destination || activityDest) q.set("destination", destination || activityDest);
+      if (departDate) q.set("departDate", departDate);
+    }
+    return `/trip-builder?${q.toString()}`;
+  }, [
+    mode,
+    tripType,
+    flightLegs,
+    origin,
+    originLabel,
+    destination,
+    destinationLabel,
+    departDate,
+    returnDate,
+    adults,
+    children,
+    infants,
+    cabinClass,
+    directOnly,
+    stayQuery,
+    rooms,
+    activityDest,
+  ]);
+
   return (
     <>
       <ShopHeroBanner
@@ -684,6 +745,7 @@ export function ShopHomeClient() {
         message={message}
         searchAirports={searchAirports}
         searchCities={searchCities}
+        tripBuilderHref={tripBuilderHref}
       />
 
       {mode === "flights" && flightResults.length > 0 ? (

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, type ReactNode } from "react";
+import Link from "next/link";
 import { HERO_SLIDES } from "@/lib/shop-content";
 import { ShopAutocomplete, type SuggestItem } from "@/components/shop/ShopAutocomplete";
 import { ShopDateRangePicker } from "@/components/shop/ShopDateRangePicker";
@@ -88,6 +89,8 @@ type Props = {
   message: string;
   searchAirports: (q: string) => Promise<SuggestItem[]>;
   searchCities: (q: string) => Promise<SuggestItem[]>;
+  /** When set, shows Trip Builder CTA under the search box */
+  tripBuilderHref?: string;
 };
 
 const PRODUCTS: Array<{ key: Mode; label: string; icon: ReactNode }> = [
@@ -956,6 +959,34 @@ export function ShopHeroBanner(props: Props) {
           {props.error ? <p className="shop-error exp-dialog-msg">{props.error}</p> : null}
           {props.message ? <p className="shop-status exp-dialog-msg">{props.message}</p> : null}
         </div>
+
+        {props.tripBuilderHref ? (
+          <div className="exp-trip-builder-cta">
+            <div className="exp-trip-builder-cta-copy">
+              <strong>رحّلتي — Trip Builder</strong>
+              <span>كوّن رحلتك: طيران + فندق + نقل + أنشطة — بنفس بيانات البحث أعلاه</span>
+            </div>
+            <Link
+              href={props.tripBuilderHref}
+              className="exp-trip-builder-cta-btn"
+              onClick={() => {
+                try {
+                  sessionStorage.setItem(
+                    "wg_trip_builder_search",
+                    JSON.stringify({
+                      href: props.tripBuilderHref,
+                      at: Date.now(),
+                    }),
+                  );
+                } catch {
+                  /* ignore */
+                }
+              }}
+            >
+              ابدأ بناء رحلتي
+            </Link>
+          </div>
+        ) : null}
 
         <h1 className="exp-home-tagline">كل رحلتك تبدأ من مكان واحد</h1>
       </div>

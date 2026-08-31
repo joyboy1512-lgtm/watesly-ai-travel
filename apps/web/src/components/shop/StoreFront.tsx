@@ -11,6 +11,7 @@ import {
 } from "@/lib/shop-session";
 import { WeekendGateLogo } from "@/components/shop/WeekendGateLogo";
 import { COMPANY_LEGAL } from "@watesly-travel/shared";
+import { platformEnabled } from "@/lib/platform-flags";
 
 const ShopAssistant = dynamic(
   () => import("@/components/shop/ShopAssistant").then((m) => m.ShopAssistant),
@@ -50,6 +51,13 @@ export function StoreFront({
           </Link>
 
           <nav className="exp-header-links" aria-label="روابط رئيسية">
+            {platformEnabled() ? (
+              <>
+                <Link href="/deals">Weekend Deals</Link>
+                <Link href="/destinations">الوجهات</Link>
+                <Link href="/trip-builder">رحّلتي</Link>
+              </>
+            ) : null}
             <Link href="/about">من نحن</Link>
             <Link href="/booking-policy">سياسة الحجز</Link>
             <Link href="/faq">الأسئلة الشائعة</Link>
@@ -66,6 +74,19 @@ export function StoreFront({
           </button>
 
           <nav className={`exp-util-nav${menuOpen ? " open" : ""}`}>
+            {platformEnabled() ? (
+              <>
+                <Link href="/deals" className="exp-util-link mobile-only">
+                  Weekend Deals
+                </Link>
+                <Link href="/destinations" className="exp-util-link mobile-only">
+                  الوجهات
+                </Link>
+                <Link href="/trip-builder" className="exp-util-link mobile-only">
+                  رحّلتي
+                </Link>
+              </>
+            ) : null}
             <Link href="/about" className="exp-util-link mobile-only">
               من نحن
             </Link>
@@ -128,8 +149,18 @@ export function StoreFront({
           </div>
           <div>
             <strong>استكشف</strong>
-            <Link href="/#destinations">الوجهات</Link>
-            <Link href="/#offers">العروض</Link>
+            {platformEnabled() ? (
+              <>
+                <Link href="/destinations">الوجهات</Link>
+                <Link href="/deals">العروض</Link>
+                <Link href="/trip-builder">رحّلتي</Link>
+              </>
+            ) : (
+              <>
+                <Link href="/#destinations">الوجهات</Link>
+                <Link href="/#offers">العروض</Link>
+              </>
+            )}
             <Link href="/#search">البحث</Link>
             <Link href="/chat">المساعد الذكي</Link>
             <Link href="/bookings/manage">إدارة حجزي</Link>

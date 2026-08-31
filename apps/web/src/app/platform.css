@@ -49,6 +49,7 @@
   padding: 0.85rem 1rem 1rem;
   display: grid;
   gap: 0.35rem;
+  color: var(--wg-ink);
 }
 
 .wg-platform-card h2 {
@@ -98,10 +99,21 @@
   font: inherit;
 }
 
+/* Beat `.shop-root a { color: inherit }` so Link buttons stay readable */
+.shop-root a.wg-btn,
+a.wg-btn {
+  color: #fff;
+}
+
 .wg-btn.secondary {
   background: #fff;
   color: var(--wg-navy);
   border: 1px solid var(--wg-border);
+}
+
+.shop-root a.wg-btn.secondary,
+a.wg-btn.secondary {
+  color: var(--wg-navy);
 }
 
 .wg-btn:disabled {

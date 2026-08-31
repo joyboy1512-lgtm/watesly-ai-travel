@@ -146,7 +146,11 @@ function HotelDetailInner() {
         description: hotel.description,
         sellAmountMinor: totalMinor,
         currency: hotel.currency,
-        details: hotel.details,
+        details: {
+          ...hotel.details,
+          costAmountMinor: hotel.costAmountMinor,
+          validatedAt: new Date().toISOString(),
+        },
       },
       selectedRate: toDraftHotelRate(rate),
       checkIn: meta.departDate,

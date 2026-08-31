@@ -140,6 +140,40 @@ export function parseHotelResultsSearch(
   };
 }
 
+/** Reconcile `occ` with adults/children/rooms after toolbar or edit changes. */
+export function syncHotelSearchParams(
+  params: HotelResultsSearchParams,
+  patch: Partial<HotelResultsSearchParams>,
+): HotelResultsSearchParams {
+  const next: HotelResultsSearchParams = { ...params, ...patch };
+  const decoded = decodeRoomOccupancies(next.occ);
+  const totalsChanged =
+    patch.adults != null ||
+    patch.children != null ||
+    patch.rooms != null ||
+    patch.childrenAges != null;
+  if (!totalsChanged) return next;
+  if (decoded?.length) {
+    const occAdults = decoded.reduce((s, r) => s + r.adults, 0);
+    const occChildren = decoded.reduce((s, r) => s + r.childAges.length, 0);
+    const occRooms = decoded.length;
+    if (
+      occAdults === next.adults &&
+      occChildren === next.children &&
+      occRooms === next.rooms
+    ) {
+      return next;
+    }
+  }
+  next.occ = encodeRoomOccupancies(occupancyFromSearchParams(next));
+  if (!next.childrenAges && next.children > 0) {
+    next.childrenAges = occupancyFromSearchParams(next)
+      .flatMap((r) => r.childAges)
+      .join(",");
+  }
+  return next;
+}
+
 export function buildHotelResultsHref(params: Partial<HotelResultsSearchParams>) {
   const q = new URLSearchParams();
   const destination = params.destination || "";

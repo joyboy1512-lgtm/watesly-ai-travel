@@ -1,5 +1,9 @@
 import { BadRequestException, Injectable } from "@nestjs/common";
 import {
+  applyPricingRule,
+  selectPricingRule,
+} from "@watesly-travel/pricing-engine";
+import {
   getFlightProvider,
   getHotelProvider,
   revalidatePricedOffer,
@@ -580,11 +584,68 @@ export class BookingsService {
     return { booking, payment };
   }
 
+  private async resolveMinimalPricing(input: CreateFromDraftInput) {
+    const currency = input.offer.currency || "KWD";
+    const details = (input.offer.details || {}) as Record<string, unknown>;
+    const serviceType =
+      input.serviceType === "hotel" ? ("hotel" as const) : ("flight" as const);
+    const rules = await this.prisma.pricingRule.findMany({
+      where: { organizationId: input.organizationId, isActive: true },
+    });
+    const costFromDetails = Number(details.costAmountMinor) || 0;
+    const sellFromClient = Math.round(input.offer.sellAmountMinor);
+    const rawStars = details.stars;
+    const rule = selectPricingRule(rules, serviceType, {
+      provider: input.offer.providerKey,
+      costAmountMinor:
+        costFromDetails > 0 ? costFromDetails : Math.round(sellFromClient * 0.88),
+      origin: input.route?.origin,
+      destination: input.route?.destination || input.stay?.location,
+      cabinClass: input.route?.cabinClass,
+      checkIn: input.stay?.checkIn,
+      city: input.stay?.location,
+      stars:
+        typeof rawStars === "number" || typeof rawStars === "string"
+          ? rawStars
+          : undefined,
+    });
+
+    if (costFromDetails > 0) {
+      const pricing = applyPricingRule({
+        costAmountMinor: costFromDetails,
+        currency,
+        serviceType,
+        rule,
+      });
+      return {
+        costAmount: pricing.costAmountMinor,
+        sellAmount: pricing.sellAmountMinor,
+        profitAmount: pricing.profitAmountMinor,
+        pricingRuleId: pricing.pricingRuleId,
+      };
+    }
+
+    const estimatedCost = Math.round(sellFromClient * 0.88);
+    const pricing = applyPricingRule({
+      costAmountMinor: estimatedCost,
+      currency,
+      serviceType,
+      rule,
+    });
+    return {
+      costAmount: pricing.costAmountMinor,
+      sellAmount: sellFromClient,
+      profitAmount: Math.max(0, sellFromClient - pricing.costAmountMinor),
+      pricingRuleId: pricing.pricingRuleId,
+    };
+  }
+
   private async createMinimalBookingFromOffer(input: CreateFromDraftInput) {
     const currency = input.offer.currency || "KWD";
-    const sellAmount = Math.round(input.offer.sellAmountMinor);
-    const costAmount = Math.round(sellAmount * 0.88);
-    const profitAmount = sellAmount - costAmount;
+    const priced = await this.resolveMinimalPricing(input);
+    const sellAmount = priced.sellAmount;
+    const costAmount = priced.costAmount;
+    const profitAmount = priced.profitAmount;
 
     const isFlight = input.serviceType === "flight";
     const isTransfer =
@@ -657,6 +718,7 @@ export class BookingsService {
               costAmount,
               sellAmount,
               profitAmount,
+              pricingRuleId: priced.pricingRuleId,
               rawOfferSnapshot: asJson(input.offer.details || {}),
               expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
             },
@@ -753,7 +815,14 @@ export class BookingsService {
       expiresAt: input.offer.expiresAt || new Date().toISOString(),
       raw: input.offer.raw || {},
     };
-    const result = await provider.revalidateOffer(offer);
+    const result = await revalidatePricedOffer({
+      offer,
+      serviceType: "hotel",
+      rules: await this.prisma.pricingRule.findMany({
+        where: { organizationId: input.organizationId, isActive: true },
+      }),
+      providerKey: input.offer.providerKey || provider.providerKey,
+    });
     return {
       available: result.available,
       priceChanged: result.priceChanged,
@@ -761,6 +830,8 @@ export class BookingsService {
       offer: result.offer,
       selectedRate: result.selectedRate,
       rateComments: result.rateComments,
+      pricing: result.pricing,
+      customerVisible: result.customerVisible,
     };
   }
 

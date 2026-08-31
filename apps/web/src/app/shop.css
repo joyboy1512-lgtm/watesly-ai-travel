@@ -2089,6 +2089,22 @@
   padding-bottom: 2rem;
 }
 
+.shop-trust-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem 1.25rem;
+  justify-content: center;
+  align-items: center;
+  margin: 0.75rem auto 0.25rem;
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  background: linear-gradient(90deg, #f4f7fb, #eef5ff 50%, #f4f7fb);
+  border: 1px solid #e2e8f0;
+  color: #0b1f3a;
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
 .shop-stats-bar {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -6439,6 +6455,22 @@
   font-weight: 700;
   color: var(--exp-navy);
   padding: 0.25rem 0.45rem;
+}
+
+.exp-locale-control {
+  cursor: pointer;
+}
+
+.exp-locale-control select {
+  border: 1px solid var(--exp-border, #d8dee6);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--exp-navy, #0b1f3a);
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 0.2rem 0.55rem;
+  max-width: 5.5rem;
 }
 
 .shop-flight-mock-banner.compact {

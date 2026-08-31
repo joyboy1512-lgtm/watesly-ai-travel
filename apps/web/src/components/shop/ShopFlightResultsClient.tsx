@@ -44,6 +44,7 @@ import {
 } from "@/lib/flight-results-session";
 import { saveFlightDraft } from "@/lib/booking-draft";
 import { shopFetch } from "@/lib/shop-session";
+import { trackFunnel } from "@/lib/funnel-analytics";
 
 type QuoteItem = { id: string; providerOfferRef: string; serviceType: string };
 
@@ -145,6 +146,15 @@ export function ShopFlightResultsClient() {
     setFlightsRaw([]);
     setExpandedTrip(null);
     setDetailsFlight(null);
+    trackFunnel({
+      event: "search_submit",
+      service: "flight",
+      meta: {
+        tripType: search.tripType,
+        origin: search.origin || null,
+        destination: search.destination || null,
+      },
+    });
     if (!shouldRestoreResultsSession(buildFlightResultsHref(search))) {
       setFilters(defaultFlightFilters());
       setSortKey("best");
@@ -204,6 +214,12 @@ export function ShopFlightResultsClient() {
         if (gen !== searchGenRef.current) return;
         setFlightsRaw(combined);
         setMessage(`تم جلب ${combined.length} رحلة تجريبية عبر ${search.legs.length} مسارات (${providerName})`);
+        trackFunnel({
+          event: "results_loaded",
+          service: "flight",
+          status: "ok",
+          meta: { count: combined.length, mode: "multicity" },
+        });
       } else {
         if (!search.origin || !search.destination || !search.departDate) {
           throw new Error("أدخل المغادرة والوجهة والتاريخ");
@@ -242,10 +258,23 @@ export function ShopFlightResultsClient() {
               ? `تم جلب ${rows.length} رحلة تجريبية — ${directCount} مباشرة`
               : `تم جلب ${rows.length} رحلة تجريبية عبر ${result.providerName || "المزوّد"}`,
         );
+        trackFunnel({
+          event: "results_loaded",
+          service: "flight",
+          status: "ok",
+          provider: result.providerName,
+          meta: { count: rows.length },
+        });
       }
     } catch (err) {
       if (gen !== searchGenRef.current || controller.signal.aborted) return;
       setError(err instanceof Error ? err.message : "فشل البحث");
+      trackFunnel({
+        event: "search_failed",
+        service: "flight",
+        status: "error",
+        errorCode: "SEARCH",
+      });
     } finally {
       if (gen === searchGenRef.current) setLoading(false);
     }

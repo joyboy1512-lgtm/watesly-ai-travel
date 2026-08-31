@@ -10,8 +10,14 @@ import {
   type ShopCustomer,
 } from "@/lib/shop-session";
 import { WeekendGateLogo } from "@/components/shop/WeekendGateLogo";
-import { COMPANY_LEGAL } from "@watesly-travel/shared";
+import {
+  COMPANY_LEGAL,
+  SHOP_LOCALE_LABEL,
+  type ShopCurrency,
+  type ShopLocale,
+} from "@watesly-travel/shared";
 import { platformEnabled } from "@/lib/platform-flags";
+import { ShopI18nProvider, useShopI18n } from "@/components/shop/ShopI18nProvider";
 
 const ShopAssistant = dynamic(
   () => import("@/components/shop/ShopAssistant").then((m) => m.ShopAssistant),
@@ -20,7 +26,7 @@ const ShopAssistant = dynamic(
 
 const BRAND = "WeekendGate";
 
-export function StoreFront({
+function StoreFrontInner({
   children,
   wide = false,
 }: {
@@ -28,6 +34,7 @@ export function StoreFront({
   wide?: boolean;
 }) {
   const pathname = usePathname();
+  const { t, locale, currency, setLocale, setCurrency, locales, currencies } = useShopI18n();
   const [customer, setCustomer] = useState<ShopCustomer | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -42,26 +49,28 @@ export function StoreFront({
     window.location.href = "/";
   }
 
+  const isEn = locale === "en";
+
   return (
-    <div className="shop-root exp-theme">
+    <div className="shop-root exp-theme" lang={locale} dir={locale === "ar" ? "rtl" : "ltr"}>
       <header className="shop-header exp-header exp-header-white">
         <div className="shop-header-inner exp-header-inner">
           <Link href="/" className="shop-brand exp-brand" aria-label="WeekendGate">
             <WeekendGateLogo />
           </Link>
 
-          <nav className="exp-header-links" aria-label="روابط رئيسية">
+          <nav className="exp-header-links" aria-label={t("navMenu")}>
             {platformEnabled() ? (
               <>
-                <Link href="/deals">Weekend Deals</Link>
-                <Link href="/destinations">الوجهات</Link>
-                <Link href="/trip-builder">رحّلتي</Link>
+                <Link href="/deals">{t("navDeals")}</Link>
+                <Link href="/destinations">{t("navDestinations")}</Link>
+                <Link href="/trip-builder">{t("navTripBuilder")}</Link>
               </>
             ) : null}
-            <Link href="/about">من نحن</Link>
-            <Link href="/booking-policy">سياسة الحجز</Link>
-            <Link href="/faq">الأسئلة الشائعة</Link>
-            <Link href="/contact">تواصل معنا</Link>
+            <Link href="/about">{t("navAbout")}</Link>
+            <Link href="/booking-policy">{t("navPolicy")}</Link>
+            <Link href="/faq">{t("navFaq")}</Link>
+            <Link href="/contact">{t("navContact")}</Link>
           </nav>
 
           <button
@@ -70,59 +79,82 @@ export function StoreFront({
             aria-expanded={menuOpen}
             onClick={() => setMenuOpen((v) => !v)}
           >
-            القائمة
+            {t("navMenu")}
           </button>
 
           <nav className={`exp-util-nav${menuOpen ? " open" : ""}`}>
             {platformEnabled() ? (
               <>
                 <Link href="/deals" className="exp-util-link mobile-only">
-                  Weekend Deals
+                  {t("navDeals")}
                 </Link>
                 <Link href="/destinations" className="exp-util-link mobile-only">
-                  الوجهات
+                  {t("navDestinations")}
                 </Link>
                 <Link href="/trip-builder" className="exp-util-link mobile-only">
-                  رحّلتي
+                  {t("navTripBuilder")}
                 </Link>
               </>
             ) : null}
             <Link href="/about" className="exp-util-link mobile-only">
-              من نحن
+              {t("navAbout")}
             </Link>
             <Link href="/booking-policy" className="exp-util-link mobile-only">
-              سياسة الحجز
+              {t("navPolicy")}
             </Link>
             <Link href="/faq" className="exp-util-link mobile-only">
-              الأسئلة الشائعة
+              {t("navFaq")}
             </Link>
             <Link href="/contact" className="exp-util-link mobile-only">
-              تواصل معنا
+              {t("navContact")}
             </Link>
-            <span className="exp-util-static" title="العملة المتاحة حاليًا">
+
+            <label className="exp-util-static exp-locale-control" title={t("currency")}>
               <span className="exp-util-icon" aria-hidden>
                 💱
               </span>
-              KWD
-            </span>
-            <span className="exp-util-static" title="اللغة المتاحة حاليًا">
+              <select
+                aria-label={t("currency")}
+                value={currency}
+                onChange={(e) => setCurrency(e.target.value as ShopCurrency)}
+              >
+                {currencies.map((code) => (
+                  <option key={code} value={code}>
+                    {code}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="exp-util-static exp-locale-control" title={t("language")}>
               <span className="exp-util-icon" aria-hidden>
                 🌐
               </span>
-              العربية
-            </span>
+              <select
+                aria-label={t("language")}
+                value={locale}
+                onChange={(e) => setLocale(e.target.value as ShopLocale)}
+              >
+                {locales.map((code) => (
+                  <option key={code} value={code}>
+                    {SHOP_LOCALE_LABEL[code]}
+                  </option>
+                ))}
+              </select>
+            </label>
+
             {customer ? (
               <>
                 <Link href="/account" className="exp-util-link">
                   {customer.name || customer.phone}
                 </Link>
                 <button type="button" className="exp-util-link exp-util-btn" onClick={logout}>
-                  خروج
+                  {t("navLogout")}
                 </button>
               </>
             ) : (
               <Link href="/account/login" className="exp-signin exp-signin-dark">
-                دخول
+                {t("navLogin")}
               </Link>
             )}
           </nav>
@@ -138,57 +170,67 @@ export function StoreFront({
           <div>
             <strong className="shop-footer-brand">{BRAND}</strong>
             <p>
-              منصة حجز تابعة لـ{COMPANY_LEGAL.legalNameAr}: طيران، فنادق، نقل،
-              وأنشطة.
+              {isEn
+                ? `Booking platform by ${COMPANY_LEGAL.legalNameEn}: flights, hotels, transfers, and activities.`
+                : `منصة حجز تابعة لـ${COMPANY_LEGAL.legalNameAr}: طيران، فنادق، نقل، وأنشطة.`}
             </p>
             <p className="shop-footer-legal-meta">
               {COMPANY_LEGAL.addressAr}
               <br />
-              ترخيص سياحي رقم {COMPANY_LEGAL.tourismLicense}
+              {isEn ? "Tourism license" : "ترخيص سياحي رقم"} {COMPANY_LEGAL.tourismLicense}
             </p>
           </div>
           <div>
-            <strong>استكشف</strong>
+            <strong>{isEn ? "Explore" : "استكشف"}</strong>
             {platformEnabled() ? (
               <>
-                <Link href="/destinations">الوجهات</Link>
-                <Link href="/deals">العروض</Link>
-                <Link href="/trip-builder">رحّلتي</Link>
+                <Link href="/destinations">{t("navDestinations")}</Link>
+                <Link href="/deals">{t("navDeals")}</Link>
+                <Link href="/trip-builder">{t("navTripBuilder")}</Link>
               </>
             ) : (
               <>
-                <Link href="/#destinations">الوجهات</Link>
-                <Link href="/#offers">العروض</Link>
+                <Link href="/#destinations">{t("navDestinations")}</Link>
+                <Link href="/#offers">{isEn ? "Offers" : "العروض"}</Link>
               </>
             )}
-            <Link href="/#search">البحث</Link>
-            <Link href="/chat">المساعد الذكي</Link>
-            <Link href="/bookings/manage">إدارة حجزي</Link>
+            <Link href="/#search">{isEn ? "Search" : "البحث"}</Link>
+            <Link href="/chat">{isEn ? "Assistant" : "المساعد الذكي"}</Link>
+            <Link href="/bookings/manage">{isEn ? "Manage booking" : "إدارة حجزي"}</Link>
           </div>
           <div>
-            <strong>قانوني</strong>
-            <Link href="/terms">الشروط والأحكام</Link>
-            <Link href="/privacy">سياسة الخصوصية</Link>
-            <Link href="/booking-policy">التعديل والإلغاء</Link>
-            <Link href="/payment-policy">سياسة الدفع</Link>
-            <Link href="/about">من نحن</Link>
+            <strong>{isEn ? "Legal" : "قانوني"}</strong>
+            <Link href="/terms">{isEn ? "Terms" : "الشروط والأحكام"}</Link>
+            <Link href="/privacy">{isEn ? "Privacy" : "سياسة الخصوصية"}</Link>
+            <Link href="/booking-policy">{t("navPolicy")}</Link>
+            <Link href="/payment-policy">{isEn ? "Payment policy" : "سياسة الدفع"}</Link>
+            <Link href="/about">{t("navAbout")}</Link>
           </div>
           <div>
-            <strong>تواصل</strong>
+            <strong>{t("navContact")}</strong>
             <a href={`tel:${COMPANY_LEGAL.phoneE164}`}>{COMPANY_LEGAL.phoneDisplay}</a>
             <a href={COMPANY_LEGAL.whatsappUrl} target="_blank" rel="noreferrer">
-              واتساب {COMPANY_LEGAL.phoneDisplay}
+              WhatsApp {COMPANY_LEGAL.phoneDisplay}
             </a>
             <a href={`mailto:${COMPANY_LEGAL.supportEmail}`}>{COMPANY_LEGAL.supportEmail}</a>
             <span>{COMPANY_LEGAL.hoursAr}</span>
           </div>
         </div>
         <p className="shop-footer-copy" suppressHydrationWarning>
-          © {new Date().getFullYear()} {BRAND}. جميع الحقوق محفوظة.
+          © {new Date().getFullYear()} {BRAND}.{" "}
+          {isEn ? "All rights reserved." : "جميع الحقوق محفوظة."}
         </p>
       </footer>
 
       <ShopAssistant />
     </div>
+  );
+}
+
+export function StoreFront(props: { children: ReactNode; wide?: boolean }) {
+  return (
+    <ShopI18nProvider>
+      <StoreFrontInner {...props} />
+    </ShopI18nProvider>
   );
 }

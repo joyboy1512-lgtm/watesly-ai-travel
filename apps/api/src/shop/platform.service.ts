@@ -486,7 +486,7 @@ export class PlatformService {
         take: 100,
       });
       if (entries.length) {
-        const balance = entries[0].balanceAfter;
+        const balance = entries[0]!.balanceAfter;
         const acc: CustomerPointsAccount = {
           customerId: customer.id,
           balance,

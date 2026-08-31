@@ -2,6 +2,7 @@ import { BadRequestException, Injectable } from "@nestjs/common";
 import {
   applyPricingRule,
   selectPricingRule,
+  toCustomerVisible,
 } from "@watesly-travel/pricing-engine";
 import {
   getFlightProvider,
@@ -698,6 +699,7 @@ export class BookingsService {
         totalCostAmount: costAmount,
         totalSellAmount: sellAmount,
         totalProfitAmount: profitAmount,
+        pricingRuleId: priced.pricingRuleId,
         customerVisiblePayload: asJson({
           summary: input.offer.description,
           sellAmountMinor: sellAmount,
@@ -718,7 +720,6 @@ export class BookingsService {
               costAmount,
               sellAmount,
               profitAmount,
-              pricingRuleId: priced.pricingRuleId,
               rawOfferSnapshot: asJson(input.offer.details || {}),
               expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
             },
@@ -815,23 +816,39 @@ export class BookingsService {
       expiresAt: input.offer.expiresAt || new Date().toISOString(),
       raw: input.offer.raw || {},
     };
-    const result = await revalidatePricedOffer({
-      offer,
+    const rules = await this.prisma.pricingRule.findMany({
+      where: { organizationId: input.organizationId, isActive: true },
+    });
+    const raw = await provider.revalidateOffer(offer);
+    const rawStars = (raw.offer.raw as Record<string, unknown> | undefined)?.stars;
+    const rule = selectPricingRule(rules, "hotel", {
+      provider: raw.offer.providerKey,
+      costAmountMinor: raw.offer.costAmountMinor,
+      stars:
+        typeof rawStars === "number" || typeof rawStars === "string"
+          ? rawStars
+          : undefined,
+    });
+    const pricing = applyPricingRule({
+      costAmountMinor: raw.offer.costAmountMinor,
+      currency: raw.offer.currency,
       serviceType: "hotel",
-      rules: await this.prisma.pricingRule.findMany({
-        where: { organizationId: input.organizationId, isActive: true },
-      }),
-      providerKey: input.offer.providerKey || provider.providerKey,
+      rule,
     });
     return {
-      available: result.available,
-      priceChanged: result.priceChanged,
-      previousCostMinor: result.previousCostMinor,
-      offer: result.offer,
-      selectedRate: result.selectedRate,
-      rateComments: result.rateComments,
-      pricing: result.pricing,
-      customerVisible: result.customerVisible,
+      available: raw.available,
+      priceChanged: raw.priceChanged,
+      previousCostMinor: raw.previousCostMinor,
+      offer: raw.offer,
+      selectedRate: raw.selectedRate,
+      rateComments: raw.rateComments,
+      pricing,
+      customerVisible: toCustomerVisible({
+        sellAmountMinor: pricing.sellAmountMinor,
+        currency: pricing.currency,
+        summary: raw.offer.description,
+        expiresAt: raw.offer.expiresAt,
+      }),
     };
   }
 

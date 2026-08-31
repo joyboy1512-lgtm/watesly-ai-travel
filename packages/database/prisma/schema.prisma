@@ -42,6 +42,12 @@ model Organization {
   aiThreads            AiThread[]
   aiUsageLogs          AiUsageLog[]
   customers            Customer[]
+  platformTrips        PlatformTrip[]
+  pointsLedger         PointsLedger[]
+  priceAlerts          PriceAlert[]
+  referrals            Referral[]
+  customerNotifications CustomerNotification[]
+  cmsDeals             CmsDeal[]
 
   @@index([status])
 }
@@ -228,6 +234,11 @@ model Customer {
   travelers    CustomerTraveler[]
   inquiries    TravelInquiry[]
   bookings     Booking[]
+  platformTrips PlatformTrip[]
+  pointsLedger  PointsLedger[]
+  priceAlerts   PriceAlert[]
+  referralsOwned Referral[] @relation("ReferralOwner")
+  customerNotifications CustomerNotification[]
 
   @@unique([organizationId, phone])
   @@index([organizationId, status])
@@ -749,4 +760,138 @@ model Airport {
   @@index([city])
   @@index([country])
   @@index([name])
+}
+
+/// Platform v2 — trip drafts / My Trips (distinct from Booking until paid/issued)
+model PlatformTrip {
+  id             String    @id @default(uuid())
+  organizationId String
+  customerId     String?
+  status         String    @default("draft")
+  currency       String    @default("KWD")
+  totalSellMinor Int       @default(0)
+  savingsMinor   Int       @default(0)
+  components     Json
+  paymentStatus  String    @default("pending")
+  title          String?
+  destination    String?
+  startDate      DateTime?
+  endDate        DateTime?
+  documents      Json?
+  services       Json?
+  bookingId      String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  customer     Customer?    @relation(fields: [customerId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId, customerId, status])
+  @@index([customerId, createdAt])
+}
+
+model PointsLedger {
+  id             String   @id @default(uuid())
+  organizationId String
+  customerId     String
+  delta          Int
+  balanceAfter   Int
+  reason         String
+  bookingId      String?
+  tripId         String?
+  createdAt      DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  customer     Customer     @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@index([customerId, createdAt])
+  @@index([organizationId, customerId])
+}
+
+model PriceAlert {
+  id                String    @id @default(uuid())
+  organizationId    String
+  customerId        String
+  origin            String
+  destination       String
+  departDate        DateTime?
+  returnDate        DateTime?
+  currentPriceMinor Int
+  targetPriceMinor  Int
+  currency          String    @default("KWD")
+  active            Boolean   @default(true)
+  lastNotifiedAt    DateTime?
+  createdAt         DateTime  @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  customer     Customer     @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@index([customerId, active])
+  @@index([origin, destination, active])
+  @@index([organizationId, customerId])
+}
+
+model Referral {
+  id              String   @id @default(uuid())
+  organizationId  String
+  ownerCustomerId String
+  code            String
+  uses            Int      @default(0)
+  createdAt       DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  owner        Customer     @relation("ReferralOwner", fields: [ownerCustomerId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, code])
+  @@index([ownerCustomerId])
+}
+
+model CustomerNotification {
+  id             String    @id @default(uuid())
+  organizationId String
+  customerId     String
+  type           String
+  title          String
+  body           String
+  channels       Json
+  href           String?
+  readAt         DateTime?
+  createdAt      DateTime  @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  customer     Customer     @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@index([customerId, createdAt])
+  @@index([organizationId, customerId, createdAt])
+}
+
+/// CMS weekend deals — seed from WEEKEND_DEALS; do not overload Booking
+model CmsDeal {
+  id                 String    @id @default(uuid())
+  organizationId     String
+  slug               String
+  destinationSlug    String
+  titleAr            String
+  titleEn            String
+  image              String
+  includes           Json
+  originalPriceMinor Int
+  salePriceMinor     Int
+  currency           String    @default("KWD")
+  nights             Int
+  active             Boolean   @default(true)
+  startAt            DateTime?
+  endAt              DateTime?
+  descriptionAr      String
+  descriptionEn      String
+  countryFlag        String?
+  city               String?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, slug])
+  @@index([organizationId, active])
+  @@index([destinationSlug])
 }

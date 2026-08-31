@@ -9,3 +9,4 @@ export * from "./notifications";
 export * from "./payments";
 export * from "./cms";
 export * from "./my-trips";
+export * from "./inventory-mode";

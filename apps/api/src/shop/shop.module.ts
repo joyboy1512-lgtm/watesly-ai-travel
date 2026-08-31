@@ -12,6 +12,12 @@ import { PlatformService } from "./platform.service";
 @Module({
   imports: [BookingsModule, PipelineModule, AssistantModule],
   controllers: [ShopController, PlatformController],
-  providers: [ShopService, PublicOrgService, CustomerAuthGuard, PlatformService],
+  providers: [
+    ShopService,
+    PublicOrgService,
+    CustomerAuthGuard,
+    PlatformService,
+  ],
+  exports: [PlatformService],
 })
 export class ShopModule {}

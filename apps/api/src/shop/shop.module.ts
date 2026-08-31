@@ -6,10 +6,12 @@ import { ShopController } from "./shop.controller";
 import { ShopService } from "./shop.service";
 import { PublicOrgService } from "./public-org";
 import { CustomerAuthGuard } from "./shop-auth";
+import { PlatformController } from "./platform.controller";
+import { PlatformService } from "./platform.service";
 
 @Module({
   imports: [BookingsModule, PipelineModule, AssistantModule],
-  controllers: [ShopController],
-  providers: [ShopService, PublicOrgService, CustomerAuthGuard],
+  controllers: [ShopController, PlatformController],
+  providers: [ShopService, PublicOrgService, CustomerAuthGuard, PlatformService],
 })
 export class ShopModule {}

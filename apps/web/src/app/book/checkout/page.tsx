@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
-import "../shop.css";
-import "../platform.css";
+import "../../shop.css";
+import "../../platform.css";
 import { StoreFront } from "@/components/shop/StoreFront";
 import { getShopSession } from "@/lib/shop-session";
 import {

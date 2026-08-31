@@ -10,7 +10,8 @@ import {
   type ShopCustomer,
 } from "@/lib/shop-session";
 import { WeekendGateLogo } from "@/components/shop/WeekendGateLogo";
-import { COMPANY_LEGAL, isPlatformEnabled } from "@watesly-travel/shared";
+import { COMPANY_LEGAL } from "@watesly-travel/shared";
+import { platformEnabled } from "@/lib/platform-flags";
 
 const ShopAssistant = dynamic(
   () => import("@/components/shop/ShopAssistant").then((m) => m.ShopAssistant),
@@ -50,7 +51,7 @@ export function StoreFront({
           </Link>
 
           <nav className="exp-header-links" aria-label="روابط رئيسية">
-            {isPlatformEnabled() ? (
+            {platformEnabled() ? (
               <>
                 <Link href="/deals">Weekend Deals</Link>
                 <Link href="/destinations">الوجهات</Link>
@@ -73,6 +74,19 @@ export function StoreFront({
           </button>
 
           <nav className={`exp-util-nav${menuOpen ? " open" : ""}`}>
+            {platformEnabled() ? (
+              <>
+                <Link href="/deals" className="exp-util-link mobile-only">
+                  Weekend Deals
+                </Link>
+                <Link href="/destinations" className="exp-util-link mobile-only">
+                  الوجهات
+                </Link>
+                <Link href="/trip-builder" className="exp-util-link mobile-only">
+                  رحّلتي
+                </Link>
+              </>
+            ) : null}
             <Link href="/about" className="exp-util-link mobile-only">
               من نحن
             </Link>
@@ -135,7 +149,7 @@ export function StoreFront({
           </div>
           <div>
             <strong>استكشف</strong>
-            {isPlatformEnabled() ? (
+            {platformEnabled() ? (
               <>
                 <Link href="/destinations">الوجهات</Link>
                 <Link href="/deals">العروض</Link>

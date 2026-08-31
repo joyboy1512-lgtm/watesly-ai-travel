@@ -12,7 +12,7 @@ import {
   getShopSession,
   shopFetch,
 } from "@/lib/shop-session";
-import { isPlatformEnabled } from "@watesly-travel/shared";
+import { platformEnabled } from "@/lib/platform-flags";
 
 type Traveler = {
   id: string;
@@ -109,7 +109,7 @@ export default function AccountPage() {
 
   return (
     <StoreFront>
-      {isPlatformEnabled() ? (
+      {platformEnabled() ? (
         <div className="wg-platform" style={{ paddingBottom: 0 }}>
           <AccountSubnav />
         </div>

@@ -1,5 +1,5 @@
 import type { MetadataRoute } from "next";
-import { DESTINATION_GUIDES, WEEKEND_DEALS, isPlatformEnabled } from "@watesly-travel/shared";
+import { DESTINATION_GUIDES, WEEKEND_DEALS } from "@watesly-travel/shared";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const base = "https://www.weekendgate.com";
@@ -16,7 +16,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/hotels/results",
   ];
 
-  if (isPlatformEnabled()) {
+  if (process.env.NEXT_PUBLIC_WG_PLATFORM === "1") {
     paths.push("/deals", "/destinations", "/trip-builder", "/book/checkout");
     for (const d of DESTINATION_GUIDES) paths.push(`/destinations/${d.slug}`);
     for (const deal of WEEKEND_DEALS.filter((x) => x.active)) {

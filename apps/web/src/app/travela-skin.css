@@ -15,7 +15,7 @@
   --exp-bg: #fff;
   background: #fff;
   /* shared blue pill frame — header cap + search shell */
-  --wg-blue-pill-width: min(calc(960px + 5cm), calc(100% - 1.5rem));
+  --wg-blue-pill-width: min(calc(960px + 1cm), calc(100% - 1.5rem));
   --wg-blue-pill-pad-x: clamp(2rem, 4.5vw, 3.25rem);
   --wg-blue-pill-pad-y: 1.25rem;
   --wg-blue-pill-inner-inset: 6cm;

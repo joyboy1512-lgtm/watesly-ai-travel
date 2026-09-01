@@ -200,20 +200,20 @@
 
 .shop-root.wg-new-ui .wg-header-cap {
   width: 100%;
-  padding: var(--wg-blue-pill-pad-y) var(--wg-blue-pill-pad-x)
-    calc(var(--wg-blue-pill-pad-y) + 2mm);
+  padding: 0.38rem var(--wg-blue-pill-pad-x) 0.52rem;
   border-radius: 0 0 999px 999px;
   background: var(--wg-blue-pill-bg);
   box-shadow: var(--wg-blue-pill-shadow);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 1rem;
+  gap: 0.65rem;
   box-sizing: border-box;
   border: 0;
   margin-bottom: -2px;
   transform: translateZ(0);
   backface-visibility: hidden;
+  min-height: 0;
 }
 
 .shop-root.wg-new-ui .wg-header-cap-nav {
@@ -223,23 +223,17 @@
   gap: 0.2rem;
 }
 
-.shop-root.wg-new-ui .wg-header-cap-nav a,
-.shop-root.wg-new-ui .wg-header-cap-dir {
+.shop-root.wg-new-ui .wg-header-cap-nav a {
   color: #fff;
   text-decoration: none;
-  font-size: 0.92rem;
+  font-size: 0.82rem;
   font-weight: 600;
-  padding: 0.4rem 0.85rem;
-  border-radius: 999px;
-  border: 0;
-  background: transparent;
-  cursor: pointer;
-  font-family: inherit;
+  padding: 0.28rem 0.65rem;
+  border-radius: 0.3rem;
   line-height: 1.2;
 }
 
-.shop-root.wg-new-ui .wg-header-cap-nav a:hover,
-.shop-root.wg-new-ui .wg-header-cap-dir:hover {
+.shop-root.wg-new-ui .wg-header-cap-nav a:hover {
   background: rgba(255, 255, 255, 0.15);
   color: #fbbf24;
 }
@@ -247,8 +241,98 @@
 .shop-root.wg-new-ui .wg-header-cap-user {
   display: flex;
   align-items: center;
-  gap: 0.45rem;
+  gap: 0.35rem;
   position: relative;
+  flex-shrink: 0;
+}
+
+.shop-root.wg-new-ui .wg-header-cap-square {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.55rem;
+  min-height: 2.55rem;
+  padding: 0.28rem 0.45rem;
+  border-radius: 0.3rem;
+  background: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  color: var(--tv-primary);
+  font: inherit;
+  font-size: 0.76rem;
+  font-weight: 800;
+  text-decoration: none;
+  cursor: pointer;
+  box-sizing: border-box;
+  line-height: 1.15;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.shop-root.wg-new-ui .wg-header-cap-square:hover {
+  background: #f8fafc;
+  border-color: #fff;
+}
+
+.shop-root.wg-new-ui .wg-header-cap-currency {
+  position: relative;
+  padding: 0;
+}
+
+.shop-root.wg-new-ui .wg-header-cap-currency select {
+  appearance: none;
+  -webkit-appearance: none;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: 800;
+  font-size: 0.76rem;
+  padding: 0.28rem 1rem 0.28rem 0.4rem;
+  cursor: pointer;
+  min-width: 3.1rem;
+  min-height: 2.55rem;
+  text-align: center;
+  line-height: 1.15;
+}
+
+.shop-root.wg-new-ui .wg-header-cap-currency::after {
+  content: "▾";
+  position: absolute;
+  inset-inline-end: 0.3rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.5rem;
+  pointer-events: none;
+  opacity: 0.65;
+  color: var(--tv-primary);
+}
+
+.shop-root.wg-new-ui .wg-header-cap-lang {
+  min-width: 2.55rem;
+  letter-spacing: 0.02em;
+}
+
+.shop-root.wg-new-ui .wg-header-cap-auth-group {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.shop-root.wg-new-ui .wg-header-cap-auth {
+  min-width: auto;
+  max-width: 5.75rem;
+  padding: 0.28rem 0.5rem;
+  font-size: 0.64rem;
+  white-space: normal;
+  hyphens: auto;
+}
+
+.shop-root.wg-new-ui .wg-header-cap-register {
+  min-width: 2.55rem;
+  max-width: 2.55rem;
+  padding: 0.28rem;
+  font-size: 0.76rem;
+  white-space: nowrap;
 }
 
 .shop-root.wg-new-ui .wg-header-cap-menu-btn {
@@ -270,16 +354,18 @@
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  padding: 0.45rem 0.9rem;
-  border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.35);
-  background: rgba(255, 255, 255, 0.12);
-  color: #fff;
+  padding: 0.28rem 0.65rem;
+  border-radius: 0.3rem;
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  background: #fff;
+  color: var(--tv-primary);
   font: inherit;
-  font-size: 0.85rem;
-  font-weight: 700;
+  font-size: 0.72rem;
+  font-weight: 800;
   cursor: pointer;
-  max-width: 11rem;
+  max-width: 7.5rem;
+  min-height: 2.55rem;
+  box-sizing: border-box;
 }
 
 .shop-root.wg-new-ui .wg-header-user-name {
@@ -351,22 +437,13 @@
   background: #fff;
 }
 
-.shop-root.wg-new-ui .wg-header-cap-signin {
-  display: inline-flex;
+.shop-root.wg-new-ui .wg-header-cap-mobile-currency {
+  display: flex;
   align-items: center;
-  padding: 0.45rem 1rem;
-  border-radius: 999px;
-  background: #fff;
-  color: var(--tv-primary);
-  text-decoration: none;
-  font-size: 0.85rem;
-  font-weight: 800;
-  white-space: nowrap;
-}
-
-.shop-root.wg-new-ui .wg-header-cap-signin:hover {
-  background: #fbbf24;
-  color: var(--tv-primary);
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.55rem 0.65rem;
+  color: #fff;
 }
 
 .shop-root.wg-new-ui .wg-header-cap-mobile {
@@ -1030,9 +1107,8 @@
   }
 
   .shop-root.wg-new-ui .wg-header-cap {
-    padding: calc(var(--wg-blue-pill-pad-y) - 2mm) 1rem
-      calc(var(--wg-blue-pill-pad-y) + 1mm);
-    border-radius: 0 0 28px 28px;
+    padding: 0.32rem 0.85rem 0.45rem;
+    border-radius: 0 0 22px 22px;
   }
 
   .shop-root.wg-new-ui .wg-hero-search-panel .exp-unified-card .exp-form-row {
@@ -1072,8 +1148,10 @@
     display: inline-flex;
   }
 
-  .shop-root.wg-new-ui .wg-header-user-dropdown,
-  .shop-root.wg-new-ui .wg-header-cap-signin {
+  .shop-root.wg-new-ui .wg-header-cap-currency,
+  .shop-root.wg-new-ui .wg-header-cap-lang,
+  .shop-root.wg-new-ui .wg-header-cap-auth-group,
+  .shop-root.wg-new-ui .wg-header-user-dropdown {
     display: none;
   }
 

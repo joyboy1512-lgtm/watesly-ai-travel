@@ -110,15 +110,6 @@ function StoreFrontInner({
               <nav className="wg-header-cap-nav" aria-label="روابط سريعة">
                 <Link href="/about">{t("navAbout")}</Link>
                 <Link href="/contact">{t("navContact")}</Link>
-                <button
-                  type="button"
-                  className="wg-header-cap-dir"
-                  title="اتجاه النص"
-                  aria-label="تبديل اتجاه النص"
-                  onClick={() => setLocale(locale === "ar" ? "en" : "ar")}
-                >
-                  {locale === "ar" ? "RTL" : "LTR"}
-                </button>
               </nav>
 
               <div className="wg-header-cap-user">
@@ -130,6 +121,30 @@ function StoreFrontInner({
                   onClick={() => setMenuOpen((v) => !v)}
                 >
                   ☰
+                </button>
+
+                <label className="wg-header-cap-square wg-header-cap-currency" title="العملة">
+                  <select
+                    aria-label="العملة"
+                    value={currency}
+                    onChange={(e) => setCurrency(e.target.value as ShopCurrency)}
+                  >
+                    {currencies.map((code) => (
+                      <option key={code} value={code}>
+                        {code}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <button
+                  type="button"
+                  className="wg-header-cap-square wg-header-cap-lang"
+                  title="اللغة"
+                  aria-label="تبديل اللغة"
+                  onClick={() => setLocale(locale === "ar" ? "en" : "ar")}
+                >
+                  {locale === "ar" ? "AR" : "EN"}
                 </button>
 
                 {customer ? (
@@ -159,20 +174,6 @@ function StoreFrontInner({
                         <Link href="/bookings/manage" role="menuitem">
                           حجوزاتي
                         </Link>
-                        <label className="wg-header-menu-currency" role="none">
-                          <span>العملة</span>
-                          <select
-                            aria-label="العملة"
-                            value={currency}
-                            onChange={(e) => setCurrency(e.target.value as ShopCurrency)}
-                          >
-                            {currencies.map((code) => (
-                              <option key={code} value={code}>
-                                {code}
-                              </option>
-                            ))}
-                          </select>
-                        </label>
                         <button type="button" role="menuitem" onClick={logout}>
                           خروج
                         </button>
@@ -180,9 +181,17 @@ function StoreFrontInner({
                     ) : null}
                   </div>
                 ) : (
-                  <Link href="/account/login" className="wg-header-cap-signin">
-                    {t("navLogin")}
-                  </Link>
+                  <div className="wg-header-cap-auth-group">
+                    <Link href="/account/login" className="wg-header-cap-square wg-header-cap-auth">
+                      تسجيل الدخول
+                    </Link>
+                    <Link
+                      href="/account/login?register=1"
+                      className="wg-header-cap-square wg-header-cap-auth wg-header-cap-register"
+                    >
+                      سجل
+                    </Link>
+                  </div>
                 )}
               </div>
             </div>
@@ -193,11 +202,25 @@ function StoreFrontInner({
               <Link href="/contact">{t("navContact")}</Link>
               <button
                 type="button"
-                className="wg-header-cap-mobile-dir"
+                className="wg-header-cap-mobile-lang"
                 onClick={() => setLocale(locale === "ar" ? "en" : "ar")}
               >
-                {locale === "ar" ? "RTL" : "LTR"}
+                {locale === "ar" ? "AR" : "EN"}
               </button>
+              <label className="wg-header-menu-currency wg-header-cap-mobile-currency">
+                <span>العملة</span>
+                <select
+                  aria-label="العملة"
+                  value={currency}
+                  onChange={(e) => setCurrency(e.target.value as ShopCurrency)}
+                >
+                  {currencies.map((code) => (
+                    <option key={code} value={code}>
+                      {code}
+                    </option>
+                  ))}
+                </select>
+              </label>
               {customer ? (
                 <>
                   <Link href="/account">بياناتي</Link>
@@ -221,7 +244,10 @@ function StoreFrontInner({
                   </button>
                 </>
               ) : (
-                <Link href="/account/login">{t("navLogin")}</Link>
+                <>
+                  <Link href="/account/login">تسجيل الدخول</Link>
+                  <Link href="/account/login?register=1">سجل</Link>
+                </>
               )}
               {platformEnabled() ? (
                 <>

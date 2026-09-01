@@ -394,18 +394,20 @@
 .shop-root.wg-new-ui .wg-header-chip {
   display: inline-flex;
   align-items: center;
-  gap: 0.3rem;
-  padding: 0.3rem 0.65rem;
+  gap: 0.35rem;
+  padding: 0.4rem 0.75rem;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.16);
   border: 1px solid rgba(255, 255, 255, 0.35);
   color: #fff;
-  font-size: 0.78rem;
+  font-size: 0.8rem;
   font-weight: 700;
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   text-decoration: none;
   cursor: pointer;
+  flex-shrink: 0;
+  line-height: 1;
 }
 
 .shop-root.wg-new-ui .exp-header-white .wg-header-chip {
@@ -423,6 +425,19 @@
   cursor: pointer;
   padding: 0;
   min-width: 2.5rem;
+  max-width: 4rem;
+}
+
+.shop-root.wg-new-ui .wg-header-dir {
+  border: 0;
+  font: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.shop-root.wg-new-ui .wg-header-dir .wg-header-chip-text {
+  min-width: 2rem;
+  text-align: center;
 }
 
 .shop-root.wg-new-ui .wg-header-chip-ico {

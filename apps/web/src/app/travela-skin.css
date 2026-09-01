@@ -287,22 +287,26 @@
 .wg-travela-search-wrap {
   position: relative;
   z-index: 10;
-  margin-top: -4.5rem;
-  padding-bottom: 2rem;
+  margin-top: -5rem;
+  padding-bottom: 2.5rem;
 }
 
 .wg-travela-search-shell {
-  width: min(960px, calc(100% - 1.5rem));
+  width: min(1140px, calc(100% - 1.5rem));
   margin: 0 auto;
-  padding: 1.25rem 1.35rem;
-  border-radius: 999px;
-  background: rgba(19, 53, 123, 0.88);
+  padding: 1.35rem 1.5rem 1.5rem;
+  border-radius: 1.75rem;
+  background: rgba(19, 53, 123, 0.92);
   box-shadow: 0 16px 40px rgba(19, 53, 123, 0.35);
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
 .shop-root.wg-new-ui .wg-travela-search-wrap .exp-icon-tabs-hero {
   justify-content: center;
-  margin-bottom: 0.65rem;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-bottom: 0.85rem;
 }
 
 .shop-root.wg-new-ui .wg-travela-search-wrap .exp-icon-circle-labeled {
@@ -317,11 +321,179 @@
   border-color: #fff;
 }
 
+.shop-root.wg-new-ui .wg-travela-search-wrap .exp-dialog {
+  width: 100%;
+}
+
 .shop-root.wg-new-ui .wg-travela-search-wrap .exp-unified-card {
   background: #fff;
   border: 0;
-  border-radius: 1.25rem;
+  border-radius: 1.15rem;
   box-shadow: none;
+  padding: 1rem 1.1rem 1.15rem;
+  gap: 0.85rem;
+  overflow: hidden;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.shop-root.wg-new-ui .wg-travela-search-wrap .exp-flight-toolbar,
+.shop-root.wg-new-ui .wg-travela-search-wrap .exp-transfer-toolbar {
+  width: 100%;
+  gap: 0.45rem;
+  padding-bottom: 0.1rem;
+}
+
+.shop-root.wg-new-ui .wg-travela-search-wrap .exp-pill-tabs-inset {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.shop-root.wg-new-ui .wg-travela-search-wrap .exp-cabin-pill,
+.shop-root.wg-new-ui .wg-travela-search-wrap .exp-direct-pill {
+  border-color: #e2e8f0;
+  color: var(--tv-dark);
+  max-width: 100%;
+  flex-shrink: 1;
+  min-width: 0;
+}
+
+.shop-root.wg-new-ui .wg-travela-search-wrap .exp-cabin-pill span,
+.shop-root.wg-new-ui .wg-travela-search-wrap .exp-direct-pill span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shop-root.wg-new-ui .wg-travela-search-wrap .exp-cabin-pill select {
+  min-width: 0;
+  max-width: 6.5rem;
+}
+
+.shop-root.wg-new-ui .wg-travela-search-wrap .exp-unified-card .exp-form-row {
+  width: 100%;
+  gap: 0.5rem;
+  padding: 0;
+}
+
+.shop-root.wg-new-ui .wg-travela-search-wrap .exp-unified-card .exp-form-flights {
+  grid-template-columns:
+    minmax(0, 1.05fr)
+    auto
+    minmax(0, 1.05fr)
+    minmax(0, 1.15fr)
+    minmax(0, 0.85fr)
+    auto;
+}
+
+.shop-root.wg-new-ui .wg-travela-search-wrap .exp-unified-card .exp-form-stays {
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1.2fr) minmax(0, 0.85fr) auto;
+}
+
+.shop-root.wg-new-ui .wg-travela-search-wrap .exp-unified-card .exp-form-cars,
+.shop-root.wg-new-ui .wg-travela-search-wrap .exp-unified-card .exp-form-activities {
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+}
+
+.shop-root.wg-new-ui .wg-travela-search-wrap .exp-unified-card .exp-input-cell {
+  height: auto;
+  min-height: 58px;
+  max-height: none;
+  padding: 0.55rem 0.75rem;
+  border-color: #e2e8f0;
+  background: #fff;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.shop-root.wg-new-ui .wg-travela-search-wrap .exp-unified-card .exp-cell-label,
+.shop-root.wg-new-ui .wg-travela-search-wrap .exp-unified-card .exp-input-cell .shop-ac-inline > span:first-child,
+.shop-root.wg-new-ui .wg-travela-search-wrap .exp-unified-card .exp-input-cell .shop-ac-inline .exp-cell-label {
+  font-size: 0.68rem;
+  color: #64748b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.shop-root.wg-new-ui .wg-travela-search-wrap .exp-unified-card .exp-input-cell .shop-ac-inline input,
+.shop-root.wg-new-ui .wg-travela-search-wrap .exp-unified-card .exp-date-btn,
+.shop-root.wg-new-ui .wg-travela-search-wrap .exp-unified-card .exp-travelers-trigger strong,
+.shop-root.wg-new-ui .wg-travela-search-wrap .exp-unified-card .shop-date-range-trigger,
+.shop-root.wg-new-ui .wg-travela-search-wrap .exp-unified-card .exp-time-select {
+  font-size: 0.88rem;
+  line-height: 1.35;
+  font-weight: 700;
+  color: var(--tv-dark);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+  display: block;
+}
+
+.shop-root.wg-new-ui .wg-travela-search-wrap .exp-unified-card .exp-travelers-trigger {
+  width: 100%;
+  text-align: start;
+  overflow: hidden;
+}
+
+.shop-root.wg-new-ui .wg-travela-search-wrap .exp-unified-card .exp-search-link {
+  height: 58px;
+  min-height: 58px;
+  min-width: 5.5rem;
+  padding: 0 1.25rem;
+  align-self: stretch;
+  justify-self: stretch;
+  flex-shrink: 0;
+}
+
+.shop-root.wg-new-ui .wg-travela-search-wrap .exp-unified-card .exp-swap-inline {
+  align-self: center;
+  flex-shrink: 0;
+}
+
+.shop-root.wg-new-ui .wg-travela-search-wrap .exp-unified-card .exp-pill-tab {
+  padding: 0.5rem 0.85rem;
+  white-space: nowrap;
+}
+
+.shop-root.wg-new-ui .wg-travela-search-wrap .exp-trip-builder-cta {
+  width: 100%;
+  max-width: none;
+  margin: 0.85rem 0 0;
+  padding: 0.9rem 1rem;
+  border-radius: 1rem;
+  background: #fff;
+  border: 1px solid rgba(19, 53, 123, 0.15);
+  box-shadow: none;
+  box-sizing: border-box;
+}
+
+.shop-root.wg-new-ui .wg-travela-search-wrap .exp-trip-builder-cta-copy {
+  min-width: 0;
+  flex: 1;
+}
+
+.shop-root.wg-new-ui .wg-travela-search-wrap .exp-trip-builder-cta-copy span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  white-space: normal;
+}
+
+.shop-root.wg-new-ui .wg-travela-search-wrap .exp-trip-builder-cta-btn {
+  background: var(--tv-primary);
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+
+.shop-root.wg-new-ui .wg-travela-search-wrap .exp-dialog-msg {
+  margin: 0.5rem 0 0;
+  padding: 0 0.15rem;
+  font-size: 0.88rem;
 }
 
 .shop-root.wg-new-ui .wg-travela-search-wrap .exp-unified-card .exp-search-link,
@@ -443,12 +615,33 @@
   }
 
   .wg-travela-search-wrap {
-    margin-top: -3rem;
+    margin-top: -2.5rem;
   }
 
   .wg-travela-search-shell {
     border-radius: 1.25rem;
-    padding: 1rem;
+    padding: 1rem 0.85rem 1.1rem;
+  }
+
+  .shop-root.wg-new-ui .wg-travela-search-wrap .exp-unified-card .exp-form-row {
+    grid-template-columns: 1fr !important;
+  }
+
+  .shop-root.wg-new-ui .wg-travela-search-wrap .exp-unified-card .exp-search-link {
+    width: 100%;
+    justify-self: stretch;
+  }
+
+  .shop-root.wg-new-ui .wg-travela-search-wrap .exp-flight-toolbar,
+  .shop-root.wg-new-ui .wg-travela-search-wrap .exp-transfer-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .shop-root.wg-new-ui .wg-travela-search-wrap .exp-cabin-pill,
+  .shop-root.wg-new-ui .wg-travela-search-wrap .exp-direct-pill {
+    width: 100%;
+    justify-content: space-between;
   }
 
   .wg-travela-carousel-btn {

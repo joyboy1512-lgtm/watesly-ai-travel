@@ -130,22 +130,18 @@ function StoreFrontInner({
               </select>
             </label>
 
-            <label className="wg-header-chip" title="اتجاه النص">
+            <button
+              type="button"
+              className="wg-header-chip wg-header-dir"
+              title="اتجاه النص"
+              aria-label="تبديل اتجاه النص"
+              onClick={() => setLocale(locale === "ar" ? "en" : "ar")}
+            >
               <span className="wg-header-chip-ico" aria-hidden>
                 ⇄
               </span>
-              <select
-                aria-label="اتجاه النص"
-                value={locale}
-                onChange={(e) => setLocale(e.target.value as ShopLocale)}
-              >
-                {locales.map((code) => (
-                  <option key={code} value={code}>
-                    {code === "ar" ? "RTL" : "LTR"}
-                  </option>
-                ))}
-              </select>
-            </label>
+              <span className="wg-header-chip-text">{locale === "ar" ? "RTL" : "LTR"}</span>
+            </button>
 
             {customer ? (
               <div className="wg-header-account">

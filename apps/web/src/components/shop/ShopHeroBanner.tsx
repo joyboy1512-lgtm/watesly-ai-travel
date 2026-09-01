@@ -1023,35 +1023,35 @@ export function ShopHeroBanner(props: Props) {
 
           {props.error ? <p className="shop-error exp-dialog-msg">{props.error}</p> : null}
           {props.message ? <p className="shop-status exp-dialog-msg">{props.message}</p> : null}
-        </div>
 
-        {props.tripBuilderHref ? (
-          <div className="exp-trip-builder-cta">
-            <div className="exp-trip-builder-cta-copy">
-              <strong>رحّلتي — Trip Builder</strong>
-              <span>كوّن رحلتك: طيران + فندق + نقل + أنشطة — بنفس بيانات البحث أعلاه</span>
+          {props.tripBuilderHref ? (
+            <div className="exp-trip-builder-cta">
+              <div className="exp-trip-builder-cta-copy">
+                <strong>رحّلتي — Trip Builder</strong>
+                <span>كوّن رحلتك: طيران + فندق + نقل + أنشطة — بنفس بيانات البحث أعلاه</span>
+              </div>
+              <Link
+                href={props.tripBuilderHref}
+                className="exp-trip-builder-cta-btn"
+                onClick={() => {
+                  try {
+                    sessionStorage.setItem(
+                      "wg_trip_builder_search",
+                      JSON.stringify({
+                        href: props.tripBuilderHref,
+                        at: Date.now(),
+                      }),
+                    );
+                  } catch {
+                    /* ignore */
+                  }
+                }}
+              >
+                ابدأ بناء رحلتي
+              </Link>
             </div>
-            <Link
-              href={props.tripBuilderHref}
-              className="exp-trip-builder-cta-btn"
-              onClick={() => {
-                try {
-                  sessionStorage.setItem(
-                    "wg_trip_builder_search",
-                    JSON.stringify({
-                      href: props.tripBuilderHref,
-                      at: Date.now(),
-                    }),
-                  );
-                } catch {
-                  /* ignore */
-                }
-              }}
-            >
-              ابدأ بناء رحلتي
-            </Link>
-          </div>
-        ) : null}
+          ) : null}
+        </div>
         </div>
       </div>
     </>

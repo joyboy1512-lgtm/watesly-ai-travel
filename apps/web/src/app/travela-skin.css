@@ -303,8 +303,7 @@
 }
 
 .shop-root.wg-new-ui .wg-travela-search-shell > .exp-icon-tabs-hero,
-.shop-root.wg-new-ui .wg-travela-search-shell > .exp-dialog,
-.shop-root.wg-new-ui .wg-travela-search-shell > .exp-trip-builder-cta {
+.shop-root.wg-new-ui .wg-travela-search-shell > .exp-dialog {
   width: calc(100% - 6cm);
   max-width: calc(100% - 6cm);
   margin-inline: auto;
@@ -493,10 +492,17 @@
   font-size: 0.78rem;
 }
 
-.shop-root.wg-new-ui .wg-travela-search-wrap .exp-trip-builder-cta {
+.shop-root.wg-new-ui .wg-travela-search-wrap .exp-dialog .exp-trip-builder-cta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.55rem 0.75rem;
+  width: 100%;
+  max-width: 100%;
   margin: calc(0.65rem - 0.1cm) 0 0;
   padding: calc(0.7rem - 0.25cm) 0.8rem;
-  border-radius: 0.95rem;
+  border-radius: 1.15rem;
   background: #fff;
   border: 1px solid rgba(19, 53, 123, 0.15);
   box-shadow: none;

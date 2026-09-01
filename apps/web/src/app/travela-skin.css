@@ -1,0 +1,1162 @@
+/**
+ * Travela template skin — scoped to .shop-root.wg-new-ui
+ * Visual layer only; search logic unchanged.
+ */
+
+.shop-root.wg-new-ui {
+  --tv-primary: #13357b;
+  --tv-secondary: #f97316;
+  --tv-light: #f2f2f2;
+  --tv-dark: #14141f;
+  --exp-navy: #13357b;
+  --exp-blue: #13357b;
+  --exp-sky: #1a4a9e;
+  --shop-bg: #fff;
+  --exp-bg: #fff;
+  background: #fff;
+  /* shared blue pill frame — header cap + search shell */
+  --wg-blue-pill-width: min(calc(960px + 1cm), calc(100% - 1.5rem));
+  --wg-blue-pill-pad-x: clamp(2rem, 4.5vw, 3.25rem);
+  --wg-blue-pill-pad-y: 1.25rem;
+  --wg-blue-pill-inner-inset: 6cm;
+  --wg-blue-pill-bg: #13357b;
+  --wg-blue-pill-shadow: 0 16px 40px rgba(19, 53, 123, 0.35);
+}
+
+.shop-root.wg-new-ui .exp-main,
+.shop-root.wg-new-ui .shop-main {
+  background: #fff;
+}
+
+/* —— Header (Travela navbar) —— */
+.shop-root.wg-new-ui .exp-header-hero-overlay {
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  z-index: 80;
+  background: transparent;
+  border: 0;
+  border-bottom: 0;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+.shop-root.wg-new-ui .shop-header.exp-header-hero-overlay {
+  background: transparent;
+  border-bottom: 0;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+.shop-root.wg-new-ui .exp-header-hero-overlay .shop-header-inner,
+.shop-root.wg-new-ui .exp-header-hero-overlay .exp-header-inner,
+.shop-root.wg-new-ui .exp-header-white .shop-header-inner,
+.shop-root.wg-new-ui .exp-header-white .exp-header-inner {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding-inline: 0;
+}
+
+.shop-root.wg-new-ui .exp-header-white {
+  background: #fff;
+  border-bottom: 1px solid #e5e7eb;
+  box-shadow: 0 2px 12px rgba(19, 53, 123, 0.06);
+}
+
+.shop-root.wg-new-ui .wg-header-row {
+  width: min(1280px, calc(100% - 2rem));
+  margin: 0 auto;
+  min-height: auto;
+  padding: 0.85rem 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.shop-root.wg-new-ui .wg-header-brand .wg-logo-word {
+  font-size: 1.65rem;
+  font-weight: 700;
+}
+
+.shop-root.wg-new-ui .exp-header-hero-overlay .wg-logo-light .wg-logo-word {
+  color: #fff;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
+}
+
+.shop-root.wg-new-ui .exp-header-hero-overlay .wg-logo-light .wg-logo-gate {
+  color: #fbbf24;
+}
+
+.shop-root.wg-new-ui .exp-header-white .wg-logo-word {
+  color: var(--tv-primary);
+}
+
+.shop-root.wg-new-ui .wg-header-pill-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0;
+  background: transparent;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.shop-root.wg-new-ui .wg-header-pill-nav a {
+  padding: 0.5rem 1rem;
+  font-size: 1rem;
+  font-weight: 500;
+  color: #fff;
+  border-radius: 0;
+}
+
+.shop-root.wg-new-ui .exp-header-white .wg-header-pill-nav a {
+  color: var(--tv-dark);
+}
+
+.shop-root.wg-new-ui .wg-header-pill-nav a:hover {
+  background: transparent;
+  color: #fbbf24;
+}
+
+.shop-root.wg-new-ui .exp-header-white .wg-header-pill-nav a:hover {
+  color: var(--tv-primary);
+}
+
+.shop-root.wg-new-ui .wg-header-chip {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.35);
+  color: #fff;
+}
+
+.shop-root.wg-new-ui .exp-header-white .wg-header-chip {
+  background: var(--tv-light);
+  border-color: #ddd;
+  color: var(--tv-dark);
+}
+
+.shop-root.wg-new-ui .wg-header-account {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.35);
+}
+
+.shop-root.wg-new-ui .exp-header-white .wg-header-account {
+  background: var(--tv-light);
+  border-color: #ddd;
+}
+
+.shop-root.wg-new-ui .exp-header-hero-overlay .wg-header-user {
+  color: #fff;
+}
+
+.shop-root.wg-new-ui .wg-header-logout {
+  background: var(--tv-primary);
+  color: #fff;
+}
+
+.shop-root.wg-new-ui .wg-header-signin {
+  background: var(--tv-primary);
+  color: #fff;
+  border: none;
+  border-radius: 999px;
+}
+
+.shop-root.wg-new-ui .exp-header-hero-overlay .exp-menu-toggle,
+.shop-root.wg-new-ui .exp-header-hero-overlay .shop-menu-toggle {
+  color: var(--tv-primary);
+  border-color: #fff;
+  background: #fff;
+}
+
+/* —— Inverted blue header cap (mirror of search shell) —— */
+.shop-root.wg-new-ui .wg-header-cap-wrap {
+  position: relative;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+.shop-root.wg-new-ui .wg-header-cap-track {
+  position: relative;
+  width: var(--wg-blue-pill-width);
+  margin: 0 auto;
+}
+
+.shop-root.wg-new-ui .wg-header-logo-standalone {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  inset-inline-start: calc(100% + 0.65rem);
+  text-decoration: none;
+  z-index: 85;
+  white-space: nowrap;
+}
+
+.shop-root.wg-new-ui .wg-header-logo-standalone .wg-logo-word {
+  font-size: clamp(1.35rem, 3vw, 1.75rem);
+  font-weight: 700;
+}
+
+.shop-root.wg-new-ui .wg-header-cap {
+  width: 100%;
+  padding: 0.38rem var(--wg-blue-pill-pad-x) 0.52rem;
+  border-radius: 0 0 999px 999px;
+  background: var(--wg-blue-pill-bg);
+  box-shadow: var(--wg-blue-pill-shadow);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem;
+  box-sizing: border-box;
+  border: 0;
+  margin-bottom: -2px;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  min-height: 0;
+}
+
+.shop-root.wg-new-ui .wg-header-cap-nav {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.2rem;
+}
+
+.shop-root.wg-new-ui .wg-header-cap-nav a {
+  color: #fff;
+  text-decoration: none;
+  font-size: 0.82rem;
+  font-weight: 600;
+  padding: 0.28rem 0.65rem;
+  border-radius: 0.3rem;
+  line-height: 1.2;
+}
+
+.shop-root.wg-new-ui .wg-header-cap-nav a:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: #fbbf24;
+}
+
+.shop-root.wg-new-ui .wg-header-cap-user {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.shop-root.wg-new-ui .wg-header-cap-text {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.28rem 0.5rem;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: #fff;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  box-sizing: border-box;
+  line-height: 1.2;
+  flex-shrink: 0;
+}
+
+.shop-root.wg-new-ui .wg-header-cap-text:hover {
+  color: #fbbf24;
+}
+
+.shop-root.wg-new-ui .wg-header-cap-currency {
+  position: relative;
+  padding: 0.28rem 0.15rem;
+}
+
+.shop-root.wg-new-ui .wg-header-cap-currency select {
+  appearance: none;
+  -webkit-appearance: none;
+  border: 0;
+  background: transparent;
+  color: #fff;
+  font: inherit;
+  font-weight: 600;
+  font-size: 0.82rem;
+  padding: 0 0.85rem 0 0.15rem;
+  cursor: pointer;
+  line-height: 1.2;
+}
+
+.shop-root.wg-new-ui .wg-header-cap-currency select option {
+  color: var(--tv-dark);
+  background: #fff;
+}
+
+.shop-root.wg-new-ui .wg-header-cap-currency::after {
+  content: "▾";
+  position: absolute;
+  inset-inline-end: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.55rem;
+  pointer-events: none;
+  opacity: 0.85;
+  color: #fff;
+}
+
+.shop-root.wg-new-ui .wg-header-cap-lang {
+  letter-spacing: 0.03em;
+  min-width: 0;
+}
+
+.shop-root.wg-new-ui .wg-header-cap-signin {
+  white-space: nowrap;
+}
+
+.shop-root.wg-new-ui .wg-header-cap-menu-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 2.35rem;
+  height: 2.35rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  font-size: 1.1rem;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.shop-root.wg-new-ui .wg-header-user-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.28rem 0.5rem;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: #fff;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  max-width: 9rem;
+  min-height: 0;
+  box-sizing: border-box;
+}
+
+.shop-root.wg-new-ui .wg-header-user-trigger:hover {
+  color: #fbbf24;
+}
+
+.shop-root.wg-new-ui .wg-header-user-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shop-root.wg-new-ui .wg-header-user-chevron {
+  font-size: 0.75rem;
+  opacity: 0.85;
+}
+
+.shop-root.wg-new-ui .wg-header-user-menu {
+  position: absolute;
+  top: calc(100% + 0.45rem);
+  inset-inline-end: 0;
+  min-width: 11.5rem;
+  padding: 0.45rem;
+  border-radius: 1rem;
+  background: #fff;
+  box-shadow: 0 12px 32px rgba(19, 53, 123, 0.22);
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.shop-root.wg-new-ui .wg-header-user-menu a,
+.shop-root.wg-new-ui .wg-header-user-menu button {
+  display: block;
+  width: 100%;
+  padding: 0.55rem 0.75rem;
+  border: 0;
+  border-radius: 0.65rem;
+  background: transparent;
+  color: var(--tv-dark);
+  text-decoration: none;
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 600;
+  text-align: start;
+  cursor: pointer;
+}
+
+.shop-root.wg-new-ui .wg-header-user-menu a:hover,
+.shop-root.wg-new-ui .wg-header-user-menu button:hover {
+  background: var(--tv-light);
+}
+
+.shop-root.wg-new-ui .wg-header-menu-currency {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.55rem 0.75rem;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--tv-dark);
+}
+
+.shop-root.wg-new-ui .wg-header-menu-currency select {
+  border: 1px solid #ddd;
+  border-radius: 0.5rem;
+  padding: 0.25rem 0.45rem;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  background: #fff;
+}
+
+.shop-root.wg-new-ui .wg-header-cap-mobile-currency {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.55rem 0.65rem;
+  color: #fff;
+}
+
+.shop-root.wg-new-ui .wg-header-cap-mobile {
+  display: none;
+  width: var(--wg-blue-pill-width);
+  margin-inline: auto;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-top: 0.35rem;
+  padding: 0.85rem;
+  border-radius: 1rem;
+  background: var(--wg-blue-pill-bg);
+  box-shadow: var(--wg-blue-pill-shadow);
+}
+
+.shop-root.wg-new-ui .wg-header-cap-mobile.open {
+  display: flex;
+}
+
+.shop-root.wg-new-ui .wg-header-cap-mobile a,
+.shop-root.wg-new-ui .wg-header-cap-mobile button {
+  display: block;
+  padding: 0.55rem 0.65rem;
+  border: 0;
+  border-radius: 0.65rem;
+  background: transparent;
+  color: #fff;
+  text-decoration: none;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-align: start;
+  cursor: pointer;
+}
+
+.shop-root.wg-new-ui .wg-header-cap-mobile a:hover,
+.shop-root.wg-new-ui .wg-header-cap-mobile button:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.shop-root.wg-new-ui .exp-header-white .wg-header-logo-standalone .wg-logo-word {
+  color: var(--tv-primary);
+}
+
+.shop-root.wg-new-ui .exp-header-white .wg-header-logo-standalone .wg-logo-gate {
+  color: #f97316;
+}
+
+/* —— Hero carousel —— */
+.shop-root.wg-new-ui.shop-home-layout {
+  position: relative;
+  background: #fff;
+}
+
+.shop-root.wg-new-ui.shop-home-layout .shop-main,
+.shop-root.wg-new-ui.shop-home-layout .exp-main {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 0;
+}
+
+.wg-travela-hero {
+  position: relative;
+  overflow: hidden;
+  min-height: 100svh;
+  min-height: 100dvh;
+}
+
+.wg-travela-carousel {
+  position: relative;
+  min-height: 100svh;
+  min-height: 100dvh;
+}
+
+.wg-travela-slide {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 1s ease;
+  pointer-events: none;
+}
+
+.wg-travela-slide.active {
+  opacity: 1;
+  pointer-events: auto;
+  z-index: 1;
+}
+
+.wg-travela-slide img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.wg-travela-caption {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 6rem 1.5rem 12rem;
+  background: linear-gradient(rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.45));
+  color: #fff;
+}
+
+.wg-travela-caption-inner {
+  max-width: 900px;
+}
+
+.wg-travela-caption h4 {
+  margin: 0 0 0.75rem;
+  font-size: clamp(0.85rem, 2vw, 1.1rem);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+.wg-travela-caption h1 {
+  margin: 0 0 1rem;
+  font-size: clamp(2rem, 6vw, 3.75rem);
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+.wg-travela-caption p {
+  margin: 0;
+  font-size: clamp(1rem, 2.2vw, 1.2rem);
+  opacity: 0.92;
+  line-height: 1.6;
+}
+
+.wg-travela-carousel-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 5;
+  border: 0;
+  background: var(--tv-primary);
+  color: #fff;
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 0 999px 999px 0;
+  cursor: pointer;
+  font-size: 1.25rem;
+  display: grid;
+  place-items: center;
+}
+
+.wg-travela-carousel-btn.next {
+  inset-inline-end: 0;
+  border-radius: 999px 0 0 999px;
+}
+
+.wg-travela-carousel-btn.prev {
+  inset-inline-start: 0;
+}
+
+.wg-travela-dots {
+  position: absolute;
+  bottom: 7.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 5;
+  display: flex;
+  gap: 0.45rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.wg-travela-dots button {
+  width: 0.65rem;
+  height: 0.65rem;
+  border-radius: 50%;
+  border: 0;
+  background: rgba(255, 255, 255, 0.45);
+  cursor: pointer;
+  padding: 0;
+}
+
+.wg-travela-dots button.active {
+  background: #fff;
+}
+
+/* —— Hero search glass square (right, vertically centered) —— */
+.wg-hero-search-panel {
+  position: absolute;
+  right: clamp(1.25rem, 3.5vw, 2.75rem);
+  left: auto;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 25;
+  width: min(26rem, calc(100% - 2rem));
+  pointer-events: none;
+}
+
+.wg-hero-search-glass {
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  background: rgba(255, 255, 255, 0.13);
+  backdrop-filter: blur(20px) saturate(1.25);
+  -webkit-backdrop-filter: blur(20px) saturate(1.25);
+  border: 1px solid rgba(255, 255, 255, 0.34);
+  border-radius: 1.35rem;
+  padding: 1rem 1.05rem 1.1rem;
+  box-shadow:
+    0 24px 60px rgba(7, 21, 38, 0.38),
+    inset 0 1px 0 rgba(255, 255, 255, 0.28);
+  box-sizing: border-box;
+}
+
+/* —— Bottom decorative arc (mirrors header cap, no search) —— */
+.wg-travela-bottom-arc {
+  position: relative;
+  z-index: 12;
+  margin-top: calc(-1 * var(--wg-blue-pill-pad-y) - 1.35rem);
+  pointer-events: none;
+}
+
+.wg-travela-bottom-arc-cap {
+  width: var(--wg-blue-pill-width);
+  margin: 0 auto;
+  height: calc(var(--wg-blue-pill-pad-y) + 1.35rem);
+  border-radius: 999px 999px 0 0;
+  background: var(--wg-blue-pill-bg);
+  box-shadow: var(--wg-blue-pill-shadow);
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+.shop-root.wg-new-ui .wg-hero-search-panel .exp-icon-tabs-hero {
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  box-sizing: border-box;
+}
+
+.shop-root.wg-new-ui .wg-hero-search-panel .exp-dialog {
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  box-sizing: border-box;
+}
+
+.shop-root.wg-new-ui .wg-hero-search-panel .exp-dialog {
+  box-sizing: border-box;
+}
+
+.shop-root.wg-new-ui .wg-hero-search-panel .exp-unified-card {
+  background: rgba(255, 255, 255, 0.94);
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  border-radius: 1rem;
+  box-shadow: 0 8px 24px rgba(19, 53, 123, 0.1);
+  padding: 0.75rem 0.8rem 0.85rem;
+  gap: 0.55rem;
+  overflow: hidden;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.shop-root.wg-new-ui .wg-hero-search-panel .exp-icon-tabs-hero {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  justify-content: stretch;
+  flex-wrap: nowrap;
+  gap: 0.4rem;
+  margin-bottom: 0;
+  max-width: 100%;
+}
+
+.shop-root.wg-new-ui .wg-hero-search-panel .exp-icon-circle-labeled {
+  width: 100%;
+  aspect-ratio: 1;
+  height: auto;
+  min-width: 0;
+  border-radius: 0.75rem;
+  padding: 0.35rem 0.25rem;
+  font-size: 0.68rem;
+  background: rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.15rem;
+}
+
+.shop-root.wg-new-ui .wg-hero-search-panel .exp-icon-circle-labeled.on {
+  background: rgba(255, 255, 255, 0.95);
+  color: var(--tv-primary);
+  border-color: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 6px 16px rgba(19, 53, 123, 0.2);
+}
+
+.shop-root.wg-new-ui .wg-hero-search-panel .exp-unified-card .exp-search-link {
+  width: 100%;
+  justify-self: stretch;
+}
+
+.shop-root.wg-new-ui .wg-hero-search-panel .exp-flight-toolbar,
+.shop-root.wg-new-ui .wg-hero-search-panel .exp-transfer-toolbar {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.shop-root.wg-new-ui .wg-hero-search-panel .exp-cabin-pill,
+.shop-root.wg-new-ui .wg-hero-search-panel .exp-direct-pill {
+  border-color: #e2e8f0;
+  color: var(--tv-dark);
+  max-width: 100%;
+  flex-shrink: 1;
+  min-width: 0;
+  font-size: 0.76rem;
+  padding: 0.4rem 0.6rem;
+}
+
+.shop-root.wg-new-ui .wg-hero-search-panel .exp-cabin-pill span:first-child {
+  font-size: 0.7rem;
+}
+
+.shop-root.wg-new-ui .wg-hero-search-panel .exp-cabin-pill select {
+  min-width: 0;
+  max-width: 5.5rem;
+  font-size: 0.76rem;
+}
+
+.shop-root.wg-new-ui .wg-hero-search-panel .exp-pill-tab {
+  padding: 0.4rem 0.7rem;
+  font-size: 0.78rem;
+}
+
+.shop-root.wg-new-ui .wg-hero-search-panel .exp-pill-tabs-inset {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.shop-root.wg-new-ui .wg-hero-search-panel .exp-cabin-pill span,
+.shop-root.wg-new-ui .wg-hero-search-panel .exp-direct-pill span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shop-root.wg-new-ui .wg-hero-search-panel .exp-unified-card .exp-form-row {
+  width: 100%;
+  max-width: 100%;
+  gap: 0.35rem;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.shop-root.wg-new-ui .wg-hero-search-panel .exp-unified-card .exp-form-flights {
+  grid-template-columns: 1fr;
+}
+
+.shop-root.wg-new-ui .wg-hero-search-panel .exp-unified-card .exp-form-stays {
+  grid-template-columns: 1fr;
+}
+
+.shop-root.wg-new-ui .wg-hero-search-panel .exp-unified-card .exp-form-cars,
+.shop-root.wg-new-ui .wg-hero-search-panel .exp-unified-card .exp-form-activities {
+  grid-template-columns: 1fr;
+}
+
+.shop-root.wg-new-ui .wg-hero-search-panel .exp-unified-card .exp-input-cell {
+  height: auto;
+  min-height: calc(48px - 0.5cm);
+  max-height: none;
+  padding: calc(0.4rem - 0.1cm) 0.55rem;
+  border-color: #e2e8f0;
+  background: #fff;
+  overflow: hidden;
+  box-sizing: border-box;
+  min-width: 0;
+}
+
+.shop-root.wg-new-ui .wg-hero-search-panel .exp-unified-card .exp-cell-label,
+.shop-root.wg-new-ui .wg-hero-search-panel .exp-unified-card .exp-input-cell .shop-ac-inline > span:first-child,
+.shop-root.wg-new-ui .wg-hero-search-panel .exp-unified-card .exp-input-cell .shop-ac-inline .exp-cell-label {
+  font-size: 0.62rem;
+  color: #64748b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.shop-root.wg-new-ui .wg-hero-search-panel .exp-unified-card .exp-input-cell .shop-ac-inline input,
+.shop-root.wg-new-ui .wg-hero-search-panel .exp-unified-card .exp-date-btn,
+.shop-root.wg-new-ui .wg-hero-search-panel .exp-unified-card .exp-travelers-trigger strong,
+.shop-root.wg-new-ui .wg-hero-search-panel .exp-unified-card .shop-date-range-trigger,
+.shop-root.wg-new-ui .wg-hero-search-panel .exp-unified-card .exp-time-select {
+  font-size: 0.8rem;
+  line-height: 1.3;
+  font-weight: 700;
+  color: var(--tv-dark);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+  display: block;
+}
+
+.shop-root.wg-new-ui .wg-hero-search-panel .exp-unified-card .exp-travelers-trigger {
+  width: 100%;
+  text-align: start;
+  overflow: hidden;
+}
+
+.shop-root.wg-new-ui .wg-hero-search-panel .exp-unified-card .exp-search-link {
+  height: calc(48px - 0.5cm);
+  min-height: calc(48px - 0.5cm);
+  min-width: 3.75rem;
+  padding: 0 0.85rem;
+  font-size: 0.82rem;
+  align-self: stretch;
+  justify-self: stretch;
+  flex-shrink: 0;
+}
+
+.shop-root.wg-new-ui .wg-hero-search-panel .exp-unified-card .exp-swap-inline {
+  align-self: center;
+  flex-shrink: 0;
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+.shop-root.wg-new-ui .wg-hero-search-panel .exp-unified-card .exp-pill-tab {
+  padding: 0.4rem 0.7rem;
+  white-space: nowrap;
+  font-size: 0.78rem;
+}
+
+.shop-root.wg-new-ui .wg-hero-search-panel .exp-dialog .exp-trip-builder-cta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.55rem 0.75rem;
+  width: 100%;
+  max-width: 100%;
+  margin: calc(0.65rem - 0.1cm) 0 0;
+  padding: calc(0.7rem - 0.25cm) 0.8rem;
+  border-radius: 1.15rem;
+  background: #fff;
+  border: 0;
+  box-shadow: none;
+  box-sizing: border-box;
+}
+
+.shop-root.wg-new-ui .wg-hero-search-panel .exp-trip-builder-cta-copy strong {
+  font-size: 0.92rem;
+}
+
+.shop-root.wg-new-ui .wg-hero-search-panel .exp-trip-builder-cta-copy span {
+  font-size: 0.78rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  white-space: normal;
+}
+
+.shop-root.wg-new-ui .wg-hero-search-panel .exp-trip-builder-cta-btn {
+  background: var(--tv-primary);
+  border-radius: 999px;
+  flex-shrink: 0;
+  padding: 0.55rem 0.9rem;
+  font-size: 0.82rem;
+}
+
+.shop-root.wg-new-ui .wg-hero-search-panel .exp-trip-builder-cta-copy {
+  min-width: 0;
+  flex: 1;
+}
+
+.shop-root.wg-new-ui .wg-hero-search-panel .exp-dialog-msg {
+  margin: 0.5rem 0 0;
+  padding: 0 0.15rem;
+  font-size: 0.88rem;
+}
+
+.shop-root.wg-new-ui .wg-hero-search-panel .exp-unified-card .exp-search-link,
+.shop-root.wg-new-ui .wg-hero-search-panel .exp-search-submit {
+  background: var(--tv-primary);
+  box-shadow: none;
+  border-radius: 999px;
+}
+
+.shop-root.wg-new-ui .wg-hero-search-panel .exp-unified-card .exp-search-link:hover:not(:disabled) {
+  background: #0f2a63;
+}
+
+.shop-root.wg-new-ui .wg-hero-search-panel .exp-pill-tab.on {
+  background: var(--tv-primary);
+  border-color: var(--tv-primary);
+}
+
+.shop-root.wg-new-ui .exp-home-tagline {
+  display: none;
+}
+
+/* —— Landing sections (Travela accents) —— */
+.shop-root.wg-new-ui .shop-kicker,
+.shop-root.wg-new-ui .wg-section-kicker {
+  position: relative;
+  display: inline-block;
+  text-transform: uppercase;
+  color: var(--tv-primary);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  padding-inline: 3.5rem;
+}
+
+.shop-root.wg-new-ui .shop-kicker::before,
+.shop-root.wg-new-ui .shop-kicker::after,
+.shop-root.wg-new-ui .wg-section-kicker::before,
+.shop-root.wg-new-ui .wg-section-kicker::after {
+  content: "";
+  width: 2.5rem;
+  position: absolute;
+  top: 50%;
+  border-top: 1px solid var(--tv-primary);
+}
+
+.shop-root.wg-new-ui .shop-kicker::before,
+.shop-root.wg-new-ui .wg-section-kicker::before {
+  inset-inline-start: 0;
+}
+
+.shop-root.wg-new-ui .shop-kicker::after,
+.shop-root.wg-new-ui .wg-section-kicker::after {
+  inset-inline-end: 0;
+}
+
+.shop-root.wg-new-ui .shop-section h2 {
+  color: var(--tv-dark);
+}
+
+.shop-root.wg-new-ui .shop-section h2 span,
+.shop-root.wg-new-ui .shop-footer-brand {
+  color: var(--tv-primary);
+}
+
+.shop-root.wg-new-ui .shop-btn,
+.shop-root.wg-new-ui .shop-cta {
+  background: var(--tv-primary);
+  box-shadow: 0 8px 20px rgba(19, 53, 123, 0.25);
+}
+
+.shop-root.wg-new-ui .shop-btn-ghost {
+  color: var(--tv-primary);
+  border-color: var(--tv-primary);
+}
+
+.shop-root.wg-new-ui .shop-dest-card:hover,
+.shop-root.wg-new-ui .shop-offer-card:hover {
+  border-color: var(--tv-primary);
+}
+
+/* —— Footer (Travela dark) —— */
+.shop-root.wg-new-ui .shop-footer.exp-footer {
+  background: var(--tv-primary);
+  color: rgba(255, 255, 255, 0.85);
+  border-top: 0;
+  margin-top: 0;
+}
+
+.shop-root.wg-new-ui .shop-footer-grid strong {
+  color: #fff;
+}
+
+.shop-root.wg-new-ui .shop-footer-grid a,
+.shop-root.wg-new-ui .shop-footer-grid span {
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.shop-root.wg-new-ui .shop-footer-grid a:hover {
+  color: #fbbf24;
+}
+
+.shop-root.wg-new-ui .shop-footer-copy {
+  color: rgba(255, 255, 255, 0.55);
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.shop-root.wg-new-ui .shop-assist-toggle {
+  background: var(--tv-primary);
+}
+
+@media (max-width: 767px) {
+  .wg-travela-carousel {
+    min-height: 88svh;
+  }
+
+  .wg-travela-caption {
+    display: none;
+  }
+
+  .wg-hero-search-panel {
+    inset: 0;
+    right: 0;
+    left: 0;
+    top: 0;
+    transform: none;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: clamp(4.75rem, 14vw, 6.5rem) 0.85rem 2.5rem;
+    margin-top: 0;
+  }
+
+  .wg-hero-search-glass {
+    width: 100%;
+    max-height: 100%;
+    overflow-y: auto;
+    border-radius: 1.15rem;
+    padding: 0.9rem;
+  }
+
+  .wg-travela-bottom-arc {
+    margin-top: calc(-1 * var(--wg-blue-pill-pad-y) - 0.85rem);
+  }
+
+  .wg-travela-bottom-arc-cap {
+    width: calc(100% - 1rem);
+    height: calc(var(--wg-blue-pill-pad-y) + 0.85rem);
+    border-radius: 28px 28px 0 0;
+  }
+
+  .shop-root.wg-new-ui .wg-header-cap-wrap {
+    position: relative;
+    padding: 0.35rem 0.5rem 0;
+  }
+
+  .shop-root.wg-new-ui .wg-header-cap-track {
+    width: calc(100% - 1rem);
+    margin-inline: auto;
+    margin-top: 2.4rem;
+  }
+
+  .shop-root.wg-new-ui .wg-header-logo-standalone {
+    position: absolute;
+    top: 0.35rem;
+    inset-inline-end: 0.75rem;
+    transform: none;
+    inset-inline-start: auto;
+  }
+
+  .shop-root.wg-new-ui .wg-header-cap {
+    padding: 0.32rem 0.85rem 0.45rem;
+    border-radius: 0 0 22px 22px;
+  }
+
+  .shop-root.wg-new-ui .wg-hero-search-panel .exp-unified-card .exp-form-row {
+    grid-template-columns: 1fr !important;
+  }
+
+  .shop-root.wg-new-ui .wg-hero-search-panel .exp-unified-card .exp-search-link {
+    width: 100%;
+    justify-self: stretch;
+  }
+
+  .shop-root.wg-new-ui .wg-hero-search-panel .exp-flight-toolbar,
+  .shop-root.wg-new-ui .wg-hero-search-panel .exp-transfer-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .shop-root.wg-new-ui .wg-hero-search-panel .exp-cabin-pill,
+  .shop-root.wg-new-ui .wg-hero-search-panel .exp-direct-pill {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .wg-travela-carousel-btn {
+    display: none;
+  }
+
+  .wg-travela-dots {
+    bottom: 1.5rem;
+  }
+
+  .shop-root.wg-new-ui .wg-header-cap-nav {
+    display: none;
+  }
+
+  .shop-root.wg-new-ui .wg-header-cap-menu-btn {
+    display: inline-flex;
+  }
+
+  .shop-root.wg-new-ui .wg-header-cap-currency,
+  .shop-root.wg-new-ui .wg-header-cap-lang,
+  .shop-root.wg-new-ui .wg-header-cap-signin,
+  .shop-root.wg-new-ui .wg-header-user-dropdown {
+    display: none;
+  }
+
+  .shop-root.wg-new-ui .wg-header-cap-user {
+    margin-inline-start: auto;
+  }
+
+  .shop-root.wg-new-ui .wg-header-pill-nav {
+    display: none;
+  }
+}
+
+@media (min-width: 768px) {
+  .shop-root.wg-new-ui .wg-header-row {
+    flex-wrap: nowrap;
+  }
+
+  .shop-root.wg-new-ui .wg-header-pill-nav {
+    margin-inline: auto;
+  }
+
+  .shop-root.wg-new-ui .wg-header-cap-mobile {
+    display: none !important;
+  }
+}

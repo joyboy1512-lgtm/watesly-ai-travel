@@ -23,6 +23,7 @@ import {
   nightsBetween,
   occupancyFromSearchParams,
   parseHotelResultsSearch,
+  syncHotelSearchParams,
   type HotelResultsSearchParams,
 } from "@/lib/hotel-results-url";
 import {
@@ -356,7 +357,16 @@ export function ShopHotelResultsClient() {
         childrenAges: ages.slice(0, next.children).join(","),
       };
     }
-    const href = buildHotelResultsHref(next);
+    const synced = syncHotelSearchParams(
+      { ...params, ...next },
+      {
+        adults: next.adults,
+        children: next.children,
+        rooms: next.rooms,
+        childrenAges: next.childrenAges,
+      },
+    );
+    const href = buildHotelResultsHref(synced);
     router.push(href);
     setEditOpen(false);
   }
@@ -385,7 +395,11 @@ export function ShopHotelResultsClient() {
         description: hotel.description,
         sellAmountMinor: totalMinor,
         currency: hotel.currency,
-        details: hotel.details,
+        details: {
+          ...hotel.details,
+          costAmountMinor: hotel.costAmountMinor,
+          validatedAt: new Date().toISOString(),
+        },
       },
       selectedRate: toDraftHotelRate(rate),
       checkIn: params.checkIn,
@@ -535,7 +549,11 @@ export function ShopHotelResultsClient() {
                 min={1}
                 value={draft.adults}
                 onChange={(e) =>
-                  setDraft((d) => ({ ...d, adults: Math.max(1, Number(e.target.value) || 1) }))
+                  setDraft((d) => ({
+                    ...d,
+                    adults: Math.max(1, Number(e.target.value) || 1),
+                    occ: "",
+                  }))
                 }
               />
             </label>
@@ -600,7 +618,11 @@ export function ShopHotelResultsClient() {
                 min={1}
                 value={draft.rooms}
                 onChange={(e) =>
-                  setDraft((d) => ({ ...d, rooms: Math.max(1, Number(e.target.value) || 1) }))
+                  setDraft((d) => ({
+                    ...d,
+                    rooms: Math.max(1, Number(e.target.value) || 1),
+                    occ: "",
+                  }))
                 }
               />
             </label>
@@ -664,13 +686,19 @@ export function ShopHotelResultsClient() {
               router.push(buildHotelResultsHref({ ...params, checkOut: v }))
             }
             onAdultsChange={(n) =>
-              router.push(buildHotelResultsHref({ ...params, adults: n }))
+              router.push(
+                buildHotelResultsHref(syncHotelSearchParams(params, { adults: n })),
+              )
             }
             onChildrenChange={(n) =>
-              router.push(buildHotelResultsHref({ ...params, children: n }))
+              router.push(
+                buildHotelResultsHref(syncHotelSearchParams(params, { children: n })),
+              )
             }
             onRoomsChange={(n) =>
-              router.push(buildHotelResultsHref({ ...params, rooms: n }))
+              router.push(
+                buildHotelResultsHref(syncHotelSearchParams(params, { rooms: n })),
+              )
             }
             onSearch={() => router.push(buildHotelResultsHref(params))}
             onOpenHotel={(hotel) => openHotel(hotel)}

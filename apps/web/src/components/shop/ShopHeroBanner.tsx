@@ -217,9 +217,25 @@ function DatePick({
 export function ShopHeroBanner(props: Props) {
   const [travelersOpen, setTravelersOpen] = useState(false);
   const [occError, setOccError] = useState("");
-  const heroSlide = HERO_SLIDES[0];
-  const heroImage = heroSlide?.image;
+  const [slideIdx, setSlideIdx] = useState(0);
+  const slides = HERO_SLIDES;
   const infants = props.infants ?? 0;
+
+  useEffect(() => {
+    if (slides.length <= 1) return;
+    const timer = window.setInterval(() => {
+      setSlideIdx((idx) => (idx + 1) % slides.length);
+    }, 6000);
+    return () => window.clearInterval(timer);
+  }, [slides.length]);
+
+  function prevSlide() {
+    setSlideIdx((idx) => (idx - 1 + slides.length) % slides.length);
+  }
+
+  function nextSlide() {
+    setSlideIdx((idx) => (idx + 1) % slides.length);
+  }
 
   const stayTotals = props.stayOccupancy
     ? occupancyTotals(props.stayOccupancy)
@@ -520,15 +536,63 @@ export function ShopHeroBanner(props: Props) {
     (props.mode === "cars" && props.transferRoundtrip);
 
   return (
-    <section className="exp-home-hero" id="search">
-      <div className="exp-home-bg" aria-hidden>
-        {heroImage ? (
-          <div className="exp-home-bg-image" style={{ backgroundImage: `url(${heroImage})` }} />
-        ) : null}
-      </div>
-      <div className="exp-home-shade" aria-hidden />
+    <>
+      <section className="wg-travela-hero" aria-label="صور الرحلة">
+        <div className="wg-travela-carousel">
+          {slides.map((slide, index) => (
+            <div
+              key={slide.image}
+              className={`wg-travela-slide${index === slideIdx ? " active" : ""}`}
+              aria-hidden={index !== slideIdx}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={slide.image} alt="" />
+              <div className="wg-travela-caption">
+                <div className="wg-travela-caption-inner">
+                  <h4>{slide.kicker}</h4>
+                  <h1>{slide.title}</h1>
+                  <p>{slide.description}</p>
+                </div>
+              </div>
+            </div>
+          ))}
+          {slides.length > 1 ? (
+            <>
+              <button
+                type="button"
+                className="wg-travela-carousel-btn prev"
+                aria-label="الشريحة السابقة"
+                onClick={prevSlide}
+              >
+                ‹
+              </button>
+              <button
+                type="button"
+                className="wg-travela-carousel-btn next"
+                aria-label="الشريحة التالية"
+                onClick={nextSlide}
+              >
+                ›
+              </button>
+              <ol className="wg-travela-dots" aria-label="شرائح العرض">
+                {slides.map((slide, index) => (
+                  <li key={slide.image}>
+                    <button
+                      type="button"
+                      className={index === slideIdx ? "active" : undefined}
+                      aria-label={`الشريحة ${index + 1}`}
+                      aria-current={index === slideIdx ? "true" : undefined}
+                      onClick={() => setSlideIdx(index)}
+                    />
+                  </li>
+                ))}
+              </ol>
+            </>
+          ) : null}
+        </div>
 
-      <div className="exp-home-content">
+        <div className="wg-hero-search-panel" id="search">
+          <div className="wg-hero-search-glass">
         <div className="exp-icon-tabs exp-icon-tabs-hero" role="tablist" aria-label="نوع الحجز">
           {PRODUCTS.map(({ key, label, icon }) => (
             <button
@@ -958,38 +1022,42 @@ export function ShopHeroBanner(props: Props) {
 
           {props.error ? <p className="shop-error exp-dialog-msg">{props.error}</p> : null}
           {props.message ? <p className="shop-status exp-dialog-msg">{props.message}</p> : null}
-        </div>
 
-        {props.tripBuilderHref ? (
-          <div className="exp-trip-builder-cta">
-            <div className="exp-trip-builder-cta-copy">
-              <strong>رحّلتي — Trip Builder</strong>
-              <span>كوّن رحلتك: طيران + فندق + نقل + أنشطة — بنفس بيانات البحث أعلاه</span>
+          {props.tripBuilderHref ? (
+            <div className="exp-trip-builder-cta">
+              <div className="exp-trip-builder-cta-copy">
+                <strong>رحّلتي — Trip Builder</strong>
+                <span>كوّن رحلتك: طيران + فندق + نقل + أنشطة — بنفس بيانات البحث أعلاه</span>
+              </div>
+              <Link
+                href={props.tripBuilderHref}
+                className="exp-trip-builder-cta-btn"
+                onClick={() => {
+                  try {
+                    sessionStorage.setItem(
+                      "wg_trip_builder_search",
+                      JSON.stringify({
+                        href: props.tripBuilderHref,
+                        at: Date.now(),
+                      }),
+                    );
+                  } catch {
+                    /* ignore */
+                  }
+                }}
+              >
+                ابدأ بناء رحلتي
+              </Link>
             </div>
-            <Link
-              href={props.tripBuilderHref}
-              className="exp-trip-builder-cta-btn"
-              onClick={() => {
-                try {
-                  sessionStorage.setItem(
-                    "wg_trip_builder_search",
-                    JSON.stringify({
-                      href: props.tripBuilderHref,
-                      at: Date.now(),
-                    }),
-                  );
-                } catch {
-                  /* ignore */
-                }
-              }}
-            >
-              ابدأ بناء رحلتي
-            </Link>
+          ) : null}
+        </div>
           </div>
-        ) : null}
+        </div>
+      </section>
 
-        <h1 className="exp-home-tagline">كل رحلتك تبدأ من مكان واحد</h1>
+      <div className="wg-travela-bottom-arc" aria-hidden="true">
+        <div className="wg-travela-bottom-arc-cap" />
       </div>
-    </section>
+    </>
   );
 }

@@ -1,5 +1,10 @@
 import { BadRequestException, Injectable } from "@nestjs/common";
 import {
+  applyPricingRule,
+  selectPricingRule,
+  toCustomerVisible,
+} from "@watesly-travel/pricing-engine";
+import {
   getFlightProvider,
   getHotelProvider,
   revalidatePricedOffer,
@@ -580,11 +585,68 @@ export class BookingsService {
     return { booking, payment };
   }
 
+  private async resolveMinimalPricing(input: CreateFromDraftInput) {
+    const currency = input.offer.currency || "KWD";
+    const details = (input.offer.details || {}) as Record<string, unknown>;
+    const serviceType =
+      input.serviceType === "hotel" ? ("hotel" as const) : ("flight" as const);
+    const rules = await this.prisma.pricingRule.findMany({
+      where: { organizationId: input.organizationId, isActive: true },
+    });
+    const costFromDetails = Number(details.costAmountMinor) || 0;
+    const sellFromClient = Math.round(input.offer.sellAmountMinor);
+    const rawStars = details.stars;
+    const rule = selectPricingRule(rules, serviceType, {
+      provider: input.offer.providerKey,
+      costAmountMinor:
+        costFromDetails > 0 ? costFromDetails : Math.round(sellFromClient * 0.88),
+      origin: input.route?.origin,
+      destination: input.route?.destination || input.stay?.location,
+      cabinClass: input.route?.cabinClass,
+      checkIn: input.stay?.checkIn,
+      city: input.stay?.location,
+      stars:
+        typeof rawStars === "number" || typeof rawStars === "string"
+          ? rawStars
+          : undefined,
+    });
+
+    if (costFromDetails > 0) {
+      const pricing = applyPricingRule({
+        costAmountMinor: costFromDetails,
+        currency,
+        serviceType,
+        rule,
+      });
+      return {
+        costAmount: pricing.costAmountMinor,
+        sellAmount: pricing.sellAmountMinor,
+        profitAmount: pricing.profitAmountMinor,
+        pricingRuleId: pricing.pricingRuleId,
+      };
+    }
+
+    const estimatedCost = Math.round(sellFromClient * 0.88);
+    const pricing = applyPricingRule({
+      costAmountMinor: estimatedCost,
+      currency,
+      serviceType,
+      rule,
+    });
+    return {
+      costAmount: pricing.costAmountMinor,
+      sellAmount: sellFromClient,
+      profitAmount: Math.max(0, sellFromClient - pricing.costAmountMinor),
+      pricingRuleId: pricing.pricingRuleId,
+    };
+  }
+
   private async createMinimalBookingFromOffer(input: CreateFromDraftInput) {
     const currency = input.offer.currency || "KWD";
-    const sellAmount = Math.round(input.offer.sellAmountMinor);
-    const costAmount = Math.round(sellAmount * 0.88);
-    const profitAmount = sellAmount - costAmount;
+    const priced = await this.resolveMinimalPricing(input);
+    const sellAmount = priced.sellAmount;
+    const costAmount = priced.costAmount;
+    const profitAmount = priced.profitAmount;
 
     const isFlight = input.serviceType === "flight";
     const isTransfer =
@@ -637,6 +699,7 @@ export class BookingsService {
         totalCostAmount: costAmount,
         totalSellAmount: sellAmount,
         totalProfitAmount: profitAmount,
+        pricingRuleId: priced.pricingRuleId,
         customerVisiblePayload: asJson({
           summary: input.offer.description,
           sellAmountMinor: sellAmount,
@@ -753,14 +816,39 @@ export class BookingsService {
       expiresAt: input.offer.expiresAt || new Date().toISOString(),
       raw: input.offer.raw || {},
     };
-    const result = await provider.revalidateOffer(offer);
+    const rules = await this.prisma.pricingRule.findMany({
+      where: { organizationId: input.organizationId, isActive: true },
+    });
+    const raw = await provider.revalidateOffer(offer);
+    const rawStars = (raw.offer.raw as Record<string, unknown> | undefined)?.stars;
+    const rule = selectPricingRule(rules, "hotel", {
+      provider: raw.offer.providerKey,
+      costAmountMinor: raw.offer.costAmountMinor,
+      stars:
+        typeof rawStars === "number" || typeof rawStars === "string"
+          ? rawStars
+          : undefined,
+    });
+    const pricing = applyPricingRule({
+      costAmountMinor: raw.offer.costAmountMinor,
+      currency: raw.offer.currency,
+      serviceType: "hotel",
+      rule,
+    });
     return {
-      available: result.available,
-      priceChanged: result.priceChanged,
-      previousCostMinor: result.previousCostMinor,
-      offer: result.offer,
-      selectedRate: result.selectedRate,
-      rateComments: result.rateComments,
+      available: raw.available,
+      priceChanged: raw.priceChanged,
+      previousCostMinor: raw.previousCostMinor,
+      offer: raw.offer,
+      selectedRate: raw.selectedRate,
+      rateComments: raw.rateComments,
+      pricing,
+      customerVisible: toCustomerVisible({
+        sellAmountMinor: pricing.sellAmountMinor,
+        currency: pricing.currency,
+        summary: raw.offer.description,
+        expiresAt: raw.offer.expiresAt,
+      }),
     };
   }
 

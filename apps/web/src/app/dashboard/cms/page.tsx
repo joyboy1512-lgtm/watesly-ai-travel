@@ -1,13 +1,13 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
-import { shopFetch } from "@/lib/shop-session";
+import { AppShell } from "@/components/AppShell";
+import { apiFetch } from "@/lib/api";
 import type { WeekendDeal } from "@watesly-travel/shared";
 
 /**
- * Admin CMS for platform content. Additive dashboard page — does not alter
- * existing ops screens. Requires staff session in production; here uses shop
- * platform CMS endpoints (in-memory until DB migration).
+ * Staff CMS for platform deals and funnel stats.
+ * Mutations require staff JWT (providers.manage / conversations.read).
  */
 export default function DashboardCmsPage() {
   const [deals, setDeals] = useState<WeekendDeal[]>([]);
@@ -16,6 +16,7 @@ export default function DashboardCmsPage() {
   const [sale, setSale] = useState("199");
   const [original, setOriginal] = useState("229");
   const [msg, setMsg] = useState("");
+  const [error, setError] = useState("");
   const [stats, setStats] = useState<{
     today: Record<string, number>;
     topDestinations: Array<{ label: string; count: number }>;
@@ -23,10 +24,10 @@ export default function DashboardCmsPage() {
   } | null>(null);
 
   useEffect(() => {
-    shopFetch<WeekendDeal[]>("/shop/platform/deals")
+    apiFetch<WeekendDeal[]>("/shop/platform/deals")
       .then(setDeals)
-      .catch(() => undefined);
-    shopFetch<typeof stats>("/shop/platform/admin/stats")
+      .catch((err: Error) => setError(err.message));
+    apiFetch<typeof stats>("/shop/platform/admin/stats")
       .then(setStats)
       .catch(() => undefined);
   }, []);
@@ -34,6 +35,7 @@ export default function DashboardCmsPage() {
   async function addDeal(e: FormEvent) {
     e.preventDefault();
     setMsg("");
+    setError("");
     const deal: WeekendDeal = {
       id: `deal-${slug}`,
       slug,
@@ -53,34 +55,37 @@ export default function DashboardCmsPage() {
       descriptionEn: titleAr,
     };
     try {
-      await shopFetch("/shop/platform/cms/deals", {
+      await apiFetch("/shop/platform/cms/deals", {
         method: "POST",
         body: JSON.stringify(deal),
       });
       setDeals((prev) => [deal, ...prev.filter((d) => d.slug !== deal.slug)]);
-      setMsg("تم حفظ العرض — سيظهر على /deals بعد التفعيل");
+      setMsg("تم حفظ العرض — يظهر على /deals في الموقع");
     } catch (err) {
-      setMsg(err instanceof Error ? err.message : "فشل الحفظ");
+      setError(err instanceof Error ? err.message : "فشل الحفظ");
     }
   }
 
   const funnel = stats?.funnel;
 
   return (
-    <main style={{ padding: "1.25rem", maxWidth: 960, margin: "0 auto", direction: "rtl" }}>
-      <h1>CMS · العروض والتحليلات</h1>
-      <p style={{ color: "#64748b" }}>
-        إدارة محتوى المنصّة دون تعديل كود الموقع. لا يؤثر على الإنتاج حتى تُفعَّل المنصّة وتُنشر.
+    <AppShell title="CMS · العروض والتحليلات">
+      <p className="hint">
+        إدارة محتوى WeekendGate من لوحة التحكم. العروض المحفوظة تظهر على صفحة{" "}
+        <a href="/deals" target="_blank" rel="noreferrer">
+          /deals
+        </a>
+        .
       </p>
+      {error ? <p className="error">{error}</p> : null}
 
       {stats ? (
-        <section style={{ marginBottom: "1.5rem" }}>
+        <section className="card" style={{ marginBottom: "1.5rem" }}>
           <h2>اليوم</h2>
           <p>
             الحجوزات: {stats.today.bookings ?? 0} · المبيعات:{" "}
             {((stats.today.salesMinor ?? 0) / 1000).toFixed(3)} د.ك · العملاء:{" "}
-            {stats.today.customers ?? 0} · الإلغاءات: {stats.today.cancellations ?? 0} · Refunds:{" "}
-            {stats.today.refunds ?? 0}
+            {stats.today.customers ?? 0} · الإلغاءات: {stats.today.cancellations ?? 0}
           </p>
           <h3>أكثر الوجهات</h3>
           <ul>
@@ -107,16 +112,30 @@ export default function DashboardCmsPage() {
         </section>
       ) : null}
 
-      <section>
+      <section className="card">
         <h2>إنشاء عرض Weekend</h2>
-        <form onSubmit={addDeal} style={{ display: "grid", gap: "0.5rem", maxWidth: 420 }}>
-          <input placeholder="العنوان" value={titleAr} onChange={(e) => setTitleAr(e.target.value)} required />
-          <input placeholder="slug مثل dubai-weekend" value={slug} onChange={(e) => setSlug(e.target.value)} required />
-          <input placeholder="السعر الأصلي" value={original} onChange={(e) => setOriginal(e.target.value)} />
-          <input placeholder="سعر العرض" value={sale} onChange={(e) => setSale(e.target.value)} />
-          <button type="submit">حفظ العرض</button>
+        <form onSubmit={addDeal} className="form-grid" style={{ maxWidth: 420 }}>
+          <label>
+            العنوان
+            <input value={titleAr} onChange={(e) => setTitleAr(e.target.value)} required />
+          </label>
+          <label>
+            slug (مثل dubai-weekend)
+            <input value={slug} onChange={(e) => setSlug(e.target.value)} required />
+          </label>
+          <label>
+            السعر الأصلي
+            <input value={original} onChange={(e) => setOriginal(e.target.value)} />
+          </label>
+          <label>
+            سعر العرض
+            <input value={sale} onChange={(e) => setSale(e.target.value)} />
+          </label>
+          <button type="submit" className="btn primary">
+            حفظ العرض
+          </button>
         </form>
-        {msg ? <p>{msg}</p> : null}
+        {msg ? <p className="hint">{msg}</p> : null}
         <ul>
           {deals.map((d) => (
             <li key={d.id}>
@@ -125,6 +144,6 @@ export default function DashboardCmsPage() {
           ))}
         </ul>
       </section>
-    </main>
+    </AppShell>
   );
 }

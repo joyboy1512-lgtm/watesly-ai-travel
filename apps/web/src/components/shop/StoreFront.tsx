@@ -97,15 +97,16 @@ function StoreFrontInner({
       >
         {newUi ? (
           <div className="shop-header-inner exp-header-inner wg-header-cap-wrap">
-            <Link
-              href="/"
-              className="wg-header-logo-standalone"
-              aria-label="WeekendGate"
-            >
-              <WeekendGateLogo light={isHome} />
-            </Link>
+            <div className="wg-header-cap-track">
+              <Link
+                href="/"
+                className="wg-header-logo-standalone"
+                aria-label="WeekendGate"
+              >
+                <WeekendGateLogo light={isHome} />
+              </Link>
 
-            <div className="wg-header-cap">
+              <div className="wg-header-cap">
               <nav className="wg-header-cap-nav" aria-label="روابط سريعة">
                 <Link href="/about">{t("navAbout")}</Link>
                 <Link href="/contact">{t("navContact")}</Link>
@@ -184,6 +185,7 @@ function StoreFrontInner({
                   </Link>
                 )}
               </div>
+            </div>
             </div>
 
             <div className={`wg-header-cap-mobile${menuOpen ? " open" : ""}`}>

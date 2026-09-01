@@ -14,6 +14,13 @@
   --shop-bg: #fff;
   --exp-bg: #fff;
   background: #fff;
+  /* shared blue pill frame — header cap + search shell */
+  --wg-blue-pill-width: min(calc(960px + 9cm), calc(100% - 1.5rem));
+  --wg-blue-pill-pad-x: clamp(2rem, 4.5vw, 3.25rem);
+  --wg-blue-pill-pad-y: 1.25rem;
+  --wg-blue-pill-inner-inset: 6cm;
+  --wg-blue-pill-bg: #13357b;
+  --wg-blue-pill-shadow: 0 16px 40px rgba(19, 53, 123, 0.35);
 }
 
 .shop-root.wg-new-ui .exp-main,
@@ -29,8 +36,26 @@
   z-index: 80;
   background: transparent;
   border: 0;
+  border-bottom: 0;
   box-shadow: none;
   backdrop-filter: none;
+}
+
+.shop-root.wg-new-ui .shop-header.exp-header-hero-overlay {
+  background: transparent;
+  border-bottom: 0;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+.shop-root.wg-new-ui .exp-header-hero-overlay .shop-header-inner,
+.shop-root.wg-new-ui .exp-header-hero-overlay .exp-header-inner,
+.shop-root.wg-new-ui .exp-header-white .shop-header-inner,
+.shop-root.wg-new-ui .exp-header-white .exp-header-inner {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding-inline: 0;
 }
 
 .shop-root.wg-new-ui .exp-header-white {
@@ -147,22 +172,25 @@
 /* —— Inverted blue header cap (mirror of search shell) —— */
 .shop-root.wg-new-ui .wg-header-cap-wrap {
   position: relative;
-  width: min(calc(960px + 9cm + 11rem), calc(100% - 1.5rem));
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+.shop-root.wg-new-ui .wg-header-cap-track {
+  position: relative;
+  width: var(--wg-blue-pill-width);
   margin: 0 auto;
-  padding: 0.55rem 0 0;
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  align-items: start;
-  gap: 0.65rem;
 }
 
 .shop-root.wg-new-ui .wg-header-logo-standalone {
-  grid-column: 1;
-  grid-row: 1;
-  align-self: center;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  inset-inline-start: calc(100% + 0.65rem);
   text-decoration: none;
   z-index: 85;
-  padding-inline: 0.15rem;
+  white-space: nowrap;
 }
 
 .shop-root.wg-new-ui .wg-header-logo-standalone .wg-logo-word {
@@ -171,19 +199,21 @@
 }
 
 .shop-root.wg-new-ui .wg-header-cap {
-  grid-column: 2;
-  grid-row: 1;
-  width: min(calc(960px + 9cm), 100%);
-  justify-self: stretch;
-  padding: 0.7rem clamp(2rem, 4.5vw, 3.25rem) 1.1rem;
+  width: 100%;
+  padding: var(--wg-blue-pill-pad-y) var(--wg-blue-pill-pad-x)
+    calc(var(--wg-blue-pill-pad-y) + 2mm);
   border-radius: 0 0 999px 999px;
-  background: rgba(19, 53, 123, 0.92);
-  box-shadow: 0 10px 28px rgba(19, 53, 123, 0.3);
+  background: var(--wg-blue-pill-bg);
+  box-shadow: var(--wg-blue-pill-shadow);
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
   box-sizing: border-box;
+  border: 0;
+  margin-bottom: -2px;
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
 
 .shop-root.wg-new-ui .wg-header-cap-nav {
@@ -341,14 +371,15 @@
 
 .shop-root.wg-new-ui .wg-header-cap-mobile {
   display: none;
-  grid-column: 1 / -1;
+  width: var(--wg-blue-pill-width);
+  margin-inline: auto;
   flex-direction: column;
   gap: 0.25rem;
   margin-top: 0.35rem;
   padding: 0.85rem;
   border-radius: 1rem;
-  background: rgba(19, 53, 123, 0.96);
-  box-shadow: 0 12px 32px rgba(19, 53, 123, 0.25);
+  background: var(--wg-blue-pill-bg);
+  box-shadow: var(--wg-blue-pill-shadow);
 }
 
 .shop-root.wg-new-ui .wg-header-cap-mobile.open {
@@ -527,31 +558,36 @@
 .wg-travela-search-wrap {
   position: relative;
   z-index: 10;
-  margin-top: -4.5rem;
+  margin-top: calc(-4.5rem + 3mm);
   padding-bottom: 2rem;
+  background: transparent;
 }
 
 .wg-travela-search-shell {
-  width: min(calc(960px + 9cm), calc(100% - 1.5rem));
+  width: var(--wg-blue-pill-width);
   margin: 0 auto;
-  padding: 1.25rem clamp(2rem, 4.5vw, 3.25rem);
+  padding: calc(var(--wg-blue-pill-pad-y) + 2mm) var(--wg-blue-pill-pad-x)
+    var(--wg-blue-pill-pad-y);
   border-radius: 999px;
-  background: rgba(19, 53, 123, 0.92);
-  box-shadow: 0 16px 40px rgba(19, 53, 123, 0.35);
-  overflow: visible;
+  background: var(--wg-blue-pill-bg);
+  box-shadow: var(--wg-blue-pill-shadow);
+  overflow: hidden;
   box-sizing: border-box;
+  border: 0;
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
 
 .shop-root.wg-new-ui .wg-travela-search-shell > .exp-icon-tabs-hero {
-  width: calc(100% - 6cm);
-  max-width: calc(100% - 6cm);
+  width: calc(100% - var(--wg-blue-pill-inner-inset));
+  max-width: calc(100% - var(--wg-blue-pill-inner-inset));
   margin-inline: auto;
   box-sizing: border-box;
 }
 
 .shop-root.wg-new-ui .wg-travela-search-shell > .exp-dialog {
-  width: calc(100% - 6cm);
-  max-width: calc(100% - 6cm);
+  width: calc(100% - var(--wg-blue-pill-inner-inset));
+  max-width: calc(100% - var(--wg-blue-pill-inner-inset));
   margin-inline: auto;
   margin-top: 0.25cm;
   box-sizing: border-box;
@@ -572,6 +608,8 @@
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 
 .shop-root.wg-new-ui .wg-travela-search-wrap .exp-icon-tabs-hero {
@@ -751,7 +789,7 @@
   padding: calc(0.7rem - 0.25cm) 0.8rem;
   border-radius: 1.15rem;
   background: #fff;
-  border: 1px solid rgba(19, 53, 123, 0.15);
+  border: 0;
   box-shadow: none;
   box-sizing: border-box;
 }
@@ -908,12 +946,38 @@
   }
 
   .wg-travela-search-wrap {
-    margin-top: -2.5rem;
+    margin-top: calc(-2.5rem + 3mm);
   }
 
   .wg-travela-search-shell {
     border-radius: 999px;
-    padding: 1rem clamp(1.25rem, 5vw, 1.75rem);
+    padding: calc(var(--wg-blue-pill-pad-y) + 1mm) clamp(1.25rem, 5vw, 1.75rem)
+      var(--wg-blue-pill-pad-y);
+  }
+
+  .shop-root.wg-new-ui .wg-header-cap-wrap {
+    position: relative;
+    padding: 0.35rem 0.5rem 0;
+  }
+
+  .shop-root.wg-new-ui .wg-header-cap-track {
+    width: calc(100% - 1rem);
+    margin-inline: auto;
+    margin-top: 2.4rem;
+  }
+
+  .shop-root.wg-new-ui .wg-header-logo-standalone {
+    position: absolute;
+    top: 0.35rem;
+    inset-inline-end: 0.75rem;
+    transform: none;
+    inset-inline-start: auto;
+  }
+
+  .shop-root.wg-new-ui .wg-header-cap {
+    padding: calc(var(--wg-blue-pill-pad-y) - 2mm) 1rem
+      calc(var(--wg-blue-pill-pad-y) + 1mm);
+    border-radius: 0 0 28px 28px;
   }
 
   .shop-root.wg-new-ui .wg-travela-search-wrap .exp-unified-card .exp-form-row {
@@ -943,27 +1007,6 @@
 
   .wg-travela-dots {
     bottom: 5.5rem;
-  }
-
-  .shop-root.wg-new-ui .wg-header-cap-wrap {
-    width: calc(100% - 1rem);
-    grid-template-columns: 1fr auto;
-    gap: 0.35rem;
-    padding-top: 0.35rem;
-  }
-
-  .shop-root.wg-new-ui .wg-header-logo-standalone {
-    grid-column: 2;
-    grid-row: 1;
-    align-self: start;
-  }
-
-  .shop-root.wg-new-ui .wg-header-cap {
-    grid-column: 1 / -1;
-    grid-row: 2;
-    width: 100%;
-    padding: 0.55rem 1rem 0.85rem;
-    border-radius: 0 0 28px 28px;
   }
 
   .shop-root.wg-new-ui .wg-header-cap-nav {

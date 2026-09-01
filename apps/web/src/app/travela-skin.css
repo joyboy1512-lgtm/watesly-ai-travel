@@ -1,0 +1,475 @@
+/**
+ * Travela template skin — scoped to .shop-root.wg-new-ui
+ * Visual layer only; search logic unchanged.
+ */
+
+.shop-root.wg-new-ui {
+  --tv-primary: #13357b;
+  --tv-secondary: #f97316;
+  --tv-light: #f2f2f2;
+  --tv-dark: #14141f;
+  --exp-navy: #13357b;
+  --exp-blue: #13357b;
+  --exp-sky: #1a4a9e;
+  --shop-bg: #fff;
+  --exp-bg: #fff;
+  background: #fff;
+}
+
+.shop-root.wg-new-ui .exp-main,
+.shop-root.wg-new-ui .shop-main {
+  background: #fff;
+}
+
+/* —— Header (Travela navbar) —— */
+.shop-root.wg-new-ui .exp-header-hero-overlay {
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  z-index: 80;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+.shop-root.wg-new-ui .exp-header-white {
+  background: #fff;
+  border-bottom: 1px solid #e5e7eb;
+  box-shadow: 0 2px 12px rgba(19, 53, 123, 0.06);
+}
+
+.shop-root.wg-new-ui .wg-header-row {
+  width: min(1280px, calc(100% - 2rem));
+  margin: 0 auto;
+  min-height: auto;
+  padding: 0.85rem 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.shop-root.wg-new-ui .wg-header-brand .wg-logo-word {
+  font-size: 1.65rem;
+  font-weight: 700;
+}
+
+.shop-root.wg-new-ui .exp-header-hero-overlay .wg-logo-light .wg-logo-word {
+  color: #fff;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
+}
+
+.shop-root.wg-new-ui .exp-header-hero-overlay .wg-logo-light .wg-logo-gate {
+  color: #fbbf24;
+}
+
+.shop-root.wg-new-ui .exp-header-white .wg-logo-word {
+  color: var(--tv-primary);
+}
+
+.shop-root.wg-new-ui .wg-header-pill-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0;
+  background: transparent;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.shop-root.wg-new-ui .wg-header-pill-nav a {
+  padding: 0.5rem 1rem;
+  font-size: 1rem;
+  font-weight: 500;
+  color: #fff;
+  border-radius: 0;
+}
+
+.shop-root.wg-new-ui .exp-header-white .wg-header-pill-nav a {
+  color: var(--tv-dark);
+}
+
+.shop-root.wg-new-ui .wg-header-pill-nav a:hover {
+  background: transparent;
+  color: #fbbf24;
+}
+
+.shop-root.wg-new-ui .exp-header-white .wg-header-pill-nav a:hover {
+  color: var(--tv-primary);
+}
+
+.shop-root.wg-new-ui .wg-header-chip {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.35);
+  color: #fff;
+}
+
+.shop-root.wg-new-ui .exp-header-white .wg-header-chip {
+  background: var(--tv-light);
+  border-color: #ddd;
+  color: var(--tv-dark);
+}
+
+.shop-root.wg-new-ui .wg-header-account {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.35);
+}
+
+.shop-root.wg-new-ui .exp-header-white .wg-header-account {
+  background: var(--tv-light);
+  border-color: #ddd;
+}
+
+.shop-root.wg-new-ui .exp-header-hero-overlay .wg-header-user {
+  color: #fff;
+}
+
+.shop-root.wg-new-ui .wg-header-logout {
+  background: var(--tv-primary);
+  color: #fff;
+}
+
+.shop-root.wg-new-ui .wg-header-signin {
+  background: var(--tv-primary);
+  color: #fff;
+  border: none;
+  border-radius: 999px;
+}
+
+.shop-root.wg-new-ui .exp-header-hero-overlay .exp-menu-toggle,
+.shop-root.wg-new-ui .exp-header-hero-overlay .shop-menu-toggle {
+  color: var(--tv-primary);
+  border-color: #fff;
+  background: #fff;
+}
+
+/* —— Hero carousel —— */
+.shop-root.wg-new-ui.shop-home-layout {
+  position: relative;
+  background: #fff;
+}
+
+.shop-root.wg-new-ui.shop-home-layout .shop-main,
+.shop-root.wg-new-ui.shop-home-layout .exp-main {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 0;
+}
+
+.wg-travela-hero {
+  position: relative;
+  overflow: hidden;
+}
+
+.wg-travela-carousel {
+  position: relative;
+  min-height: 100svh;
+  min-height: 100dvh;
+}
+
+.wg-travela-slide {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 1s ease;
+  pointer-events: none;
+}
+
+.wg-travela-slide.active {
+  opacity: 1;
+  pointer-events: auto;
+  z-index: 1;
+}
+
+.wg-travela-slide img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.wg-travela-caption {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 6rem 1.5rem 12rem;
+  background: linear-gradient(rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.45));
+  color: #fff;
+}
+
+.wg-travela-caption-inner {
+  max-width: 900px;
+}
+
+.wg-travela-caption h4 {
+  margin: 0 0 0.75rem;
+  font-size: clamp(0.85rem, 2vw, 1.1rem);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+.wg-travela-caption h1 {
+  margin: 0 0 1rem;
+  font-size: clamp(2rem, 6vw, 3.75rem);
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+.wg-travela-caption p {
+  margin: 0;
+  font-size: clamp(1rem, 2.2vw, 1.2rem);
+  opacity: 0.92;
+  line-height: 1.6;
+}
+
+.wg-travela-carousel-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 5;
+  border: 0;
+  background: var(--tv-primary);
+  color: #fff;
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 0 999px 999px 0;
+  cursor: pointer;
+  font-size: 1.25rem;
+  display: grid;
+  place-items: center;
+}
+
+.wg-travela-carousel-btn.next {
+  inset-inline-end: 0;
+  border-radius: 999px 0 0 999px;
+}
+
+.wg-travela-carousel-btn.prev {
+  inset-inline-start: 0;
+}
+
+.wg-travela-dots {
+  position: absolute;
+  bottom: 7.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 5;
+  display: flex;
+  gap: 0.45rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.wg-travela-dots button {
+  width: 0.65rem;
+  height: 0.65rem;
+  border-radius: 50%;
+  border: 0;
+  background: rgba(255, 255, 255, 0.45);
+  cursor: pointer;
+  padding: 0;
+}
+
+.wg-travela-dots button.active {
+  background: #fff;
+}
+
+/* —— Search bar overlapping hero (Travela style) —— */
+.wg-travela-search-wrap {
+  position: relative;
+  z-index: 10;
+  margin-top: -4.5rem;
+  padding-bottom: 2rem;
+}
+
+.wg-travela-search-shell {
+  width: min(960px, calc(100% - 1.5rem));
+  margin: 0 auto;
+  padding: 1.25rem 1.35rem;
+  border-radius: 999px;
+  background: rgba(19, 53, 123, 0.88);
+  box-shadow: 0 16px 40px rgba(19, 53, 123, 0.35);
+}
+
+.shop-root.wg-new-ui .wg-travela-search-wrap .exp-icon-tabs-hero {
+  justify-content: center;
+  margin-bottom: 0.65rem;
+}
+
+.shop-root.wg-new-ui .wg-travela-search-wrap .exp-icon-circle-labeled {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.25);
+  color: #fff;
+}
+
+.shop-root.wg-new-ui .wg-travela-search-wrap .exp-icon-circle-labeled.on {
+  background: #fff;
+  color: var(--tv-primary);
+  border-color: #fff;
+}
+
+.shop-root.wg-new-ui .wg-travela-search-wrap .exp-unified-card {
+  background: #fff;
+  border: 0;
+  border-radius: 1.25rem;
+  box-shadow: none;
+}
+
+.shop-root.wg-new-ui .wg-travela-search-wrap .exp-unified-card .exp-search-link,
+.shop-root.wg-new-ui .wg-travela-search-wrap .exp-search-submit {
+  background: var(--tv-primary);
+  box-shadow: none;
+  border-radius: 999px;
+}
+
+.shop-root.wg-new-ui .wg-travela-search-wrap .exp-unified-card .exp-search-link:hover:not(:disabled) {
+  background: #0f2a63;
+}
+
+.shop-root.wg-new-ui .wg-travela-search-wrap .exp-pill-tab.on {
+  background: var(--tv-primary);
+  border-color: var(--tv-primary);
+}
+
+.shop-root.wg-new-ui .exp-home-tagline {
+  display: none;
+}
+
+/* —— Landing sections (Travela accents) —— */
+.shop-root.wg-new-ui .shop-kicker,
+.shop-root.wg-new-ui .wg-section-kicker {
+  position: relative;
+  display: inline-block;
+  text-transform: uppercase;
+  color: var(--tv-primary);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  padding-inline: 3.5rem;
+}
+
+.shop-root.wg-new-ui .shop-kicker::before,
+.shop-root.wg-new-ui .shop-kicker::after,
+.shop-root.wg-new-ui .wg-section-kicker::before,
+.shop-root.wg-new-ui .wg-section-kicker::after {
+  content: "";
+  width: 2.5rem;
+  position: absolute;
+  top: 50%;
+  border-top: 1px solid var(--tv-primary);
+}
+
+.shop-root.wg-new-ui .shop-kicker::before,
+.shop-root.wg-new-ui .wg-section-kicker::before {
+  inset-inline-start: 0;
+}
+
+.shop-root.wg-new-ui .shop-kicker::after,
+.shop-root.wg-new-ui .wg-section-kicker::after {
+  inset-inline-end: 0;
+}
+
+.shop-root.wg-new-ui .shop-section h2 {
+  color: var(--tv-dark);
+}
+
+.shop-root.wg-new-ui .shop-section h2 span,
+.shop-root.wg-new-ui .shop-footer-brand {
+  color: var(--tv-primary);
+}
+
+.shop-root.wg-new-ui .shop-btn,
+.shop-root.wg-new-ui .shop-cta {
+  background: var(--tv-primary);
+  box-shadow: 0 8px 20px rgba(19, 53, 123, 0.25);
+}
+
+.shop-root.wg-new-ui .shop-btn-ghost {
+  color: var(--tv-primary);
+  border-color: var(--tv-primary);
+}
+
+.shop-root.wg-new-ui .shop-dest-card:hover,
+.shop-root.wg-new-ui .shop-offer-card:hover {
+  border-color: var(--tv-primary);
+}
+
+/* —— Footer (Travela dark) —— */
+.shop-root.wg-new-ui .shop-footer.exp-footer {
+  background: var(--tv-primary);
+  color: rgba(255, 255, 255, 0.85);
+  border-top: 0;
+  margin-top: 0;
+}
+
+.shop-root.wg-new-ui .shop-footer-grid strong {
+  color: #fff;
+}
+
+.shop-root.wg-new-ui .shop-footer-grid a,
+.shop-root.wg-new-ui .shop-footer-grid span {
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.shop-root.wg-new-ui .shop-footer-grid a:hover {
+  color: #fbbf24;
+}
+
+.shop-root.wg-new-ui .shop-footer-copy {
+  color: rgba(255, 255, 255, 0.55);
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.shop-root.wg-new-ui .shop-assist-toggle {
+  background: var(--tv-primary);
+}
+
+@media (max-width: 767px) {
+  .wg-travela-carousel {
+    min-height: 88svh;
+  }
+
+  .wg-travela-caption {
+    padding-top: 5rem;
+    padding-bottom: 10rem;
+  }
+
+  .wg-travela-search-wrap {
+    margin-top: -3rem;
+  }
+
+  .wg-travela-search-shell {
+    border-radius: 1.25rem;
+    padding: 1rem;
+  }
+
+  .wg-travela-carousel-btn {
+    display: none;
+  }
+
+  .wg-travela-dots {
+    bottom: 5.5rem;
+  }
+
+  .shop-root.wg-new-ui .wg-header-pill-nav {
+    display: none;
+  }
+}
+
+@media (min-width: 768px) {
+  .shop-root.wg-new-ui .wg-header-row {
+    flex-wrap: nowrap;
+  }
+
+  .shop-root.wg-new-ui .wg-header-pill-nav {
+    margin-inline: auto;
+  }
+}

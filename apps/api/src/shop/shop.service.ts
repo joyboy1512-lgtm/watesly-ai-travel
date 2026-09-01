@@ -54,7 +54,10 @@ export class ShopService {
 
   bootstrap() {
     return this.orgs.resolve().then((org) => ({
+      /** Operating entity from dashboard → الإعدادات */
       brand: org.name || "WeekendGate",
+      /** Customer product mark (logo / site title) */
+      productBrand: "WeekendGate",
       currency: org.defaultCurrency || "KWD",
       timezone: org.timezone || "Asia/Kuwait",
     }));

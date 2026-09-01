@@ -26,7 +26,6 @@ import { platformEnabled } from "@/lib/platform-flags";
 import {
   buildHotelResultsHref,
   encodeRoomOccupancies,
-  openHotelResultsInNewTab,
 } from "@/lib/hotel-results-url";
 import {
   defaultOccupancy,

@@ -590,10 +590,9 @@ export function ShopHeroBanner(props: Props) {
             </>
           ) : null}
         </div>
-      </section>
 
-      <div className="wg-travela-search-wrap" id="search">
-        <div className="wg-travela-search-shell">
+        <div className="wg-hero-search-panel" id="search">
+          <div className="wg-hero-search-glass">
         <div className="exp-icon-tabs exp-icon-tabs-hero" role="tablist" aria-label="نوع الحجز">
           {PRODUCTS.map(({ key, label, icon }) => (
             <button
@@ -1052,7 +1051,12 @@ export function ShopHeroBanner(props: Props) {
             </div>
           ) : null}
         </div>
+          </div>
         </div>
+      </section>
+
+      <div className="wg-travela-bottom-arc" aria-hidden="true">
+        <div className="wg-travela-bottom-arc-cap" />
       </div>
     </>
   );

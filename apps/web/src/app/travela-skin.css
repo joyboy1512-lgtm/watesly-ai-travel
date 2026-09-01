@@ -144,6 +144,246 @@
   background: #fff;
 }
 
+/* —— Inverted blue header cap (mirror of search shell) —— */
+.shop-root.wg-new-ui .wg-header-cap-wrap {
+  position: relative;
+  width: min(calc(960px + 9cm + 11rem), calc(100% - 1.5rem));
+  margin: 0 auto;
+  padding: 0.55rem 0 0;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 0.65rem;
+}
+
+.shop-root.wg-new-ui .wg-header-logo-standalone {
+  grid-column: 1;
+  grid-row: 1;
+  align-self: center;
+  text-decoration: none;
+  z-index: 85;
+  padding-inline: 0.15rem;
+}
+
+.shop-root.wg-new-ui .wg-header-logo-standalone .wg-logo-word {
+  font-size: clamp(1.35rem, 3vw, 1.75rem);
+  font-weight: 700;
+}
+
+.shop-root.wg-new-ui .wg-header-cap {
+  grid-column: 2;
+  grid-row: 1;
+  width: min(calc(960px + 9cm), 100%);
+  justify-self: stretch;
+  padding: 0.7rem clamp(2rem, 4.5vw, 3.25rem) 1.1rem;
+  border-radius: 0 0 999px 999px;
+  background: rgba(19, 53, 123, 0.92);
+  box-shadow: 0 10px 28px rgba(19, 53, 123, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  box-sizing: border-box;
+}
+
+.shop-root.wg-new-ui .wg-header-cap-nav {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.2rem;
+}
+
+.shop-root.wg-new-ui .wg-header-cap-nav a,
+.shop-root.wg-new-ui .wg-header-cap-dir {
+  color: #fff;
+  text-decoration: none;
+  font-size: 0.92rem;
+  font-weight: 600;
+  padding: 0.4rem 0.85rem;
+  border-radius: 999px;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  font-family: inherit;
+  line-height: 1.2;
+}
+
+.shop-root.wg-new-ui .wg-header-cap-nav a:hover,
+.shop-root.wg-new-ui .wg-header-cap-dir:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: #fbbf24;
+}
+
+.shop-root.wg-new-ui .wg-header-cap-user {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  position: relative;
+}
+
+.shop-root.wg-new-ui .wg-header-cap-menu-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 2.35rem;
+  height: 2.35rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  font-size: 1.1rem;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.shop-root.wg-new-ui .wg-header-user-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.45rem 0.9rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  max-width: 11rem;
+}
+
+.shop-root.wg-new-ui .wg-header-user-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shop-root.wg-new-ui .wg-header-user-chevron {
+  font-size: 0.75rem;
+  opacity: 0.85;
+}
+
+.shop-root.wg-new-ui .wg-header-user-menu {
+  position: absolute;
+  top: calc(100% + 0.45rem);
+  inset-inline-end: 0;
+  min-width: 11.5rem;
+  padding: 0.45rem;
+  border-radius: 1rem;
+  background: #fff;
+  box-shadow: 0 12px 32px rgba(19, 53, 123, 0.22);
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.shop-root.wg-new-ui .wg-header-user-menu a,
+.shop-root.wg-new-ui .wg-header-user-menu button {
+  display: block;
+  width: 100%;
+  padding: 0.55rem 0.75rem;
+  border: 0;
+  border-radius: 0.65rem;
+  background: transparent;
+  color: var(--tv-dark);
+  text-decoration: none;
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 600;
+  text-align: start;
+  cursor: pointer;
+}
+
+.shop-root.wg-new-ui .wg-header-user-menu a:hover,
+.shop-root.wg-new-ui .wg-header-user-menu button:hover {
+  background: var(--tv-light);
+}
+
+.shop-root.wg-new-ui .wg-header-menu-currency {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.55rem 0.75rem;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--tv-dark);
+}
+
+.shop-root.wg-new-ui .wg-header-menu-currency select {
+  border: 1px solid #ddd;
+  border-radius: 0.5rem;
+  padding: 0.25rem 0.45rem;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  background: #fff;
+}
+
+.shop-root.wg-new-ui .wg-header-cap-signin {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.45rem 1rem;
+  border-radius: 999px;
+  background: #fff;
+  color: var(--tv-primary);
+  text-decoration: none;
+  font-size: 0.85rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.shop-root.wg-new-ui .wg-header-cap-signin:hover {
+  background: #fbbf24;
+  color: var(--tv-primary);
+}
+
+.shop-root.wg-new-ui .wg-header-cap-mobile {
+  display: none;
+  grid-column: 1 / -1;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-top: 0.35rem;
+  padding: 0.85rem;
+  border-radius: 1rem;
+  background: rgba(19, 53, 123, 0.96);
+  box-shadow: 0 12px 32px rgba(19, 53, 123, 0.25);
+}
+
+.shop-root.wg-new-ui .wg-header-cap-mobile.open {
+  display: flex;
+}
+
+.shop-root.wg-new-ui .wg-header-cap-mobile a,
+.shop-root.wg-new-ui .wg-header-cap-mobile button {
+  display: block;
+  padding: 0.55rem 0.65rem;
+  border: 0;
+  border-radius: 0.65rem;
+  background: transparent;
+  color: #fff;
+  text-decoration: none;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-align: start;
+  cursor: pointer;
+}
+
+.shop-root.wg-new-ui .wg-header-cap-mobile a:hover,
+.shop-root.wg-new-ui .wg-header-cap-mobile button:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.shop-root.wg-new-ui .exp-header-white .wg-header-logo-standalone .wg-logo-word {
+  color: var(--tv-primary);
+}
+
+.shop-root.wg-new-ui .exp-header-white .wg-header-logo-standalone .wg-logo-gate {
+  color: #f97316;
+}
+
 /* —— Hero carousel —— */
 .shop-root.wg-new-ui.shop-home-layout {
   position: relative;
@@ -705,6 +945,44 @@
     bottom: 5.5rem;
   }
 
+  .shop-root.wg-new-ui .wg-header-cap-wrap {
+    width: calc(100% - 1rem);
+    grid-template-columns: 1fr auto;
+    gap: 0.35rem;
+    padding-top: 0.35rem;
+  }
+
+  .shop-root.wg-new-ui .wg-header-logo-standalone {
+    grid-column: 2;
+    grid-row: 1;
+    align-self: start;
+  }
+
+  .shop-root.wg-new-ui .wg-header-cap {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    width: 100%;
+    padding: 0.55rem 1rem 0.85rem;
+    border-radius: 0 0 28px 28px;
+  }
+
+  .shop-root.wg-new-ui .wg-header-cap-nav {
+    display: none;
+  }
+
+  .shop-root.wg-new-ui .wg-header-cap-menu-btn {
+    display: inline-flex;
+  }
+
+  .shop-root.wg-new-ui .wg-header-user-dropdown,
+  .shop-root.wg-new-ui .wg-header-cap-signin {
+    display: none;
+  }
+
+  .shop-root.wg-new-ui .wg-header-cap-user {
+    margin-inline-start: auto;
+  }
+
   .shop-root.wg-new-ui .wg-header-pill-nav {
     display: none;
   }
@@ -717,5 +995,9 @@
 
   .shop-root.wg-new-ui .wg-header-pill-nav {
     margin-inline: auto;
+  }
+
+  .shop-root.wg-new-ui .wg-header-cap-mobile {
+    display: none !important;
   }
 }

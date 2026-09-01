@@ -294,7 +294,7 @@
 .wg-travela-search-shell {
   width: min(1140px, calc(100% - 1.5rem));
   margin: 0 auto;
-  padding: 2.1rem 1.65rem 2.35rem;
+  padding: calc(2.1rem + 1.25cm) 1.65rem calc(2.35rem + 1.25cm);
   border-radius: 999px;
   background: rgba(19, 53, 123, 0.92);
   box-shadow: 0 16px 40px rgba(19, 53, 123, 0.35);
@@ -620,7 +620,7 @@
 
   .wg-travela-search-shell {
     border-radius: 999px;
-    padding: 1.65rem 1rem 1.85rem;
+    padding: calc(1.65rem + 1cm) 1rem calc(1.85rem + 1cm);
   }
 
   .shop-root.wg-new-ui .wg-travela-search-wrap .exp-unified-card .exp-form-row {

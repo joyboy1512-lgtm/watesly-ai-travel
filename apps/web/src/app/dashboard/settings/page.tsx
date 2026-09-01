@@ -63,6 +63,9 @@ export default function SettingsPage() {
             <span>اسم المؤسسة</span>
             <input value={name} onChange={(e) => setName(e.target.value)} />
           </label>
+          <p className="hint">
+            يظهر في تذييل الموقع كاسم الجهة التشغيلية. شعار WeekendGate يبقى ثابتاً في الواجهة.
+          </p>
           <label className="field">
             <span>المعرّف</span>
             <input value={org?.slug || ""} disabled />

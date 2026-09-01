@@ -21,11 +21,11 @@ import { shopFetch } from "@/lib/shop-session";
 import { ShopLanding } from "@/components/shop/ShopLanding";
 import { ShopHeroBanner, type FlightLeg, type FlightTripType } from "@/components/shop/ShopHeroBanner";
 import type { ShopDestination, ShopOffer } from "@/lib/shop-content";
-import { openFlightResultsInNewTab } from "@/lib/flight-results-url";
+import { buildFlightResultsHref } from "@/lib/flight-results-url";
 import { platformEnabled } from "@/lib/platform-flags";
 import {
+  buildHotelResultsHref,
   encodeRoomOccupancies,
-  openHotelResultsInNewTab,
 } from "@/lib/hotel-results-url";
 import {
   defaultOccupancy,
@@ -303,40 +303,44 @@ export function ShopHomeClient() {
               throw new Error(`أكمل بيانات الرحلة ${i + 1}`);
             }
           });
-          openFlightResultsInNewTab({
-            tripType: "multicity",
-            adults,
-            children,
-            infants,
-            cabinClass,
-            directOnly,
-            legs: flightLegs.map((leg) => ({
-              origin: leg.origin,
-              originLabel: leg.originLabel,
-              destination: leg.destination,
-              destinationLabel: leg.destinationLabel,
-              departDate: leg.departDate,
-            })),
-          });
+          router.push(
+            buildFlightResultsHref({
+              tripType: "multicity",
+              adults,
+              children,
+              infants,
+              cabinClass,
+              directOnly,
+              legs: flightLegs.map((leg) => ({
+                origin: leg.origin,
+                originLabel: leg.originLabel,
+                destination: leg.destination,
+                destinationLabel: leg.destinationLabel,
+                departDate: leg.departDate,
+              })),
+            }),
+          );
           return;
         }
         if (!origin || !destination || !departDate) {
           throw new Error("أدخل المغادرة والوجهة والتاريخ");
         }
-        openFlightResultsInNewTab({
-          tripType,
-          origin,
-          originLabel,
-          destination,
-          destinationLabel,
-          departDate,
-          returnDate: tripType === "roundtrip" ? returnDate : undefined,
-          adults,
-          children,
-          infants,
-          cabinClass,
-          directOnly,
-        });
+        router.push(
+          buildFlightResultsHref({
+            tripType,
+            origin,
+            originLabel,
+            destination,
+            destinationLabel,
+            departDate,
+            returnDate: tripType === "roundtrip" ? returnDate : undefined,
+            adults,
+            children,
+            infants,
+            cabinClass,
+            directOnly,
+          }),
+        );
         return;
       } catch (err) {
         setError(err instanceof Error ? err.message : "فشل البحث");
@@ -352,18 +356,20 @@ export function ShopHomeClient() {
         const occErr = validateOccupancy(stayOccupancy);
         if (occErr) throw new Error(occErr);
         const totals = occupancyTotals(stayOccupancy);
-        openHotelResultsInNewTab({
-          destination: stayQuery,
-          destinationLabel: stayQuery,
-          checkIn: departDate,
-          checkOut: returnDate,
-          adults: totals.adults,
-          children: totals.children,
-          infants,
-          rooms: totals.rooms,
-          childrenAges: totals.childrenAgesCsv,
-          occ: encodeRoomOccupancies(stayOccupancy.rooms),
-        });
+        router.push(
+          buildHotelResultsHref({
+            destination: stayQuery,
+            destinationLabel: stayQuery,
+            checkIn: departDate,
+            checkOut: returnDate,
+            adults: totals.adults,
+            children: totals.children,
+            infants,
+            rooms: totals.rooms,
+            childrenAges: totals.childrenAgesCsv,
+            occ: encodeRoomOccupancies(stayOccupancy.rooms),
+          }),
+        );
       } catch (err) {
         setError(err instanceof Error ? err.message : "فشل البحث");
       }

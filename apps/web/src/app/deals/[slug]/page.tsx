@@ -2,20 +2,34 @@
 
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import "../../shop.css";
 import "../../platform.css";
 import { StoreFront } from "@/components/shop/StoreFront";
-import { WEEKEND_DEALS, dealSavingsMinor } from "@watesly-travel/shared";
-import { bookDeal, formatKwdMinor } from "@/lib/platform-api";
+import { dealSavingsMinor, type WeekendDeal } from "@watesly-travel/shared";
+import { bookDeal, fetchDeal, formatKwdMinor } from "@/lib/platform-api";
 
 export default function DealDetailPage() {
   const params = useParams();
   const router = useRouter();
   const slug = String(params.slug || "");
-  const deal = useMemo(() => WEEKEND_DEALS.find((d) => d.slug === slug), [slug]);
+  const [deal, setDeal] = useState<WeekendDeal | null | undefined>(undefined);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchDeal(slug)
+      .then((row) => {
+        if (!cancelled) setDeal(row);
+      })
+      .catch(() => {
+        if (!cancelled) setDeal(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [slug]);
 
   async function book() {
     if (!deal) return;
@@ -29,6 +43,16 @@ export default function DealDetailPage() {
     } finally {
       setBusy(false);
     }
+  }
+
+  if (deal === undefined) {
+    return (
+      <StoreFront wide>
+        <div className="wg-platform">
+          <p className="lead">جاري تحميل العرض…</p>
+        </div>
+      </StoreFront>
+    );
   }
 
   if (!deal) {

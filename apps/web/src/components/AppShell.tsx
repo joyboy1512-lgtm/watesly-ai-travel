@@ -14,6 +14,7 @@ import {
 } from "react";
 import {
   APP_NAME,
+  COMPANY_LEGAL,
   NAV_PERMISSIONS,
   SUPPORTED_CURRENCIES,
 } from "@watesly-travel/shared";
@@ -113,6 +114,7 @@ const NAV = [
   { href: "/dashboard/campaigns", label: "الحملات" },
   { href: "/dashboard/users", label: "الموظفون والصلاحيات" },
   { href: "/dashboard/audit", label: "سجل التدقيق" },
+  { href: "/dashboard/cms", label: "CMS · المحتوى" },
   { href: "/dashboard/settings", label: "الإعدادات" },
 ];
 
@@ -355,7 +357,10 @@ export function AppShell({
 
       <aside className="sidebar" id="app-sidebar">
         <div className="sidebar-head">
-          <p className="brand">{APP_NAME}</p>
+          <Link href="/" className="brand brand-site-link" title="الموقع العام">
+            {APP_NAME}
+          </Link>
+          <p className="brand-legal">{COMPANY_LEGAL.legalNameAr}</p>
           <button
             type="button"
             className="nav-close"

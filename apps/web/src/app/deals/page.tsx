@@ -3,7 +3,8 @@ import Link from "next/link";
 import "../shop.css";
 import "../platform.css";
 import { StoreFront } from "@/components/shop/StoreFront";
-import { WEEKEND_DEALS, dealSavingsMinor } from "@watesly-travel/shared";
+import { dealSavingsMinor } from "@watesly-travel/shared";
+import { fetchShopDeals } from "@/lib/shop-server";
 
 export const metadata: Metadata = {
   title: "Weekend Deals | عروض نهاية الأسبوع — WeekendGate",
@@ -15,8 +16,8 @@ function formatMinor(minor: number, currency: string) {
   return `${(minor / 1000).toFixed(3)} ${currency}`;
 }
 
-export default function DealsPage() {
-  const deals = WEEKEND_DEALS.filter((d) => d.active);
+export default async function DealsPage() {
+  const deals = await fetchShopDeals();
   return (
     <StoreFront wide>
       <div className="wg-platform">

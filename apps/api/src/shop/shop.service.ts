@@ -12,6 +12,7 @@ import { BotPipelineService } from "../pipeline/bot-pipeline.service";
 import { AssistantService } from "../assistant/assistant.service";
 import { VoiceAssistantService } from "../assistant/voice-assistant.service";
 import { PublicOrgService } from "./public-org";
+import { dispatchCustomerNotification } from "./platform-notify";
 import type { CustomerJwtPayload, ShopCustomer } from "./shop-auth";
 
 function asJson(value: unknown): Prisma.InputJsonValue {
@@ -54,7 +55,10 @@ export class ShopService {
 
   bootstrap() {
     return this.orgs.resolve().then((org) => ({
+      /** Operating entity from dashboard → الإعدادات */
       brand: org.name || "WeekendGate",
+      /** Customer product mark (logo / site title) */
+      productBrand: "WeekendGate",
       currency: org.defaultCurrency || "KWD",
       timezone: org.timezone || "Asia/Kuwait",
     }));
@@ -820,8 +824,13 @@ export class ShopService {
     // P6: hotel bookings require a recent reprice/checkrate before confirm
     if (body.serviceType === "hotel") {
       const details = (body.offer.details || {}) as Record<string, unknown>;
+      const extras = (body.extras || {}) as Record<string, unknown>;
       const validatedAt = String(
-        details.validatedAt || details.revalidatedAt || details.checkRateAt || "",
+        details.validatedAt ||
+          details.revalidatedAt ||
+          details.checkRateAt ||
+          extras.validatedAt ||
+          "",
       );
       const validatedMs = validatedAt ? Date.parse(validatedAt) : NaN;
       const fresh =
@@ -860,6 +869,38 @@ export class ShopService {
       seatPref: body.seatPref,
       payment: { method: "manual", status: "unpaid" },
     });
+
+    const ref = result.booking.id.slice(0, 8).toUpperCase();
+    await dispatchCustomerNotification(
+      { prisma: this.prisma },
+      {
+        organizationId: customer.organizationId,
+        customerId: customer.id,
+        type: "booking_confirmed",
+        title: "تم استلام طلب الحجز",
+        body: `رقم الطلب ${ref} — سيتواصل معك فريق WeekendGate لتأكيد السعر والتفاصيل.`,
+        href: `/bookings/manage?ref=${encodeURIComponent(result.booking.id)}`,
+        channels: ["in_app"],
+      },
+    ).catch(() => undefined);
+
+    await this.prisma.auditLog
+      .create({
+        data: {
+          organizationId: customer.organizationId,
+          action: "shop.booking_received",
+          entityType: "Booking",
+          entityId: result.booking.id,
+          after: {
+            serviceType: body.serviceType,
+            channel: "web_shop",
+            customerId: customer.id,
+            totalSellAmount: result.booking.totalSellAmount,
+          },
+        },
+      })
+      .catch(() => undefined);
+
     return {
       booking: {
         id: result.booking.id,

@@ -52,5 +52,6 @@ export const NAV_PERMISSIONS: Record<string, string | null> = {
   "/dashboard/channels": "whatsapp.manage",
   "/dashboard/users": "users.manage",
   "/dashboard/audit": "audit.read",
+  "/dashboard/cms": "providers.manage",
   "/dashboard/settings": "settings.manage",
 };

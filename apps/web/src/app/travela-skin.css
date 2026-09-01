@@ -292,7 +292,7 @@
 }
 
 .wg-travela-search-shell {
-  width: min(calc(960px + 2.5cm), calc(100% - 1.5rem));
+  width: min(calc(960px + 5cm), calc(100% - 1.5rem));
   margin: 0 auto;
   padding: 1.25rem 1.35rem;
   border-radius: 999px;

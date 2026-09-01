@@ -302,11 +302,18 @@
   box-sizing: border-box;
 }
 
-.shop-root.wg-new-ui .wg-travela-search-shell > .exp-icon-tabs-hero,
+.shop-root.wg-new-ui .wg-travela-search-shell > .exp-icon-tabs-hero {
+  width: calc(100% - 6cm);
+  max-width: calc(100% - 6cm);
+  margin-inline: auto;
+  box-sizing: border-box;
+}
+
 .shop-root.wg-new-ui .wg-travela-search-shell > .exp-dialog {
   width: calc(100% - 6cm);
   max-width: calc(100% - 6cm);
   margin-inline: auto;
+  margin-top: 0.25cm;
   box-sizing: border-box;
 }
 

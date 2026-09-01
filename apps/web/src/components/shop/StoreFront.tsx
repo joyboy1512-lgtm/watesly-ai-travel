@@ -123,7 +123,7 @@ function StoreFrontInner({
                   ☰
                 </button>
 
-                <label className="wg-header-cap-square wg-header-cap-currency" title="العملة">
+                <label className="wg-header-cap-text wg-header-cap-currency" title="العملة">
                   <select
                     aria-label="العملة"
                     value={currency}
@@ -139,7 +139,7 @@ function StoreFrontInner({
 
                 <button
                   type="button"
-                  className="wg-header-cap-square wg-header-cap-lang"
+                  className="wg-header-cap-text wg-header-cap-lang"
                   title="اللغة"
                   aria-label="تبديل اللغة"
                   onClick={() => setLocale(locale === "ar" ? "en" : "ar")}
@@ -151,7 +151,7 @@ function StoreFrontInner({
                   <div className="wg-header-user-dropdown">
                     <button
                       type="button"
-                      className="wg-header-user-trigger"
+                      className="wg-header-cap-text wg-header-user-trigger"
                       aria-expanded={userMenuOpen}
                       aria-haspopup="menu"
                       onClick={(event) => {
@@ -181,17 +181,9 @@ function StoreFrontInner({
                     ) : null}
                   </div>
                 ) : (
-                  <div className="wg-header-cap-auth-group">
-                    <Link href="/account/login" className="wg-header-cap-square wg-header-cap-auth">
-                      تسجيل الدخول
-                    </Link>
-                    <Link
-                      href="/account/login?register=1"
-                      className="wg-header-cap-square wg-header-cap-auth wg-header-cap-register"
-                    >
-                      سجل
-                    </Link>
-                  </div>
+                  <Link href="/account/login" className="wg-header-cap-text wg-header-cap-signin">
+                    تسجيل الدخول
+                  </Link>
                 )}
               </div>
             </div>
@@ -244,10 +236,7 @@ function StoreFrontInner({
                   </button>
                 </>
               ) : (
-                <>
-                  <Link href="/account/login">تسجيل الدخول</Link>
-                  <Link href="/account/login?register=1">سجل</Link>
-                </>
+                <Link href="/account/login">تسجيل الدخول</Link>
               )}
               {platformEnabled() ? (
                 <>

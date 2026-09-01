@@ -18,6 +18,7 @@ import {
   type ShopLocale,
 } from "@watesly-travel/shared";
 import { platformEnabled } from "@/lib/platform-flags";
+import { newUiEnabled } from "@/lib/new-ui-flags";
 import { ShopI18nProvider, useShopI18n } from "@/components/shop/ShopI18nProvider";
 
 const ShopAssistant = dynamic(
@@ -66,9 +67,19 @@ function StoreFrontInner({
 
   const isEn = locale === "en";
   const operatingName = bootstrap?.brand?.trim() || COMPANY_LEGAL.legalNameAr;
+  const newUi = newUiEnabled();
+
+  function navActive(prefix: string) {
+    if (prefix === "/") return pathname === "/";
+    return pathname === prefix || pathname.startsWith(`${prefix}/`);
+  }
 
   return (
-    <div className="shop-root exp-theme" lang={locale} dir={locale === "ar" ? "rtl" : "ltr"}>
+    <div
+      className={`shop-root exp-theme${newUi ? " wg-new-ui" : ""}`}
+      lang={locale}
+      dir={locale === "ar" ? "rtl" : "ltr"}
+    >
       <header className="shop-header exp-header exp-header-white">
         <div className="shop-header-inner exp-header-inner">
           <Link href="/" className="shop-brand exp-brand" aria-label="WeekendGate">
@@ -237,6 +248,48 @@ function StoreFrontInner({
           {isEn ? "All rights reserved." : "جميع الحقوق محفوظة."}
         </p>
       </footer>
+
+      {newUi ? (
+        <nav className="wg-bottom-nav" aria-label={isEn ? "Main navigation" : "التنقل الرئيسي"}>
+          <Link href="/" className={pathname === "/" ? "active" : ""}>
+            <span className="wg-nav-ico">🏠</span>
+            {isEn ? "Home" : "الرئيسية"}
+          </Link>
+          <Link href="/flights/results" className={navActive("/flights") ? "active" : ""}>
+            <span className="wg-nav-ico">✈</span>
+            {isEn ? "Flights" : "طيران"}
+          </Link>
+          <Link href="/hotels/results" className={navActive("/hotels") ? "active" : ""}>
+            <span className="wg-nav-ico">🏨</span>
+            {isEn ? "Hotels" : "فنادق"}
+          </Link>
+          {platformEnabled() ? (
+            <Link href="/deals" className={navActive("/deals") ? "active" : ""}>
+              <span className="wg-nav-ico">🔥</span>
+              {isEn ? "Deals" : "عروض"}
+            </Link>
+          ) : (
+            <Link href="/#search" className="">
+              <span className="wg-nav-ico">🔍</span>
+              {isEn ? "Search" : "بحث"}
+            </Link>
+          )}
+          {customer ? (
+            <Link href="/account" className={navActive("/account") ? "active" : ""}>
+              <span className="wg-nav-ico">👤</span>
+              {isEn ? "Account" : "حسابي"}
+            </Link>
+          ) : (
+            <Link
+              href="/account/login"
+              className={pathname === "/account/login" ? "active" : ""}
+            >
+              <span className="wg-nav-ico">👤</span>
+              {t("navLogin")}
+            </Link>
+          )}
+        </nav>
+      ) : null}
 
       <ShopAssistant />
     </div>

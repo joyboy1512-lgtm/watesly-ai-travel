@@ -303,16 +303,28 @@ export class HotelbedsHotelProvider implements HotelProviderAdapter {
         };
       });
     } else {
-      occupancies = [
-        {
-          rooms,
-          adults: Math.max(1, params.adults),
-          children,
-          ...(children > 0
-            ? { paxes: ages.map((age) => ({ type: "CH", age })) }
-            : {}),
-        },
-      ];
+      const roomCount = rooms;
+      const totalAdults = Math.max(1, params.adults);
+      const distributed: Array<{ adults: number; childAges: number[] }> = [];
+      let remainingAdults = totalAdults;
+      let remainingAges = [...ages];
+      for (let i = 0; i < roomCount; i += 1) {
+        const left = roomCount - i;
+        const a = Math.max(1, Math.floor(remainingAdults / left));
+        const c = Math.floor(remainingAges.length / left);
+        distributed.push({ adults: a, childAges: remainingAges.splice(0, c) });
+        remainingAdults -= a;
+      }
+      if (remainingAdults > 0) distributed[0]!.adults += remainingAdults;
+      if (remainingAges.length) distributed[0]!.childAges.push(...remainingAges);
+      occupancies = distributed.map((room) => ({
+        rooms: 1,
+        adults: room.adults,
+        children: room.childAges.length,
+        ...(room.childAges.length
+          ? { paxes: room.childAges.map((age) => ({ type: "CH", age })) }
+          : {}),
+      }));
     }
 
     const payload: Record<string, unknown> = {

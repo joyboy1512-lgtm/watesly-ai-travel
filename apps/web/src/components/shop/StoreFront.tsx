@@ -7,6 +7,7 @@ import { type ReactNode, useEffect, useState } from "react";
 import {
   clearShopSession,
   getShopSession,
+  shopFetch,
   type ShopCustomer,
 } from "@/lib/shop-session";
 import { WeekendGateLogo } from "@/components/shop/WeekendGateLogo";
@@ -26,6 +27,13 @@ const ShopAssistant = dynamic(
 
 const BRAND = "WeekendGate";
 
+type ShopBootstrap = {
+  brand?: string;
+  productBrand?: string;
+  currency?: string;
+  timezone?: string;
+};
+
 function StoreFrontInner({
   children,
   wide = false,
@@ -37,11 +45,18 @@ function StoreFrontInner({
   const { t, locale, currency, setLocale, setCurrency, locales, currencies } = useShopI18n();
   const [customer, setCustomer] = useState<ShopCustomer | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [bootstrap, setBootstrap] = useState<ShopBootstrap | null>(null);
 
   useEffect(() => {
     setCustomer(getShopSession()?.customer || null);
     setMenuOpen(false);
   }, [pathname]);
+
+  useEffect(() => {
+    shopFetch<ShopBootstrap>("/shop/bootstrap", { auth: false })
+      .then(setBootstrap)
+      .catch(() => undefined);
+  }, []);
 
   function logout() {
     clearShopSession();
@@ -50,6 +65,7 @@ function StoreFrontInner({
   }
 
   const isEn = locale === "en";
+  const operatingName = bootstrap?.brand?.trim() || COMPANY_LEGAL.legalNameAr;
 
   return (
     <div className="shop-root exp-theme" lang={locale} dir={locale === "ar" ? "rtl" : "ltr"}>
@@ -171,8 +187,8 @@ function StoreFrontInner({
             <strong className="shop-footer-brand">{BRAND}</strong>
             <p>
               {isEn
-                ? `Booking platform by ${COMPANY_LEGAL.legalNameEn}: flights, hotels, transfers, and activities.`
-                : `منصة حجز تابعة لـ${COMPANY_LEGAL.legalNameAr}: طيران، فنادق، نقل، وأنشطة.`}
+                ? `Booking platform operated by ${operatingName}: flights, hotels, transfers, and activities.`
+                : `منصة حجز تابعة لـ${operatingName}: طيران، فنادق، نقل، وأنشطة.`}
             </p>
             <p className="shop-footer-legal-meta">
               {COMPANY_LEGAL.addressAr}

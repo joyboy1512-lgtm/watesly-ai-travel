@@ -54,7 +54,10 @@ export class ShopService {
 
   bootstrap() {
     return this.orgs.resolve().then((org) => ({
+      /** Operating entity from dashboard → الإعدادات */
       brand: org.name || "WeekendGate",
+      /** Customer product mark (logo / site title) */
+      productBrand: "WeekendGate",
       currency: org.defaultCurrency || "KWD",
       timezone: org.timezone || "Asia/Kuwait",
     }));
@@ -820,8 +823,13 @@ export class ShopService {
     // P6: hotel bookings require a recent reprice/checkrate before confirm
     if (body.serviceType === "hotel") {
       const details = (body.offer.details || {}) as Record<string, unknown>;
+      const extras = (body.extras || {}) as Record<string, unknown>;
       const validatedAt = String(
-        details.validatedAt || details.revalidatedAt || details.checkRateAt || "",
+        details.validatedAt ||
+          details.revalidatedAt ||
+          details.checkRateAt ||
+          extras.validatedAt ||
+          "",
       );
       const validatedMs = validatedAt ? Date.parse(validatedAt) : NaN;
       const fresh =

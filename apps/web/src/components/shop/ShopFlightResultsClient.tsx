@@ -58,7 +58,7 @@ export function ShopFlightResultsClient() {
   const resultsHref = useMemo(() => buildFlightResultsHref(params), [params]);
 
   const isRoundTrip = params.tripType === "roundtrip" && Boolean(params.returnDate);
-  const passengers = params.adults + params.children;
+  const passengers = params.adults + params.children + params.infants;
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");

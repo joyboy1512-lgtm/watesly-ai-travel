@@ -55,8 +55,10 @@ type CheckRateResponse = {
   available: boolean;
   priceChanged: boolean;
   previousCostMinor?: number;
+  offer?: { costAmountMinor?: number; sellAmountMinor?: number };
   selectedRate?: HotelRateOption;
   rateComments?: string;
+  pricing?: { sellAmountMinor?: number; costAmountMinor?: number };
 };
 
 function formatDay(value?: string) {
@@ -181,13 +183,24 @@ export function HotelDetailModal({
         rateComments: result.rateComments || result.selectedRate?.rateComments || rate.rateComments,
       };
       if (result.priceChanged) {
-        const toMinor = result.selectedRate
-          ? rateDisplayMinor(
-              { ...rate, ...(result.selectedRate || {}) },
-              hotel,
-              nights,
-            )
-          : hotel.displayFromMinor;
+        const repricedOffer = result.offer
+          ? {
+              ...hotel,
+              costAmountMinor:
+                Number(result.offer.costAmountMinor) || hotel.costAmountMinor,
+              sellAmountMinor:
+                Number(result.pricing?.sellAmountMinor) || hotel.sellAmountMinor,
+            }
+          : hotel;
+        const toMinor =
+          Number(result.pricing?.sellAmountMinor) ||
+          (result.selectedRate
+            ? rateDisplayMinor(
+                { ...rate, ...(result.selectedRate || {}) },
+                repricedOffer,
+                nights,
+              )
+            : hotel.displayFromMinor);
         setPriceChange({
           fromMinor: Number(result.previousCostMinor || hotel.sellAmountMinor),
           toMinor,

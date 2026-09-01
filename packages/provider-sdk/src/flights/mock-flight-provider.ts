@@ -107,11 +107,12 @@ export class MockFlightProvider implements FlightProviderAdapter {
     const origin = normalizeAirport(params.origin);
     const destination = normalizeAirport(params.destination);
     const seed = hashSeed(
-      `${origin}-${destination}-${params.departDate}-${params.adults}-${params.cabinClass || "economy"}`,
+      `${origin}-${destination}-${params.departDate}-${params.adults}-${params.children || 0}-${params.infants || 0}-${params.cabinClass || "economy"}`,
     );
     const currency = (params.currency || "KWD").toUpperCase();
     const adults = Math.max(1, params.adults);
     const children = Math.max(0, params.children || 0);
+    const infants = Math.max(0, params.infants || 0);
     const expiresAt = new Date(Date.now() + 30 * 60 * 1000).toISOString();
     const mult = routeMultiplier(destination);
     const isRoundTrip = Boolean(params.returnDate);
@@ -185,7 +186,11 @@ export class MockFlightProvider implements FlightProviderAdapter {
       const taxesMajor = tpl.taxesKwd * mult * (isRoundTrip ? 1.7 : 1);
       const perAdult = fareMajor + taxesMajor;
       const childFactor = 0.75;
-      const totalMajor = perAdult * adults + perAdult * childFactor * children;
+      const infantFactor = 0.1;
+      const totalMajor =
+        perAdult * adults +
+        perAdult * childFactor * children +
+        perAdult * infantFactor * infants;
       const costAmountMinor = toMinor(totalMajor, currency);
 
       const scenario = tpl.scenario || "normal";

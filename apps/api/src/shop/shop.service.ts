@@ -820,8 +820,13 @@ export class ShopService {
     // P6: hotel bookings require a recent reprice/checkrate before confirm
     if (body.serviceType === "hotel") {
       const details = (body.offer.details || {}) as Record<string, unknown>;
+      const extras = (body.extras || {}) as Record<string, unknown>;
       const validatedAt = String(
-        details.validatedAt || details.revalidatedAt || details.checkRateAt || "",
+        details.validatedAt ||
+          details.revalidatedAt ||
+          details.checkRateAt ||
+          extras.validatedAt ||
+          "",
       );
       const validatedMs = validatedAt ? Date.parse(validatedAt) : NaN;
       const fresh =

@@ -287,14 +287,14 @@
 .wg-travela-search-wrap {
   position: relative;
   z-index: 10;
-  margin-top: -5rem;
-  padding-bottom: 2.5rem;
+  margin-top: -4.5rem;
+  padding-bottom: 2rem;
 }
 
 .wg-travela-search-shell {
-  width: min(1140px, calc(100% - 1.5rem));
+  width: min(calc(960px + 2.5cm), calc(100% - 1.5rem));
   margin: 0 auto;
-  padding: calc(2.1rem + 1.25cm) 1.65rem calc(2.35rem + 1.25cm);
+  padding: 1.25rem 1.35rem;
   border-radius: 999px;
   background: rgba(19, 53, 123, 0.92);
   box-shadow: 0 16px 40px rgba(19, 53, 123, 0.35);
@@ -306,7 +306,7 @@
   justify-content: center;
   flex-wrap: wrap;
   gap: 0.45rem;
-  margin-bottom: 1.05rem;
+  margin-bottom: 0.65rem;
 }
 
 .shop-root.wg-new-ui .wg-travela-search-wrap .exp-icon-circle-labeled {
@@ -330,8 +330,8 @@
   border: 0;
   border-radius: 1.25rem;
   box-shadow: none;
-  padding: 1.2rem 1.15rem 1.35rem;
-  gap: 1rem;
+  padding: 1rem 1.1rem 1.15rem;
+  gap: 0.85rem;
   overflow: hidden;
   width: 100%;
   box-sizing: border-box;
@@ -461,8 +461,8 @@
 .shop-root.wg-new-ui .wg-travela-search-wrap .exp-trip-builder-cta {
   width: 100%;
   max-width: none;
-  margin: 1.05rem 0 0;
-  padding: 1rem 1.05rem;
+  margin: 0.85rem 0 0;
+  padding: 0.9rem 1rem;
   border-radius: 1rem;
   background: #fff;
   border: 1px solid rgba(19, 53, 123, 0.15);
@@ -620,7 +620,7 @@
 
   .wg-travela-search-shell {
     border-radius: 999px;
-    padding: calc(1.65rem + 1cm) 1rem calc(1.85rem + 1cm);
+    padding: 1rem 0.85rem;
   }
 
   .shop-root.wg-new-ui .wg-travela-search-wrap .exp-unified-card .exp-form-row {

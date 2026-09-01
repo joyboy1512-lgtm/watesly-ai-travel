@@ -99,7 +99,7 @@ export function ShopI18nProvider({ children }: { children: ReactNode }) {
       dir: localeDir(locale),
       setLocale,
       setCurrency,
-      t: (key) => tShop(locale, key),
+      t: (key) => tShop("ar", key),
       formatKwdMinor: (kwdMinor) => formatFromKwdMinor(kwdMinor, currency, locale),
       locales: SHOP_LOCALES,
       currencies: SHOP_CURRENCIES,

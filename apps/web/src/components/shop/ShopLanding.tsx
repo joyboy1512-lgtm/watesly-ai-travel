@@ -68,12 +68,6 @@ export function ShopLanding({ onPickDestination, onPickOffer }: Props) {
 
   return (
     <div className="shop-landing">
-      <section className="shop-trust-strip" aria-label="ثقة WeekendGate">
-        <span>ترخيص سياحي 2015/2587</span>
-        <span>دعم واتساب مباشر</span>
-        <span>لا يتم الخصم قبل تأكيد السعر</span>
-        <span>عربي / English · عملات متعددة</span>
-      </section>
       <section className="shop-section" id="destinations">
         <div className="shop-section-head">
           <div>

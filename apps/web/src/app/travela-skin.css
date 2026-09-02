@@ -174,7 +174,7 @@
   position: relative;
   width: min(1280px, calc(100% - 2rem));
   margin: 0 auto;
-  padding: 0.85rem 0;
+  padding: 0.85rem clamp(0.85rem, 2.8vw, 1.75rem);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1217,7 +1217,7 @@
 
   .shop-root.wg-new-ui .wg-topbar {
     width: calc(100% - 1.25rem);
-    padding: 0.65rem 0;
+    padding: 0.65rem 0.85rem;
     gap: 0.5rem;
   }
 

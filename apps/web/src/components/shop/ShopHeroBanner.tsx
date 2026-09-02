@@ -95,55 +95,11 @@ type Props = {
   onRuheltiClick?: () => void;
 };
 
-const PRODUCTS: Array<{ key: Mode; label: string; icon: ReactNode }> = [
-  {
-    key: "stays",
-    label: "الفنادق",
-    icon: (
-      <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden>
-        <path
-          fill="currentColor"
-          d="M7 13c1.66 0 3-1.34 3-3S8.66 7 7 7s-3 1.34-3 3 1.34 3 3 3zm12-6h-8v7H3V5H1v15h2v-3h18v3h2v-9c0-2.21-1.79-4-4-4z"
-        />
-      </svg>
-    ),
-  },
-  {
-    key: "flights",
-    label: "الطيران",
-    icon: (
-      <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden>
-        <path
-          fill="currentColor"
-          d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"
-        />
-      </svg>
-    ),
-  },
-  {
-    key: "cars",
-    label: "النقل",
-    icon: (
-      <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden>
-        <path
-          fill="currentColor"
-          d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"
-        />
-      </svg>
-    ),
-  },
-  {
-    key: "activities",
-    label: "الأنشطة",
-    icon: (
-      <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden>
-        <path
-          fill="currentColor"
-          d="M22 10.99h-3.5v-2h3.5v2zm0-4h-3.5V5h3.5v2zM7.5 5C5.57 5 4 6.57 4 8.5S5.57 12 7.5 12 11 10.43 11 8.5 9.43 5 7.5 5zM2 19h20v2H2v-2zm2-8h16v6H4v-6z"
-        />
-      </svg>
-    ),
-  },
+const PRODUCTS: Array<{ key: Mode; label: string }> = [
+  { key: "flights", label: "الطيران" },
+  { key: "stays", label: "الفنادق" },
+  { key: "cars", label: "النقل" },
+  { key: "activities", label: "الأنشطة" },
 ];
 
 function IconSwap() {
@@ -607,55 +563,32 @@ export function ShopHeroBanner(props: Props) {
         </div>
 
         <div className="wg-hero-search-panel" id="search">
-          <div className="wg-hero-ticket-shell">
-        <div className="wg-hero-ticket" data-mode={props.mode}>
-          <aside className="wg-hero-ticket-rail" aria-hidden="true">
-            <span>BOARDING</span>
-          </aside>
-
-          <div className="wg-hero-ticket-main">
-            <header className="wg-hero-ticket-banner">
-              <strong className="wg-hero-ticket-pass">BOARDING PASS</strong>
-              <span className="wg-hero-ticket-airlines">
-                WEEKEND GATE
-                <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden>
-                  <path
-                    fill="currentColor"
-                    d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"
-                  />
-                </svg>
-              </span>
-              <span className="wg-hero-ticket-swoosh" aria-hidden="true" />
-            </header>
-
+          <div className="wg-hero-ticket-shell wg-hero-dock-shell" data-mode={props.mode}>
             <div
-              className="wg-hero-ticket-modes wg-hero-ticket-modes-row"
+              className="wg-hero-dock-modes"
               role="tablist"
               aria-label="نوع الحجز"
             >
-              {PRODUCTS.map(({ key, label, icon }) => {
+              {PRODUCTS.map(({ key, label }) => {
                 const on = props.mode === key;
                 return (
                   <button
                     key={key}
                     type="button"
                     role="tab"
-                    className={`wg-hero-ticket-mode${on ? " on" : ""}`}
+                    className={`wg-hero-dock-mode${on ? " on" : ""}`}
                     aria-selected={on}
-                    aria-label={label}
                     onClick={() => props.onModeChange(key)}
                   >
-                    <span className="wg-hero-ticket-mode-icon" aria-hidden>
-                      {icon}
-                    </span>
-                    <strong>{label}</strong>
+                    {label}
                   </button>
                 );
               })}
             </div>
 
+            <div className="wg-hero-dock">
         <div className="exp-dialog">
-          <div className="exp-unified-card wg-hero-ticket-card">
+          <div className="exp-unified-card wg-hero-ticket-card wg-hero-dock-card">
           {props.mode === "flights" ? (
             <>
               <div className="exp-flight-toolbar">
@@ -1043,36 +976,23 @@ export function ShopHeroBanner(props: Props) {
           )}
           </div>
         </div>
-          </div>
+            </div>
 
-          <div className="wg-hero-ticket-stub">
-            <span className="wg-hero-ticket-notch wg-hero-ticket-notch-top" aria-hidden="true" />
-            <span className="wg-hero-ticket-notch wg-hero-ticket-notch-bottom" aria-hidden="true" />
-            <div className="wg-hero-ticket-stub-inner wg-hero-ticket-stub-ruhelti">
-              {props.onRuheltiClick ? (
-                <>
-                  <p className="wg-hero-ticket-stub-title">باقة متكاملة</p>
-                  <p className="wg-hero-ticket-stub-hint">
-                    طيران + فندق + مواصلات + أنشطة
-                  </p>
+            {props.onRuheltiClick || props.tripBuilderHref ? (
+              <div className="wg-hero-dock-ruhelti">
+                {props.onRuheltiClick ? (
                   <button
                     type="button"
-                    className="wg-hero-ticket-ruhelti-btn wg-ruhelti-hero-btn"
+                    className="wg-hero-dock-ruhelti-link wg-ruhelti-hero-btn"
                     onClick={props.onRuheltiClick}
                     aria-haspopup="dialog"
                   >
                     رحلتي
                   </button>
-                </>
-              ) : props.tripBuilderHref ? (
-                <>
-                  <p className="wg-hero-ticket-stub-title">باقة متكاملة</p>
-                  <p className="wg-hero-ticket-stub-hint">
-                    طيران + فندق + نقل + أنشطة
-                  </p>
+                ) : props.tripBuilderHref ? (
                   <Link
                     href={props.tripBuilderHref}
-                    className="wg-hero-ticket-ruhelti-btn"
+                    className="wg-hero-dock-ruhelti-link"
                     onClick={() => {
                       try {
                         sessionStorage.setItem(
@@ -1089,16 +1009,9 @@ export function ShopHeroBanner(props: Props) {
                   >
                     رحلتي
                   </Link>
-                </>
-              ) : (
-                <>
-                  <p className="wg-hero-ticket-stub-title">Weekend Gate</p>
-                  <p className="wg-hero-ticket-stub-hint">BOARDING PASS</p>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
+                ) : null}
+              </div>
+            ) : null}
 
           {props.error ? <p className="shop-error exp-dialog-msg">{props.error}</p> : null}
           {props.message ? <p className="shop-status exp-dialog-msg">{props.message}</p> : null}

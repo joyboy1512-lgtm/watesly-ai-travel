@@ -628,6 +628,32 @@ export function ShopHeroBanner(props: Props) {
               <span className="wg-hero-ticket-swoosh" aria-hidden="true" />
             </header>
 
+            <div
+              className="wg-hero-ticket-modes wg-hero-ticket-modes-row"
+              role="tablist"
+              aria-label="نوع الحجز"
+            >
+              {PRODUCTS.map(({ key, label, icon }) => {
+                const on = props.mode === key;
+                return (
+                  <button
+                    key={key}
+                    type="button"
+                    role="tab"
+                    className={`wg-hero-ticket-mode${on ? " on" : ""}`}
+                    aria-selected={on}
+                    aria-label={label}
+                    onClick={() => props.onModeChange(key)}
+                  >
+                    <span className="wg-hero-ticket-mode-icon" aria-hidden>
+                      {icon}
+                    </span>
+                    <strong>{label}</strong>
+                  </button>
+                );
+              })}
+            </div>
+
         <div className="exp-dialog">
           <div className="exp-unified-card wg-hero-ticket-card">
           {props.mode === "flights" ? (
@@ -760,6 +786,7 @@ export function ShopHeroBanner(props: Props) {
                   ) : null}
                   <div className="exp-form-row exp-form-flights exp-multicity-footer">
                     {renderTravelersCell()}
+                    {renderSearchButton("wg-hero-ticket-search")}
                   </div>
                 </div>
               ) : (
@@ -820,6 +847,7 @@ export function ShopHeroBanner(props: Props) {
                   )}
                 </div>
                 {renderTravelersCell()}
+                {renderSearchButton("wg-hero-ticket-search")}
               </div>
               )}
               {renderTravelersPanel()}
@@ -1008,6 +1036,7 @@ export function ShopHeroBanner(props: Props) {
             ) : null}
 
             {renderTravelersCell()}
+            {renderSearchButton("wg-hero-ticket-search")}
             </div>
             {renderTravelersPanel()}
             </>
@@ -1019,86 +1048,60 @@ export function ShopHeroBanner(props: Props) {
           <div className="wg-hero-ticket-stub">
             <span className="wg-hero-ticket-notch wg-hero-ticket-notch-top" aria-hidden="true" />
             <span className="wg-hero-ticket-notch wg-hero-ticket-notch-bottom" aria-hidden="true" />
-            <div className="wg-hero-ticket-stub-inner">
-              <p className="wg-hero-ticket-stub-title">ماذا تبحث؟</p>
-              <div
-                className="wg-hero-ticket-modes"
-                role="tablist"
-                aria-label="نوع الحجز"
-              >
-                {PRODUCTS.map(({ key, label, icon }) => {
-                  const on = props.mode === key;
-                  return (
-                    <button
-                      key={key}
-                      type="button"
-                      role="tab"
-                      className={`wg-hero-ticket-mode${on ? " on" : ""}`}
-                      aria-selected={on}
-                      aria-label={label}
-                      onClick={() => props.onModeChange(key)}
-                    >
-                      <span className={`wg-hero-ticket-mode-tick${on ? " is-on" : ""}`} aria-hidden>
-                        {on ? "✓" : ""}
-                      </span>
-                      <span className="wg-hero-ticket-mode-icon" aria-hidden>
-                        {icon}
-                      </span>
-                      <strong>{label}</strong>
-                    </button>
-                  );
-                })}
-              </div>
-              {renderSearchButton("wg-hero-ticket-search")}
+            <div className="wg-hero-ticket-stub-inner wg-hero-ticket-stub-ruhelti">
+              {props.onRuheltiClick ? (
+                <>
+                  <p className="wg-hero-ticket-stub-title">باقة متكاملة</p>
+                  <p className="wg-hero-ticket-stub-hint">
+                    طيران + فندق + مواصلات + أنشطة
+                  </p>
+                  <button
+                    type="button"
+                    className="wg-hero-ticket-ruhelti-btn wg-ruhelti-hero-btn"
+                    onClick={props.onRuheltiClick}
+                    aria-haspopup="dialog"
+                  >
+                    رحلتي
+                  </button>
+                </>
+              ) : props.tripBuilderHref ? (
+                <>
+                  <p className="wg-hero-ticket-stub-title">باقة متكاملة</p>
+                  <p className="wg-hero-ticket-stub-hint">
+                    طيران + فندق + نقل + أنشطة
+                  </p>
+                  <Link
+                    href={props.tripBuilderHref}
+                    className="wg-hero-ticket-ruhelti-btn"
+                    onClick={() => {
+                      try {
+                        sessionStorage.setItem(
+                          "wg_trip_builder_search",
+                          JSON.stringify({
+                            href: props.tripBuilderHref,
+                            at: Date.now(),
+                          }),
+                        );
+                      } catch {
+                        /* ignore */
+                      }
+                    }}
+                  >
+                    رحلتي
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <p className="wg-hero-ticket-stub-title">Weekend Gate</p>
+                  <p className="wg-hero-ticket-stub-hint">BOARDING PASS</p>
+                </>
+              )}
             </div>
           </div>
         </div>
 
           {props.error ? <p className="shop-error exp-dialog-msg">{props.error}</p> : null}
           {props.message ? <p className="shop-status exp-dialog-msg">{props.message}</p> : null}
-
-          {props.onRuheltiClick ? (
-            <div className="exp-trip-builder-cta">
-              <div className="exp-trip-builder-cta-copy">
-                <strong>رحلتي</strong>
-                <span>نظّم رحلتك الكاملة: طيران + فندق + مواصلات + أنشطة</span>
-              </div>
-              <button
-                type="button"
-                className="exp-trip-builder-cta-btn wg-ruhelti-hero-btn"
-                onClick={props.onRuheltiClick}
-                aria-haspopup="dialog"
-              >
-                رحلتي
-              </button>
-            </div>
-          ) : props.tripBuilderHref ? (
-            <div className="exp-trip-builder-cta">
-              <div className="exp-trip-builder-cta-copy">
-                <strong>رحّلتي — Trip Builder</strong>
-                <span>كوّن رحلتك: طيران + فندق + نقل + أنشطة — بنفس بيانات البحث أعلاه</span>
-              </div>
-              <Link
-                href={props.tripBuilderHref}
-                className="exp-trip-builder-cta-btn"
-                onClick={() => {
-                  try {
-                    sessionStorage.setItem(
-                      "wg_trip_builder_search",
-                      JSON.stringify({
-                        href: props.tripBuilderHref,
-                        at: Date.now(),
-                      }),
-                    );
-                  } catch {
-                    /* ignore */
-                  }
-                }}
-              >
-                ابدأ بناء رحلتي
-              </Link>
-            </div>
-          ) : null}
           </div>
         </div>
       </section>

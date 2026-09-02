@@ -647,7 +647,7 @@
   --ht-accent: var(--tv-primary, #13357b);
   position: relative;
   display: grid;
-  grid-template-columns: 30px minmax(0, 1fr) minmax(156px, 172px);
+  grid-template-columns: 30px minmax(0, 1fr) minmax(128px, 148px);
   align-items: start;
   background: var(--ht-paper);
   border-radius: 14px;
@@ -836,30 +836,30 @@
 }
 
 .shop-root.wg-new-ui .wg-hero-search-panel .exp-unified-card .exp-form-flights {
-  grid-template-columns: minmax(0, 1.1fr) auto minmax(0, 1.1fr) minmax(0, 1.35fr) minmax(0, 0.95fr);
+  grid-template-columns: minmax(0, 1.05fr) auto minmax(0, 1.05fr) minmax(0, 1.25fr) minmax(0, 0.85fr) auto;
 }
 
 .shop-root.wg-new-ui .wg-hero-search-panel .exp-unified-card .exp-form-stays {
-  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1.25fr) minmax(0, 0.95fr);
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1.2fr) minmax(0, 0.9fr) auto;
 }
 
 .shop-root.wg-new-ui .wg-hero-search-panel .exp-unified-card .exp-form-cars {
-  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.15fr) minmax(0, 1.2fr) minmax(0, 0.55fr) minmax(0, 0.55fr) minmax(0, 0.9fr);
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.05fr) minmax(0, 1.1fr) minmax(0, 0.5fr) minmax(0, 0.5fr) minmax(0, 0.85fr) auto;
 }
 
 .shop-root.wg-new-ui .wg-hero-search-panel .exp-unified-card .exp-form-cars:not(
     :has(.exp-cell-time-compact + .exp-cell-time-compact)
   ) {
-  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.2fr) minmax(0, 1.35fr) minmax(0, 0.55fr) minmax(0, 0.9fr);
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.1fr) minmax(0, 1.2fr) minmax(0, 0.5fr) minmax(0, 0.85fr) auto;
 }
 
 .shop-root.wg-new-ui .wg-hero-search-panel .exp-unified-card .exp-form-activities {
-  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1.25fr) minmax(0, 0.95fr);
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1.15fr) minmax(0, 0.9fr) auto;
 }
 
 .shop-root.wg-new-ui .wg-hero-search-panel .exp-unified-card .exp-multicity-footer {
-  grid-template-columns: minmax(0, 1fr);
-  max-width: 14rem;
+  grid-template-columns: minmax(0, 1fr) auto;
+  max-width: none;
 }
 
 .shop-root.wg-new-ui .wg-hero-search-panel .exp-unified-card .exp-input-cell {
@@ -966,6 +966,77 @@
   color: var(--ht-ink);
   text-align: start;
   line-height: 1.2;
+}
+
+
+.wg-hero-ticket-modes-row {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.28rem;
+  margin: 0.05rem 0 0.2rem;
+}
+
+.wg-hero-ticket-modes-row .wg-hero-ticket-mode {
+  grid-template-columns: auto 1fr;
+  justify-items: start;
+  padding: 0.28rem 0.4rem;
+  min-height: 2.15rem;
+}
+
+.wg-hero-ticket-modes-row .wg-hero-ticket-mode-tick {
+  display: none;
+}
+
+.wg-hero-ticket-modes-row .wg-hero-ticket-mode strong {
+  font-size: 0.72rem;
+}
+
+.wg-hero-ticket-stub-ruhelti {
+  display: grid;
+  gap: 0.35rem;
+  align-content: center;
+  justify-items: center;
+  text-align: center;
+  height: 100%;
+  padding: 0.35rem 0.15rem;
+}
+
+.wg-hero-ticket-stub-hint {
+  margin: 0;
+  font-size: 0.62rem;
+  line-height: 1.35;
+  color: var(--ht-muted);
+}
+
+.wg-hero-ticket-ruhelti-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 2.55rem;
+  border: none;
+  border-radius: 10px;
+  background: var(--ht-accent);
+  color: #fff;
+  font-weight: 800;
+  font-size: 0.92rem;
+  text-decoration: none;
+  cursor: pointer;
+  box-shadow: 0 8px 18px rgba(19, 53, 123, 0.22);
+}
+
+.wg-hero-ticket-ruhelti-btn:hover {
+  background: #0f2a63;
+}
+
+.shop-root.wg-new-ui .wg-hero-search-panel .wg-hero-ticket-search.exp-search-link {
+  width: auto;
+  min-width: 4.5rem;
+  height: 2.55rem;
+  min-height: 2.55rem;
+  align-self: stretch;
+  border-radius: 8px;
+  padding: 0 0.85rem;
 }
 
 .wg-hero-ticket-modes {
@@ -1300,12 +1371,22 @@
     display: none;
   }
 
-  .wg-hero-ticket-modes {
+  .wg-hero-ticket-modes,
+  .wg-hero-ticket-modes-row {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .wg-hero-ticket-stub-inner {
-    gap: 0.45rem;
+  .wg-hero-ticket-stub-ruhelti {
+    grid-template-columns: 1fr auto;
+    justify-items: start;
+    text-align: start;
+    align-items: center;
+  }
+
+  .wg-hero-ticket-ruhelti-btn {
+    width: auto;
+    min-width: 6rem;
+    justify-self: end;
   }
 
   .shop-root.wg-new-ui .wg-hero-search-panel .wg-hero-ticket-search.exp-search-link {

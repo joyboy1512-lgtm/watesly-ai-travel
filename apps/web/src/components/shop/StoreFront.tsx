@@ -263,7 +263,7 @@ function StoreFrontInner({
               >
                 اتصل بنا · {COMPANY_LEGAL.phoneDisplay}
               </a>
-              <Link href="/chat">المساعد الذكي · لمّاح</Link>
+              <Link href="/chat">المساعد الذكي · AI</Link>
               <button
                 type="button"
                 className="wg-topbar-mobile-lang"

@@ -587,10 +587,10 @@ export function ShopHeroBanner(props: Props) {
               <Link
                 href="/chat"
                 className="wg-hero-dock-mode wg-hero-dock-mode-ai"
-                title="المساعد الذكي لمّاح"
-                aria-label="فتح المساعد الذكي لمّاح"
+                title="المساعد الذكي AI"
+                aria-label="فتح المساعد الذكي AI"
               >
-                لمّاح
+                AI
               </Link>
             </div>
 

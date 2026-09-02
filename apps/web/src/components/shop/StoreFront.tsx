@@ -96,110 +96,103 @@ function StoreFrontInner({
         className={`shop-header exp-header${isHome ? " exp-header-hero-overlay" : " exp-header-white"}`}
       >
         {newUi ? (
-          <div className="shop-header-inner exp-header-inner wg-header-cap-wrap">
-            <div className="wg-header-cap-track">
-              <Link
-                href="/"
-                className="wg-header-logo-standalone"
-                aria-label="WeekendGate"
-              >
+          <div className="shop-header-inner exp-header-inner wg-topbar">
+            <div className="wg-topbar-start">
+              <Link href="/" className="wg-topbar-logo" aria-label="WeekendGate">
                 <WeekendGateLogo light={isHome} />
               </Link>
-
-              <div className="wg-header-cap">
-              <nav className="wg-header-cap-nav" aria-label="روابط سريعة">
+              <nav className="wg-topbar-nav" aria-label="روابط سريعة">
                 <Link href="/about">{t("navAbout")}</Link>
                 <Link href="/contact">{t("navContact")}</Link>
               </nav>
-
-              <div className="wg-header-cap-user">
-                <button
-                  type="button"
-                  className="wg-header-cap-menu-btn"
-                  aria-expanded={menuOpen}
-                  aria-label={t("navMenu")}
-                  onClick={() => setMenuOpen((v) => !v)}
-                >
-                  ☰
-                </button>
-
-                <label className="wg-header-cap-text wg-header-cap-currency" title="العملة">
-                  <select
-                    aria-label="العملة"
-                    value={currency}
-                    onChange={(e) => setCurrency(e.target.value as ShopCurrency)}
-                  >
-                    {currencies.map((code) => (
-                      <option key={code} value={code}>
-                        {code}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-
-                <button
-                  type="button"
-                  className="wg-header-cap-text wg-header-cap-lang"
-                  title="اللغة"
-                  aria-label="تبديل اللغة"
-                  onClick={() => setLocale(locale === "ar" ? "en" : "ar")}
-                >
-                  {locale === "ar" ? "AR" : "EN"}
-                </button>
-
-                {customer ? (
-                  <div className="wg-header-user-dropdown">
-                    <button
-                      type="button"
-                      className="wg-header-cap-text wg-header-user-trigger"
-                      aria-expanded={userMenuOpen}
-                      aria-haspopup="menu"
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        setUserMenuOpen((v) => !v);
-                      }}
-                    >
-                      <span className="wg-header-user-name">
-                        {customer.name || customer.phone}
-                      </span>
-                      <span className="wg-header-user-chevron" aria-hidden>
-                        ▾
-                      </span>
-                    </button>
-                    {userMenuOpen ? (
-                      <div className="wg-header-user-menu" role="menu">
-                        <Link href="/account" role="menuitem">
-                          بياناتي
-                        </Link>
-                        <Link href="/bookings/manage" role="menuitem">
-                          حجوزاتي
-                        </Link>
-                        <button type="button" role="menuitem" onClick={logout}>
-                          خروج
-                        </button>
-                      </div>
-                    ) : null}
-                  </div>
-                ) : (
-                  <Link href="/account/login" className="wg-header-cap-text wg-header-cap-signin">
-                    تسجيل الدخول
-                  </Link>
-                )}
-              </div>
-            </div>
             </div>
 
-            <div className={`wg-header-cap-mobile${menuOpen ? " open" : ""}`}>
-              <Link href="/about">{t("navAbout")}</Link>
-              <Link href="/contact">{t("navContact")}</Link>
+            <div className="wg-topbar-end">
               <button
                 type="button"
-                className="wg-header-cap-mobile-lang"
+                className="wg-topbar-menu-btn"
+                aria-expanded={menuOpen}
+                aria-label={t("navMenu")}
+                onClick={() => setMenuOpen((v) => !v)}
+              >
+                ☰
+              </button>
+
+              <label className="wg-topbar-text wg-topbar-currency" title="العملة">
+                <select
+                  aria-label="العملة"
+                  value={currency}
+                  onChange={(e) => setCurrency(e.target.value as ShopCurrency)}
+                >
+                  {currencies.map((code) => (
+                    <option key={code} value={code}>
+                      {code}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <button
+                type="button"
+                className="wg-topbar-text wg-topbar-lang"
+                title="اللغة"
+                aria-label="تبديل اللغة"
                 onClick={() => setLocale(locale === "ar" ? "en" : "ar")}
               >
                 {locale === "ar" ? "AR" : "EN"}
               </button>
-              <label className="wg-header-menu-currency wg-header-cap-mobile-currency">
+
+              {customer ? (
+                <div className="wg-header-user-dropdown">
+                  <button
+                    type="button"
+                    className="wg-topbar-text wg-header-user-trigger"
+                    aria-expanded={userMenuOpen}
+                    aria-haspopup="menu"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      setUserMenuOpen((v) => !v);
+                    }}
+                  >
+                    <span className="wg-header-user-name">
+                      {customer.name || customer.phone}
+                    </span>
+                    <span className="wg-header-user-chevron" aria-hidden>
+                      ▾
+                    </span>
+                  </button>
+                  {userMenuOpen ? (
+                    <div className="wg-header-user-menu" role="menu">
+                      <Link href="/account" role="menuitem">
+                        بياناتي
+                      </Link>
+                      <Link href="/bookings/manage" role="menuitem">
+                        حجوزاتي
+                      </Link>
+                      <button type="button" role="menuitem" onClick={logout}>
+                        خروج
+                      </button>
+                    </div>
+                  ) : null}
+                </div>
+              ) : (
+                <Link href="/account/login" className="wg-topbar-text wg-topbar-signin">
+                  تسجيل الدخول
+                </Link>
+              )}
+            </div>
+
+            <div className={`wg-topbar-mobile${menuOpen ? " open" : ""}`}>
+              <Link href="/about">{t("navAbout")}</Link>
+              <Link href="/contact">{t("navContact")}</Link>
+              <button
+                type="button"
+                className="wg-topbar-mobile-lang"
+                onClick={() => setLocale(locale === "ar" ? "en" : "ar")}
+              >
+                {locale === "ar" ? "AR" : "EN"}
+              </button>
+              <label className="wg-header-menu-currency wg-topbar-mobile-currency">
                 <span>العملة</span>
                 <select
                   aria-label="العملة"

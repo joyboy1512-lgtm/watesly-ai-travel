@@ -195,37 +195,16 @@
 }
 
 .shop-root.wg-new-ui .wg-topbar-logo .wg-logo {
-  gap: 0.65rem;
+  gap: 0.55rem;
 }
 
 .shop-root.wg-new-ui .wg-topbar-logo .wg-logo-mark {
-  display: grid;
-  place-items: center;
-  width: 2.15rem;
-  height: 2.15rem;
-  flex-shrink: 0;
-}
-
-.shop-root.wg-new-ui .wg-topbar-logo .wg-logo-mark svg {
-  width: 100%;
-  height: 100%;
   display: block;
-}
-
-.shop-root.wg-new-ui .wg-topbar-logo .wg-logo-mark-bg {
-  fill: #13357b;
-}
-
-.shop-root.wg-new-ui .wg-topbar-logo .wg-logo-mark-fg {
-  fill: #fff;
-}
-
-.shop-root.wg-new-ui .exp-header-hero-overlay .wg-topbar-logo .wg-logo-light .wg-logo-mark-bg {
-  fill: rgba(255, 255, 255, 0.96);
-}
-
-.shop-root.wg-new-ui .exp-header-hero-overlay .wg-topbar-logo .wg-logo-light .wg-logo-mark-fg {
-  fill: #13357b;
+  width: auto;
+  height: 1.55rem;
+  flex-shrink: 0;
+  object-fit: contain;
+  object-position: center;
 }
 
 .shop-root.wg-new-ui .wg-topbar-logo .wg-logo-word {
@@ -1300,8 +1279,7 @@
   }
 
   .shop-root.wg-new-ui .wg-topbar-logo .wg-logo-mark {
-    width: 1.9rem;
-    height: 1.9rem;
+    height: 1.35rem;
   }
 
   .shop-root.wg-new-ui .wg-topbar-nav {

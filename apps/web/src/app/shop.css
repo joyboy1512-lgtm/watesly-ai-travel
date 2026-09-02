@@ -6393,7 +6393,7 @@
 }
 
 .wg-logo-single .wg-logo-mark {
-  display: none;
+  display: block;
 }
 
 /* —— Legal pages —— */

@@ -648,6 +648,7 @@
   position: relative;
   display: grid;
   grid-template-columns: 30px minmax(0, 1fr) minmax(156px, 172px);
+  align-items: start;
   background: var(--ht-paper);
   border-radius: 14px;
   box-shadow:
@@ -687,10 +688,16 @@
   min-width: 0;
   padding: 0.4rem 0.65rem 0.45rem;
   display: grid;
-  gap: 0.35rem;
-  align-content: center;
+  gap: 0.28rem;
+  align-content: start;
+  align-self: stretch;
   position: relative;
   overflow: visible;
+}
+
+.wg-hero-ticket-rail,
+.wg-hero-ticket-stub {
+  align-self: stretch;
 }
 
 .wg-hero-ticket-banner {
@@ -765,13 +772,14 @@
   border-radius: 0;
   box-shadow: none;
   padding: 0;
-  gap: 0.3rem;
+  gap: 0.28rem;
   overflow: visible;
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
+  align-content: start;
 }
 
 .shop-root.wg-new-ui .wg-hero-search-panel .exp-flight-toolbar,

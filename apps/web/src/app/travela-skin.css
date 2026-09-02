@@ -277,6 +277,12 @@
   gap: 0.15rem;
 }
 
+.shop-root.wg-new-ui .wg-topbar-contact {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.1rem;
+}
+
 .shop-root.wg-new-ui .wg-topbar-icon-btn {
   display: inline-flex;
   align-items: center;
@@ -330,6 +336,24 @@
 
 .shop-root.wg-new-ui .exp-header-white .wg-topbar-icon-btn:hover {
   color: var(--tv-primary);
+}
+
+.shop-root.wg-new-ui .wg-topbar-whatsapp {
+  color: #25d366;
+  filter: drop-shadow(0 1px 6px rgba(10, 22, 48, 0.28));
+}
+
+.shop-root.wg-new-ui .wg-topbar-whatsapp:hover {
+  color: #1ebe57;
+}
+
+.shop-root.wg-new-ui .exp-header-white .wg-topbar-whatsapp {
+  color: #128c7e;
+  filter: none;
+}
+
+.shop-root.wg-new-ui .exp-header-white .wg-topbar-whatsapp:hover {
+  color: #075e54;
 }
 
 .shop-root.wg-new-ui .wg-topbar-text {

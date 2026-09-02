@@ -27,6 +27,39 @@ const ShopAssistant = dynamic(
 
 const BRAND = "WeekendGate";
 
+function IconChat({ size = 18 }: { size?: number }) {
+  return (
+    <svg viewBox="0 0 24 24" width={size} height={size} aria-hidden>
+      <path
+        fill="currentColor"
+        d="M4 4h11a3 3 0 0 1 3 3v5a3 3 0 0 1-3 3H9l-4 3v-3H5a3 3 0 0 1-3-3V7a3 3 0 0 1 3-3zm13 4h2a3 3 0 0 1 3 3v5a3 3 0 0 1-3 3h-1v3l-3.5-2.6H14a2.9 2.9 0 0 1-.7-1.9V11a3 3 0 0 1 3-3z"
+      />
+    </svg>
+  );
+}
+
+function IconGlobe({ size = 18 }: { size?: number }) {
+  return (
+    <svg viewBox="0 0 24 24" width={size} height={size} aria-hidden>
+      <path
+        fill="currentColor"
+        d="M12 2a10 10 0 1 0 .01 20.01A10 10 0 0 0 12 2zm6.9 6h-3.2a15.5 15.5 0 0 0-1.3-3.4A8.05 8.05 0 0 1 18.9 8zM12 4c.7 0 1.9 1.5 2.6 4H9.4C10.1 5.5 11.3 4 12 4zM4.1 14a8.1 8.1 0 0 1 0-4h3.5a17 17 0 0 0 0 4H4.1zm1 2h3.2a15.5 15.5 0 0 0 1.3 3.4A8.05 8.05 0 0 1 5.1 16zM8.1 8H4.9a8.05 8.05 0 0 1 4.5-3.4A15.5 15.5 0 0 0 8.1 8zM12 20c-.7 0-1.9-1.5-2.6-4h5.2c-.7 2.5-1.9 4-2.6 4zm2.6-6H9.4a15.2 15.2 0 0 1 0-4h5.2a15.2 15.2 0 0 1 0 4zm.8 5.4a15.5 15.5 0 0 0 1.3-3.4h3.2a8.05 8.05 0 0 1-4.5 3.4zM16.4 14c.2-1.3.2-2.7 0-4h3.5a8.1 8.1 0 0 1 0 4h-3.5z"
+      />
+    </svg>
+  );
+}
+
+function IconUser({ size = 18 }: { size?: number }) {
+  return (
+    <svg viewBox="0 0 24 24" width={size} height={size} aria-hidden>
+      <path
+        fill="currentColor"
+        d="M12 12a4.5 4.5 0 1 0-4.5-4.5A4.5 4.5 0 0 0 12 12zm0 2c-4 0-8 2-8 5v1h16v-1c0-3-4-5-8-5z"
+      />
+    </svg>
+  );
+}
+
 type ShopBootstrap = {
   brand?: string;
   productBrand?: string;
@@ -118,68 +151,85 @@ function StoreFrontInner({
                 ☰
               </button>
 
-              <label className="wg-topbar-text wg-topbar-currency" title="العملة">
-                <select
-                  aria-label="العملة"
-                  value={currency}
-                  onChange={(e) => setCurrency(e.target.value as ShopCurrency)}
+              <div className="wg-topbar-utils" dir="ltr">
+                <Link
+                  href="/chat"
+                  className="wg-topbar-icon-btn"
+                  aria-label="المساعد والدردشة"
+                  title="المساعد والدردشة"
                 >
-                  {currencies.map((code) => (
-                    <option key={code} value={code}>
-                      {code}
-                    </option>
-                  ))}
-                </select>
-              </label>
+                  <IconChat />
+                </Link>
 
-              <button
-                type="button"
-                className="wg-topbar-text wg-topbar-lang"
-                title="اللغة"
-                aria-label="تبديل اللغة"
-                onClick={() => setLocale(locale === "ar" ? "en" : "ar")}
-              >
-                {locale === "ar" ? "AR" : "EN"}
-              </button>
-
-              {customer ? (
-                <div className="wg-header-user-dropdown">
+                <div className="wg-topbar-locale">
                   <button
                     type="button"
-                    className="wg-topbar-text wg-header-user-trigger"
-                    aria-expanded={userMenuOpen}
-                    aria-haspopup="menu"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      setUserMenuOpen((v) => !v);
-                    }}
+                    className="wg-topbar-icon-btn"
+                    title="تبديل اللغة"
+                    aria-label="تبديل اللغة"
+                    onClick={() => setLocale(locale === "ar" ? "en" : "ar")}
                   >
-                    <span className="wg-header-user-name">
-                      {customer.name || customer.phone}
-                    </span>
-                    <span className="wg-header-user-chevron" aria-hidden>
-                      ▾
-                    </span>
+                    <IconGlobe />
                   </button>
-                  {userMenuOpen ? (
-                    <div className="wg-header-user-menu" role="menu">
-                      <Link href="/account" role="menuitem">
-                        بياناتي
-                      </Link>
-                      <Link href="/bookings/manage" role="menuitem">
-                        حجوزاتي
-                      </Link>
-                      <button type="button" role="menuitem" onClick={logout}>
-                        خروج
-                      </button>
-                    </div>
-                  ) : null}
+                  <label className="wg-topbar-text wg-topbar-currency" title="العملة">
+                    <select
+                      aria-label="العملة"
+                      value={currency}
+                      onChange={(e) => setCurrency(e.target.value as ShopCurrency)}
+                    >
+                      {currencies.map((code) => (
+                        <option key={code} value={code}>
+                          {code}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
                 </div>
-              ) : (
-                <Link href="/account/login" className="wg-topbar-text wg-topbar-signin">
-                  تسجيل الدخول
-                </Link>
-              )}
+
+                {customer ? (
+                  <div className="wg-header-user-dropdown">
+                    <button
+                      type="button"
+                      className="wg-topbar-text wg-topbar-account wg-header-user-trigger"
+                      aria-expanded={userMenuOpen}
+                      aria-haspopup="menu"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        setUserMenuOpen((v) => !v);
+                      }}
+                    >
+                      <IconUser />
+                      <span className="wg-header-user-name">
+                        {customer.name || customer.phone}
+                      </span>
+                      <span className="wg-header-user-chevron" aria-hidden>
+                        ▾
+                      </span>
+                    </button>
+                    {userMenuOpen ? (
+                      <div className="wg-header-user-menu" role="menu">
+                        <Link href="/account" role="menuitem">
+                          بياناتي
+                        </Link>
+                        <Link href="/bookings/manage" role="menuitem">
+                          حجوزاتي
+                        </Link>
+                        <button type="button" role="menuitem" onClick={logout}>
+                          خروج
+                        </button>
+                      </div>
+                    ) : null}
+                  </div>
+                ) : (
+                  <Link
+                    href="/account/login"
+                    className="wg-topbar-text wg-topbar-signin wg-topbar-account"
+                  >
+                    <IconUser />
+                    <span>تسجيل الدخول</span>
+                  </Link>
+                )}
+              </div>
             </div>
 
             <div className={`wg-topbar-mobile${menuOpen ? " open" : ""}`}>

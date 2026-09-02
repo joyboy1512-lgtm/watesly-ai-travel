@@ -511,9 +511,6 @@ export function ShopHeroBanner(props: Props) {
     );
   }
 
-  const modeLabel =
-    PRODUCTS.find((p) => p.key === props.mode)?.label ?? "البحث";
-
   function renderSearchButton(extraClass = "") {
     return (
       <button
@@ -611,27 +608,9 @@ export function ShopHeroBanner(props: Props) {
 
         <div className="wg-hero-search-panel" id="search">
           <div className="wg-hero-ticket-shell">
-        <div className="exp-icon-tabs exp-icon-tabs-hero wg-hero-ticket-modes" role="tablist" aria-label="نوع الحجز">
-          {PRODUCTS.map(({ key, label, icon }) => (
-            <button
-              key={key}
-              type="button"
-              role="tab"
-              className={`exp-icon-circle exp-icon-circle-labeled${props.mode === key ? " on" : ""}`}
-              aria-selected={props.mode === key}
-              aria-label={label}
-              title={label}
-              onClick={() => props.onModeChange(key)}
-            >
-              <span className="exp-icon-circle-svg">{icon}</span>
-              <span className="exp-icon-circle-label">{label}</span>
-            </button>
-          ))}
-        </div>
-
         <div className="wg-hero-ticket" data-mode={props.mode}>
           <aside className="wg-hero-ticket-rail" aria-hidden="true">
-            <span>{modeLabel}</span>
+            <span>BOARDING</span>
           </aside>
 
           <div className="wg-hero-ticket-main">
@@ -1041,9 +1020,35 @@ export function ShopHeroBanner(props: Props) {
             <span className="wg-hero-ticket-notch wg-hero-ticket-notch-top" aria-hidden="true" />
             <span className="wg-hero-ticket-notch wg-hero-ticket-notch-bottom" aria-hidden="true" />
             <div className="wg-hero-ticket-stub-inner">
-              <p className="wg-hero-ticket-stub-pass">BOARDING PASS</p>
-              <p className="wg-hero-ticket-stub-mode">{modeLabel}</p>
-              <p className="wg-hero-ticket-stub-hint">Weekend Gate</p>
+              <p className="wg-hero-ticket-stub-title">ماذا تبحث؟</p>
+              <div
+                className="wg-hero-ticket-modes"
+                role="tablist"
+                aria-label="نوع الحجز"
+              >
+                {PRODUCTS.map(({ key, label, icon }) => {
+                  const on = props.mode === key;
+                  return (
+                    <button
+                      key={key}
+                      type="button"
+                      role="tab"
+                      className={`wg-hero-ticket-mode${on ? " on" : ""}`}
+                      aria-selected={on}
+                      aria-label={label}
+                      onClick={() => props.onModeChange(key)}
+                    >
+                      <span className={`wg-hero-ticket-mode-tick${on ? " is-on" : ""}`} aria-hidden>
+                        {on ? "✓" : ""}
+                      </span>
+                      <span className="wg-hero-ticket-mode-icon" aria-hidden>
+                        {icon}
+                      </span>
+                      <strong>{label}</strong>
+                    </button>
+                  );
+                })}
+              </div>
               {renderSearchButton("wg-hero-ticket-search")}
             </div>
           </div>

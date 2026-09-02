@@ -511,6 +511,22 @@ export function ShopHeroBanner(props: Props) {
     );
   }
 
+  const modeLabel =
+    PRODUCTS.find((p) => p.key === props.mode)?.label ?? "البحث";
+
+  function renderSearchButton(extraClass = "") {
+    return (
+      <button
+        type="button"
+        className={`exp-search-link${extraClass ? ` ${extraClass}` : ""}`}
+        disabled={props.loading}
+        onClick={props.onSearch}
+      >
+        {props.loading ? "..." : "بحث"}
+      </button>
+    );
+  }
+
   function swapLegAirports(legId: string) {
     const leg = props.flightLegs.find((row) => row.id === legId);
     if (!leg) return;
@@ -594,8 +610,8 @@ export function ShopHeroBanner(props: Props) {
         </div>
 
         <div className="wg-hero-search-panel" id="search">
-          <div className="wg-hero-search-glass">
-        <div className="exp-icon-tabs exp-icon-tabs-hero" role="tablist" aria-label="نوع الحجز">
+          <div className="wg-hero-ticket-shell">
+        <div className="exp-icon-tabs exp-icon-tabs-hero wg-hero-ticket-modes" role="tablist" aria-label="نوع الحجز">
           {PRODUCTS.map(({ key, label, icon }) => (
             <button
               key={key}
@@ -613,8 +629,28 @@ export function ShopHeroBanner(props: Props) {
           ))}
         </div>
 
+        <div className="wg-hero-ticket" data-mode={props.mode}>
+          <aside className="wg-hero-ticket-rail" aria-hidden="true">
+            <span>{modeLabel}</span>
+          </aside>
+
+          <div className="wg-hero-ticket-main">
+            <header className="wg-hero-ticket-banner">
+              <strong className="wg-hero-ticket-pass">BOARDING PASS</strong>
+              <span className="wg-hero-ticket-airlines">
+                WEEKEND GATE
+                <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden>
+                  <path
+                    fill="currentColor"
+                    d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"
+                  />
+                </svg>
+              </span>
+              <span className="wg-hero-ticket-swoosh" aria-hidden="true" />
+            </header>
+
         <div className="exp-dialog">
-          <div className="exp-unified-card">
+          <div className="exp-unified-card wg-hero-ticket-card">
           {props.mode === "flights" ? (
             <>
               <div className="exp-flight-toolbar">
@@ -745,14 +781,6 @@ export function ShopHeroBanner(props: Props) {
                   ) : null}
                   <div className="exp-form-row exp-form-flights exp-multicity-footer">
                     {renderTravelersCell()}
-                    <button
-                      type="button"
-                      className="exp-search-link"
-                      disabled={props.loading}
-                      onClick={props.onSearch}
-                    >
-                      {props.loading ? "..." : "بحث"}
-                    </button>
                   </div>
                 </div>
               ) : (
@@ -793,6 +821,7 @@ export function ShopHeroBanner(props: Props) {
                   <span className="exp-cell-label">التواريخ</span>
                   {showReturnDate ? (
                     <ShopDateRangePicker
+                      forcePortal
                       checkIn={props.departDate}
                       checkOut={props.returnDate}
                       onChange={(checkIn, checkOut) => {
@@ -812,14 +841,6 @@ export function ShopHeroBanner(props: Props) {
                   )}
                 </div>
                 {renderTravelersCell()}
-                <button
-                  type="button"
-                  className="exp-search-link"
-                  disabled={props.loading}
-                  onClick={props.onSearch}
-                >
-                  {props.loading ? "..." : "بحث"}
-                </button>
               </div>
               )}
               {renderTravelersPanel()}
@@ -930,6 +951,7 @@ export function ShopHeroBanner(props: Props) {
               <span className="exp-cell-label">{props.mode === "cars" ? "التاريخ" : "التواريخ"}</span>
               {showReturnDate ? (
                 <ShopDateRangePicker
+                  forcePortal
                   checkIn={props.departDate}
                   checkOut={props.returnDate}
                   onChange={(checkIn, checkOut) => {
@@ -1007,20 +1029,25 @@ export function ShopHeroBanner(props: Props) {
             ) : null}
 
             {renderTravelersCell()}
-
-            <button
-              type="button"
-              className="exp-search-link"
-              disabled={props.loading}
-              onClick={props.onSearch}
-            >
-              {props.loading ? "..." : "بحث"}
-            </button>
             </div>
             {renderTravelersPanel()}
             </>
           )}
           </div>
+        </div>
+          </div>
+
+          <div className="wg-hero-ticket-stub">
+            <span className="wg-hero-ticket-notch wg-hero-ticket-notch-top" aria-hidden="true" />
+            <span className="wg-hero-ticket-notch wg-hero-ticket-notch-bottom" aria-hidden="true" />
+            <div className="wg-hero-ticket-stub-inner">
+              <p className="wg-hero-ticket-stub-pass">BOARDING PASS</p>
+              <p className="wg-hero-ticket-stub-mode">{modeLabel}</p>
+              <p className="wg-hero-ticket-stub-hint">Weekend Gate</p>
+              {renderSearchButton("wg-hero-ticket-search")}
+            </div>
+          </div>
+        </div>
 
           {props.error ? <p className="shop-error exp-dialog-msg">{props.error}</p> : null}
           {props.message ? <p className="shop-status exp-dialog-msg">{props.message}</p> : null}
@@ -1067,7 +1094,6 @@ export function ShopHeroBanner(props: Props) {
               </Link>
             </div>
           ) : null}
-        </div>
           </div>
         </div>
       </section>

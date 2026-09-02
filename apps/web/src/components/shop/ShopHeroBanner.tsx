@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, type ReactNode } from "react";
+import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { HERO_SLIDES } from "@/lib/shop-content";
 import { ShopAutocomplete, type SuggestItem } from "@/components/shop/ShopAutocomplete";

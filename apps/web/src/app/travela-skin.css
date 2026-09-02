@@ -170,11 +170,15 @@
 }
 
 /* —— Flat top bar (no blue pill header) —— */
-.shop-root.wg-new-ui .wg-topbar {
+.shop-root.wg-new-ui .wg-topbar,
+.shop-root.wg-new-ui .exp-header-hero-overlay .wg-topbar,
+.shop-root.wg-new-ui .exp-header-white .wg-topbar {
   position: relative;
   width: min(1140px, calc(100% - 7rem));
+  max-width: min(1140px, calc(100% - 7rem));
   margin: 0 auto;
   padding: 1rem max(1.05cm, clamp(1.75rem, 5.5vw, 3.25rem));
+  padding-inline: max(1.05cm, clamp(1.75rem, 5.5vw, 3.25rem));
   display: flex;
   align-items: center;
   justify-content: space-between;

@@ -169,76 +169,95 @@
   background: #fff;
 }
 
-/* —— Inverted blue header cap (mirror of search shell) —— */
-.shop-root.wg-new-ui .wg-header-cap-wrap {
+/* —— Flat top bar (no blue pill header) —— */
+.shop-root.wg-new-ui .wg-topbar,
+.shop-root.wg-new-ui .exp-header-hero-overlay .wg-topbar,
+.shop-root.wg-new-ui .exp-header-white .wg-topbar {
   position: relative;
-  width: 100%;
-  margin: 0;
-  padding: 0;
-}
-
-.shop-root.wg-new-ui .wg-header-cap-track {
-  position: relative;
-  width: var(--wg-blue-pill-width);
+  width: calc(100% - 6cm);
+  max-width: calc(100% - 6cm);
   margin: 0 auto;
-}
-
-.shop-root.wg-new-ui .wg-header-logo-standalone {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  inset-inline-start: calc(100% + 0.65rem);
-  text-decoration: none;
-  z-index: 85;
-  white-space: nowrap;
-}
-
-.shop-root.wg-new-ui .wg-header-logo-standalone .wg-logo-word {
-  font-size: clamp(1.35rem, 3vw, 1.75rem);
-  font-weight: 700;
-}
-
-.shop-root.wg-new-ui .wg-header-cap {
-  width: 100%;
-  padding: 0.38rem var(--wg-blue-pill-pad-x) 0.52rem;
-  border-radius: 0 0 999px 999px;
-  background: var(--wg-blue-pill-bg);
-  box-shadow: var(--wg-blue-pill-shadow);
+  padding: 1rem 0;
+  padding-inline: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.65rem;
+  gap: 1.25rem;
   box-sizing: border-box;
-  border: 0;
-  margin-bottom: -2px;
-  transform: translateZ(0);
-  backface-visibility: hidden;
-  min-height: 0;
 }
 
-.shop-root.wg-new-ui .wg-header-cap-nav {
+.shop-root.wg-new-ui .wg-topbar-start {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 0.2rem;
+  gap: 1.35rem;
+  min-width: 0;
 }
 
-.shop-root.wg-new-ui .wg-header-cap-nav a {
+.shop-root.wg-new-ui .wg-topbar-logo {
+  text-decoration: none;
+  flex-shrink: 0;
+}
+
+.shop-root.wg-new-ui .wg-topbar-logo .wg-logo {
+  gap: 0;
+  align-items: center;
+}
+
+.shop-root.wg-new-ui .wg-topbar-logo .wg-logo-lockup-img {
+  display: block;
+  height: clamp(2rem, 3.2vw, 2.55rem);
+  width: auto;
+  object-fit: contain;
+}
+
+.shop-root.wg-new-ui .wg-topbar-logo .wg-logo-mark {
+  display: block;
+  width: auto;
+  height: 1.7rem;
+  flex-shrink: 0;
+  object-fit: contain;
+  object-position: center;
+}
+
+.shop-root.wg-new-ui .wg-topbar-logo .wg-logo-word {
+  position: relative;
+  font-size: clamp(1.28rem, 2.4vw, 1.62rem);
+  font-weight: 600;
+}
+
+.shop-root.wg-new-ui .wg-topbar-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.15rem;
+}
+
+.shop-root.wg-new-ui .wg-topbar-nav a {
   color: #fff;
   text-decoration: none;
-  font-size: 0.82rem;
+  font-size: 0.92rem;
   font-weight: 600;
-  padding: 0.28rem 0.65rem;
-  border-radius: 0.3rem;
+  padding: 0.35rem 0.7rem;
+  border-radius: 0.35rem;
   line-height: 1.2;
+  text-shadow: 0 1px 8px rgba(10, 22, 48, 0.35);
 }
 
-.shop-root.wg-new-ui .wg-header-cap-nav a:hover {
-  background: rgba(255, 255, 255, 0.15);
+.shop-root.wg-new-ui .exp-header-white .wg-topbar-nav a {
+  color: var(--tv-dark);
+  text-shadow: none;
+}
+
+.shop-root.wg-new-ui .wg-topbar-nav a:hover {
   color: #fbbf24;
+  background: rgba(255, 255, 255, 0.1);
 }
 
-.shop-root.wg-new-ui .wg-header-cap-user {
+.shop-root.wg-new-ui .exp-header-white .wg-topbar-nav a:hover {
+  color: var(--tv-primary);
+  background: rgba(19, 53, 123, 0.06);
+}
+
+.shop-root.wg-new-ui .wg-topbar-end {
   display: flex;
   align-items: center;
   gap: 0.35rem;
@@ -246,54 +265,160 @@
   flex-shrink: 0;
 }
 
-.shop-root.wg-new-ui .wg-header-cap-text {
+.shop-root.wg-new-ui .wg-topbar-utils {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.shop-root.wg-new-ui .wg-topbar-locale {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+}
+
+.shop-root.wg-new-ui .wg-topbar-contact {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.1rem;
+}
+
+.shop-root.wg-new-ui .wg-topbar-icon-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0.28rem 0.5rem;
+  width: 2.55rem;
+  height: 2.55rem;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: #fff;
+  text-decoration: none;
+  cursor: pointer;
+  flex-shrink: 0;
+  text-shadow: none;
+  filter: drop-shadow(0 1px 6px rgba(10, 22, 48, 0.35));
+}
+
+.shop-root.wg-new-ui .wg-topbar-icon-btn svg,
+.shop-root.wg-new-ui .wg-topbar-lang svg,
+.shop-root.wg-new-ui .wg-topbar-phone svg,
+.shop-root.wg-new-ui .wg-topbar-account svg {
+  width: 1.4rem;
+  height: 1.4rem;
+}
+
+.shop-root.wg-new-ui .wg-topbar-lang,
+.shop-root.wg-new-ui .wg-topbar-phone {
+  gap: 0.4rem;
+  font-size: 0.92rem;
+  font-weight: 700;
+  padding-inline: 0.35rem;
+}
+
+.shop-root.wg-new-ui .wg-topbar-phone span {
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.shop-root.wg-new-ui .exp-header-white .wg-topbar-icon-btn,
+.shop-root.wg-new-ui .exp-header-white .wg-topbar-lang,
+.shop-root.wg-new-ui .exp-header-white .wg-topbar-phone {
+  color: var(--tv-dark);
+  filter: none;
+  text-shadow: none;
+}
+
+.shop-root.wg-new-ui .wg-topbar-icon-btn:hover {
+  color: #fbbf24;
+}
+
+.shop-root.wg-new-ui .exp-header-white .wg-topbar-icon-btn:hover {
+  color: var(--tv-primary);
+}
+
+.shop-root.wg-new-ui .wg-topbar-whatsapp {
+  color: #25d366;
+  filter: drop-shadow(0 1px 6px rgba(10, 22, 48, 0.28));
+}
+
+.shop-root.wg-new-ui .wg-topbar-whatsapp:hover {
+  color: #1ebe57;
+}
+
+.shop-root.wg-new-ui .exp-header-white .wg-topbar-whatsapp {
+  color: #128c7e;
+  filter: none;
+}
+
+.shop-root.wg-new-ui .exp-header-white .wg-topbar-whatsapp:hover {
+  color: #075e54;
+}
+
+.shop-root.wg-new-ui .wg-topbar-text {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.55rem;
   border: 0;
   border-radius: 0;
   background: transparent;
   color: #fff;
   font: inherit;
-  font-size: 0.82rem;
+  font-size: 0.88rem;
   font-weight: 600;
   text-decoration: none;
   cursor: pointer;
   box-sizing: border-box;
   line-height: 1.2;
   flex-shrink: 0;
+  text-shadow: 0 1px 8px rgba(10, 22, 48, 0.35);
 }
 
-.shop-root.wg-new-ui .wg-header-cap-text:hover {
+.shop-root.wg-new-ui .exp-header-white .wg-topbar-text {
+  color: var(--tv-dark);
+  text-shadow: none;
+}
+
+.shop-root.wg-new-ui .wg-topbar-text:hover {
   color: #fbbf24;
 }
 
-.shop-root.wg-new-ui .wg-header-cap-currency {
-  position: relative;
-  padding: 0.28rem 0.15rem;
+.shop-root.wg-new-ui .exp-header-white .wg-topbar-text:hover {
+  color: var(--tv-primary);
 }
 
-.shop-root.wg-new-ui .wg-header-cap-currency select {
+.shop-root.wg-new-ui .wg-topbar-account svg {
+  flex-shrink: 0;
+}
+
+.shop-root.wg-new-ui .wg-topbar-currency {
+  position: relative;
+  padding: 0.35rem 0.2rem;
+}
+
+.shop-root.wg-new-ui .wg-topbar-currency select {
   appearance: none;
   -webkit-appearance: none;
   border: 0;
   background: transparent;
-  color: #fff;
+  color: inherit;
   font: inherit;
   font-weight: 600;
-  font-size: 0.82rem;
+  font-size: 0.88rem;
   padding: 0 0.85rem 0 0.15rem;
   cursor: pointer;
   line-height: 1.2;
 }
 
-.shop-root.wg-new-ui .wg-header-cap-currency select option {
+.shop-root.wg-new-ui .wg-topbar-currency select option {
   color: var(--tv-dark);
   background: #fff;
 }
 
-.shop-root.wg-new-ui .wg-header-cap-currency::after {
+.shop-root.wg-new-ui .wg-topbar-currency::after {
   content: "▾";
   position: absolute;
   inset-inline-end: 0;
@@ -302,53 +427,38 @@
   font-size: 0.55rem;
   pointer-events: none;
   opacity: 0.85;
-  color: #fff;
 }
 
-.shop-root.wg-new-ui .wg-header-cap-lang {
-  letter-spacing: 0.03em;
-  min-width: 0;
-}
-
-.shop-root.wg-new-ui .wg-header-cap-signin {
+.shop-root.wg-new-ui .wg-topbar-signin {
   white-space: nowrap;
 }
 
-.shop-root.wg-new-ui .wg-header-cap-menu-btn {
+.shop-root.wg-new-ui .wg-topbar-menu-btn {
   display: none;
   align-items: center;
   justify-content: center;
-  width: 2.35rem;
-  height: 2.35rem;
-  border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.35);
+  width: 2.25rem;
+  height: 2.25rem;
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  border-radius: 8px;
   background: rgba(255, 255, 255, 0.12);
   color: #fff;
   font-size: 1.1rem;
   cursor: pointer;
-  line-height: 1;
+}
+
+.shop-root.wg-new-ui .exp-header-white .wg-topbar-menu-btn {
+  border-color: #d1d5db;
+  background: #fff;
+  color: var(--tv-primary);
 }
 
 .shop-root.wg-new-ui .wg-header-user-trigger {
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
-  padding: 0.28rem 0.5rem;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-  color: #fff;
-  font: inherit;
-  font-size: 0.82rem;
-  font-weight: 600;
-  cursor: pointer;
   max-width: 9rem;
   min-height: 0;
-  box-sizing: border-box;
-}
-
-.shop-root.wg-new-ui .wg-header-user-trigger:hover {
-  color: #fbbf24;
 }
 
 .shop-root.wg-new-ui .wg-header-user-name {
@@ -420,40 +530,34 @@
   background: #fff;
 }
 
-.shop-root.wg-new-ui .wg-header-cap-mobile-currency {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
-  padding: 0.55rem 0.65rem;
-  color: #fff;
-}
-
-.shop-root.wg-new-ui .wg-header-cap-mobile {
+.shop-root.wg-new-ui .wg-topbar-mobile {
   display: none;
-  width: var(--wg-blue-pill-width);
-  margin-inline: auto;
+  position: absolute;
+  inset-inline: 0;
+  top: calc(100% - 0.1rem);
+  width: min(1280px, calc(100% - 2rem));
+  margin: 0 auto;
   flex-direction: column;
   gap: 0.25rem;
-  margin-top: 0.35rem;
   padding: 0.85rem;
   border-radius: 1rem;
-  background: var(--wg-blue-pill-bg);
-  box-shadow: var(--wg-blue-pill-shadow);
+  background: #fff;
+  box-shadow: 0 12px 32px rgba(19, 53, 123, 0.18);
+  z-index: 90;
 }
 
-.shop-root.wg-new-ui .wg-header-cap-mobile.open {
+.shop-root.wg-new-ui .wg-topbar-mobile.open {
   display: flex;
 }
 
-.shop-root.wg-new-ui .wg-header-cap-mobile a,
-.shop-root.wg-new-ui .wg-header-cap-mobile button {
+.shop-root.wg-new-ui .wg-topbar-mobile a,
+.shop-root.wg-new-ui .wg-topbar-mobile button {
   display: block;
   padding: 0.55rem 0.65rem;
   border: 0;
   border-radius: 0.65rem;
   background: transparent;
-  color: #fff;
+  color: var(--tv-dark);
   text-decoration: none;
   font: inherit;
   font-size: 0.9rem;
@@ -462,16 +566,16 @@
   cursor: pointer;
 }
 
-.shop-root.wg-new-ui .wg-header-cap-mobile a:hover,
-.shop-root.wg-new-ui .wg-header-cap-mobile button:hover {
-  background: rgba(255, 255, 255, 0.12);
+.shop-root.wg-new-ui .wg-topbar-mobile a:hover,
+.shop-root.wg-new-ui .wg-topbar-mobile button:hover {
+  background: #f1f5f9;
 }
 
-.shop-root.wg-new-ui .exp-header-white .wg-header-logo-standalone .wg-logo-word {
+.shop-root.wg-new-ui .exp-header-white .wg-topbar-logo .wg-logo-word {
   color: var(--tv-primary);
 }
 
-.shop-root.wg-new-ui .exp-header-white .wg-header-logo-standalone .wg-logo-gate {
+.shop-root.wg-new-ui .exp-header-white .wg-topbar-logo .wg-logo-gate {
   color: #f97316;
 }
 
@@ -532,13 +636,15 @@
   align-items: center;
   justify-content: center;
   text-align: center;
-  padding: 6rem 1.5rem 12rem;
+  padding: 6rem 3cm 13rem;
   background: linear-gradient(rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.45));
   color: #fff;
+  pointer-events: none;
 }
 
 .wg-travela-caption-inner {
   max-width: 900px;
+  padding-inline: 0.5rem;
 }
 
 .wg-travela-caption h4 {
@@ -616,157 +722,220 @@
   background: #fff;
 }
 
-/* —— Hero search glass square (right, vertically centered) —— */
+/* —— Hero slim search dock (E2) —— */
 .wg-hero-search-panel {
   position: absolute;
-  right: clamp(1.25rem, 3.5vw, 2.75rem);
-  left: auto;
-  top: 50%;
-  transform: translateY(-50%);
+  inset-inline: 0;
+  left: 50%;
+  right: auto;
+  top: auto;
+  bottom: clamp(3.25rem, 6.5vw, 5rem);
+  transform: translateX(-50%);
   z-index: 25;
-  width: min(26rem, calc(100% - 2rem));
+  width: min(1120px, calc(100% - 6cm));
   pointer-events: none;
 }
 
-.wg-hero-search-glass {
+.wg-hero-ticket-shell,
+.wg-hero-dock-shell {
+  --hd-accent: var(--tv-primary, #13357b);
+  --hd-ink: #0f172a;
+  --hd-muted: #64748b;
+  --hd-line: #e2e8f0;
   pointer-events: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 0.65rem;
-  background: rgba(255, 255, 255, 0.13);
-  backdrop-filter: blur(20px) saturate(1.25);
-  -webkit-backdrop-filter: blur(20px) saturate(1.25);
-  border: 1px solid rgba(255, 255, 255, 0.34);
-  border-radius: 1.35rem;
-  padding: 1rem 1.05rem 1.1rem;
-  box-shadow:
-    0 24px 60px rgba(7, 21, 38, 0.38),
-    inset 0 1px 0 rgba(255, 255, 255, 0.28);
-  box-sizing: border-box;
-}
-
-/* —— Bottom decorative arc (mirrors header cap, no search) —— */
-.wg-travela-bottom-arc {
-  position: relative;
-  z-index: 12;
-  margin-top: calc(-1 * var(--wg-blue-pill-pad-y) - 1.35rem);
-  pointer-events: none;
-}
-
-.wg-travela-bottom-arc-cap {
-  width: var(--wg-blue-pill-width);
-  margin: 0 auto;
-  height: calc(var(--wg-blue-pill-pad-y) + 1.35rem);
-  border-radius: 999px 999px 0 0;
-  background: var(--wg-blue-pill-bg);
-  box-shadow: var(--wg-blue-pill-shadow);
-  transform: translateZ(0);
-  backface-visibility: hidden;
-}
-
-.shop-root.wg-new-ui .wg-hero-search-panel .exp-icon-tabs-hero {
-  width: 100%;
-  max-width: 100%;
-  margin: 0;
-  box-sizing: border-box;
-}
-
-.shop-root.wg-new-ui .wg-hero-search-panel .exp-dialog {
-  width: 100%;
-  max-width: 100%;
-  margin: 0;
-  box-sizing: border-box;
-}
-
-.shop-root.wg-new-ui .wg-hero-search-panel .exp-dialog {
-  box-sizing: border-box;
-}
-
-.shop-root.wg-new-ui .wg-hero-search-panel .exp-unified-card {
-  background: rgba(255, 255, 255, 0.94);
-  border: 1px solid rgba(255, 255, 255, 0.55);
-  border-radius: 1rem;
-  box-shadow: 0 8px 24px rgba(19, 53, 123, 0.1);
-  padding: 0.75rem 0.8rem 0.85rem;
-  gap: 0.55rem;
-  overflow: hidden;
-  width: 100%;
-  max-width: 100%;
-  box-sizing: border-box;
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-}
-
-.shop-root.wg-new-ui .wg-hero-search-panel .exp-icon-tabs-hero {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  justify-content: stretch;
-  flex-wrap: nowrap;
-  gap: 0.4rem;
-  margin-bottom: 0;
-  max-width: 100%;
+  gap: 0.55rem;
+  width: 100%;
+  justify-items: center;
 }
 
-.shop-root.wg-new-ui .wg-hero-search-panel .exp-icon-circle-labeled {
-  width: 100%;
-  aspect-ratio: 1;
-  height: auto;
-  min-width: 0;
-  border-radius: 0.75rem;
-  padding: 0.35rem 0.25rem;
-  font-size: 0.68rem;
-  background: rgba(255, 255, 255, 0.18);
-  border: 1px solid rgba(255, 255, 255, 0.35);
-  color: #fff;
+.wg-hero-dock-modes {
   display: flex;
-  flex-direction: column;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: center;
-  gap: 0.15rem;
-}
-
-.shop-root.wg-new-ui .wg-hero-search-panel .exp-icon-circle-labeled.on {
-  background: rgba(255, 255, 255, 0.95);
-  color: var(--tv-primary);
-  border-color: rgba(255, 255, 255, 0.95);
-  box-shadow: 0 6px 16px rgba(19, 53, 123, 0.2);
-}
-
-.shop-root.wg-new-ui .wg-hero-search-panel .exp-unified-card .exp-search-link {
+  gap: 0.15rem 1.35rem;
   width: 100%;
-  justify-self: stretch;
+  padding: 0 0.25rem;
+  position: relative;
+  z-index: 2;
+  pointer-events: auto;
+}
+
+.wg-hero-dock-mode {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.82);
+  font: inherit;
+  font-size: 0.92rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  padding: 0.2rem 0.1rem 0.45rem;
+  cursor: pointer;
+  position: relative;
+  text-shadow: 0 1px 8px rgba(10, 22, 48, 0.35);
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+}
+
+.wg-hero-dock-mode::after {
+  content: "";
+  position: absolute;
+  inset-inline: 0.15rem;
+  bottom: 0;
+  height: 2px;
+  border-radius: 999px;
+  background: transparent;
+  transition: background 0.15s ease;
+}
+
+.wg-hero-dock-mode:hover {
+  color: #fff;
+}
+
+.wg-hero-dock-mode.on {
+  color: #fff;
+}
+
+.wg-hero-dock-mode.on::after {
+  background: #fff;
+}
+
+.shop-root.wg-new-ui a.wg-hero-dock-mode.wg-hero-dock-mode-ai,
+.wg-hero-dock-mode.wg-hero-dock-mode-ai {
+  color: #fde68a !important;
+  font-weight: 800;
+  text-decoration: none;
+  text-shadow: 0 1px 10px rgba(10, 22, 48, 0.55);
+}
+
+.shop-root.wg-new-ui a.wg-hero-dock-mode.wg-hero-dock-mode-ai:hover,
+.shop-root.wg-new-ui a.wg-hero-dock-mode.wg-hero-dock-mode-ai:focus-visible,
+.wg-hero-dock-mode.wg-hero-dock-mode-ai:hover,
+.wg-hero-dock-mode.wg-hero-dock-mode-ai:focus-visible {
+  color: #fff !important;
+}
+
+.wg-hero-dock-mode.wg-hero-dock-mode-ai::after {
+  background: #fbbf24;
+}
+
+.wg-hero-dock-mode:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+.wg-hero-dock {
+  width: 100%;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow:
+    0 18px 40px rgba(10, 22, 48, 0.22),
+    0 1px 0 rgba(255, 255, 255, 0.9) inset;
+  border: 1px solid rgba(19, 53, 123, 0.08);
+  padding: 0.55rem 0.55rem 0.55rem 0.65rem;
+  overflow: visible;
+}
+
+.wg-hero-dock-ruhelti {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  margin-top: -0.1rem;
+}
+
+.wg-hero-dock-ruhelti-link,
+.wg-hero-dock-ruhelti-link.wg-ruhelti-hero-btn {
+  appearance: none;
+  border: 0 !important;
+  background: transparent !important;
+  color: #fff !important;
+  font: inherit;
+  font-size: 0.86rem;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 0.22em;
+  text-shadow: 0 1px 8px rgba(10, 22, 48, 0.4);
+  cursor: pointer;
+  padding: 0.15rem 0.35rem;
+  min-height: 0;
+  width: auto;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.wg-hero-dock-ruhelti-link:hover,
+.wg-hero-dock-ruhelti-link.wg-ruhelti-hero-btn:hover {
+  color: #f8fafc !important;
+  background: transparent !important;
+}
+
+.shop-root.wg-new-ui .wg-hero-search-panel .exp-dialog {
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  box-sizing: border-box;
+  isolation: isolate;
+}
+
+.shop-root.wg-new-ui .wg-hero-search-panel .exp-unified-card,
+.shop-root.wg-new-ui .wg-hero-search-panel .wg-hero-ticket-card,
+.shop-root.wg-new-ui .wg-hero-search-panel .wg-hero-dock-card {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 0;
+  gap: 0.35rem;
+  overflow: visible;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  align-content: start;
 }
 
 .shop-root.wg-new-ui .wg-hero-search-panel .exp-flight-toolbar,
 .shop-root.wg-new-ui .wg-hero-search-panel .exp-transfer-toolbar {
-  flex-direction: column;
-  align-items: stretch;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 0.4rem;
+  margin: 0 0 0.15rem;
+  padding: 0 0.15rem;
 }
 
 .shop-root.wg-new-ui .wg-hero-search-panel .exp-cabin-pill,
 .shop-root.wg-new-ui .wg-hero-search-panel .exp-direct-pill {
-  border-color: #e2e8f0;
-  color: var(--tv-dark);
+  border-color: var(--hd-line);
+  color: var(--hd-ink);
   max-width: 100%;
   flex-shrink: 1;
   min-width: 0;
-  font-size: 0.76rem;
-  padding: 0.4rem 0.6rem;
+  font-size: 0.68rem;
+  padding: 0.18rem 0.4rem;
+  background: #f8fafc;
+  border-radius: 999px;
 }
 
 .shop-root.wg-new-ui .wg-hero-search-panel .exp-cabin-pill span:first-child {
-  font-size: 0.7rem;
+  font-size: 0.6rem;
 }
 
 .shop-root.wg-new-ui .wg-hero-search-panel .exp-cabin-pill select {
   min-width: 0;
   max-width: 5.5rem;
-  font-size: 0.76rem;
+  font-size: 0.68rem;
 }
 
 .shop-root.wg-new-ui .wg-hero-search-panel .exp-pill-tab {
-  padding: 0.4rem 0.7rem;
-  font-size: 0.78rem;
+  padding: 0.2rem 0.55rem;
+  font-size: 0.7rem;
+  border-radius: 999px;
 }
 
 .shop-root.wg-new-ui .wg-hero-search-panel .exp-pill-tabs-inset {
@@ -774,54 +943,75 @@
   min-width: 0;
 }
 
-.shop-root.wg-new-ui .wg-hero-search-panel .exp-cabin-pill span,
-.shop-root.wg-new-ui .wg-hero-search-panel .exp-direct-pill span {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 .shop-root.wg-new-ui .wg-hero-search-panel .exp-unified-card .exp-form-row {
   width: 100%;
   max-width: 100%;
-  gap: 0.35rem;
+  gap: 0;
   padding: 0;
   box-sizing: border-box;
+  align-items: stretch;
+  background: transparent;
 }
 
 .shop-root.wg-new-ui .wg-hero-search-panel .exp-unified-card .exp-form-flights {
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1.05fr) auto minmax(0, 1.05fr) minmax(0, 1.25fr) minmax(0, 0.85fr) auto;
 }
 
 .shop-root.wg-new-ui .wg-hero-search-panel .exp-unified-card .exp-form-stays {
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1.2fr) minmax(0, 0.9fr) auto;
 }
 
-.shop-root.wg-new-ui .wg-hero-search-panel .exp-unified-card .exp-form-cars,
+.shop-root.wg-new-ui .wg-hero-search-panel .exp-unified-card .exp-form-cars {
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.05fr) minmax(0, 1.1fr) minmax(0, 0.5fr) minmax(0, 0.5fr) minmax(0, 0.85fr) auto;
+}
+
+.shop-root.wg-new-ui .wg-hero-search-panel .exp-unified-card .exp-form-cars:not(
+    :has(.exp-cell-time-compact + .exp-cell-time-compact)
+  ) {
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.1fr) minmax(0, 1.2fr) minmax(0, 0.5fr) minmax(0, 0.85fr) auto;
+}
+
 .shop-root.wg-new-ui .wg-hero-search-panel .exp-unified-card .exp-form-activities {
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1.15fr) minmax(0, 0.9fr) auto;
+}
+
+.shop-root.wg-new-ui .wg-hero-search-panel .exp-unified-card .exp-multicity-footer {
+  grid-template-columns: minmax(0, 1fr) auto;
+  max-width: none;
 }
 
 .shop-root.wg-new-ui .wg-hero-search-panel .exp-unified-card .exp-input-cell {
   height: auto;
-  min-height: calc(48px - 0.5cm);
+  min-height: 3rem;
   max-height: none;
-  padding: calc(0.4rem - 0.1cm) 0.55rem;
-  border-color: #e2e8f0;
-  background: #fff;
-  overflow: hidden;
+  padding: 0.28rem 0.7rem;
+  border: 0;
+  border-inline-start: 1px solid var(--hd-line);
+  background: transparent;
+  overflow: visible;
   box-sizing: border-box;
   min-width: 0;
+  border-radius: 0;
+}
+
+.shop-root.wg-new-ui .wg-hero-search-panel .exp-unified-card .exp-form-row > .exp-input-cell:first-child,
+.shop-root.wg-new-ui .wg-hero-search-panel .exp-unified-card .exp-form-flights > .exp-input-cell:first-of-type {
+  border-inline-start: 0;
+  padding-inline-start: 0.45rem;
 }
 
 .shop-root.wg-new-ui .wg-hero-search-panel .exp-unified-card .exp-cell-label,
 .shop-root.wg-new-ui .wg-hero-search-panel .exp-unified-card .exp-input-cell .shop-ac-inline > span:first-child,
 .shop-root.wg-new-ui .wg-hero-search-panel .exp-unified-card .exp-input-cell .shop-ac-inline .exp-cell-label {
-  font-size: 0.62rem;
-  color: #64748b;
+  font-size: 0.58rem;
+  color: var(--hd-muted);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  text-transform: none;
+  letter-spacing: 0;
+  line-height: 1.1;
+  font-weight: 700;
 }
 
 .shop-root.wg-new-ui .wg-hero-search-panel .exp-unified-card .exp-input-cell .shop-ac-inline input,
@@ -829,10 +1019,10 @@
 .shop-root.wg-new-ui .wg-hero-search-panel .exp-unified-card .exp-travelers-trigger strong,
 .shop-root.wg-new-ui .wg-hero-search-panel .exp-unified-card .shop-date-range-trigger,
 .shop-root.wg-new-ui .wg-hero-search-panel .exp-unified-card .exp-time-select {
-  font-size: 0.8rem;
-  line-height: 1.3;
+  font-size: 0.86rem;
+  line-height: 1.25;
   font-weight: 700;
-  color: var(--tv-dark);
+  color: var(--hd-ink);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -843,34 +1033,43 @@
 .shop-root.wg-new-ui .wg-hero-search-panel .exp-unified-card .exp-travelers-trigger {
   width: 100%;
   text-align: start;
-  overflow: hidden;
-}
-
-.shop-root.wg-new-ui .wg-hero-search-panel .exp-unified-card .exp-search-link {
-  height: calc(48px - 0.5cm);
-  min-height: calc(48px - 0.5cm);
-  min-width: 3.75rem;
-  padding: 0 0.85rem;
-  font-size: 0.82rem;
-  align-self: stretch;
-  justify-self: stretch;
-  flex-shrink: 0;
+  overflow: visible;
 }
 
 .shop-root.wg-new-ui .wg-hero-search-panel .exp-unified-card .exp-swap-inline {
   align-self: center;
   flex-shrink: 0;
-  width: 1.5rem;
-  height: 1.5rem;
+  width: 1.55rem;
+  height: 1.55rem;
+  border-radius: 999px;
+  border: 1px solid var(--hd-line);
+  background: #f8fafc;
+  color: var(--hd-accent);
+  margin-inline: 0.1rem;
 }
 
-.shop-root.wg-new-ui .wg-hero-search-panel .exp-unified-card .exp-pill-tab {
-  padding: 0.4rem 0.7rem;
-  white-space: nowrap;
-  font-size: 0.78rem;
+.shop-root.wg-new-ui .wg-hero-search-panel .wg-hero-ticket-search.exp-search-link {
+  width: auto;
+  min-width: 5.25rem;
+  height: 3rem;
+  min-height: 3rem;
+  margin: 0;
+  margin-inline-start: 0.35rem;
+  padding: 0 1.15rem;
+  font-size: 0.92rem;
+  font-weight: 800;
+  border-radius: 12px;
+  background: var(--hd-accent);
+  box-shadow: none;
+  justify-self: end;
+  align-self: stretch;
 }
 
-.shop-root.wg-new-ui .wg-hero-search-panel .exp-dialog .exp-trip-builder-cta {
+.shop-root.wg-new-ui .wg-hero-search-panel .wg-hero-ticket-search.exp-search-link:hover:not(:disabled) {
+  background: #0f2a63;
+}
+
+.shop-root.wg-new-ui .wg-hero-search-panel .exp-trip-builder-cta {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -878,21 +1077,21 @@
   gap: 0.55rem 0.75rem;
   width: 100%;
   max-width: 100%;
-  margin: calc(0.65rem - 0.1cm) 0 0;
-  padding: calc(0.7rem - 0.25cm) 0.8rem;
-  border-radius: 1.15rem;
-  background: #fff;
+  margin: 0.15rem 0 0;
+  padding: 0.55rem 0.75rem;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.92);
   border: 0;
-  box-shadow: none;
+  box-shadow: 0 10px 24px rgba(10, 22, 48, 0.16);
   box-sizing: border-box;
 }
 
 .shop-root.wg-new-ui .wg-hero-search-panel .exp-trip-builder-cta-copy strong {
-  font-size: 0.92rem;
+  font-size: 0.88rem;
 }
 
 .shop-root.wg-new-ui .wg-hero-search-panel .exp-trip-builder-cta-copy span {
-  font-size: 0.78rem;
+  font-size: 0.74rem;
   overflow: hidden;
   text-overflow: ellipsis;
   display: -webkit-box;
@@ -905,8 +1104,8 @@
   background: var(--tv-primary);
   border-radius: 999px;
   flex-shrink: 0;
-  padding: 0.55rem 0.9rem;
-  font-size: 0.82rem;
+  padding: 0.5rem 0.85rem;
+  font-size: 0.8rem;
 }
 
 .shop-root.wg-new-ui .wg-hero-search-panel .exp-trip-builder-cta-copy {
@@ -915,20 +1114,13 @@
 }
 
 .shop-root.wg-new-ui .wg-hero-search-panel .exp-dialog-msg {
-  margin: 0.5rem 0 0;
-  padding: 0 0.15rem;
-  font-size: 0.88rem;
-}
-
-.shop-root.wg-new-ui .wg-hero-search-panel .exp-unified-card .exp-search-link,
-.shop-root.wg-new-ui .wg-hero-search-panel .exp-search-submit {
-  background: var(--tv-primary);
-  box-shadow: none;
-  border-radius: 999px;
-}
-
-.shop-root.wg-new-ui .wg-hero-search-panel .exp-unified-card .exp-search-link:hover:not(:disabled) {
-  background: #0f2a63;
+  margin: 0.15rem 0 0;
+  padding: 0.35rem 0.55rem;
+  font-size: 0.82rem;
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 10px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .shop-root.wg-new-ui .wg-hero-search-panel .exp-pill-tab.on {
@@ -936,8 +1128,23 @@
   border-color: var(--tv-primary);
 }
 
+.shop-root.wg-new-ui .wg-hero-search-panel .exp-travelers-panel {
+  position: absolute;
+  z-index: 60;
+  inset-inline: 0.7rem auto;
+  width: min(320px, calc(100% - 1.4rem));
+  margin-top: 0.35rem;
+  box-shadow: 0 16px 36px rgba(15, 23, 42, 0.18);
+}
+
 .shop-root.wg-new-ui .exp-home-tagline {
   display: none;
+}
+
+/* —— Bottom decorative arc removed per request —— */
+.wg-travela-bottom-arc,
+.wg-travela-bottom-arc-cap {
+  display: none !important;
 }
 
 /* —— Landing sections (Travela accents) —— */
@@ -1042,65 +1249,65 @@
     right: 0;
     left: 0;
     top: 0;
+    bottom: 0;
     transform: none;
     width: 100%;
     height: 100%;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: clamp(4.75rem, 14vw, 6.5rem) 0.85rem 2.5rem;
+    padding: clamp(4.75rem, 14vw, 6.5rem) 0.75rem 1.5rem;
     margin-top: 0;
   }
 
-  .wg-hero-search-glass {
+  .wg-hero-ticket-shell,
+  .wg-hero-dock-shell {
     width: 100%;
     max-height: 100%;
     overflow-y: auto;
-    border-radius: 1.15rem;
-    padding: 0.9rem;
+    -webkit-overflow-scrolling: touch;
+    gap: 0.7rem;
   }
 
-  .wg-travela-bottom-arc {
-    margin-top: calc(-1 * var(--wg-blue-pill-pad-y) - 0.85rem);
+  .wg-hero-dock-modes {
+    gap: 0.1rem 0.85rem;
+    justify-content: flex-start;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    padding-bottom: 0.15rem;
+    -webkit-overflow-scrolling: touch;
   }
 
-  .wg-travela-bottom-arc-cap {
-    width: calc(100% - 1rem);
-    height: calc(var(--wg-blue-pill-pad-y) + 0.85rem);
-    border-radius: 28px 28px 0 0;
+  .wg-hero-dock-mode {
+    flex: 0 0 auto;
+    font-size: 0.86rem;
+    white-space: nowrap;
   }
 
-  .shop-root.wg-new-ui .wg-header-cap-wrap {
-    position: relative;
-    padding: 0.35rem 0.5rem 0;
+  .wg-hero-dock {
+    padding: 0.7rem;
+    border-radius: 14px;
   }
 
-  .shop-root.wg-new-ui .wg-header-cap-track {
-    width: calc(100% - 1rem);
-    margin-inline: auto;
-    margin-top: 2.4rem;
-  }
-
-  .shop-root.wg-new-ui .wg-header-logo-standalone {
-    position: absolute;
-    top: 0.35rem;
-    inset-inline-end: 0.75rem;
-    transform: none;
-    inset-inline-start: auto;
-  }
-
-  .shop-root.wg-new-ui .wg-header-cap {
-    padding: 0.32rem 0.85rem 0.45rem;
-    border-radius: 0 0 22px 22px;
+  .shop-root.wg-new-ui .wg-hero-search-panel .wg-hero-ticket-search.exp-search-link {
+    width: 100%;
+    min-width: 0;
+    margin-inline-start: 0;
+    margin-top: 0.35rem;
   }
 
   .shop-root.wg-new-ui .wg-hero-search-panel .exp-unified-card .exp-form-row {
     grid-template-columns: 1fr !important;
+    gap: 0.35rem;
   }
 
-  .shop-root.wg-new-ui .wg-hero-search-panel .exp-unified-card .exp-search-link {
-    width: 100%;
-    justify-self: stretch;
+  .shop-root.wg-new-ui .wg-hero-search-panel .exp-unified-card .exp-input-cell,
+  .shop-root.wg-new-ui .wg-hero-search-panel .exp-unified-card .exp-form-row > .exp-input-cell:first-child,
+  .shop-root.wg-new-ui .wg-hero-search-panel .exp-unified-card .exp-form-flights > .exp-input-cell:first-of-type {
+    border-inline-start: 0;
+    border-radius: 10px;
+    background: #f8fafc;
+    padding: 0.35rem 0.65rem;
   }
 
   .shop-root.wg-new-ui .wg-hero-search-panel .exp-flight-toolbar,
@@ -1115,35 +1322,67 @@
     justify-content: space-between;
   }
 
+  .shop-root.wg-new-ui .wg-hero-search-panel .exp-travelers-panel {
+    position: static;
+    width: 100%;
+    inset: auto;
+    margin-top: 0.35rem;
+  }
+
+  .wg-hero-dock-ruhelti-link {
+    font-size: 0.92rem;
+  }
+
+  .wg-travela-bottom-arc {
+    display: none !important;
+  }
+
+  .wg-travela-bottom-arc-cap {
+    width: calc(100% - 1rem);
+    height: calc(var(--wg-blue-pill-pad-y) + 0.85rem);
+    border-radius: 28px 28px 0 0;
+  }
+
+  .shop-root.wg-new-ui .wg-topbar,
+  .shop-root.wg-new-ui .exp-header-hero-overlay .wg-topbar,
+  .shop-root.wg-new-ui .exp-header-white .wg-topbar {
+    width: calc(100% - 2cm);
+    max-width: calc(100% - 2cm);
+    padding: 0.75rem 0;
+    padding-inline: 0;
+    gap: 0.65rem;
+  }
+
+  .shop-root.wg-new-ui .wg-topbar-logo .wg-logo-lockup-img {
+    height: 1.85rem;
+  }
+
+  .shop-root.wg-new-ui .wg-topbar-logo .wg-logo-mark {
+    height: 1.35rem;
+  }
+
+  .shop-root.wg-new-ui .wg-topbar-nav {
+    display: none;
+  }
+
+  .shop-root.wg-new-ui .wg-topbar-menu-btn {
+    display: inline-flex;
+  }
+
+  .shop-root.wg-new-ui .wg-topbar-utils {
+    display: none;
+  }
+
+  .shop-root.wg-new-ui .wg-header-pill-nav {
+    display: none;
+  }
+
   .wg-travela-carousel-btn {
     display: none;
   }
 
   .wg-travela-dots {
     bottom: 1.5rem;
-  }
-
-  .shop-root.wg-new-ui .wg-header-cap-nav {
-    display: none;
-  }
-
-  .shop-root.wg-new-ui .wg-header-cap-menu-btn {
-    display: inline-flex;
-  }
-
-  .shop-root.wg-new-ui .wg-header-cap-currency,
-  .shop-root.wg-new-ui .wg-header-cap-lang,
-  .shop-root.wg-new-ui .wg-header-cap-signin,
-  .shop-root.wg-new-ui .wg-header-user-dropdown {
-    display: none;
-  }
-
-  .shop-root.wg-new-ui .wg-header-cap-user {
-    margin-inline-start: auto;
-  }
-
-  .shop-root.wg-new-ui .wg-header-pill-nav {
-    display: none;
   }
 }
 
@@ -1156,6 +1395,7 @@
     margin-inline: auto;
   }
 
+  .shop-root.wg-new-ui .wg-topbar-mobile,
   .shop-root.wg-new-ui .wg-header-cap-mobile {
     display: none !important;
   }

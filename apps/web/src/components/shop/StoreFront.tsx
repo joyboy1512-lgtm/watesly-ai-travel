@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import dynamic from "next/dynamic";
 import { usePathname } from "next/navigation";
 import { type ReactNode, useEffect, useState } from "react";
 import {
@@ -20,12 +19,51 @@ import { platformEnabled } from "@/lib/platform-flags";
 import { newUiEnabled } from "@/lib/new-ui-flags";
 import { ShopI18nProvider, useShopI18n } from "@/components/shop/ShopI18nProvider";
 
-const ShopAssistant = dynamic(
-  () => import("@/components/shop/ShopAssistant").then((m) => m.ShopAssistant),
-  { ssr: false },
-);
-
 const BRAND = "WeekendGate";
+
+function IconWhatsApp({ size = 22 }: { size?: number }) {
+  return (
+    <svg viewBox="0 0 24 24" width={size} height={size} aria-hidden>
+      <path
+        fill="currentColor"
+        d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.435 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z"
+      />
+    </svg>
+  );
+}
+
+function IconGlobe({ size = 22 }: { size?: number }) {
+  return (
+    <svg viewBox="0 0 24 24" width={size} height={size} aria-hidden>
+      <path
+        fill="currentColor"
+        d="M12 2a10 10 0 1 0 .01 20.01A10 10 0 0 0 12 2zm6.9 6h-3.2a15.5 15.5 0 0 0-1.3-3.4A8.05 8.05 0 0 1 18.9 8zM12 4c.7 0 1.9 1.5 2.6 4H9.4C10.1 5.5 11.3 4 12 4zM4.1 14a8.1 8.1 0 0 1 0-4h3.5a17 17 0 0 0 0 4H4.1zm1 2h3.2a15.5 15.5 0 0 0 1.3 3.4A8.05 8.05 0 0 1 5.1 16zM8.1 8H4.9a8.05 8.05 0 0 1 4.5-3.4A15.5 15.5 0 0 0 8.1 8zM12 20c-.7 0-1.9-1.5-2.6-4h5.2c-.7 2.5-1.9 4-2.6 4zm2.6-6H9.4a15.2 15.2 0 0 1 0-4h5.2a15.2 15.2 0 0 1 0 4zm.8 5.4a15.5 15.5 0 0 0 1.3-3.4h3.2a8.05 8.05 0 0 1-4.5 3.4zM16.4 14c.2-1.3.2-2.7 0-4h3.5a8.1 8.1 0 0 1 0 4h-3.5z"
+      />
+    </svg>
+  );
+}
+
+function IconPhone({ size = 22 }: { size?: number }) {
+  return (
+    <svg viewBox="0 0 24 24" width={size} height={size} aria-hidden>
+      <path
+        fill="currentColor"
+        d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1.1-.2 1.2.4 2.5.6 3.8.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1C10.6 21 3 13.4 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.6.6 3.8.1.4 0 .8-.3 1.1l-2.2 2.2z"
+      />
+    </svg>
+  );
+}
+
+function IconUser({ size = 22 }: { size?: number }) {
+  return (
+    <svg viewBox="0 0 24 24" width={size} height={size} aria-hidden>
+      <path
+        fill="currentColor"
+        d="M12 12a4.5 4.5 0 1 0-4.5-4.5A4.5 4.5 0 0 0 12 12zm0 2c-4 0-8 2-8 5v1h16v-1c0-3-4-5-8-5z"
+      />
+    </svg>
+  );
+}
 
 type ShopBootstrap = {
   brand?: string;
@@ -96,62 +134,82 @@ function StoreFrontInner({
         className={`shop-header exp-header${isHome ? " exp-header-hero-overlay" : " exp-header-white"}`}
       >
         {newUi ? (
-          <div className="shop-header-inner exp-header-inner wg-header-cap-wrap">
-            <div className="wg-header-cap-track">
-              <Link
-                href="/"
-                className="wg-header-logo-standalone"
-                aria-label="WeekendGate"
-              >
+          <div className="shop-header-inner exp-header-inner wg-topbar">
+            <div className="wg-topbar-start">
+              <Link href="/" className="wg-topbar-logo" aria-label="WeekendGate">
                 <WeekendGateLogo light={isHome} />
               </Link>
-
-              <div className="wg-header-cap">
-              <nav className="wg-header-cap-nav" aria-label="روابط سريعة">
+              <nav className="wg-topbar-nav" aria-label="روابط سريعة">
                 <Link href="/about">{t("navAbout")}</Link>
                 <Link href="/contact">{t("navContact")}</Link>
               </nav>
+            </div>
 
-              <div className="wg-header-cap-user">
-                <button
-                  type="button"
-                  className="wg-header-cap-menu-btn"
-                  aria-expanded={menuOpen}
-                  aria-label={t("navMenu")}
-                  onClick={() => setMenuOpen((v) => !v)}
-                >
-                  ☰
-                </button>
+            <div className="wg-topbar-end">
+              <button
+                type="button"
+                className="wg-topbar-menu-btn"
+                aria-expanded={menuOpen}
+                aria-label={t("navMenu")}
+                onClick={() => setMenuOpen((v) => !v)}
+              >
+                ☰
+              </button>
 
-                <label className="wg-header-cap-text wg-header-cap-currency" title="العملة">
-                  <select
-                    aria-label="العملة"
-                    value={currency}
-                    onChange={(e) => setCurrency(e.target.value as ShopCurrency)}
+              <div className="wg-topbar-utils" dir="ltr">
+                <div className="wg-topbar-contact">
+                  <a
+                    href={`tel:${COMPANY_LEGAL.phoneE164}`}
+                    className="wg-topbar-text wg-topbar-phone"
+                    aria-label={`اتصل بنا ${COMPANY_LEGAL.phoneDisplay}`}
+                    title="اتصل بنا"
                   >
-                    {currencies.map((code) => (
-                      <option key={code} value={code}>
-                        {code}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                    <IconPhone />
+                    <span dir="ltr">{COMPANY_LEGAL.phoneDisplay}</span>
+                  </a>
+                  <a
+                    href={COMPANY_LEGAL.whatsappUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="wg-topbar-icon-btn wg-topbar-whatsapp"
+                    aria-label="واتساب"
+                    title="واتساب"
+                  >
+                    <IconWhatsApp />
+                  </a>
+                </div>
 
-                <button
-                  type="button"
-                  className="wg-header-cap-text wg-header-cap-lang"
-                  title="اللغة"
-                  aria-label="تبديل اللغة"
-                  onClick={() => setLocale(locale === "ar" ? "en" : "ar")}
-                >
-                  {locale === "ar" ? "AR" : "EN"}
-                </button>
+                <div className="wg-topbar-locale">
+                  <button
+                    type="button"
+                    className="wg-topbar-text wg-topbar-lang"
+                    title="اللغة"
+                    aria-label="تبديل اللغة"
+                    onClick={() => setLocale(locale === "ar" ? "en" : "ar")}
+                  >
+                    <IconGlobe />
+                    <span>{locale === "ar" ? "العربية" : "EN"}</span>
+                  </button>
+                  <label className="wg-topbar-text wg-topbar-currency" title="العملة">
+                    <select
+                      aria-label="العملة"
+                      value={currency}
+                      onChange={(e) => setCurrency(e.target.value as ShopCurrency)}
+                    >
+                      {currencies.map((code) => (
+                        <option key={code} value={code}>
+                          {code}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
 
                 {customer ? (
                   <div className="wg-header-user-dropdown">
                     <button
                       type="button"
-                      className="wg-header-cap-text wg-header-user-trigger"
+                      className="wg-topbar-text wg-topbar-account wg-header-user-trigger"
                       aria-expanded={userMenuOpen}
                       aria-haspopup="menu"
                       onClick={(event) => {
@@ -159,6 +217,7 @@ function StoreFrontInner({
                         setUserMenuOpen((v) => !v);
                       }}
                     >
+                      <IconUser />
                       <span className="wg-header-user-name">
                         {customer.name || customer.phone}
                       </span>
@@ -181,25 +240,43 @@ function StoreFrontInner({
                     ) : null}
                   </div>
                 ) : (
-                  <Link href="/account/login" className="wg-header-cap-text wg-header-cap-signin">
-                    تسجيل الدخول
+                  <Link
+                    href="/account/login"
+                    className="wg-topbar-text wg-topbar-signin wg-topbar-account"
+                  >
+                    <IconUser />
+                    <span>تسجيل الدخول</span>
                   </Link>
                 )}
               </div>
             </div>
-            </div>
 
-            <div className={`wg-header-cap-mobile${menuOpen ? " open" : ""}`}>
+            <div className={`wg-topbar-mobile${menuOpen ? " open" : ""}`}>
               <Link href="/about">{t("navAbout")}</Link>
               <Link href="/contact">{t("navContact")}</Link>
+              <a
+                href={`tel:${COMPANY_LEGAL.phoneE164}`}
+                className="wg-topbar-mobile-phone"
+              >
+                اتصل بنا · {COMPANY_LEGAL.phoneDisplay}
+              </a>
+              <a
+                href={COMPANY_LEGAL.whatsappUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="wg-topbar-mobile-whatsapp"
+              >
+                واتساب · {COMPANY_LEGAL.phoneDisplay}
+              </a>
+              <Link href="/chat">AI</Link>
               <button
                 type="button"
-                className="wg-header-cap-mobile-lang"
+                className="wg-topbar-mobile-lang"
                 onClick={() => setLocale(locale === "ar" ? "en" : "ar")}
               >
-                {locale === "ar" ? "AR" : "EN"}
+                اللغة · {locale === "ar" ? "العربية" : "EN"}
               </button>
-              <label className="wg-header-menu-currency wg-header-cap-mobile-currency">
+              <label className="wg-header-menu-currency wg-topbar-mobile-currency">
                 <span>العملة</span>
                 <select
                   aria-label="العملة"
@@ -447,7 +524,6 @@ function StoreFrontInner({
         </nav>
       ) : null}
 
-      <ShopAssistant />
     </div>
   );
 }

@@ -4,7 +4,6 @@ import { Suspense, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { StoreFront } from "@/components/shop/StoreFront";
 import { useTripBuilder } from "@/components/trip-builder/TripBuilderProvider";
-import { ruheltiEnabled } from "@/lib/trip-builder/flags";
 import "../shop.css";
 import "../platform.css";
 import "../travela-skin.css";
@@ -16,10 +15,6 @@ function TripBuilderEntry() {
   const { openBoarding } = useTripBuilder();
 
   useEffect(() => {
-    if (!ruheltiEnabled()) {
-      router.replace("/");
-      return;
-    }
     openBoarding({
       origin: sp.get("origin") || undefined,
       originLabel: sp.get("originLabel") || undefined,

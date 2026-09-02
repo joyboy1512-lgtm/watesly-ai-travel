@@ -29,6 +29,15 @@ export type ServiceBookingStatus =
 
 export type FlightTripType = "roundtrip" | "oneway" | "multicity";
 
+export type TripFlightLeg = {
+  id: string;
+  origin: string;
+  originLabel: string;
+  destination: string;
+  destinationLabel: string;
+  departDate: string;
+};
+
 export type TripFlightDraft = {
   tripType: FlightTripType;
   origin: string;
@@ -40,9 +49,12 @@ export type TripFlightDraft = {
   adults: number;
   children: number;
   infants: number;
+  /** Ages 0–17 for each child — used for hotels */
+  childAges: number[];
   cabinClass: string;
   directOnly: boolean;
   flexibleDates: boolean;
+  legs: TripFlightLeg[];
 };
 
 export type TripHotelDraft = {
@@ -55,6 +67,8 @@ export type TripHotelDraft = {
   childAges: number[];
   starRating: number;
   boardType: string;
+  /** Links this hotel stay to a multicity destination/leg */
+  legId?: string;
 };
 
 export type TripTransferDraft = {
@@ -66,6 +80,7 @@ export type TripTransferDraft = {
   passengers: number;
   bags: number;
   vehicleType: string;
+  legId?: string;
 };
 
 export type TripActivityDraft = {
@@ -77,6 +92,17 @@ export type TripActivityDraft = {
   activityTypes: string;
   budgetMinor: number;
   suggestWithAi: boolean;
+  legId?: string;
+};
+
+/** Per-destination service flags for multicity packages */
+export type TripDestinationServiceFlags = {
+  legId: string;
+  destination: string;
+  destinationLabel: string;
+  hotel: boolean;
+  transfer: boolean;
+  activity: boolean;
 };
 
 export type TripTravelerDraft = {
@@ -140,6 +166,13 @@ export type TripDraftState = {
   hotel: TripHotelDraft;
   transfer: TripTransferDraft;
   activity: TripActivityDraft;
+  /** Extra hotels when multicity + per-destination hotels enabled */
+  hotels: TripHotelDraft[];
+  /** Extra transfers when multicity */
+  transfers: TripTransferDraft[];
+  /** Extra activities when multicity */
+  activities: TripActivityDraft[];
+  destinationFlags: TripDestinationServiceFlags[];
   selectedTier: TripTier | null;
   selectedOffers: Partial<Record<TripServiceKind, TripOfferSummary>>;
   travelers: TripTravelerDraft[];

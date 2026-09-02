@@ -73,8 +73,8 @@
   box-shadow:
     0 28px 70px rgba(19, 53, 123, 0.22),
     0 2px 0 rgba(255, 255, 255, 0.6) inset;
-  overflow: hidden;
-  min-height: 460px;
+  overflow: visible;
+  min-height: 0;
   border: 1px solid rgba(19, 53, 123, 0.08);
 }
 
@@ -137,13 +137,13 @@
 }
 
 .wg-boarding-main {
-  padding: 1.35rem 1.4rem 1.15rem;
+  padding: 1rem 1.15rem 0.9rem;
   display: grid;
-  gap: 0.95rem;
+  gap: 0.7rem;
   align-content: start;
   min-width: 0;
-  background:
-    linear-gradient(180deg, #ffffff 0%, #fbfcfe 100%);
+  background: linear-gradient(180deg, #ffffff 0%, #fbfcfe 100%);
+  overflow: visible;
 }
 
 .wg-boarding-header h2 {
@@ -299,13 +299,14 @@
 
 .wg-boarding-cell {
   display: grid;
-  gap: 0.2rem;
+  gap: 0.1rem;
   min-width: 0;
-  padding: 0.55rem 0.75rem;
+  padding: 0.4rem 0.65rem;
   border: 1px solid var(--bp-border);
-  border-radius: 12px;
+  border-radius: 10px;
   background: #fff;
   transition: border-color 0.15s, box-shadow 0.15s;
+  position: relative;
 }
 
 .wg-boarding-cell:focus-within {
@@ -354,6 +355,16 @@
 
 .wg-boarding-cell-dates {
   padding: 0.35rem 0.55rem;
+}
+
+.wg-boarding-cell-dates .shop-date-range,
+.wg-boarding-cell-dates .shop-date-range-trigger {
+  width: 100%;
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  min-height: auto;
 }
 
 .wg-boarding-swap {
@@ -621,6 +632,271 @@
   margin: 0 0 0.45rem;
   font-size: 0.82rem;
   color: var(--bp-muted);
+}
+
+.wg-boarding-travelers-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.35rem;
+  width: 100%;
+  border: none;
+  background: transparent;
+  padding: 0.15rem 0;
+  font: inherit;
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--bp-ink);
+  cursor: pointer;
+  text-align: start;
+}
+
+.wg-boarding-travelers-panel {
+  position: absolute;
+  top: calc(100% + 6px);
+  inset-inline: 0;
+  z-index: 40;
+  background: #fff;
+  border: 1px solid var(--bp-border);
+  border-radius: 12px;
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.14);
+  padding: 0.75rem;
+  display: grid;
+  gap: 0.55rem;
+  min-width: 220px;
+}
+
+.wg-traveler-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-size: 0.86rem;
+}
+
+.wg-traveler-row small {
+  display: block;
+  color: var(--bp-muted);
+  font-size: 0.7rem;
+}
+
+.wg-stepper {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.wg-stepper button {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  border: 1px solid var(--bp-border);
+  background: #fff;
+  cursor: pointer;
+  color: var(--bp-primary);
+  font-weight: 700;
+}
+
+.wg-stepper strong {
+  min-width: 1.2rem;
+  text-align: center;
+}
+
+.wg-child-ages {
+  display: grid;
+  gap: 0.35rem;
+  padding: 0.35rem 0;
+  border-top: 1px dashed var(--bp-border);
+  border-bottom: 1px dashed var(--bp-border);
+}
+
+.wg-child-ages label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-size: 0.78rem;
+}
+
+.wg-child-ages select {
+  border: 1px solid var(--bp-border);
+  border-radius: 8px;
+  padding: 0.25rem 0.4rem;
+  font: inherit;
+}
+
+.wg-boarding-travelers-done {
+  border: none;
+  border-radius: 8px;
+  padding: 0.45rem;
+  background: var(--bp-primary);
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.wg-boarding-legs {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.wg-boarding-leg {
+  padding: 0.55rem;
+  border: 1px solid var(--bp-border);
+  border-radius: 12px;
+  background: #f8fafc;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.wg-boarding-leg-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.82rem;
+  color: var(--bp-primary);
+}
+
+.wg-boarding-leg-remove {
+  border: none;
+  background: none;
+  color: #b42318;
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+
+.wg-boarding-leg-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.wg-boarding-add-leg {
+  border: 1px dashed color-mix(in srgb, var(--bp-primary) 45%, white);
+  background: var(--bp-primary-soft);
+  color: var(--bp-primary);
+  border-radius: 10px;
+  padding: 0.45rem 0.75rem;
+  font-weight: 700;
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+
+.wg-boarding-add-leg:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.wg-boarding-dest-flags {
+  border: 1px solid var(--bp-border);
+  border-radius: 12px;
+  padding: 0.65rem 0.75rem;
+  background: #f8fafc;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.wg-boarding-dest-flags h4 {
+  margin: 0;
+  font-size: 0.88rem;
+  color: var(--bp-ink);
+}
+
+.wg-boarding-dest-hint {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--bp-muted);
+}
+
+.wg-boarding-dest-list {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.wg-boarding-dest-card {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.45rem;
+  padding: 0.45rem 0.55rem;
+  background: #fff;
+  border-radius: 10px;
+  border: 1px solid var(--bp-border);
+  font-size: 0.82rem;
+}
+
+.wg-boarding-dest-toggles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.wg-boarding-dest-toggles label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  cursor: pointer;
+}
+
+.wg-boarding-dest-toggles input {
+  accent-color: var(--bp-primary);
+}
+
+.wg-boarding-chips-static {
+  padding: 0.15rem 0;
+}
+
+.wg-boarding-stub {
+  position: relative;
+  border-inline-start: 2px dashed #cbd5e1;
+  padding: 1rem 0.9rem 0.95rem;
+  background: linear-gradient(180deg, #f7f9fc 0%, #eef3f9 100%);
+  display: grid;
+  gap: 0.55rem;
+  align-content: start;
+}
+
+.wg-service-check {
+  display: grid;
+  grid-template-columns: auto auto 1fr;
+  grid-template-rows: auto auto;
+  column-gap: 0.45rem;
+  row-gap: 0;
+  padding: 0.5rem 0.6rem;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  cursor: pointer;
+  background: #fff;
+  text-align: start;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
+}
+
+.wg-service-icon {
+  grid-row: span 2;
+  align-self: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  background: var(--bp-primary-soft);
+  color: var(--bp-primary);
+}
+
+.wg-boarding-cta {
+  width: 100%;
+  border: none;
+  border-radius: 10px;
+  padding: 0.7rem 0.9rem;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--bp-primary) 92%, white), var(--bp-primary));
+  color: #fff;
+  font-weight: 800;
+  font-size: 0.9rem;
+  cursor: pointer;
+  box-shadow: 0 8px 18px rgba(19, 53, 123, 0.2);
 }
 
 .wg-service-chip {

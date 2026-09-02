@@ -11,6 +11,8 @@ type Props = {
   startLabel?: string;
   endLabel?: string;
   placeholder?: string;
+  /** Always render calendar in a portal (avoids overflow clipping in modals) */
+  forcePortal?: boolean;
 };
 
 function toIso(d: Date) {
@@ -141,6 +143,7 @@ export function ShopDateRangePicker({
   startLabel = "تاريخ الوصول",
   endLabel = "تاريخ المغادرة",
   placeholder = "اختر التواريخ",
+  forcePortal = false,
 }: Props) {
   const [open, setOpen] = useState(false);
   const [phase, setPhase] = useState<"checkin" | "checkout">("checkin");
@@ -157,6 +160,7 @@ export function ShopDateRangePicker({
   const wrapRef = useRef<HTMLDivElement>(null);
   const todayIso = useMemo(() => toIso(new Date()), []);
   const isMobile = useIsMobile();
+  const usePortal = forcePortal || isMobile;
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -179,22 +183,22 @@ export function ShopDateRangePicker({
   }, [open, checkIn, checkOut]);
 
   useEffect(() => {
-    if (!open || isMobile) return;
+    if (!open || usePortal) return;
     function onDoc(e: MouseEvent) {
       if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) setOpen(false);
     }
     document.addEventListener("mousedown", onDoc);
     return () => document.removeEventListener("mousedown", onDoc);
-  }, [open, isMobile]);
+  }, [open, usePortal]);
 
   useEffect(() => {
-    if (!open || !isMobile) return;
+    if (!open || !usePortal) return;
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => {
       document.body.style.overflow = prev;
     };
-  }, [open, isMobile]);
+  }, [open, usePortal]);
 
   function shiftMonth(delta: number) {
     const d = new Date(viewYear, viewMonth + delta, 1);
@@ -234,15 +238,15 @@ export function ShopDateRangePicker({
   const panel = (
     <div
       className={`shop-date-range-pop shop-date-range-pop-dual${
-        isMobile ? " shop-date-range-pop-mobile" : ""
+        usePortal ? " shop-date-range-pop-mobile shop-date-range-pop-portal" : ""
       }`}
       role="dialog"
-      aria-modal={isMobile ? true : undefined}
+      aria-modal={usePortal ? true : undefined}
       aria-label="اختيار التواريخ"
     >
       <div className="shop-date-range-pop-head">
         <p className="shop-date-range-phase">{phase === "checkin" ? startLabel : endLabel}</p>
-        {isMobile ? (
+        {usePortal ? (
           <button
             type="button"
             className="shop-date-range-close"
@@ -299,8 +303,8 @@ export function ShopDateRangePicker({
     </div>
   );
 
-  const mobileOverlay =
-    open && isMobile && mounted
+  const portalOverlay =
+    open && usePortal && mounted
       ? createPortal(
           <>
             <button
@@ -328,8 +332,8 @@ export function ShopDateRangePicker({
       >
         {summary}
       </button>
-      {open && !isMobile ? panel : null}
-      {mobileOverlay}
+      {open && !usePortal ? panel : null}
+      {portalOverlay}
     </div>
   );
 }

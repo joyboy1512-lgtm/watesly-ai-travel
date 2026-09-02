@@ -91,6 +91,8 @@ type Props = {
   searchCities: (q: string) => Promise<SuggestItem[]>;
   /** When set, shows Trip Builder CTA under the search box */
   tripBuilderHref?: string;
+  /** Opens رحلتي boarding pass modal (preferred over tripBuilderHref) */
+  onRuheltiClick?: () => void;
 };
 
 const PRODUCTS: Array<{ key: Mode; label: string; icon: ReactNode }> = [
@@ -1023,7 +1025,22 @@ export function ShopHeroBanner(props: Props) {
           {props.error ? <p className="shop-error exp-dialog-msg">{props.error}</p> : null}
           {props.message ? <p className="shop-status exp-dialog-msg">{props.message}</p> : null}
 
-          {props.tripBuilderHref ? (
+          {props.onRuheltiClick ? (
+            <div className="exp-trip-builder-cta">
+              <div className="exp-trip-builder-cta-copy">
+                <strong>رحلتي</strong>
+                <span>نظّم رحلتك الكاملة: طيران + فندق + مواصلات + أنشطة</span>
+              </div>
+              <button
+                type="button"
+                className="exp-trip-builder-cta-btn wg-ruhelti-hero-btn"
+                onClick={props.onRuheltiClick}
+                aria-haspopup="dialog"
+              >
+                رحلتي
+              </button>
+            </div>
+          ) : props.tripBuilderHref ? (
             <div className="exp-trip-builder-cta">
               <div className="exp-trip-builder-cta-copy">
                 <strong>رحّلتي — Trip Builder</strong>

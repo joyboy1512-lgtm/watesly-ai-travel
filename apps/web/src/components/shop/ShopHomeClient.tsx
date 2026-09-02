@@ -33,6 +33,10 @@ import {
   validateOccupancy,
   type HotelOccupancyState,
 } from "@/lib/hotel-occupancy";
+import { ruheltiEnabled } from "@/lib/trip-builder/flags";
+import { TripBuilderProvider, useTripBuilder } from "@/components/trip-builder/TripBuilderProvider";
+import { RuheltiBoardingModal } from "@/components/trip-builder/RuheltiBoardingModal";
+import "@/components/trip-builder/trip-builder.css";
 
 const ShopFlightResults = dynamic(
   () => import("@/components/shop/ShopFlightResults").then((m) => m.ShopFlightResults),
@@ -108,7 +112,17 @@ function createFlightLeg(partial?: Partial<FlightLeg>): FlightLeg {
 }
 
 export function ShopHomeClient() {
+  return (
+    <TripBuilderProvider>
+      <ShopHomeInner />
+    </TripBuilderProvider>
+  );
+}
+
+function ShopHomeInner() {
   const router = useRouter();
+  const ruhelti = ruheltiEnabled();
+  const { openBoarding } = useTripBuilder();
   const [mode, setMode] = useState<Mode>("flights");
   const [tripType, setTripType] = useState<FlightTripType>("roundtrip");
   const [flightLegs, setFlightLegs] = useState<FlightLeg[]>(() => [
@@ -604,7 +618,7 @@ export function ShopHomeClient() {
   }
 
   const tripBuilderHref = useMemo(() => {
-    if (!platformEnabled()) return undefined;
+    if (!platformEnabled() || ruhelti) return undefined;
     const q = new URLSearchParams();
     q.set("fromSearch", "1");
     if (mode === "flights") {
@@ -661,7 +675,32 @@ export function ShopHomeClient() {
     stayQuery,
     rooms,
     activityDest,
+    ruhelti,
   ]);
+
+  function openRuheltiBoarding() {
+    const o = tripType === "multicity" ? flightLegs[0]?.origin || origin : origin;
+    const d = tripType === "multicity" ? flightLegs[0]?.destination || destination : destination;
+    const oLabel =
+      tripType === "multicity" ? flightLegs[0]?.originLabel || originLabel : originLabel;
+    const dLabel =
+      tripType === "multicity" ? flightLegs[0]?.destinationLabel || destinationLabel : destinationLabel;
+    const dep = tripType === "multicity" ? flightLegs[0]?.departDate || departDate : departDate;
+    openBoarding({
+      tripType,
+      origin: o,
+      originLabel: oLabel,
+      destination: d,
+      destinationLabel: dLabel,
+      departDate: dep,
+      returnDate: tripType === "roundtrip" ? returnDate : "",
+      adults,
+      children,
+      infants,
+      cabinClass,
+      directOnly,
+    });
+  }
 
   return (
     <>
@@ -752,7 +791,12 @@ export function ShopHomeClient() {
         searchAirports={searchAirports}
         searchCities={searchCities}
         tripBuilderHref={tripBuilderHref}
+        onRuheltiClick={ruhelti ? openRuheltiBoarding : undefined}
       />
+
+      {ruhelti ? (
+        <RuheltiBoardingModal searchAirports={searchAirports} searchCities={searchCities} />
+      ) : null}
 
       {mode === "flights" && flightResults.length > 0 ? (
         <ShopFlightResults

@@ -8,6 +8,7 @@ import { PublicOrgService } from "./public-org";
 import { CustomerAuthGuard } from "./shop-auth";
 import { PlatformController } from "./platform.controller";
 import { PlatformService } from "./platform.service";
+import { TripOrchestrationService } from "./trip-orchestration.service";
 
 @Module({
   imports: [BookingsModule, PipelineModule, AssistantModule],
@@ -17,6 +18,7 @@ import { PlatformService } from "./platform.service";
     PublicOrgService,
     CustomerAuthGuard,
     PlatformService,
+    TripOrchestrationService,
   ],
   exports: [PlatformService],
 })

@@ -12,3 +12,4 @@ export * from "./my-trips";
 export * from "./inventory-mode";
 export * from "./i18n";
 export * from "./currency";
+export * from "../trip";

@@ -14,6 +14,8 @@ import {
   type ShopCustomer,
 } from "./shop-auth";
 import { PlatformService } from "./platform.service";
+import { TripOrchestrationService } from "./trip-orchestration.service";
+import type { TripDraftState } from "@watesly-travel/shared";
 import type { PackageComponent, WeekendDeal, CmsState, PointsRules } from "@watesly-travel/shared";
 
 /**
@@ -22,7 +24,10 @@ import type { PackageComponent, WeekendDeal, CmsState, PointsRules } from "@wate
  */
 @Controller("shop/platform")
 export class PlatformController {
-  constructor(private readonly platform: PlatformService) {}
+  constructor(
+    private readonly platform: PlatformService,
+    private readonly tripOrchestration: TripOrchestrationService,
+  ) {}
 
   @Public()
   @Get("catalog")
@@ -76,6 +81,25 @@ export class PlatformController {
   @RequirePermissions("providers.manage")
   upsertDeal(@Body() body: WeekendDeal) {
     return this.platform.upsertDeal(body);
+  }
+
+  @Public()
+  @Post("trips/:id/search")
+  searchTrip(
+    @Param("id") id: string,
+    @Body()
+    body: Pick<
+      TripDraftState,
+      "services" | "flight" | "hotel" | "transfer" | "activity" | "sessionId"
+    >,
+  ) {
+    return this.tripOrchestration.searchTrip(id, body);
+  }
+
+  @Public()
+  @Post("trips/:id/reprice")
+  repriceTrip(@Param("id") id: string) {
+    return this.platform.tripPrice(id);
   }
 
   @Public()

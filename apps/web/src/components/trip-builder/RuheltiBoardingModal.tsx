@@ -1,6 +1,15 @@
 "use client";
 
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type RefObject,
+} from "react";
 import { createPortal } from "react-dom";
 import { ShopAutocomplete, type SuggestItem } from "@/components/shop/ShopAutocomplete";
 import { ShopDateRangePicker } from "@/components/shop/ShopDateRangePicker";
@@ -14,6 +23,181 @@ type Props = {
 };
 
 const SERVICE_ORDER: TripServiceKind[] = ["flight", "hotel", "transfer", "activity"];
+
+type TravelersPanelProps = {
+  open: boolean;
+  anchorRef: RefObject<HTMLElement | null>;
+  panelRef: RefObject<HTMLDivElement | null>;
+  adults: number;
+  childrenCount: number;
+  infants: number;
+  childAges: number[];
+  onAdults: (n: number) => void;
+  onChildren: (n: number) => void;
+  onInfants: (n: number) => void;
+  onChildAge: (index: number, age: number) => void;
+  onDone: () => void;
+};
+
+function TravelersPanel({
+  open,
+  anchorRef,
+  panelRef,
+  adults,
+  childrenCount,
+  infants,
+  childAges,
+  onAdults,
+  onChildren,
+  onInfants,
+  onChildAge,
+  onDone,
+}: TravelersPanelProps) {
+  const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
+
+  const updatePos = useCallback(() => {
+    const el = anchorRef.current;
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    const width = Math.min(280, window.innerWidth - 24);
+    let left = r.right - width;
+    if (left < 12) left = 12;
+    if (left + width > window.innerWidth - 12) {
+      left = Math.max(12, window.innerWidth - width - 12);
+    }
+    let top = r.bottom + 8;
+    const estimatedH = 320;
+    if (top + estimatedH > window.innerHeight - 12) {
+      top = Math.max(12, r.top - estimatedH - 8);
+    }
+    setPos({ top, left });
+  }, [anchorRef]);
+
+  useLayoutEffect(() => {
+    if (!open) {
+      setPos(null);
+      return;
+    }
+    updatePos();
+    window.addEventListener("resize", updatePos);
+    window.addEventListener("scroll", updatePos, true);
+    return () => {
+      window.removeEventListener("resize", updatePos);
+      window.removeEventListener("scroll", updatePos, true);
+    };
+  }, [open, updatePos]);
+
+  if (!open || !pos || typeof document === "undefined") return null;
+
+  return createPortal(
+    <div
+      ref={panelRef}
+      className="wg-boarding-travelers-panel wg-boarding-travelers-panel-portal"
+      role="dialog"
+      aria-label="عدد المسافرين"
+      style={{ top: pos.top, left: pos.left }}
+    >
+      <div className="wg-traveler-row">
+        <span>
+          بالغون
+          <small>12+</small>
+        </span>
+        <div className="wg-stepper">
+          <button
+            type="button"
+            aria-label="تقليل البالغين"
+            onClick={() => onAdults(Math.max(1, adults - 1))}
+          >
+            −
+          </button>
+          <span className="wg-stepper-count" aria-live="polite">
+            {adults}
+          </span>
+          <button
+            type="button"
+            aria-label="زيادة البالغين"
+            onClick={() => onAdults(Math.min(9, adults + 1))}
+          >
+            +
+          </button>
+        </div>
+      </div>
+      <div className="wg-traveler-row">
+        <span>
+          أطفال
+          <small>2–11</small>
+        </span>
+        <div className="wg-stepper">
+          <button
+            type="button"
+            aria-label="تقليل الأطفال"
+            onClick={() => onChildren(childrenCount - 1)}
+          >
+            −
+          </button>
+          <span className="wg-stepper-count" aria-live="polite">
+            {childrenCount}
+          </span>
+          <button
+            type="button"
+            aria-label="زيادة الأطفال"
+            onClick={() => onChildren(childrenCount + 1)}
+          >
+            +
+          </button>
+        </div>
+      </div>
+      {childrenCount > 0 ? (
+        <div className="wg-child-ages">
+          {childAges.slice(0, childrenCount).map((age, i) => (
+            <label key={i}>
+              عمر الطفل {i + 1}
+              <select
+                value={age}
+                onChange={(e) => onChildAge(i, Number(e.target.value))}
+              >
+                {Array.from({ length: 12 }, (_, a) => a + 2).map((a) => (
+                  <option key={a} value={a}>
+                    {a} سنة
+                  </option>
+                ))}
+              </select>
+            </label>
+          ))}
+        </div>
+      ) : null}
+      <div className="wg-traveler-row">
+        <span>
+          رضع
+          <small>&lt;2</small>
+        </span>
+        <div className="wg-stepper">
+          <button
+            type="button"
+            aria-label="تقليل الرضع"
+            onClick={() => onInfants(Math.max(0, infants - 1))}
+          >
+            −
+          </button>
+          <span className="wg-stepper-count" aria-live="polite">
+            {infants}
+          </span>
+          <button
+            type="button"
+            aria-label="زيادة الرضع"
+            onClick={() => onInfants(Math.min(adults, infants + 1))}
+          >
+            +
+          </button>
+        </div>
+      </div>
+      <button type="button" className="wg-boarding-travelers-done" onClick={onDone}>
+        تم
+      </button>
+    </div>,
+    document.body,
+  );
+}
 
 function ServiceIcon({ kind }: { kind: TripServiceKind }) {
   if (kind === "flight") {
@@ -77,7 +261,9 @@ export function RuheltiBoardingModal({ searchAirports, searchCities }: Props) {
   } = useTripBuilder();
 
   const dialogRef = useRef<HTMLDivElement>(null);
-  const travelersRef = useRef<HTMLDivElement>(null);
+  const travelersAnchorRef = useRef<HTMLDivElement>(null);
+  const travelersMultiAnchorRef = useRef<HTMLDivElement>(null);
+  const travelersPanelRef = useRef<HTMLDivElement>(null);
   const titleId = useId();
   const prevFocus = useRef<HTMLElement | null>(null);
   const [travelersOpen, setTravelersOpen] = useState(false);
@@ -85,12 +271,15 @@ export function RuheltiBoardingModal({ searchAirports, searchCities }: Props) {
   useEffect(() => {
     if (!boardingOpen) return;
     prevFocus.current = document.activeElement as HTMLElement | null;
+    document.body.classList.add("wg-ruhelti-open");
     const t = window.setTimeout(() => dialogRef.current?.focus(), 50);
     document.body.style.overflow = "hidden";
     return () => {
       window.clearTimeout(t);
+      document.body.classList.remove("wg-ruhelti-open");
       document.body.style.overflow = "";
       prevFocus.current?.focus?.();
+      setTravelersOpen(false);
     };
   }, [boardingOpen]);
 
@@ -109,9 +298,12 @@ export function RuheltiBoardingModal({ searchAirports, searchCities }: Props) {
   useEffect(() => {
     if (!travelersOpen) return;
     function onDoc(e: MouseEvent) {
-      if (travelersRef.current && !travelersRef.current.contains(e.target as Node)) {
-        setTravelersOpen(false);
-      }
+      const t = e.target as Node;
+      const inPanel = travelersPanelRef.current?.contains(t);
+      const inAnchor =
+        travelersAnchorRef.current?.contains(t) ||
+        travelersMultiAnchorRef.current?.contains(t);
+      if (!inPanel && !inAnchor) setTravelersOpen(false);
     }
     document.addEventListener("mousedown", onDoc);
     return () => document.removeEventListener("mousedown", onDoc);
@@ -362,136 +554,20 @@ export function RuheltiBoardingModal({ searchAirports, searchCities }: Props) {
                       />
                     </div>
 
-                    <div className="wg-boarding-cell wg-boarding-travelers" ref={travelersRef}>
+                    <div
+                      className="wg-boarding-cell wg-boarding-travelers"
+                      ref={travelersAnchorRef}
+                    >
                       <span className="wg-boarding-cell-label">المسافرون</span>
                       <button
                         type="button"
                         className="wg-boarding-travelers-trigger"
-                        aria-expanded={travelersOpen}
+                        aria-expanded={travelersOpen && !isMulticity}
                         onClick={() => setTravelersOpen((v) => !v)}
                       >
                         {travelersLabel}
                         <span aria-hidden>▾</span>
                       </button>
-                      {travelersOpen ? (
-                        <div className="wg-boarding-travelers-panel" role="dialog">
-                          <div className="wg-traveler-row">
-                            <span>
-                              بالغون <small>12+</small>
-                            </span>
-                            <div className="wg-stepper">
-                              <button
-                                type="button"
-                                aria-label="تقليل البالغين"
-                                onClick={() =>
-                                  patchFlight({
-                                    adults: Math.max(1, draft.flight.adults - 1),
-                                  })
-                                }
-                              >
-                                −
-                              </button>
-                              <strong>{draft.flight.adults}</strong>
-                              <button
-                                type="button"
-                                aria-label="زيادة البالغين"
-                                onClick={() =>
-                                  patchFlight({
-                                    adults: Math.min(9, draft.flight.adults + 1),
-                                  })
-                                }
-                              >
-                                +
-                              </button>
-                            </div>
-                          </div>
-                          <div className="wg-traveler-row">
-                            <span>
-                              أطفال <small>2–11</small>
-                            </span>
-                            <div className="wg-stepper">
-                              <button
-                                type="button"
-                                aria-label="تقليل الأطفال"
-                                onClick={() => setChildrenCount(draft.flight.children - 1)}
-                              >
-                                −
-                              </button>
-                              <strong>{draft.flight.children}</strong>
-                              <button
-                                type="button"
-                                aria-label="زيادة الأطفال"
-                                onClick={() => setChildrenCount(draft.flight.children + 1)}
-                              >
-                                +
-                              </button>
-                            </div>
-                          </div>
-                          {draft.flight.children > 0 ? (
-                            <div className="wg-child-ages">
-                              {draft.flight.childAges
-                                .slice(0, draft.flight.children)
-                                .map((age, i) => (
-                                  <label key={i}>
-                                    عمر الطفل {i + 1}
-                                    <select
-                                      value={age}
-                                      onChange={(e) =>
-                                        setChildAge(i, Number(e.target.value))
-                                      }
-                                    >
-                                      {Array.from({ length: 12 }, (_, a) => a + 2).map((a) => (
-                                        <option key={a} value={a}>
-                                          {a} سنة
-                                        </option>
-                                      ))}
-                                    </select>
-                                  </label>
-                                ))}
-                            </div>
-                          ) : null}
-                          <div className="wg-traveler-row">
-                            <span>
-                              رضع <small>&lt;2</small>
-                            </span>
-                            <div className="wg-stepper">
-                              <button
-                                type="button"
-                                aria-label="تقليل الرضع"
-                                onClick={() =>
-                                  patchFlight({
-                                    infants: Math.max(0, draft.flight.infants - 1),
-                                  })
-                                }
-                              >
-                                −
-                              </button>
-                              <strong>{draft.flight.infants}</strong>
-                              <button
-                                type="button"
-                                aria-label="زيادة الرضع"
-                                onClick={() =>
-                                  patchFlight({
-                                    infants: Math.min(
-                                      draft.flight.adults,
-                                      draft.flight.infants + 1,
-                                    ),
-                                  })
-                                }
-                              >
-                                +
-                              </button>
-                            </div>
-                          </div>
-                          <button
-                            type="button"
-                            className="wg-boarding-travelers-done"
-                            onClick={() => setTravelersOpen(false)}
-                          >
-                            تم
-                          </button>
-                        </div>
-                      ) : null}
                     </div>
 
                     <label className="wg-boarding-cell">
@@ -590,11 +666,14 @@ export function RuheltiBoardingModal({ searchAirports, searchCities }: Props) {
                     >
                       + إضافة وجهة
                     </button>
-                    <div className="wg-boarding-cell wg-boarding-travelers" ref={travelersRef}>
+                    <div
+                      className="wg-boarding-cell wg-boarding-travelers"
+                      ref={travelersMultiAnchorRef}
+                    >
                       <button
                         type="button"
                         className="wg-boarding-travelers-trigger"
-                        aria-expanded={travelersOpen}
+                        aria-expanded={travelersOpen && isMulticity}
                         onClick={() => setTravelersOpen((v) => !v)}
                       >
                         {travelersLabel} ·{" "}
@@ -603,131 +682,37 @@ export function RuheltiBoardingModal({ searchAirports, searchCities }: Props) {
                           : draft.flight.cabinClass}
                         <span aria-hidden>▾</span>
                       </button>
-                      {travelersOpen ? (
-                        <div className="wg-boarding-travelers-panel" role="dialog">
-                          <div className="wg-traveler-row">
-                            <span>بالغون</span>
-                            <div className="wg-stepper">
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  patchFlight({
-                                    adults: Math.max(1, draft.flight.adults - 1),
-                                  })
-                                }
-                              >
-                                −
-                              </button>
-                              <strong>{draft.flight.adults}</strong>
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  patchFlight({
-                                    adults: Math.min(9, draft.flight.adults + 1),
-                                  })
-                                }
-                              >
-                                +
-                              </button>
-                            </div>
-                          </div>
-                          <div className="wg-traveler-row">
-                            <span>أطفال</span>
-                            <div className="wg-stepper">
-                              <button
-                                type="button"
-                                onClick={() => setChildrenCount(draft.flight.children - 1)}
-                              >
-                                −
-                              </button>
-                              <strong>{draft.flight.children}</strong>
-                              <button
-                                type="button"
-                                onClick={() => setChildrenCount(draft.flight.children + 1)}
-                              >
-                                +
-                              </button>
-                            </div>
-                          </div>
-                          {draft.flight.children > 0 ? (
-                            <div className="wg-child-ages">
-                              {draft.flight.childAges
-                                .slice(0, draft.flight.children)
-                                .map((age, i) => (
-                                  <label key={i}>
-                                    عمر الطفل {i + 1}
-                                    <select
-                                      value={age}
-                                      onChange={(e) =>
-                                        setChildAge(i, Number(e.target.value))
-                                      }
-                                    >
-                                      {Array.from({ length: 12 }, (_, a) => a + 2).map((a) => (
-                                        <option key={a} value={a}>
-                                          {a} سنة
-                                        </option>
-                                      ))}
-                                    </select>
-                                  </label>
-                                ))}
-                            </div>
-                          ) : null}
-                          <div className="wg-traveler-row">
-                            <span>رضع</span>
-                            <div className="wg-stepper">
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  patchFlight({
-                                    infants: Math.max(0, draft.flight.infants - 1),
-                                  })
-                                }
-                              >
-                                −
-                              </button>
-                              <strong>{draft.flight.infants}</strong>
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  patchFlight({
-                                    infants: Math.min(
-                                      draft.flight.adults,
-                                      draft.flight.infants + 1,
-                                    ),
-                                  })
-                                }
-                              >
-                                +
-                              </button>
-                            </div>
-                          </div>
-                          <label className="wg-boarding-cell" style={{ marginTop: "0.35rem" }}>
-                            <span className="wg-boarding-cell-label">درجة السفر</span>
-                            <select
-                              value={draft.flight.cabinClass}
-                              onChange={(e) =>
-                                patchFlight({ cabinClass: e.target.value })
-                              }
-                            >
-                              <option value="economy">السياحية</option>
-                              <option value="premium_economy">سياحية ممتازة</option>
-                              <option value="business">رجال الأعمال</option>
-                              <option value="first">الأولى</option>
-                            </select>
-                          </label>
-                          <button
-                            type="button"
-                            className="wg-boarding-travelers-done"
-                            onClick={() => setTravelersOpen(false)}
-                          >
-                            تم
-                          </button>
-                        </div>
-                      ) : null}
                     </div>
+                    <label className="wg-boarding-cell wg-boarding-cabin-inline">
+                      <span className="wg-boarding-cell-label">درجة السفر</span>
+                      <select
+                        value={draft.flight.cabinClass}
+                        onChange={(e) => patchFlight({ cabinClass: e.target.value })}
+                      >
+                        <option value="economy">السياحية</option>
+                        <option value="premium_economy">سياحية ممتازة</option>
+                        <option value="business">رجال الأعمال</option>
+                        <option value="first">الأولى</option>
+                      </select>
+                    </label>
                   </div>
                 </div>
               )}
+
+              <TravelersPanel
+                open={travelersOpen}
+                anchorRef={isMulticity ? travelersMultiAnchorRef : travelersAnchorRef}
+                panelRef={travelersPanelRef}
+                adults={draft.flight.adults}
+                childrenCount={draft.flight.children}
+                infants={draft.flight.infants}
+                childAges={draft.flight.childAges}
+                onAdults={(n) => patchFlight({ adults: n })}
+                onChildren={setChildrenCount}
+                onInfants={(n) => patchFlight({ infants: n })}
+                onChildAge={setChildAge}
+                onDone={() => setTravelersOpen(false)}
+              />
 
               <div className="wg-boarding-checks">
                 <label className="wg-boarding-check">

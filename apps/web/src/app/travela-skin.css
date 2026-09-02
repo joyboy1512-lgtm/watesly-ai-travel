@@ -222,7 +222,7 @@
 .shop-root.wg-new-ui .wg-topbar-logo .wg-logo-word {
   position: relative;
   font-size: clamp(1.28rem, 2.4vw, 1.62rem);
-  font-weight: 900;
+  font-weight: 600;
 }
 
 .shop-root.wg-new-ui .wg-topbar-nav {

@@ -535,6 +535,7 @@
   padding: 6rem 1.5rem 12rem;
   background: linear-gradient(rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.45));
   color: #fff;
+  pointer-events: none;
 }
 
 .wg-travela-caption-inner {
@@ -651,6 +652,9 @@
   gap: 0.15rem 1.35rem;
   width: 100%;
   padding: 0 0.25rem;
+  position: relative;
+  z-index: 2;
+  pointer-events: auto;
 }
 
 .wg-hero-dock-mode {
@@ -716,11 +720,12 @@
   margin-top: -0.1rem;
 }
 
-.wg-hero-dock-ruhelti-link {
+.wg-hero-dock-ruhelti-link,
+.wg-hero-dock-ruhelti-link.wg-ruhelti-hero-btn {
   appearance: none;
-  border: 0;
-  background: transparent;
-  color: #fff;
+  border: 0 !important;
+  background: transparent !important;
+  color: #fff !important;
   font: inherit;
   font-size: 0.86rem;
   font-weight: 700;
@@ -729,10 +734,16 @@
   text-shadow: 0 1px 8px rgba(10, 22, 48, 0.4);
   cursor: pointer;
   padding: 0.15rem 0.35rem;
+  min-height: 0;
+  width: auto;
+  border-radius: 0;
+  box-shadow: none;
 }
 
-.wg-hero-dock-ruhelti-link:hover {
-  color: #f8fafc;
+.wg-hero-dock-ruhelti-link:hover,
+.wg-hero-dock-ruhelti-link.wg-ruhelti-hero-btn:hover {
+  color: #f8fafc !important;
+  background: transparent !important;
 }
 
 .shop-root.wg-new-ui .wg-hero-search-panel .exp-dialog {

@@ -647,7 +647,7 @@
   --ht-accent: var(--tv-primary, #13357b);
   position: relative;
   display: grid;
-  grid-template-columns: 34px minmax(0, 1fr) minmax(168px, 188px);
+  grid-template-columns: 30px minmax(0, 1fr) minmax(156px, 172px);
   background: var(--ht-paper);
   border-radius: 14px;
   box-shadow:
@@ -685,9 +685,10 @@
 
 .wg-hero-ticket-main {
   min-width: 0;
-  padding: 0.45rem 0.7rem 0.55rem;
+  padding: 0.4rem 0.65rem 0.45rem;
   display: grid;
-  gap: 0.28rem;
+  gap: 0.35rem;
+  align-content: center;
   position: relative;
   overflow: visible;
 }
@@ -698,13 +699,13 @@
   justify-content: space-between;
   gap: 0.5rem;
   position: relative;
-  padding-bottom: 0.2rem;
-  min-height: 1.35rem;
+  padding-bottom: 0.05rem;
+  min-height: 1.05rem;
 }
 
 .wg-hero-ticket-pass {
   font-family: Oswald, Cairo, sans-serif;
-  font-size: 0.95rem;
+  font-size: 0.82rem;
   font-weight: 600;
   letter-spacing: 0.06em;
   color: var(--ht-ink);
@@ -716,7 +717,7 @@
   align-items: center;
   gap: 0.28rem;
   font-family: Oswald, Cairo, sans-serif;
-  font-size: 0.78rem;
+  font-size: 0.7rem;
   font-weight: 600;
   letter-spacing: 0.08em;
   color: var(--ht-accent);
@@ -764,7 +765,7 @@
   border-radius: 0;
   box-shadow: none;
   padding: 0;
-  gap: 0.4rem;
+  gap: 0.3rem;
   overflow: visible;
   width: 100%;
   max-width: 100%;
@@ -778,7 +779,7 @@
   flex-direction: row;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.35rem 0.55rem;
+  gap: 0.25rem 0.4rem;
   margin: 0;
 }
 
@@ -789,26 +790,26 @@
   max-width: 100%;
   flex-shrink: 1;
   min-width: 0;
-  font-size: 0.72rem;
-  padding: 0.28rem 0.5rem;
+  font-size: 0.68rem;
+  padding: 0.18rem 0.4rem;
   background: #fff;
-  border-radius: 8px;
+  border-radius: 7px;
 }
 
 .shop-root.wg-new-ui .wg-hero-search-panel .exp-cabin-pill span:first-child {
-  font-size: 0.65rem;
+  font-size: 0.6rem;
 }
 
 .shop-root.wg-new-ui .wg-hero-search-panel .exp-cabin-pill select {
   min-width: 0;
-  max-width: 6rem;
-  font-size: 0.72rem;
+  max-width: 5.5rem;
+  font-size: 0.68rem;
   font-family: "IBM Plex Mono", Cairo, monospace;
 }
 
 .shop-root.wg-new-ui .wg-hero-search-panel .exp-pill-tab {
-  padding: 0.28rem 0.65rem;
-  font-size: 0.74rem;
+  padding: 0.2rem 0.55rem;
+  font-size: 0.7rem;
   border-radius: 999px;
 }
 
@@ -820,7 +821,7 @@
 .shop-root.wg-new-ui .wg-hero-search-panel .exp-unified-card .exp-form-row {
   width: 100%;
   max-width: 100%;
-  gap: 0.35rem;
+  gap: 0.28rem;
   padding: 0;
   box-sizing: border-box;
   align-items: stretch;
@@ -855,27 +856,28 @@
 
 .shop-root.wg-new-ui .wg-hero-search-panel .exp-unified-card .exp-input-cell {
   height: auto;
-  min-height: 3rem;
+  min-height: 2.55rem;
   max-height: none;
-  padding: 0.28rem 0.55rem;
+  padding: 0.18rem 0.45rem;
   border: 1px solid var(--ht-line);
   background: #fff;
   overflow: visible;
   box-sizing: border-box;
   min-width: 0;
-  border-radius: 10px;
+  border-radius: 8px;
 }
 
 .shop-root.wg-new-ui .wg-hero-search-panel .exp-unified-card .exp-cell-label,
 .shop-root.wg-new-ui .wg-hero-search-panel .exp-unified-card .exp-input-cell .shop-ac-inline > span:first-child,
 .shop-root.wg-new-ui .wg-hero-search-panel .exp-unified-card .exp-input-cell .shop-ac-inline .exp-cell-label {
-  font-size: 0.6rem;
+  font-size: 0.56rem;
   color: var(--ht-muted);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   text-transform: uppercase;
   letter-spacing: 0.04em;
+  line-height: 1.1;
 }
 
 .shop-root.wg-new-ui .wg-hero-search-panel .exp-unified-card .exp-input-cell .shop-ac-inline input,
@@ -883,8 +885,8 @@
 .shop-root.wg-new-ui .wg-hero-search-panel .exp-unified-card .exp-travelers-trigger strong,
 .shop-root.wg-new-ui .wg-hero-search-panel .exp-unified-card .shop-date-range-trigger,
 .shop-root.wg-new-ui .wg-hero-search-panel .exp-unified-card .exp-time-select {
-  font-size: 0.82rem;
-  line-height: 1.25;
+  font-size: 0.78rem;
+  line-height: 1.2;
   font-weight: 700;
   color: var(--ht-ink);
   font-family: "IBM Plex Mono", Cairo, monospace;
@@ -904,8 +906,8 @@
 .shop-root.wg-new-ui .wg-hero-search-panel .exp-unified-card .exp-swap-inline {
   align-self: center;
   flex-shrink: 0;
-  width: 1.7rem;
-  height: 1.7rem;
+  width: 1.45rem;
+  height: 1.45rem;
   border-radius: 999px;
   border: 1px solid var(--ht-line);
   background: #fff;
@@ -915,11 +917,11 @@
 .wg-hero-ticket-stub {
   position: relative;
   display: grid;
-  align-content: stretch;
+  align-content: center;
   border-inline-start: 1.5px dashed #b8b0a4;
   background: linear-gradient(180deg, #fbfaf7 0%, #f0ece4 100%);
   border-radius: 0 14px 14px 0;
-  padding: 0.55rem 0.55rem 0.6rem;
+  padding: 0.4rem 0.45rem 0.45rem;
   overflow: visible;
 }
 
@@ -944,35 +946,35 @@
 
 .wg-hero-ticket-stub-inner {
   display: grid;
-  gap: 0.4rem;
-  align-content: space-between;
-  height: 100%;
+  gap: 0.28rem;
+  align-content: start;
   min-height: 0;
 }
 
 .wg-hero-ticket-stub-title {
   margin: 0;
-  font-size: 0.78rem;
+  font-size: 0.68rem;
   font-weight: 800;
   color: var(--ht-ink);
   text-align: start;
+  line-height: 1.2;
 }
 
 .wg-hero-ticket-modes {
   display: grid;
-  gap: 0.28rem;
+  gap: 0.18rem;
 }
 
 .wg-hero-ticket-mode {
   display: grid;
   grid-template-columns: auto auto 1fr;
   align-items: center;
-  column-gap: 0.4rem;
+  column-gap: 0.32rem;
   width: 100%;
   border: 1px solid transparent;
-  border-radius: 10px;
+  border-radius: 8px;
   background: #fff;
-  padding: 0.35rem 0.4rem;
+  padding: 0.22rem 0.32rem;
   cursor: pointer;
   text-align: start;
   color: var(--ht-ink);
@@ -995,13 +997,13 @@
 }
 
 .wg-hero-ticket-mode-tick {
-  width: 16px;
-  height: 16px;
-  border-radius: 5px;
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
   border: 1.5px solid #cbd5e1;
   display: grid;
   place-items: center;
-  font-size: 0.62rem;
+  font-size: 0.55rem;
   font-weight: 800;
   color: #fff;
   background: #fff;
@@ -1014,9 +1016,9 @@
 }
 
 .wg-hero-ticket-mode-icon {
-  width: 26px;
-  height: 26px;
-  border-radius: 8px;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
   display: grid;
   place-items: center;
   background: color-mix(in srgb, var(--ht-accent) 10%, white);
@@ -1025,26 +1027,26 @@
 }
 
 .wg-hero-ticket-mode-icon svg {
-  width: 15px;
-  height: 15px;
+  width: 13px;
+  height: 13px;
 }
 
 .wg-hero-ticket-mode strong {
-  font-size: 0.76rem;
+  font-size: 0.7rem;
   font-weight: 800;
-  line-height: 1.2;
+  line-height: 1.15;
 }
 
 .shop-root.wg-new-ui .wg-hero-search-panel .wg-hero-ticket-search.exp-search-link {
   width: 100%;
   min-width: 0;
-  height: 2.35rem;
-  min-height: 2.35rem;
-  margin-top: 0.15rem;
-  padding: 0 0.7rem;
-  font-size: 0.88rem;
+  height: 2.1rem;
+  min-height: 2.1rem;
+  margin-top: 0.05rem;
+  padding: 0 0.55rem;
+  font-size: 0.82rem;
   font-weight: 800;
-  border-radius: 10px;
+  border-radius: 8px;
   background: var(--ht-accent);
   box-shadow: none;
   justify-self: stretch;

@@ -584,6 +584,14 @@ export function ShopHeroBanner(props: Props) {
                   </button>
                 );
               })}
+              <Link
+                href="/chat"
+                className="wg-hero-dock-mode wg-hero-dock-mode-ai"
+                title="المساعد الذكي لمّاح"
+                aria-label="فتح المساعد الذكي لمّاح"
+              >
+                لمّاح
+              </Link>
             </div>
 
             <div className="wg-hero-dock">
@@ -1018,10 +1026,6 @@ export function ShopHeroBanner(props: Props) {
           </div>
         </div>
       </section>
-
-      <div className="wg-travela-bottom-arc" aria-hidden="true">
-        <div className="wg-travela-bottom-arc-cap" />
-      </div>
     </>
   );
 }

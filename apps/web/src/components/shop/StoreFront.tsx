@@ -27,7 +27,7 @@ const ShopAssistant = dynamic(
 
 const BRAND = "WeekendGate";
 
-function IconChat({ size = 18 }: { size?: number }) {
+function IconChat({ size = 22 }: { size?: number }) {
   return (
     <svg viewBox="0 0 24 24" width={size} height={size} aria-hidden>
       <path
@@ -38,7 +38,7 @@ function IconChat({ size = 18 }: { size?: number }) {
   );
 }
 
-function IconGlobe({ size = 18 }: { size?: number }) {
+function IconGlobe({ size = 22 }: { size?: number }) {
   return (
     <svg viewBox="0 0 24 24" width={size} height={size} aria-hidden>
       <path
@@ -49,7 +49,18 @@ function IconGlobe({ size = 18 }: { size?: number }) {
   );
 }
 
-function IconUser({ size = 18 }: { size?: number }) {
+function IconPhone({ size = 22 }: { size?: number }) {
+  return (
+    <svg viewBox="0 0 24 24" width={size} height={size} aria-hidden>
+      <path
+        fill="currentColor"
+        d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1.1-.2 1.2.4 2.5.6 3.8.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1C10.6 21 3 13.4 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.6.6 3.8.1.4 0 .8-.3 1.1l-2.2 2.2z"
+      />
+    </svg>
+  );
+}
+
+function IconUser({ size = 22 }: { size?: number }) {
   return (
     <svg viewBox="0 0 24 24" width={size} height={size} aria-hidden>
       <path
@@ -152,11 +163,21 @@ function StoreFrontInner({
               </button>
 
               <div className="wg-topbar-utils" dir="ltr">
+                <a
+                  href={`tel:${COMPANY_LEGAL.phoneE164}`}
+                  className="wg-topbar-text wg-topbar-phone"
+                  aria-label={`اتصل بنا ${COMPANY_LEGAL.phoneDisplay}`}
+                  title="اتصل بنا"
+                >
+                  <IconPhone />
+                  <span dir="ltr">{COMPANY_LEGAL.phoneDisplay}</span>
+                </a>
+
                 <Link
                   href="/chat"
                   className="wg-topbar-icon-btn"
-                  aria-label="المساعد والدردشة"
-                  title="المساعد والدردشة"
+                  aria-label="المساعد الذكي"
+                  title="المساعد الذكي"
                 >
                   <IconChat />
                 </Link>
@@ -164,12 +185,13 @@ function StoreFrontInner({
                 <div className="wg-topbar-locale">
                   <button
                     type="button"
-                    className="wg-topbar-icon-btn"
-                    title="تبديل اللغة"
+                    className="wg-topbar-text wg-topbar-lang"
+                    title="اللغة"
                     aria-label="تبديل اللغة"
                     onClick={() => setLocale(locale === "ar" ? "en" : "ar")}
                   >
                     <IconGlobe />
+                    <span>{locale === "ar" ? "العربية" : "EN"}</span>
                   </button>
                   <label className="wg-topbar-text wg-topbar-currency" title="العملة">
                     <select
@@ -235,12 +257,19 @@ function StoreFrontInner({
             <div className={`wg-topbar-mobile${menuOpen ? " open" : ""}`}>
               <Link href="/about">{t("navAbout")}</Link>
               <Link href="/contact">{t("navContact")}</Link>
+              <a
+                href={`tel:${COMPANY_LEGAL.phoneE164}`}
+                className="wg-topbar-mobile-phone"
+              >
+                اتصل بنا · {COMPANY_LEGAL.phoneDisplay}
+              </a>
+              <Link href="/chat">المساعد الذكي · لمّاح</Link>
               <button
                 type="button"
                 className="wg-topbar-mobile-lang"
                 onClick={() => setLocale(locale === "ar" ? "en" : "ar")}
               >
-                {locale === "ar" ? "AR" : "EN"}
+                اللغة · {locale === "ar" ? "العربية" : "EN"}
               </button>
               <label className="wg-header-menu-currency wg-topbar-mobile-currency">
                 <span>العملة</span>

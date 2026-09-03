@@ -182,9 +182,10 @@ function StoreFrontInner({
                     title={t("language")}
                     aria-label={t("toggleLanguage")}
                     onClick={() => setLocale(locale === "ar" ? "en" : "ar")}
+                    data-testid="shop-locale-toggle"
                   >
                     <IconGlobe />
-                    <span>{locale === "ar" ? "العربية" : "EN"}</span>
+                    <span>{locale === "ar" ? "EN" : "العربية"}</span>
                   </button>
                   <label className="wg-topbar-text wg-topbar-currency" title={t("currency")}>
                     <select
@@ -268,7 +269,7 @@ function StoreFrontInner({
                 className="wg-topbar-mobile-lang"
                 onClick={() => setLocale(locale === "ar" ? "en" : "ar")}
               >
-                {t("language")} · {locale === "ar" ? "العربية" : "EN"}
+                {t("language")} · {locale === "ar" ? "EN" : "العربية"}
               </button>
               <label className="wg-header-menu-currency wg-topbar-mobile-currency">
                 <span>{t("currency")}</span>
@@ -370,13 +371,14 @@ function StoreFrontInner({
                   className="wg-header-chip wg-header-dir"
                   title={t("language")}
                   aria-label={t("toggleLanguage")}
+                  data-testid="shop-locale-toggle"
                   onClick={() => setLocale(locale === "ar" ? "en" : "ar")}
                 >
                   <span className="wg-header-chip-ico" aria-hidden>
                     ⇄
                   </span>
                   <span className="wg-header-chip-text">
-                    {locale === "ar" ? "العربية" : "EN"}
+                    {locale === "ar" ? "EN" : "العربية"}
                   </span>
                 </button>
 

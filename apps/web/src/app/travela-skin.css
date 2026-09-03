@@ -210,6 +210,22 @@
   object-fit: contain;
 }
 
+/* Unified lockup on every page (hero + white headers) */
+.shop-root.wg-new-ui .wg-header-brand .wg-logo-lockup-img,
+.shop-root.wg-new-ui .shop-brand .wg-logo-lockup-img {
+  display: block;
+  height: clamp(2rem, 3.2vw, 2.55rem);
+  width: auto;
+  object-fit: contain;
+}
+
+.shop-root.wg-new-ui .shop-footer-brand-logo .wg-logo-lockup-img {
+  height: 2.1rem;
+  width: auto;
+  display: block;
+  object-fit: contain;
+}
+
 .shop-root.wg-new-ui .wg-topbar-logo .wg-logo-mark {
   display: block;
   width: auto;

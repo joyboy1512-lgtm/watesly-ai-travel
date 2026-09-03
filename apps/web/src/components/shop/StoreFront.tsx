@@ -139,10 +139,6 @@ function StoreFrontInner({
               <Link href="/" className="wg-topbar-logo" aria-label="WeekendGate">
                 <WeekendGateLogo light={isHome} />
               </Link>
-              <nav className="wg-topbar-nav" aria-label="روابط سريعة">
-                <Link href="/about">{t("navAbout")}</Link>
-                <Link href="/contact">{t("navContact")}</Link>
-              </nav>
             </div>
 
             <div className="wg-topbar-end">
@@ -252,8 +248,6 @@ function StoreFrontInner({
             </div>
 
             <div className={`wg-topbar-mobile${menuOpen ? " open" : ""}`}>
-              <Link href="/about">{t("navAbout")}</Link>
-              <Link href="/contact">{t("navContact")}</Link>
               <a
                 href={`tel:${COMPANY_LEGAL.phoneE164}`}
                 className="wg-topbar-mobile-phone"
@@ -332,11 +326,6 @@ function StoreFrontInner({
               <WeekendGateLogo light={isHome} />
             </Link>
 
-            <nav className="wg-header-pill-nav" aria-label="روابط سريعة">
-              <Link href="/about">{t("navAbout")}</Link>
-              <Link href="/contact">{t("navContact")}</Link>
-            </nav>
-
             <div className="wg-header-end">
               <button
                 type="button"
@@ -405,8 +394,6 @@ function StoreFrontInner({
                 )}
 
                 <div className="wg-header-mobile-links mobile-only">
-                  <Link href="/about">{t("navAbout")}</Link>
-                  <Link href="/contact">{t("navContact")}</Link>
                   {platformEnabled() ? (
                     <>
                       <Link href="/deals">{t("navDeals")}</Link>
@@ -430,7 +417,9 @@ function StoreFrontInner({
       <footer className="shop-footer exp-footer">
         <div className="shop-footer-grid">
           <div>
-            <strong className="shop-footer-brand">{BRAND}</strong>
+            <Link href="/" className="shop-footer-brand-logo" aria-label="WeekendGate">
+              <WeekendGateLogo light />
+            </Link>
             <p>
               منصة حجز تابعة لـ{COMPANY_LEGAL.legalNameAr}: طيران، فنادق، نقل، وأنشطة.
             </p>

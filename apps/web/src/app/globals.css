@@ -263,6 +263,13 @@ h1 {
   text-decoration: none;
 }
 
+.brand .wg-logo-lockup-img {
+  display: block;
+  height: 2.1rem;
+  width: auto;
+  object-fit: contain;
+}
+
 .brand-site-link:hover {
   color: #fff;
   text-decoration: none;

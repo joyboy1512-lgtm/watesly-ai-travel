@@ -77,6 +77,13 @@
   gap: 0;
 }
 
+.wg-logo-lockup-img {
+  display: block;
+  height: 2.35rem;
+  width: auto;
+  object-fit: contain;
+}
+
 .wg-logo-mark {
   display: block;
   width: 48px;

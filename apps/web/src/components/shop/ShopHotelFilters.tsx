@@ -9,6 +9,8 @@ import {
   type HotelFilterFacets,
   type HotelSearchFilters,
 } from "@/lib/hotel-search";
+import { useShopI18n } from "@/components/shop/ShopI18nProvider";
+import { shopFilterOptionLabel } from "@watesly-travel/shared";
 
 type Props = {
   filters: HotelSearchFilters;
@@ -103,6 +105,7 @@ function ExpandableChecks({
   initial?: number;
 }) {
   const [expanded, setExpanded] = useState(false);
+  const { t } = useShopI18n();
   if (!options.length) return null;
   const visible = expanded ? options : options.slice(0, initial);
   return (
@@ -123,7 +126,7 @@ function ExpandableChecks({
           className="shop-hotel-filter-more"
           onClick={() => setExpanded((v) => !v)}
         >
-          {expanded ? "عرض أقل" : `اعرض الـ ${options.length} جميعها`}
+          {expanded ? t("showLess") : t("showAllN", { n: options.length })}
         </button>
       ) : null}
     </>
@@ -144,6 +147,7 @@ function FiltersPanel({
   searchDestinationCode?: string;
   searchDestinationLabel?: string;
 }) {
+  const { t, locale } = useShopI18n();
   const facilityOptions = (facets.facilities || []).filter((f) =>
     ["pool", "wifi", "parking", "accessibility"].includes(f.id),
   );
@@ -154,21 +158,21 @@ function FiltersPanel({
   return (
     <aside className="shop-hotel-filters-panel">
       <div className="shop-hotel-filters-title-row">
-        <h3 className="shop-hotel-filters-title">تصفية حسب:</h3>
+        <h3 className="shop-hotel-filters-title">{t("filterBy")}</h3>
         <button
           type="button"
           className="shop-hotel-filters-clear"
           onClick={() => onChange(defaultHotelFilters())}
         >
-          مسح الكل
+          {t("clearAll")}
         </button>
       </div>
 
       {destCode ? (
-        <FilterSection title="المدينة">
+        <FilterSection title={t("city")}>
           <FilterCheck
             id="destinationOnly"
-            label={`داخل ${destLabel} فقط`}
+            label={t("insideOnly", { name: destLabel })}
             checked={filters.destinationCodeOnly === destCode}
             onToggle={() =>
               onChange({
@@ -182,7 +186,7 @@ function FiltersPanel({
       ) : null}
 
       {facets.priceMaxMajor > 0 ? (
-        <FilterSection title="نطاق السعر (د.ك)">
+        <FilterSection title={t("priceRangeKwd")}>
           <ShopPriceRangeSlider
             min={0}
             max={facets.priceMaxMajor}
@@ -198,10 +202,13 @@ function FiltersPanel({
       ) : null}
 
       {(facets.starRatings || []).length ? (
-        <FilterSection title="النجوم">
+        <FilterSection title={t("stars")}>
           <ExpandableChecks
             name="starRatings"
-            options={facets.starRatings}
+            options={(facets.starRatings || []).map((o) => ({
+              ...o,
+              label: shopFilterOptionLabel(locale, o.id, o.label, "star"),
+            }))}
             selected={filters.starRatings || []}
             onToggle={(id) =>
               onChange({
@@ -214,11 +221,11 @@ function FiltersPanel({
       ) : null}
 
       {(facets.zonesWithCounts || []).length ? (
-        <FilterSection title="المنطقة">
+        <FilterSection title={t("area")}>
           <FilterRadio
             name="shopZone"
             id=""
-            label="الكل"
+            label={t("all")}
             checked={!filters.zone}
             onSelect={() => onChange({ ...filters, zone: "" })}
           />
@@ -232,11 +239,11 @@ function FiltersPanel({
       ) : null}
 
       {(facets.distances || []).length ? (
-        <FilterSection title="المسافة من وسط المدينة">
+        <FilterSection title={t("distanceCenter")}>
           <FilterRadio
             name="shopDistance"
             id=""
-            label="الكل"
+            label={t("all")}
             checked={!filters.maxDistanceKm}
             onSelect={() => onChange({ ...filters, maxDistanceKm: "" })}
           />
@@ -245,7 +252,7 @@ function FiltersPanel({
               key={option.id}
               name="shopDistance"
               id={option.id}
-              label={option.label}
+              label={shopFilterOptionLabel(locale, option.id, option.label, "distance")}
               count={option.count}
               checked={filters.maxDistanceKm === option.id}
               onSelect={(id) => onChange({ ...filters, maxDistanceKm: id })}
@@ -255,10 +262,10 @@ function FiltersPanel({
       ) : null}
 
       {facets.breakfastIncluded ? (
-        <FilterSection title="الإفطار">
+        <FilterSection title={t("breakfast")}>
           <FilterCheck
             id="breakfast"
-            label="شامل الإفطار"
+            label={t("breakfastIncl")}
             count={facets.breakfastIncluded}
             checked={filters.breakfast}
             onToggle={() => onChange({ ...filters, breakfast: !filters.breakfast })}
@@ -270,11 +277,11 @@ function FiltersPanel({
       facets.bookingPolicies?.noPrepayment ||
       facets.bookingPolicies?.onlinePayment ||
       facets.bookingPolicies?.bookableOnly ? (
-        <FilterSection title="سياسة الحجز والدفع">
+        <FilterSection title={t("bookingPayPolicy")}>
           {facets.bookingPolicies.freeCancellation ? (
             <FilterCheck
               id="freeCancellation"
-              label="إلغاء مجاني"
+              label={t("freeCancel")}
               count={facets.bookingPolicies.freeCancellation}
               checked={filters.freeCancellation}
               onToggle={() =>
@@ -285,7 +292,7 @@ function FiltersPanel({
           {facets.bookingPolicies.noPrepayment ? (
             <FilterCheck
               id="noPrepayment"
-              label="الدفع في الفندق"
+              label={t("payAtHotelOpt")}
               count={facets.bookingPolicies.noPrepayment}
               checked={filters.noPrepayment}
               onToggle={() => onChange({ ...filters, noPrepayment: !filters.noPrepayment })}
@@ -294,7 +301,7 @@ function FiltersPanel({
           {facets.bookingPolicies.onlinePayment ? (
             <FilterCheck
               id="onlinePayment"
-              label="الدفع الآن (أونلاين)"
+              label={t("payOnlineNow")}
               count={facets.bookingPolicies.onlinePayment}
               checked={Boolean(filters.onlinePayment)}
               onToggle={() =>
@@ -305,7 +312,7 @@ function FiltersPanel({
           {facets.bookingPolicies.bookableOnly ? (
             <FilterCheck
               id="bookableOnly"
-              label="المتاح للحجز فقط"
+              label={t("bookableOnly")}
               count={facets.bookingPolicies.bookableOnly}
               checked={filters.bookableOnly}
               onToggle={() => onChange({ ...filters, bookableOnly: !filters.bookableOnly })}
@@ -315,10 +322,13 @@ function FiltersPanel({
       ) : null}
 
       {(facets.propertyTypes || []).length ? (
-        <FilterSection title="نوع مكان الإقامة">
+        <FilterSection title={t("propertyType")}>
           <ExpandableChecks
             name="propertyTypes"
-            options={facets.propertyTypes}
+            options={(facets.propertyTypes || []).map((o) => ({
+              ...o,
+              label: shopFilterOptionLabel(locale, o.id, o.label, "property"),
+            }))}
             selected={filters.propertyTypes}
             onToggle={(id) =>
               onChange({
@@ -331,10 +341,13 @@ function FiltersPanel({
       ) : null}
 
       {facilityOptions.length ? (
-        <FilterSection title="المرافق">
+        <FilterSection title={t("facilities")}>
           <ExpandableChecks
             name="facilities"
-            options={facilityOptions}
+            options={facilityOptions.map((o) => ({
+              ...o,
+              label: shopFilterOptionLabel(locale, o.id, o.label, "facility"),
+            }))}
             selected={filters.facilities}
             onToggle={(id) =>
               onChange({ ...filters, facilities: toggleList(filters.facilities, id) })
@@ -344,11 +357,11 @@ function FiltersPanel({
       ) : null}
 
       {hasGuestReviews ? (
-        <FilterSection title="تقييم الضيوف">
+        <FilterSection title={t("guestRating")}>
           <FilterRadio
             name="shopMinReview"
             id="any"
-            label="الكل"
+            label={t("all")}
             checked={filters.minReviewScore === "any"}
             onSelect={() => onChange({ ...filters, minReviewScore: "any" })}
           />
@@ -357,7 +370,7 @@ function FiltersPanel({
               key={option.id}
               name="shopMinReview"
               id={option.id}
-              label={option.label}
+              label={shopFilterOptionLabel(locale, option.id, option.label, "review")}
               count={option.count}
               checked={filters.minReviewScore === option.id}
               onSelect={(id) =>
@@ -383,6 +396,7 @@ export function ShopHotelFilters({
   searchDestinationCode,
   searchDestinationLabel,
 }: Props) {
+  const { t } = useShopI18n();
   const filterCount = countHotelFilters(filters);
   return (
     <div className="shop-hotel-filters">
@@ -390,7 +404,7 @@ export function ShopHotelFilters({
         <button
           type="button"
           className="shop-filters-sheet-backdrop"
-          aria-label="إغلاق التصفية"
+          aria-label={t("closeFilters")}
           onClick={onMobileToggle}
         />
       ) : null}
@@ -400,16 +414,16 @@ export function ShopHotelFilters({
         onClick={onMobileToggle}
         aria-expanded={mobileOpen}
       >
-        {mobileOpen ? "إخفاء التصفية" : "تصفية"}
+        {mobileOpen ? t("hideFilters") : t("filters")}
         {filterCount > 0 ? (
           <span className="shop-filters-count-badge">{filterCount}</span>
         ) : null}
       </button>
       <div className={`shop-hotel-filters-drawer shop-filters-sheet${mobileOpen ? " open" : ""}`}>
         <div className="shop-filters-sheet-head">
-          <strong>التصفية</strong>
+          <strong>{t("filters")}</strong>
           <button type="button" onClick={onMobileToggle}>
-            تم
+            {t("done")}
           </button>
         </div>
         <FiltersPanel

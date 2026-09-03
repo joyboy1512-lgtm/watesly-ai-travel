@@ -30,9 +30,13 @@ describe("payment-gateway sandbox", () => {
       cancelUrl: "https://example.com/cancel",
     });
     assert.equal(a.id, b.id);
+    const { createHmac } = await import("node:crypto");
+    const rawBody = JSON.stringify({ intentId: a.id, status: "captured" });
+    const secret = process.env.PAYMENT_WEBHOOK_SECRET || "sandbox-webhook-secret";
+    const sig = createHmac("sha256", secret).update(rawBody).digest("hex");
     const event = await gw.verifyAndParseWebhook(
-      { "x-weekendgate-signature": "sandbox" },
-      JSON.stringify({ intentId: a.id, status: "captured" }),
+      { "x-weekendgate-signature": sig },
+      rawBody,
     );
     assert.equal(event.status, "captured");
     const got = await gw.getIntent(a.id);

@@ -1,20 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { type SuggestItem } from "@/components/shop/ShopAutocomplete";
 import {
-  collectFlightFacets,
-  defaultFlightFilters,
-  filterAndSortFlights,
-  type FlightOfferRow,
-  type FlightSearchFilters,
-  type FlightSortKey,
-} from "@/lib/flight-search";
-import {
   saveActivityDraft,
-  saveFlightDraft,
   saveTransferDraft,
 } from "@/lib/booking-draft";
 import { shopFetch } from "@/lib/shop-session";
@@ -33,17 +24,7 @@ import {
   type HotelOccupancyState,
 } from "@/lib/hotel-occupancy";
 import { TripBuilderProvider, useTripBuilder } from "@/components/trip-builder/TripBuilderProvider";
-import { RuheltiBoardingModal } from "@/components/trip-builder/RuheltiBoardingModal";
-import "@/components/trip-builder/trip-builder.css";
 
-const ShopFlightResults = dynamic(
-  () => import("@/components/shop/ShopFlightResults").then((m) => m.ShopFlightResults),
-  { ssr: false },
-);
-const ShopFlightDetailModal = dynamic(
-  () => import("@/components/shop/ShopFlightDetailModal").then((m) => m.ShopFlightDetailModal),
-  { ssr: false },
-);
 const TransferSearchCard = dynamic(
   () => import("@/components/hotels/TransferSearchCard").then((m) => m.TransferSearchCard),
   { ssr: false },
@@ -52,19 +33,13 @@ const ActivitySearchCard = dynamic(
   () => import("@/components/hotels/ActivitySearchCard").then((m) => m.ActivitySearchCard),
   { ssr: false },
 );
+const RuheltiBoardingModal = dynamic(
+  () =>
+    import("@/components/trip-builder/RuheltiBoardingModal").then((m) => m.RuheltiBoardingModal),
+  { ssr: false },
+);
 
 type Mode = "flights" | "stays" | "cars" | "activities";
-
-type Offer = {
-  id: string;
-  description: string;
-  sellAmountMinor: number;
-  currency: string;
-  expiresAt?: string;
-  details: Record<string, unknown>;
-};
-
-type QuoteItem = { id: string; providerOfferRef: string; serviceType: string };
 
 type TransferItem = {
   id: string;
@@ -119,7 +94,8 @@ export function ShopHomeClient() {
 
 function ShopHomeInner() {
   const router = useRouter();
-  const { openBoarding } = useTripBuilder();
+  const { openBoarding, boardingOpen } = useTripBuilder();
+  const [boardingMounted, setBoardingMounted] = useState(false);
   const [mode, setMode] = useState<Mode>("flights");
   const [tripType, setTripType] = useState<FlightTripType>("roundtrip");
   const [flightLegs, setFlightLegs] = useState<FlightLeg[]>(() => [
@@ -168,37 +144,10 @@ function ShopHomeInner() {
   );
   const [cabinClass, setCabinClass] = useState("economy");
   const [directOnly, setDirectOnly] = useState(false);
-  const [flightResults, setFlightResults] = useState<Offer[]>([]);
   const [transfers, setTransfers] = useState<TransferItem[]>([]);
   const [activities, setActivities] = useState<TransferItem[]>([]);
-  const [inquiryId, setInquiryId] = useState<string>();
-  const [quoteItems, setQuoteItems] = useState<QuoteItem[]>([]);
-  const [flightFilters, setFlightFilters] = useState<FlightSearchFilters>(() =>
-    defaultFlightFilters(),
-  );
-  const [flightSortKey, setFlightSortKey] = useState<FlightSortKey>("best");
-  const [detailFlight, setDetailFlight] = useState<FlightOfferRow | null>(null);
 
-  const flightFacets = useMemo(
-    () => collectFlightFacets(flightResults as FlightOfferRow[]),
-    [flightResults],
-  );
-
-  const flights = useMemo(
-    () =>
-      filterAndSortFlights(
-        flightResults as FlightOfferRow[],
-        flightFilters,
-        flightSortKey,
-        directOnly,
-      ),
-    [flightResults, flightFilters, flightSortKey, directOnly],
-  );
-
-  const hasResults =
-    flightResults.length > 0 ||
-    transfers.length > 0 ||
-    activities.length > 0;
+  const hasResults = transfers.length > 0 || activities.length > 0;
 
   async function searchAirports(q: string): Promise<SuggestItem[]> {
     const rows = await shopFetch<
@@ -390,10 +339,8 @@ function ShopHomeInner() {
     setLoading(true);
     setError("");
     setMessage("");
-    setFlightResults([]);
     setTransfers([]);
     setActivities([]);
-    setDetailFlight(null);
     try {
       if (mode === "cars") {
         if (!transferAirport && !transferCarRental) {
@@ -498,37 +445,6 @@ function ShopHomeInner() {
     }
   }
 
-  function quoteItemIdFor(offerId: string, serviceType: string) {
-    return quoteItems.find(
-      (item) => item.providerOfferRef === offerId && item.serviceType === serviceType,
-    )?.id;
-  }
-
-  function bookFlight(flight: Offer) {
-    const legOrigin = String(flight.details.legOrigin || origin);
-    const legDestination = String(flight.details.legDestination || destination);
-    const legDepartDate = String(flight.details.legDepartDate || departDate);
-    const offerRef = String(flight.details.originalOfferId || flight.id);
-    saveFlightDraft({
-      flight,
-      origin: legOrigin,
-      destination: legDestination,
-      originLabel: legOrigin,
-      destinationLabel: legDestination,
-      departDate: legDepartDate,
-      returnDate: tripType === "roundtrip" ? returnDate : undefined,
-      tripType,
-      adults,
-      children,
-      infants,
-      cabinClass,
-      createdAt: new Date().toISOString(),
-      inquiryId,
-      quoteItemId: quoteItemIdFor(offerRef, "flight"),
-    });
-    router.push("/book");
-  }
-
   function bookTransfer(item: TransferItem) {
     saveTransferDraft({
       transfer: {
@@ -617,6 +533,7 @@ function ShopHomeInner() {
   const tripBuilderHref = undefined;
 
   function openRuheltiBoarding() {
+    setBoardingMounted(true);
     const o = tripType === "multicity" ? flightLegs[0]?.origin || origin : origin;
     const d = tripType === "multicity" ? flightLegs[0]?.destination || destination : destination;
     const oLabel =
@@ -732,27 +649,11 @@ function ShopHomeInner() {
         onRuheltiClick={openRuheltiBoarding}
       />
 
-      <RuheltiBoardingModal searchAirports={searchAirports} searchCities={searchCities} />
-
-      {mode === "flights" && flightResults.length > 0 ? (
-        <ShopFlightResults
-          flights={flights}
-          totalCount={flightResults.length}
-          filters={flightFilters}
-          facets={flightFacets}
-          sortKey={flightSortKey}
-          origin={origin}
-          destination={destination}
-          originLabel={originLabel}
-          destinationLabel={destinationLabel}
-          onFiltersChange={setFlightFilters}
-          onSortChange={setFlightSortKey}
-          onResetFilters={() => setFlightFilters(defaultFlightFilters())}
-          onSelectFlight={setDetailFlight}
-        />
+      {boardingMounted || boardingOpen ? (
+        <RuheltiBoardingModal searchAirports={searchAirports} searchCities={searchCities} />
       ) : null}
 
-      {hasResults && mode !== "flights" ? (
+      {hasResults ? (
         <section className="shop-results shop-results-block">
           <div className="shop-section-head">
             <div>
@@ -786,23 +687,6 @@ function ShopHomeInner() {
         onPickDestination={applyDestination}
         onPickOffer={applyOffer}
       />
-
-      {detailFlight ? (
-        <ShopFlightDetailModal
-          flight={detailFlight}
-          origin={origin}
-          destination={destination}
-          originLabel={originLabel}
-          destinationLabel={destinationLabel}
-          cabinClass={cabinClass}
-          onClose={() => setDetailFlight(null)}
-          onContinue={() => {
-            const selected = detailFlight;
-            setDetailFlight(null);
-            bookFlight(selected);
-          }}
-        />
-      ) : null}
     </>
   );
 }

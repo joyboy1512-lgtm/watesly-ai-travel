@@ -5,6 +5,7 @@ import {
 } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import bcrypt from "bcryptjs";
+import { createHmac, randomInt, timingSafeEqual } from "crypto";
 import { Prisma } from "@watesly-travel/database";
 import { PrismaService } from "../prisma/prisma.service";
 import { BookingsService } from "../bookings/bookings.service";
@@ -41,6 +42,38 @@ function publicOffer<T extends { costAmountMinor?: number; profitAmountMinor?: n
   return rest;
 }
 
+type UnlockOtpEntry = {
+  codeHash: string;
+  expiresAt: number;
+  attempts: number;
+};
+
+const unlockOtpStore = new Map<string, UnlockOtpEntry>();
+
+function unlockRequiresOtp(): boolean {
+  const flag = process.env.SHOP_UNLOCK_REQUIRE_OTP;
+  if (flag === "0" || flag === "false") return false;
+  if (flag === "1" || flag === "true") return true;
+  // Opt-in until WhatsApp/SMS delivery is configured in production.
+  return false;
+}
+
+function hashOtp(phone: string, code: string): string {
+  return createHmac("sha256", process.env.SHOP_OTP_PEPPER || "weekendgate-otp")
+    .update(`${phone}:${code}`)
+    .digest("hex");
+}
+
+function generateOtpCode(): string {
+  return String(randomInt(100000, 1000000));
+}
+
+function otpMatches(phone: string, code: string, entry: UnlockOtpEntry): boolean {
+  const a = Buffer.from(entry.codeHash, "utf8");
+  const b = Buffer.from(hashOtp(phone, code), "utf8");
+  return a.length === b.length && timingSafeEqual(a, b);
+}
+
 @Injectable()
 export class ShopService {
   constructor(
@@ -66,13 +99,16 @@ export class ShopService {
 
   async airports(q?: string, limit = 20) {
     const query = String(q || "").trim();
-    const take = Math.min(50, Math.max(5, limit));
+    const take = Math.min(40, Math.max(5, limit || 20));
     if (!query) {
       return this.prisma.airport.findMany({
         where: { iataCode: { in: ["KWI", "DXB", "DOH", "RUH", "BAH", "MCT"] } },
         take,
         orderBy: { city: "asc" },
       });
+    }
+    if (query.length < 2) {
+      return [];
     }
     return this.prisma.airport.findMany({
       where: {
@@ -466,11 +502,68 @@ export class ShopService {
     };
   }
 
-  async unlock(body: { phone?: string; name?: string; email?: string }) {
+  async requestUnlockOtp(body: { phone?: string }) {
     const phone = normalizeShopPhone(body.phone || "");
     if (!phone || phone.length < 8) {
       throw new BadRequestException("أدخل رقم الجوال");
     }
+    const code = generateOtpCode();
+    unlockOtpStore.set(phone, {
+      codeHash: hashOtp(phone, code),
+      expiresAt: Date.now() + 5 * 60_000,
+      attempts: 0,
+    });
+
+    const exposeDebug =
+      process.env.NODE_ENV !== "production" &&
+      (process.env.PAYMENT_ENV || "sandbox").toLowerCase() !== "production";
+
+    // Delivery channel: WhatsApp/SMS can be wired later; never log OTP in production.
+    if (exposeDebug || process.env.SHOP_OTP_ALLOW_LOG === "1") {
+      // eslint-disable-next-line no-console
+      console.info(`[shop.otp] unlock code for ${phone}: ${code}`);
+    }
+
+    return {
+      ok: true as const,
+      expiresInSec: 300,
+      requiresCode: unlockRequiresOtp(),
+      ...(exposeDebug ? { debugCode: code } : {}),
+    };
+  }
+
+  async unlock(body: {
+    phone?: string;
+    name?: string;
+    email?: string;
+    code?: string;
+  }) {
+    const phone = normalizeShopPhone(body.phone || "");
+    if (!phone || phone.length < 8) {
+      throw new BadRequestException("أدخل رقم الجوال");
+    }
+
+    if (unlockRequiresOtp()) {
+      const code = String(body.code || "").trim();
+      if (!/^\d{6}$/.test(code)) {
+        throw new BadRequestException("أدخل رمز التحقق المكوّن من 6 أرقام");
+      }
+      const entry = unlockOtpStore.get(phone);
+      if (!entry || entry.expiresAt < Date.now()) {
+        unlockOtpStore.delete(phone);
+        throw new UnauthorizedException("انتهت صلاحية الرمز — اطلب رمزاً جديداً");
+      }
+      entry.attempts += 1;
+      if (entry.attempts > 5) {
+        unlockOtpStore.delete(phone);
+        throw new UnauthorizedException("محاولات كثيرة — اطلب رمزاً جديداً");
+      }
+      if (!otpMatches(phone, code, entry)) {
+        throw new UnauthorizedException("رمز التحقق غير صحيح");
+      }
+      unlockOtpStore.delete(phone);
+    }
+
     const org = await this.orgs.resolve();
     const name = body.name?.trim() || undefined;
     const email = body.email?.trim().toLowerCase() || undefined;
@@ -1021,14 +1114,16 @@ export class ShopService {
     };
   }
 
-  async handlePaymentWebhook(body: Record<string, unknown>) {
+  async handlePaymentWebhook(
+    body: Record<string, unknown>,
+    headers: Record<string, string | string[] | undefined> = {},
+    rawBody?: string,
+  ) {
     const { getPaymentGateway } = await import("@watesly-travel/provider-sdk");
     const { normalizeShopPaymentStatus } = await import("@watesly-travel/shared");
     const gateway = getPaymentGateway();
-    const event = await gateway.verifyAndParseWebhook(
-      { "x-weekendgate-signature": "sandbox" },
-      JSON.stringify(body),
-    );
+    const payload = rawBody && rawBody.length ? rawBody : JSON.stringify(body || {});
+    const event = await gateway.verifyAndParseWebhook(headers, payload);
     // Redirect alone is never enough — webhook drives Payment.status
     const shopStatus = normalizeShopPaymentStatus(event.status);
     const intent = await gateway.getIntent(event.intentId);

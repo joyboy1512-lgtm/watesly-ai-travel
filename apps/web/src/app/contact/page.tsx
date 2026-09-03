@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 
 export default function ContactPage() {
   return (
-    <LegalPageShell title="تواصل معنا">
+    <LegalPageShell title="تواصل معنا" titleKey="navContact">
       <ul className="shop-contact-list">
         <li>
           <strong>الشركة:</strong> {COMPANY_LEGAL.legalNameAr}

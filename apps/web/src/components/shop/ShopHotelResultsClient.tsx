@@ -35,10 +35,11 @@ import {
 import { saveHotelDraft } from "@/lib/booking-draft";
 import { trackFunnel } from "@/lib/funnel-analytics";
 import {
-  arabicGuestCount,
-  arabicNightCount,
-  arabicRoomCount,
+  shopGuestCount,
+  shopNightCount,
+  shopRoomCount,
 } from "@/lib/hotel-occupancy";
+import { useShopI18n } from "@/components/shop/ShopI18nProvider";
 import {
   buildHotelDraftPriceBreakdown,
   toDraftHotelRate,
@@ -73,6 +74,7 @@ type HotelRow = HotelOfferRow & {
 };
 
 export function ShopHotelResultsClient() {
+  const { t, locale } = useShopI18n();
   const router = useRouter();
   const searchParams = useSearchParams();
   const params = useMemo(() => parseHotelResultsSearch(searchParams), [searchParams]);
@@ -203,7 +205,7 @@ export function ShopHotelResultsClient() {
             occ: search.occ || encodeRoomOccupancies(occ),
           };
         }
-        setMessage("نقارن الأسعار من مزودي الفنادق…");
+        setMessage(t("comparingHotels"));
         const result = await shopFetch<{
           inquiryId: string;
           quoteItems?: QuoteItem[];
@@ -482,6 +484,7 @@ export function ShopHotelResultsClient() {
 
   return (
     <div className="shop-hotel-results-page">
+      <h1 className="shop-flight-results-h1">{t("hotelResultsTitle")}</h1>
       <ShopMockBanner kind="hotel" />
 
       <div className="shop-flight-results-topbar shop-hotel-results-topbar">
@@ -490,8 +493,8 @@ export function ShopHotelResultsClient() {
             <strong>{summary.destination}</strong>
             <span>{summary.dates}</span>
             <span>
-              {arabicNightCount(summary.nights)} · {arabicGuestCount(summary.guests)} ·{" "}
-              {arabicRoomCount(summary.rooms)}
+              {shopNightCount(locale, summary.nights)} · {shopGuestCount(locale, summary.guests)} ·{" "}
+              {shopRoomCount(locale, summary.rooms)}
             </span>
           </div>
           <div className="shop-flight-results-topbar-actions">

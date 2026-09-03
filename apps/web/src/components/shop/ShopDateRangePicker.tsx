@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { useShopCopy } from "@/components/shop/ShopI18nProvider";
 
 type Props = {
   checkIn: string;
@@ -34,17 +35,25 @@ function addDays(iso: string, days: number) {
   return toIso(d);
 }
 
-function formatShort(iso: string) {
+function formatShort(iso: string, locale: string) {
   const d = parseIso(iso);
   if (!d) return "—";
-  return d.toLocaleDateString("ar-KW", { weekday: "short", day: "numeric", month: "short" });
+  return d.toLocaleDateString(locale === "en" ? "en-GB" : "ar-KW", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+  });
 }
 
-function monthLabel(year: number, month: number) {
-  return new Date(year, month, 1).toLocaleDateString("ar-KW", { month: "long", year: "numeric" });
+function monthLabel(year: number, month: number, locale: string) {
+  return new Date(year, month, 1).toLocaleDateString(locale === "en" ? "en-GB" : "ar-KW", {
+    month: "long",
+    year: "numeric",
+  });
 }
 
-const WEEKDAYS = ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
+const WEEKDAYS_AR = ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
+const WEEKDAYS_EN = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 function useIsMobile(breakpoint = 768) {
   const [mobile, setMobile] = useState(false);
@@ -80,6 +89,7 @@ function MonthGrid({
   draftIn,
   draftOut,
   onPick,
+  locale,
 }: {
   year: number;
   month: number;
@@ -87,8 +97,10 @@ function MonthGrid({
   draftIn: string;
   draftOut: string;
   onPick: (iso: string) => void;
+  locale: string;
 }) {
   const cells = useMemo(() => buildMonthCells(year, month, todayIso), [year, month, todayIso]);
+  const weekdays = locale === "en" ? WEEKDAYS_EN : WEEKDAYS_AR;
 
   function cellClass(iso: string) {
     const isStart = iso === draftIn;
@@ -107,9 +119,9 @@ function MonthGrid({
 
   return (
     <div className="shop-date-month">
-      <strong className="shop-date-month-title">{monthLabel(year, month)}</strong>
+      <strong className="shop-date-month-title">{monthLabel(year, month, locale)}</strong>
       <div className="shop-date-range-weekdays">
-        {WEEKDAYS.map((w) => (
+        {weekdays.map((w) => (
           <span key={w}>{w}</span>
         ))}
       </div>
@@ -140,11 +152,15 @@ export function ShopDateRangePicker({
   checkOut,
   onChange,
   className,
-  startLabel = "تاريخ الوصول",
-  endLabel = "تاريخ المغادرة",
-  placeholder = "اختر التواريخ",
+  startLabel,
+  endLabel,
+  placeholder,
   forcePortal = false,
 }: Props) {
+  const { t, locale } = useShopCopy();
+  const resolvedStart = startLabel || t("arrivalDate");
+  const resolvedEnd = endLabel || t("departDate");
+  const resolvedPlaceholder = placeholder || t("selectDates");
   const [open, setOpen] = useState(false);
   const [phase, setPhase] = useState<"checkin" | "checkout">("checkin");
   const [draftIn, setDraftIn] = useState(checkIn);
@@ -227,13 +243,13 @@ export function ShopDateRangePicker({
 
   const summary = open
     ? draftIn && draftOut
-      ? `${formatShort(draftIn)} – ${formatShort(draftOut)}`
+      ? `${formatShort(draftIn, locale)} – ${formatShort(draftOut, locale)}`
       : draftIn
-        ? `${formatShort(draftIn)} – …`
-        : placeholder
+        ? `${formatShort(draftIn, locale)} – …`
+        : resolvedPlaceholder
     : checkIn && checkOut
-      ? `${formatShort(checkIn)} – ${formatShort(checkOut)}`
-      : placeholder;
+      ? `${formatShort(checkIn, locale)} – ${formatShort(checkOut, locale)}`
+      : resolvedPlaceholder;
 
   const panel = (
     <div
@@ -242,15 +258,15 @@ export function ShopDateRangePicker({
       }`}
       role="dialog"
       aria-modal={usePortal ? true : undefined}
-      aria-label="اختيار التواريخ"
+      aria-label={t("selectDatesAria")}
     >
       <div className="shop-date-range-pop-head">
-        <p className="shop-date-range-phase">{phase === "checkin" ? startLabel : endLabel}</p>
+        <p className="shop-date-range-phase">{phase === "checkin" ? resolvedStart : resolvedEnd}</p>
         {usePortal ? (
           <button
             type="button"
             className="shop-date-range-close"
-            aria-label="إغلاق"
+            aria-label={t("close")}
             onClick={() => setOpen(false)}
           >
             ×
@@ -258,10 +274,10 @@ export function ShopDateRangePicker({
         ) : null}
       </div>
       <div className="shop-date-range-nav">
-        <button type="button" onClick={() => shiftMonth(-1)} aria-label="الشهر السابق">
+        <button type="button" onClick={() => shiftMonth(-1)} aria-label={t("calendarPrev")}>
           ‹
         </button>
-        <button type="button" onClick={() => shiftMonth(1)} aria-label="الشهر التالي">
+        <button type="button" onClick={() => shiftMonth(1)} aria-label={t("calendarNext")}>
           ›
         </button>
       </div>
@@ -273,6 +289,7 @@ export function ShopDateRangePicker({
           draftIn={draftIn}
           draftOut={draftOut}
           onPick={pickDay}
+          locale={locale}
         />
         <MonthGrid
           year={monthB.year}
@@ -281,11 +298,12 @@ export function ShopDateRangePicker({
           draftIn={draftIn}
           draftOut={draftOut}
           onPick={pickDay}
+          locale={locale}
         />
       </div>
       <div className="shop-date-range-footer">
         <span>
-          {formatShort(draftIn)} → {formatShort(draftOut)}
+          {formatShort(draftIn, locale)} → {formatShort(draftOut, locale)}
         </span>
         <button
           type="button"
@@ -297,7 +315,7 @@ export function ShopDateRangePicker({
             }
           }}
         >
-          تم
+          {t("done")}
         </button>
       </div>
     </div>
@@ -310,7 +328,7 @@ export function ShopDateRangePicker({
             <button
               type="button"
               className="shop-date-range-backdrop"
-              aria-label="إغلاق"
+              aria-label={t("close")}
               onClick={() => setOpen(false)}
             />
             {panel}

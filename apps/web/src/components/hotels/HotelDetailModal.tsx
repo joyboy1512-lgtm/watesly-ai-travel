@@ -13,11 +13,12 @@ import { HotelGallery } from "./HotelGallery";
 import { HotelMediaImage } from "./HotelMediaImage";
 import { pickHotelHighlightFacilities } from "@/lib/hotel-facilities";
 import {
-  arabicAdultCount,
-  arabicChildCount,
-  arabicNightCount,
-  arabicRoomCount,
+  shopAdultCount,
+  shopChildCount,
+  shopNightCount,
+  shopRoomCount,
 } from "@/lib/hotel-occupancy";
+import { useShopCopy } from "@/components/shop/ShopI18nProvider";
 
 type StayMeta = {
   stayQuery: string;
@@ -77,6 +78,7 @@ export function HotelDetailModal({
   fetchJson = apiFetch,
   variant = "default",
 }: Props) {
+  const { locale } = useShopCopy();
   const shopStyle = variant === "shop";
   const [descOpen, setDescOpen] = useState(false);
   const [selectedRate, setSelectedRate] = useState<HotelRateOption | null>(null);
@@ -418,11 +420,11 @@ export function HotelDetailModal({
               <div className="hotel-detail-modal-summary">
                 <p>
                   {formatDay(meta.departDate)} → {formatDay(meta.returnDate)} ·{" "}
-                  {arabicNightCount(nights)}
+                  {shopNightCount(locale, nights)}
                 </p>
                 <p>
-                  {arabicRoomCount(meta.rooms)} · {arabicAdultCount(meta.adults)}
-                  {meta.children ? ` · ${arabicChildCount(meta.children)}` : ""}
+                  {shopRoomCount(locale, meta.rooms)} · {shopAdultCount(locale, meta.adults)}
+                  {meta.children ? ` · ${shopChildCount(locale, meta.children)}` : ""}
                 </p>
                 {hotel.details.distanceToCenterLabel ? (
                   <p className="hotel-detail-distance">

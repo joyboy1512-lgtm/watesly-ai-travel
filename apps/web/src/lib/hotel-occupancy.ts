@@ -9,6 +9,14 @@ import {
   arabicTravelerCount as sharedTraveler,
   arabicNightWord,
   arabicRoomWord,
+  shopAdultCount,
+  shopChildCount,
+  shopGuestCount,
+  shopNightCount,
+  shopRoomCount,
+  shopTravelerCount,
+  tShop,
+  type ShopLocale,
 } from "@watesly-travel/shared";
 
 export type HotelRoomOccupancyInput = {
@@ -62,17 +70,24 @@ export function occupancyTotals(state: HotelOccupancyState) {
 }
 
 export function validateOccupancy(state: HotelOccupancyState): string | null {
-  if (!state.rooms.length) return "أضف غرفة واحدة على الأقل";
+  return validateOccupancyMessage(state, "ar");
+}
+
+export function validateOccupancyMessage(
+  state: HotelOccupancyState,
+  locale: ShopLocale = "ar",
+): string | null {
+  if (!state.rooms.length) return tShop(locale, "occMinRooms");
   for (let i = 0; i < state.rooms.length; i += 1) {
     const room = state.rooms[i]!;
-    if (room.adults < 1) return `الغرفة ${i + 1}: يجب وجود بالغ واحد على الأقل`;
+    if (room.adults < 1) return tShop(locale, "occMinAdult", { n: i + 1 });
     if (room.adults + room.childAges.length > 8) {
-      return `الغرفة ${i + 1}: الحد الأقصى 8 أشخاص`;
+      return tShop(locale, "occMaxPeople", { n: i + 1 });
     }
     for (let c = 0; c < room.childAges.length; c += 1) {
       const age = room.childAges[c];
       if (age == null || !Number.isFinite(age) || age < 0 || age > 17) {
-        return `الغرفة ${i + 1}: أدخل عمرًا صحيحًا للطفل ${c + 1} (0–17)`;
+        return tShop(locale, "occChildAge", { n: i + 1, c: c + 1 });
       }
     }
   }
@@ -94,3 +109,4 @@ export const arabicChildCount = sharedChild;
 export const arabicRoomCount = sharedRoom;
 export const arabicTravelerCount = sharedTraveler;
 export { arabicNightWord, arabicRoomWord };
+export { shopAdultCount, shopChildCount, shopGuestCount, shopNightCount, shopRoomCount, shopTravelerCount };

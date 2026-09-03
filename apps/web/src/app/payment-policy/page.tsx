@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 
 export default function PaymentPolicyPage() {
   return (
-    <LegalPageShell title="سياسة الدفع">
+    <LegalPageShell title="سياسة الدفع" titleKey="paymentPolicy">
       <p>
         تشغّل {COMPANY_LEGAL.legalNameAr} المدفوعات عبر بوابات معتمدة عند تفعيل
         حساب التاجر. في وضع Sandbox لا تُخصم مبالغ حقيقية.

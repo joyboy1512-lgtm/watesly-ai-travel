@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 
 export default function TermsPage() {
   return (
-    <LegalPageShell title="الشروط والأحكام">
+    <LegalPageShell title="الشروط والأحكام" titleKey="terms">
       <p>
         باستخدامك لموقع WeekendGate التابع لـ{COMPANY_LEGAL.legalNameAr} فإنك
         توافق على ما يلي:

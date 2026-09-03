@@ -19,12 +19,11 @@ export const metadata: Metadata = {
 export default function HotelResultsPage() {
   return (
     <StoreFront wide>
-      <h1 className="shop-flight-results-h1">نتائج البحث عن الفنادق والإقامات</h1>
       <Suspense
         fallback={
           <div className="shop-flight-results-loading">
             <div className="shop-flight-spinner" aria-hidden />
-            <p>جاري تحميل صفحة النتائج…</p>
+            <p>…</p>
           </div>
         }
       >

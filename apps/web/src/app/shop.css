@@ -1715,6 +1715,19 @@
   box-shadow: 0 4px 24px rgba(24, 74, 84, 0.06);
 }
 
+/* Locale toggle must stay clickable above the hero on the homepage */
+.shop-header .wg-header-dir,
+.shop-header .wg-topbar-lang,
+.shop-header [data-testid="shop-locale-toggle"] {
+  position: relative;
+  z-index: 60;
+  pointer-events: auto;
+  cursor: pointer;
+  min-height: 2.5rem;
+  min-width: 3.25rem;
+  padding-inline: 0.75rem;
+}
+
 .shop-header-inner {
   width: min(1200px, calc(100% - 2rem));
   margin: 0 auto;

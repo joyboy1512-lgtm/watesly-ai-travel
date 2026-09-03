@@ -3,15 +3,18 @@ import {
   Controller,
   Delete,
   Get,
+  Headers,
   Param,
   Patch,
   Post,
   Query,
+  Req,
   UploadedFile,
   UseGuards,
   UseInterceptors,
   BadRequestException,
 } from "@nestjs/common";
+import type { Request } from "express";
 import { FileInterceptor } from "@nestjs/platform-express";
 import { memoryStorage } from "multer";
 import { Public } from "../auth/decorators";
@@ -149,8 +152,15 @@ export class ShopController {
     return this.shop.checkHotelRate(body);
   }
 
+  @Post("unlock/request")
+  requestUnlock(@Body() body: { phone?: string }) {
+    return this.shop.requestUnlockOtp(body);
+  }
+
   @Post("unlock")
-  unlock(@Body() body: { phone?: string; name?: string; email?: string }) {
+  unlock(
+    @Body() body: { phone?: string; name?: string; email?: string; code?: string },
+  ) {
     return this.shop.unlock(body);
   }
 
@@ -256,9 +266,14 @@ export class ShopController {
   @Post("payments/webhook")
   paymentWebhook(
     @Body() body: Record<string, unknown>,
-    // Nest may parse JSON already — adapter still requires raw verification in real PSP
+    @Headers() headers: Record<string, string | string[] | undefined>,
+    @Req() req: Request & { rawBody?: Buffer },
   ) {
-    return this.shop.handlePaymentWebhook(body);
+    const raw =
+      req.rawBody && Buffer.isBuffer(req.rawBody)
+        ? req.rawBody.toString("utf8")
+        : undefined;
+    return this.shop.handlePaymentWebhook(body, headers, raw);
   }
 
   @Get("bookings")

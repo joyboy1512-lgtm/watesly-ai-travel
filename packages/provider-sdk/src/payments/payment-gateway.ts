@@ -1,3 +1,5 @@
+import { createHmac, timingSafeEqual } from "crypto";
+
 /**
  * Payment gateway adapter — Hosted Payment Page / tokenization oriented.
  * Never store raw PAN or CVV. Production must use merchant credentials via env.
@@ -165,17 +167,38 @@ export class SandboxHostedPaymentAdapter implements PaymentGatewayAdapter {
     headers: Record<string, string | string[] | undefined>,
     rawBody: string,
   ): Promise<PaymentWebhookEvent> {
-    const secret = process.env.PAYMENT_WEBHOOK_SECRET || "sandbox-webhook-secret";
-    const sig = String(headers["x-weekendgate-signature"] || headers["x-payment-signature"] || "");
-    if (this.environment === "production" && !sig) {
-      throw new Error("توقيع Webhook مفقود");
+    const secret =
+      process.env.PAYMENT_WEBHOOK_SECRET?.trim() ||
+      (this.environment === "production" ? "" : "sandbox-webhook-secret");
+    if (!secret) {
+      throw new Error("PAYMENT_WEBHOOK_SECRET غير مضبوط");
     }
-    if (sig && sig !== secret && !sig.startsWith("sandbox")) {
-      // Lightweight check — production PSP should use HMAC with secret manager
-      if (process.env.PAYMENT_WEBHOOK_SECRET && sig !== process.env.PAYMENT_WEBHOOK_SECRET) {
+
+    const rawSig = headers["x-weekendgate-signature"] ?? headers["x-payment-signature"] ?? "";
+    const sig = Array.isArray(rawSig) ? rawSig[0] || "" : String(rawSig || "");
+    const provided = sig.replace(/^sha256=/i, "").trim();
+
+    const allowLegacySandboxHeader =
+      this.environment !== "production" &&
+      process.env.PAYMENT_WEBHOOK_ALLOW_SANDBOX_HEADER === "1" &&
+      (sig === "sandbox" || sig.startsWith("sandbox"));
+
+    if (!allowLegacySandboxHeader) {
+      if (!provided) {
+        throw new Error("توقيع Webhook مفقود");
+      }
+      const expected = createHmac("sha256", secret).update(rawBody || "").digest("hex");
+      const a = Buffer.from(provided, "utf8");
+      const b = Buffer.from(expected, "utf8");
+      const match =
+        a.length === b.length && timingSafeEqual(a, b)
+          ? true
+          : provided === secret;
+      if (!match) {
         throw new Error("توقيع Webhook غير صالح");
       }
     }
+
     const body = JSON.parse(rawBody || "{}") as {
       intentId?: string;
       status?: PaymentIntentStatus;

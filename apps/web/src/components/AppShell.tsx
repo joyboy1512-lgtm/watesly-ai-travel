@@ -18,6 +18,7 @@ import {
   NAV_PERMISSIONS,
   SUPPORTED_CURRENCIES,
 } from "@watesly-travel/shared";
+import { WeekendGateLogo } from "@/components/shop/WeekendGateLogo";
 import { apiFetch, clearSession, getSession, type AuthSession } from "@/lib/api";
 import {
   getPreferredCurrency,
@@ -357,8 +358,8 @@ export function AppShell({
 
       <aside className="sidebar" id="app-sidebar">
         <div className="sidebar-head">
-          <Link href="/" className="brand brand-site-link" title="الموقع العام">
-            {APP_NAME}
+          <Link href="/" className="brand brand-site-link" title="الموقع العام" aria-label={APP_NAME}>
+            <WeekendGateLogo light />
           </Link>
           <p className="brand-legal">{COMPANY_LEGAL.legalNameAr}</p>
           <button

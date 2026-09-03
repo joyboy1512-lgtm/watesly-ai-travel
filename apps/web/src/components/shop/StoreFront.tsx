@@ -430,7 +430,9 @@ function StoreFrontInner({
       <footer className="shop-footer exp-footer">
         <div className="shop-footer-grid">
           <div>
-            <strong className="shop-footer-brand">{BRAND}</strong>
+            <Link href="/" className="shop-footer-brand-logo" aria-label="WeekendGate">
+              <WeekendGateLogo light />
+            </Link>
             <p>
               منصة حجز تابعة لـ{COMPANY_LEGAL.legalNameAr}: طيران، فنادق، نقل، وأنشطة.
             </p>

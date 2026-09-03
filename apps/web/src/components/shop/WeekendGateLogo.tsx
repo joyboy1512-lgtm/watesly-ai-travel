@@ -1,32 +1,26 @@
+/**
+ * Unified WeekendGate lockup — same asset family on every page.
+ * - light: white+gold (hero / dark overlays)
+ * - default: navy+gold (white headers)
+ */
 export function WeekendGateLogo({ light = false }: { light?: boolean }) {
-  // On hero (light), use the exact approved lockup asset for a 1:1 match.
-  if (light) {
-    return (
-      <span className="wg-logo wg-logo-lockup wg-logo-light" dir="ltr">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          className="wg-logo-lockup-img"
-          src="/brand/wg-lockup.png"
-          srcSet="/brand/wg-lockup.png 1x, /brand/wg-lockup@2x.png 2x"
-          alt="WeekendGate"
-          height={40}
-        />
-      </span>
-    );
-  }
+  const src = light ? "/brand/wg-lockup.png" : "/brand/wg-lockup-dark.png";
+  const srcSet = light
+    ? "/brand/wg-lockup.png 1x, /brand/wg-lockup@2x.png 2x"
+    : "/brand/wg-lockup-dark.png 1x, /brand/wg-lockup-dark@2x.png 2x";
 
   return (
-    <span className="wg-logo wg-logo-lockup" dir="ltr">
-      <span className="wg-logo-word">
-        Weekend<span className="wg-logo-gate">Gate</span>
-      </span>
+    <span
+      className={`wg-logo wg-logo-lockup${light ? " wg-logo-light" : " wg-logo-dark"}`}
+      dir="ltr"
+    >
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        className="wg-logo-mark"
-        src="/brand/wg-monogram-gold.png"
-        alt=""
-        width={76}
-        height={34}
+        className="wg-logo-lockup-img"
+        src={src}
+        srcSet={srcSet}
+        alt="WeekendGate"
+        height={40}
       />
     </span>
   );

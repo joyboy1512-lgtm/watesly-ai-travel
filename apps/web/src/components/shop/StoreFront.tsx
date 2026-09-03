@@ -12,8 +12,8 @@ import {
 import { WeekendGateLogo } from "@/components/shop/WeekendGateLogo";
 import {
   COMPANY_LEGAL,
+  pickLocalized,
   type ShopCurrency,
-  type ShopLocale,
 } from "@watesly-travel/shared";
 import { platformEnabled } from "@/lib/platform-flags";
 import { newUiEnabled } from "@/lib/new-ui-flags";
@@ -157,8 +157,8 @@ function StoreFrontInner({
                   <a
                     href={`tel:${COMPANY_LEGAL.phoneE164}`}
                     className="wg-topbar-text wg-topbar-phone"
-                    aria-label={`اتصل بنا ${COMPANY_LEGAL.phoneDisplay}`}
-                    title="اتصل بنا"
+                    aria-label={`${t("callUs")} ${COMPANY_LEGAL.phoneDisplay}`}
+                    title={t("callUs")}
                   >
                     <IconPhone />
                     <span dir="ltr">{COMPANY_LEGAL.phoneDisplay}</span>
@@ -168,8 +168,8 @@ function StoreFrontInner({
                     target="_blank"
                     rel="noreferrer"
                     className="wg-topbar-icon-btn wg-topbar-whatsapp"
-                    aria-label="واتساب"
-                    title="واتساب"
+                    aria-label={t("whatsapp")}
+                    title={t("whatsapp")}
                   >
                     <IconWhatsApp />
                   </a>
@@ -179,16 +179,16 @@ function StoreFrontInner({
                   <button
                     type="button"
                     className="wg-topbar-text wg-topbar-lang"
-                    title="اللغة"
-                    aria-label="تبديل اللغة"
+                    title={t("language")}
+                    aria-label={t("toggleLanguage")}
                     onClick={() => setLocale(locale === "ar" ? "en" : "ar")}
                   >
                     <IconGlobe />
                     <span>{locale === "ar" ? "العربية" : "EN"}</span>
                   </button>
-                  <label className="wg-topbar-text wg-topbar-currency" title="العملة">
+                  <label className="wg-topbar-text wg-topbar-currency" title={t("currency")}>
                     <select
-                      aria-label="العملة"
+                      aria-label={t("currency")}
                       value={currency}
                       onChange={(e) => setCurrency(e.target.value as ShopCurrency)}
                     >
@@ -224,13 +224,13 @@ function StoreFrontInner({
                     {userMenuOpen ? (
                       <div className="wg-header-user-menu" role="menu">
                         <Link href="/account" role="menuitem">
-                          بياناتي
+                          {t("navMyData")}
                         </Link>
                         <Link href="/bookings/manage" role="menuitem">
-                          حجوزاتي
+                          {t("navMyBookings")}
                         </Link>
                         <button type="button" role="menuitem" onClick={logout}>
-                          خروج
+                          {t("navLogout")}
                         </button>
                       </div>
                     ) : null}
@@ -241,7 +241,7 @@ function StoreFrontInner({
                     className="wg-topbar-text wg-topbar-signin wg-topbar-account"
                   >
                     <IconUser />
-                    <span>تسجيل الدخول</span>
+                    <span>{t("navSignIn")}</span>
                   </Link>
                 )}
               </div>
@@ -252,7 +252,7 @@ function StoreFrontInner({
                 href={`tel:${COMPANY_LEGAL.phoneE164}`}
                 className="wg-topbar-mobile-phone"
               >
-                اتصل بنا · {COMPANY_LEGAL.phoneDisplay}
+                {t("callUs")} · {COMPANY_LEGAL.phoneDisplay}
               </a>
               <a
                 href={COMPANY_LEGAL.whatsappUrl}
@@ -260,7 +260,7 @@ function StoreFrontInner({
                 rel="noreferrer"
                 className="wg-topbar-mobile-whatsapp"
               >
-                واتساب · {COMPANY_LEGAL.phoneDisplay}
+                {t("whatsapp")} · {COMPANY_LEGAL.phoneDisplay}
               </a>
               <Link href="/chat">AI</Link>
               <button
@@ -268,12 +268,12 @@ function StoreFrontInner({
                 className="wg-topbar-mobile-lang"
                 onClick={() => setLocale(locale === "ar" ? "en" : "ar")}
               >
-                اللغة · {locale === "ar" ? "العربية" : "EN"}
+                {t("language")} · {locale === "ar" ? "العربية" : "EN"}
               </button>
               <label className="wg-header-menu-currency wg-topbar-mobile-currency">
-                <span>العملة</span>
+                <span>{t("currency")}</span>
                 <select
-                  aria-label="العملة"
+                  aria-label={t("currency")}
                   value={currency}
                   onChange={(e) => setCurrency(e.target.value as ShopCurrency)}
                 >
@@ -286,12 +286,12 @@ function StoreFrontInner({
               </label>
               {customer ? (
                 <>
-                  <Link href="/account">بياناتي</Link>
-                  <Link href="/bookings/manage">حجوزاتي</Link>
+                  <Link href="/account">{t("navMyData")}</Link>
+                  <Link href="/bookings/manage">{t("navMyBookings")}</Link>
                   <label className="wg-header-menu-currency">
-                    <span>العملة</span>
+                    <span>{t("currency")}</span>
                     <select
-                      aria-label="العملة"
+                      aria-label={t("currency")}
                       value={currency}
                       onChange={(e) => setCurrency(e.target.value as ShopCurrency)}
                     >
@@ -303,11 +303,11 @@ function StoreFrontInner({
                     </select>
                   </label>
                   <button type="button" onClick={logout}>
-                    خروج
+                    {t("navLogout")}
                   </button>
                 </>
               ) : (
-                <Link href="/account/login">تسجيل الدخول</Link>
+                <Link href="/account/login">{t("navSignIn")}</Link>
               )}
               {platformEnabled() ? (
                 <>
@@ -340,7 +340,7 @@ function StoreFrontInner({
                 <a
                   href={`tel:${COMPANY_LEGAL.phoneE164}`}
                   className="wg-header-chip wg-header-phone"
-                  title="اتصل بنا"
+                  title={t("callUs")}
                 >
                   <span className="wg-header-chip-ico" aria-hidden>
                     📞
@@ -348,12 +348,12 @@ function StoreFrontInner({
                   <span className="wg-header-chip-text">{COMPANY_LEGAL.phoneDisplay}</span>
                 </a>
 
-                <label className="wg-header-chip" title="العملة">
+                <label className="wg-header-chip" title={t("currency")}>
                   <span className="wg-header-chip-ico" aria-hidden>
                     💱
                   </span>
                   <select
-                    aria-label="العملة"
+                    aria-label={t("currency")}
                     value={currency}
                     onChange={(e) => setCurrency(e.target.value as ShopCurrency)}
                   >
@@ -368,14 +368,16 @@ function StoreFrontInner({
                 <button
                   type="button"
                   className="wg-header-chip wg-header-dir"
-                  title="اتجاه النص"
-                  aria-label="تبديل اتجاه النص"
+                  title={t("language")}
+                  aria-label={t("toggleLanguage")}
                   onClick={() => setLocale(locale === "ar" ? "en" : "ar")}
                 >
                   <span className="wg-header-chip-ico" aria-hidden>
                     ⇄
                   </span>
-                  <span className="wg-header-chip-text">{locale === "ar" ? "RTL" : "LTR"}</span>
+                  <span className="wg-header-chip-text">
+                    {locale === "ar" ? "العربية" : "EN"}
+                  </span>
                 </button>
 
                 {customer ? (
@@ -384,7 +386,7 @@ function StoreFrontInner({
                       {customer.name || customer.phone}
                     </Link>
                     <button type="button" className="wg-header-logout" onClick={logout}>
-                      خروج
+                      {t("navLogout")}
                     </button>
                   </div>
                 ) : (
@@ -421,16 +423,18 @@ function StoreFrontInner({
               <WeekendGateLogo light />
             </Link>
             <p>
-              منصة حجز تابعة لـ{COMPANY_LEGAL.legalNameAr}: طيران، فنادق، نقل، وأنشطة.
+              {t("footerTagline", {
+                legal: pickLocalized(locale, COMPANY_LEGAL.legalNameAr, COMPANY_LEGAL.legalNameEn),
+              })}
             </p>
             <p className="shop-footer-legal-meta">
-              {COMPANY_LEGAL.addressAr}
+              {t("address")}
               <br />
-              ترخيص سياحي رقم {COMPANY_LEGAL.tourismLicense}
+              {t("tourismLicenseNo", { n: COMPANY_LEGAL.tourismLicense })}
             </p>
           </div>
           <div>
-            <strong>استكشف</strong>
+            <strong>{t("explore")}</strong>
             {platformEnabled() ? (
               <>
                 <Link href="/destinations">{t("navDestinations")}</Link>
@@ -440,66 +444,66 @@ function StoreFrontInner({
             ) : (
               <>
                 <Link href="/#destinations">{t("navDestinations")}</Link>
-                <Link href="/#offers">العروض</Link>
+                <Link href="/#offers">{t("navOffers")}</Link>
               </>
             )}
-            <Link href="/#search">البحث</Link>
-            <Link href="/chat">المساعد الذكي</Link>
-            <Link href="/bookings/manage">إدارة حجزي</Link>
+            <Link href="/#search">{t("navSearch")}</Link>
+            <Link href="/chat">{t("aiAssistant")}</Link>
+            <Link href="/bookings/manage">{t("manageBooking")}</Link>
             <Link href="/faq">{t("navFaq")}</Link>
           </div>
           <div>
-            <strong>قانوني</strong>
-            <Link href="/terms">الشروط والأحكام</Link>
-            <Link href="/privacy">سياسة الخصوصية</Link>
+            <strong>{t("legal")}</strong>
+            <Link href="/terms">{t("terms")}</Link>
+            <Link href="/privacy">{t("privacy")}</Link>
             <Link href="/booking-policy">{t("navPolicy")}</Link>
-            <Link href="/payment-policy">سياسة الدفع</Link>
+            <Link href="/payment-policy">{t("paymentPolicy")}</Link>
             <Link href="/about">{t("navAbout")}</Link>
           </div>
           <div>
             <strong>{t("navContact")}</strong>
             <a href={`tel:${COMPANY_LEGAL.phoneE164}`}>{COMPANY_LEGAL.phoneDisplay}</a>
             <a href={COMPANY_LEGAL.whatsappUrl} target="_blank" rel="noreferrer">
-              واتساب {COMPANY_LEGAL.phoneDisplay}
+              {t("whatsapp")} {COMPANY_LEGAL.phoneDisplay}
             </a>
             <a href={`mailto:${COMPANY_LEGAL.supportEmail}`}>{COMPANY_LEGAL.supportEmail}</a>
-            <span>{COMPANY_LEGAL.hoursAr}</span>
+            <span>{t("hours")}</span>
           </div>
         </div>
         <p className="shop-footer-copy" suppressHydrationWarning>
-          © {new Date().getFullYear()} {BRAND}. جميع الحقوق محفوظة.
+          © {new Date().getFullYear()} {BRAND}. {t("allRights")}
         </p>
       </footer>
 
       {newUi ? (
-        <nav className="wg-bottom-nav" aria-label="التنقل الرئيسي">
+        <nav className="wg-bottom-nav" aria-label={t("mainNav")}>
           <Link href="/" className={pathname === "/" ? "active" : ""}>
             <span className="wg-nav-ico">🏠</span>
-            الرئيسية
+            {t("navHome")}
           </Link>
           <Link href="/flights/results" className={navActive("/flights") ? "active" : ""}>
             <span className="wg-nav-ico">✈</span>
-            طيران
+            {t("searchFlights")}
           </Link>
           <Link href="/hotels/results" className={navActive("/hotels") ? "active" : ""}>
             <span className="wg-nav-ico">🏨</span>
-            فنادق
+            {t("searchHotels")}
           </Link>
           {platformEnabled() ? (
             <Link href="/deals" className={navActive("/deals") ? "active" : ""}>
               <span className="wg-nav-ico">🔥</span>
-              عروض
+              {t("navOffers")}
             </Link>
           ) : (
             <Link href="/#search" className="">
               <span className="wg-nav-ico">🔍</span>
-              بحث
+              {t("navSearch")}
             </Link>
           )}
           {customer ? (
             <Link href="/account" className={navActive("/account") ? "active" : ""}>
               <span className="wg-nav-ico">👤</span>
-              حسابي
+              {t("navAccount")}
             </Link>
           ) : (
             <Link

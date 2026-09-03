@@ -1,3 +1,5 @@
+import { tShop, type ShopLocale, type ShopUiKey } from "@watesly-travel/shared";
+
 export type ShopDestination = {
   id: string;
   name: string;
@@ -230,3 +232,151 @@ export const SHOP_FEATURES = [
     text: "كل رحلتك تبدأ من مكان واحد — من البحث إلى المراجعة والمتابعة.",
   },
 ] as const;
+
+export function shopStatsFor(locale: ShopLocale) {
+  return [
+    { value: "+12K", label: tShop(locale, "statHappy") },
+    { value: "4.9", label: tShop(locale, "statRating") },
+    { value: "48", label: tShop(locale, "statDest") },
+    { value: "24/7", label: tShop(locale, "statSupport") },
+  ];
+}
+
+const DEST_I18N: Record<string, { name: ShopUiKey; country: ShopUiKey; tag: ShopUiKey; n: number }> = {
+  dubai: { name: "destDubai", country: "countryAE", tag: "tagPopular", n: 89 },
+  istanbul: { name: "destIstanbul", country: "countryTR", tag: "tagCulture", n: 72 },
+  maldives: { name: "destMaldives", country: "countryMV", tag: "tagBeach", n: 210 },
+  london: { name: "destLondon", country: "countryGB", tag: "tagFamilies", n: 145 },
+  paris: { name: "destParis", country: "countryFR", tag: "tagRomance", n: 138 },
+  doha: { name: "destDoha", country: "countryQA", tag: "tagNearby", n: 45 },
+};
+
+export function shopDestinationsFor(locale: ShopLocale): ShopDestination[] {
+  return SHOP_DESTINATIONS.map((d) => {
+    const keys = DEST_I18N[d.id];
+    if (!keys) return d;
+    return {
+      ...d,
+      name: tShop(locale, keys.name),
+      country: tShop(locale, keys.country),
+      tag: tShop(locale, keys.tag),
+      fromPrice: tShop(locale, "fromPriceKwd", { n: keys.n }),
+    };
+  });
+}
+
+const OFFER_I18N: Record<
+  string,
+  { title: ShopUiKey; subtitle: ShopUiKey; badge: ShopUiKey; n: number; dest?: ShopUiKey }
+> = {
+  "offer-dxb-stay": {
+    title: "offerStayTitle",
+    subtitle: "offerStaySub",
+    badge: "offerStayBadge",
+    n: 185,
+    dest: "destDubai",
+  },
+  "offer-kwi-dxb": {
+    title: "offerFlightTitle",
+    subtitle: "offerFlightSub",
+    badge: "offerFlightBadge",
+    n: 89,
+    dest: "destDubai",
+  },
+  "offer-transfer": {
+    title: "offerTransferTitle",
+    subtitle: "offerTransferSub",
+    badge: "offerTransferBadge",
+    n: 18,
+    dest: "countryKW",
+  },
+  "offer-activity": {
+    title: "offerActivityTitle",
+    subtitle: "offerActivitySub",
+    badge: "offerActivityBadge",
+    n: 32,
+    dest: "destDubai",
+  },
+};
+
+export function shopOffersFor(locale: ShopLocale): ShopOffer[] {
+  return SHOP_OFFERS.map((offer) => {
+    const keys = OFFER_I18N[offer.id];
+    if (!keys) return offer;
+    return {
+      ...offer,
+      title: tShop(locale, keys.title),
+      subtitle: tShop(locale, keys.subtitle),
+      badge: tShop(locale, keys.badge),
+      priceLabel: tShop(locale, "fromPriceKwd", { n: keys.n }),
+      destination: keys.dest ? tShop(locale, keys.dest) : offer.destination,
+    };
+  });
+}
+
+export function shopReviewsFor(locale: ShopLocale): ShopReview[] {
+  const cities: ShopUiKey[] = ["countryKW", "cityAhmadi", "cityRiyadh"];
+  const texts: ShopUiKey[] = ["review1Text", "review2Text", "review3Text"];
+  const trips: ShopUiKey[] = ["review1Trip", "review2Trip", "review3Trip"];
+  return SHOP_REVIEWS.map((review, i) => ({
+    ...review,
+    city: tShop(locale, cities[i] || "countryKW"),
+    text: tShop(locale, texts[i] || "review1Text"),
+    trip: tShop(locale, trips[i] || "review1Trip"),
+  }));
+}
+
+export function heroSlidesFor(locale: ShopLocale) {
+  const keys = [
+    {
+      kicker: "hero1Kicker",
+      title: "hero1Title",
+      subtitle: "hero1Subtitle",
+      description: "hero1Desc",
+    },
+    {
+      kicker: "hero2Kicker",
+      title: "hero2Title",
+      subtitle: "hero2Subtitle",
+      description: "hero2Desc",
+    },
+    {
+      kicker: "hero3Kicker",
+      title: "hero3Title",
+      subtitle: "hero3Subtitle",
+      description: "hero3Desc",
+    },
+  ] as const;
+  return HERO_SLIDES.map((slide, i) => ({
+    ...slide,
+    kicker: tShop(locale, keys[i]!.kicker),
+    title: tShop(locale, keys[i]!.title),
+    subtitle: tShop(locale, keys[i]!.subtitle),
+    description: tShop(locale, keys[i]!.description),
+  }));
+}
+
+export function shopFeaturesFor(locale: ShopLocale) {
+  return [
+    {
+      icon: "🌊",
+      title: tShop(locale, "featureSearchTitle"),
+      text: tShop(locale, "featureSearchText"),
+    },
+    {
+      icon: "🛡️",
+      title: tShop(locale, "featureSafeTitle"),
+      text: tShop(locale, "featureSafeText"),
+    },
+    {
+      icon: "💬",
+      title: tShop(locale, "featureAiTitle"),
+      text: tShop(locale, "featureAiText"),
+    },
+    {
+      icon: "✈️",
+      title: tShop(locale, "featureOneTitle"),
+      text: tShop(locale, "featureOneText"),
+    },
+  ];
+}

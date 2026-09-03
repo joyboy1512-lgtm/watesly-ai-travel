@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { ShopAutocomplete, type SuggestItem } from "@/components/shop/ShopAutocomplete";
 import { ShopDateRangePicker } from "@/components/shop/ShopDateRangePicker";
+import { useShopI18n } from "@/components/shop/ShopI18nProvider";
+import { shopGuestCount, shopRoomCount } from "@/lib/hotel-occupancy";
 
 type Props = {
   stayQuery: string;
@@ -25,7 +27,11 @@ type Props = {
 
 export function ShopHotelResultsBar(props: Props) {
   const [guestsOpen, setGuestsOpen] = useState(false);
-  const guestSummary = `${props.adults + props.children} ضيف · ${props.rooms} غرفة`;
+  const { t, locale } = useShopI18n();
+  const guestSummary = t("guestRoomSummary", {
+    guests: shopGuestCount(locale, props.adults + props.children),
+    rooms: shopRoomCount(locale, props.rooms),
+  });
 
   return (
     <div className="shop-hotel-results-bar-wrap">
@@ -42,10 +48,10 @@ export function ShopHotelResultsBar(props: Props) {
           </span>
           <ShopAutocomplete
             inline
-            label="الوجهة"
+            label={t("destination")}
             value={props.stayQuery}
             display={props.stayQuery}
-            placeholder="مدينة أو فندق"
+            placeholder={t("cityOrHotel")}
             onQuery={props.searchCities}
             onClearText={props.onStayQueryChange}
             onPick={props.onStayPick}
@@ -80,7 +86,7 @@ export function ShopHotelResultsBar(props: Props) {
           {guestsOpen ? (
             <div className="shop-hotel-results-bar-guests-pop">
               <div className="exp-travelers-row">
-                <span>بالغون</span>
+                <span>{t("adults")}</span>
                 <div className="exp-stepper">
                   <button
                     type="button"
@@ -95,7 +101,7 @@ export function ShopHotelResultsBar(props: Props) {
                 </div>
               </div>
               <div className="exp-travelers-row">
-                <span>أطفال</span>
+                <span>{t("children")}</span>
                 <div className="exp-stepper">
                   <button
                     type="button"
@@ -110,7 +116,7 @@ export function ShopHotelResultsBar(props: Props) {
                 </div>
               </div>
               <div className="exp-travelers-row">
-                <span>غرف</span>
+                <span>{t("rooms")}</span>
                 <div className="exp-stepper">
                   <button
                     type="button"
@@ -125,14 +131,14 @@ export function ShopHotelResultsBar(props: Props) {
                 </div>
               </div>
               <button type="button" className="exp-pop-done" onClick={() => setGuestsOpen(false)}>
-                تم
+                {t("done")}
               </button>
             </div>
           ) : null}
         </div>
 
         <button type="submit" className="shop-hotel-results-bar-search" disabled={props.loading}>
-          {props.loading ? "..." : "بحث"}
+          {props.loading ? "..." : t("search")}
         </button>
       </form>
     </div>

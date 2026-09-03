@@ -14,7 +14,8 @@ import {
   type HotelRoomOption,
 } from "@/lib/hotel-search";
 import { formatMoneyMinor } from "@/lib/format";
-import { arabicNightCount } from "@/lib/hotel-occupancy";
+import { shopNightCount } from "@/lib/hotel-occupancy";
+import { useShopCopy } from "@/components/shop/ShopI18nProvider";
 import { HotelMediaImage } from "@/components/hotels/HotelMediaImage";
 
 type Props = {
@@ -77,14 +78,20 @@ function cancellationSummary(rate: HotelRateOption) {
   return { text: "غير قابل للاسترداد", deadline: "لا استرداد", good: false };
 }
 
-function nightlyHint(rate: HotelRateOption, nights: number, perNightMinor: number, currency: string) {
+function nightlyHint(
+  rate: HotelRateOption,
+  nights: number,
+  perNightMinor: number,
+  currency: string,
+  locale: "ar" | "en",
+) {
   const daily = rate.dailyRates?.filter((d) => d.net != null) || [];
   if (daily.length) {
     const first = daily[0];
     const label = first?.date ? `ليلة ${first.date}` : "لليلة الأولى";
     return `${first?.net} ${rate.currency} ${label}`;
   }
-  return `${formatMoneyMinor(perNightMinor, currency)} / ليلة · ${arabicNightCount(nights)}`;
+  return `${formatMoneyMinor(perNightMinor, currency)} / ${locale === "en" ? "night" : "ليلة"} · ${shopNightCount(locale, nights)}`;
 }
 
 function taxHint(rate: HotelRateOption) {
@@ -105,6 +112,7 @@ export function HotelRoomAccordion({
   shopStyle,
   onBookRate,
 }: Props) {
+  const { t, locale } = useShopCopy();
   const rooms = useMemo(() => {
     const raw = hotel.details.rooms;
     const fromDetails = Array.isArray(raw) ? (raw as HotelRoomOption[]) : [];
@@ -133,7 +141,7 @@ export function HotelRoomAccordion({
         <h2>اختر نوع الغرفة</h2>
         <p>
           {rooms.length} {rooms.length === 1 ? "نوع" : "أنواع"} · {hotel.matchingRates.length}{" "}
-          {hotel.matchingRates.length === 1 ? "سعر" : "أسعار"} · {arabicNightCount(nights)}
+          {hotel.matchingRates.length === 1 ? t("priceOne") : t("prices")} · {shopNightCount(locale, nights)}
         </p>
       </header>
 
@@ -236,7 +244,7 @@ export function HotelRoomAccordion({
                       </div>
                       <div className="hotel-rate-col price">
                         <strong>{formatMoneyMinor(totalMinor, hotel.currency)}</strong>
-                        <small>{nightlyHint(rate, nights, perNightMinor, hotel.currency)}</small>
+                        <small>{nightlyHint(rate, nights, perNightMinor, hotel.currency, locale)}</small>
                         {taxes ? <small>{taxes}</small> : null}
                         {rate.dailyRates && rate.dailyRates.length > 1 ? (
                           <details className="hotel-rate-daily">

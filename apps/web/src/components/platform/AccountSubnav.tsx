@@ -3,24 +3,27 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
+import { useShopI18n } from "@/components/shop/ShopI18nProvider";
+import type { ShopUiKey } from "@watesly-travel/shared";
 
-const LINKS = [
-  { href: "/account", label: "حسابي" },
-  { href: "/account/trips", label: "رحلاتي" },
-  { href: "/account/points", label: "النقاط" },
-  { href: "/account/alerts", label: "تنبيهات السعر" },
-  { href: "/account/referrals", label: "الإحالات" },
-  { href: "/account/notifications", label: "الإشعارات" },
+const LINKS: Array<{ href: string; key: ShopUiKey }> = [
+  { href: "/account", key: "navAccount" },
+  { href: "/account/trips", key: "myTrips" },
+  { href: "/account/points", key: "pointsNav" },
+  { href: "/account/alerts", key: "priceAlertsNav" },
+  { href: "/account/referrals", key: "referrals" },
+  { href: "/account/notifications", key: "notifications" },
 ];
 
 export function AccountSubnav({ children }: { children?: ReactNode }) {
   const pathname = usePathname();
+  const { t } = useShopI18n();
   return (
     <>
-      <nav className="wg-account-nav" aria-label="حساب العميل">
+      <nav className="wg-account-nav" aria-label={t("accountCustomer")}>
         {LINKS.map((l) => (
           <Link key={l.href} href={l.href} className={pathname === l.href ? "on" : undefined}>
-            {l.label}
+            {t(l.key)}
           </Link>
         ))}
       </nav>

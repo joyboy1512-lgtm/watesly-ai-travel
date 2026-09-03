@@ -2,25 +2,30 @@
 
 import Link from "next/link";
 import {
-  SHOP_DESTINATIONS,
-  SHOP_FEATURES,
-  SHOP_OFFERS,
-  SHOP_REVIEWS,
-  SHOP_STATS,
+  shopDestinationsFor,
+  shopFeaturesFor,
+  shopOffersFor,
+  shopReviewsFor,
+  shopStatsFor,
   type ShopDestination,
   type ShopOffer,
 } from "@/lib/shop-content";
-import { DESTINATION_GUIDES, WEEKEND_DEALS } from "@watesly-travel/shared";
+import {
+  DESTINATION_GUIDES,
+  WEEKEND_DEALS,
+  pickLocalized,
+} from "@watesly-travel/shared";
 import { platformEnabled } from "@/lib/platform-flags";
+import { useShopI18n } from "@/components/shop/ShopI18nProvider";
 
 type Props = {
   onPickDestination: (dest: ShopDestination) => void;
   onPickOffer: (offer: ShopOffer) => void;
 };
 
-function Stars({ value }: { value: number }) {
+function Stars({ value, ofFive }: { value: number; ofFive: string }) {
   return (
-    <span className="shop-stars" aria-label={`${value} من 5`}>
+    <span className="shop-stars" aria-label={ofFive}>
       {Array.from({ length: 5 }, (_, i) => (
         <span key={i} className={i < Math.round(value) ? "on" : undefined}>
           ★
@@ -30,40 +35,55 @@ function Stars({ value }: { value: number }) {
   );
 }
 
-function guideToShopDest(slug: string): ShopDestination | null {
-  const g = DESTINATION_GUIDES.find((d) => d.slug === slug);
-  if (!g) return null;
-  return {
-    id: g.slug,
-    name: g.nameAr,
-    country: g.countryAr,
-    code: g.airportCode,
-    tag: g.flag,
-    image: g.image,
-    fromPrice: g.costHintAr.replace(/^[^~]*~?/, "من ").slice(0, 24) || "عرض خاص",
-    rating: 4.9,
-    reviews: 500,
-  };
-}
-
 export function ShopLanding({ onPickDestination, onPickOffer }: Props) {
-  const footerStats = SHOP_STATS.filter(
-    (row) => row.label !== "مسافر سعيد" && row.label !== "تقييم العملاء",
+  const { t, locale } = useShopI18n();
+  const destinations = shopDestinationsFor(locale);
+  const offers = shopOffersFor(locale);
+  const reviews = shopReviewsFor(locale);
+  const features = shopFeaturesFor(locale);
+  const stats = shopStatsFor(locale);
+  const footerStats = stats.filter(
+    (row) => row.label !== t("statHappy") && row.label !== t("statRating"),
   );
   const platformOn = platformEnabled();
+
+  function guideToShopDest(slug: string): ShopDestination | null {
+    const g = DESTINATION_GUIDES.find((d) => d.slug === slug);
+    if (!g) return null;
+    const cost = pickLocalized(locale, g.costHintAr, g.costHintEn);
+    const priceMatch = cost.match(/~\s*(\d+)/);
+    return {
+      id: g.slug,
+      name: pickLocalized(locale, g.nameAr, g.nameEn),
+      country: pickLocalized(locale, g.countryAr, g.countryEn),
+      code: g.airportCode,
+      tag: g.flag,
+      image: g.image,
+      fromPrice: priceMatch
+        ? t("fromPriceKwd", { n: priceMatch[1]! })
+        : t("specialOffer"),
+      rating: 4.9,
+      reviews: 500,
+    };
+  }
+
   const destCards = platformOn
-    ? DESTINATION_GUIDES.map((g) => ({
-        slug: g.slug,
-        name: g.nameAr,
-        country: g.countryAr,
-        flag: g.flag,
-        image: g.image,
-        tag: g.bestTimeAr.slice(0, 28),
-        fromPrice: g.costHintAr.match(/~\s*(\d+)/)?.[1]
-          ? `من ${g.costHintAr.match(/~\s*(\d+)/)?.[1]} د.ك`
-          : "عرض خاص",
-        shop: guideToShopDest(g.slug),
-      }))
+    ? DESTINATION_GUIDES.map((g) => {
+        const cost = pickLocalized(locale, g.costHintAr, g.costHintEn);
+        const priceMatch = cost.match(/~\s*(\d+)/);
+        return {
+          slug: g.slug,
+          name: pickLocalized(locale, g.nameAr, g.nameEn),
+          country: pickLocalized(locale, g.countryAr, g.countryEn),
+          flag: g.flag,
+          image: g.image,
+          tag: pickLocalized(locale, g.bestTimeAr, g.bestTimeEn).slice(0, 28),
+          fromPrice: priceMatch
+            ? t("fromPriceKwd", { n: priceMatch[1]! })
+            : t("specialOffer"),
+          shop: guideToShopDest(g.slug),
+        };
+      })
     : null;
 
   return (
@@ -71,21 +91,17 @@ export function ShopLanding({ onPickDestination, onPickOffer }: Props) {
       <section className="shop-section" id="destinations">
         <div className="shop-section-head">
           <div>
-            <p className="shop-kicker">وجهات مميزة</p>
-            <h2>اكتشف العالم بطريقتك</h2>
-            <p className="shop-lead">
-              {platformOn
-                ? "وجهات مختارة بصفحات كاملة — افتح الوجهة أو املأ محرك البحث فوراً."
-                : "وجهات مختارة بصور حقيقية وتقييمات مسافرين — اضغط على أي وجهة لملء البحث فوراً."}
-            </p>
+            <p className="shop-kicker">{t("destKicker")}</p>
+            <h2>{t("destTitle")}</h2>
+            <p className="shop-lead">{platformOn ? t("destLeadPlatform") : t("destLead")}</p>
           </div>
           {platformOn ? (
             <Link href="/destinations" className="shop-btn-ghost">
-              كل الوجهات
+              {t("allDestinations")}
             </Link>
           ) : (
             <Link href="/#search" className="shop-btn-ghost">
-              ابحث الآن
+              {t("searchNow")}
             </Link>
           )}
         </div>
@@ -110,7 +126,7 @@ export function ShopLanding({ onPickDestination, onPickOffer }: Props) {
                         <p>{dest.country}</p>
                       </div>
                       <div className="shop-dest-meta">
-                        <Stars value={4.9} />
+                        <Stars value={4.9} ofFive={t("ofFive", { n: 4.9 })} />
                         <small>{dest.tag}</small>
                         <strong>{dest.fromPrice}</strong>
                       </div>
@@ -123,12 +139,12 @@ export function ShopLanding({ onPickDestination, onPickOffer }: Props) {
                       style={{ margin: "0.5rem 0.75rem 0.75rem" }}
                       onClick={() => onPickDestination(dest.shop!)}
                     >
-                      املأ البحث
+                      {t("fillSearch")}
                     </button>
                   ) : null}
                 </div>
               ))
-            : SHOP_DESTINATIONS.map((dest) => (
+            : destinations.map((dest) => (
                 <button
                   key={dest.id}
                   type="button"
@@ -144,8 +160,8 @@ export function ShopLanding({ onPickDestination, onPickOffer }: Props) {
                       <p>{dest.country}</p>
                     </div>
                     <div className="shop-dest-meta">
-                      <Stars value={dest.rating} />
-                      <small>{dest.reviews.toString()} تقييم</small>
+                      <Stars value={dest.rating} ofFive={t("ofFive", { n: dest.rating })} />
+                      <small>{t("reviewsCount", { n: dest.reviews })}</small>
                       <strong>{dest.fromPrice}</strong>
                     </div>
                   </div>
@@ -157,12 +173,12 @@ export function ShopLanding({ onPickDestination, onPickOffer }: Props) {
       <section className="shop-section shop-section-soft" id="offers">
         <div className="shop-section-head">
           <div>
-            <p className="shop-kicker">{platformOn ? "Weekend Deals" : "عروض الأسبوع"}</p>
-            <h2>{platformOn ? "عروض نهاية الأسبوع من الكويت" : "باقات جاهزة بأسعار تبدأ من"}</h2>
+            <p className="shop-kicker">{platformOn ? "Weekend Deals" : t("offersKicker")}</p>
+            <h2>{platformOn ? t("weekendDealsFromKw") : t("offersTitle")}</h2>
           </div>
           {platformOn ? (
             <Link href="/deals" className="shop-btn-ghost">
-              كل العروض
+              {t("allOffers")}
             </Link>
           ) : null}
         </div>
@@ -178,18 +194,24 @@ export function ShopLanding({ onPickDestination, onPickOffer }: Props) {
                     style={{ textDecoration: "none", color: "inherit" }}
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={deal.image} alt={deal.titleAr} loading="lazy" />
-                    <span className="shop-offer-badge">{deal.countryFlag} عرض</span>
+                    <img
+                      src={deal.image}
+                      alt={pickLocalized(locale, deal.titleAr, deal.titleEn)}
+                      loading="lazy"
+                    />
+                    <span className="shop-offer-badge">
+                      {deal.countryFlag} {t("dealBadge")}
+                    </span>
                     <div className="shop-offer-body">
-                      <h3>{deal.titleAr}</h3>
-                      <p>{deal.descriptionAr}</p>
+                      <h3>{pickLocalized(locale, deal.titleAr, deal.titleEn)}</h3>
+                      <p>{pickLocalized(locale, deal.descriptionAr, deal.descriptionEn)}</p>
                       <strong>
                         {(deal.salePriceMinor / 1000).toFixed(0)} {deal.currency}
                       </strong>
                     </div>
                   </Link>
                 ))
-            : SHOP_OFFERS.map((offer) => (
+            : offers.map((offer) => (
                 <button
                   key={offer.id}
                   type="button"
@@ -211,11 +233,11 @@ export function ShopLanding({ onPickDestination, onPickOffer }: Props) {
 
       <section className="shop-section">
         <div className="shop-section-head center">
-          <p className="shop-kicker">لماذا WeekendGate؟</p>
-          <h2>تجربة حجز كاملة بلمسة بحرية هادئة</h2>
+          <p className="shop-kicker">{t("whyKicker")}</p>
+          <h2>{t("whyTitle")}</h2>
         </div>
         <div className="shop-feature-grid">
-          {SHOP_FEATURES.map((f) => (
+          {features.map((f) => (
             <article key={f.title} className="shop-feature-card">
               <span className="shop-feature-icon" aria-hidden>
                 {f.icon}
@@ -230,20 +252,20 @@ export function ShopLanding({ onPickDestination, onPickOffer }: Props) {
       <section className="shop-section shop-section-soft" id="reviews">
         <div className="shop-section-head">
           <div>
-            <p className="shop-kicker">آراء المسافرين</p>
-            <h2>نماذج تقييمات توضيحية</h2>
+            <p className="shop-kicker">{t("reviewsKicker")}</p>
+            <h2>{t("reviewsHeading")}</h2>
           </div>
           <div className="shop-rating-summary">
             <strong>4.9</strong>
-            <Stars value={5} />
-            <span>أمثلة توضيحية — التقييمات الحقيقية تُعرض بعد تفعيل الحجوزات بالكامل</span>
+            <Stars value={5} ofFive={t("ofFive", { n: 5 })} />
+            <span>{t("reviewsExamples")}</span>
           </div>
         </div>
         <p className="shop-muted" style={{ margin: "0 0 1rem", maxWidth: "40rem" }}>
-          هذه تقييمات توضيحية للعرض وليست شهادات عملاء موثّقة بعد.
+          {t("reviewsDisclaimer")}
         </p>
         <div className="shop-review-grid">
-          {SHOP_REVIEWS.map((review) => (
+          {reviews.map((review) => (
             <article key={review.id} className="shop-review-card">
               <div className="shop-review-top">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -252,7 +274,7 @@ export function ShopLanding({ onPickDestination, onPickOffer }: Props) {
                   <strong>{review.name}</strong>
                   <span>{review.city}</span>
                 </div>
-                <Stars value={review.rating} />
+                <Stars value={review.rating} ofFive={t("ofFive", { n: review.rating })} />
               </div>
               <p>&ldquo;{review.text}&rdquo;</p>
               <small>{review.trip}</small>
@@ -263,31 +285,27 @@ export function ShopLanding({ onPickDestination, onPickOffer }: Props) {
 
       <section className="shop-cta-banner">
         <div>
-          <p className="shop-kicker light">جاهز للانطلاق؟</p>
-          <h2>{platformOn ? "ابدأ من البحث أو رحّلتي" : "خطّط رحلتك مع مساعد WeekendGate"}</h2>
-          <p>
-            {platformOn
-              ? "استخدم محرك البحث أعلاه ثم اضغط «ابدأ بناء رحلتي»، أو تصفّح الوجهات والعروض."
-              : "أدخل جوالك وابدأ محادثة ذكية — أو ابحث مباشرة من الأعلى."}
-          </p>
+          <p className="shop-kicker light">{t("ctaKicker")}</p>
+          <h2>{platformOn ? t("ctaTitlePlatform") : t("ctaTitle")}</h2>
+          <p>{platformOn ? t("ctaLeadPlatform") : t("ctaLead")}</p>
         </div>
         <div className="shop-cta-actions">
           {platformOn ? (
             <>
               <Link href="/#search" className="shop-btn shop-btn-light">
-                محرك البحث
+                {t("searchEngine")}
               </Link>
               <Link href="/destinations" className="shop-btn-ghost shop-btn-ghost-light">
-                الوجهات
+                {t("navDestinations")}
               </Link>
             </>
           ) : (
             <>
               <Link href="/chat" className="shop-btn shop-btn-light">
-                تحدث مع المساعد
+                {t("talkAssistant")}
               </Link>
               <Link href="/#search" className="shop-btn-ghost shop-btn-ghost-light">
-                ابحث عن رحلة
+                {t("findTrip")}
               </Link>
             </>
           )}
@@ -295,7 +313,7 @@ export function ShopLanding({ onPickDestination, onPickOffer }: Props) {
       </section>
 
       {footerStats.length > 0 ? (
-        <section className="shop-stats-bar shop-stats-bar-footer" aria-label="أرقام WeekendGate">
+        <section className="shop-stats-bar shop-stats-bar-footer" aria-label={t("statsAria")}>
           {footerStats.map((row) => (
             <div key={row.label} className="shop-stat">
               <strong>{row.value}</strong>

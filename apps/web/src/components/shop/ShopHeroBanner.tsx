@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
-import { HERO_SLIDES } from "@/lib/shop-content";
+import { heroSlidesFor } from "@/lib/shop-content";
 import { ShopAutocomplete, type SuggestItem } from "@/components/shop/ShopAutocomplete";
 import { ShopDateRangePicker } from "@/components/shop/ShopDateRangePicker";
 import { formatDay } from "@/lib/flight-search";
@@ -11,8 +11,10 @@ import {
   emptyRoom,
   occupancyTotals,
   setRoomCount,
+  shopRoomCount,
+  shopTravelerCount,
   type HotelOccupancyState,
-  validateOccupancy,
+  validateOccupancyMessage,
 } from "@/lib/hotel-occupancy";
 
 type Mode = "flights" | "stays" | "cars" | "activities";
@@ -96,11 +98,11 @@ type Props = {
   onRuheltiClick?: () => void;
 };
 
-const PRODUCTS: Array<{ key: Mode; labelAr: string; labelEn: string }> = [
-  { key: "flights", labelAr: "الطيران", labelEn: "Flights" },
-  { key: "stays", labelAr: "الفنادق", labelEn: "Hotels" },
-  { key: "cars", labelAr: "النقل", labelEn: "Transfers" },
-  { key: "activities", labelAr: "الأنشطة", labelEn: "Activities" },
+const PRODUCT_KEYS: Array<{ key: Mode; label: "searchFlights" | "searchHotels" | "searchCars" | "searchActivities" }> = [
+  { key: "flights", label: "searchFlights" },
+  { key: "stays", label: "searchHotels" },
+  { key: "cars", label: "searchCars" },
+  { key: "activities", label: "searchActivities" },
 ];
 
 function IconSwap() {
@@ -135,6 +137,7 @@ function DatePick({
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [mounted, setMounted] = useState(false);
+  const { t, locale } = useShopI18n();
 
   useEffect(() => {
     setMounted(true);
@@ -158,7 +161,7 @@ function DatePick({
   return (
     <div className="exp-date-pick">
       <button type="button" className="exp-date-btn" onClick={openPicker} aria-label={label}>
-        {mounted ? (value ? formatDay(value) : "اختر تاريخ") : value || "اختر تاريخ"}
+        {mounted ? (value ? formatDay(value, locale) : t("pickDate")) : value || t("pickDate")}
       </button>
       <input
         ref={inputRef}
@@ -177,16 +180,15 @@ export function ShopHeroBanner(props: Props) {
   const [travelersOpen, setTravelersOpen] = useState(false);
   const [occError, setOccError] = useState("");
   const [slideIdx, setSlideIdx] = useState(0);
-  const slides = HERO_SLIDES;
   const infants = props.infants ?? 0;
-  const { locale } = useShopI18n();
-  const isEn = locale === "en";
-  const fromLabel = isEn ? "From" : "المغادرة من";
-  const fromPlaceholder = isEn ? "City or airport" : "مدينة أو مطار";
-  const toLabel = isEn ? "Destination" : "الوجهة";
-  const toPlaceholder = isEn ? "Where to?" : "إلى أين؟";
-  const datesLabel = isEn ? "Dates" : "التواريخ";
-  const dateLabel = isEn ? "Date" : "التاريخ";
+  const { locale, t } = useShopI18n();
+  const slides = heroSlidesFor(locale);
+  const fromLabel = t("from");
+  const fromPlaceholder = t("fromPlaceholder");
+  const toLabel = t("destination");
+  const toPlaceholder = t("whereTo");
+  const datesLabel = t("dates");
+  const dateLabel = t("date");
 
   useEffect(() => {
     if (slides.length <= 1) return;
@@ -210,10 +212,14 @@ export function ShopHeroBanner(props: Props) {
 
   const travelerSummary =
     props.mode === "stays"
-      ? `${(stayTotals?.adults ?? props.adults) + (stayTotals?.children ?? props.children)} مسافر · ${
-          stayTotals?.rooms ?? props.rooms
-        } غرفة`
-      : `${props.adults + props.children + infants} مسافر`;
+      ? t("travelerRoomSummary", {
+          travelers: shopTravelerCount(
+            locale,
+            (stayTotals?.adults ?? props.adults) + (stayTotals?.children ?? props.children),
+          ),
+          rooms: shopRoomCount(locale, stayTotals?.rooms ?? props.rooms),
+        })
+      : shopTravelerCount(locale, props.adults + props.children + infants);
 
   function updateStayOccupancy(next: HotelOccupancyState) {
     props.onStayOccupancyChange?.(next);
@@ -221,21 +227,21 @@ export function ShopHeroBanner(props: Props) {
     props.onAdultsChange(totals.adults);
     props.onChildrenChange(totals.children);
     props.onRoomsChange(totals.rooms);
-    setOccError(validateOccupancy(next) || "");
+    setOccError(validateOccupancyMessage(next, locale) || "");
   }
 
   function renderFlightTravelersPanel() {
     return (
-      <div className="exp-travelers-panel" role="dialog" aria-label="عدد المسافرين">
+      <div className="exp-travelers-panel" role="dialog" aria-label={t("travelersAria")}>
         <div className="exp-travelers-row">
           <span>
-            بالغون
-            <small className="exp-traveler-hint">12 سنة فأكثر</small>
+            {t("adults")}
+            <small className="exp-traveler-hint">{t("adultsAgeHint")}</small>
           </span>
           <div className="exp-stepper">
             <button
               type="button"
-              aria-label="تقليل البالغين"
+              aria-label={t("adults")}
               onClick={() => props.onAdultsChange(Math.max(1, props.adults - 1))}
             >
               −
@@ -243,7 +249,7 @@ export function ShopHeroBanner(props: Props) {
             <strong>{props.adults}</strong>
             <button
               type="button"
-              aria-label="زيادة البالغين"
+              aria-label={t("adults")}
               onClick={() => props.onAdultsChange(Math.min(9, props.adults + 1))}
             >
               +
@@ -252,13 +258,13 @@ export function ShopHeroBanner(props: Props) {
         </div>
         <div className="exp-travelers-row">
           <span>
-            أطفال
-            <small className="exp-traveler-hint">2 – 11 سنة</small>
+            {t("children")}
+            <small className="exp-traveler-hint">{t("childrenAgeHint")}</small>
           </span>
           <div className="exp-stepper">
             <button
               type="button"
-              aria-label="تقليل الأطفال"
+              aria-label={t("children")}
               onClick={() => props.onChildrenChange(Math.max(0, props.children - 1))}
             >
               −
@@ -266,7 +272,7 @@ export function ShopHeroBanner(props: Props) {
             <strong>{props.children}</strong>
             <button
               type="button"
-              aria-label="زيادة الأطفال"
+              aria-label={t("children")}
               onClick={() => props.onChildrenChange(Math.min(8, props.children + 1))}
             >
               +
@@ -275,13 +281,13 @@ export function ShopHeroBanner(props: Props) {
         </div>
         <div className="exp-travelers-row">
           <span>
-            رضع
-            <small className="exp-traveler-hint">أقل من سنتين</small>
+            {t("infants")}
+            <small className="exp-traveler-hint">{t("infantsAgeHint")}</small>
           </span>
           <div className="exp-stepper">
             <button
               type="button"
-              aria-label="تقليل الرضع"
+              aria-label={t("infants")}
               onClick={() => props.onInfantsChange?.(Math.max(0, infants - 1))}
             >
               −
@@ -289,7 +295,7 @@ export function ShopHeroBanner(props: Props) {
             <strong>{infants}</strong>
             <button
               type="button"
-              aria-label="زيادة الرضع"
+              aria-label={t("infants")}
               onClick={() =>
                 props.onInfantsChange?.(Math.min(props.adults, infants + 1))
               }
@@ -303,7 +309,7 @@ export function ShopHeroBanner(props: Props) {
           className="exp-pop-done"
           onClick={() => setTravelersOpen(false)}
         >
-          تم
+          {t("done")}
         </button>
       </div>
     );
@@ -317,10 +323,10 @@ export function ShopHeroBanner(props: Props) {
         <div
           className="exp-travelers-panel exp-occupancy-panel"
           role="dialog"
-          aria-label={isEn ? "Rooms & Travelers" : "الغرف والمسافرون"}
+          aria-label={t("roomsAndTravelers")}
         >
         <div className="exp-travelers-row">
-          <span>عدد الغرف</span>
+          <span>{t("roomCountLabel")}</span>
           <div className="exp-stepper">
             <button
               type="button"
@@ -339,9 +345,9 @@ export function ShopHeroBanner(props: Props) {
         </div>
         {state.rooms.map((room, roomIdx) => (
           <div key={roomIdx} className="exp-room-occ-block">
-            <strong className="exp-room-occ-title">الغرفة {roomIdx + 1}</strong>
+            <strong className="exp-room-occ-title">{t("roomN", { n: roomIdx + 1 })}</strong>
             <div className="exp-travelers-row">
-              <span>بالغون</span>
+              <span>{t("adults")}</span>
               <div className="exp-stepper">
                 <button
                   type="button"
@@ -369,7 +375,7 @@ export function ShopHeroBanner(props: Props) {
               </div>
             </div>
             <div className="exp-travelers-row">
-              <span>أطفال</span>
+              <span>{t("children")}</span>
               <div className="exp-stepper">
                 <button
                   type="button"
@@ -402,7 +408,7 @@ export function ShopHeroBanner(props: Props) {
             </div>
             {room.childAges.map((age, childIdx) => (
               <div key={childIdx} className="exp-travelers-row">
-                <span>عمر الطفل {childIdx + 1}</span>
+                <span>{t("childAgeN", { n: childIdx + 1 })}</span>
                 <select
                   value={age}
                   onChange={(e) => {
@@ -418,7 +424,7 @@ export function ShopHeroBanner(props: Props) {
                 >
                   {Array.from({ length: 18 }, (_, ageOpt) => (
                     <option key={ageOpt} value={ageOpt}>
-                      {ageOpt} سنة
+                      {t("yearsOld", { n: ageOpt })}
                     </option>
                   ))}
                 </select>
@@ -433,7 +439,7 @@ export function ShopHeroBanner(props: Props) {
                   updateStayOccupancy({ rooms: rooms.length ? rooms : [emptyRoom(1)] });
                 }}
               >
-                حذف الغرفة
+                {t("removeRoom")}
               </button>
             ) : null}
           </div>
@@ -443,7 +449,7 @@ export function ShopHeroBanner(props: Props) {
           type="button"
           className="exp-pop-done"
           onClick={() => {
-            const err = validateOccupancy(state);
+            const err = validateOccupancyMessage(state, locale);
             if (err) {
               setOccError(err);
               return;
@@ -451,7 +457,7 @@ export function ShopHeroBanner(props: Props) {
             setTravelersOpen(false);
           }}
         >
-          تم
+          {t("done")}
         </button>
       </div>
     );
@@ -473,7 +479,7 @@ export function ShopHeroBanner(props: Props) {
           aria-expanded={travelersOpen}
           onClick={() => setTravelersOpen((v) => !v)}
         >
-          <span className="exp-cell-label">{isEn ? "Travelers" : "المسافرون"}</span>
+          <span className="exp-cell-label">{t("travelers")}</span>
           <strong>{travelerSummary}</strong>
         </button>
       </div>
@@ -488,7 +494,7 @@ export function ShopHeroBanner(props: Props) {
         disabled={props.loading}
         onClick={props.onSearch}
       >
-        {props.loading ? "..." : isEn ? "Search" : "بحث"}
+        {props.loading ? "..." : t("search")}
       </button>
     );
   }
@@ -521,7 +527,7 @@ export function ShopHeroBanner(props: Props) {
 
   return (
     <>
-      <section className="wg-travela-hero" aria-label="صور الرحلة">
+      <section className="wg-travela-hero" aria-label={t("heroAria")}>
         <div className="wg-travela-carousel">
           {slides.map((slide, index) => (
             <div
@@ -545,7 +551,7 @@ export function ShopHeroBanner(props: Props) {
               <button
                 type="button"
                 className="wg-travela-carousel-btn prev"
-                aria-label="الشريحة السابقة"
+                aria-label={t("prevSlide")}
                 onClick={prevSlide}
               >
                 ‹
@@ -553,18 +559,18 @@ export function ShopHeroBanner(props: Props) {
               <button
                 type="button"
                 className="wg-travela-carousel-btn next"
-                aria-label="الشريحة التالية"
+                aria-label={t("nextSlide")}
                 onClick={nextSlide}
               >
                 ›
               </button>
-              <ol className="wg-travela-dots" aria-label="شرائح العرض">
+              <ol className="wg-travela-dots" aria-label={t("slidesAria")}>
                 {slides.map((slide, index) => (
                   <li key={slide.image}>
                     <button
                       type="button"
                       className={index === slideIdx ? "active" : undefined}
-                      aria-label={`الشريحة ${index + 1}`}
+                      aria-label={t("slideN", { n: index + 1 })}
                       aria-current={index === slideIdx ? "true" : undefined}
                       onClick={() => setSlideIdx(index)}
                     />
@@ -580,9 +586,9 @@ export function ShopHeroBanner(props: Props) {
             <div
               className="wg-hero-dock-modes"
               role="tablist"
-              aria-label={isEn ? "Booking type" : "نوع الحجز"}
+              aria-label={t("bookingType")}
             >
-              {PRODUCTS.map(({ key, labelAr, labelEn }) => {
+              {PRODUCT_KEYS.map(({ key, label }) => {
                 const on = props.mode === key;
                 return (
                   <button
@@ -593,15 +599,15 @@ export function ShopHeroBanner(props: Props) {
                     aria-selected={on}
                     onClick={() => props.onModeChange(key)}
                   >
-                    {isEn ? labelEn : labelAr}
+                    {t(label)}
                   </button>
                 );
               })}
               <Link
                 href="/chat"
                 className="wg-hero-dock-mode wg-hero-dock-mode-ai"
-                title={isEn ? "AI Assistant" : "المساعد الذكي AI"}
-                aria-label={isEn ? "Open AI Assistant" : "فتح المساعد الذكي AI"}
+                title={t("aiAssistantTitle")}
+                aria-label={t("openAiAssistant")}
               >
                 AI
               </Link>
@@ -613,42 +619,42 @@ export function ShopHeroBanner(props: Props) {
           {props.mode === "flights" ? (
             <>
               <div className="exp-flight-toolbar">
-                <div className="exp-pill-tabs exp-pill-tabs-inset" role="group" aria-label={isEn ? "Trip type" : "نوع الرحلة"}>
+                <div className="exp-pill-tabs exp-pill-tabs-inset" role="group" aria-label={t("tripType")}>
                   <button
                     type="button"
                     className={`exp-pill-tab${props.tripType === "roundtrip" ? " on" : ""}`}
                     onClick={() => props.onTripTypeChange("roundtrip")}
                   >
-                    {isEn ? "Round trip" : "ذهاب وعودة"}
+                    {t("roundTrip")}
                   </button>
                    <button
                     type="button"
                     className={`exp-pill-tab${props.tripType === "oneway" ? " on" : ""}`}
                     onClick={() => props.onTripTypeChange("oneway")}
                   >
-                     {isEn ? "One way" : "ذهاب فقط"}
+                     {t("oneWay")}
                   </button>
                    <button
                     type="button"
                     className={`exp-pill-tab${props.tripType === "multicity" ? " on" : ""}`}
                     onClick={() => props.onTripTypeChange("multicity")}
                   >
-                     {isEn ? "Multi-city" : "وجهات متعددة"}
+                     {t("multiCity")}
                   </button>
                 </div>
                  <label className="exp-cabin-pill">
-                   <span>{isEn ? "Cabin class" : "فئة المقصورة"}</span>
+                   <span>{t("cabinClass")}</span>
                   <select
                     value={props.cabinClass}
                     onChange={(e) => props.onCabinClassChange(e.target.value)}
-                     aria-label={isEn ? "Cabin class" : "فئة المقصورة"}
+                     aria-label={t("cabinClass")}
                   >
-                     <option value="economy">{isEn ? "Economy" : "اقتصادية"}</option>
+                     <option value="economy">{t("cabinEconomy")}</option>
                      <option value="premium_economy">
-                       {isEn ? "Premium economy" : "اقتصادية مميزة"}
+                       {t("cabinPremium")}
                      </option>
-                     <option value="business">{isEn ? "Business" : "رجال أعمال"}</option>
-                     <option value="first">{isEn ? "First" : "أولى"}</option>
+                     <option value="business">{t("cabinBusiness")}</option>
+                     <option value="first">{t("cabinFirst")}</option>
                   </select>
                 </label>
                 <label className={`exp-direct-pill${props.directOnly ? " on" : ""}`}>
@@ -657,7 +663,7 @@ export function ShopHeroBanner(props: Props) {
                     checked={props.directOnly}
                     onChange={(e) => props.onDirectOnlyChange(e.target.checked)}
                   />
-                   <span>{isEn ? "Direct flights only" : "الرحلات المباشرة فقط"}</span>
+                   <span>{t("directOnly")}</span>
                 </label>
               </div>
 
@@ -665,7 +671,7 @@ export function ShopHeroBanner(props: Props) {
                 <div className="exp-multicity-stack">
                   {props.flightLegs.map((leg, index) => (
                     <div key={leg.id} className="exp-form-row exp-form-flights exp-flight-leg-row">
-                      <span className="exp-leg-badge">الرحلة {index + 1}</span>
+                      <span className="exp-leg-badge">{t("flightLegN", { n: index + 1 })}</span>
                       <div className="exp-input-cell exp-cell-grow">
                         <ShopAutocomplete
                           inline
@@ -688,7 +694,7 @@ export function ShopHeroBanner(props: Props) {
                       <button
                         type="button"
                         className="exp-swap-inline"
-                        aria-label="تبديل"
+                        aria-label={t("swap")}
                         onClick={() => swapLegAirports(leg.id)}
                       >
                         <IconSwap />
@@ -720,14 +726,14 @@ export function ShopHeroBanner(props: Props) {
                         <DatePick
                           value={leg.departDate}
                           onChange={(v) => props.onFlightLegChange(leg.id, { departDate: v })}
-                          label={`تاريخ الرحلة ${index + 1}`}
+                          label={t("departDate")}
                         />
                       </div>
                       {props.flightLegs.length > 2 ? (
                         <button
                           type="button"
                           className="exp-leg-remove"
-                          aria-label={`حذف الرحلة ${index + 1}`}
+                          aria-label={t("removeFlight")}
                           onClick={() => props.onRemoveFlightLeg(leg.id)}
                         >
                           ×
@@ -737,7 +743,7 @@ export function ShopHeroBanner(props: Props) {
                   ))}
                   {props.flightLegs.length < 5 ? (
                     <button type="button" className="exp-add-leg-btn" onClick={props.onAddFlightLeg}>
-                      + إضافة رحلة
+                      + {t("addFlight")}
                     </button>
                   ) : null}
                   <div className="exp-form-row exp-form-flights exp-multicity-footer">
@@ -762,7 +768,7 @@ export function ShopHeroBanner(props: Props) {
                 <button
                   type="button"
                   className="exp-swap-inline"
-                  aria-label="تبديل"
+                  aria-label={t("swap")}
                   onClick={swapAirports}
                 >
                   <IconSwap />
@@ -790,15 +796,15 @@ export function ShopHeroBanner(props: Props) {
                         props.onDepartDateChange(checkIn);
                         props.onReturnDateChange(checkOut);
                       }}
-                      startLabel={isEn ? "Departure date" : "تاريخ المغادرة"}
-                      endLabel={isEn ? "Return date" : "تاريخ العودة"}
-                      placeholder={isEn ? "Select travel dates" : "اختر تواريخ السفر"}
+                      startLabel={t("departDate")}
+                      endLabel={t("returnDate")}
+                      placeholder={t("selectTravelDates")}
                     />
                   ) : (
                     <DatePick
                       value={props.departDate}
                       onChange={props.onDepartDateChange}
-                      label={isEn ? "Departure date" : "تاريخ المغادرة"}
+                      label={t("departDate")}
                     />
                   )}
                 </div>
@@ -812,20 +818,20 @@ export function ShopHeroBanner(props: Props) {
             <>
             {props.mode === "cars" ? (
               <div className="exp-transfer-toolbar">
-                <div className="exp-pill-tabs exp-pill-tabs-inset" role="group" aria-label={isEn ? "Trip type" : "نوع الرحلة"}>
+                <div className="exp-pill-tabs exp-pill-tabs-inset" role="group" aria-label={t("tripType")}>
                   <button
                     type="button"
                     className={`exp-pill-tab${!props.transferRoundtrip ? " on" : ""}`}
                     onClick={() => props.onTransferRoundtripChange(false)}
                   >
-                    {isEn ? "Arrival only" : "وصول فقط"}
+                    {t("arrivalOnly")}
                   </button>
                   <button
                     type="button"
                     className={`exp-pill-tab${props.transferRoundtrip ? " on" : ""}`}
                     onClick={() => props.onTransferRoundtripChange(true)}
                   >
-                    {isEn ? "Round trip" : "وصول وعودة"}
+                    {t("arrivalAndReturn")}
                   </button>
                 </div>
                 <label className={`exp-direct-pill${props.transferAirport ? " on" : ""}`}>
@@ -834,7 +840,7 @@ export function ShopHeroBanner(props: Props) {
                     checked={props.transferAirport}
                     onChange={(e) => props.onTransferAirportChange(e.target.checked)}
                   />
-                  <span>{isEn ? "Airport transfer" : "نقل المطار"}</span>
+                  <span>{t("airportTransfer")}</span>
                 </label>
                 <label className={`exp-direct-pill${props.transferCarRental ? " on" : ""}`}>
                   <input
@@ -842,7 +848,7 @@ export function ShopHeroBanner(props: Props) {
                     checked={props.transferCarRental}
                     onChange={(e) => props.onTransferCarRentalChange(e.target.checked)}
                   />
-                  <span>{isEn ? "Car rental" : "تأجير سيارة"}</span>
+                  <span>{t("carRental")}</span>
                 </label>
               </div>
             ) : null}
@@ -851,10 +857,10 @@ export function ShopHeroBanner(props: Props) {
               <div className="exp-input-cell exp-cell-grow">
                 <ShopAutocomplete
                   inline
-                  label="إلى أين؟"
+                  label={t("whereTo")}
                   value={props.stayQuery}
                   display={props.stayQuery}
-                  placeholder="مدينة أو فندق"
+                  placeholder={t("cityOrHotel")}
                   onQuery={props.searchCities}
                   onClearText={props.onStayQueryChange}
                   onPick={props.onStayPick}
@@ -867,10 +873,10 @@ export function ShopHeroBanner(props: Props) {
                 <div className="exp-input-cell">
                   <ShopAutocomplete
                     inline
-                    label="المطار"
+                    label={t("airport")}
                     value={props.origin}
                     display={props.originLabel}
-                    placeholder="اختر المطار"
+                    placeholder={t("pickAirport")}
                     onQuery={props.searchAirports}
                     onClearText={props.onOriginClear}
                     onPick={props.onOriginPick}
@@ -879,10 +885,10 @@ export function ShopHeroBanner(props: Props) {
                 <div className="exp-input-cell exp-cell-grow">
                   <ShopAutocomplete
                     inline
-                    label="الفندق أو العنوان"
+                    label={t("hotelOrAddress")}
                     value={props.transferDropoff}
                     display={props.transferDropoffLabel}
-                    placeholder="اسم فندق، عنوان، أو مدينة"
+                    placeholder={t("hotelAddressPlaceholder")}
                     onQuery={props.searchCities}
                     onClearText={props.onTransferDropoffClear}
                     onPick={props.onTransferDropoffPick}
@@ -898,7 +904,7 @@ export function ShopHeroBanner(props: Props) {
                   label={toLabel}
                   value={props.activityDest}
                   display={props.activityLabel}
-                  placeholder={isEn ? "Activity city" : "مدينة النشاط"}
+                  placeholder={t("activityCity")}
                   onQuery={props.searchCities}
                   onClearText={props.onActivityClear}
                   onPick={props.onActivityPick}
@@ -911,7 +917,7 @@ export function ShopHeroBanner(props: Props) {
                 props.mode === "cars" ? " exp-cell-dates-wide" : ""
               }`}
             >
-              <span className="exp-cell-label">{props.mode === "cars" ? "التاريخ" : "التواريخ"}</span>
+              <span className="exp-cell-label">{props.mode === "cars" ? t("date") : t("dates")}</span>
               {showReturnDate ? (
                 <ShopDateRangePicker
                   forcePortal
@@ -922,50 +928,28 @@ export function ShopHeroBanner(props: Props) {
                     props.onReturnDateChange(checkOut);
                   }}
                   startLabel={
-                    isEn
-                      ? props.mode === "activities"
-                        ? "Start date"
-                        : props.mode === "cars"
-                          ? "Arrival date"
-                          : "Arrival date"
-                      : props.mode === "activities"
-                        ? "تاريخ البداية"
-                        : props.mode === "cars"
-                          ? "تاريخ الوصول"
-                          : "تاريخ الوصول"
+                    props.mode === "activities"
+                      ? t("startDate")
+                      : t("arrivalDate")
                   }
                   endLabel={
-                    isEn
-                      ? props.mode === "activities"
-                        ? "End date"
-                        : "Departure date"
-                      : props.mode === "activities"
-                        ? "تاريخ النهاية"
-                        : "تاريخ المغادرة"
+                    props.mode === "activities" ? t("endDate") : t("departDate")
                   }
                   placeholder={
-                    isEn
-                      ? props.mode === "stays"
-                        ? "Select stay dates"
-                        : props.mode === "activities"
-                          ? "Select activity dates"
-                          : props.mode === "cars"
-                            ? "Select trip dates"
-                            : "Select dates"
-                      : props.mode === "stays"
-                        ? "اختر تواريخ الإقامة"
-                        : props.mode === "activities"
-                          ? "اختر تواريخ النشاط"
-                          : props.mode === "cars"
-                            ? "اختر تواريخ الرحلة"
-                            : "اختر التواريخ"
+                    props.mode === "stays"
+                      ? t("selectStayDates")
+                      : props.mode === "activities"
+                        ? t("selectActivityDates")
+                        : props.mode === "cars"
+                          ? t("selectTripDates")
+                          : t("selectDates")
                   }
                 />
               ) : (
                 <DatePick
                   value={props.departDate}
                   onChange={props.onDepartDateChange}
-                  label={isEn ? "Arrival date" : "تاريخ الوصول"}
+                  label={t("arrivalDate")}
                 />
               )}
             </div>
@@ -973,7 +957,7 @@ export function ShopHeroBanner(props: Props) {
             {props.mode === "cars" ? (
               <>
                 <div className="exp-input-cell exp-cell-time exp-cell-time-compact">
-                  <span className="exp-cell-label">{isEn ? "Arrival time" : "وقت الوصول"}</span>
+                  <span className="exp-cell-label">{t("arrivalTime")}</span>
                   <select
                     className="exp-time-select"
                     value={props.pickupTime}
@@ -982,7 +966,7 @@ export function ShopHeroBanner(props: Props) {
                     {["06:00", "08:00", "10:30", "12:00", "14:00", "16:00", "18:00", "20:00"].map(
                       (t) => (
                         <option key={t} value={t}>
-                          {formatTimeShort(t, isEn)}
+                          {formatTimeShort(t, locale === "en")}
                         </option>
                       ),
                     )}
@@ -990,7 +974,7 @@ export function ShopHeroBanner(props: Props) {
                 </div>
                 {props.transferRoundtrip ? (
                   <div className="exp-input-cell exp-cell-time exp-cell-time-compact">
-                    <span className="exp-cell-label">{isEn ? "Return time" : "وقت العودة"}</span>
+                    <span className="exp-cell-label">{t("returnTime")}</span>
                     <select
                       className="exp-time-select"
                       value={props.dropoffTime}
@@ -999,7 +983,7 @@ export function ShopHeroBanner(props: Props) {
                       {["08:00", "10:00", "10:30", "12:00", "14:00", "16:00", "18:00", "20:00"].map(
                         (t) => (
                           <option key={t} value={t}>
-                            {formatTimeShort(t, isEn)}
+                            {formatTimeShort(t, locale === "en")}
                           </option>
                         ),
                       )}
@@ -1028,7 +1012,7 @@ export function ShopHeroBanner(props: Props) {
                     onClick={props.onRuheltiClick}
                     aria-haspopup="dialog"
                   >
-                    {isEn ? "My trip" : "رحلتي"}
+                    {t("myTrip")}
                   </button>
                 ) : props.tripBuilderHref ? (
                   <Link
@@ -1048,7 +1032,7 @@ export function ShopHeroBanner(props: Props) {
                       }
                     }}
                   >
-                    {isEn ? "My trip" : "رحلتي"}
+                    {t("myTrip")}
                   </Link>
                 ) : null}
               </div>

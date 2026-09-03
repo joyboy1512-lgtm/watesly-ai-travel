@@ -8,11 +8,12 @@ import { ShopMockBanner } from "@/components/shop/ShopMockBanner";
 import { HotelPricePanel, hotelPriceFromParts } from "@/components/hotels/HotelPricePanel";
 import type { HotelBookingDraft, HotelRoomGuestDraft } from "@/lib/booking-draft";
 import {
-  arabicAdultCount,
-  arabicChildCount,
-  arabicNightCount,
-  arabicRoomCount,
+  shopAdultCount,
+  shopChildCount,
+  shopNightCount,
+  shopRoomCount,
 } from "@/lib/hotel-occupancy";
+import { useShopCopy } from "@/components/shop/ShopI18nProvider";
 
 type FieldErrors = Record<string, string>;
 
@@ -147,6 +148,7 @@ export function HotelCheckout({
   submitting,
   onSubmit,
 }: Props) {
+  const { locale } = useShopCopy();
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const formRef = useRef<HTMLDivElement>(null);
   const rate = draft.selectedRate;
@@ -247,11 +249,11 @@ export function HotelCheckout({
           {rate?.roomName && rate.roomName !== roomLabel ? (
             <small> ({rate.roomName})</small>
           ) : null}{" "}
-          · {arabicRoomCount(draft.rooms)}
+          · {shopRoomCount(locale, draft.rooms)}
         </p>
         <p>
-          {arabicNightCount(nights)} · {arabicAdultCount(draft.adults)}
-          {draft.children ? ` · ${arabicChildCount(draft.children)}` : ""}
+          {shopNightCount(locale, nights)} · {shopAdultCount(locale, draft.adults)}
+          {draft.children ? ` · ${shopChildCount(locale, draft.children)}` : ""}
           {dateLabel ? ` · ${dateLabel}` : ""}
         </p>
       </div>

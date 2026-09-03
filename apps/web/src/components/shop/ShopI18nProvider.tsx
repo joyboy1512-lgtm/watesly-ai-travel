@@ -18,6 +18,7 @@ import {
   type ShopCurrency,
   type ShopLocale,
   type ShopUiKey,
+  type ShopUiVars,
 } from "@watesly-travel/shared";
 
 const LOCALE_KEY = "weekendgate_locale";
@@ -29,7 +30,7 @@ type ShopI18nValue = {
   dir: "rtl" | "ltr";
   setLocale: (locale: ShopLocale) => void;
   setCurrency: (currency: ShopCurrency) => void;
-  t: (key: ShopUiKey) => string;
+  t: (key: ShopUiKey, vars?: ShopUiVars) => string;
   formatKwdMinor: (kwdMinor: number) => string;
   locales: readonly ShopLocale[];
   currencies: readonly ShopCurrency[];
@@ -101,7 +102,7 @@ export function ShopI18nProvider({ children }: { children: ReactNode }) {
       setCurrency,
       // Use the selected locale for UI dictionary.
       // Previously it was hardcoded to Arabic, so choosing EN only changed direction.
-      t: (key) => tShop(locale, key),
+        t: (key, vars) => tShop(locale, key, vars),
       formatKwdMinor: (kwdMinor) => formatFromKwdMinor(kwdMinor, currency, locale),
       locales: SHOP_LOCALES,
       currencies: SHOP_CURRENCIES,
@@ -112,10 +113,27 @@ export function ShopI18nProvider({ children }: { children: ReactNode }) {
   return <ShopI18nContext.Provider value={value}>{children}</ShopI18nContext.Provider>;
 }
 
+const FALLBACK_I18N: ShopI18nValue = {
+  locale: "ar",
+  currency: "KWD",
+  dir: "rtl",
+  setLocale: () => undefined,
+  setCurrency: () => undefined,
+  t: (key, vars) => tShop("ar", key, vars),
+  formatKwdMinor: (kwdMinor) => formatFromKwdMinor(kwdMinor, "KWD", "ar"),
+  locales: SHOP_LOCALES,
+  currencies: SHOP_CURRENCIES,
+};
+
 export function useShopI18n(): ShopI18nValue {
   const ctx = useContext(ShopI18nContext);
   if (!ctx) {
     throw new Error("useShopI18n must be used within ShopI18nProvider");
   }
   return ctx;
+}
+
+/** Safe for hotel/flight cards that also render in staff dashboard (Arabic fallback). */
+export function useShopCopy(): ShopI18nValue {
+  return useContext(ShopI18nContext) ?? FALLBACK_I18N;
 }

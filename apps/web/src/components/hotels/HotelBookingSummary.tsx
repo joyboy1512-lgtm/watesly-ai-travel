@@ -18,11 +18,12 @@ import {
 import { formatMoneyMinor } from "@/lib/format";
 import { summarizeRateCommentsAr } from "@/lib/hotel-rate-comments";
 import {
-  arabicAdultCount,
-  arabicChildCount,
-  arabicNightCount,
-  arabicRoomCount,
+  shopAdultCount,
+  shopChildCount,
+  shopNightCount,
+  shopRoomCount,
 } from "@/lib/hotel-occupancy";
+import { useShopCopy } from "@/components/shop/ShopI18nProvider";
 import { HotelPricePanel } from "./HotelPricePanel";
 import type { HotelDraftPriceBreakdown } from "@/lib/booking-draft";
 
@@ -116,6 +117,7 @@ export function HotelBookingSummary({
   onCheckout,
   onContinueToReview,
 }: Props) {
+  const { t, locale } = useShopCopy();
   const [step, setStep] = useState<"summary" | "guest" | "payment">("summary");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -244,7 +246,7 @@ export function HotelBookingSummary({
             <small>المبلغ الإجمالي</small>
             <strong>{formatMoneyMinor(totalMinor, hotel.currency)}</strong>
             <em>
-              {formatMoneyMinor(perNight, hotel.currency)} / ليلة · {arabicNightCount(nights)}
+              {formatMoneyMinor(perNight, hotel.currency)} / {t("perNight")} · {shopNightCount(locale, nights)}
               
             </em>
           </div>
@@ -342,7 +344,7 @@ export function HotelBookingSummary({
             <small>السعر المختار</small>
             <strong>{formatMoneyMinor(totalMinor, hotel.currency)}</strong>
             <em>
-              {formatMoneyMinor(perNight, hotel.currency)} / ليلة · {arabicNightCount(nights)}
+              {formatMoneyMinor(perNight, hotel.currency)} / {t("perNight")} · {shopNightCount(locale, nights)}
               
             </em>
           </div>
@@ -386,13 +388,13 @@ export function HotelBookingSummary({
         </div>
         <div>
           <span>المدة</span>
-          <strong>{arabicNightCount(nights)}</strong>
+          <strong>{shopNightCount(locale, nights)}</strong>
         </div>
         <div>
           <span>النزلاء</span>
           <strong>
-            {arabicRoomCount(meta.rooms)} · {arabicAdultCount(meta.adults)}
-            {meta.children ? ` · ${arabicChildCount(meta.children)}` : ""}
+            {shopRoomCount(locale, meta.rooms)} · {shopAdultCount(locale, meta.adults)}
+            {meta.children ? ` · ${shopChildCount(locale, meta.children)}` : ""}
           </strong>
         </div>
         <div>
@@ -461,7 +463,7 @@ export function HotelBookingSummary({
           <div className="hotel-booking-preview-price">
             <strong>{formatMoneyMinor(totalMinor, hotel.currency)}</strong>
             <small>
-              {formatMoneyMinor(perNight, hotel.currency)} / ليلة · {arabicNightCount(nights)}
+              {formatMoneyMinor(perNight, hotel.currency)} / {t("perNight")} · {shopNightCount(locale, nights)}
               
             </small>
           </div>

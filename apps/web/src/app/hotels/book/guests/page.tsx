@@ -23,11 +23,12 @@ import { unlockShopCustomer, verifyShopUnlock } from "@/lib/shop-unlock";
 import { translateRoomNameAr } from "@watesly-travel/shared";
 import { formatMoneyMinor } from "@/lib/format";
 import {
-  arabicAdultCount,
-  arabicChildCount,
-  arabicNightCount,
-  arabicRoomCount,
+  shopAdultCount,
+  shopChildCount,
+  shopNightCount,
+  shopRoomCount,
 } from "@/lib/hotel-occupancy";
+import { useShopI18n } from "@/components/shop/ShopI18nProvider";
 
 function buildRoomGuests(draft: HotelBookingDraft): HotelRoomGuestDraft[] {
   if (draft.roomGuests?.length) return draft.roomGuests;
@@ -76,6 +77,33 @@ function buildRoomGuests(draft: HotelBookingDraft): HotelRoomGuestDraft[] {
           type: "adult",
         },
       ];
+}
+
+function StayOccupancyBits({
+  rooms,
+  nights,
+  adults,
+  children,
+  roomLabel,
+}: {
+  rooms: number;
+  nights: number;
+  adults: number;
+  children: number;
+  roomLabel: string;
+}) {
+  const { locale } = useShopI18n();
+  return (
+    <>
+      <p>
+        {roomLabel} · {shopRoomCount(locale, rooms)}
+      </p>
+      <p>
+        {shopNightCount(locale, nights)} · {shopAdultCount(locale, adults)}
+        {children ? ` · ${shopChildCount(locale, children)}` : ""}
+      </p>
+    </>
+  );
 }
 
 export default function HotelGuestsPage() {
@@ -305,13 +333,13 @@ export default function HotelGuestsPage() {
           <h1>إتمام الطلب</h1>
           <div className="shop-hotel-unlock-summary">
             <strong>{hotelName}</strong>
-            <p>
-              {roomLabel} · {arabicRoomCount(draft.rooms)}
-            </p>
-            <p>
-              {arabicNightCount(draft.nights || 1)} · {arabicAdultCount(draft.adults)}
-              {draft.children ? ` · ${arabicChildCount(draft.children)}` : ""}
-            </p>
+            <StayOccupancyBits
+              rooms={draft.rooms}
+              nights={draft.nights || 1}
+              adults={draft.adults}
+              children={draft.children}
+              roomLabel={roomLabel}
+            />
             <p>
               {formatMoneyMinor(payNow, draft.hotel.currency)}
               {payAtHotel > 0

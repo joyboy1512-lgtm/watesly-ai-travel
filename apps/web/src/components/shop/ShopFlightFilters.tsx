@@ -8,6 +8,8 @@ import {
   type FlightSearchFilters,
   type DepartureBucket,
 } from "@/lib/flight-search";
+import { useShopI18n } from "@/components/shop/ShopI18nProvider";
+import type { ShopUiKey } from "@watesly-travel/shared";
 
 type Facets = {
   stops: {
@@ -41,18 +43,32 @@ type Props = {
   onChange: (next: FlightSearchFilters) => void;
 };
 
-function moneyOrEmpty(minor: number, currency: string) {
+const BUCKET_COPY: Record<
+  DepartureBucket,
+  { label: ShopUiKey; hint: ShopUiKey }
+> = {
+  night: { label: "bucketNight", hint: "bucketNightHint" },
+  morning: { label: "bucketMorning", hint: "bucketMorningHint" },
+  afternoon: { label: "bucketAfternoon", hint: "bucketAfternoonHint" },
+  evening: { label: "bucketEvening", hint: "bucketEveningHint" },
+};
+
+function moneyOrEmpty(minor: number, currency: string, fromLabel: string) {
   if (!Number.isFinite(minor) || minor >= Number.MAX_SAFE_INTEGER) return "";
-  return `من ${formatMoneyMinor(minor, currency)}`;
+  return `${fromLabel} ${formatMoneyMinor(minor, currency)}`;
 }
 
 export function ShopFlightFilters({
   filters,
   facets,
-  originLabel = "المغادرة",
-  destinationLabel = "الوجهة",
+  originLabel,
+  destinationLabel,
   onChange,
 }: Props) {
+  const { t } = useShopI18n();
+  const fromWord = t("fromPrice");
+  const resolvedOrigin = originLabel || t("departure");
+  const resolvedDestination = destinationLabel || t("destination");
   const [timeTab, setTimeTab] = useState<"depart" | "return">("depart");
   const durationValue = Number(filters.maxDurationHours) || facets.durationMaxHours;
   const priceValue = Number(filters.maxPrice) || facets.priceMaxMajor;
@@ -86,7 +102,7 @@ export function ShopFlightFilters({
   return (
     <aside className="shop-flight-filters-panel">
       <div className="shop-flight-filters-head">
-        <strong>تصفية النتائج</strong>
+        <strong>{t("filterResults")}</strong>
         <button
           type="button"
           className="shop-flight-filters-reset"
@@ -101,15 +117,15 @@ export function ShopFlightFilters({
             })
           }
         >
-          إعادة الضبط
+          {t("resetFilters")}
         </button>
       </div>
 
       <div className="shop-flight-filter-block">
-        <strong>التوقفات</strong>
+        <strong>{t("stops")}</strong>
         <label className="shop-flight-filter-radio">
-          <em>{moneyOrEmpty(facets.stops.minAny, facets.stops.currency)}</em>
-          <span>الكل ({facets.stops.any})</span>
+          <em>{moneyOrEmpty(facets.stops.minAny, facets.stops.currency, fromWord)}</em>
+          <span>{t("allCount", { n: facets.stops.any })}</span>
           <input
             type="radio"
             name="shop-stops"
@@ -118,8 +134,8 @@ export function ShopFlightFilters({
           />
         </label>
         <label className="shop-flight-filter-radio">
-          <em>{moneyOrEmpty(facets.stops.minDirect, facets.stops.currency)}</em>
-          <span>مباشر فقط ({facets.stops.direct})</span>
+          <em>{moneyOrEmpty(facets.stops.minDirect, facets.stops.currency, fromWord)}</em>
+          <span>{t("directOnlyCount", { n: facets.stops.direct })}</span>
           <input
             type="radio"
             name="shop-stops"
@@ -128,8 +144,8 @@ export function ShopFlightFilters({
           />
         </label>
         <label className="shop-flight-filter-radio">
-          <em>{moneyOrEmpty(facets.stops.minOne, facets.stops.currency)}</em>
-          <span>توقف واحد كحد أقصى ({facets.stops.one})</span>
+          <em>{moneyOrEmpty(facets.stops.minOne, facets.stops.currency, fromWord)}</em>
+          <span>{t("oneStopMax", { n: facets.stops.one })}</span>
           <input
             type="radio"
             name="shop-stops"
@@ -140,12 +156,12 @@ export function ShopFlightFilters({
       </div>
 
       <div className="shop-flight-filter-block">
-        <strong>شركات الطيران</strong>
+        <strong>{t("airlines")}</strong>
         {facets.airlines.map((a) => {
           const checked = filters.airlines.includes(a.code);
           return (
             <label key={a.code} className="shop-flight-filter-check">
-              <em>{moneyOrEmpty(a.minPrice, a.currency)}</em>
+              <em>{moneyOrEmpty(a.minPrice, a.currency, fromWord)}</em>
               <span>
                 {a.name} ({a.count})
               </span>
@@ -157,11 +173,11 @@ export function ShopFlightFilters({
             </label>
           );
         })}
-        {!facets.airlines.length ? <small>لا توجد شركات في النتائج</small> : null}
+        {!facets.airlines.length ? <small>{t("noAirlines")}</small> : null}
       </div>
 
       <div className="shop-flight-filter-block">
-        <strong>أوقات الرحلة</strong>
+        <strong>{t("flightTimes")}</strong>
         {facets.hasReturn ? (
           <div className="shop-flight-time-tabs" role="tablist">
             <button
@@ -171,7 +187,7 @@ export function ShopFlightFilters({
               aria-selected={timeTab === "depart"}
               onClick={() => setTimeTab("depart")}
             >
-              {originLabel}
+              {resolvedOrigin}
             </button>
             <button
               type="button"
@@ -180,21 +196,24 @@ export function ShopFlightFilters({
               aria-selected={timeTab === "return"}
               onClick={() => setTimeTab("return")}
             >
-              {destinationLabel}
+              {resolvedDestination}
             </button>
           </div>
         ) : null}
         <p className="shop-flight-time-hint">
-          تغادر من {timeTab === "depart" ? originLabel : destinationLabel}
+          {t("departsFrom", {
+            place: timeTab === "depart" ? resolvedOrigin : resolvedDestination,
+          })}
         </p>
         {DEPARTURE_BUCKETS.map((bucket) => {
           const checked = filters[activeField].includes(bucket.key);
           const count = activeCounts[bucket.key] || 0;
+          const copy = BUCKET_COPY[bucket.key];
           return (
             <label key={`${activeField}-${bucket.key}`} className="shop-flight-filter-check">
-              <em>{bucket.hint}</em>
+              <em>{t(copy.hint)}</em>
               <span>
-                {bucket.label} ({count})
+                {t(copy.label)} ({count})
               </span>
               <input
                 type="checkbox"
@@ -207,7 +226,7 @@ export function ShopFlightFilters({
       </div>
 
       <div className="shop-flight-filter-block">
-        <strong>المدة القصوى</strong>
+        <strong>{t("maxDuration")}</strong>
         <input
           type="range"
           min={2}
@@ -221,11 +240,11 @@ export function ShopFlightFilters({
             })
           }
         />
-        <small>حتى {durationValue} ساعة</small>
+        <small>{t("upToHours", { n: durationValue })}</small>
       </div>
 
       <div className="shop-flight-filter-block">
-        <strong>السعر</strong>
+        <strong>{t("price")}</strong>
         <input
           type="range"
           min={10}
@@ -240,8 +259,10 @@ export function ShopFlightFilters({
           }
         />
         <small>
-          حتى {priceValue.toFixed(currencyExponent(facets.stops.currency))}{" "}
-          {facets.stops.currency} · إجمالي الرحلة
+          {t("upToPriceTrip", {
+            n: priceValue.toFixed(currencyExponent(facets.stops.currency)),
+            currency: facets.stops.currency,
+          })}
         </small>
       </div>
     </aside>

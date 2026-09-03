@@ -14,6 +14,7 @@ import {
   type HotelSearchFilters,
   type HotelHighlightBadge,
 } from "@/lib/hotel-search";
+import { useShopI18n } from "@/components/shop/ShopI18nProvider";
 
 type HotelRow = HotelOfferRow & {
   matchingRates: import("@/lib/hotel-search").HotelRateOption[];
@@ -58,11 +59,12 @@ type Props = {
 };
 
 export function ShopHotelResults(props: Props) {
+  const { t } = useShopI18n();
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [mapOpen, setMapOpen] = useState(false);
   const [mapHotelId, setMapHotelId] = useState<string | null>(null);
   const [visibleCount, setVisibleCount] = useState(props.initialVisibleCount || PAGE_SIZE);
-  const title = props.destination || props.stayQuery || "الإقامات";
+  const title = props.destination || props.stayQuery || t("staysFallback");
   const guests = props.adults + props.children;
 
   useEffect(() => {
@@ -85,7 +87,7 @@ export function ShopHotelResults(props: Props) {
           if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
           return {
             id: h.id,
-            name: String(h.details.name || h.description || "فندق"),
+            name: String(h.details.name || h.description || t("hotelFallback")),
             lat,
             lng,
             priceMinor: h.displayFromMinor,
@@ -100,13 +102,13 @@ export function ShopHotelResults(props: Props) {
         priceMinor: number;
         currency: string;
       }>,
-    [props.hotels],
+    [props.hotels, t],
   );
 
   const badgeLabel = (badge: HotelHighlightBadge) => {
-    if (badge === "cheapest") return "الأقل سعرًا";
-    if (badge === "top_rated") return "الأعلى تقييمًا";
-    return "الأقرب للمركز";
+    if (badge === "cheapest") return t("cheapest");
+    if (badge === "top_rated") return t("topRated");
+    return t("nearestCenter");
   };
 
   return (
@@ -132,7 +134,7 @@ export function ShopHotelResults(props: Props) {
 
       <div className="shop-hotel-results-head">
         <h2>
-          {title}: {props.hotels.length} عقار
+          {title}: {t("propertiesCount", { n: props.hotels.length })}
         </h2>
         <div className="shop-hotel-results-sort">
           <button
@@ -140,21 +142,21 @@ export function ShopHotelResults(props: Props) {
             className={props.sortKey === "best" ? "on" : undefined}
             onClick={() => props.onSortChange("best")}
           >
-            الأفضل
+            {t("sortBest")}
           </button>
           <button
             type="button"
             className={props.sortKey === "price_asc" ? "on" : undefined}
             onClick={() => props.onSortChange("price_asc")}
           >
-            الأقل سعراً
+            {t("sortPriceAsc")}
           </button>
           <button
             type="button"
             className={props.sortKey === "price_desc" ? "on" : undefined}
             onClick={() => props.onSortChange("price_desc")}
           >
-            الأعلى سعراً
+            {t("sortPriceDesc")}
           </button>
           {props.hotels.some((h) => Number(h.details.guestRatingScore || 0) > 0) ? (
             <button
@@ -162,7 +164,7 @@ export function ShopHotelResults(props: Props) {
               className={props.sortKey === "rating_desc" ? "on" : undefined}
               onClick={() => props.onSortChange("rating_desc")}
             >
-              الأعلى تقييماً
+              {t("sortRating")}
             </button>
           ) : null}
           <button
@@ -170,7 +172,7 @@ export function ShopHotelResults(props: Props) {
             className={props.sortKey === "distance" ? "on" : undefined}
             onClick={() => props.onSortChange("distance")}
           >
-            الأقرب
+            {t("sortNearest")}
           </button>
           {mapPins.length ? (
             <button
@@ -178,7 +180,7 @@ export function ShopHotelResults(props: Props) {
               className={mapOpen ? "on" : undefined}
               onClick={() => setMapOpen((v) => !v)}
             >
-              {mapOpen ? "إخفاء الخريطة" : "الخريطة"}
+              {mapOpen ? t("hideMap") : t("map")}
             </button>
           ) : null}
         </div>
@@ -216,7 +218,7 @@ export function ShopHotelResults(props: Props) {
               {Array.from({ length: 6 }, (_, i) => (
                 <div key={i} className="shop-hotel-skeleton-card" />
               ))}
-              <p className="shop-hotel-loading-msg">نقارن الأسعار من مزودي الفنادق…</p>
+              <p className="shop-hotel-loading-msg">{t("comparingHotels")}</p>
             </div>
           ) : null}
           {!props.loading
@@ -247,11 +249,11 @@ export function ShopHotelResults(props: Props) {
               className="shop-hotel-load-more"
               onClick={() => setVisibleCount((n) => n + PAGE_SIZE)}
             >
-              عرض المزيد ({props.hotels.length - visibleCount} متبقي)
+              {t("loadMore", { n: props.hotels.length - visibleCount })}
             </button>
           ) : null}
           {!props.loading && props.hotels.length === 0 ? (
-            <p className="shop-hotel-results-empty">لا توجد فنادق مطابقة للفلاتر الحالية.</p>
+            <p className="shop-hotel-results-empty">{t("noHotels")}</p>
           ) : null}
         </div>
       </div>

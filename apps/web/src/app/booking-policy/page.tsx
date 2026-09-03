@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 
 export default function BookingPolicyPage() {
   return (
-    <LegalPageShell title="سياسة الحجز والتعديل والإلغاء والدفع">
+    <LegalPageShell title="سياسة الحجز والتعديل والإلغاء والدفع" titleKey="navPolicy">
       <h2>دور WeekendGate والمزوّد</h2>
       <p>{COMPANY_LEGAL.roleClarificationAr}</p>
       <h2>إعادة التسعير</h2>

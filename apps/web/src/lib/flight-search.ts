@@ -111,12 +111,31 @@ const AR_MONTHS = [
   "ديسمبر",
 ];
 
-export function formatDay(value?: string | null) {
+const EN_WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const EN_MONTHS = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
+];
+
+export function formatDay(value?: string | null, locale: "ar" | "en" = "ar") {
   if (!value) return "";
   const d = value.slice(0, 10);
   if (!/^\d{4}-\d{2}-\d{2}$/.test(d)) return "";
   const [y, m, day] = d.split("-").map(Number);
   const utc = new Date(Date.UTC(y!, m! - 1, day!));
+  if (locale === "en") {
+    return `${EN_WEEKDAYS[utc.getUTCDay()]} ${day} ${EN_MONTHS[m! - 1]}`;
+  }
   return `${AR_WEEKDAYS[utc.getUTCDay()]} ${day} ${AR_MONTHS[m! - 1]}`;
 }
 

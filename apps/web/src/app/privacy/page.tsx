@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 
 export default function PrivacyPage() {
   return (
-    <LegalPageShell title="سياسة الخصوصية">
+    <LegalPageShell title="سياسة الخصوصية" titleKey="privacy">
       <p>
         تشغّل {COMPANY_LEGAL.legalNameAr} منصة WeekendGate. توضح هذه السياسة كيف
         نتعامل مع بياناتك الشخصية.

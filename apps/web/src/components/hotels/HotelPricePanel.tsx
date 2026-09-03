@@ -2,6 +2,7 @@
 
 import { formatMoneyMinor } from "@/lib/format";
 import type { HotelDraftPriceBreakdown } from "@/lib/booking-draft";
+import { useShopCopy } from "@/components/shop/ShopI18nProvider";
 
 export type HotelPricePanelInput = {
   currency: string;
@@ -27,6 +28,7 @@ export function HotelPricePanel({
   boardLabel,
   emphasizeTotal = true,
 }: HotelPricePanelInput) {
+  const { t } = useShopCopy();
   const {
     stayMinor,
     includedTaxMinor,
@@ -45,14 +47,21 @@ export function HotelPricePanel({
         <strong className="hotel-price-panel-total">
           {formatMoneyMinor(tripTotalMinor, currency)}
         </strong>
-        <small>التكلفة الكلية · {nights > 0 ? `متوسط ${formatMoneyMinor(perNightMinor, currency)} / ليلة` : null}</small>
+        <small>
+          {t("tripTotal")}
+          {nights > 0
+            ? ` · ${t("avgNightShort", { price: formatMoneyMinor(perNightMinor, currency) })}`
+            : null}
+        </small>
         {payAtHotelMinor > 0 ? (
           <em>
-            تدفع الآن {formatMoneyMinor(payNowMinor, currency)} · في الفندق{" "}
-            {formatMoneyMinor(payAtHotelMinor, currency)}
+            {t("payNowHotel", {
+              now: formatMoneyMinor(payNowMinor, currency),
+              hotel: formatMoneyMinor(payAtHotelMinor, currency),
+            })}
           </em>
         ) : (
-          <em>{taxesIncluded ? "شامل الضرائب" : "قد تُضاف رسوم محلية"}</em>
+          <em>{taxesIncluded ? t("taxesIncluded") : t("localFeesMaybe")}</em>
         )}
       </div>
     );
@@ -68,47 +77,47 @@ export function HotelPricePanel({
 
       {emphasizeTotal ? (
         <div className="hotel-price-panel-hero">
-          <span>التكلفة الكلية</span>
+          <span>{t("tripTotal")}</span>
           <strong>{formatMoneyMinor(tripTotalMinor, currency)}</strong>
         </div>
       ) : null}
 
       <dl className="hotel-price-panel-dl">
         <div>
-          <dt>سعر الإقامة</dt>
+          <dt>{t("stayPrice")}</dt>
           <dd>{formatMoneyMinor(stayMinor, currency)}</dd>
         </div>
         {includedTaxMinor > 0 ? (
           <div>
-            <dt>ضرائب ورسوم مشمولة</dt>
+            <dt>{t("includedTaxes")}</dt>
             <dd>{formatMoneyMinor(includedTaxMinor, currency)}</dd>
           </div>
         ) : null}
         {excludedTaxMinor > 0 ? (
           <div>
-            <dt>ضرائب غير مشمولة</dt>
+            <dt>{t("excludedTaxes")}</dt>
             <dd>{formatMoneyMinor(excludedTaxMinor, currency)}</dd>
           </div>
         ) : null}
         {serviceFeeMinor > 0 ? (
           <div>
-            <dt>رسوم WeekendGate</dt>
+            <dt>{t("wgFees")}</dt>
             <dd>{formatMoneyMinor(serviceFeeMinor, currency)}</dd>
           </div>
         ) : null}
         <div>
-          <dt>يُدفع الآن</dt>
+          <dt>{t("payNow")}</dt>
           <dd>{formatMoneyMinor(payNowMinor, currency)}</dd>
         </div>
         {payAtHotelMinor > 0 ? (
           <div>
-            <dt>يُدفع في الفندق</dt>
+            <dt>{t("payAtHotel")}</dt>
             <dd>{formatMoneyMinor(payAtHotelMinor, currency)}</dd>
           </div>
         ) : null}
         {!emphasizeTotal ? (
           <div className="total">
-            <dt>التكلفة الكلية</dt>
+            <dt>{t("tripTotal")}</dt>
             <dd>{formatMoneyMinor(tripTotalMinor, currency)}</dd>
           </div>
         ) : null}
@@ -116,17 +125,17 @@ export function HotelPricePanel({
 
       {payAtHotelMinor > 0 ? (
         <p className="hotel-price-panel-split">
-          تدفع الآن: {formatMoneyMinor(payNowMinor, currency)}
+          {t("payNowLine", { price: formatMoneyMinor(payNowMinor, currency) })}
           <br />
-          تدفع في الفندق: {formatMoneyMinor(payAtHotelMinor, currency)}
+          {t("payHotelLine", { price: formatMoneyMinor(payAtHotelMinor, currency) })}
           <br />
-          التكلفة الكلية: {formatMoneyMinor(tripTotalMinor, currency)}
+          {t("totalLine", { price: formatMoneyMinor(tripTotalMinor, currency) })}
         </p>
       ) : (
         <p className="hotel-price-panel-note">
           {taxesIncluded
-            ? "الضرائب مشمولة في السعر المعروض"
-            : "قد تُضاف رسوم محلية في الفندق"}
+            ? t("taxesInPrice")
+            : t("localFeesHotel")}
         </p>
       )}
     </div>

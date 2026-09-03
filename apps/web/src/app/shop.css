@@ -488,6 +488,22 @@
   color: #fff;
 }
 
+.exp-flex-dates {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 0.25rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #13357b;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.exp-flex-dates input {
+  accent-color: #13357b;
+}
+
 .exp-multicity-stack {
   display: grid;
   gap: 0.55rem;

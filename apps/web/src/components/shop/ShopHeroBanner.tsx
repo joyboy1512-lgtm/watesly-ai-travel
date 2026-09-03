@@ -667,14 +667,6 @@ export function ShopHeroBanner(props: Props) {
                   />
                    <span>{t("directOnly")}</span>
                 </label>
-                <label className={`exp-direct-pill${props.flexibleDates ? " on" : ""}`}>
-                  <input
-                    type="checkbox"
-                    checked={props.flexibleDates}
-                    onChange={(e) => props.onFlexibleDatesChange(e.target.checked)}
-                  />
-                  <span>{t("flexibleDates")}</span>
-                </label>
               </div>
 
               {isMulticity ? (
@@ -817,6 +809,14 @@ export function ShopHeroBanner(props: Props) {
                       label={t("departDate")}
                     />
                   )}
+                  <label className={`exp-flex-dates${props.flexibleDates ? " on" : ""}`}>
+                    <input
+                      type="checkbox"
+                      checked={props.flexibleDates}
+                      onChange={(e) => props.onFlexibleDatesChange(e.target.checked)}
+                    />
+                    <span>{t("flexibleDates")}</span>
+                  </label>
                 </div>
                 {renderTravelersCell()}
                 {renderSearchButton("wg-hero-ticket-search")}

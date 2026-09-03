@@ -4,10 +4,6 @@ import { useState } from "react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { type SuggestItem } from "@/components/shop/ShopAutocomplete";
-import {
-  saveActivityDraft,
-  saveTransferDraft,
-} from "@/lib/booking-draft";
 import { shopFetch } from "@/lib/shop-session";
 import { ShopLanding } from "@/components/shop/ShopLanding";
 import { ShopHeroBanner, type FlightLeg, type FlightTripType } from "@/components/shop/ShopHeroBanner";
@@ -18,6 +14,10 @@ import {
   encodeRoomOccupancies,
 } from "@/lib/hotel-results-url";
 import {
+  buildActivityResultsHref,
+  buildTransferResultsHref,
+} from "@/lib/transfer-results-url";
+import {
   defaultOccupancy,
   occupancyTotals,
   validateOccupancy,
@@ -25,14 +25,6 @@ import {
 } from "@/lib/hotel-occupancy";
 import { TripBuilderProvider, useTripBuilder } from "@/components/trip-builder/TripBuilderProvider";
 
-const TransferSearchCard = dynamic(
-  () => import("@/components/hotels/TransferSearchCard").then((m) => m.TransferSearchCard),
-  { ssr: false },
-);
-const ActivitySearchCard = dynamic(
-  () => import("@/components/hotels/ActivitySearchCard").then((m) => m.ActivitySearchCard),
-  { ssr: false },
-);
 const RuheltiBoardingModal = dynamic(
   () =>
     import("@/components/trip-builder/RuheltiBoardingModal").then((m) => m.RuheltiBoardingModal),
@@ -40,15 +32,6 @@ const RuheltiBoardingModal = dynamic(
 );
 
 type Mode = "flights" | "stays" | "cars" | "activities";
-
-type TransferItem = {
-  id: string;
-  name: string;
-  price: number;
-  currency: string;
-  details: string;
-  extra?: Record<string, unknown>;
-};
 
 function plusDays(n: number) {
   const d = new Date();
@@ -144,10 +127,7 @@ function ShopHomeInner() {
   );
   const [cabinClass, setCabinClass] = useState("economy");
   const [directOnly, setDirectOnly] = useState(false);
-  const [transfers, setTransfers] = useState<TransferItem[]>([]);
-  const [activities, setActivities] = useState<TransferItem[]>([]);
-
-  const hasResults = transfers.length > 0 || activities.length > 0;
+  const [flexibleDates, setFlexibleDates] = useState(false);
 
   async function searchAirports(q: string): Promise<SuggestItem[]> {
     const rows = await shopFetch<
@@ -299,6 +279,7 @@ function ShopHomeInner() {
             infants,
             cabinClass,
             directOnly,
+            flexibleDates,
           }),
         );
         return;
@@ -339,8 +320,6 @@ function ShopHomeInner() {
     setLoading(true);
     setError("");
     setMessage("");
-    setTransfers([]);
-    setActivities([]);
     try {
       if (mode === "cars") {
         if (!transferAirport && !transferCarRental) {
@@ -355,137 +334,42 @@ function ShopHomeInner() {
         if (!transferDropoff.trim()) {
           throw new Error("أدخل الفندق أو العنوان");
         }
-        const dropoffText = transferDropoffLabel.trim() || transferDropoff.trim();
-        const result = await shopFetch<{
-          providerName?: string;
-          items: Array<{
-            id: string;
-            name: string;
-            description: string;
-            sellAmountMinor: number;
-            currency: string;
-            details?: Record<string, unknown>;
-          }>;
-        }>("/shop/search-transfers", {
-          method: "POST",
-          timeoutMs: 45000,
-          body: JSON.stringify({
-            city: dropoffText,
-            from: origin || "KWI",
-            to: dropoffText,
-            fromKind: "IATA",
-            toKind: "GPS",
-            toLabel: dropoffText,
+        router.push(
+          buildTransferResultsHref({
+            origin: origin || "KWI",
+            originLabel,
+            dropoff: transferDropoff,
+            dropoffLabel: transferDropoffLabel.trim() || transferDropoff.trim(),
             outboundDate: departDate,
             outboundTime: pickupTime,
             inboundDate: transferRoundtrip ? returnDate : undefined,
             inboundTime: transferRoundtrip ? dropoffTime : undefined,
+            roundtrip: transferRoundtrip,
             adults,
             children,
             infants,
           }),
-        });
-        setTransfers(
-          (result.items || []).map((row) => ({
-            id: row.id,
-            name: row.name,
-            price: row.sellAmountMinor,
-            currency: row.currency,
-            details: row.description,
-            extra: row.details,
-          })),
         );
-        setMessage(
-          result.items?.length
-            ? `تم جلب ${result.items.length} خيار نقل عبر ${result.providerName}`
-            : "لا توجد رحلات نقل متاحة لهذا المطار والوجهة.",
-        );
-      } else {
-        const result = await shopFetch<{
-          providerName?: string;
-          items: Array<{
-            id: string;
-            name: string;
-            description: string;
-            sellAmountMinor: number;
-            currency: string;
-            details?: Record<string, unknown>;
-          }>;
-        }>("/shop/search-activities", {
-          method: "POST",
-          timeoutMs: 45000,
-          body: JSON.stringify({
-            destination: activityDest || stayQuery,
-            fromDate: departDate,
-            toDate: returnDate,
-            adults,
-            children,
-          }),
-        });
-        setActivities(
-          (result.items || []).map((row) => ({
-            id: row.id,
-            name: row.name,
-            price: row.sellAmountMinor,
-            currency: row.currency,
-            details: row.description,
-            extra: row.details,
-          })),
-        );
-        setMessage(
-          result.items?.length
-            ? `تم جلب ${result.items.length} نشاط عبر ${result.providerName}`
-            : "لا توجد أنشطة متاحة لهذه الوجهة والتواريخ.",
-        );
+        return;
       }
+      if (!activityDest && !stayQuery) {
+        throw new Error("أدخل الوجهة");
+      }
+      router.push(
+        buildActivityResultsHref({
+          destination: activityDest || stayQuery,
+          destinationLabel: activityLabel || stayQuery,
+          fromDate: departDate,
+          toDate: returnDate,
+          adults,
+          children,
+        }),
+      );
     } catch (err) {
       setError(err instanceof Error ? err.message : "فشل البحث");
     } finally {
       setLoading(false);
     }
-  }
-
-  function bookTransfer(item: TransferItem) {
-    saveTransferDraft({
-      transfer: {
-        id: item.id,
-        description: item.name,
-        sellAmountMinor: item.price,
-        currency: item.currency,
-        details: item.extra || {},
-      },
-      from: origin || "KWI",
-      to: transferDropoffLabel || transferDropoff || "الكويت",
-      outboundDate: departDate,
-      outboundTime: pickupTime,
-      inboundDate: transferRoundtrip ? returnDate : undefined,
-      inboundTime: transferRoundtrip ? dropoffTime : undefined,
-      adults,
-      children,
-      infants,
-      createdAt: new Date().toISOString(),
-    });
-    router.push("/book");
-  }
-
-  function bookActivity(item: TransferItem) {
-    saveActivityDraft({
-      activity: {
-        id: item.id,
-        description: item.name,
-        sellAmountMinor: item.price,
-        currency: item.currency,
-        details: item.extra || {},
-      },
-      destination: activityDest,
-      destinationLabel: activityLabel,
-      fromDate: departDate,
-      toDate: returnDate,
-      adults,
-      children,
-      createdAt: new Date().toISOString(),
-    });
-    router.push("/book");
   }
 
   function scrollToSearch() {
@@ -588,6 +472,8 @@ function ShopHomeInner() {
         onCabinClassChange={setCabinClass}
         directOnly={directOnly}
         onDirectOnlyChange={setDirectOnly}
+        flexibleDates={flexibleDates}
+        onFlexibleDatesChange={setFlexibleDates}
         origin={origin}
         originLabel={originLabel}
         destination={destination}
@@ -651,36 +537,6 @@ function ShopHomeInner() {
 
       {boardingMounted || boardingOpen ? (
         <RuheltiBoardingModal searchAirports={searchAirports} searchCities={searchCities} />
-      ) : null}
-
-      {hasResults ? (
-        <section className="shop-results shop-results-block">
-          <div className="shop-section-head">
-            <div>
-              <p className="shop-kicker">نتائج البحث</p>
-              <h2>اختر العرض المناسب لك</h2>
-            </div>
-          </div>
-
-        {transfers.map((item) => (
-          <TransferSearchCard
-            key={item.id}
-            item={item}
-            from={originLabel}
-            to={stayQuery}
-            onBook={() => bookTransfer(item)}
-          />
-        ))}
-
-        {activities.map((item) => (
-          <ActivitySearchCard
-            key={item.id}
-            item={item}
-            destination={activityLabel}
-            onBook={() => bookActivity(item)}
-          />
-        ))}
-        </section>
       ) : null}
 
       <ShopLanding

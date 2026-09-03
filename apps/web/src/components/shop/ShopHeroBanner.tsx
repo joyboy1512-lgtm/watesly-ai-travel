@@ -52,6 +52,8 @@ type Props = {
   onCabinClassChange: (v: string) => void;
   directOnly: boolean;
   onDirectOnlyChange: (v: boolean) => void;
+  flexibleDates: boolean;
+  onFlexibleDatesChange: (v: boolean) => void;
   origin: string;
   originLabel: string;
   destination: string;
@@ -807,6 +809,14 @@ export function ShopHeroBanner(props: Props) {
                       label={t("departDate")}
                     />
                   )}
+                  <label className={`exp-flex-dates${props.flexibleDates ? " on" : ""}`}>
+                    <input
+                      type="checkbox"
+                      checked={props.flexibleDates}
+                      onChange={(e) => props.onFlexibleDatesChange(e.target.checked)}
+                    />
+                    <span>{t("flexibleDates")}</span>
+                  </label>
                 </div>
                 {renderTravelersCell()}
                 {renderSearchButton("wg-hero-ticket-search")}

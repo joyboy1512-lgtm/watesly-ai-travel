@@ -160,6 +160,7 @@ export type TransferBookingDraft = {
   inquiryId?: string;
   quoteId?: string;
   quoteItemId?: string;
+  resultsReturnHref?: string;
 };
 
 export type BookingDraftActivity = {
@@ -181,6 +182,7 @@ export type ActivityBookingDraft = {
   children: number;
   createdAt: string;
   inquiryId?: string;
+  resultsReturnHref?: string;
 };
 
 export type BookingDraft =

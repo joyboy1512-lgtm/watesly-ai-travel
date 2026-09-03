@@ -9,6 +9,7 @@ import { HotelPricePanel } from "./HotelPricePanel";
 import { buildHotelDraftPriceBreakdown } from "@/lib/hotel-draft-price";
 import { pickHotelHighlightFacilities } from "@/lib/hotel-facilities";
 import { useShopCopy } from "@/components/shop/ShopI18nProvider";
+import { ShopWishlistButton } from "@/components/shop/ShopWishlistButton";
 
 type HotelRow = {
   id: string;
@@ -97,7 +98,7 @@ export function HotelSearchCard({
     ? (hotel.details.images as Array<{ url?: string } | string>)
         .map((img) => (typeof img === "string" ? img : img.url || ""))
         .filter(Boolean)
-        .slice(0, 4)
+        .slice(0, 6)
     : [];
   if (imageUrl && !galleryUrls.includes(imageUrl)) {
     galleryUrls.unshift(imageUrl);
@@ -173,7 +174,7 @@ export function HotelSearchCard({
         />
         {galleryUrls.length > 1 ? (
           <div className="hotel-search-card-thumbs" aria-hidden>
-            {galleryUrls.slice(0, 4).map((src) => (
+            {galleryUrls.slice(0, 6).map((src) => (
               <HotelMediaImage
                 key={src}
                 src={src}
@@ -189,6 +190,24 @@ export function HotelSearchCard({
           </span>
         ) : null}
         {soldOut ? <span className="hotel-search-card-badge">{t("unavailable")}</span> : null}
+        {isShop ? (
+          <ShopWishlistButton
+            compact
+            item={{
+              id: hotel.id,
+              kind: "hotel",
+              title: name,
+              href:
+                typeof window !== "undefined"
+                  ? window.location.pathname + window.location.search
+                  : "/hotels/results",
+              imageUrl: imageUrl || galleryUrls[0],
+              subtitle: location,
+              priceMinor: hotel.displayFromMinor,
+              currency: hotel.currency,
+            }}
+          />
+        ) : null}
       </div>
 
       <div className="hotel-search-card-main">

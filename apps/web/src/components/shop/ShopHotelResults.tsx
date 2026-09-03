@@ -92,6 +92,9 @@ export function ShopHotelResults(props: Props) {
             lng,
             priceMinor: h.displayFromMinor,
             currency: h.currency,
+            rating: Number(h.details.guestRatingScore) > 0
+              ? Number(h.details.guestRatingScore)
+              : undefined,
           };
         })
         .filter(Boolean) as Array<{
@@ -101,6 +104,7 @@ export function ShopHotelResults(props: Props) {
         lng: number;
         priceMinor: number;
         currency: string;
+        rating?: number;
       }>,
     [props.hotels, t],
   );

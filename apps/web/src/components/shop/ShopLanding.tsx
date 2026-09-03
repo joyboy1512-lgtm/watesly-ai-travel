@@ -240,7 +240,7 @@ export function ShopLanding({ onPickDestination, onPickOffer }: Props) {
           </div>
         </div>
         <p className="shop-muted" style={{ margin: "0 0 1rem", maxWidth: "40rem" }}>
-          هذه نصوص نموذجية لأغراض العرض فقط وليست شهادات عملاء موثّقة بعد.
+          هذه تقييمات توضيحية للعرض وليست شهادات عملاء موثّقة بعد.
         </p>
         <div className="shop-review-grid">
           {SHOP_REVIEWS.map((review) => (

@@ -5,11 +5,12 @@ import { FormEvent, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { COMPANY_LEGAL } from "@watesly-travel/shared";
 import { loginRequest, saveSession } from "@/lib/api";
+import { safeNextPath } from "@/lib/safe-next-path";
 
 export default function StaffLoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const next = searchParams.get("next") || "/dashboard/inquiries";
+  const next = safeNextPath(searchParams.get("next"), "/dashboard/inquiries");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");

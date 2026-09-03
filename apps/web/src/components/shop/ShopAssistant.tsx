@@ -9,6 +9,7 @@ import {
   shopFetch,
   getShopToken,
 } from "@/lib/shop-session";
+import { unlockShopCustomer, verifyShopUnlock } from "@/lib/shop-unlock";
 import { COMPANY_LEGAL } from "@watesly-travel/shared";
 
 type Bubble = {
@@ -23,6 +24,8 @@ export function ShopAssistant() {
   const [open, setOpen] = useState(false);
   const [phone, setPhone] = useState("");
   const [name, setName] = useState("");
+  const [unlockCode, setUnlockCode] = useState("");
+  const [needsUnlockCode, setNeedsUnlockCode] = useState(false);
   const [unlocked, setUnlocked] = useState(false);
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
@@ -82,19 +85,29 @@ export function ShopAssistant() {
     setBusy(true);
     setError("");
     try {
-      const result = await shopFetch<{
-        accessToken: string;
-        customer: {
-          id: string;
-          phone: string;
-          email: string | null;
-          name: string | null;
-          status: string;
-        };
-      }>("/shop/unlock", {
-        method: "POST",
-        body: JSON.stringify({ phone, name }),
-      });
+      if (needsUnlockCode) {
+        const result = await verifyShopUnlock({ phone, name, code: unlockCode });
+        saveShopSession({
+          accessToken: result.accessToken,
+          customer: result.customer,
+        });
+        setUnlocked(true);
+        setNeedsUnlockCode(false);
+        setMessages([
+          {
+            id: "welcome-unlocked",
+            role: "assistant",
+            content: "مرحباً! كيف يمكنني مساعدتك في تخطيط رحلتك؟ يمكنك الكتابة أو إرسال رسالة صوتية.",
+          },
+        ]);
+        return;
+      }
+      const result = await unlockShopCustomer({ phone, name });
+      if (result.needsCode) {
+        setNeedsUnlockCode(true);
+        if (result.debugCode) setUnlockCode(result.debugCode);
+        return;
+      }
       saveShopSession({
         accessToken: result.accessToken,
         customer: result.customer,
@@ -281,10 +294,24 @@ export function ShopAssistant() {
                   onChange={(e) => setPhone(e.target.value)}
                   placeholder="965xxxxxxxx"
                   required
+                  disabled={needsUnlockCode}
                 />
               </label>
+              {needsUnlockCode ? (
+                <label>
+                  رمز التحقق
+                  <input
+                    value={unlockCode}
+                    onChange={(e) => setUnlockCode(e.target.value)}
+                    required
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                    placeholder="6 أرقام"
+                  />
+                </label>
+              ) : null}
               <button className="shop-btn" type="submit" disabled={busy}>
-                {busy ? "..." : "بدء المحادثة"}
+                {busy ? "..." : needsUnlockCode ? "تأكيد الرمز" : "بدء المحادثة"}
               </button>
             </form>
           ) : (

@@ -122,7 +122,7 @@ export async function createCheckout(tripId: string, redeemPoints = 0) {
 export async function payCheckout(tripId: string) {
   return shopFetch<CheckoutSummary>("/shop/platform/me/checkout/pay", {
     method: "POST",
-    body: JSON.stringify({ tripId, result: "paid" }),
+    body: JSON.stringify({ tripId }),
   });
 }
 

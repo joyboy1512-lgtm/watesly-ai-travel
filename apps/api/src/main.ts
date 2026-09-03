@@ -30,7 +30,10 @@ async function bootstrap() {
         _res: Response,
         buf: Buffer,
       ) => {
-        if (req.originalUrl?.includes("/whatsapp/webhook")) {
+        if (
+          req.originalUrl?.includes("/whatsapp/webhook") ||
+          req.originalUrl?.includes("/shop/payments/webhook")
+        ) {
           req.rawBody = Buffer.from(buf);
         }
       },
@@ -47,7 +50,10 @@ async function bootstrap() {
       !path.startsWith("/auth/") &&
       !path.startsWith("/whatsapp/webhook") &&
       !path.startsWith("/shop/unlock") &&
-      !path.startsWith("/shop/login")
+      !path.startsWith("/shop/login") &&
+      !path.startsWith("/shop/airports") &&
+      !path.startsWith("/shop/cities") &&
+      !path.startsWith("/shop/payments/webhook")
     ) {
       return next();
     }

@@ -20,6 +20,7 @@ import {
   saveShopSession,
   shopFetch,
 } from "@/lib/shop-session";
+import { unlockShopCustomer, verifyShopUnlock } from "@/lib/shop-unlock";
 import type { HotelBookingDraft, HotelRoomGuestDraft } from "@/lib/booking-draft";
 import { compressPassportImage } from "@/lib/compress-passport-image";
 
@@ -656,6 +657,8 @@ export default function PublicBookPage() {
   const [submitting, setSubmitting] = useState(false);
   const [bookingId, setBookingId] = useState<string | null>(null);
   const [needLogin, setNeedLogin] = useState(false);
+  const [unlockCode, setUnlockCode] = useState("");
+  const [needsUnlockCode, setNeedsUnlockCode] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<string | null>(null);
   const [specialRequests, setSpecialRequests] = useState("");
   const [emailConfirm, setEmailConfirm] = useState("");
@@ -752,19 +755,28 @@ export default function PublicBookPage() {
     setSubmitting(true);
     setError("");
     try {
-      const result = await shopFetch<{
-        accessToken: string;
-        customer: {
-          id: string;
-          phone: string;
-          email: string | null;
-          name: string | null;
-          status: string;
-        };
-      }>("/shop/unlock", {
-        method: "POST",
-        body: JSON.stringify({ phone, name, email }),
-      });
+      if (needsUnlockCode) {
+        const result = await verifyShopUnlock({
+          phone,
+          name,
+          email,
+          code: unlockCode,
+        });
+        saveShopSession({
+          accessToken: result.accessToken,
+          customer: result.customer,
+        });
+        setNeedLogin(false);
+        setNeedsUnlockCode(false);
+        setPhone(result.customer.phone);
+        return;
+      }
+      const result = await unlockShopCustomer({ phone, name, email });
+      if (result.needsCode) {
+        setNeedsUnlockCode(true);
+        if (result.debugCode) setUnlockCode(result.debugCode);
+        return;
+      }
       saveShopSession({
         accessToken: result.accessToken,
         customer: result.customer,
@@ -987,14 +999,28 @@ export default function PublicBookPage() {
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 required
+                disabled={needsUnlockCode}
               />
             </label>
             <label>
               البريد
               <input value={email} onChange={(e) => setEmail(e.target.value)} />
             </label>
+            {needsUnlockCode ? (
+              <label>
+                رمز التحقق
+                <input
+                  value={unlockCode}
+                  onChange={(e) => setUnlockCode(e.target.value)}
+                  required
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  placeholder="6 أرقام"
+                />
+              </label>
+            ) : null}
             <button className="shop-btn" type="submit" disabled={submitting}>
-              {submitting ? "..." : "متابعة"}
+              {submitting ? "..." : needsUnlockCode ? "تأكيد الرمز" : "متابعة"}
             </button>
           </form>
         </section>

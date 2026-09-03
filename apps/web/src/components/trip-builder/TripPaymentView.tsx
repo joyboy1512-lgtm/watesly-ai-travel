@@ -14,7 +14,6 @@ export function TripPaymentView() {
   const [method, setMethod] = useState<PayMethod>("card");
   const [lockSec, setLockSec] = useState(9 * 60 + 42);
   const [paying, setPaying] = useState(false);
-  const [saveCard, setSaveCard] = useState(false);
   const [receiptEmail, setReceiptEmail] = useState(draft.contact?.email || "");
 
   const dest =
@@ -114,42 +113,18 @@ export function TripPaymentView() {
             </div>
 
             {method === "card" ? (
-              <div className="wg-ru-form-grid2" style={{ marginTop: "1rem" }}>
-                <label>
-                  الاسم على البطاقة
-                  <input autoComplete="cc-name" placeholder="NAME ON CARD" />
-                </label>
-                <label>
-                  رقم البطاقة
-                  <input
-                    autoComplete="cc-number"
-                    placeholder="•••• •••• •••• ••••"
-                    inputMode="numeric"
-                  />
-                </label>
-                <label>
-                  تاريخ الانتهاء (MM/YY)
-                  <input autoComplete="cc-exp" placeholder="MM/YY" />
-                </label>
-                <label>
-                  رمز الأمان CVV
-                  <input autoComplete="cc-csc" placeholder="•••" inputMode="numeric" />
-                </label>
-              </div>
+              <p className="wg-ru-muted" style={{ marginTop: "1rem" }}>
+                بيانات البطاقة تُدخل فقط على بوابة الدفع المشفّرة — لا نجمع رقم البطاقة أو رمز الأمان في هذا الموقع.
+              </p>
             ) : (
               <p className="wg-ru-muted" style={{ marginTop: "1rem" }}>
                 سيتم تحويلك لإتمام الدفع عبر {methods.find((x) => x.key === method)?.label}.
               </p>
             )}
 
-            <label className="wg-ru-check-row" style={{ marginTop: "0.75rem" }}>
-              <input
-                type="checkbox"
-                checked={saveCard}
-                onChange={(e) => setSaveCard(e.target.checked)}
-              />
-              <span>احفظ البطاقة للحجوزات القادمة</span>
-            </label>
+            <p className="wg-ru-muted" style={{ marginTop: "0.75rem" }}>
+              بعد التفعيل الحقيقي سيتم تحويلك لبوابة معتمدة (كي نت / بطاقة) دون تخزين بيانات الدفع لدينا.
+            </p>
           </div>
 
           <div className="wg-ru-form-card">

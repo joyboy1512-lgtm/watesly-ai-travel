@@ -15,6 +15,9 @@ type Props = {
   display: string;
   placeholder?: string;
   inline?: boolean;
+  /** Minimum characters before calling onQuery (default 2). Empty focus still opens popular/empty. */
+  minChars?: number;
+  debounceMs?: number;
   onQuery: (q: string) => Promise<SuggestItem[]>;
   onPick: (item: SuggestItem) => void;
   onClearText: (text: string) => void;
@@ -26,6 +29,8 @@ export function ShopAutocomplete({
   display,
   placeholder,
   inline = false,
+  minChars = 2,
+  debounceMs = 280,
   onQuery,
   onPick,
   onClearText,
@@ -33,23 +38,58 @@ export function ShopAutocomplete({
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState<SuggestItem[]>([]);
   const boxRef = useRef<HTMLDivElement | null>(null);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
+  const seqRef = useRef(0);
+  const onQueryRef = useRef(onQuery);
+  onQueryRef.current = onQuery;
 
   useEffect(() => {
     function onDoc(e: MouseEvent) {
       if (!boxRef.current?.contains(e.target as Node)) setOpen(false);
     }
     document.addEventListener("mousedown", onDoc);
-    return () => document.removeEventListener("mousedown", onDoc);
+    return () => {
+      document.removeEventListener("mousedown", onDoc);
+      if (timerRef.current) clearTimeout(timerRef.current);
+      abortRef.current?.abort();
+    };
   }, []);
 
-  async function runQuery(text: string) {
+  function scheduleQuery(text: string, immediate = false) {
     onClearText(text);
     setOpen(true);
-    try {
-      setItems(await onQuery(text));
-    } catch {
+
+    if (timerRef.current) clearTimeout(timerRef.current);
+    abortRef.current?.abort();
+
+    const trimmed = text.trim();
+    if (trimmed.length > 0 && trimmed.length < minChars) {
       setItems([]);
+      return;
     }
+
+    const run = async () => {
+      const seq = ++seqRef.current;
+      const ac = new AbortController();
+      abortRef.current = ac;
+      try {
+        const next = await onQueryRef.current(trimmed);
+        if (ac.signal.aborted || seq !== seqRef.current) return;
+        setItems(next);
+      } catch {
+        if (ac.signal.aborted || seq !== seqRef.current) return;
+        setItems([]);
+      }
+    };
+
+    if (immediate) {
+      void run();
+      return;
+    }
+    timerRef.current = setTimeout(() => {
+      void run();
+    }, debounceMs);
   }
 
   const menu =
@@ -81,10 +121,10 @@ export function ShopAutocomplete({
           type="text"
           value={display || value}
           placeholder={placeholder}
-          onChange={(e) => void runQuery(e.target.value)}
+          onChange={(e) => scheduleQuery(e.target.value)}
           onFocus={() => {
             setOpen(true);
-            void runQuery(display || value || "");
+            scheduleQuery(display || value || "", true);
           }}
           autoComplete="off"
         />
@@ -94,16 +134,16 @@ export function ShopAutocomplete({
   }
 
   return (
-    <label className="fs-cell shop-ac">
+    <label className="fs-cell shop-ac" ref={boxRef as never}>
       <span>{label}</span>
       <input
         type="text"
         value={display || value}
         placeholder={placeholder}
-        onChange={(e) => void runQuery(e.target.value)}
+        onChange={(e) => scheduleQuery(e.target.value)}
         onFocus={() => {
           setOpen(true);
-          if (!items.length) void runQuery(display || value);
+          if (!items.length) scheduleQuery(display || value || "", true);
         }}
         autoComplete="off"
       />

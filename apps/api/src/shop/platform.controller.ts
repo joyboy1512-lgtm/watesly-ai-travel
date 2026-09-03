@@ -242,9 +242,9 @@ export class PlatformController {
   @UseGuards(CustomerAuthGuard)
   pay(
     @CurrentCustomer() customer: ShopCustomer,
-    @Body() body: { tripId: string; result?: "paid" | "failed" },
+    @Body() body: { tripId: string },
   ) {
-    return this.platform.payCheckout(customer, body.tripId, body.result || "paid");
+    return this.platform.payCheckout(customer, body.tripId);
   }
 
   @Public()

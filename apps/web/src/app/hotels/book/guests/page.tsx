@@ -19,6 +19,7 @@ import {
   saveShopSession,
   shopFetch,
 } from "@/lib/shop-session";
+import { unlockShopCustomer, verifyShopUnlock } from "@/lib/shop-unlock";
 import { translateRoomNameAr } from "@watesly-travel/shared";
 import { formatMoneyMinor } from "@/lib/format";
 import {
@@ -92,6 +93,8 @@ export default function HotelGuestsPage() {
   const [submitting, setSubmitting] = useState(false);
   const [bookingId, setBookingId] = useState<string | null>(null);
   const [needLogin, setNeedLogin] = useState(false);
+  const [unlockCode, setUnlockCode] = useState("");
+  const [needsUnlockCode, setNeedsUnlockCode] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<string | null>(null);
   const [specialRequests, setSpecialRequests] = useState("");
   const [termsAccepted, setTermsAccepted] = useState(false);
@@ -128,25 +131,37 @@ export default function HotelGuestsPage() {
     if (email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
       errors.email = "البريد غير صحيح";
     }
+    if (needsUnlockCode && !/^\d{6}$/.test(unlockCode.trim())) {
+      errors.code = "أدخل رمز التحقق";
+    }
     setFieldErrors(errors);
     if (Object.keys(errors).length) return;
 
     setSubmitting(true);
     setError("");
     try {
-      const result = await shopFetch<{
-        accessToken: string;
-        customer: {
-          id: string;
-          phone: string;
-          email: string | null;
-          name: string | null;
-          status: string;
-        };
-      }>("/shop/unlock", {
-        method: "POST",
-        body: JSON.stringify({ phone, name, email }),
-      });
+      if (needsUnlockCode) {
+        const result = await verifyShopUnlock({
+          phone,
+          name,
+          email,
+          code: unlockCode,
+        });
+        saveShopSession({
+          accessToken: result.accessToken,
+          customer: result.customer,
+        });
+        setNeedLogin(false);
+        setNeedsUnlockCode(false);
+        setPhone(result.customer.phone);
+        return;
+      }
+      const result = await unlockShopCustomer({ phone, name, email });
+      if (result.needsCode) {
+        setNeedsUnlockCode(true);
+        if (result.debugCode) setUnlockCode(result.debugCode);
+        return;
+      }
       saveShopSession({
         accessToken: result.accessToken,
         customer: result.customer,
@@ -334,8 +349,22 @@ export default function HotelGuestsPage() {
               />
               {fieldErrors.email ? <em className="shop-field-error">{fieldErrors.email}</em> : null}
             </label>
+            {needsUnlockCode ? (
+              <label>
+                رمز التحقق
+                <input
+                  value={unlockCode}
+                  onChange={(e) => setUnlockCode(e.target.value)}
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  placeholder="6 أرقام"
+                  aria-invalid={Boolean(fieldErrors.code)}
+                />
+                {fieldErrors.code ? <em className="shop-field-error">{fieldErrors.code}</em> : null}
+              </label>
+            ) : null}
             <button className="shop-btn" type="submit" disabled={submitting}>
-              {submitting ? "..." : "متابعة"}
+              {submitting ? "..." : needsUnlockCode ? "تأكيد الرمز" : "متابعة"}
             </button>
           </form>
         </section>

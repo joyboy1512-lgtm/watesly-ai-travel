@@ -2,7 +2,7 @@
  * Platform v2 shop service — prefers Prisma persistence; keeps light
  * in-memory fallbacks for CMS banners/rules, checkouts, favorites, searches.
  */
-import { Injectable } from "@nestjs/common";
+import { BadRequestException, Injectable } from "@nestjs/common";
 import { Prisma } from "@watesly-travel/database";
 import {
   WEEKEND_DEALS,
@@ -1103,13 +1103,21 @@ export class PlatformService {
     return summary;
   }
 
-  async payCheckout(
-    customer: ShopCustomer,
-    tripId: string,
-    result: "paid" | "failed" = "paid",
-  ) {
+  async payCheckout(customer: ShopCustomer, tripId: string) {
     const summary = this.checkouts.get(tripId);
     if (!summary) return null;
+
+    // Never trust a client-supplied "paid" flag. Demo pay is server-gated only.
+    const allowDemo =
+      process.env.ALLOW_DEMO_CHECKOUT_PAY === "1" &&
+      (process.env.PAYMENT_ENV || "sandbox").toLowerCase() !== "production";
+    if (!allowDemo) {
+      throw new BadRequestException(
+        "أكمل الدفع عبر بوابة الدفع المعتمدة. تأكيد الدفع يتم من السيرفر فقط.",
+      );
+    }
+
+    const result = "paid" as const;
     summary.paymentStatus = normalizeShopPaymentStatus(result);
     if (result === "paid") {
       const earned = pointsEarnedFromSpend(summary.finalMinor, this.pointsRules);

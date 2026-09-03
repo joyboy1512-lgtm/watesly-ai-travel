@@ -632,7 +632,8 @@
 
 .wg-travela-slide.active {
   opacity: 1;
-  pointer-events: auto;
+  /* Keep slides non-interactive so the search dock (sibling, higher z-index) always receives clicks */
+  pointer-events: none;
   z-index: 1;
 }
 
@@ -749,7 +750,7 @@
   transform: translateX(-50%);
   z-index: 25;
   width: min(1120px, calc(100% - 6cm));
-  pointer-events: none;
+  pointer-events: auto;
 }
 
 .wg-hero-ticket-shell,
@@ -763,6 +764,8 @@
   gap: 0.55rem;
   width: 100%;
   justify-items: center;
+  position: relative;
+  z-index: 1;
 }
 
 .wg-hero-dock-modes {

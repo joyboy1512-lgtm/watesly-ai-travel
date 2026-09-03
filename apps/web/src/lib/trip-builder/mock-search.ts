@@ -1,9 +1,12 @@
-/** Mock search — isolated behind NEXT_PUBLIC_WG_TRIP_USE_MOCK=1 */
+/** Mock search — opt-in via NEXT_PUBLIC_WG_TRIP_USE_MOCK=1 (off in production by default) */
 import type { TripDraftState, TripSearchResult, TripServiceKind } from "@watesly-travel/shared";
 import { buildPackageOptions, mergeSearchSlices } from "@watesly-travel/shared";
 
 export function tripUseMock(): boolean {
-  return process.env.NEXT_PUBLIC_WG_TRIP_USE_MOCK !== "0";
+  const flag = process.env.NEXT_PUBLIC_WG_TRIP_USE_MOCK;
+  if (flag === "1" || flag === "true") return true;
+  if (flag === "0" || flag === "false") return false;
+  return process.env.NODE_ENV !== "production";
 }
 
 export async function mockTripSearch(draft: TripDraftState): Promise<TripSearchResult> {

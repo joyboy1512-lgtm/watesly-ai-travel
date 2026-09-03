@@ -3,10 +3,29 @@ import {
   createEmptyTripDraft,
   createFlightLeg,
   type TripDraftState,
+  type TripTravelerDraft,
 } from "@watesly-travel/shared";
 
 const KEY = "weekendgate_trip_draft_v2";
 const LEGACY_KEY = "weekendgate_trip_draft_v1";
+
+function redactTraveler(t: TripTravelerDraft): TripTravelerDraft {
+  return {
+    ...t,
+    passportNumber: "",
+    passportExpiry: "",
+  };
+}
+
+/** Never persist passport / payment secrets in the browser. */
+export function redactDraftForStorage(draft: TripDraftState): TripDraftState {
+  return {
+    ...draft,
+    travelers: (draft.travelers || []).map((t) =>
+      redactTraveler(t as TripTravelerDraft),
+    ),
+  };
+}
 
 function migrateDraft(raw: unknown): TripDraftState | null {
   if (!raw || typeof raw !== "object") return null;
@@ -44,7 +63,7 @@ function migrateDraft(raw: unknown): TripDraftState | null {
           ],
   };
 
-  return {
+  return redactDraftForStorage({
     ...base,
     ...data,
     flight,
@@ -59,7 +78,7 @@ function migrateDraft(raw: unknown): TripDraftState | null {
     contact: { ...base.contact, ...data.contact },
     selectedOffers: data.selectedOffers || {},
     search: data.search || null,
-  };
+  });
 }
 
 export function loadTripDraft(): TripDraftState | null {
@@ -76,10 +95,11 @@ export function loadTripDraft(): TripDraftState | null {
 export function saveTripDraft(draft: TripDraftState): void {
   if (typeof window === "undefined") return;
   try {
-    sessionStorage.setItem(
-      KEY,
-      JSON.stringify({ ...draft, updatedAt: new Date().toISOString() }),
-    );
+    const safe = redactDraftForStorage({
+      ...draft,
+      updatedAt: new Date().toISOString(),
+    });
+    sessionStorage.setItem(KEY, JSON.stringify(safe));
   } catch {
     /* quota */
   }

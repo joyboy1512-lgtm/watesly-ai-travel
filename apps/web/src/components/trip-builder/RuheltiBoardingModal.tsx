@@ -16,6 +16,7 @@ import { ShopDateRangePicker } from "@/components/shop/ShopDateRangePicker";
 import { TRIP_SERVICE_META } from "@watesly-travel/shared";
 import type { TripServiceKind } from "@watesly-travel/shared";
 import { useTripBuilder } from "./TripBuilderProvider";
+import "./trip-builder.css";
 
 type Props = {
   searchAirports: (q: string) => Promise<SuggestItem[]>;

@@ -1,192 +1,227 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { buildTripTimeline } from "@watesly-travel/shared";
-import { formatKwdMinor } from "@/lib/platform-api";
+import { useState } from "react";
+import { COMPANY_LEGAL } from "@watesly-travel/shared";
 import { useTripBuilder } from "./TripBuilderProvider";
-
-const QUICK_QUESTIONS = [
-  "متى أذهب إلى المطار؟",
-  "أين سأجد السائق؟",
-  "ما موعد تسجيل الفندق؟",
-  "ما أنشطتي اليوم؟",
-  "اقترح مطعمًا قريبًا",
-  "هل يوجد تعارض في البرنامج؟",
-];
+import { MOCKUP_TRIP, money } from "./mockup-data";
 
 export function TripFileView({ tripId }: { tripId: string }) {
   const { draft } = useTripBuilder();
+  const [day, setDay] = useState(MOCKUP_TRIP.dayTabs[0]);
   const [assistantReply, setAssistantReply] = useState<string | null>(null);
-  const [selectedDay, setSelectedDay] = useState(draft.flight.departDate);
 
-  const dest = draft.flight.destinationLabel || draft.flight.destination || "الوجهة";
-  const bookingRef = `TRP-${tripId.slice(-8).toUpperCase()}`;
-  const timeline = useMemo(() => buildTripTimeline(draft), [draft]);
+  const dest =
+    draft.flight.destinationLabel || draft.flight.destination || MOCKUP_TRIP.destinationAr;
+  const ref = MOCKUP_TRIP.bookingRef;
 
-  const days = useMemo(() => {
-    const set = new Set(timeline.map((t) => t.day).filter(Boolean));
-    return Array.from(set);
-  }, [timeline]);
+  const timeline = [
+    { time: "05:30", title: "تذكير بالمغادرة إلى المطار", kind: "reminder", action: null as string | null, meta: null as string | null },
+    {
+      time: "08:30",
+      title: `${MOCKUP_TRIP.originCode} → ${MOCKUP_TRIP.destCode}`,
+      kind: "flight",
+      action: "عرض التذكرة",
+      meta: "المدة 2س 45د",
+    },
+    {
+      time: "11:30",
+      title: "السائق بانتظارك في مطار دبي",
+      kind: "transfer",
+      action: "تفاصيل الاستقبال",
+      meta: null,
+    },
+    {
+      time: "13:00",
+      title: `تسجيل الدخول — ${MOCKUP_TRIP.hotel.name}`,
+      kind: "hotel",
+      action: "قسيمة الفندق",
+      meta: null,
+    },
+    {
+      time: "18:00",
+      title: "وقت حر — اقتراح من Ai: ممشى دبي مارينا",
+      kind: "free",
+      action: "اقتراحات المكان",
+      meta: null,
+    },
+  ];
 
-  const dayItems = timeline.filter((t) => t.day === selectedDay || !selectedDay);
-
-  const allConfirmed = draft.services.every((s) => draft.selectedOffers[s]);
-
-  function askAssistant(q: string) {
+  function ask(q: string) {
     if (q.includes("المطار")) {
-      setAssistantReply("يُنصح بالوصول قبل 3 ساعات من إقلاع رحلتك. رحلتك القادمة في 08:30.");
+      setAssistantReply("يُفضّل الوصول قبل 3 ساعات من الإقلاع. رحلتك الساعة 08:30.");
     } else if (q.includes("السائق")) {
-      setAssistantReply(
-        `سيجدك السائق عند صالة الوصول — ${draft.transfer.pickup || "مطار الوصول"}. تفاصيل الاستقبال في قسيمة المواصلات.`,
-      );
-    } else if (q.includes("الفندق")) {
-      setAssistantReply("موعد تسجيل الدخول المعتاد 15:00. يمكن طلب وصول مبكر حسب التوفر.");
-    } else if (q.includes("أنشطتي")) {
-      setAssistantReply(draft.selectedOffers.activity?.label || "لا أنشطة محددة لهذا اليوم.");
+      setAssistantReply("سيجدك السائق عند صالة الوصول — التفاصيل في قسيمة المواصلات.");
     } else if (q.includes("مطعم")) {
-      setAssistantReply(`يمكنني اقتراح مطاعم قرب ${dest} — هل تفضّل مطبخًا معينًا؟`);
-    } else if (q.includes("تعارض")) {
-      setAssistantReply("لا يوجد تعارض واضح في برنامجك الحالي.");
+      setAssistantReply(`اقتراح Ai قرب ${dest}: مطاعم دبي مارينا وممشى جميرا.`);
     } else {
       setAssistantReply("كيف يمكنني مساعدتك في رحلتك؟");
     }
   }
 
-  const total = useMemo(() => {
-    let sum = 0;
-    const o = draft.selectedOffers;
-    if (o.flight) sum += o.flight.sellAmountMinor;
-    if (o.hotel) sum += o.hotel.sellAmountMinor;
-    if (o.transfer) sum += o.transfer.sellAmountMinor;
-    if (o.activity) sum += o.activity.sellAmountMinor;
-    return sum;
-  }, [draft.selectedOffers]);
-
   return (
-    <div className="wg-trip-flow">
-      <header className="wg-trip-card" style={{ marginBottom: "1rem" }}>
-        <h1 style={{ margin: 0, color: "var(--tv-primary,#13357b)" }}>
-          ملف رحلتي إلى {dest}
-        </h1>
-        <p style={{ margin: "0.35rem 0", color: "var(--wg-muted)" }}>
-          {draft.flight.departDate}
-          {draft.flight.returnDate ? ` — ${draft.flight.returnDate}` : ""} · {bookingRef}
-        </p>
-        <span
-          style={{
-            display: "inline-block",
-            padding: "0.25rem 0.65rem",
-            borderRadius: 999,
-            background: allConfirmed ? "#dcfce7" : "#fef3c7",
-            color: allConfirmed ? "#18785a" : "#b45309",
-            fontSize: "0.82rem",
-          }}
-        >
-          {allConfirmed ? "جميع الحجوزات مؤكدة" : "بعض الخدمات قيد المعالجة"}
-        </span>
+    <div className="wg-ru-page" dir="rtl">
+      <header className="wg-ru-file-head">
+        <div>
+          <h1>🧳 ملف رحلتي إلى {dest}</h1>
+          <p className="wg-ru-muted">
+            {ref} · {MOCKUP_TRIP.dateFromAr} — {MOCKUP_TRIP.dateToAr}
+          </p>
+          <span className="wg-ru-badge-green">جميع الحجوزات مؤكدة</span>
+        </div>
+        <div className="wg-ru-file-actions">
+          <button type="button" className="wg-ru-ghost-btn">
+            📅 إضافة إلى التقويم
+          </button>
+          <button type="button" className="wg-ru-ghost-btn">
+            مشاركة
+          </button>
+          <button type="button" className="wg-ru-outline-btn">
+            تحميل ملف الرحلة PDF
+          </button>
+        </div>
       </header>
 
-      <div className="wg-trip-card" style={{ marginBottom: "1rem", background: "#f0f7ff" }}>
-        <h3 style={{ margin: "0 0 0.5rem" }}>الموعد القادم</h3>
-        <p style={{ margin: 0 }}>
-          <strong>رحلة {draft.flight.origin} → {draft.flight.destination}</strong>
-          {" · "}
-          {draft.flight.departDate} 08:30
-        </p>
-        <p style={{ fontSize: "0.85rem", color: "var(--wg-muted)" }}>
-          البوابة: تظهر عند توفرها
-        </p>
-        <button type="button" className="wg-trip-primary-btn" style={{ maxWidth: 200, marginTop: "0.5rem" }}>
-          عرض التذكرة
-        </button>
+      <div className="wg-ru-next-event">
+        <span className="wg-ru-next-tag">الموعد القادم</span>
+        <div className="wg-ru-next-grid3">
+          <div>
+            <p className="wg-ru-countdown">⏱ متبقي يومان و 6 ساعات</p>
+          </div>
+          <div>
+            <strong>
+              رحلة {MOCKUP_TRIP.originAr} إلى {dest}
+            </strong>
+            <p>الأحد 25 مايو · الإقلاع 08:30</p>
+            <button type="button" className="wg-ru-link-btn">
+              تعليمات المطار
+            </button>
+          </div>
+          <div>
+            <button type="button" className="wg-ru-primary-btn">
+              عرض التذكرة
+            </button>
+          </div>
+        </div>
       </div>
 
-      <div className="wg-trip-grid">
-        <div>
-          <div className="wg-trip-card" style={{ marginBottom: "1rem" }}>
-            <h3>جدول الرحلة</h3>
-            {days.length > 1 ? (
-              <div style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap", marginBottom: "0.75rem" }}>
-                {days.map((d) => (
-                  <button
-                    key={d}
-                    type="button"
-                    className="wg-trip-tier-tab"
-                    aria-pressed={selectedDay === d}
-                    onClick={() => setSelectedDay(d)}
-                    style={{ flex: "0 0 auto", minWidth: 80 }}
-                  >
-                    {d}
-                  </button>
-                ))}
-              </div>
-            ) : null}
-            <div className="wg-trip-timeline">
-              {dayItems.map((item) => (
-                <div key={item.id} className="wg-trip-timeline-item">
-                  <time style={{ fontSize: "0.78rem", color: "var(--wg-muted)" }}>
-                    {item.time}
-                  </time>
-                  <strong>{item.title}</strong>
-                  {item.description ? (
-                    <p style={{ margin: "0.15rem 0", fontSize: "0.85rem" }}>{item.description}</p>
-                  ) : null}
-                  {item.actionLabel ? (
-                    <button type="button" className="wg-trip-change-btn">
-                      {item.actionLabel}
-                    </button>
-                  ) : null}
+      <div className="wg-ru-layout">
+        <div className="wg-ru-main">
+          <div className="wg-ru-form-card">
+            <h3>جدول رحلتك</h3>
+            <div className="wg-ru-day-tabs">
+              {MOCKUP_TRIP.dayTabs.map((d) => (
+                <button
+                  key={d}
+                  type="button"
+                  className={`wg-ru-day-tab${day === d ? " active" : ""}`}
+                  onClick={() => setDay(d)}
+                >
+                  {d}
+                </button>
+              ))}
+            </div>
+            <div className="wg-ru-timeline">
+              {timeline.map((item) => (
+                <div key={item.time + item.title} className="wg-ru-timeline-row">
+                  <time>{item.time}</time>
+                  <div>
+                    <strong>{item.title}</strong>
+                    {item.meta ? <p className="wg-ru-muted">{item.meta}</p> : null}
+                    {item.action ? (
+                      <button type="button" className="wg-ru-outline-btn">
+                        {item.action}
+                      </button>
+                    ) : null}
+                  </div>
                 </div>
               ))}
             </div>
           </div>
 
-          <div className="wg-trip-assistant">
-            <h3 style={{ margin: 0 }}>مساعد رحلتك</h3>
-            <div className="wg-trip-assistant-quick">
-              {QUICK_QUESTIONS.map((q) => (
-                <button key={q} type="button" onClick={() => askAssistant(q)}>
-                  {q}
-                </button>
+          <div className="wg-ru-form-card">
+            <h3>أنشطة قادمة في رحلتك</h3>
+            <div className="wg-ru-act-cards">
+              {MOCKUP_TRIP.activities.map((a) => (
+                <div key={a.title} className="wg-ru-act-card">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={a.image} alt={a.title} />
+                  <div>
+                    <strong>
+                      اليوم {a.day}: {a.title}
+                    </strong>
+                    <p>
+                      {a.dateAr} · {a.time}
+                    </p>
+                  </div>
+                </div>
               ))}
             </div>
-            {assistantReply ? (
-              <p style={{ margin: "0.5rem 0 0", fontSize: "0.88rem" }}>{assistantReply}</p>
-            ) : null}
-            <button type="button" className="wg-trip-primary-btn" style={{ marginTop: "0.5rem" }}>
-              اسأل المساعد
-            </button>
           </div>
+
+          <button type="button" className="wg-ru-outline-btn full">
+            احفظ الرحلة للاستخدام بدون إنترنت
+          </button>
         </div>
 
-        <aside>
-          <div className="wg-trip-card" style={{ marginBottom: "1rem" }}>
-            <h3>مستندات الرحلة</h3>
-            <ul style={{ margin: 0, paddingInlineStart: "1.1rem", fontSize: "0.88rem" }}>
-              {draft.selectedOffers.flight ? <li>تذكرة الطيران ✓</li> : null}
-              {draft.selectedOffers.hotel ? <li>قسيمة الفندق ✓</li> : null}
-              {draft.selectedOffers.transfer ? <li>قسيمة المواصلات</li> : null}
-              {draft.selectedOffers.activity ? <li>تذاكر الأنشطة</li> : null}
-              <li>إيصال الدفع</li>
+        <aside className="wg-ru-aside">
+          <div className="wg-ru-summary-card">
+            <h3>مستندات رحلتي</h3>
+            <ul className="wg-ru-docs">
+              {["تذكرة الطيران", "قسيمة الفندق", "قسيمة المواصلات", "تذاكر الأنشطة"].map((doc) => (
+                <li key={doc}>
+                  <span>✓ {doc}</span>
+                  <span>
+                    <button type="button" className="wg-ru-ghost-btn">
+                      عرض
+                    </button>
+                    <button type="button" className="wg-ru-ghost-btn">
+                      تحميل
+                    </button>
+                  </span>
+                </li>
+              ))}
             </ul>
-            <button type="button" className="wg-trip-primary-btn" style={{ marginTop: "0.75rem" }}>
+            <button type="button" className="wg-ru-link-btn">
               تحميل جميع المستندات
             </button>
           </div>
 
-          <div className="wg-trip-card">
+          <div className="wg-ru-summary-card">
             <h3>معلومات مهمة</h3>
-            <p style={{ fontSize: "0.85rem", margin: "0.25rem 0" }}>
-              حالة الرحلة: في الموعد
+            <p>
+              حالة الرحلة: <span className="ok">في الموعد</span>
             </p>
-            <p style={{ fontSize: "0.85rem", margin: "0.25rem 0" }}>
-              الطقس في {dest}: تظهر عند توفرها
+            <p>الطقس في {dest}: 34°</p>
+            <p>تسجيل الدخول للفندق: 15:00</p>
+            <p className="wg-ru-support-line">
+              🎧 الدعم: {COMPANY_LEGAL.phoneDisplay}
+              <a
+                href={COMPANY_LEGAL.whatsappUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="wg-ru-wa-inline"
+                aria-label="واتساب"
+              >
+                واتساب
+              </a>
             </p>
-            <p style={{ fontSize: "0.85rem", margin: "0.25rem 0" }}>
-              الدعم: +965 2222 0000
-            </p>
-            <p style={{ fontSize: "0.82rem", color: "var(--wg-muted)", marginTop: "0.5rem" }}>
-              الإجمالي المدفوع: {formatKwdMinor(total)}
+          </div>
+
+          <div className="wg-ru-summary-card">
+            <h3>مساعد رحلتك · Ai</h3>
+            <div className="wg-ru-assistant-qs">
+              {["متى أذهب إلى المطار؟", "أين سأجد السائق؟", "اقترح مطعماً قريباً"].map((q) => (
+                <button key={q} type="button" onClick={() => ask(q)}>
+                  {q}
+                </button>
+              ))}
+            </div>
+            {assistantReply ? <p className="wg-ru-assistant-reply">{assistantReply}</p> : null}
+            <button type="button" className="wg-ru-primary-btn">
+              اسأل Ai
+            </button>
+            <p className="wg-ru-muted" style={{ fontSize: "0.75rem", marginTop: "0.5rem" }}>
+              الإجمالي المدفوع: {money(MOCKUP_TRIP.prices.total)} · {tripId.slice(-6)}
             </p>
           </div>
         </aside>

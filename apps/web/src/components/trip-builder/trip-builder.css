@@ -1376,3 +1376,404 @@ body.wg-ruhelti-open .shop-date-range-pop-portal {
   font-size: 0.78rem;
   cursor: pointer;
 }
+
+
+/* === RUHLETI MOCKUP UI (navy) === */
+.wg-ru-page {
+  --ru-navy: #13357b;
+  --ru-navy-soft: rgba(19, 53, 123, 0.08);
+  --ru-border: #e2e8f0;
+  --ru-muted: #64748b;
+  --ru-ok: #18785a;
+  --ru-warn: #b45309;
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 1rem 1rem 5.5rem;
+  color: #0f172a;
+  background: #f7f9fc;
+  min-height: 70vh;
+}
+.wg-ru-page h1, .wg-ru-page h2, .wg-ru-page h3 {
+  color: var(--ru-navy);
+  margin: 0 0 0.35rem;
+}
+.wg-ru-muted { color: var(--ru-muted); font-size: 0.88rem; }
+.wg-ru-hero-head, .wg-ru-hero-head, .wg-ru-file-head {
+  margin: 0.75rem 0 1.1rem;
+}
+.wg-ru-stepper {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 0;
+  margin: 0.25rem 0 1.25rem;
+  flex-wrap: wrap;
+}
+.wg-ru-step-item { display: flex; align-items: center; }
+.wg-ru-step-line {
+  width: 2.5rem;
+  height: 2px;
+  background: #cbd5e1;
+  margin: 0 0.15rem;
+  margin-top: -1.1rem;
+}
+.wg-ru-step-line.on { background: var(--ru-navy); }
+.wg-ru-step-node {
+  display: grid;
+  justify-items: center;
+  gap: 0.25rem;
+  min-width: 4.5rem;
+}
+.wg-ru-step-circle {
+  width: 1.85rem;
+  height: 1.85rem;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  border: 2px solid #cbd5e1;
+  color: var(--ru-muted);
+  font-size: 0.85rem;
+  font-weight: 700;
+  background: #fff;
+}
+.wg-ru-step-node.active .wg-ru-step-circle,
+.wg-ru-step-node.done .wg-ru-step-circle {
+  background: var(--ru-navy);
+  border-color: var(--ru-navy);
+  color: #fff;
+}
+.wg-ru-step-label { font-size: 0.72rem; color: var(--ru-muted); text-align: center; }
+.wg-ru-step-node.active .wg-ru-step-label { color: var(--ru-navy); font-weight: 700; }
+
+.wg-ru-services-ribbon {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.15rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+.wg-ru-svc-item { display: flex; align-items: center; gap: 0.35rem; }
+.wg-ru-svc-dash { width: 2rem; height: 2px; border-top: 2px dashed #cbd5e1; }
+.wg-ru-svc-dash.on { border-color: var(--ru-navy); }
+.wg-ru-svc-dot {
+  width: 1.55rem; height: 1.55rem; border-radius: 999px;
+  display: grid; place-items: center; font-size: 0.75rem; font-weight: 700;
+  background: #fff; border: 2px solid #cbd5e1; color: var(--ru-muted);
+}
+.wg-ru-svc-dot.on { background: var(--ru-navy); border-color: var(--ru-navy); color: #fff; }
+.wg-ru-svc-label { font-size: 0.78rem; color: var(--ru-navy); font-weight: 600; }
+
+.wg-ru-tier-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.65rem;
+  margin-bottom: 1.1rem;
+}
+.wg-ru-tier-card {
+  background: #fff;
+  border: 1.5px solid var(--ru-border);
+  border-radius: 12px;
+  padding: 0.85rem 0.75rem;
+  text-align: center;
+  cursor: pointer;
+  display: grid;
+  gap: 0.2rem;
+}
+.wg-ru-tier-card.selected {
+  border-color: var(--ru-navy);
+  box-shadow: 0 0 0 1px var(--ru-navy);
+  background: var(--ru-navy-soft);
+}
+.wg-ru-tier-ico { font-size: 1.25rem; }
+.wg-ru-tier-card small { color: var(--ru-muted); font-size: 0.75rem; }
+
+.wg-ru-layout {
+  display: grid;
+  gap: 1rem;
+}
+@media (min-width: 920px) {
+  .wg-ru-layout { grid-template-columns: 1fr 300px; align-items: start; }
+}
+.wg-ru-main { display: grid; gap: 0.85rem; }
+.wg-ru-aside { display: grid; gap: 0.85rem; position: sticky; top: 0.75rem; }
+
+.wg-ru-svc-card,
+.wg-ru-form-card,
+.wg-ru-summary-card,
+.wg-ru-ticket-card,
+.wg-ru-smart-card,
+.wg-ru-success-card {
+  background: #fff;
+  border: 1px solid var(--ru-border);
+  border-radius: 14px;
+  padding: 1rem 1.05rem;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+.wg-ru-svc-card {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 0.75rem;
+  align-items: start;
+}
+.wg-ru-svc-check {
+  width: 1.5rem; height: 1.5rem; border-radius: 999px;
+  background: var(--ru-navy); color: #fff;
+  display: grid; place-items: center; font-size: 0.8rem; font-weight: 700;
+}
+.wg-ru-svc-side {
+  display: grid; justify-items: center; gap: 0.25rem; min-width: 7rem;
+}
+.wg-ru-price { font-size: 1.15rem; font-weight: 800; color: var(--ru-navy); }
+.wg-ru-flight-times {
+  display: grid; grid-template-columns: 1fr auto 1fr; gap: 0.5rem; align-items: center;
+}
+.wg-ru-flight-times strong { display: block; font-size: 1.05rem; }
+.wg-ru-flight-mid { text-align: center; color: var(--ru-muted); font-size: 0.75rem; }
+.wg-ru-flight-line {
+  display: block; height: 1px; background: #cbd5e1; width: 3.5rem; margin: 0.15rem auto;
+}
+.wg-ru-flight-leg + .wg-ru-flight-leg { margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px dashed var(--ru-border); }
+.wg-ru-badge-green {
+  display: inline-block; margin-top: 0.5rem; padding: 0.15rem 0.55rem;
+  border-radius: 999px; background: #e8f8f0; color: var(--ru-ok); font-size: 0.75rem; font-weight: 700;
+}
+.wg-ru-hotel-body { display: grid; grid-template-columns: 110px 1fr; gap: 0.75rem; }
+.wg-ru-hotel-img { width: 110px; height: 88px; object-fit: cover; border-radius: 10px; }
+.wg-ru-stars { color: #eab308; margin: 0.15rem 0; letter-spacing: 1px; }
+.wg-ru-chips { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.35rem; }
+.wg-ru-chips span {
+  font-size: 0.72rem; padding: 0.15rem 0.45rem; border-radius: 999px;
+  background: #f1f5f9; color: #334155;
+}
+.wg-ru-chips span.ok { background: #e8f8f0; color: var(--ru-ok); }
+.wg-ru-transfer-row, .wg-ru-act-row {
+  display: flex; gap: 0.65rem; align-items: center; padding: 0.35rem 0;
+}
+.wg-ru-act-row img { width: 56px; height: 42px; object-fit: cover; border-radius: 8px; }
+.wg-ru-act-info { flex: 1; }
+
+.wg-ru-primary-btn,
+.wg-ru-outline-btn,
+.wg-ru-ghost-btn,
+.wg-ru-link-btn {
+  font: inherit; cursor: pointer; border-radius: 10px;
+}
+.wg-ru-primary-btn {
+  width: 100%; border: none; background: var(--ru-navy); color: #fff;
+  font-weight: 700; padding: 0.75rem 1rem; margin-top: 0.55rem;
+}
+.wg-ru-primary-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+.wg-ru-outline-btn {
+  border: 1.5px solid var(--ru-navy); color: var(--ru-navy); background: #fff;
+  padding: 0.4rem 0.7rem; font-size: 0.82rem; font-weight: 600;
+}
+.wg-ru-outline-btn.full, .wg-ru-outline-btn.full { width: 100%; margin-top: 0.4rem; }
+.wg-ru-outline-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.wg-ru-ghost-btn {
+  border: 1px solid var(--ru-border); background: #fff; color: #334155;
+  padding: 0.35rem 0.55rem; font-size: 0.78rem;
+}
+.wg-ru-link-btn {
+  border: none; background: none; color: var(--ru-navy); font-weight: 600;
+  padding: 0.35rem 0; font-size: 0.85rem;
+}
+.wg-ru-sum-line, .wg-ru-sum-total {
+  display: flex; justify-content: space-between; gap: 0.5rem; padding: 0.3rem 0;
+  font-size: 0.9rem;
+}
+.wg-ru-sum-total {
+  margin-top: 0.35rem; padding-top: 0.55rem;
+  border-top: 1px dashed var(--ru-border); font-weight: 700;
+}
+.wg-ru-sum-total strong { color: var(--ru-navy); font-size: 1.25rem; }
+.wg-ru-smart-card { background: #fff8ef; border-color: #fde68a; }
+.wg-ru-smart-card h4 { margin: 0 0 0.35rem; color: var(--ru-navy); }
+.wg-ru-verified { color: var(--ru-ok); font-size: 0.82rem; font-weight: 600; }
+.wg-ru-secure { font-size: 0.75rem; color: var(--ru-muted); text-align: center; }
+.wg-ru-mobile-bar {
+  display: none;
+}
+@media (max-width: 919px) {
+  .wg-ru-tier-row { grid-template-columns: 1fr; }
+  .wg-ru-svc-card { grid-template-columns: auto 1fr; }
+  .wg-ru-svc-side { grid-column: 1 / -1; justify-items: stretch; text-align: center; }
+  .wg-ru-hotel-body { grid-template-columns: 1fr; }
+  .wg-ru-mobile-bar {
+    display: flex; position: fixed; inset-inline: 0; bottom: 0; z-index: 40;
+    gap: 0.75rem; align-items: center; padding: 0.75rem 1rem max(0.75rem, env(safe-area-inset-bottom));
+    background: #fff; border-top: 1px solid var(--ru-border);
+    box-shadow: 0 -6px 20px rgba(15,23,42,0.08);
+  }
+  .wg-ru-mobile-bar .wg-ru-primary-btn { margin: 0; width: auto; flex: 1; }
+  .wg-ru-aside { position: static; }
+}
+
+.wg-ru-ticket-card {
+  display: flex; justify-content: space-between; gap: 1rem; align-items: flex-start;
+}
+.wg-ru-ticket-card.perforated, .wg-ru-summary-card.perforated {
+  background-image: radial-gradient(circle at 0 50%, #f7f9fc 8px, transparent 9px),
+    radial-gradient(circle at 100% 50%, #f7f9fc 8px, transparent 9px);
+}
+.wg-ru-route { font-size: 1.15rem; font-weight: 800; color: var(--ru-navy); margin: 0.25rem 0; }
+.wg-ru-service-pills { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.4rem; }
+.wg-ru-service-pills span {
+  background: #e8f0fe; color: var(--ru-navy); border-radius: 999px;
+  padding: 0.15rem 0.55rem; font-size: 0.75rem; font-weight: 600;
+}
+.wg-ru-form-grid3, .wg-ru-form-grid2 {
+  display: grid; gap: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  margin-top: 0.75rem;
+}
+.wg-ru-form-card label, .wg-ru-form-grid3 label, .wg-ru-form-grid2 label {
+  display: grid; gap: 0.25rem; font-size: 0.82rem; color: #334155;
+}
+.wg-ru-form-card input, .wg-ru-form-card select,
+.wg-ru-form-grid3 input, .wg-ru-form-grid3 select,
+.wg-ru-form-grid2 input, .wg-ru-form-grid2 select {
+  border: 1px solid var(--ru-border); border-radius: 8px; padding: 0.5rem 0.65rem; font: inherit;
+}
+.wg-ru-form-card em, .wg-ru-form-grid3 em { color: #b42318; font-style: normal; font-size: 0.75rem; }
+.wg-ru-info-note {
+  background: #eff6ff; color: #1e3a8a; border-radius: 8px; padding: 0.45rem 0.65rem; font-size: 0.82rem;
+}
+.wg-ru-phone-row { display: flex; gap: 0.35rem; align-items: center; }
+.wg-ru-phone-row select { max-width: 7rem; }
+.wg-ru-phone-row input { flex: 1; }
+.wg-ru-wa-inline {
+  color: #128c7e; font-weight: 700; font-size: 0.8rem; text-decoration: none; white-space: nowrap;
+}
+.wg-ru-check-row, .wg-ru-check-row {
+  display: flex; gap: 0.5rem; align-items: flex-start; margin-top: 0.75rem; font-size: 0.88rem;
+}
+.wg-ru-check-row input { accent-color: var(--ru-navy); margin-top: 0.2rem; }
+.wg-ru-accordion {
+  width: 100%; display: flex; justify-content: space-between; align-items: center;
+  gap: 0.75rem; background: #fff; border: 1px solid var(--ru-border); border-radius: 12px;
+  padding: 0.85rem 1rem; text-align: start; cursor: pointer; font: inherit;
+}
+.wg-ru-accordion small { display: block; color: var(--ru-muted); font-size: 0.75rem; margin-top: 0.15rem; }
+
+.wg-ru-pay-methods { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 0.5rem; }
+.wg-ru-pay-method {
+  display: flex; align-items: center; gap: 0.45rem; border: 1.5px solid var(--ru-border);
+  border-radius: 10px; padding: 0.7rem 0.75rem; background: #fff; cursor: pointer; font: inherit;
+}
+.wg-ru-pay-method.selected { border-color: var(--ru-navy); background: var(--ru-navy-soft); }
+.wg-ru-radio {
+  width: 1rem; height: 1rem; border-radius: 999px; border: 2px solid #94a3b8; display: inline-block;
+}
+.wg-ru-pay-method.selected .wg-ru-radio {
+  border-color: var(--ru-navy); box-shadow: inset 0 0 0 3px var(--ru-navy);
+}
+.wg-ru-trust-row {
+  display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 0.65rem;
+}
+.wg-ru-trust-row > div {
+  background: #fff; border: 1px solid var(--ru-border); border-radius: 12px; padding: 0.75rem;
+}
+.wg-ru-trust-row p { margin: 0.2rem 0 0; font-size: 0.75rem; color: var(--ru-muted); }
+.wg-ru-policy-list { list-style: none; padding: 0; margin: 0.5rem 0; display: grid; gap: 0.45rem; }
+.wg-ru-policy-list li { display: flex; justify-content: space-between; gap: 0.5rem; font-size: 0.88rem; }
+.wg-ru-policy-list .ok { color: var(--ru-ok); font-style: normal; }
+.wg-ru-policy-list .bad { color: #b42318; font-style: normal; }
+.wg-ru-lock { color: var(--ru-ok); font-weight: 600; font-size: 0.85rem; }
+
+.wg-ru-success-card { text-align: center; }
+.wg-ru-success-ico {
+  width: 3.2rem; height: 3.2rem; margin: 0 auto 0.65rem; border-radius: 999px;
+  background: #e8f8f0; color: var(--ru-ok); display: grid; place-items: center;
+  font-size: 1.6rem; font-weight: 800;
+}
+.wg-ru-success-meta {
+  display: flex; flex-wrap: wrap; gap: 1rem; justify-content: center; margin: 0.75rem 0;
+  font-size: 0.92rem;
+}
+.wg-ru-issue-list { display: grid; gap: 0.65rem; }
+.wg-ru-issue-row {
+  display: grid; grid-template-columns: 1fr auto auto; gap: 0.65rem; align-items: center;
+  padding: 0.75rem; border: 1px solid var(--ru-border); border-radius: 12px;
+}
+.wg-ru-status-ok { color: var(--ru-ok); font-weight: 700; font-size: 0.82rem; }
+.wg-ru-status-pending { color: var(--ru-warn); font-weight: 700; font-size: 0.82rem; }
+.wg-ru-info-bar {
+  margin-top: 0.85rem; background: #eff6ff; color: #1e3a8a; border-radius: 10px;
+  padding: 0.65rem 0.75rem; font-size: 0.85rem;
+}
+.wg-ru-next-grid {
+  display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 0.75rem; margin-top: 0.75rem;
+}
+.wg-ru-next-num {
+  width: 1.6rem; height: 1.6rem; border-radius: 999px; background: var(--ru-navy); color: #fff;
+  display: inline-grid; place-items: center; font-size: 0.8rem; font-weight: 700; margin-bottom: 0.35rem;
+}
+.wg-ru-receipt-card {
+  display: flex; justify-content: space-between; align-items: center; gap: 0.5rem;
+  background: #fff; border: 1px solid var(--ru-border); border-radius: 12px; padding: 0.75rem 0.9rem;
+}
+
+.wg-ru-file-head {
+  display: flex; justify-content: space-between; gap: 1rem; align-items: flex-start; flex-wrap: wrap;
+}
+.wg-ru-file-actions { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.wg-ru-badge-green {
+  display: inline-block; margin-top: 0.35rem; padding: 0.2rem 0.65rem; border-radius: 999px;
+  border: 1px solid #86efac; background: #f0fdf4; color: var(--ru-ok); font-size: 0.78rem; font-weight: 700;
+}
+.wg-ru-next-event {
+  position: relative; background: #fff; border: 1.5px solid var(--ru-navy); border-radius: 14px;
+  padding: 1rem 1.05rem; margin-bottom: 1rem;
+}
+.wg-ru-next-tag {
+  position: absolute; top: -0.65rem; inset-inline-start: 1rem;
+  background: var(--ru-navy); color: #fff; font-size: 0.72rem; font-weight: 700;
+  padding: 0.15rem 0.55rem; border-radius: 6px;
+}
+.wg-ru-next-grid3 {
+  display: grid; grid-template-columns: 1fr 1.4fr auto; gap: 0.75rem; align-items: center;
+}
+.wg-ru-countdown { color: var(--ru-navy); font-weight: 800; margin: 0; }
+.wg-ru-day-tabs { display: flex; gap: 0.35rem; overflow-x: auto; padding-bottom: 0.5rem; }
+.wg-ru-day-tab {
+  border: 1px solid var(--ru-border); background: #fff; border-radius: 999px;
+  padding: 0.35rem 0.7rem; white-space: nowrap; cursor: pointer; font: inherit; font-size: 0.8rem;
+}
+.wg-ru-day-tab.active { background: var(--ru-navy); color: #fff; border-color: var(--ru-navy); }
+.wg-ru-timeline { border-inline-start: 2px dashed #cbd5e1; padding-inline-start: 1rem; margin-top: 0.5rem; }
+.wg-ru-timeline-row {
+  position: relative; display: grid; grid-template-columns: 3.5rem 1fr; gap: 0.65rem;
+  padding-bottom: 1rem;
+}
+.wg-ru-timeline-row::before {
+  content: ""; position: absolute; inset-inline-start: -1.28rem; top: 0.35rem;
+  width: 10px; height: 10px; border-radius: 999px; background: var(--ru-navy);
+}
+.wg-ru-act-cards {
+  display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 0.65rem;
+}
+.wg-ru-act-card {
+  border: 1px solid var(--ru-border); border-radius: 12px; overflow: hidden; background: #fff;
+}
+.wg-ru-act-card img { width: 100%; height: 90px; object-fit: cover; display: block; }
+.wg-ru-act-card div { padding: 0.55rem 0.65rem; }
+.wg-ru-docs { list-style: none; padding: 0; margin: 0.5rem 0; display: grid; gap: 0.45rem; }
+.wg-ru-docs li { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; font-size: 0.88rem; }
+.wg-ru-support-line { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+.wg-ru-assistant-qs { display: flex; flex-wrap: wrap; gap: 0.35rem; margin: 0.5rem 0; }
+.wg-ru-assistant-qs button {
+  border: 1px solid var(--ru-border); background: #fff; border-radius: 999px;
+  padding: 0.35rem 0.65rem; font-size: 0.78rem; cursor: pointer;
+}
+.wg-ru-assistant-reply {
+  background: var(--ru-navy-soft); border-radius: 10px; padding: 0.55rem 0.7rem; font-size: 0.85rem;
+}
+.ok { color: var(--ru-ok); font-weight: 700; }
+
+@media (max-width: 919px) {
+  .wg-ru-trust-row, .wg-ru-next-grid, .wg-ru-act-cards, .wg-ru-next-grid3, .wg-ru-pay-methods {
+    grid-template-columns: 1fr;
+  }
+  .wg-ru-issue-row { grid-template-columns: 1fr; }
+}

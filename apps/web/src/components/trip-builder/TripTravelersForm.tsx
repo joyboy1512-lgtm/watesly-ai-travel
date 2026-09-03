@@ -1,285 +1,322 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import {
-  defaultContact,
-  firstErrorField,
-  mergeValidationErrors,
-  validateContact,
-  validateTraveler,
-  type TripTravelerDraft,
-} from "@watesly-travel/shared";
-import { formatKwdMinor } from "@/lib/platform-api";
+import { COMPANY_LEGAL } from "@watesly-travel/shared";
 import { useTripBuilder } from "./TripBuilderProvider";
 import { TripProgressStepper } from "./TripProgressStepper";
-
-function emptyTraveler(): TripTravelerDraft {
-  return {
-    title: "Mr",
-    firstNameEn: "",
-    lastNameEn: "",
-    gender: "M",
-    dateOfBirth: "",
-    nationality: "KW",
-    passportNumber: "",
-    passportExpiry: "",
-  };
-}
+import { MOCKUP_TRIP, money } from "./mockup-data";
 
 export function TripTravelersForm() {
   const router = useRouter();
   const { draft, patchDraft } = useTripBuilder();
-  const [errors, setErrors] = useState<Record<string, string>>({});
   const [termsOk, setTermsOk] = useState(false);
+  const [whatsappOk, setWhatsappOk] = useState(true);
+  const [openExtra, setOpenExtra] = useState<string | null>(null);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const travelers = useMemo(() => {
-    if (draft.travelers.length >= draft.flight.adults) return draft.travelers;
-    const list = [...draft.travelers];
-    while (list.length < draft.flight.adults) list.push(emptyTraveler());
-    return list;
-  }, [draft.travelers, draft.flight.adults]);
+  const dest =
+    draft.flight.destinationLabel || draft.flight.destination || MOCKUP_TRIP.destinationAr;
+  const prices = MOCKUP_TRIP.prices;
 
-  const contact = draft.contact || defaultContact();
+  const existing = (draft.travelers?.[0] || {}) as Record<string, string>;
+  const [title, setTitle] = useState(existing.title || "Mr");
+  const [firstNameEn, setFirstNameEn] = useState(existing.firstNameEn || existing.firstNameEn || "");
+  const [lastNameEn, setLastNameEn] = useState(existing.lastNameEn || existing.lastNameEn || "");
+  const [gender, setGender] = useState(existing.gender || "M");
+  const [dateOfBirth, setDateOfBirth] = useState(existing.dateOfBirth || existing.dateOfBirth || "");
+  const [nationality, setNationality] = useState(existing.nationality || "KW");
+  const [passportNumber, setPassportNumber] = useState(
+    existing.passportNumber || existing.passportNumber || "",
+  );
+  const [passportExpiry, setPassportExpiry] = useState(
+    existing.passportExpiry || existing.passportExpiry || "",
+  );
 
-  const total = useMemo(() => {
-    let sum = 0;
-    const o = draft.selectedOffers;
-    if (o.flight) sum += o.flight.sellAmountMinor;
-    if (o.hotel) sum += o.hotel.sellAmountMinor;
-    if (o.transfer) sum += o.transfer.sellAmountMinor;
-    if (o.activity) sum += o.activity.sellAmountMinor;
-    return sum;
-  }, [draft.selectedOffers]);
-
-  function updateTraveler(index: number, patch: Partial<TripTravelerDraft>) {
-    const next = travelers.map((t, i) => (i === index ? { ...t, ...patch } : t));
-    patchDraft({ travelers: next });
-  }
+  const c = draft.contact as unknown as Record<string, string>;
+  const [phoneCountry, setPhoneCountry] = useState(c?.phoneCountry || "+965");
+  const [phone, setPhone] = useState(c?.phone || "");
+  const [email, setEmail] = useState(c?.email || "");
+  const [emailConfirm, setEmailConfirm] = useState(c?.emailConfirm || "");
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
-    const travelerErrors = travelers.flatMap((t, i) => {
-      const m = validateTraveler(t, i);
-      return Object.entries(m);
+    const err: Record<string, string> = {};
+    if (!firstNameEn.trim()) err.firstNameEn = "مطلوب";
+    if (!lastNameEn.trim()) err.lastNameEn = "مطلوب";
+    if (!dateOfBirth) err.dateOfBirth = "مطلوب";
+    if (!passportNumber.trim()) err.passportNumber = "مطلوب";
+    if (!passportExpiry) err.passportExpiry = "مطلوب";
+    if (!phone.trim()) err.phone = "مطلوب";
+    if (!email.trim()) err.email = "مطلوب";
+    if (email !== emailConfirm) err.emailConfirm = "البريد غير متطابق";
+    if (!termsOk) err.terms = "يجب الموافقة على الشروط";
+    setErrors(err);
+    if (Object.keys(err).length) return;
+
+    patchDraft({
+      travelers: [
+        {
+          title,
+          firstNameEn,
+          lastNameEn,
+          gender,
+          dateOfBirth,
+          nationality,
+          passportNumber,
+          passportExpiry,
+        },
+      ] as never,
+      contact: {
+        phoneCountry,
+        phone,
+        email,
+        emailConfirm,
+        whatsappUpdates: whatsappOk,
+      } as never,
     });
-    const contactErrors = validateContact(contact);
-    const merged = mergeValidationErrors(
-      Object.fromEntries(travelerErrors),
-      contactErrors,
-    );
-    if (!termsOk) merged.terms = "يجب الموافقة على الشروط";
-    setErrors(merged);
-    const first = firstErrorField(merged);
-    if (first) {
-      document.getElementById(first)?.focus();
-      return;
-    }
-    patchDraft({ travelers, contact });
     router.push("/trip-builder/payment");
   }
 
   return (
-    <form className="wg-trip-flow" onSubmit={submit} noValidate>
+    <form className="wg-ru-page" dir="rtl" onSubmit={submit} noValidate>
       <TripProgressStepper current="travelers" />
 
-      <header style={{ marginBottom: "1rem" }}>
-        <h1 style={{ margin: 0, color: "var(--tv-primary,#13357b)" }}>
-          راجع رحلتك وأدخل بيانات المسافر
-        </h1>
-        <p style={{ color: "var(--wg-muted)" }}>احجز جميع خدمات رحلتك في خطوة واحدة</p>
+      <header className="wg-ru-hero-head">
+        <h1>راجع رحلتك وأدخل بيانات المسافر</h1>
+        <p>احجز جميع خدمات رحلتك في خطوة واحدة</p>
       </header>
 
-      <div className="wg-trip-grid">
-        <div>
-          <div className="wg-trip-card" style={{ marginBottom: "1rem" }}>
-            <h3>ملخص الرحلة</h3>
-            <p>
-              {draft.flight.origin} → {draft.flight.destination}
-              {" · "}
-              {draft.flight.departDate}
-              {draft.flight.returnDate ? ` — ${draft.flight.returnDate}` : ""}
-            </p>
-          </div>
-
-          {travelers.map((t, i) => (
-            <div key={i} className="wg-trip-card" style={{ marginBottom: "1rem" }}>
-              <h3>بيانات المسافر {i + 1}</h3>
-              <div className="wg-trip-form-grid">
-                <label>
-                  اللقب
-                  <select
-                    value={t.title}
-                    onChange={(e) => updateTraveler(i, { title: e.target.value })}
-                  >
-                    <option value="Mr">Mr</option>
-                    <option value="Mrs">Mrs</option>
-                    <option value="Ms">Ms</option>
-                  </select>
-                </label>
-                <label htmlFor={`traveler_${i}_firstNameEn`}>
-                  الاسم الأول (إنجليزي)
-                  <input
-                    id={`traveler_${i}_firstNameEn`}
-                    value={t.firstNameEn}
-                    onChange={(e) => updateTraveler(i, { firstNameEn: e.target.value })}
-                    autoComplete="given-name"
-                  />
-                  {errors[`traveler_${i}_firstNameEn`] ? (
-                    <span className="wg-trip-field-error">{errors[`traveler_${i}_firstNameEn`]}</span>
-                  ) : null}
-                </label>
-                <label htmlFor={`traveler_${i}_lastNameEn`}>
-                  اسم العائلة (إنجليزي)
-                  <input
-                    id={`traveler_${i}_lastNameEn`}
-                    value={t.lastNameEn}
-                    onChange={(e) => updateTraveler(i, { lastNameEn: e.target.value })}
-                    autoComplete="family-name"
-                  />
-                  {errors[`traveler_${i}_lastNameEn`] ? (
-                    <span className="wg-trip-field-error">{errors[`traveler_${i}_lastNameEn`]}</span>
-                  ) : null}
-                </label>
-                <label>
-                  الجنس
-                  <select
-                    value={t.gender}
-                    onChange={(e) => updateTraveler(i, { gender: e.target.value })}
-                  >
-                    <option value="M">ذكر</option>
-                    <option value="F">أنثى</option>
-                  </select>
-                </label>
-                <label htmlFor={`traveler_${i}_dob`}>
-                  تاريخ الميلاد
-                  <input
-                    id={`traveler_${i}_dob`}
-                    type="date"
-                    value={t.dateOfBirth}
-                    onChange={(e) => updateTraveler(i, { dateOfBirth: e.target.value })}
-                  />
-                  {errors[`traveler_${i}_dob`] ? (
-                    <span className="wg-trip-field-error">{errors[`traveler_${i}_dob`]}</span>
-                  ) : null}
-                </label>
-                <label>
-                  الجنسية
-                  <input
-                    value={t.nationality}
-                    onChange={(e) => updateTraveler(i, { nationality: e.target.value })}
-                  />
-                </label>
-                <label htmlFor={`traveler_${i}_passport`}>
-                  رقم الجواز
-                  <input
-                    id={`traveler_${i}_passport`}
-                    value={t.passportNumber}
-                    onChange={(e) => updateTraveler(i, { passportNumber: e.target.value })}
-                  />
-                  {errors[`traveler_${i}_passport`] ? (
-                    <span className="wg-trip-field-error">{errors[`traveler_${i}_passport`]}</span>
-                  ) : null}
-                </label>
-                <label htmlFor={`traveler_${i}_passportExpiry`}>
-                  انتهاء الجواز
-                  <input
-                    id={`traveler_${i}_passportExpiry`}
-                    type="date"
-                    value={t.passportExpiry}
-                    onChange={(e) => updateTraveler(i, { passportExpiry: e.target.value })}
-                  />
-                  {errors[`traveler_${i}_passportExpiry`] ? (
-                    <span className="wg-trip-field-error">{errors[`traveler_${i}_passportExpiry`]}</span>
-                  ) : null}
-                </label>
+      <div className="wg-ru-layout">
+        <div className="wg-ru-main">
+          <div className="wg-ru-ticket-card">
+            <div>
+              <h3>رحلتك إلى {dest}</h3>
+              <p className="wg-ru-route">
+                {MOCKUP_TRIP.originCode} <span aria-hidden>✈</span> {MOCKUP_TRIP.destCode}
+              </p>
+              <p className="wg-ru-muted">
+                {MOCKUP_TRIP.dateFromAr} — {MOCKUP_TRIP.dateToAr}
+              </p>
+              <div className="wg-ru-service-pills">
+                <span>✓ طيران</span>
+                <span>✓ فندق</span>
+                <span>✓ مواصلات</span>
+                <span>✓ أنشطة</span>
               </div>
             </div>
-          ))}
+            <button
+              type="button"
+              className="wg-ru-link-btn"
+              onClick={() => router.push("/trip-builder/results")}
+            >
+              عرض التفاصيل ←
+            </button>
+          </div>
 
-          <div className="wg-trip-card" style={{ marginBottom: "1rem" }}>
-            <h3>بيانات التواصل</h3>
-            <div className="wg-trip-form-grid">
+          <div className="wg-ru-form-card">
+            <h3>👤 بيانات المسافر 1</h3>
+            <p className="wg-ru-info-note">ℹ تأكد أن البيانات مطابقة لجواز السفر</p>
+            <div className="wg-ru-form-grid3">
               <label>
-                مفتاح الدولة
-                <input
-                  value={contact.phoneCountry}
-                  onChange={(e) =>
-                    patchDraft({ contact: { ...contact, phoneCountry: e.target.value } })
-                  }
-                />
+                اللقب
+                <select value={title} onChange={(e) => setTitle(e.target.value)}>
+                  <option value="Mr">Mr</option>
+                  <option value="Mrs">Mrs</option>
+                  <option value="Ms">Ms</option>
+                </select>
               </label>
-              <label htmlFor="phone">
-                رقم الهاتف
+              <label>
+                الاسم الأول بالإنجليزي
                 <input
-                  id="phone"
-                  value={contact.phone}
-                  onChange={(e) => patchDraft({ contact: { ...contact, phone: e.target.value } })}
-                  autoComplete="tel"
+                  value={firstNameEn}
+                  onChange={(e) => setFirstNameEn(e.target.value)}
+                  autoComplete="given-name"
                 />
-                {errors.phone ? <span className="wg-trip-field-error">{errors.phone}</span> : null}
+                {errors.firstNameEn ? <em>{errors.firstNameEn}</em> : null}
               </label>
-              <label htmlFor="email">
-                البريد الإلكتروني
+              <label>
+                اسم العائلة بالإنجليزي
                 <input
-                  id="email"
-                  type="email"
-                  value={contact.email}
-                  onChange={(e) => patchDraft({ contact: { ...contact, email: e.target.value } })}
-                  autoComplete="email"
+                  value={lastNameEn}
+                  onChange={(e) => setLastNameEn(e.target.value)}
+                  autoComplete="family-name"
                 />
-                {errors.email ? <span className="wg-trip-field-error">{errors.email}</span> : null}
+                {errors.lastNameEn ? <em>{errors.lastNameEn}</em> : null}
               </label>
-              <label htmlFor="emailConfirm">
-                تأكيد البريد
+              <label>
+                الجنس
+                <select value={gender} onChange={(e) => setGender(e.target.value)}>
+                  <option value="M">ذكر</option>
+                  <option value="F">أنثى</option>
+                </select>
+              </label>
+              <label>
+                تاريخ الميلاد
                 <input
-                  id="emailConfirm"
-                  type="email"
-                  value={contact.emailConfirm}
-                  onChange={(e) =>
-                    patchDraft({ contact: { ...contact, emailConfirm: e.target.value } })
-                  }
+                  type="date"
+                  value={dateOfBirth}
+                  onChange={(e) => setDateOfBirth(e.target.value)}
                 />
-                {errors.emailConfirm ? (
-                  <span className="wg-trip-field-error">{errors.emailConfirm}</span>
-                ) : null}
+                {errors.dateOfBirth ? <em>{errors.dateOfBirth}</em> : null}
               </label>
-              <label style={{ gridColumn: "1 / -1" }}>
+              <label>
+                الجنسية
+                <select value={nationality} onChange={(e) => setNationality(e.target.value)}>
+                  <option value="KW">الكويت</option>
+                  <option value="SA">السعودية</option>
+                  <option value="AE">الإمارات</option>
+                  <option value="BH">البحرين</option>
+                  <option value="QA">قطر</option>
+                  <option value="OM">عُمان</option>
+                </select>
+              </label>
+              <label>
+                رقم جواز السفر
                 <input
-                  type="checkbox"
-                  checked={contact.whatsappUpdates}
-                  onChange={(e) =>
-                    patchDraft({ contact: { ...contact, whatsappUpdates: e.target.checked } })
-                  }
-                />{" "}
-                إرسال تفاصيل الحجز عبر واتساب
+                  value={passportNumber}
+                  onChange={(e) => setPassportNumber(e.target.value)}
+                />
+                {errors.passportNumber ? <em>{errors.passportNumber}</em> : null}
+              </label>
+              <label>
+                تاريخ انتهاء الجواز
+                <input
+                  type="date"
+                  value={passportExpiry}
+                  onChange={(e) => setPassportExpiry(e.target.value)}
+                />
+                {errors.passportExpiry ? <em>{errors.passportExpiry}</em> : null}
               </label>
             </div>
           </div>
 
-          <label className="wg-trip-card" style={{ display: "flex", gap: "0.5rem", alignItems: "flex-start" }}>
+          <div className="wg-ru-form-card">
+            <h3>📱 بيانات التواصل</h3>
+            <div className="wg-ru-form-grid3">
+              <label className="wg-ru-phone-field">
+                رقم الهاتف
+                <div className="wg-ru-phone-row">
+                  <select
+                    value={phoneCountry}
+                    onChange={(e) => setPhoneCountry(e.target.value)}
+                  >
+                    <option value="+965">🇰🇼 +965</option>
+                    <option value="+966">🇸🇦 +966</option>
+                    <option value="+971">🇦🇪 +971</option>
+                  </select>
+                  <input
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    inputMode="tel"
+                    placeholder="90053224"
+                  />
+                  <a
+                    className="wg-ru-wa-inline"
+                    href={COMPANY_LEGAL.whatsappUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    aria-label="واتساب"
+                  >
+                    واتساب
+                  </a>
+                </div>
+                {errors.phone ? <em>{errors.phone}</em> : null}
+              </label>
+              <label>
+                البريد الإلكتروني
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+                {errors.email ? <em>{errors.email}</em> : null}
+              </label>
+              <label>
+                تأكيد البريد الإلكتروني
+                <input
+                  type="email"
+                  value={emailConfirm}
+                  onChange={(e) => setEmailConfirm(e.target.value)}
+                />
+                {errors.emailConfirm ? <em>{errors.emailConfirm}</em> : null}
+              </label>
+            </div>
+            <label className="wg-ru-check-row">
+              <input
+                type="checkbox"
+                checked={whatsappOk}
+                onChange={(e) => setWhatsappOk(e.target.checked)}
+              />
+              <span>أرسل تفاصيل الحجز عبر واتساب</span>
+            </label>
+          </div>
+
+          {(
+            [
+              ["hotel", "🛏", "طلبات الفندق", "نوع السرير / وصول متأخر"],
+              ["transfer", "🚗", "بيانات رحلة الوصول للمواصلات", "رقم الرحلة ووقت الهبوط"],
+              ["special", "♿", "طلبات خاصة أو احتياجات مساعدة", "كرسي متحرك / ملاحظات"],
+            ] as const
+          ).map(([key, ico, titleText, hint]) => (
+            <button
+              key={key}
+              type="button"
+              className="wg-ru-accordion"
+              aria-expanded={openExtra === key}
+              onClick={() => setOpenExtra(openExtra === key ? null : key)}
+            >
+              <span>
+                {ico} {titleText}
+                <small>{hint}</small>
+              </span>
+              <span aria-hidden>{openExtra === key ? "▾" : "◂"}</span>
+            </button>
+          ))}
+
+          <label className="wg-ru-check-row wg-ru-terms">
             <input
               type="checkbox"
               checked={termsOk}
               onChange={(e) => setTermsOk(e.target.checked)}
             />
             <span>
-              أوافق على الشروط وسياسة الإلغاء والخصوصية
-              {errors.terms ? <span className="wg-trip-field-error"> — {errors.terms}</span> : null}
+              أوافق على شروط الحجز وسياسة الإلغاء والخصوصية
+              {errors.terms ? <em> — {errors.terms}</em> : null}
             </span>
           </label>
         </div>
 
-        <aside className="wg-trip-sticky-price">
-          <h3>ملخص السعر</h3>
-          <p className="total">{formatKwdMinor(total)}</p>
-          <p style={{ fontSize: "0.82rem", color: "#18785a" }}>✓ السعر محقق الآن</p>
-          <button type="submit" className="wg-trip-primary-btn">
-            الانتقال إلى الدفع
-          </button>
-          <p style={{ fontSize: "0.75rem", color: "var(--wg-muted)", marginTop: "0.5rem" }}>
-            🔒 دفع آمن ومشفّر
-          </p>
+        <aside className="wg-ru-aside">
+          <div className="wg-ru-summary-card">
+            <h3>ملخص السعر</h3>
+            <div className="wg-ru-sum-line">
+              <span>✈ الطيران</span>
+              <span>{money(prices.flight)}</span>
+            </div>
+            <div className="wg-ru-sum-line">
+              <span>🏨 الفندق</span>
+              <span>{money(prices.hotel)}</span>
+            </div>
+            <div className="wg-ru-sum-line">
+              <span>🚗 المواصلات</span>
+              <span>{money(prices.transfer)}</span>
+            </div>
+            <div className="wg-ru-sum-line">
+              <span>🎟 الأنشطة</span>
+              <span>{money(prices.activities)}</span>
+            </div>
+            <div className="wg-ru-sum-total">
+              <span>الإجمالي</span>
+              <strong>{money(prices.total)}</strong>
+            </div>
+            <p className="wg-ru-muted">شامل الضرائب والرسوم</p>
+            <p className="wg-ru-verified">✓ تم التحقق من السعر الآن</p>
+            <button type="submit" className="wg-ru-primary-btn">
+              الانتقال إلى الدفع
+            </button>
+            <p className="wg-ru-secure">🔒 دفع آمن ومشفّر</p>
+          </div>
         </aside>
       </div>
     </form>

@@ -167,7 +167,6 @@ export function HotelSearchCard({
         <HotelMediaImage
           src={imageUrl || galleryUrls[0]}
           alt={name}
-          preferMedium
           className="hotel-search-card-photo"
         />
         {galleryUrls.length > 1 ? (
@@ -177,7 +176,6 @@ export function HotelSearchCard({
                 key={src}
                 src={src}
                 alt=""
-                preferMedium
                 className="hotel-search-card-thumb"
               />
             ))}

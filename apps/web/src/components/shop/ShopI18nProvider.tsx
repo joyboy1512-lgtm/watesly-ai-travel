@@ -99,7 +99,9 @@ export function ShopI18nProvider({ children }: { children: ReactNode }) {
       dir: localeDir(locale),
       setLocale,
       setCurrency,
-      t: (key) => tShop("ar", key),
+      // Use the selected locale for UI dictionary.
+      // Previously it was hardcoded to Arabic, so choosing EN only changed direction.
+      t: (key) => tShop(locale, key),
       formatKwdMinor: (kwdMinor) => formatFromKwdMinor(kwdMinor, currency, locale),
       locales: SHOP_LOCALES,
       currencies: SHOP_CURRENCIES,

@@ -37,6 +37,12 @@ export class MockHotelProvider implements HotelProviderAdapter {
       `${params.location}-${params.checkInDate}-${params.checkOutDate}-${params.adults}`,
     );
     const currency = (params.currency || "KWD").toUpperCase();
+    const roomCount = Math.max(
+      1,
+      Array.isArray(params.roomOccupancies) && params.roomOccupancies.length
+        ? params.roomOccupancies.length
+        : params.rooms || 1,
+    );
     const expiresAt = new Date(Date.now() + 45 * 60 * 1000).toISOString();
     const nights = Math.max(
       1,
@@ -70,7 +76,7 @@ export class MockHotelProvider implements HotelProviderAdapter {
         currency === "KWD" || currency === "BHD" || currency === "OMR"
           ? hotel.nightRateKwd * variance
           : hotel.nightRateKwd * variance * 10;
-      const cost = toMinor(nightMajor * nights, currency);
+      const cost = toMinor(nightMajor * nights * roomCount, currency);
       const scenario = hotel.scenario || "normal";
       const scenarioTag =
         scenario === "price_change"
@@ -128,8 +134,8 @@ export class MockHotelProvider implements HotelProviderAdapter {
           name: hotel.nameAr,
           nameEn: hotel.nameEn,
           stars: hotel.stars,
-          rating: hotel.rating,
-          reviewCount: hotel.reviewCount,
+          // Mock catalog ratings are synthetic — do not expose as guest reviews.
+          ranking: hotel.rating ? Math.round(hotel.rating * 10) : undefined,
           roomType: cheapest?.roomName || hotel.roomType,
           roomCode: cheapest?.roomCode,
           propertyType: hotel.propertyType,
@@ -147,7 +153,6 @@ export class MockHotelProvider implements HotelProviderAdapter {
           distanceToCenterKm: dist?.distanceToCenterKm,
           distanceToCenterLabel: dist?.distanceToCenterLabel,
           poiDistances: dist?.poiDistances,
-          ranking: Math.round(hotel.rating * 10),
           facilityLabels: hotel.facilities.map((f) =>
             f === "wifi" ? "واي‑فاي" : f === "parking" ? "موقف" : f === "pool" ? "مسبح" : f === "spa" ? "سبا" : f === "gym" ? "جيم" : f,
           ),

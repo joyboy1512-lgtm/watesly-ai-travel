@@ -43,7 +43,12 @@ async function bootstrap() {
   const maxHits = Number(process.env.RATE_LIMIT_MAX || 100);
   app.use((req: Request, res: Response, next: NextFunction) => {
     const path = req.path || "";
-    if (!path.startsWith("/auth/") && !path.startsWith("/whatsapp/webhook")) {
+    if (
+      !path.startsWith("/auth/") &&
+      !path.startsWith("/whatsapp/webhook") &&
+      !path.startsWith("/shop/unlock") &&
+      !path.startsWith("/shop/login")
+    ) {
       return next();
     }
     const key = `${req.ip}:${path}`;

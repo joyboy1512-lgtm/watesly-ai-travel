@@ -21,6 +21,7 @@ export type FlightResultsSearchParams = {
   infants: number;
   cabinClass: string;
   directOnly: boolean;
+  flexibleDates: boolean;
   legs: FlightSearchLegParam[];
 };
 
@@ -37,6 +38,7 @@ const DEFAULTS: FlightResultsSearchParams = {
   infants: 0,
   cabinClass: "economy",
   directOnly: false,
+  flexibleDates: false,
   legs: [],
 };
 
@@ -98,6 +100,7 @@ export function parseFlightResultsSearch(
     infants: num(get("infants"), DEFAULTS.infants),
     cabinClass: String(get("cabinClass") || DEFAULTS.cabinClass),
     directOnly: get("directOnly") === "1" || get("directOnly") === "true",
+    flexibleDates: get("flex") === "1" || get("flex") === "true",
     legs: decodeLegs(get("legs")),
   };
 }
@@ -117,6 +120,7 @@ export function buildFlightResultsHref(params: Partial<FlightResultsSearchParams
   q.set("infants", String(params.infants ?? 0));
   q.set("cabinClass", params.cabinClass || "economy");
   if (params.directOnly) q.set("directOnly", "1");
+  if (params.flexibleDates) q.set("flex", "1");
   if (tripType === "multicity" && params.legs?.length) {
     q.set("legs", encodeLegs(params.legs));
   }

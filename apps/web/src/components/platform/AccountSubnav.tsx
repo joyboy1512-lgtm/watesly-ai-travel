@@ -11,6 +11,7 @@ const LINKS: Array<{ href: string; key: ShopUiKey }> = [
   { href: "/account/trips", key: "myTrips" },
   { href: "/account/points", key: "pointsNav" },
   { href: "/account/alerts", key: "priceAlertsNav" },
+  { href: "/account/saved", key: "wishlistNav" },
   { href: "/account/referrals", key: "referrals" },
   { href: "/account/notifications", key: "notifications" },
 ];

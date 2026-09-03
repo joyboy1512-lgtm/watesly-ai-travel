@@ -45,6 +45,9 @@ import {
 import { saveFlightDraft } from "@/lib/booking-draft";
 import { shopFetch } from "@/lib/shop-session";
 import { trackFunnel } from "@/lib/funnel-analytics";
+import { ShopPriceCalendar } from "@/components/shop/ShopPriceCalendar";
+import { ShopWatchPrice } from "@/components/shop/ShopWatchPrice";
+import { ShopWishlistButton } from "@/components/shop/ShopWishlistButton";
 
 type QuoteItem = { id: string; providerOfferRef: string; serviceType: string };
 
@@ -94,6 +97,14 @@ export function ShopFlightResultsClient() {
   );
 
   const summary = formatFlightSearchSummary(params);
+  const cheapestFlight = useMemo(() => {
+    let min: FlightOfferRow | null = null;
+    for (const row of flightsRaw) {
+      if (row.sellAmountMinor <= 0) continue;
+      if (!min || row.sellAmountMinor < min.sellAmountMinor) min = row;
+    }
+    return min;
+  }, [flightsRaw]);
 
   const composedPreview = useMemo(() => {
     if (!selectedOutboundKey) return null;
@@ -534,6 +545,14 @@ export function ShopFlightResultsClient() {
               />
               مباشر فقط
             </label>
+            <label className="shop-flight-edit-check">
+              <input
+                type="checkbox"
+                checked={draft.flexibleDates}
+                onChange={(e) => setDraft((d) => ({ ...d, flexibleDates: e.target.checked }))}
+              />
+              تواريخ مرنة
+            </label>
             <button type="submit" className="shop-flight-search-again">
               بحث
             </button>
@@ -573,6 +592,48 @@ export function ShopFlightResultsClient() {
             </span>
           </div>
           {message ? <p className="shop-flight-results-status">{message}</p> : null}
+
+          {params.tripType !== "multicity" ? (
+            <ShopPriceCalendar
+              search={params}
+              currentCheapestMinor={cheapestFlight?.sellAmountMinor}
+              currentCurrency={cheapestFlight?.currency}
+              onPick={(cell) => {
+                router.push(
+                  buildFlightResultsHref({
+                    ...params,
+                    departDate: cell.departDate,
+                    returnDate: cell.returnDate,
+                    flexibleDates: true,
+                  }),
+                );
+              }}
+            />
+          ) : null}
+
+          {cheapestFlight ? (
+            <div className="shop-flight-watch-row">
+              <ShopWatchPrice
+                origin={params.origin}
+                destination={params.destination}
+                departDate={params.departDate}
+                returnDate={params.tripType === "roundtrip" ? params.returnDate : undefined}
+                currentPriceMinor={cheapestFlight.sellAmountMinor}
+                currency={cheapestFlight.currency}
+              />
+              <ShopWishlistButton
+                item={{
+                  id: `flight:${params.origin}-${params.destination}-${params.departDate}`,
+                  kind: "flight",
+                  title: `${params.originLabel || params.origin} → ${params.destinationLabel || params.destination}`,
+                  href: resultsHref,
+                  subtitle: summary.dates,
+                  priceMinor: cheapestFlight.sellAmountMinor,
+                  currency: cheapestFlight.currency,
+                }}
+              />
+            </div>
+          ) : null}
 
           <ShopFlightResults
             flights={flights}

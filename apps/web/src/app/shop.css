@@ -7190,3 +7190,280 @@
   padding: 0.5rem;
   font: inherit;
 }
+
+/* Conversion: price calendar, watch fare, wishlist, map markers, assistant */
+.shop-price-calendar {
+  width: min(1200px, calc(100% - 2rem));
+  margin: 0 auto 1rem;
+  background: #fff;
+  border: 1px solid var(--exp-border, #e2e8f0);
+  border-radius: 14px;
+  padding: 0.85rem 1rem 1rem;
+}
+
+.shop-price-calendar-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.25rem;
+}
+
+.shop-price-calendar-head strong {
+  color: #13357b;
+  font-size: 1rem;
+}
+
+.shop-price-calendar-head span {
+  color: #64748b;
+  font-size: 0.82rem;
+}
+
+.shop-price-calendar-row {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 0.4rem;
+  margin-top: 0.65rem;
+}
+
+.shop-price-calendar-cell {
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  border-radius: 10px;
+  padding: 0.45rem 0.25rem;
+  font: inherit;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  min-height: 4.4rem;
+}
+
+.shop-price-calendar-cell.on {
+  border-color: #13357b;
+  background: #f4f7fb;
+}
+
+.shop-price-calendar-cell.cheap strong {
+  color: #0f766e;
+}
+
+.shop-price-calendar-day {
+  font-size: 0.72rem;
+  color: #64748b;
+}
+
+.shop-price-calendar-cell strong {
+  font-size: 0.82rem;
+  color: #0f172a;
+}
+
+.shop-price-calendar-cell em {
+  font-style: normal;
+  font-size: 0.68rem;
+  color: #13357b;
+}
+
+.shop-flight-watch-row {
+  width: min(1200px, calc(100% - 2rem));
+  margin: 0 auto 0.85rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.shop-watch-price {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem 0.75rem;
+}
+
+.shop-watch-price-btn.on {
+  border-color: #13357b;
+  color: #13357b;
+}
+
+.shop-wishlist-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  color: #13357b;
+  border-radius: 999px;
+  padding: 0.35rem 0.7rem;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.shop-wishlist-btn.on {
+  background: #13357b;
+  color: #fff;
+  border-color: #13357b;
+}
+
+.shop-wishlist-btn.compact {
+  position: absolute;
+  top: 0.45rem;
+  inset-inline-end: 0.45rem;
+  z-index: 3;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.94);
+}
+
+.hotel-search-card-media .shop-wishlist-btn.compact {
+  position: absolute;
+}
+
+.shop-wishlist-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.shop-wishlist-row {
+  display: grid;
+  grid-template-columns: 88px 1fr auto;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.shop-wishlist-row img,
+.shop-wishlist-ph {
+  width: 88px;
+  height: 72px;
+  object-fit: cover;
+  border-radius: 10px;
+  background: #e2e8f0;
+}
+
+.shop-wishlist-row-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.shop-ancillary-result-row {
+  position: relative;
+}
+
+.shop-ancillary-result-row .shop-wishlist-btn.compact {
+  position: absolute;
+  top: 0.75rem;
+  inset-inline-end: 0.75rem;
+}
+
+.shop-ancillary-review-photo {
+  width: 100%;
+  max-height: 180px;
+  object-fit: cover;
+  border-radius: 12px;
+  margin-bottom: 0.75rem;
+}
+
+.shop-ancillary-review-price {
+  display: block;
+  font-size: 1.35rem;
+  color: #13357b;
+  margin: 0.35rem 0 0.85rem;
+}
+
+.shop-hotel-map-canvas {
+  position: relative;
+  width: 100%;
+  min-height: 320px;
+  height: 360px;
+  overflow: hidden;
+  background: #e8eef4;
+}
+
+.shop-hotel-map-tile {
+  position: absolute;
+  width: 256px;
+  height: 256px;
+  pointer-events: none;
+  user-select: none;
+}
+
+.shop-hotel-map-marker {
+  position: absolute;
+  transform: translate(-50%, -100%);
+  z-index: 2;
+  border: 0;
+  background: #13357b;
+  color: #fff;
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 0.28rem 0.45rem;
+  border-radius: 999px;
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.22);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.shop-hotel-map-marker.on {
+  background: #c9a227;
+  color: #13357b;
+}
+
+.shop-hotel-map-copy {
+  position: absolute;
+  inset-inline-start: 0.4rem;
+  bottom: 0.35rem;
+  z-index: 3;
+  font-size: 0.62rem;
+  color: #334155;
+  background: rgba(255, 255, 255, 0.85);
+  padding: 0.1rem 0.35rem;
+  border-radius: 4px;
+}
+
+.hotel-review-subhead {
+  margin: 1rem 0 0.45rem;
+  font-size: 0.95rem;
+  color: #13357b;
+}
+
+.hotel-review-photos {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.4rem;
+}
+
+.hotel-review-photo {
+  width: 100%;
+  height: 72px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+@media (max-width: 720px) {
+  .shop-price-calendar-row {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .shop-wishlist-row {
+    grid-template-columns: 72px 1fr;
+  }
+
+  .shop-wishlist-row-actions {
+    grid-column: 1 / -1;
+    flex-direction: row;
+  }
+
+  .hotel-review-photos {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+

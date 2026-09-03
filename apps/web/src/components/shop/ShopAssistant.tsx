@@ -11,6 +11,7 @@ import {
 } from "@/lib/shop-session";
 import { unlockShopCustomer, verifyShopUnlock } from "@/lib/shop-unlock";
 import { COMPANY_LEGAL } from "@watesly-travel/shared";
+import { useShopI18n } from "@/components/shop/ShopI18nProvider";
 
 type Bubble = {
   id: string;
@@ -21,6 +22,7 @@ type Bubble = {
 };
 
 export function ShopAssistant() {
+  const { t } = useShopI18n();
   const [open, setOpen] = useState(false);
   const [phone, setPhone] = useState("");
   const [name, setName] = useState("");
@@ -36,7 +38,7 @@ export function ShopAssistant() {
     {
       id: "welcome",
       role: "assistant",
-      content: "مرحباً بك في WeekendGate. أدخل رقم جوالك لأبدأ مساعدتك في تخطيط الرحلة.",
+            content: t("assistantWelcome"),
     },
   ]);
 
@@ -64,7 +66,7 @@ export function ShopAssistant() {
           {
             id: "welcome-back",
             role: "assistant",
-            content: "مرحباً بعودتك! كيف يمكنني مساعدتك في تخطيط رحلتك؟",
+            content: t("assistantWelcomeBack"),
           },
         ]);
       })
@@ -97,7 +99,7 @@ export function ShopAssistant() {
           {
             id: "welcome-unlocked",
             role: "assistant",
-            content: "مرحباً! كيف يمكنني مساعدتك في تخطيط رحلتك؟ يمكنك الكتابة أو إرسال رسالة صوتية.",
+            content: t("assistantUnlocked"),
           },
         ]);
         return;
@@ -241,8 +243,8 @@ export function ShopAssistant() {
             target="_blank"
             rel="noreferrer"
             className="wg-whatsapp-fab"
-            aria-label="واتساب الدعم"
-            title="واتساب الدعم"
+            aria-label={t("whatsapp")}
+            title={t("whatsapp")}
           >
             <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden>
               <path
@@ -256,21 +258,21 @@ export function ShopAssistant() {
             className="shop-assist-toggle"
             onClick={() => setOpen(true)}
           >
-            مساعد السفر
+            {t("assistantToggle")}
           </button>
         </div>
       ) : null}
       {open ? (
         <section className="shop-assist-panel">
           <header className="shop-assist-head">
-            <strong>مساعد WeekendGate</strong>
+            <strong>{t("assistantTitle")}</strong>
             {!unlocked ? (
-              <p className="shop-assist-head-hint">أدخل رقم جوالك للبدء</p>
+              <p className="shop-assist-head-hint">{t("assistantGateHint")}</p>
             ) : null}
             <button
               type="button"
               className="shop-assist-close"
-              aria-label="إغلاق"
+              aria-label={t("close")}
               onClick={() => setOpen(false)}
             >
               ×
@@ -280,15 +282,15 @@ export function ShopAssistant() {
           {!unlocked ? (
             <form className="shop-assist-gate" onSubmit={unlock}>
               <label>
-                الاسم
+                {t("name")}
                 <input
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="اسمك"
+                  placeholder={t("name")}
                 />
               </label>
               <label>
-                الجوال
+                {t("mobile")}
                 <input
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
@@ -299,19 +301,19 @@ export function ShopAssistant() {
               </label>
               {needsUnlockCode ? (
                 <label>
-                  رمز التحقق
+                  {t("otpCode")}
                   <input
                     value={unlockCode}
                     onChange={(e) => setUnlockCode(e.target.value)}
                     required
                     inputMode="numeric"
                     autoComplete="one-time-code"
-                    placeholder="6 أرقام"
+                    placeholder={t("otpPlaceholder")}
                   />
                 </label>
               ) : null}
               <button className="shop-btn" type="submit" disabled={busy}>
-                {busy ? "..." : needsUnlockCode ? "تأكيد الرمز" : "بدء المحادثة"}
+                {busy ? "..." : needsUnlockCode ? t("confirmCode") : t("assistantToggle")}
               </button>
             </form>
           ) : (
@@ -327,13 +329,13 @@ export function ShopAssistant() {
                           className="shop-voice-listen"
                           onClick={() => void listenToReply(row)}
                         >
-                          الاستماع للرد
+                          {t("assistantListen")}
                         </button>
                       ) : null}
                     </div>
                   </div>
                 ))}
-                {busy ? <p className="shop-hint">جارٍ البحث والرد...</p> : null}
+                {busy ? <p className="shop-hint">{t("assistantBusy")}</p> : null}
               </div>
 
               {pendingTranscript ? (
@@ -395,10 +397,10 @@ export function ShopAssistant() {
                 <textarea
                   value={text}
                   onChange={(e) => setText(e.target.value)}
-                  placeholder="اكتب وجهتك وتواريخ السفر"
+                  placeholder={t("assistantPlaceholder")}
                 />
                 <button className="shop-btn" type="submit" disabled={busy || !text.trim()}>
-                  إرسال
+                  {t("assistantSend")}
                 </button>
               </form>
             </div>

@@ -52,6 +52,8 @@ type Props = {
   onCabinClassChange: (v: string) => void;
   directOnly: boolean;
   onDirectOnlyChange: (v: boolean) => void;
+  flexibleDates: boolean;
+  onFlexibleDatesChange: (v: boolean) => void;
   origin: string;
   originLabel: string;
   destination: string;
@@ -664,6 +666,14 @@ export function ShopHeroBanner(props: Props) {
                     onChange={(e) => props.onDirectOnlyChange(e.target.checked)}
                   />
                    <span>{t("directOnly")}</span>
+                </label>
+                <label className={`exp-direct-pill${props.flexibleDates ? " on" : ""}`}>
+                  <input
+                    type="checkbox"
+                    checked={props.flexibleDates}
+                    onChange={(e) => props.onFlexibleDatesChange(e.target.checked)}
+                  />
+                  <span>{t("flexibleDates")}</span>
                 </label>
               </div>
 

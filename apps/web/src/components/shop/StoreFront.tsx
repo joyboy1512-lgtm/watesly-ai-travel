@@ -18,6 +18,7 @@ import {
 import { platformEnabled } from "@/lib/platform-flags";
 import { newUiEnabled } from "@/lib/new-ui-flags";
 import { ShopI18nProvider, useShopI18n } from "@/components/shop/ShopI18nProvider";
+import { ShopAssistant } from "@/components/shop/ShopAssistant";
 
 const BRAND = "WeekendGate";
 
@@ -229,6 +230,12 @@ function StoreFrontInner({
                         </Link>
                         <Link href="/bookings/manage" role="menuitem">
                           {t("navMyBookings")}
+                        </Link>
+                        <Link href="/account/saved" role="menuitem">
+                          {t("wishlistNav")}
+                        </Link>
+                        <Link href="/account/alerts" role="menuitem">
+                          {t("priceAlertsNav")}
                         </Link>
                         <button type="button" role="menuitem" onClick={logout}>
                           {t("navLogout")}
@@ -518,6 +525,8 @@ function StoreFrontInner({
           )}
         </nav>
       ) : null}
+
+      {pathname === "/chat" ? null : <ShopAssistant />}
 
     </div>
   );

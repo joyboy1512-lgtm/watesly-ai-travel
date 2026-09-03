@@ -12,6 +12,7 @@ import { HotelLiveBadge } from "./HotelLiveBadge";
 import { HotelGallery } from "./HotelGallery";
 import { HotelMediaImage } from "./HotelMediaImage";
 import { pickHotelHighlightFacilities } from "@/lib/hotel-facilities";
+import { hotelReviewHighlights, guestScoreBand } from "@/lib/hotel-review-highlights";
 import {
   shopAdultCount,
   shopChildCount,
@@ -78,7 +79,7 @@ export function HotelDetailModal({
   fetchJson = apiFetch,
   variant = "default",
 }: Props) {
-  const { locale } = useShopCopy();
+  const { locale, t } = useShopCopy();
   const shopStyle = variant === "shop";
   const [descOpen, setDescOpen] = useState(false);
   const [selectedRate, setSelectedRate] = useState<HotelRateOption | null>(null);
@@ -118,6 +119,13 @@ export function HotelDetailModal({
       ? (hotel.details.facilityLabels as string[])
       : [],
     8,
+  );
+  const reviewHighlights = hotelReviewHighlights(
+    locale,
+    Array.isArray(hotel.details.facilityLabels)
+      ? (hotel.details.facilityLabels as string[])
+      : [],
+    6,
   );
   const description =
     typeof hotel.details.description === "string" ? hotel.details.description : "";
@@ -574,14 +582,15 @@ export function HotelDetailModal({
 
             {tab === "reviews" ? (
               <section className="flight-modal-section hotel-tab-panel">
-                <h3>التقييمات</h3>
+                <h3>{t("reviewScoreLabel")}</h3>
                 {guestRating ? (
                   <div className="hotel-review-score">
                     <strong>{guestRating.score.toFixed(1)}</strong>
                     <div>
-                      <span>مصدر: {guestRating.source}</span>
+                      <span>{t(guestScoreBand(guestRating.score))}</span>
+                      <span>{t("reviewsFromSource", { source: guestRating.source })}</span>
                       {guestRating.count ? (
-                        <small>{guestRating.count} مراجعة</small>
+                        <small>{t("basedOnReviews", { n: guestRating.count })}</small>
                       ) : null}
                     </div>
                   </div>
@@ -590,6 +599,31 @@ export function HotelDetailModal({
                     لا يتوفر تقييم نزلاء موثوق من المزود لهذا العقار. يُعرض تصنيف النجوم الرسمي فقط.
                   </p>
                 )}
+                {reviewHighlights.length ? (
+                  <>
+                    <h4 className="hotel-review-subhead">{t("reviewHighlights")}</h4>
+                    <ul className="hotel-facility-chips">
+                      {reviewHighlights.map((f) => (
+                        <li key={f}>{f}</li>
+                      ))}
+                    </ul>
+                  </>
+                ) : null}
+                {galleryObjects.length > 1 ? (
+                  <>
+                    <h4 className="hotel-review-subhead">{t("reviewPhotos")}</h4>
+                    <div className="hotel-review-photos">
+                      {galleryObjects.slice(0, 8).map((img) => (
+                        <HotelMediaImage
+                          key={img.url}
+                          src={img.url}
+                          alt={name}
+                          className="hotel-review-photo"
+                        />
+                      ))}
+                    </div>
+                  </>
+                ) : null}
               </section>
             ) : null}
 

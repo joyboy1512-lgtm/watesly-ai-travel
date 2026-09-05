@@ -4727,3 +4727,66 @@ html body .wg-hero-dock.wg-hero-acc-panel {
     width: 100% !important;
   }
 }
+
+
+/* WG_OVERLAY_FIX — ensure suggest/guests escape clipping */
+html body .wg-hero-acc-shell,
+html body .wg-hero-acc-shell.is-open,
+html body .wg-hero-ticket-shell,
+html body .wg-hero-dock-shell,
+html body .wg-hero-search-panel,
+html body .wg-travela-hero,
+html body .wg-hero-acc-panel,
+html body .wg-hero-acc-panel .exp-dialog,
+html body .wg-hero-acc-panel .exp-unified-card,
+html body .wg-hero-acc-panel .exp-form-row,
+html body .shop-ac,
+html body .shop-ac-inline,
+html body .exp-ac-field {
+  overflow: visible !important;
+}
+
+html body .shop-ac,
+html body .shop-ac-inline,
+html body .exp-ac-field,
+html body .exp-input-cell,
+html body .wg-hero-acc-field {
+  position: relative !important;
+}
+
+html body .prc-suggest.exp-ac-menu,
+html body .exp-ac-menu.prc-suggest {
+  position: absolute !important;
+  top: auto !important;
+  bottom: calc(100% + 8px) !important;
+  inset-inline-start: 0 !important;
+  z-index: 8000 !important;
+  display: grid !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+  background: #fff !important;
+  color: #0f172a !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 12px !important;
+  box-shadow: 0 18px 44px rgba(10, 22, 48, 0.32) !important;
+  max-height: min(52vh, 300px) !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  min-width: 260px !important;
+  width: max(100%, 260px) !important;
+}
+
+html body .exp-travelers-panel {
+  position: absolute !important;
+  top: auto !important;
+  bottom: calc(100% + 8px) !important;
+  inset-inline-end: 0 !important;
+  inset-inline-start: auto !important;
+  z-index: 8100 !important;
+  pointer-events: auto !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  background: #fff !important;
+  color: #0f172a !important;
+}

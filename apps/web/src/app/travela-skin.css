@@ -4,13 +4,13 @@
  */
 
 .shop-root.wg-new-ui {
-  --tv-primary: #01153E;
+  --tv-primary: #001B35;
   --tv-secondary: #f97316;
   --tv-light: #f2f2f2;
   --tv-dark: #14141f;
-  --exp-navy: #01153E;
-  --exp-blue: #01153E;
-  --exp-sky: #1D2951;
+  --exp-navy: #001B35;
+  --exp-blue: #001B35;
+  --exp-sky: #1A3348;
   --shop-bg: #fff;
   --exp-bg: #fff;
   background: #fff;
@@ -19,8 +19,8 @@
   --wg-blue-pill-pad-x: clamp(2rem, 4.5vw, 3.25rem);
   --wg-blue-pill-pad-y: 1.25rem;
   --wg-blue-pill-inner-inset: 6cm;
-  --wg-blue-pill-bg: #01153E;
-  --wg-blue-pill-shadow: 0 16px 40px rgba(1, 21, 62, 0.35);
+  --wg-blue-pill-bg: #001B35;
+  --wg-blue-pill-shadow: 0 16px 40px rgba(0, 27, 53, 0.35);
 }
 
 .shop-root.wg-new-ui .exp-main,
@@ -61,7 +61,7 @@
 .shop-root.wg-new-ui .exp-header-white {
   background: #fff;
   border-bottom: 1px solid #e5e7eb;
-  box-shadow: 0 2px 12px rgba(1, 21, 62, 0.06);
+  box-shadow: 0 2px 12px rgba(0, 27, 53, 0.06);
 }
 
 .shop-root.wg-new-ui .wg-header-row {
@@ -270,7 +270,7 @@
 
 .shop-root.wg-new-ui .exp-header-white .wg-topbar-nav a:hover {
   color: var(--tv-primary);
-  background: rgba(1, 21, 62, 0.06);
+  background: rgba(0, 27, 53, 0.06);
 }
 
 .shop-root.wg-new-ui .wg-topbar-end {
@@ -496,7 +496,7 @@
   padding: 0.45rem;
   border-radius: 1rem;
   background: #fff;
-  box-shadow: 0 12px 32px rgba(1, 21, 62, 0.22);
+  box-shadow: 0 12px 32px rgba(0, 27, 53, 0.22);
   z-index: 100;
   display: flex;
   flex-direction: column;
@@ -558,7 +558,7 @@
   padding: 0.85rem;
   border-radius: 1rem;
   background: #fff;
-  box-shadow: 0 12px 32px rgba(1, 21, 62, 0.18);
+  box-shadow: 0 12px 32px rgba(0, 27, 53, 0.18);
   z-index: 90;
 }
 
@@ -755,7 +755,7 @@
 
 .wg-hero-ticket-shell,
 .wg-hero-dock-shell {
-  --hd-accent: var(--tv-primary, #01153E);
+  --hd-accent: var(--tv-primary, #001B35);
   --hd-ink: #0f172a;
   --hd-muted: #64748b;
   --hd-line: #e2e8f0;
@@ -853,7 +853,7 @@
   display: grid !important;
   grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
   flex-wrap: nowrap;
-  background: linear-gradient(180deg, #001C3D 0%, #01153E 100%) !important;
+  background: linear-gradient(180deg, #002445 0%, #001B35 100%) !important;
   border: 1px solid rgba(251, 191, 36, 0.35) !important;
   border-bottom: 0 !important;
   border-radius: 16px 16px 0 0 !important;
@@ -921,7 +921,7 @@
   width: 100%;
   padding: 0;
   border-radius: 16px 16px 0 0;
-  background: linear-gradient(180deg, #001C3D 0%, #01153E 100%);
+  background: linear-gradient(180deg, #002445 0%, #001B35 100%);
   border: 1px solid rgba(251, 191, 36, 0.28);
   border-bottom: 0;
   box-shadow: 0 10px 28px rgba(10, 22, 48, 0.28);
@@ -984,7 +984,7 @@
 .wg-hero-acc-mode.on .wg-hero-acc-icon,
 .wg-hero-acc-mode.is-expanded .wg-hero-acc-icon {
   background: #fbbf24;
-  color: #01153E;
+  color: #001B35;
   border-color: #fbbf24;
   box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.22);
 }
@@ -1038,7 +1038,7 @@
   padding: 0.35rem 0.85rem !important;
   border-radius: 999px !important;
   border: 1px solid rgba(251, 191, 36, 0.55) !important;
-  background: rgba(1, 21, 62, 0.72) !important;
+  background: rgba(0, 27, 53, 0.72) !important;
   color: #fde68a !important;
   font-weight: 800;
   text-decoration: none;
@@ -1070,8 +1070,8 @@
   width: 14px;
   height: 14px;
   background: #fff;
-  border-inline-start: 1px solid rgba(1, 21, 62, 0.08);
-  border-top: 1px solid rgba(1, 21, 62, 0.08);
+  border-inline-start: 1px solid rgba(0, 27, 53, 0.08);
+  border-top: 1px solid rgba(0, 27, 53, 0.08);
   transform: rotate(45deg);
   z-index: 1;
 }
@@ -1099,7 +1099,7 @@
   box-shadow:
     0 18px 40px rgba(10, 22, 48, 0.22),
     0 1px 0 rgba(255, 255, 255, 0.9) inset;
-  border: 1px solid rgba(1, 21, 62, 0.08);
+  border: 1px solid rgba(0, 27, 53, 0.08);
   padding: 0.55rem 0.55rem 0.55rem 0.65rem;
   overflow: visible;
 }
@@ -1456,7 +1456,7 @@
 .shop-root.wg-new-ui .shop-btn,
 .shop-root.wg-new-ui .shop-cta {
   background: var(--tv-primary);
-  box-shadow: 0 8px 20px rgba(1, 21, 62, 0.25);
+  box-shadow: 0 8px 20px rgba(0, 27, 53, 0.25);
 }
 
 .shop-root.wg-new-ui .shop-btn-ghost {
@@ -1707,7 +1707,7 @@
 .shop-root.wg-new-ui .wg-hero-acc-modes,
 .wg-hero-acc-modes {
   border-radius: 18px 18px 0 0 !important;
-  background: #01153E !important;
+  background: #001B35 !important;
   border: 1px solid rgba(251, 191, 36, 0.35) !important;
   border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
 }
@@ -1724,7 +1724,7 @@
 
 .shop-root.wg-new-ui .wg-hero-dock.wg-hero-acc-panel,
 .wg-hero-dock.wg-hero-acc-panel {
-  background: #01153E !important;
+  background: #001B35 !important;
   border: 1px solid rgba(251, 191, 36, 0.35) !important;
   border-top: 0 !important;
   border-radius: 0 0 18px 18px !important;
@@ -1733,7 +1733,7 @@
 }
 
 .shop-root.wg-new-ui .wg-hero-acc-panel.is-open::before {
-  background: #01153E !important;
+  background: #001B35 !important;
   border-color: rgba(251, 191, 36, 0.35) !important;
 }
 
@@ -1830,7 +1830,7 @@
 .shop-root.wg-new-ui .wg-hero-search-panel .wg-hero-ticket-search.exp-search-link,
 .shop-root.wg-new-ui .wg-hero-acc-panel .wg-hero-ticket-search.exp-search-link {
   background: #fbbf24 !important;
-  color: #01153E !important;
+  color: #001B35 !important;
   border: 0 !important;
   border-radius: 12px !important;
   font-weight: 800 !important;
@@ -1862,11 +1862,11 @@
 
 /* WG_ACCORDION_NO_NEWUI_FIX — root may lack .wg-new-ui */
 .wg-hero-acc-modes.wg-hero-dock-modes {
-  background: #01153E !important;
+  background: #001B35 !important;
   background-image: none !important;
 }
 .wg-hero-dock.wg-hero-acc-panel {
-  background: #01153E !important;
+  background: #001B35 !important;
 }
 .wg-hero-search-panel .wg-hero-ticket-search.exp-search-link,
 .wg-hero-acc-panel .wg-hero-ticket-search.exp-search-link,
@@ -1874,7 +1874,7 @@
 .wg-hero-search-panel button.wg-hero-ticket-search.exp-search-link {
   background: #fbbf24 !important;
   background-image: none !important;
-  color: #01153E !important;
+  color: #001B35 !important;
   border: 0 !important;
   border-radius: 12px !important;
   font-weight: 800 !important;
@@ -1914,7 +1914,7 @@
 .wg-hero-acc-shell {
   border-radius: 18px !important;
   overflow: hidden;
-  background: #01153E !important;
+  background: #001B35 !important;
   border: 1px solid rgba(251, 191, 36, 0.35) !important;
   box-shadow: 0 18px 42px rgba(10, 22, 48, 0.35) !important;
 }
@@ -2038,7 +2038,7 @@
   padding: 0.7rem 1.1rem !important;
   border-radius: 12px !important;
   background: #fbbf24 !important;
-  color: #01153E !important;
+  color: #001B35 !important;
   font-weight: 800 !important;
   white-space: nowrap !important;
 }
@@ -2069,7 +2069,7 @@
   content: none !important;
 }
 .wg-hero-acc-shell.wg-hero-dock-shell {
-  background: #01153E !important;
+  background: #001B35 !important;
   border-radius: 18px !important;
   overflow: hidden !important;
   border: 1px solid rgba(251, 191, 36, 0.38) !important;
@@ -2088,7 +2088,7 @@
 .wg-hero-acc-mode.on .wg-hero-acc-icon,
 .wg-hero-acc-mode.is-expanded .wg-hero-acc-icon {
   background: #fbbf24 !important;
-  color: #01153E !important;
+  color: #001B35 !important;
 }
 
 /* WG_ACCORDION_AGREEMENT_EXACT */
@@ -2136,7 +2136,7 @@
   width: 0;
   height: 0;
   border-inline: 8px solid transparent;
-  border-bottom: 9px solid #001C3D;
+  border-bottom: 9px solid #002445;
   z-index: 3;
 }
 .wg-hero-acc-shell.is-open[data-mode="stays"] .wg-hero-acc-modes::after { inset-inline-start: 12.5%; transform: translateX(50%); }
@@ -2149,10 +2149,10 @@
 [dir="rtl"] .wg-hero-acc-shell.is-open[data-mode="activities"] .wg-hero-acc-modes::after { transform: translateX(-50%); }
 
 .wg-hero-acc-panel {
-  background: #001C3D !important;
+  background: #002445 !important;
 }
 .wg-hero-acc-shell {
-  background: #01153E !important;
+  background: #001B35 !important;
 }
 .wg-hero-acc-title {
   font-size: 1.05rem !important;
@@ -2167,14 +2167,14 @@
 
 /* WG_ACCORDION_PHOTO_MATCH */
 .wg-hero-acc-shell {
-  background: #000B26 !important;
+  background: #000F1F !important;
   border: 0 !important;
   border-radius: 0 !important;
   box-shadow: none !important;
   overflow: visible !important;
 }
 .wg-hero-acc-modes {
-  background: #01153E !important;
+  background: #001B35 !important;
   background-image: none !important;
   border: 0 !important;
   border-bottom: 1px solid rgba(255,255,255,0.18) !important;
@@ -2201,7 +2201,7 @@
 .wg-hero-acc-mode.is-expanded .wg-hero-acc-icon {
   background: #D99A3E !important;
   border-color: #D99A3E !important;
-  color: #000B26 !important;
+  color: #000F1F !important;
   box-shadow: none !important;
 }
 .wg-hero-acc-title { color: #fff !important; }
@@ -2213,7 +2213,7 @@
 }
 
 .wg-hero-acc-panel.wg-hero-dock {
-  background: #000B26 !important;
+  background: #000F1F !important;
   border: 0 !important;
   border-radius: 0 !important;
   box-shadow: none !important;
@@ -2229,7 +2229,7 @@
   width: 0 !important;
   height: 0 !important;
   border-inline: 8px solid transparent !important;
-  border-bottom: 8px solid #000B26 !important;
+  border-bottom: 8px solid #000F1F !important;
   border-top: 0 !important;
   background: transparent !important;
   transform: none !important;
@@ -2510,7 +2510,7 @@
   grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
   gap: 0 !important;
   padding: 0 !important;
-  background: #01153E !important;
+  background: #001B35 !important;
   background-image: none !important;
   border: 1px solid rgba(201, 162, 39, 0.38) !important;
   border-radius: 16px !important;
@@ -2574,7 +2574,7 @@
 .wg-hero-acc-mode.is-expanded .wg-hero-acc-icon {
   background: #D99A3E !important;
   border-color: #D99A3E !important;
-  color: #01153E !important;
+  color: #001B35 !important;
   box-shadow: 0 0 0 3px rgba(201, 162, 39, 0.22) !important;
 }
 
@@ -2638,7 +2638,7 @@
   gap: 0.45rem;
   padding: 1.05rem 1rem 0.55rem;
   margin: 0;
-  background: #01153E;
+  background: #001B35;
   border-inline: 1px solid rgba(201, 162, 39, 0.38);
   box-shadow: 0 14px 28px rgba(8, 18, 40, 0.28);
 }
@@ -2665,7 +2665,7 @@
 .wg-hero-acc-trip.on {
   background: #D99A3E;
   border-color: #D99A3E;
-  color: #01153E;
+  color: #001B35;
 }
 
 .wg-hero-acc-trip:hover:not(.on) {
@@ -2676,7 +2676,7 @@
 .wg-hero-acc-panel.wg-hero-dock {
   position: relative !important;
   z-index: 1 !important;
-  background: #01153E !important;
+  background: #001B35 !important;
   border: 1px solid rgba(201, 162, 39, 0.38) !important;
   border-radius: 16px !important;
   box-shadow: 0 18px 42px rgba(8, 18, 40, 0.38) !important;
@@ -2734,7 +2734,7 @@
   padding: 0.7rem 1.15rem !important;
   border-radius: 12px !important;
   background: #D99A3E !important;
-  color: #01153E !important;
+  color: #001B35 !important;
   font-weight: 800 !important;
   box-shadow: 0 8px 18px rgba(201, 162, 39, 0.28) !important;
   flex-direction: row-reverse !important;
@@ -2783,7 +2783,7 @@
 .wg-hero-acc-shell {
   display: grid !important;
   gap: 0 !important;
-  background: #01153E !important;
+  background: #001B35 !important;
   border: 0 !important;
   border-radius: 18px !important;
   overflow: hidden !important;
@@ -2837,7 +2837,7 @@
 .wg-hero-acc-mode.is-expanded .wg-hero-acc-icon {
   background: #D99A3E !important;
   border-color: #D99A3E !important;
-  color: #01153E !important;
+  color: #001B35 !important;
   box-shadow: none !important;
 }
 
@@ -2884,7 +2884,7 @@
 .wg-hero-acc-trip.on {
   background: #D99A3E !important;
   border-color: #D99A3E !important;
-  color: #01153E !important;
+  color: #001B35 !important;
 }
 
 .wg-hero-dock.wg-hero-acc-panel,
@@ -2982,7 +2982,7 @@
   padding: 0 1.25rem !important;
   border-radius: 14px !important;
   background: #D99A3E !important;
-  color: #01153E !important;
+  color: #001B35 !important;
   font-weight: 800 !important;
   box-shadow: none !important;
   flex-direction: row-reverse !important;
@@ -3032,7 +3032,7 @@
   gap: 0 !important;
   margin: 0 !important;
   padding: 0 !important;
-  background: #01153E !important;
+  background: #001B35 !important;
   background-image: none !important;
   border: 0 !important;
   border-radius: 16px !important;
@@ -3089,7 +3089,7 @@
 .wg-hero-acc-mode.is-expanded .wg-hero-acc-icon {
   background: #D99A3E !important;
   border-color: #D99A3E !important;
-  color: #01153E !important;
+  color: #001B35 !important;
   box-shadow: none !important;
 }
 
@@ -3157,7 +3157,7 @@
   align-items: center !important;
   margin: 0 !important;
   padding: 1.35rem 1rem 0.55rem !important;
-  background: #01153E !important;
+  background: #001B35 !important;
   border: 0 !important;
   border-radius: 16px 16px 0 0 !important;
   box-shadow: 0 16px 36px rgba(8, 18, 40, 0.34) !important;
@@ -3174,7 +3174,7 @@
 }
 .wg-hero-acc-trip.on {
   background: #D99A3E !important;
-  color: #01153E !important;
+  color: #001B35 !important;
 }
 
 /* BOTTOM row — fields */
@@ -3182,7 +3182,7 @@
 .wg-hero-acc-panel.wg-hero-dock {
   position: relative !important;
   z-index: 1 !important;
-  background: #01153E !important;
+  background: #001B35 !important;
   border: 0 !important;
   border-radius: 16px !important;
   box-shadow: 0 20px 44px rgba(8, 18, 40, 0.4) !important;
@@ -3253,7 +3253,7 @@
   padding: 0 1.3rem !important;
   border-radius: 14px !important;
   background: #D99A3E !important;
-  color: #01153E !important;
+  color: #001B35 !important;
   font-weight: 800 !important;
   font-size: 1rem !important;
   box-shadow: none !important;
@@ -3290,8 +3290,8 @@ html body .wg-hero-acc-title {
 
 /* WG_TUNE — colors, type, width, chevron under text (match agreed mock) */
 :root {
-  --wg-acc-navy: #01153E;
-  --wg-acc-navy-deep: #000B26;
+  --wg-acc-navy: #001B35;
+  --wg-acc-navy-deep: #000F1F;
   --wg-acc-gold: #D99A3E;
   --wg-acc-gold-bright: #E5B15A;
   --wg-acc-text: #F5F5F5;
@@ -3516,7 +3516,7 @@ html body .wg-hero-acc-modes,
 html body .wg-hero-acc-panel.wg-hero-dock,
 html body .wg-hero-dock.wg-hero-acc-panel,
 html body .wg-hero-acc-tripstrip {
-  background: #01153E !important;
+  background: #001B35 !important;
 }
 
 html body .wg-hero-acc-field-ico,
@@ -3536,7 +3536,7 @@ html body .wg-hero-acc-search-btn.exp-search-link,
 html body .wg-hero-search-panel .wg-hero-ticket-search.exp-search-link {
   background: #D99A3E !important;
   border-color: #D99A3E !important;
-  color: #01153E !important;
+  color: #001B35 !important;
 }
 
 html body .wg-hero-acc-trip:not(.on) {
@@ -3611,18 +3611,18 @@ html body .wg-hero-acc-panel .exp-flex-dates {
 
 /* ============================================================
    WG_PIXEL_V2 — literal match to user reference JPGs
-   Colors sampled: navy ~#001C3D, gold ~#D99A3E / #D99A3E
+   Colors sampled: navy ~#002445, gold ~#D99A3E / #D99A3E
    RTL: icons on physical RIGHT; chevron beside title
    ============================================================ */
 :root {
-  --wg-v2-navy: #01153E;
-  --wg-v2-navy-soft: #001C3D;
-  --wg-v2-navy-deep: #000B26;
-  --wg-v2-navy-mid: #1D2951;
+  --wg-v2-navy: #001B35;
+  --wg-v2-navy-soft: #002445;
+  --wg-v2-navy-deep: #000F1F;
+  --wg-v2-navy-mid: #1A3348;
   --wg-v2-gold: #D99A3E;
   --wg-v2-gold-deep: #C48932;
   --wg-v2-gold-bright: #E5B15A;
-  --wg-v2-ink: #01153E;
+  --wg-v2-ink: #001B35;
   --wg-v2-white: #F5F5F5;
   --wg-v2-muted: #A9B0BE;
   --wg-v2-line: rgba(245, 245, 245, 0.18);
@@ -4003,7 +4003,7 @@ html body .wg-hero-acc-panel .exp-search-link.wg-hero-ticket-search {
   padding: 0 1.35rem !important;
   border-radius: 14px !important;
   background: #D99A3E !important;
-  color: #01153E !important;
+  color: #001B35 !important;
   font-weight: 800 !important;
   font-size: 1.05rem !important;
   box-shadow: none !important;
@@ -4105,7 +4105,7 @@ html body .wg-hero-acc-mode.on .wg-hero-acc-icon,
 html body .wg-hero-acc-mode.is-expanded .wg-hero-acc-icon {
   background: #D99A3E !important;
   border-color: #D99A3E !important;
-  color: #01153E !important;
+  color: #001B35 !important;
 }
 
 /* Gold chevron UNDER the text (not beside title) */
@@ -4928,23 +4928,23 @@ html body .exp-ac-field > .exp-ac-menu {
 
 /* ============================================================
    WG_LUXURY_NAVY_GOLD — user palette (night navy + warm gold)
-   Navy #01153E / deep #000B26 / soft #001C3D / mid #1D2951
+   Navy #001B35 / deep #000F1F / soft #002445 / mid #1A3348
    Gold #D99A3E / bright #E5B15A · text #F5F5F5 / muted #A9B0BE
    ============================================================ */
 :root {
-  --wg-v2-navy: #01153E;
-  --wg-v2-navy-soft: #001C3D;
-  --wg-v2-navy-deep: #000B26;
-  --wg-v2-navy-mid: #1D2951;
+  --wg-v2-navy: #001B35;
+  --wg-v2-navy-soft: #002445;
+  --wg-v2-navy-deep: #000F1F;
+  --wg-v2-navy-mid: #1A3348;
   --wg-v2-gold: #D99A3E;
   --wg-v2-gold-deep: #C48932;
   --wg-v2-gold-bright: #E5B15A;
-  --wg-v2-ink: #01153E;
+  --wg-v2-ink: #001B35;
   --wg-v2-white: #F5F5F5;
   --wg-v2-muted: #A9B0BE;
   --wg-v2-line: rgba(245, 245, 245, 0.16);
-  --wg-acc-navy: #01153E;
-  --wg-acc-navy-deep: #000B26;
+  --wg-acc-navy: #001B35;
+  --wg-acc-navy-deep: #000F1F;
   --wg-acc-gold: #D99A3E;
   --wg-acc-gold-bright: #E5B15A;
   --wg-acc-text: #F5F5F5;
@@ -4952,12 +4952,12 @@ html body .exp-ac-field > .exp-ac-menu {
 }
 
 html body .shop-root.wg-new-ui {
-  --tv-primary: #01153E;
-  --exp-navy: #01153E;
-  --exp-blue: #01153E;
-  --exp-sky: #1D2951;
-  --wg-blue-pill-bg: #01153E;
-  --wg-blue-pill-shadow: 0 16px 40px rgba(1, 21, 62, 0.38);
+  --tv-primary: #001B35;
+  --exp-navy: #001B35;
+  --exp-blue: #001B35;
+  --exp-sky: #1A3348;
+  --wg-blue-pill-bg: #001B35;
+  --wg-blue-pill-shadow: 0 16px 40px rgba(0, 27, 53, 0.38);
 }
 
 /* Dock surfaces: deep night navy, never bright royal blue */
@@ -4966,20 +4966,20 @@ html body .wg-hero-acc-modes.wg-hero-dock-modes,
 html body .wg-hero-acc-tripstrip,
 html body .wg-hero-acc-panel.wg-hero-dock,
 html body .wg-hero-dock.wg-hero-acc-panel {
-  background: #01153E !important;
+  background: #001B35 !important;
   background-image: none !important;
   color: #F5F5F5 !important;
 }
 
 html body .wg-hero-acc-modes,
 html body .wg-hero-acc-modes.wg-hero-dock-modes {
-  box-shadow: 0 18px 44px rgba(0, 11, 38, 0.55) !important;
+  box-shadow: 0 18px 44px rgba(0, 15, 31, 0.55) !important;
   border: 1px solid rgba(217, 154, 62, 0.18) !important;
 }
 
 html body .wg-hero-acc-panel.wg-hero-dock,
 html body .wg-hero-dock.wg-hero-acc-panel {
-  box-shadow: 0 22px 48px rgba(0, 11, 38, 0.5) !important;
+  box-shadow: 0 22px 48px rgba(0, 15, 31, 0.5) !important;
   border: 1px solid rgba(217, 154, 62, 0.14) !important;
   padding: 0.75rem 0.85rem 0.9rem !important;
 }
@@ -4989,7 +4989,7 @@ html body .wg-hero-acc-mode.on,
 html body .wg-hero-acc-mode.is-expanded,
 html body .wg-hero-dock-mode.wg-hero-acc-mode.on,
 html body .wg-hero-dock-mode.wg-hero-acc-mode.is-expanded {
-  background: #1D2951 !important;
+  background: #1A3348 !important;
   background-image: none !important;
   box-shadow: inset 0 -2px 0 #D99A3E !important;
 }
@@ -5024,7 +5024,7 @@ html body .wg-hero-acc-tripstrip button.is-on,
 html body .wg-hero-acc-tripstrip .exp-trip-type.is-on {
   background: #D99A3E !important;
   border-color: #D99A3E !important;
-  color: #01153E !important;
+  color: #001B35 !important;
 }
 
 html body .wg-hero-ticket-search.exp-search-link,
@@ -5033,7 +5033,7 @@ html body .wg-hero-acc-panel .exp-search-link.wg-hero-ticket-search,
 html body .wg-hero-acc-panel button.wg-hero-acc-search-btn {
   background: #D99A3E !important;
   border-color: #D99A3E !important;
-  color: #01153E !important;
+  color: #001B35 !important;
   box-shadow: 0 8px 22px rgba(217, 154, 62, 0.35) !important;
 }
 
@@ -5082,10 +5082,10 @@ html body .shop-ac > .exp-ac-menu,
 html body .exp-ac-field > .prc-suggest,
 html body .exp-ac-field > .exp-ac-menu {
   background: #fff !important;
-  color: #01153E !important;
-  border: 1px solid rgba(1, 21, 62, 0.1) !important;
+  color: #001B35 !important;
+  border: 1px solid rgba(0, 27, 53, 0.1) !important;
   border-radius: 14px !important;
-  box-shadow: 0 16px 40px rgba(0, 11, 38, 0.22) !important;
+  box-shadow: 0 16px 40px rgba(0, 15, 31, 0.22) !important;
   padding: 0.45rem !important;
   max-height: min(280px, 42vh) !important;
   overflow: auto !important;
@@ -5097,7 +5097,7 @@ html body .prc-suggest [role="option"],
 html body .exp-ac-menu [role="option"] {
   padding: 0.7rem 0.85rem !important;
   border-radius: 10px !important;
-  color: #01153E !important;
+  color: #001B35 !important;
 }
 
 html body .prc-suggest button:hover,
@@ -5116,4 +5116,41 @@ html body .wg-hero-acc-mode {
   max-height: 4.5rem !important;
   padding: 0.55rem 0.7rem !important;
   gap: 0.35rem !important;
+}
+
+/* ============================================================
+   WG_USER_NAVY_001B35 — exact picker RGB(0,27,53)
+   ============================================================ */
+:root {
+  --wg-v2-navy: #001B35;
+  --wg-v2-navy-soft: #002445;
+  --wg-v2-navy-deep: #000F1F;
+  --wg-v2-navy-mid: #1A3348;
+  --wg-v2-ink: #001B35;
+  --wg-acc-navy: #001B35;
+  --wg-acc-navy-deep: #000F1F;
+}
+
+html body .shop-root.wg-new-ui {
+  --tv-primary: #001B35;
+  --exp-navy: #001B35;
+  --exp-blue: #001B35;
+  --wg-blue-pill-bg: #001B35;
+}
+
+html body .wg-hero-acc-modes,
+html body .wg-hero-acc-modes.wg-hero-dock-modes,
+html body .wg-hero-acc-tripstrip,
+html body .wg-hero-acc-panel.wg-hero-dock,
+html body .wg-hero-dock.wg-hero-acc-panel {
+  background: #001B35 !important;
+  background-image: none !important;
+}
+
+html body .wg-hero-acc-mode.on,
+html body .wg-hero-acc-mode.is-expanded,
+html body .wg-hero-dock-mode.wg-hero-acc-mode.on,
+html body .wg-hero-dock-mode.wg-hero-acc-mode.is-expanded {
+  background: #1A3348 !important;
+  background-image: none !important;
 }

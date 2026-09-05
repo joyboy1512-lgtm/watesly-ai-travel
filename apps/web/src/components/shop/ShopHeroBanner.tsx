@@ -273,10 +273,11 @@ export function ShopHeroBanner(props: Props) {
     function onKey(e: KeyboardEvent) {
       if (e.key === "Escape") setTravelersOpen(false);
     }
-    document.addEventListener("mousedown", onDoc);
+    // Use bubble-phase click (not mousedown) so the opening click finishes first.
+    document.addEventListener("click", onDoc);
     document.addEventListener("keydown", onKey);
     return () => {
-      document.removeEventListener("mousedown", onDoc);
+      document.removeEventListener("click", onDoc);
       document.removeEventListener("keydown", onKey);
     };
   }, [travelersOpen]);
@@ -556,17 +557,20 @@ export function ShopHeroBanner(props: Props) {
         data-field={props.mode === "stays" ? "guests" : "travelers"}
         ref={travelersWrapRef}
       >
-        <span className="wg-hero-acc-field-ico" aria-hidden />
         <button
           type="button"
           className={`exp-travelers-trigger wg-hero-acc-field-body${travelersOpen ? " open" : ""}`}
           aria-expanded={travelersOpen}
-          onClick={() => setTravelersOpen((v) => !v)}
+          onClick={(e) => {
+            e.stopPropagation();
+            setTravelersOpen((v) => !v);
+          }}
         >
+          <span className="wg-hero-acc-field-ico" aria-hidden />
           <span className="exp-cell-label">{props.mode === "stays" ? t("guests") : t("travelers")}</span>
           <strong>{travelerSummary}</strong>
+          <span className="wg-hero-acc-field-chevron" aria-hidden />
         </button>
-        <span className="wg-hero-acc-field-chevron" aria-hidden />
         {renderTravelersPanel()}
       </div>
     );

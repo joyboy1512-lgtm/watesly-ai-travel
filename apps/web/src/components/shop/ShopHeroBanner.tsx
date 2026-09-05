@@ -683,9 +683,11 @@ export function ShopHeroBanner(props: Props) {
                       <ModeGlyph mode={key} />
                     </span>
                     <span className="wg-hero-acc-copy">
-                      <span className="wg-hero-acc-title">{t(label)}</span>
+                      <span className="wg-hero-acc-title-row">
+                        <span className="wg-hero-acc-title">{t(label)}</span>
+                        <AccordionChevron open={expanded} />
+                      </span>
                       <span className="wg-hero-acc-hint">{t(hint)}</span>
-                      <AccordionChevron open={expanded} />
                     </span>
                   </button>
                 );
@@ -696,10 +698,10 @@ export function ShopHeroBanner(props: Props) {
               <div className="wg-hero-acc-tripstrip" role="group" aria-label={t("tripType")}>
                 <button
                   type="button"
-                  className={`wg-hero-acc-trip${props.tripType === "multicity" ? " on" : ""}`}
-                  onClick={() => props.onTripTypeChange("multicity")}
+                  className={`wg-hero-acc-trip${props.tripType === "roundtrip" ? " on" : ""}`}
+                  onClick={() => props.onTripTypeChange("roundtrip")}
                 >
-                  {t("multiCity")}
+                  {t("roundTrip")}
                 </button>
                 <button
                   type="button"
@@ -710,10 +712,10 @@ export function ShopHeroBanner(props: Props) {
                 </button>
                 <button
                   type="button"
-                  className={`wg-hero-acc-trip${props.tripType === "roundtrip" ? " on" : ""}`}
-                  onClick={() => props.onTripTypeChange("roundtrip")}
+                  className={`wg-hero-acc-trip${props.tripType === "multicity" ? " on" : ""}`}
+                  onClick={() => props.onTripTypeChange("multicity")}
                 >
-                  {t("roundTrip")}
+                  {t("multiCity")}
                 </button>
               </div>
             ) : null}
@@ -980,45 +982,57 @@ export function ShopHeroBanner(props: Props) {
 
             {props.mode === "cars" ? (
               <>
-                <div className="exp-input-cell">
-                  <ShopAutocomplete
-                    inline
-                    label={t("airport")}
-                    value={props.origin}
-                    display={props.originLabel}
-                    placeholder={t("pickAirport")}
-                    onQuery={props.searchAirports}
-                    onClearText={props.onOriginClear}
-                    onPick={props.onOriginPick}
-                  />
+                <div className="exp-input-cell wg-hero-acc-field" data-field="airport">
+                  <span className="wg-hero-acc-field-ico" aria-hidden />
+                  <span className="wg-hero-acc-field-body">
+                    <ShopAutocomplete
+                      inline
+                      label={t("airport")}
+                      value={props.origin}
+                      display={props.originLabel}
+                      placeholder={t("pickAirport")}
+                      onQuery={props.searchAirports}
+                      onClearText={props.onOriginClear}
+                      onPick={props.onOriginPick}
+                    />
+                  </span>
+                  <span className="wg-hero-acc-field-chevron" aria-hidden />
                 </div>
-                <div className="exp-input-cell exp-cell-grow">
-                  <ShopAutocomplete
-                    inline
-                    label={t("hotelOrAddress")}
-                    value={props.transferDropoff}
-                    display={props.transferDropoffLabel}
-                    placeholder={t("hotelAddressPlaceholder")}
-                    onQuery={props.searchCities}
-                    onClearText={props.onTransferDropoffClear}
-                    onPick={props.onTransferDropoffPick}
-                  />
+                <div className="exp-input-cell exp-cell-grow wg-hero-acc-field" data-field="address">
+                  <span className="wg-hero-acc-field-ico" aria-hidden />
+                  <span className="wg-hero-acc-field-body">
+                    <ShopAutocomplete
+                      inline
+                      label={t("hotelOrAddress")}
+                      value={props.transferDropoff}
+                      display={props.transferDropoffLabel}
+                      placeholder={t("hotelAddressPlaceholder")}
+                      onQuery={props.searchCities}
+                      onClearText={props.onTransferDropoffClear}
+                      onPick={props.onTransferDropoffPick}
+                    />
+                  </span>
+                  <span className="wg-hero-acc-field-chevron" aria-hidden />
                 </div>
               </>
             ) : null}
 
             {props.mode === "activities" ? (
-              <div className="exp-input-cell exp-cell-grow">
-                <ShopAutocomplete
-                  inline
-                  label={toLabel}
-                  value={props.activityDest}
-                  display={props.activityLabel}
-                  placeholder={t("activityCity")}
-                  onQuery={props.searchCities}
-                  onClearText={props.onActivityClear}
-                  onPick={props.onActivityPick}
-                />
+              <div className="exp-input-cell exp-cell-grow wg-hero-acc-field" data-field="destination">
+                <span className="wg-hero-acc-field-ico" aria-hidden />
+                <span className="wg-hero-acc-field-body">
+                  <ShopAutocomplete
+                    inline
+                    label={toLabel}
+                    value={props.activityDest}
+                    display={props.activityLabel}
+                    placeholder={t("activityCity")}
+                    onQuery={props.searchCities}
+                    onClearText={props.onActivityClear}
+                    onPick={props.onActivityPick}
+                  />
+                </span>
+                <span className="wg-hero-acc-field-chevron" aria-hidden />
               </div>
             ) : null}
 
@@ -1098,31 +1112,16 @@ export function ShopHeroBanner(props: Props) {
 
             {props.mode === "cars" ? (
               <>
-                <div className="exp-input-cell exp-cell-time exp-cell-time-compact">
-                  <span className="exp-cell-label">{t("arrivalTime")}</span>
-                  <select
-                    className="exp-time-select"
-                    value={props.pickupTime}
-                    onChange={(e) => props.onPickupTimeChange(e.target.value)}
-                  >
-                    {["06:00", "08:00", "10:30", "12:00", "14:00", "16:00", "18:00", "20:00"].map(
-                      (t) => (
-                        <option key={t} value={t}>
-                          {formatTimeShort(t, locale === "en")}
-                        </option>
-                      ),
-                    )}
-                  </select>
-                </div>
-                {props.transferRoundtrip ? (
-                  <div className="exp-input-cell exp-cell-time exp-cell-time-compact">
-                    <span className="exp-cell-label">{t("returnTime")}</span>
+                <div className="exp-input-cell exp-cell-time exp-cell-time-compact wg-hero-acc-field" data-field="time">
+                  <span className="wg-hero-acc-field-ico" aria-hidden />
+                  <span className="wg-hero-acc-field-body">
+                    <span className="exp-cell-label">{t("arrivalTime")}</span>
                     <select
                       className="exp-time-select"
-                      value={props.dropoffTime}
-                      onChange={(e) => props.onDropoffTimeChange(e.target.value)}
+                      value={props.pickupTime}
+                      onChange={(e) => props.onPickupTimeChange(e.target.value)}
                     >
-                      {["08:00", "10:00", "10:30", "12:00", "14:00", "16:00", "18:00", "20:00"].map(
+                      {["06:00", "08:00", "10:30", "12:00", "14:00", "16:00", "18:00", "20:00"].map(
                         (t) => (
                           <option key={t} value={t}>
                             {formatTimeShort(t, locale === "en")}
@@ -1130,6 +1129,29 @@ export function ShopHeroBanner(props: Props) {
                         ),
                       )}
                     </select>
+                  </span>
+                  <span className="wg-hero-acc-field-chevron" aria-hidden />
+                </div>
+                {props.transferRoundtrip ? (
+                  <div className="exp-input-cell exp-cell-time exp-cell-time-compact wg-hero-acc-field" data-field="time">
+                    <span className="wg-hero-acc-field-ico" aria-hidden />
+                    <span className="wg-hero-acc-field-body">
+                      <span className="exp-cell-label">{t("returnTime")}</span>
+                      <select
+                        className="exp-time-select"
+                        value={props.dropoffTime}
+                        onChange={(e) => props.onDropoffTimeChange(e.target.value)}
+                      >
+                        {["08:00", "10:00", "10:30", "12:00", "14:00", "16:00", "18:00", "20:00"].map(
+                          (t) => (
+                            <option key={t} value={t}>
+                              {formatTimeShort(t, locale === "en")}
+                            </option>
+                          ),
+                        )}
+                      </select>
+                    </span>
+                    <span className="wg-hero-acc-field-chevron" aria-hidden />
                   </div>
                 ) : null}
               </>

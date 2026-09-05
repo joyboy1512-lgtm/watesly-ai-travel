@@ -1910,3 +1910,184 @@
   border-color: #fbbf24 !important;
 }
 
+/* WG_ACCORDION_REF_SHAPE — match agreed screenshot field row */
+.wg-hero-acc-shell {
+  border-radius: 18px !important;
+  overflow: hidden;
+  background: #13357b !important;
+  border: 1px solid rgba(251, 191, 36, 0.35) !important;
+  box-shadow: 0 18px 42px rgba(10, 22, 48, 0.35) !important;
+}
+.wg-hero-acc-modes {
+  border: 0 !important;
+  border-bottom: 1px solid rgba(255,255,255,0.14) !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+.wg-hero-acc-panel.wg-hero-dock {
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  padding: 0.55rem 0.65rem 0.75rem !important;
+}
+.wg-hero-acc-panel.is-open::before { display: none !important; }
+.wg-hero-acc-panel .exp-form-row {
+  display: grid !important;
+  grid-template-columns: minmax(0,1.35fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1.1fr) auto !important;
+  align-items: stretch !important;
+  gap: 0 !important;
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+}
+.wg-hero-acc-panel .exp-form-row.exp-form-flights {
+  grid-template-columns: minmax(0,1.1fr) auto minmax(0,1.1fr) minmax(0,1.35fr) minmax(0,1fr) auto !important;
+}
+.wg-hero-acc-panel .exp-form-row.exp-form-cars {
+  grid-template-columns: minmax(0,1fr) minmax(0,1.2fr) minmax(0,1.2fr) minmax(0,.9fr) minmax(0,.9fr) minmax(0,1fr) auto !important;
+}
+.wg-hero-acc-panel .exp-form-row.exp-form-activities {
+  grid-template-columns: minmax(0,1.3fr) minmax(0,1.2fr) minmax(0,1fr) auto !important;
+}
+.wg-hero-acc-field {
+  display: grid !important;
+  grid-template-columns: auto minmax(0,1fr) auto !important;
+  align-items: center !important;
+  gap: 0.55rem !important;
+  min-height: 4.4rem !important;
+  padding: 0.55rem 0.75rem !important;
+  border: 0 !important;
+  border-inline-end: 1px solid rgba(255,255,255,0.16) !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+}
+.wg-hero-acc-field-ico {
+  width: 1.35rem;
+  height: 1.35rem;
+  flex: 0 0 auto;
+  background: currentColor;
+  color: #fbbf24;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5A2.5 2.5 0 1 1 12 6a2.5 2.5 0 0 1 0 5.5z'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5A2.5 2.5 0 1 1 12 6a2.5 2.5 0 0 1 0 5.5z'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+.wg-hero-acc-field[data-field="checkin"] .wg-hero-acc-field-ico,
+.wg-hero-acc-field[data-field="checkout"] .wg-hero-acc-field-ico,
+.wg-hero-acc-field[data-field="dates"] .wg-hero-acc-field-ico {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M19 4h-1V2h-2v2H8V2H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zm0-12H5V6h14v2z'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M19 4h-1V2h-2v2H8V2H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zm0-12H5V6h14v2z'/%3E%3C/svg%3E");
+}
+.wg-hero-acc-field[data-field="guests"] .wg-hero-acc-field-ico,
+.wg-hero-acc-field[data-field="travelers"] .wg-hero-acc-field-ico {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5C15 14.17 10.33 13 8 13zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5C15 14.17 10.33 13 8 13zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z'/%3E%3C/svg%3E");
+}
+.wg-hero-acc-field-body {
+  min-width: 0;
+  display: grid;
+  gap: 0.12rem;
+}
+.wg-hero-acc-field-chevron {
+  width: 0.7rem;
+  height: 0.7rem;
+  color: rgba(255,255,255,0.7);
+  background: currentColor;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M7.41 8.59 12 13.17l4.59-4.58L18 10l-6 6-6-6z'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M7.41 8.59 12 13.17l4.59-4.58L18 10l-6 6-6-6z'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+.wg-hero-acc-field .exp-cell-label,
+.wg-hero-acc-field .shop-ac-inline > span:first-child,
+.wg-hero-acc-field .exp-travelers-trigger .exp-cell-label {
+  color: #fbbf24 !important;
+  font-size: 0.78rem !important;
+  font-weight: 700 !important;
+}
+.wg-hero-acc-field .exp-date-btn,
+.wg-hero-acc-field .exp-travelers-trigger strong,
+.wg-hero-acc-field .shop-ac-inline input,
+.wg-hero-acc-field strong {
+  color: #fff !important;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  font-size: 0.95rem !important;
+  font-weight: 700 !important;
+  text-align: start !important;
+}
+.wg-hero-acc-field .exp-travelers-trigger {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  gap: 0.12rem !important;
+  width: 100% !important;
+  background: transparent !important;
+  border: 0 !important;
+  padding: 0 !important;
+}
+.wg-hero-acc-search-btn.exp-search-link,
+.wg-hero-acc-panel .wg-hero-ticket-search.exp-search-link {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.4rem !important;
+  min-width: 10.5rem !important;
+  min-height: 3.35rem !important;
+  margin: 0.45rem 0.25rem !important;
+  padding: 0.7rem 1.1rem !important;
+  border-radius: 12px !important;
+  background: #fbbf24 !important;
+  color: #13357b !important;
+  font-weight: 800 !important;
+  white-space: nowrap !important;
+}
+.wg-hero-acc-mode .wg-hero-acc-hint {
+  color: rgba(253, 230, 138, 0.9) !important;
+}
+.wg-hero-acc-mode {
+  border-inline-end: 1px solid rgba(255,255,255,0.14) !important;
+}
+.wg-hero-acc-mode:last-child { border-inline-end: 0 !important; }
+@media (max-width: 767px) {
+  .wg-hero-acc-panel .exp-form-row,
+  .wg-hero-acc-panel .exp-form-row.exp-form-flights,
+  .wg-hero-acc-panel .exp-form-row.exp-form-cars,
+  .wg-hero-acc-panel .exp-form-row.exp-form-activities {
+    grid-template-columns: 1fr !important;
+  }
+  .wg-hero-acc-field {
+    border-inline-end: 0 !important;
+    border-bottom: 1px solid rgba(255,255,255,0.14) !important;
+  }
+}
+
+/* WG_ACCORDION_REF_SHAPE_POLISH */
+.wg-hero-acc-panel.is-open::before,
+.wg-hero-acc-shell[data-mode] .wg-hero-acc-panel.is-open::before {
+  display: none !important;
+  content: none !important;
+}
+.wg-hero-acc-shell.wg-hero-dock-shell {
+  background: #13357b !important;
+  border-radius: 18px !important;
+  overflow: hidden !important;
+  border: 1px solid rgba(251, 191, 36, 0.38) !important;
+}
+.wg-hero-acc-modes.wg-hero-dock-modes {
+  background: transparent !important;
+  background-image: none !important;
+}
+.wg-hero-acc-mode .wg-hero-acc-title {
+  font-size: 1rem !important;
+  font-weight: 800 !important;
+}
+.wg-hero-acc-mode .wg-hero-acc-hint {
+  font-size: 0.72rem !important;
+}
+.wg-hero-acc-mode.on .wg-hero-acc-icon,
+.wg-hero-acc-mode.is-expanded .wg-hero-acc-icon {
+  background: #fbbf24 !important;
+  color: #13357b !important;
+}
+

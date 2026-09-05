@@ -222,7 +222,7 @@ function DatePick({
   return (
     <div className="exp-date-pick">
       <button type="button" className="exp-date-btn" onClick={openPicker} aria-label={label}>
-        {mounted ? (value ? formatDay(value, locale) : t("pickDate")) : value || t("pickDate")}
+        {mounted ? (value ? formatDay(value, locale) : label) : value || label}
       </button>
       <input
         ref={inputRef}
@@ -535,29 +535,44 @@ export function ShopHeroBanner(props: Props) {
 
   function renderTravelersCell() {
     return (
-      <div className="exp-input-cell exp-cell-travelers">
+      <div className="exp-input-cell exp-cell-travelers wg-hero-acc-field" data-field={props.mode === "stays" ? "guests" : "travelers"}>
+        <span className="wg-hero-acc-field-ico" aria-hidden />
         <button
           type="button"
-          className={`exp-travelers-trigger${travelersOpen ? " open" : ""}`}
+          className={`exp-travelers-trigger wg-hero-acc-field-body${travelersOpen ? " open" : ""}`}
           aria-expanded={travelersOpen}
           onClick={() => setTravelersOpen((v) => !v)}
         >
-          <span className="exp-cell-label">{t("travelers")}</span>
+          <span className="exp-cell-label">{props.mode === "stays" ? t("guests") : t("travelers")}</span>
           <strong>{travelerSummary}</strong>
         </button>
+        <span className="wg-hero-acc-field-chevron" aria-hidden />
       </div>
     );
+  }
+
+  function searchCtaLabel() {
+    if (props.mode === "stays") return t("searchHotelsCta");
+    if (props.mode === "cars") return t("searchCarsCta");
+    if (props.mode === "activities") return t("searchActivitiesCta");
+    return t("searchFlightsCta");
   }
 
   function renderSearchButton(extraClass = "") {
     return (
       <button
         type="button"
-        className={`exp-search-link${extraClass ? ` ${extraClass}` : ""}`}
+        className={`exp-search-link wg-hero-acc-search-btn${extraClass ? ` ${extraClass}` : ""}`}
         disabled={props.loading}
         onClick={props.onSearch}
       >
-        {props.loading ? "..." : t("search")}
+        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden>
+          <path
+            fill="currentColor"
+            d="M15.5 14h-.79l-.28-.27A6.47 6.47 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"
+          />
+        </svg>
+        <span>{props.loading ? "..." : searchCtaLabel()}</span>
       </button>
     );
   }
@@ -933,17 +948,21 @@ export function ShopHeroBanner(props: Props) {
             ) : null}
             <div className={`exp-form-row exp-form-${props.mode}`}>
             {props.mode === "stays" ? (
-              <div className="exp-input-cell exp-cell-grow">
-                <ShopAutocomplete
-                  inline
-                  label={t("whereTo")}
-                  value={props.stayQuery}
-                  display={props.stayQuery}
-                  placeholder={t("cityOrHotel")}
-                  onQuery={props.searchCities}
-                  onClearText={props.onStayQueryChange}
-                  onPick={props.onStayPick}
-                />
+              <div className="exp-input-cell exp-cell-grow wg-hero-acc-field" data-field="destination">
+                <span className="wg-hero-acc-field-ico" aria-hidden />
+                <span className="wg-hero-acc-field-body">
+                  <ShopAutocomplete
+                    inline
+                    label={t("whereTo")}
+                    value={props.stayQuery}
+                    display={props.stayQuery}
+                    placeholder={t("whereToTravel")}
+                    onQuery={props.searchCities}
+                    onClearText={props.onStayQueryChange}
+                    onPick={props.onStayPick}
+                  />
+                </span>
+                <span className="wg-hero-acc-field-chevron" aria-hidden />
               </div>
             ) : null}
 
@@ -991,47 +1010,79 @@ export function ShopHeroBanner(props: Props) {
               </div>
             ) : null}
 
-            <div
-              className={`exp-input-cell exp-cell-dates${
-                props.mode === "cars" ? " exp-cell-dates-wide" : ""
-              }`}
-            >
-              <span className="exp-cell-label">{props.mode === "cars" ? t("date") : t("dates")}</span>
-              {showReturnDate ? (
-                <ShopDateRangePicker
-                  forcePortal
-                  checkIn={props.departDate}
-                  checkOut={props.returnDate}
-                  onChange={(checkIn, checkOut) => {
-                    props.onDepartDateChange(checkIn);
-                    props.onReturnDateChange(checkOut);
-                  }}
-                  startLabel={
-                    props.mode === "activities"
-                      ? t("startDate")
-                      : t("arrivalDate")
-                  }
-                  endLabel={
-                    props.mode === "activities" ? t("endDate") : t("departDate")
-                  }
-                  placeholder={
-                    props.mode === "stays"
-                      ? t("selectStayDates")
-                      : props.mode === "activities"
-                        ? t("selectActivityDates")
-                        : props.mode === "cars"
-                          ? t("selectTripDates")
-                          : t("selectDates")
-                  }
-                />
-              ) : (
-                <DatePick
-                  value={props.departDate}
-                  onChange={props.onDepartDateChange}
-                  label={t("arrivalDate")}
-                />
-              )}
-            </div>
+            {props.mode === "stays" ? (
+              <>
+                <div className="exp-input-cell exp-cell-dates wg-hero-acc-field" data-field="checkin">
+                  <span className="wg-hero-acc-field-ico" aria-hidden />
+                  <span className="wg-hero-acc-field-body">
+                    <span className="exp-cell-label">{t("arrivalDate")}</span>
+                    <DatePick
+                      value={props.departDate}
+                      onChange={props.onDepartDateChange}
+                      label={t("pickDateShort")}
+                    />
+                  </span>
+                  <span className="wg-hero-acc-field-chevron" aria-hidden />
+                </div>
+                <div className="exp-input-cell exp-cell-dates wg-hero-acc-field" data-field="checkout">
+                  <span className="wg-hero-acc-field-ico" aria-hidden />
+                  <span className="wg-hero-acc-field-body">
+                    <span className="exp-cell-label">{t("departDate")}</span>
+                    <DatePick
+                      value={props.returnDate}
+                      onChange={props.onReturnDateChange}
+                      label={t("pickDateShort")}
+                    />
+                  </span>
+                  <span className="wg-hero-acc-field-chevron" aria-hidden />
+                </div>
+              </>
+            ) : (
+              <div
+                className={`exp-input-cell exp-cell-dates wg-hero-acc-field${
+                  props.mode === "cars" ? " exp-cell-dates-wide" : ""
+                }`}
+                data-field="dates"
+              >
+                <span className="wg-hero-acc-field-ico" aria-hidden />
+                <span className="wg-hero-acc-field-body">
+                  <span className="exp-cell-label">{props.mode === "cars" ? t("date") : t("dates")}</span>
+                  {showReturnDate ? (
+                    <ShopDateRangePicker
+                      forcePortal
+                      checkIn={props.departDate}
+                      checkOut={props.returnDate}
+                      onChange={(checkIn, checkOut) => {
+                        props.onDepartDateChange(checkIn);
+                        props.onReturnDateChange(checkOut);
+                      }}
+                      startLabel={
+                        props.mode === "activities"
+                          ? t("startDate")
+                          : t("arrivalDate")
+                      }
+                      endLabel={
+                        props.mode === "activities" ? t("endDate") : t("departDate")
+                      }
+                      placeholder={
+                        props.mode === "activities"
+                          ? t("selectActivityDates")
+                          : props.mode === "cars"
+                            ? t("selectTripDates")
+                            : t("selectDates")
+                      }
+                    />
+                  ) : (
+                    <DatePick
+                      value={props.departDate}
+                      onChange={props.onDepartDateChange}
+                      label={t("arrivalDate")}
+                    />
+                  )}
+                </span>
+                <span className="wg-hero-acc-field-chevron" aria-hidden />
+              </div>
+            )}
 
             {props.mode === "cars" ? (
               <>

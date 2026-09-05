@@ -2164,3 +2164,120 @@
   color: rgba(255,255,255,0.88) !important;
   font-weight: 500 !important;
 }
+
+/* WG_ACCORDION_PHOTO_MATCH */
+.wg-hero-acc-shell {
+  background: #0a1a3a !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  overflow: visible !important;
+}
+.wg-hero-acc-modes {
+  background: #0d2248 !important;
+  background-image: none !important;
+  border: 0 !important;
+  border-bottom: 1px solid rgba(255,255,255,0.18) !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+.wg-hero-acc-mode {
+  background: transparent !important;
+  min-height: 5.1rem !important;
+}
+.wg-hero-acc-mode.on,
+.wg-hero-acc-mode.is-expanded {
+  background: transparent !important;
+}
+.wg-hero-acc-icon {
+  width: 2.5rem !important;
+  height: 2.5rem !important;
+  background: transparent !important;
+  border: 1.5px solid rgba(255,255,255,0.55) !important;
+  color: #fff !important;
+  box-shadow: none !important;
+}
+.wg-hero-acc-mode.on .wg-hero-acc-icon,
+.wg-hero-acc-mode.is-expanded .wg-hero-acc-icon {
+  background: #c9a227 !important;
+  border-color: #c9a227 !important;
+  color: #0a1a3a !important;
+  box-shadow: none !important;
+}
+.wg-hero-acc-title { color: #fff !important; }
+.wg-hero-acc-hint { color: rgba(255,255,255,0.82) !important; }
+.wg-hero-acc-copy .wg-hero-acc-chevron { color: rgba(255,255,255,0.75) !important; }
+.wg-hero-acc-mode.on .wg-hero-acc-copy .wg-hero-acc-chevron,
+.wg-hero-acc-mode.is-expanded .wg-hero-acc-copy .wg-hero-acc-chevron {
+  color: #c9a227 !important;
+}
+
+.wg-hero-acc-panel.wg-hero-dock {
+  background: #081531 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  padding: 0.35rem 0.25rem 0.45rem !important;
+  position: relative !important;
+}
+/* gold caret pointing up to active tab */
+.wg-hero-acc-panel.is-open::before {
+  display: block !important;
+  content: "" !important;
+  position: absolute !important;
+  top: -8px !important;
+  width: 0 !important;
+  height: 0 !important;
+  border-inline: 8px solid transparent !important;
+  border-bottom: 8px solid #081531 !important;
+  border-top: 0 !important;
+  background: transparent !important;
+  transform: none !important;
+  z-index: 4 !important;
+}
+.wg-hero-acc-shell[data-mode="stays"] .wg-hero-acc-panel.is-open::before { inset-inline-start: 12.5%; margin-inline-start: -8px; }
+.wg-hero-acc-shell[data-mode="flights"] .wg-hero-acc-panel.is-open::before { inset-inline-start: 37.5%; margin-inline-start: -8px; }
+.wg-hero-acc-shell[data-mode="cars"] .wg-hero-acc-panel.is-open::before { inset-inline-start: 62.5%; margin-inline-start: -8px; }
+.wg-hero-acc-shell[data-mode="activities"] .wg-hero-acc-panel.is-open::before { inset-inline-start: 87.5%; margin-inline-start: -8px; }
+
+.wg-hero-acc-panel .exp-form-row {
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+  box-shadow: none !important;
+}
+.wg-hero-acc-field {
+  border-inline-end: 1px solid rgba(255,255,255,0.2) !important;
+  min-height: 4.75rem !important;
+  padding: 0.7rem 0.9rem !important;
+}
+.wg-hero-acc-field .exp-cell-label,
+.wg-hero-acc-field .shop-ac-inline > span:first-child {
+  color: #fff !important;
+  font-size: 0.86rem !important;
+  font-weight: 700 !important;
+}
+.wg-hero-acc-field .exp-date-btn,
+.wg-hero-acc-field .exp-travelers-trigger strong,
+.wg-hero-acc-field .shop-ac-inline input,
+.wg-hero-acc-field strong {
+  color: rgba(255,255,255,0.88) !important;
+  font-weight: 600 !important;
+}
+.wg-hero-acc-field-ico {
+  color: #c9a227 !important;
+}
+.wg-hero-acc-search-btn.exp-search-link,
+.wg-hero-acc-panel .wg-hero-ticket-search.exp-search-link {
+  background: #c9a227 !important;
+  color: #111 !important;
+  border-radius: 10px !important;
+  min-width: 11rem !important;
+  min-height: 3.2rem !important;
+  margin: 0.65rem 0.55rem !important;
+}
+.wg-hero-search-panel .wg-hero-ticket-search.exp-search-link {
+  background: #c9a227 !important;
+  color: #111 !important;
+}

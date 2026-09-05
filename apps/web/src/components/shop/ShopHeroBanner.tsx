@@ -117,7 +117,7 @@ function ModeGlyph({ mode }: { mode: Mode }) {
       <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden>
         <path
           fill="currentColor"
-          d="M7 13c1.66 0 3-1.34 3-3S8.66 7 7 7s-3 1.34-3 3 1.34 3 3 3zm12-6h-8v7H3V5H1v15h2v-3h18v3h2v-9c0-2.21-1.79-4-4-4z"
+          d="M12 7V3H2v18h20V7H12zM6 19H4v-2h2v2zm0-4H4v-2h2v2zm0-4H4V9h2v2zm0-4H4V5h2v2zm4 12H8v-2h2v2zm0-4H8v-2h2v2zm0-4H8V9h2v2zm0-4H8V5h2v2zm10 12h-8v-2h2v-2h-2v-2h2v-2h-2V9h8v10zm-4-6h2v2h-2v-2zm0 4h2v2h-2v-2z"
         />
       </svg>
     );
@@ -146,7 +146,7 @@ function ModeGlyph({ mode }: { mode: Mode }) {
     <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden>
       <path
         fill="currentColor"
-        d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm0 2a8 8 0 0 1 8 8c0 1.85-.63 3.55-1.69 4.9L12 12.5 7.69 16.9A7.96 7.96 0 0 1 4 12a8 8 0 0 1 8-8zm1.2 5.2 2.6 2.6-4.4 1.8-1.8 4.4-2.6-2.6 4.4-1.8 1.8-4.4z"
+        d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 2c4.41 0 8 3.59 8 8s-3.59 8-8 8-8-3.59-8-8 3.59-8 8-8zm1.5 3.5-5 2-2 5 5-2 2-5zm-2.2 3.3 1.4 1.4-2.5 1-1-2.5 2.1-0.9z"
       />
     </svg>
   );
@@ -273,15 +273,11 @@ export function ShopHeroBanner(props: Props) {
     ? occupancyTotals(props.stayOccupancy)
     : null;
 
+  const stayAdults = stayTotals?.adults ?? props.adults;
+  const stayChildren = stayTotals?.children ?? props.children;
   const travelerSummary =
     props.mode === "stays"
-      ? t("travelerRoomSummary", {
-          travelers: shopTravelerCount(
-            locale,
-            (stayTotals?.adults ?? props.adults) + (stayTotals?.children ?? props.children),
-          ),
-          rooms: shopRoomCount(locale, stayTotals?.rooms ?? props.rooms),
-        })
+      ? t("guestsAdultsChildren", { adults: stayAdults, children: stayChildren })
       : shopTravelerCount(locale, props.adults + props.children + infants);
 
   function updateStayOccupancy(next: HotelOccupancyState) {

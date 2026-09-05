@@ -2281,3 +2281,207 @@
   background: #c9a227 !important;
   color: #111 !important;
 }
+
+/* WG_COMPARE_FIX — match user comparison photo exactly */
+.wg-hero-acc-shell {
+  background: #0b1c3d !important;
+  border: 0 !important;
+  border-radius: 14px !important;
+  overflow: hidden !important;
+  box-shadow: 0 16px 40px rgba(0,0,0,.35) !important;
+}
+.wg-hero-acc-modes.wg-hero-dock-modes {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0,1fr)) !important;
+  background: #0b1c3d !important;
+  background-image: none !important;
+  border: 0 !important;
+  border-bottom: 1px solid rgba(255,255,255,.14) !important;
+  gap: 0 !important;
+  padding: 0 !important;
+}
+.wg-hero-acc-mode {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+  gap: 0.35rem !important;
+  min-height: 6.2rem !important;
+  padding: 0.85rem 0.5rem 1rem !important;
+  border: 0 !important;
+  border-inline-end: 1px solid rgba(255,255,255,.14) !important;
+  background: transparent !important;
+  grid-template-columns: none !important;
+  position: relative !important;
+}
+.wg-hero-acc-mode:last-child { border-inline-end: 0 !important; }
+.wg-hero-acc-mode.on,
+.wg-hero-acc-mode.is-expanded {
+  background: transparent !important;
+}
+.wg-hero-acc-icon {
+  width: 2.7rem !important;
+  height: 2.7rem !important;
+  margin: 0 auto !important;
+  background: transparent !important;
+  border: 0 !important;
+  color: #fff !important;
+  box-shadow: none !important;
+}
+.wg-hero-acc-mode.on .wg-hero-acc-icon,
+.wg-hero-acc-mode.is-expanded .wg-hero-acc-icon {
+  background: #c9a227 !important;
+  border: 0 !important;
+  color: #0b1c3d !important;
+  border-radius: 999px !important;
+}
+.wg-hero-acc-copy {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 0.15rem !important;
+  width: 100% !important;
+}
+.wg-hero-acc-title {
+  font-size: 1.05rem !important;
+  font-weight: 800 !important;
+  color: #fff !important;
+  line-height: 1.2 !important;
+}
+.wg-hero-acc-hint {
+  font-size: 0.72rem !important;
+  color: rgba(255,255,255,.78) !important;
+  font-weight: 500 !important;
+  line-height: 1.25 !important;
+  white-space: normal !important;
+  max-width: 11rem;
+}
+.wg-hero-acc-copy .wg-hero-acc-chevron {
+  color: rgba(255,255,255,.7) !important;
+  width: 14px !important;
+  height: 14px !important;
+}
+.wg-hero-acc-mode.on .wg-hero-acc-copy .wg-hero-acc-chevron,
+.wg-hero-acc-mode.is-expanded .wg-hero-acc-copy .wg-hero-acc-chevron {
+  color: #c9a227 !important;
+}
+/* gold connector under active tab */
+.wg-hero-acc-mode.on::after,
+.wg-hero-acc-mode.is-expanded::after {
+  display: block !important;
+  content: "" !important;
+  position: absolute !important;
+  left: 50% !important;
+  bottom: -1px !important;
+  transform: translateX(-50%) !important;
+  width: 0 !important;
+  height: 0 !important;
+  border-left: 8px solid transparent !important;
+  border-right: 8px solid transparent !important;
+  border-bottom: 8px solid #08122c !important;
+  border-top: 0 !important;
+  background: none !important;
+  inset-inline: auto !important;
+  z-index: 5 !important;
+}
+
+.wg-hero-acc-panel.wg-hero-dock {
+  background: #08122c !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  position: relative !important;
+}
+.wg-hero-acc-panel.is-open::before { display: none !important; content: none !important; }
+
+.wg-hero-acc-panel .exp-form-row {
+  display: grid !important;
+  grid-template-columns: minmax(0,1.25fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1.1fr) auto !important;
+  align-items: stretch !important;
+  gap: 0 !important;
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+  min-height: 5.1rem !important;
+}
+.wg-hero-acc-panel .exp-form-row.exp-form-flights {
+  grid-template-columns: minmax(0,1.05fr) auto minmax(0,1.05fr) minmax(0,1.2fr) minmax(0,1fr) auto !important;
+}
+.wg-hero-acc-field {
+  display: grid !important;
+  grid-template-columns: auto minmax(0,1fr) auto !important;
+  align-items: center !important;
+  gap: 0.55rem !important;
+  min-height: 5.1rem !important;
+  padding: 0.75rem 0.95rem !important;
+  border: 0 !important;
+  border-inline-end: 1px solid rgba(255,255,255,.12) !important;
+  background: transparent !important;
+  border-radius: 0 !important;
+}
+.wg-hero-acc-field .exp-cell-label,
+.wg-hero-acc-field .shop-ac-inline > span:first-child {
+  color: rgba(255,255,255,.92) !important;
+  font-size: 0.84rem !important;
+  font-weight: 700 !important;
+}
+.wg-hero-acc-field .exp-date-btn,
+.wg-hero-acc-field .exp-travelers-trigger strong,
+.wg-hero-acc-field .shop-ac-inline input,
+.wg-hero-acc-field strong {
+  color: rgba(255,255,255,.82) !important;
+}
+.wg-hero-acc-field-ico { color: #c9a227 !important; }
+.wg-hero-acc-field-chevron {
+  color: rgba(255,255,255,.55) !important;
+  transform: rotate(180deg); /* up caret like reference */
+}
+
+/* search button fills panel height */
+.wg-hero-acc-panel .wg-hero-ticket-search.exp-search-link,
+.wg-hero-acc-search-btn.exp-search-link,
+.wg-hero-search-panel .wg-hero-ticket-search.exp-search-link {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-direction: row !important;
+  gap: 0.45rem !important;
+  align-self: stretch !important;
+  height: auto !important;
+  min-height: 5.1rem !important;
+  margin: 0 !important;
+  border-radius: 0 !important;
+  padding: 0 1.35rem !important;
+  min-width: 11.5rem !important;
+  background: #c9a227 !important;
+  color: #111 !important;
+  font-weight: 800 !important;
+  box-shadow: none !important;
+}
+/* icon after text in DOM appears on left in RTL = icon left of text visually? 
+   In RTL flex row: first child (svg) goes to the right. Reference wants magnifier on left of text.
+   So put text first in markup OR use row-reverse. Using row-reverse here. */
+.wg-hero-acc-panel .wg-hero-ticket-search.exp-search-link,
+.wg-hero-acc-search-btn.exp-search-link {
+  flex-direction: row-reverse !important;
+}
+
+@media (max-width: 767px) {
+  .wg-hero-acc-modes.wg-hero-dock-modes {
+    grid-template-columns: repeat(2, minmax(0,1fr)) !important;
+  }
+  .wg-hero-acc-panel .exp-form-row,
+  .wg-hero-acc-panel .exp-form-row.exp-form-flights {
+    grid-template-columns: 1fr !important;
+  }
+  .wg-hero-acc-field { border-inline-end: 0 !important; border-bottom: 1px solid rgba(255,255,255,.12) !important; }
+  .wg-hero-acc-panel .wg-hero-ticket-search.exp-search-link,
+  .wg-hero-acc-search-btn.exp-search-link {
+    min-height: 3.4rem !important;
+    width: 100% !important;
+    border-radius: 0 !important;
+  }
+}

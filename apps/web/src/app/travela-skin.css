@@ -4357,3 +4357,126 @@ html body .wg-hero-acc-copy .wg-hero-acc-chevron {
     font-size: 1.25rem !important;
   }
 }
+
+/* ============================================================
+   WG_FINAL_CENTER — RTL logo beside title, centered cell, big type
+   ============================================================ */
+html body .shop-root .wg-hero-acc-mode,
+html body .wg-hero-dock-mode.wg-hero-acc-mode,
+html body .wg-hero-acc-mode {
+  display: flex !important;
+  flex-direction: row !important;
+  direction: rtl !important; /* icon first in DOM → physical RIGHT */
+  justify-content: center !important;
+  align-items: center !important;
+  gap: 0.9rem !important;
+  min-height: 7rem !important;
+  padding: 1.05rem 0.9rem !important;
+  text-align: center !important;
+}
+
+html body .shop-root .wg-hero-acc-icon,
+html body .wg-hero-acc-mode .wg-hero-acc-icon,
+html body .wg-hero-acc-icon {
+  width: 4.25rem !important;
+  height: 4.25rem !important;
+  flex: 0 0 auto !important;
+  margin: 0 !important;
+  order: 0 !important;
+}
+
+html body .shop-root .wg-hero-acc-icon svg,
+html body .wg-hero-acc-icon svg {
+  width: 2.1rem !important;
+  height: 2.1rem !important;
+}
+
+html body .shop-root .wg-hero-acc-copy,
+html body .wg-hero-acc-mode .wg-hero-acc-copy,
+html body .wg-hero-acc-copy {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: max-content !important;
+  max-width: min(100%, 13.5rem) !important;
+  margin: 0 !important;
+  direction: rtl !important;
+  text-align: center !important;
+  gap: 0.2rem !important;
+  flex: 0 1 auto !important;
+}
+
+html body .shop-root .wg-hero-acc-title,
+html body .wg-hero-search-panel .wg-hero-acc-title,
+html body .wg-hero-acc-mode .wg-hero-acc-title,
+html body .wg-hero-acc-title {
+  font-size: 2rem !important;
+  font-weight: 800 !important;
+  line-height: 1.15 !important;
+  text-align: center !important;
+  color: #fff !important;
+  letter-spacing: 0 !important;
+}
+
+html body .shop-root .wg-hero-acc-hint,
+html body .wg-hero-acc-mode .wg-hero-acc-hint,
+html body .wg-hero-acc-hint {
+  font-size: 0.95rem !important;
+  font-weight: 500 !important;
+  line-height: 1.3 !important;
+  text-align: center !important;
+  color: rgba(255, 255, 255, 0.84) !important;
+  width: auto !important;
+  max-width: 13rem !important;
+}
+
+html body .shop-root .wg-hero-acc-copy .wg-hero-acc-chevron,
+html body .wg-hero-acc-copy .wg-hero-acc-chevron {
+  color: #d4a35d !important;
+  fill: currentColor !important;
+  width: 18px !important;
+  height: 18px !important;
+  margin: 0.2rem 0 0 !important;
+  align-self: center !important;
+}
+
+/* Trip strip: full bleed equal columns */
+html body .shop-root .wg-hero-acc-tripstrip,
+html body .wg-hero-acc-shell .wg-hero-acc-tripstrip,
+html body .wg-hero-acc-tripstrip {
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 0.75rem !important;
+  padding: 1.05rem 1rem 0.7rem !important;
+  margin: 0 !important;
+}
+
+html body .shop-root .wg-hero-acc-trip,
+html body .wg-hero-acc-trip {
+  width: 100% !important;
+  min-width: 0 !important;
+  min-height: 2.75rem !important;
+  justify-content: center !important;
+  text-align: center !important;
+  font-size: 1.02rem !important;
+  font-weight: 700 !important;
+  border-radius: 999px !important;
+}
+
+@media (max-width: 1100px) {
+  html body .shop-root .wg-hero-acc-title,
+  html body .wg-hero-acc-title { font-size: 1.45rem !important; }
+  html body .shop-root .wg-hero-acc-icon,
+  html body .wg-hero-acc-icon { width: 3.4rem !important; height: 3.4rem !important; }
+}
+@media (max-width: 767px) {
+  html body .shop-root .wg-hero-acc-title,
+  html body .wg-hero-acc-title { font-size: 1.25rem !important; }
+  html body .shop-root .wg-hero-acc-tripstrip {
+    grid-template-columns: 1fr !important;
+  }
+}

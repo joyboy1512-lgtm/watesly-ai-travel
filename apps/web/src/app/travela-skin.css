@@ -848,6 +848,67 @@
 }
 
 /* —— Accordion search (category row + expandable fields) —— */
+.shop-root.wg-new-ui .wg-hero-acc-modes.wg-hero-dock-modes,
+.wg-hero-acc-modes.wg-hero-dock-modes {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  flex-wrap: nowrap;
+  background: linear-gradient(180deg, #163f8f 0%, #13357b 100%) !important;
+  border: 1px solid rgba(251, 191, 36, 0.35) !important;
+  border-bottom: 0 !important;
+  border-radius: 16px 16px 0 0 !important;
+  box-shadow: 0 12px 30px rgba(10, 22, 48, 0.3);
+  gap: 0 !important;
+  padding: 0 !important;
+  justify-content: stretch !important;
+  overflow: hidden;
+}
+
+.shop-root.wg-new-ui .wg-hero-acc-shell:not(.is-open) .wg-hero-acc-modes,
+.wg-hero-acc-shell:not(.is-open) .wg-hero-acc-modes {
+  border-radius: 16px !important;
+  border-bottom: 1px solid rgba(251, 191, 36, 0.35) !important;
+}
+
+.shop-root.wg-new-ui .wg-hero-dock-mode.wg-hero-acc-mode,
+.wg-hero-dock-mode.wg-hero-acc-mode {
+  display: grid !important;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.55rem;
+  width: 100%;
+  min-height: 4.35rem;
+  padding: 0.85rem 0.85rem !important;
+  margin: 0 !important;
+  border: 0 !important;
+  border-inline-end: 1px solid rgba(255, 255, 255, 0.14) !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  color: #fff !important;
+  text-shadow: none !important;
+  font-size: 0.95rem !important;
+  font-weight: 800 !important;
+  letter-spacing: 0 !important;
+}
+
+.shop-root.wg-new-ui .wg-hero-dock-mode.wg-hero-acc-mode::after,
+.wg-hero-dock-mode.wg-hero-acc-mode::after,
+.shop-root.wg-new-ui .wg-hero-dock-mode.wg-hero-acc-mode.on::after,
+.wg-hero-dock-mode.wg-hero-acc-mode.on::after {
+  display: none !important;
+  content: none !important;
+  background: transparent !important;
+}
+
+.shop-root.wg-new-ui .wg-hero-dock-mode.wg-hero-acc-mode.on,
+.shop-root.wg-new-ui .wg-hero-dock-mode.wg-hero-acc-mode.is-expanded,
+.wg-hero-dock-mode.wg-hero-acc-mode.on,
+.wg-hero-dock-mode.wg-hero-acc-mode.is-expanded {
+  background: rgba(251, 191, 36, 0.14) !important;
+  color: #fff !important;
+}
+
+
 .wg-hero-acc-shell {
   gap: 0;
   align-items: stretch;

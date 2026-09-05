@@ -102,13 +102,13 @@ type Props = {
 
 const PRODUCT_KEYS: Array<{
   key: Mode;
-  label: "searchFlights" | "searchHotels" | "searchCars" | "searchActivities";
+  label: "searchFlightsTab" | "searchHotelsTab" | "searchCarsTab" | "searchActivitiesTab";
   hint: "searchFlightsHint" | "searchHotelsHint" | "searchCarsHint" | "searchActivitiesHint";
 }> = [
-  { key: "stays", label: "searchHotels", hint: "searchHotelsHint" },
-  { key: "flights", label: "searchFlights", hint: "searchFlightsHint" },
-  { key: "cars", label: "searchCars", hint: "searchCarsHint" },
-  { key: "activities", label: "searchActivities", hint: "searchActivitiesHint" },
+  { key: "stays", label: "searchHotelsTab", hint: "searchHotelsHint" },
+  { key: "flights", label: "searchFlightsTab", hint: "searchFlightsHint" },
+  { key: "cars", label: "searchCarsTab", hint: "searchCarsHint" },
+  { key: "activities", label: "searchActivitiesTab", hint: "searchActivitiesHint" },
 ];
 
 function ModeGlyph({ mode }: { mode: Mode }) {
@@ -146,7 +146,7 @@ function ModeGlyph({ mode }: { mode: Mode }) {
     <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden>
       <path
         fill="currentColor"
-        d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5A2.5 2.5 0 1 1 12 6a2.5 2.5 0 0 1 0 5.5z"
+        d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm0 2a8 8 0 0 1 8 8c0 1.85-.63 3.55-1.69 4.9L12 12.5 7.69 16.9A7.96 7.96 0 0 1 4 12a8 8 0 0 1 8-8zm1.2 5.2 2.6 2.6-4.4 1.8-1.8 4.4-2.6-2.6 4.4-1.8 1.8-4.4z"
       />
     </svg>
   );
@@ -688,8 +688,8 @@ export function ShopHeroBanner(props: Props) {
                     <span className="wg-hero-acc-copy">
                       <span className="wg-hero-acc-title">{t(label)}</span>
                       <span className="wg-hero-acc-hint">{t(hint)}</span>
+                      <AccordionChevron open={expanded} />
                     </span>
-                    <AccordionChevron open={expanded} />
                   </button>
                 );
               })}

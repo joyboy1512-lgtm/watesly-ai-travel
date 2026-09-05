@@ -2091,3 +2091,76 @@
   color: #13357b !important;
 }
 
+/* WG_ACCORDION_AGREEMENT_EXACT */
+.wg-hero-acc-mode {
+  grid-template-columns: auto minmax(0, 1fr) !important;
+  justify-items: start !important;
+  align-items: center !important;
+  gap: 0.7rem !important;
+  padding: 0.95rem 1rem !important;
+}
+.wg-hero-acc-copy {
+  display: grid !important;
+  justify-items: start !important;
+  gap: 0.1rem !important;
+  width: 100%;
+}
+.wg-hero-acc-copy .wg-hero-acc-chevron {
+  margin-top: 0.15rem;
+  color: rgba(255,255,255,0.75) !important;
+  width: 14px !important;
+  height: 14px !important;
+}
+.wg-hero-acc-mode.on .wg-hero-acc-copy .wg-hero-acc-chevron,
+.wg-hero-acc-mode.is-expanded .wg-hero-acc-copy .wg-hero-acc-chevron {
+  color: #fbbf24 !important;
+}
+.wg-hero-acc-mode.on {
+  position: relative;
+}
+.wg-hero-acc-mode.on::after,
+.wg-hero-acc-mode.is-expanded::after {
+  display: none !important;
+}
+/* gold connector caret under active category into fields row */
+.wg-hero-acc-shell.is-open .wg-hero-acc-modes {
+  position: relative;
+}
+.wg-hero-acc-shell.is-open[data-mode="stays"] .wg-hero-acc-modes::after,
+.wg-hero-acc-shell.is-open[data-mode="flights"] .wg-hero-acc-modes::after,
+.wg-hero-acc-shell.is-open[data-mode="cars"] .wg-hero-acc-modes::after,
+.wg-hero-acc-shell.is-open[data-mode="activities"] .wg-hero-acc-modes::after {
+  content: "";
+  position: absolute;
+  bottom: -1px;
+  width: 0;
+  height: 0;
+  border-inline: 8px solid transparent;
+  border-bottom: 9px solid #0b1f4d;
+  z-index: 3;
+}
+.wg-hero-acc-shell.is-open[data-mode="stays"] .wg-hero-acc-modes::after { inset-inline-start: 12.5%; transform: translateX(50%); }
+.wg-hero-acc-shell.is-open[data-mode="flights"] .wg-hero-acc-modes::after { inset-inline-start: 37.5%; transform: translateX(50%); }
+.wg-hero-acc-shell.is-open[data-mode="cars"] .wg-hero-acc-modes::after { inset-inline-start: 62.5%; transform: translateX(50%); }
+.wg-hero-acc-shell.is-open[data-mode="activities"] .wg-hero-acc-modes::after { inset-inline-start: 87.5%; transform: translateX(50%); }
+[dir="rtl"] .wg-hero-acc-shell.is-open[data-mode="stays"] .wg-hero-acc-modes::after { transform: translateX(-50%); }
+[dir="rtl"] .wg-hero-acc-shell.is-open[data-mode="flights"] .wg-hero-acc-modes::after { transform: translateX(-50%); }
+[dir="rtl"] .wg-hero-acc-shell.is-open[data-mode="cars"] .wg-hero-acc-modes::after { transform: translateX(-50%); }
+[dir="rtl"] .wg-hero-acc-shell.is-open[data-mode="activities"] .wg-hero-acc-modes::after { transform: translateX(-50%); }
+
+.wg-hero-acc-panel {
+  background: #0b1f4d !important;
+}
+.wg-hero-acc-shell {
+  background: #13357b !important;
+}
+.wg-hero-acc-title {
+  font-size: 1.05rem !important;
+  font-weight: 800 !important;
+  color: #fff !important;
+}
+.wg-hero-acc-hint {
+  font-size: 0.78rem !important;
+  color: rgba(255,255,255,0.88) !important;
+  font-weight: 500 !important;
+}

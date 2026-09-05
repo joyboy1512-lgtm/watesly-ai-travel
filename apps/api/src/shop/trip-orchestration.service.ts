@@ -1,6 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import {
   buildPackageOptions,
+  createEmptyTripDraft,
   mergeSearchSlices,
   type TripDraftState,
   type TripSearchResult,
@@ -29,10 +30,13 @@ export class TripOrchestrationService {
       if (s.offers.length) base[s.kind] = { offers: s.offers };
     }
     const merged = mergeSearchSlices(body.sessionId || tripId, slices);
-    merged.options = buildPackageOptions(
-      { ...body, tripId, travelers: [], contact: {} as TripDraftState["contact"], selectedTier: null, selectedOffers: {}, search: null, repriceStatus: "idle", updatedAt: new Date().toISOString() },
-      base,
-    );
+    const draft: TripDraftState = {
+      ...createEmptyTripDraft(tripId),
+      ...body,
+      tripId,
+      updatedAt: new Date().toISOString(),
+    };
+    merged.options = buildPackageOptions(draft, base);
     return merged;
   }
 

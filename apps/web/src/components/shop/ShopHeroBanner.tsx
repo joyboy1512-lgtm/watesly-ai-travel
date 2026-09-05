@@ -685,8 +685,8 @@ export function ShopHeroBanner(props: Props) {
                     <span className="wg-hero-acc-copy">
                       <span className="wg-hero-acc-title">{t(label)}</span>
                       <span className="wg-hero-acc-hint">{t(hint)}</span>
+                      <AccordionChevron open={expanded} />
                     </span>
-                    <AccordionChevron open={expanded} />
                   </button>
                 );
               })}

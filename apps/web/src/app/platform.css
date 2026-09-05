@@ -1,0 +1,260 @@
+.wg-platform {
+  --wg-navy: #00255d;
+  --wg-blue: #1668e3;
+  --wg-ink: #0f172a;
+  --wg-muted: #64748b;
+  --wg-border: #e2e8f0;
+  --wg-sand: #f4f7fb;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 1.25rem 1rem 3rem;
+  color: var(--wg-ink);
+}
+
+.wg-platform h1 {
+  font-size: clamp(1.6rem, 3vw, 2.1rem);
+  margin: 0 0 0.4rem;
+  color: var(--wg-navy);
+}
+
+.wg-platform .lead {
+  color: var(--wg-muted);
+  margin: 0 0 1.25rem;
+  max-width: 42rem;
+}
+
+.wg-platform-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+}
+
+.wg-platform-card {
+  background: #fff;
+  border: 1px solid var(--wg-border);
+  border-radius: 12px;
+  overflow: hidden;
+  display: grid;
+  gap: 0;
+}
+
+.wg-platform-card img {
+  width: 100%;
+  height: 140px;
+  object-fit: cover;
+  display: block;
+}
+
+.wg-platform-card .body {
+  padding: 0.85rem 1rem 1rem;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.wg-platform-card h2 {
+  margin: 0;
+  font-size: 1.05rem;
+  color: var(--wg-navy);
+}
+
+.wg-price-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.85rem;
+  align-items: baseline;
+}
+
+.wg-price-row .old {
+  text-decoration: line-through;
+  color: var(--wg-muted);
+  font-size: 0.9rem;
+}
+
+.wg-price-row .now {
+  font-weight: 800;
+  color: var(--wg-navy);
+  font-size: 1.15rem;
+}
+
+.wg-price-row .save {
+  color: #18785a;
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.wg-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  background: var(--wg-navy);
+  color: #fff;
+  border: 0;
+  border-radius: 8px;
+  padding: 0.55rem 0.9rem;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+  font: inherit;
+}
+
+.wg-btn.secondary {
+  background: #fff;
+  color: var(--wg-navy);
+  border: 1px solid var(--wg-border);
+}
+
+.wg-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.wg-trip-builder {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: 1.4fr 0.9fr;
+}
+
+.wg-trip-slot {
+  border: 1px dashed var(--wg-border);
+  border-radius: 12px;
+  padding: 0.9rem 1rem;
+  background: #fff;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.wg-trip-slot.on {
+  border-style: solid;
+  border-color: var(--wg-blue);
+  box-shadow: inset 0 -3px 0 var(--wg-blue);
+}
+
+.wg-trip-summary {
+  background: #fff;
+  border: 1px solid var(--wg-blue);
+  box-shadow: inset 0 -3px 0 var(--wg-blue);
+  border-radius: 12px;
+  padding: 1rem;
+  display: grid;
+  gap: 0.45rem;
+  align-self: start;
+  position: sticky;
+  top: 1rem;
+}
+
+.wg-trip-summary dl {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0;
+}
+
+.wg-trip-summary div {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-size: 0.92rem;
+}
+
+.wg-trip-summary .final {
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: var(--wg-navy);
+  border-top: 1px solid var(--wg-border);
+  padding-top: 0.5rem;
+}
+
+.wg-account-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-bottom: 1rem;
+}
+
+.wg-account-nav a {
+  padding: 0.35rem 0.7rem;
+  border-radius: 999px;
+  border: 1px solid var(--wg-border);
+  text-decoration: none;
+  color: var(--wg-navy);
+  font-size: 0.86rem;
+  font-weight: 600;
+}
+
+.wg-account-nav a.on {
+  background: var(--wg-navy);
+  color: #fff;
+  border-color: var(--wg-navy);
+}
+
+.wg-dest-hero {
+  position: relative;
+  border-radius: 14px;
+  overflow: hidden;
+  min-height: 220px;
+  margin-bottom: 1.25rem;
+  background: #0b1f3a;
+}
+
+.wg-dest-hero img {
+  width: 100%;
+  height: 260px;
+  object-fit: cover;
+  opacity: 0.85;
+  display: block;
+}
+
+.wg-dest-hero .caption {
+  position: absolute;
+  inset-inline-start: 1rem;
+  bottom: 1rem;
+  color: #fff;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.45);
+}
+
+.wg-dest-sections {
+  display: grid;
+  gap: 1rem;
+}
+
+.wg-dest-sections section {
+  background: #fff;
+  border: 1px solid var(--wg-border);
+  border-radius: 12px;
+  padding: 1rem 1.1rem;
+}
+
+.wg-dest-sections h2 {
+  margin: 0 0 0.4rem;
+  font-size: 1.05rem;
+  color: var(--wg-navy);
+}
+
+.wg-funnel {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.wg-funnel .bar {
+  display: grid;
+  grid-template-columns: 7rem 1fr 3rem;
+  gap: 0.5rem;
+  align-items: center;
+  font-size: 0.85rem;
+}
+
+.wg-funnel .bar i {
+  display: block;
+  height: 10px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, var(--wg-blue), #59a0ff);
+}
+
+@media (max-width: 860px) {
+  .wg-trip-builder {
+    grid-template-columns: 1fr;
+  }
+  .wg-trip-summary {
+    position: static;
+  }
+}

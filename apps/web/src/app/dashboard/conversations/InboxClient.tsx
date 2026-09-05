@@ -351,7 +351,7 @@ function InboxIdleDetails() {
     <>
       <div className="wi-details-profile">
         <div className="wi-avatar xl">WG</div>
-        <h3>وكالة واتسلي</h3>
+        <h3>WeekendGate</h3>
         <p className="wi-phone">+965 · قناة واتساب</p>
         <div className="wi-details-actions">
           <span className="wi-btn ghost">حساب القناة</span>

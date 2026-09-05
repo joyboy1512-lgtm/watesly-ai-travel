@@ -1,0 +1,168 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+
+export type SuggestItem = {
+  id: string;
+  code: string;
+  title: string;
+  subtitle?: string;
+};
+
+type Props = {
+  label: string;
+  value: string;
+  display: string;
+  placeholder?: string;
+  inline?: boolean;
+  /** Minimum characters before calling onQuery (default 2). Empty focus still opens popular/empty. */
+  minChars?: number;
+  debounceMs?: number;
+  onQuery: (q: string) => Promise<SuggestItem[]>;
+  onPick: (item: SuggestItem) => void;
+  onClearText: (text: string) => void;
+};
+
+export function ShopAutocomplete({
+  label,
+  value,
+  display,
+  placeholder,
+  inline = false,
+  minChars = 2,
+  debounceMs = 280,
+  onQuery,
+  onPick,
+  onClearText,
+}: Props) {
+  const [open, setOpen] = useState(false);
+  const [items, setItems] = useState<SuggestItem[]>([]);
+  const boxRef = useRef<HTMLDivElement | null>(null);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
+  const seqRef = useRef(0);
+  const onQueryRef = useRef(onQuery);
+  onQueryRef.current = onQuery;
+
+  useEffect(() => {
+    function onDoc(e: MouseEvent) {
+      if (!boxRef.current?.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("mousedown", onDoc);
+    return () => {
+      document.removeEventListener("mousedown", onDoc);
+      if (timerRef.current) clearTimeout(timerRef.current);
+      abortRef.current?.abort();
+    };
+  }, []);
+
+  async function runQuery(text: string) {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    abortRef.current?.abort();
+
+    const trimmed = text.trim();
+    if (trimmed.length > 0 && trimmed.length < minChars) {
+      setItems([]);
+      return;
+    }
+
+    const seq = ++seqRef.current;
+    const ac = new AbortController();
+    abortRef.current = ac;
+    try {
+      const next = await onQueryRef.current(trimmed);
+      if (ac.signal.aborted || seq !== seqRef.current) return;
+      setItems(next);
+    } catch {
+      if (ac.signal.aborted || seq !== seqRef.current) return;
+      setItems([]);
+    }
+  }
+
+  function scheduleQuery(text: string, immediate = false) {
+    onClearText(text);
+    setOpen(true);
+
+    if (timerRef.current) clearTimeout(timerRef.current);
+    abortRef.current?.abort();
+
+    const trimmed = text.trim();
+    if (trimmed.length > 0 && trimmed.length < minChars) {
+      setItems([]);
+      return;
+    }
+
+    if (immediate) {
+      void runQuery(trimmed);
+      return;
+    }
+    timerRef.current = setTimeout(() => {
+      void runQuery(trimmed);
+    }, debounceMs);
+  }
+
+  /** Focus: open popular list without requiring the user to erase the current value. */
+  function handleFocus(e: React.FocusEvent<HTMLInputElement>) {
+    setOpen(true);
+    // Keep selection until the user types; empty query returns popular airports/cities.
+    void runQuery("");
+    try {
+      e.currentTarget.select();
+    } catch {
+      /* ignore */
+    }
+  }
+
+  const menu =
+    open && items.length ? (
+      <div className="prc-suggest exp-ac-menu" role="listbox">
+        {items.map((item) => (
+          <button
+            key={item.id}
+            type="button"
+            role="option"
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={() => {
+              onPick(item);
+              setOpen(false);
+            }}
+          >
+            <strong>{item.title}</strong>
+            {item.subtitle ? <span>{item.subtitle}</span> : null}
+          </button>
+        ))}
+      </div>
+    ) : null;
+
+  if (inline) {
+    return (
+      <div className="shop-ac shop-ac-inline exp-ac-field" ref={boxRef}>
+        <span className="exp-cell-label">{label}</span>
+        <input
+          type="text"
+          value={display || value}
+          placeholder={placeholder}
+          onChange={(e) => scheduleQuery(e.target.value)}
+          onFocus={handleFocus}
+          autoComplete="off"
+        />
+        {menu}
+      </div>
+    );
+  }
+
+  return (
+    <label className="fs-cell shop-ac" ref={boxRef as never}>
+      <span>{label}</span>
+      <input
+        type="text"
+        value={display || value}
+        placeholder={placeholder}
+        onChange={(e) => scheduleQuery(e.target.value)}
+        onFocus={handleFocus}
+        autoComplete="off"
+      />
+      {menu}
+    </label>
+  );
+}

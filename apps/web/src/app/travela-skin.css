@@ -1,0 +1,4924 @@
+/**
+ * Travela template skin — scoped to .shop-root.wg-new-ui
+ * Visual layer only; search logic unchanged.
+ */
+
+.shop-root.wg-new-ui {
+  --tv-primary: #13357b;
+  --tv-secondary: #f97316;
+  --tv-light: #f2f2f2;
+  --tv-dark: #14141f;
+  --exp-navy: #13357b;
+  --exp-blue: #13357b;
+  --exp-sky: #1a4a9e;
+  --shop-bg: #fff;
+  --exp-bg: #fff;
+  background: #fff;
+  /* shared blue pill frame — header cap + search shell */
+  --wg-blue-pill-width: min(calc(960px + 1cm), calc(100% - 1.5rem));
+  --wg-blue-pill-pad-x: clamp(2rem, 4.5vw, 3.25rem);
+  --wg-blue-pill-pad-y: 1.25rem;
+  --wg-blue-pill-inner-inset: 6cm;
+  --wg-blue-pill-bg: #13357b;
+  --wg-blue-pill-shadow: 0 16px 40px rgba(19, 53, 123, 0.35);
+}
+
+.shop-root.wg-new-ui .exp-main,
+.shop-root.wg-new-ui .shop-main {
+  background: #fff;
+}
+
+/* —— Header (Travela navbar) —— */
+.shop-root.wg-new-ui .exp-header-hero-overlay {
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  z-index: 80;
+  background: transparent;
+  border: 0;
+  border-bottom: 0;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+.shop-root.wg-new-ui .shop-header.exp-header-hero-overlay {
+  background: transparent;
+  border-bottom: 0;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+.shop-root.wg-new-ui .exp-header-hero-overlay .shop-header-inner,
+.shop-root.wg-new-ui .exp-header-hero-overlay .exp-header-inner,
+.shop-root.wg-new-ui .exp-header-white .shop-header-inner,
+.shop-root.wg-new-ui .exp-header-white .exp-header-inner {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding-inline: 0;
+}
+
+.shop-root.wg-new-ui .exp-header-white {
+  background: #fff;
+  border-bottom: 1px solid #e5e7eb;
+  box-shadow: 0 2px 12px rgba(19, 53, 123, 0.06);
+}
+
+.shop-root.wg-new-ui .wg-header-row {
+  width: min(1280px, calc(100% - 2rem));
+  margin: 0 auto;
+  min-height: auto;
+  padding: 0.85rem 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.shop-root.wg-new-ui .wg-header-brand .wg-logo-word {
+  font-size: 1.65rem;
+  font-weight: 700;
+}
+
+.shop-root.wg-new-ui .exp-header-hero-overlay .wg-logo-light .wg-logo-word {
+  color: #fff;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
+}
+
+.shop-root.wg-new-ui .exp-header-hero-overlay .wg-logo-light .wg-logo-gate {
+  color: #fbbf24;
+}
+
+.shop-root.wg-new-ui .exp-header-white .wg-logo-word {
+  color: var(--tv-primary);
+}
+
+.shop-root.wg-new-ui .wg-header-pill-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0;
+  background: transparent;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.shop-root.wg-new-ui .wg-header-pill-nav a {
+  padding: 0.5rem 1rem;
+  font-size: 1rem;
+  font-weight: 500;
+  color: #fff;
+  border-radius: 0;
+}
+
+.shop-root.wg-new-ui .exp-header-white .wg-header-pill-nav a {
+  color: var(--tv-dark);
+}
+
+.shop-root.wg-new-ui .wg-header-pill-nav a:hover {
+  background: transparent;
+  color: #fbbf24;
+}
+
+.shop-root.wg-new-ui .exp-header-white .wg-header-pill-nav a:hover {
+  color: var(--tv-primary);
+}
+
+.shop-root.wg-new-ui .wg-header-chip {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.35);
+  color: #fff;
+}
+
+.shop-root.wg-new-ui .exp-header-white .wg-header-chip {
+  background: var(--tv-light);
+  border-color: #ddd;
+  color: var(--tv-dark);
+}
+
+.shop-root.wg-new-ui .wg-header-account {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.35);
+}
+
+.shop-root.wg-new-ui .exp-header-white .wg-header-account {
+  background: var(--tv-light);
+  border-color: #ddd;
+}
+
+.shop-root.wg-new-ui .exp-header-hero-overlay .wg-header-user {
+  color: #fff;
+}
+
+.shop-root.wg-new-ui .wg-header-logout {
+  background: var(--tv-primary);
+  color: #fff;
+}
+
+.shop-root.wg-new-ui .wg-header-signin {
+  background: var(--tv-primary);
+  color: #fff;
+  border: none;
+  border-radius: 999px;
+}
+
+.shop-root.wg-new-ui .exp-header-hero-overlay .exp-menu-toggle,
+.shop-root.wg-new-ui .exp-header-hero-overlay .shop-menu-toggle {
+  color: var(--tv-primary);
+  border-color: #fff;
+  background: #fff;
+}
+
+/* —— Flat top bar (no blue pill header) —— */
+.shop-root.wg-new-ui .wg-topbar,
+.shop-root.wg-new-ui .exp-header-hero-overlay .wg-topbar,
+.shop-root.wg-new-ui .exp-header-white .wg-topbar {
+  position: relative;
+  width: calc(100% - 6cm);
+  max-width: calc(100% - 6cm);
+  margin: 0 auto;
+  padding: 1rem 0;
+  padding-inline: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.25rem;
+  box-sizing: border-box;
+}
+
+.shop-root.wg-new-ui .wg-topbar-start {
+  display: flex;
+  align-items: center;
+  gap: 1.35rem;
+  min-width: 0;
+}
+
+.shop-root.wg-new-ui .wg-topbar-logo {
+  text-decoration: none;
+  flex-shrink: 0;
+}
+
+.shop-root.wg-new-ui .wg-topbar-logo .wg-logo {
+  gap: 0;
+  align-items: center;
+}
+
+.shop-root.wg-new-ui .wg-topbar-logo .wg-logo-lockup-img {
+  display: block;
+  height: clamp(2rem, 3.2vw, 2.55rem);
+  width: auto;
+  object-fit: contain;
+}
+
+/* Unified lockup on every page (hero + white headers) */
+.shop-root.wg-new-ui .wg-header-brand .wg-logo-lockup-img,
+.shop-root.wg-new-ui .shop-brand .wg-logo-lockup-img {
+  display: block;
+  height: clamp(2rem, 3.2vw, 2.55rem);
+  width: auto;
+  object-fit: contain;
+}
+
+.shop-root.wg-new-ui .shop-footer-brand-logo .wg-logo-lockup-img {
+  height: 2.1rem;
+  width: auto;
+  display: block;
+  object-fit: contain;
+}
+
+.shop-root.wg-new-ui .wg-topbar-logo .wg-logo-mark {
+  display: block;
+  width: auto;
+  height: 1.7rem;
+  flex-shrink: 0;
+  object-fit: contain;
+  object-position: center;
+}
+
+.shop-root.wg-new-ui .wg-topbar-logo .wg-logo-word {
+  position: relative;
+  font-size: clamp(1.28rem, 2.4vw, 1.62rem);
+  font-weight: 600;
+}
+
+.shop-root.wg-new-ui .wg-topbar-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.15rem;
+}
+
+.shop-root.wg-new-ui .wg-topbar-nav a {
+  color: #fff;
+  text-decoration: none;
+  font-size: 0.92rem;
+  font-weight: 600;
+  padding: 0.35rem 0.7rem;
+  border-radius: 0.35rem;
+  line-height: 1.2;
+  text-shadow: 0 1px 8px rgba(10, 22, 48, 0.35);
+}
+
+.shop-root.wg-new-ui .exp-header-white .wg-topbar-nav a {
+  color: var(--tv-dark);
+  text-shadow: none;
+}
+
+.shop-root.wg-new-ui .wg-topbar-nav a:hover {
+  color: #fbbf24;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.shop-root.wg-new-ui .exp-header-white .wg-topbar-nav a:hover {
+  color: var(--tv-primary);
+  background: rgba(19, 53, 123, 0.06);
+}
+
+.shop-root.wg-new-ui .wg-topbar-end {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.shop-root.wg-new-ui .wg-topbar-utils {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.shop-root.wg-new-ui .wg-topbar-locale {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+}
+
+.shop-root.wg-new-ui .wg-topbar-contact {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.1rem;
+}
+
+.shop-root.wg-new-ui .wg-topbar-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.55rem;
+  height: 2.55rem;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: #fff;
+  text-decoration: none;
+  cursor: pointer;
+  flex-shrink: 0;
+  text-shadow: none;
+  filter: drop-shadow(0 1px 6px rgba(10, 22, 48, 0.35));
+}
+
+.shop-root.wg-new-ui .wg-topbar-icon-btn svg,
+.shop-root.wg-new-ui .wg-topbar-lang svg,
+.shop-root.wg-new-ui .wg-topbar-phone svg,
+.shop-root.wg-new-ui .wg-topbar-account svg {
+  width: 1.4rem;
+  height: 1.4rem;
+}
+
+.shop-root.wg-new-ui .wg-topbar-lang,
+.shop-root.wg-new-ui .wg-topbar-phone {
+  gap: 0.4rem;
+  font-size: 0.92rem;
+  font-weight: 700;
+  padding-inline: 0.35rem;
+}
+
+.shop-root.wg-new-ui .wg-topbar-phone span {
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.shop-root.wg-new-ui .exp-header-white .wg-topbar-icon-btn,
+.shop-root.wg-new-ui .exp-header-white .wg-topbar-lang,
+.shop-root.wg-new-ui .exp-header-white .wg-topbar-phone {
+  color: var(--tv-dark);
+  filter: none;
+  text-shadow: none;
+}
+
+.shop-root.wg-new-ui .wg-topbar-icon-btn:hover {
+  color: #fbbf24;
+}
+
+.shop-root.wg-new-ui .exp-header-white .wg-topbar-icon-btn:hover {
+  color: var(--tv-primary);
+}
+
+.shop-root.wg-new-ui .wg-topbar-whatsapp {
+  color: #25d366;
+  filter: drop-shadow(0 1px 6px rgba(10, 22, 48, 0.28));
+}
+
+.shop-root.wg-new-ui .wg-topbar-whatsapp:hover {
+  color: #1ebe57;
+}
+
+.shop-root.wg-new-ui .exp-header-white .wg-topbar-whatsapp {
+  color: #128c7e;
+  filter: none;
+}
+
+.shop-root.wg-new-ui .exp-header-white .wg-topbar-whatsapp:hover {
+  color: #075e54;
+}
+
+.shop-root.wg-new-ui .wg-topbar-text {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.55rem;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: #fff;
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  box-sizing: border-box;
+  line-height: 1.2;
+  flex-shrink: 0;
+  text-shadow: 0 1px 8px rgba(10, 22, 48, 0.35);
+}
+
+.shop-root.wg-new-ui .exp-header-white .wg-topbar-text {
+  color: var(--tv-dark);
+  text-shadow: none;
+}
+
+.shop-root.wg-new-ui .wg-topbar-text:hover {
+  color: #fbbf24;
+}
+
+.shop-root.wg-new-ui .exp-header-white .wg-topbar-text:hover {
+  color: var(--tv-primary);
+}
+
+.shop-root.wg-new-ui .wg-topbar-account svg {
+  flex-shrink: 0;
+}
+
+.shop-root.wg-new-ui .wg-topbar-currency {
+  position: relative;
+  padding: 0.35rem 0.2rem;
+}
+
+.shop-root.wg-new-ui .wg-topbar-currency select {
+  appearance: none;
+  -webkit-appearance: none;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: 600;
+  font-size: 0.88rem;
+  padding: 0 0.85rem 0 0.15rem;
+  cursor: pointer;
+  line-height: 1.2;
+}
+
+.shop-root.wg-new-ui .wg-topbar-currency select option {
+  color: var(--tv-dark);
+  background: #fff;
+}
+
+.shop-root.wg-new-ui .wg-topbar-currency::after {
+  content: "▾";
+  position: absolute;
+  inset-inline-end: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.55rem;
+  pointer-events: none;
+  opacity: 0.85;
+}
+
+.shop-root.wg-new-ui .wg-topbar-signin {
+  white-space: nowrap;
+}
+
+.shop-root.wg-new-ui .wg-topbar-menu-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  font-size: 1.1rem;
+  cursor: pointer;
+}
+
+.shop-root.wg-new-ui .exp-header-white .wg-topbar-menu-btn {
+  border-color: #d1d5db;
+  background: #fff;
+  color: var(--tv-primary);
+}
+
+.shop-root.wg-new-ui .wg-header-user-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  max-width: 9rem;
+  min-height: 0;
+}
+
+.shop-root.wg-new-ui .wg-header-user-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shop-root.wg-new-ui .wg-header-user-chevron {
+  font-size: 0.75rem;
+  opacity: 0.85;
+}
+
+.shop-root.wg-new-ui .wg-header-user-menu {
+  position: absolute;
+  top: calc(100% + 0.45rem);
+  inset-inline-end: 0;
+  min-width: 11.5rem;
+  padding: 0.45rem;
+  border-radius: 1rem;
+  background: #fff;
+  box-shadow: 0 12px 32px rgba(19, 53, 123, 0.22);
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.shop-root.wg-new-ui .wg-header-user-menu a,
+.shop-root.wg-new-ui .wg-header-user-menu button {
+  display: block;
+  width: 100%;
+  padding: 0.55rem 0.75rem;
+  border: 0;
+  border-radius: 0.65rem;
+  background: transparent;
+  color: var(--tv-dark);
+  text-decoration: none;
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 600;
+  text-align: start;
+  cursor: pointer;
+}
+
+.shop-root.wg-new-ui .wg-header-user-menu a:hover,
+.shop-root.wg-new-ui .wg-header-user-menu button:hover {
+  background: var(--tv-light);
+}
+
+.shop-root.wg-new-ui .wg-header-menu-currency {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.55rem 0.75rem;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--tv-dark);
+}
+
+.shop-root.wg-new-ui .wg-header-menu-currency select {
+  border: 1px solid #ddd;
+  border-radius: 0.5rem;
+  padding: 0.25rem 0.45rem;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  background: #fff;
+}
+
+.shop-root.wg-new-ui .wg-topbar-mobile {
+  display: none;
+  position: absolute;
+  inset-inline: 0;
+  top: calc(100% - 0.1rem);
+  width: min(1280px, calc(100% - 2rem));
+  margin: 0 auto;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.85rem;
+  border-radius: 1rem;
+  background: #fff;
+  box-shadow: 0 12px 32px rgba(19, 53, 123, 0.18);
+  z-index: 90;
+}
+
+.shop-root.wg-new-ui .wg-topbar-mobile.open {
+  display: flex;
+}
+
+.shop-root.wg-new-ui .wg-topbar-mobile a,
+.shop-root.wg-new-ui .wg-topbar-mobile button {
+  display: block;
+  padding: 0.55rem 0.65rem;
+  border: 0;
+  border-radius: 0.65rem;
+  background: transparent;
+  color: var(--tv-dark);
+  text-decoration: none;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-align: start;
+  cursor: pointer;
+}
+
+.shop-root.wg-new-ui .wg-topbar-mobile a:hover,
+.shop-root.wg-new-ui .wg-topbar-mobile button:hover {
+  background: #f1f5f9;
+}
+
+.shop-root.wg-new-ui .exp-header-white .wg-topbar-logo .wg-logo-word {
+  color: var(--tv-primary);
+}
+
+.shop-root.wg-new-ui .exp-header-white .wg-topbar-logo .wg-logo-gate {
+  color: #f97316;
+}
+
+/* —— Hero carousel —— */
+.shop-root.wg-new-ui.shop-home-layout {
+  position: relative;
+  background: #fff;
+}
+
+.shop-root.wg-new-ui.shop-home-layout .shop-main,
+.shop-root.wg-new-ui.shop-home-layout .exp-main {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 0;
+}
+
+.wg-travela-hero {
+  position: relative;
+  overflow: hidden;
+  min-height: 100svh;
+  min-height: 100dvh;
+}
+
+.wg-travela-carousel {
+  position: relative;
+  min-height: 100svh;
+  min-height: 100dvh;
+}
+
+.wg-travela-slide {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 1s ease;
+  pointer-events: none;
+}
+
+.wg-travela-slide.active {
+  opacity: 1;
+  /* Keep slides non-interactive so the search dock (sibling, higher z-index) always receives clicks */
+  pointer-events: none;
+  z-index: 1;
+}
+
+.wg-travela-slide img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.wg-travela-caption {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 6rem 3cm 13rem;
+  background: linear-gradient(rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.45));
+  color: #fff;
+  pointer-events: none;
+}
+
+.wg-travela-caption-inner {
+  max-width: 900px;
+  padding-inline: 0.5rem;
+}
+
+.wg-travela-caption h4 {
+  margin: 0 0 0.75rem;
+  font-size: clamp(0.85rem, 2vw, 1.1rem);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+.wg-travela-caption h1 {
+  margin: 0 0 1rem;
+  font-size: clamp(2rem, 6vw, 3.75rem);
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+.wg-travela-caption p {
+  margin: 0;
+  font-size: clamp(1rem, 2.2vw, 1.2rem);
+  opacity: 0.92;
+  line-height: 1.6;
+}
+
+.wg-travela-carousel-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 5;
+  border: 0;
+  background: var(--tv-primary);
+  color: #fff;
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 0 999px 999px 0;
+  cursor: pointer;
+  font-size: 1.25rem;
+  display: grid;
+  place-items: center;
+}
+
+.wg-travela-carousel-btn.next {
+  inset-inline-end: 0;
+  border-radius: 999px 0 0 999px;
+}
+
+.wg-travela-carousel-btn.prev {
+  inset-inline-start: 0;
+}
+
+.wg-travela-dots {
+  position: absolute;
+  bottom: 7.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 5;
+  display: flex;
+  gap: 0.45rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.wg-travela-dots button {
+  width: 0.65rem;
+  height: 0.65rem;
+  border-radius: 50%;
+  border: 0;
+  background: rgba(255, 255, 255, 0.45);
+  cursor: pointer;
+  padding: 0;
+}
+
+.wg-travela-dots button.active {
+  background: #fff;
+}
+
+/* —— Hero slim search dock (E2) —— */
+.wg-hero-search-panel {
+  position: absolute;
+  inset-inline: 0;
+  left: 50%;
+  right: auto;
+  top: auto;
+  bottom: clamp(3.25rem, 6.5vw, 5rem);
+  transform: translateX(-50%);
+  z-index: 25;
+  width: min(1120px, calc(100% - 6cm));
+  pointer-events: auto;
+}
+
+.wg-hero-ticket-shell,
+.wg-hero-dock-shell {
+  --hd-accent: var(--tv-primary, #13357b);
+  --hd-ink: #0f172a;
+  --hd-muted: #64748b;
+  --hd-line: #e2e8f0;
+  pointer-events: auto;
+  display: grid;
+  gap: 0.55rem;
+  width: 100%;
+  justify-items: center;
+  position: relative;
+  z-index: 1;
+}
+
+.wg-hero-dock-modes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.15rem 1.35rem;
+  width: 100%;
+  padding: 0 0.25rem;
+  position: relative;
+  z-index: 2;
+  pointer-events: auto;
+}
+
+.wg-hero-dock-mode {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.82);
+  font: inherit;
+  font-size: 0.92rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  padding: 0.2rem 0.1rem 0.45rem;
+  cursor: pointer;
+  position: relative;
+  text-shadow: 0 1px 8px rgba(10, 22, 48, 0.35);
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+}
+
+.wg-hero-dock-mode::after {
+  content: "";
+  position: absolute;
+  inset-inline: 0.15rem;
+  bottom: 0;
+  height: 2px;
+  border-radius: 999px;
+  background: transparent;
+  transition: background 0.15s ease;
+}
+
+.wg-hero-dock-mode:hover {
+  color: #fff;
+}
+
+.wg-hero-dock-mode.on {
+  color: #fff;
+}
+
+.wg-hero-dock-mode.on::after {
+  background: #fff;
+}
+
+.shop-root.wg-new-ui a.wg-hero-dock-mode.wg-hero-dock-mode-ai,
+.wg-hero-dock-mode.wg-hero-dock-mode-ai {
+  color: #fde68a !important;
+  font-weight: 800;
+  text-decoration: none;
+  text-shadow: 0 1px 10px rgba(10, 22, 48, 0.55);
+}
+
+.shop-root.wg-new-ui a.wg-hero-dock-mode.wg-hero-dock-mode-ai:hover,
+.shop-root.wg-new-ui a.wg-hero-dock-mode.wg-hero-dock-mode-ai:focus-visible,
+.wg-hero-dock-mode.wg-hero-dock-mode-ai:hover,
+.wg-hero-dock-mode.wg-hero-dock-mode-ai:focus-visible {
+  color: #fff !important;
+}
+
+.wg-hero-dock-mode.wg-hero-dock-mode-ai::after {
+  background: #fbbf24;
+}
+
+.wg-hero-dock-mode:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+/* —— Accordion search (category row + expandable fields) —— */
+.shop-root.wg-new-ui .wg-hero-acc-modes.wg-hero-dock-modes,
+.wg-hero-acc-modes.wg-hero-dock-modes {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  flex-wrap: nowrap;
+  background: linear-gradient(180deg, #163f8f 0%, #13357b 100%) !important;
+  border: 1px solid rgba(251, 191, 36, 0.35) !important;
+  border-bottom: 0 !important;
+  border-radius: 16px 16px 0 0 !important;
+  box-shadow: 0 12px 30px rgba(10, 22, 48, 0.3);
+  gap: 0 !important;
+  padding: 0 !important;
+  justify-content: stretch !important;
+  overflow: hidden;
+}
+
+.shop-root.wg-new-ui .wg-hero-acc-shell:not(.is-open) .wg-hero-acc-modes,
+.wg-hero-acc-shell:not(.is-open) .wg-hero-acc-modes {
+  border-radius: 16px !important;
+  border-bottom: 1px solid rgba(251, 191, 36, 0.35) !important;
+}
+
+.shop-root.wg-new-ui .wg-hero-dock-mode.wg-hero-acc-mode,
+.wg-hero-dock-mode.wg-hero-acc-mode {
+  display: grid !important;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.55rem;
+  width: 100%;
+  min-height: 4.35rem;
+  padding: 0.85rem 0.85rem !important;
+  margin: 0 !important;
+  border: 0 !important;
+  border-inline-end: 1px solid rgba(255, 255, 255, 0.14) !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  color: #fff !important;
+  text-shadow: none !important;
+  font-size: 0.95rem !important;
+  font-weight: 800 !important;
+  letter-spacing: 0 !important;
+}
+
+.shop-root.wg-new-ui .wg-hero-dock-mode.wg-hero-acc-mode::after,
+.wg-hero-dock-mode.wg-hero-acc-mode::after,
+.shop-root.wg-new-ui .wg-hero-dock-mode.wg-hero-acc-mode.on::after,
+.wg-hero-dock-mode.wg-hero-acc-mode.on::after {
+  display: none !important;
+  content: none !important;
+  background: transparent !important;
+}
+
+.shop-root.wg-new-ui .wg-hero-dock-mode.wg-hero-acc-mode.on,
+.shop-root.wg-new-ui .wg-hero-dock-mode.wg-hero-acc-mode.is-expanded,
+.wg-hero-dock-mode.wg-hero-acc-mode.on,
+.wg-hero-dock-mode.wg-hero-acc-mode.is-expanded {
+  background: rgba(251, 191, 36, 0.14) !important;
+  color: #fff !important;
+}
+
+
+.wg-hero-acc-shell {
+  gap: 0;
+  align-items: stretch;
+}
+
+.wg-hero-acc-modes {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0;
+  width: 100%;
+  padding: 0;
+  border-radius: 16px 16px 0 0;
+  background: linear-gradient(180deg, #163f8f 0%, #13357b 100%);
+  border: 1px solid rgba(251, 191, 36, 0.28);
+  border-bottom: 0;
+  box-shadow: 0 10px 28px rgba(10, 22, 48, 0.28);
+  overflow: hidden;
+}
+
+.wg-hero-acc-shell:not(.is-open) .wg-hero-acc-modes {
+  border-radius: 16px;
+  border-bottom: 1px solid rgba(251, 191, 36, 0.28);
+}
+
+.wg-hero-acc-mode {
+  appearance: none;
+  border: 0;
+  border-inline-end: 1px solid rgba(255, 255, 255, 0.14);
+  background: transparent;
+  color: rgba(255, 255, 255, 0.88);
+  text-shadow: none;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.85rem 0.9rem;
+  min-height: 4.35rem;
+  text-align: start;
+  cursor: pointer;
+  font: inherit;
+  width: 100%;
+  position: relative;
+}
+
+.wg-hero-acc-mode::after {
+  display: none;
+}
+
+.wg-hero-acc-mode:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+}
+
+.wg-hero-acc-mode.on,
+.wg-hero-acc-mode.is-expanded {
+  background: rgba(251, 191, 36, 0.12);
+  color: #fff;
+}
+
+.wg-hero-acc-icon {
+  width: 2.35rem;
+  height: 2.35rem;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  flex: 0 0 auto;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.wg-hero-acc-mode.on .wg-hero-acc-icon,
+.wg-hero-acc-mode.is-expanded .wg-hero-acc-icon {
+  background: #fbbf24;
+  color: #13357b;
+  border-color: #fbbf24;
+  box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.22);
+}
+
+.wg-hero-acc-copy {
+  display: grid;
+  gap: 0.12rem;
+  min-width: 0;
+}
+
+.wg-hero-acc-title {
+  font-size: 0.95rem;
+  font-weight: 800;
+  line-height: 1.2;
+  color: inherit;
+}
+
+.wg-hero-acc-hint {
+  font-size: 0.72rem;
+  font-weight: 500;
+  line-height: 1.25;
+  color: rgba(253, 230, 138, 0.92);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.wg-hero-acc-chevron {
+  color: rgba(255, 255, 255, 0.7);
+  flex: 0 0 auto;
+  transition: transform 0.18s ease;
+}
+
+.wg-hero-acc-mode.on .wg-hero-acc-chevron,
+.wg-hero-acc-mode.is-expanded .wg-hero-acc-chevron {
+  color: #fbbf24;
+}
+
+.wg-hero-acc-chevron.open {
+  transform: rotate(180deg);
+}
+
+.wg-hero-acc-ai {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  align-self: center;
+  margin: 0.35rem auto 0.15rem;
+  min-width: 3rem;
+  min-height: 2rem;
+  padding: 0.35rem 0.85rem !important;
+  border-radius: 999px !important;
+  border: 1px solid rgba(251, 191, 36, 0.55) !important;
+  background: rgba(19, 53, 123, 0.72) !important;
+  color: #fde68a !important;
+  font-weight: 800;
+  text-decoration: none;
+  text-shadow: none !important;
+}
+
+.wg-hero-acc-ai::after {
+  display: none !important;
+}
+
+.wg-hero-dock.wg-hero-acc-panel {
+  border-radius: 0 0 16px 16px;
+  border-top: 0;
+  position: relative;
+  margin-top: 0;
+}
+
+.wg-hero-acc-panel {
+  border-radius: 0 0 16px 16px;
+  border-top: 0;
+  position: relative;
+}
+
+.wg-hero-acc-panel.is-open::before {
+  content: "";
+  position: absolute;
+  top: -7px;
+  inset-inline-start: calc(12.5% - 7px);
+  width: 14px;
+  height: 14px;
+  background: #fff;
+  border-inline-start: 1px solid rgba(19, 53, 123, 0.08);
+  border-top: 1px solid rgba(19, 53, 123, 0.08);
+  transform: rotate(45deg);
+  z-index: 1;
+}
+
+.wg-hero-acc-shell[data-mode="stays"] .wg-hero-acc-panel.is-open::before {
+  inset-inline-start: calc(12.5% - 7px);
+}
+
+.wg-hero-acc-shell[data-mode="flights"] .wg-hero-acc-panel.is-open::before {
+  inset-inline-start: calc(37.5% - 7px);
+}
+
+.wg-hero-acc-shell[data-mode="cars"] .wg-hero-acc-panel.is-open::before {
+  inset-inline-start: calc(62.5% - 7px);
+}
+
+.wg-hero-acc-shell[data-mode="activities"] .wg-hero-acc-panel.is-open::before {
+  inset-inline-start: calc(87.5% - 7px);
+}
+
+.wg-hero-dock {
+  width: 100%;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow:
+    0 18px 40px rgba(10, 22, 48, 0.22),
+    0 1px 0 rgba(255, 255, 255, 0.9) inset;
+  border: 1px solid rgba(19, 53, 123, 0.08);
+  padding: 0.55rem 0.55rem 0.55rem 0.65rem;
+  overflow: visible;
+}
+
+.wg-hero-dock-ruhelti {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  margin-top: -0.1rem;
+}
+
+.wg-hero-dock-ruhelti-link,
+.wg-hero-dock-ruhelti-link.wg-ruhelti-hero-btn {
+  appearance: none;
+  border: 0 !important;
+  background: transparent !important;
+  color: #fff !important;
+  font: inherit;
+  font-size: 0.86rem;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 0.22em;
+  text-shadow: 0 1px 8px rgba(10, 22, 48, 0.4);
+  cursor: pointer;
+  padding: 0.15rem 0.35rem;
+  min-height: 0;
+  width: auto;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.wg-hero-dock-ruhelti-link:hover,
+.wg-hero-dock-ruhelti-link.wg-ruhelti-hero-btn:hover {
+  color: #f8fafc !important;
+  background: transparent !important;
+}
+
+.shop-root.wg-new-ui .wg-hero-search-panel .exp-dialog {
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  box-sizing: border-box;
+  isolation: isolate;
+}
+
+.shop-root.wg-new-ui .wg-hero-search-panel .exp-unified-card,
+.shop-root.wg-new-ui .wg-hero-search-panel .wg-hero-ticket-card,
+.shop-root.wg-new-ui .wg-hero-search-panel .wg-hero-dock-card {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 0;
+  gap: 0.35rem;
+  overflow: visible;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  align-content: start;
+}
+
+.shop-root.wg-new-ui .wg-hero-search-panel .exp-flight-toolbar,
+.shop-root.wg-new-ui .wg-hero-search-panel .exp-transfer-toolbar {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 0.4rem;
+  margin: 0 0 0.15rem;
+  padding: 0 0.15rem;
+}
+
+.shop-root.wg-new-ui .wg-hero-search-panel .exp-cabin-pill,
+.shop-root.wg-new-ui .wg-hero-search-panel .exp-direct-pill {
+  border-color: var(--hd-line);
+  color: var(--hd-ink);
+  max-width: 100%;
+  flex-shrink: 1;
+  min-width: 0;
+  font-size: 0.68rem;
+  padding: 0.18rem 0.4rem;
+  background: #f8fafc;
+  border-radius: 999px;
+}
+
+.shop-root.wg-new-ui .wg-hero-search-panel .exp-cabin-pill span:first-child {
+  font-size: 0.6rem;
+}
+
+.shop-root.wg-new-ui .wg-hero-search-panel .exp-cabin-pill select {
+  min-width: 0;
+  max-width: 5.5rem;
+  font-size: 0.68rem;
+}
+
+.shop-root.wg-new-ui .wg-hero-search-panel .exp-pill-tab {
+  padding: 0.2rem 0.55rem;
+  font-size: 0.7rem;
+  border-radius: 999px;
+}
+
+.shop-root.wg-new-ui .wg-hero-search-panel .exp-pill-tabs-inset {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.shop-root.wg-new-ui .wg-hero-search-panel .exp-unified-card .exp-form-row {
+  width: 100%;
+  max-width: 100%;
+  gap: 0;
+  padding: 0;
+  box-sizing: border-box;
+  align-items: stretch;
+  background: transparent;
+}
+
+.shop-root.wg-new-ui .wg-hero-search-panel .exp-unified-card .exp-form-flights {
+  grid-template-columns: minmax(0, 1.05fr) auto minmax(0, 1.05fr) minmax(0, 1.25fr) minmax(0, 0.85fr) auto;
+}
+
+.shop-root.wg-new-ui .wg-hero-search-panel .exp-unified-card .exp-form-stays {
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1.2fr) minmax(0, 0.9fr) auto;
+}
+
+.shop-root.wg-new-ui .wg-hero-search-panel .exp-unified-card .exp-form-cars {
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.05fr) minmax(0, 1.1fr) minmax(0, 0.5fr) minmax(0, 0.5fr) minmax(0, 0.85fr) auto;
+}
+
+.shop-root.wg-new-ui .wg-hero-search-panel .exp-unified-card .exp-form-cars:not(
+    :has(.exp-cell-time-compact + .exp-cell-time-compact)
+  ) {
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.1fr) minmax(0, 1.2fr) minmax(0, 0.5fr) minmax(0, 0.85fr) auto;
+}
+
+.shop-root.wg-new-ui .wg-hero-search-panel .exp-unified-card .exp-form-activities {
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1.15fr) minmax(0, 0.9fr) auto;
+}
+
+.shop-root.wg-new-ui .wg-hero-search-panel .exp-unified-card .exp-multicity-footer {
+  grid-template-columns: minmax(0, 1fr) auto;
+  max-width: none;
+}
+
+.shop-root.wg-new-ui .wg-hero-search-panel .exp-unified-card .exp-input-cell {
+  height: auto;
+  min-height: 3rem;
+  max-height: none;
+  padding: 0.28rem 0.7rem;
+  border: 0;
+  border-inline-start: 1px solid var(--hd-line);
+  background: transparent;
+  overflow: visible;
+  box-sizing: border-box;
+  min-width: 0;
+  border-radius: 0;
+}
+
+.shop-root.wg-new-ui .wg-hero-search-panel .exp-unified-card .exp-form-row > .exp-input-cell:first-child,
+.shop-root.wg-new-ui .wg-hero-search-panel .exp-unified-card .exp-form-flights > .exp-input-cell:first-of-type {
+  border-inline-start: 0;
+  padding-inline-start: 0.45rem;
+}
+
+.shop-root.wg-new-ui .wg-hero-search-panel .exp-unified-card .exp-cell-label,
+.shop-root.wg-new-ui .wg-hero-search-panel .exp-unified-card .exp-input-cell .shop-ac-inline > span:first-child,
+.shop-root.wg-new-ui .wg-hero-search-panel .exp-unified-card .exp-input-cell .shop-ac-inline .exp-cell-label {
+  font-size: 0.58rem;
+  color: var(--hd-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-transform: none;
+  letter-spacing: 0;
+  line-height: 1.1;
+  font-weight: 700;
+}
+
+.shop-root.wg-new-ui .wg-hero-search-panel .exp-unified-card .exp-input-cell .shop-ac-inline input,
+.shop-root.wg-new-ui .wg-hero-search-panel .exp-unified-card .exp-date-btn,
+.shop-root.wg-new-ui .wg-hero-search-panel .exp-unified-card .exp-travelers-trigger strong,
+.shop-root.wg-new-ui .wg-hero-search-panel .exp-unified-card .shop-date-range-trigger,
+.shop-root.wg-new-ui .wg-hero-search-panel .exp-unified-card .exp-time-select {
+  font-size: 0.86rem;
+  line-height: 1.25;
+  font-weight: 700;
+  color: var(--hd-ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+  display: block;
+}
+
+.shop-root.wg-new-ui .wg-hero-search-panel .exp-unified-card .exp-travelers-trigger {
+  width: 100%;
+  text-align: start;
+  overflow: visible;
+}
+
+.shop-root.wg-new-ui .wg-hero-search-panel .exp-unified-card .exp-swap-inline {
+  align-self: center;
+  flex-shrink: 0;
+  width: 1.55rem;
+  height: 1.55rem;
+  border-radius: 999px;
+  border: 1px solid var(--hd-line);
+  background: #f8fafc;
+  color: var(--hd-accent);
+  margin-inline: 0.1rem;
+}
+
+.shop-root.wg-new-ui .wg-hero-search-panel .wg-hero-ticket-search.exp-search-link {
+  width: auto;
+  min-width: 5.25rem;
+  height: 3rem;
+  min-height: 3rem;
+  margin: 0;
+  margin-inline-start: 0.35rem;
+  padding: 0 1.15rem;
+  font-size: 0.92rem;
+  font-weight: 800;
+  border-radius: 12px;
+  background: var(--hd-accent);
+  box-shadow: none;
+  justify-self: end;
+  align-self: stretch;
+}
+
+.shop-root.wg-new-ui .wg-hero-search-panel .wg-hero-ticket-search.exp-search-link:hover:not(:disabled) {
+  background: #0f2a63;
+}
+
+.shop-root.wg-new-ui .wg-hero-search-panel .exp-trip-builder-cta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.55rem 0.75rem;
+  width: 100%;
+  max-width: 100%;
+  margin: 0.15rem 0 0;
+  padding: 0.55rem 0.75rem;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.92);
+  border: 0;
+  box-shadow: 0 10px 24px rgba(10, 22, 48, 0.16);
+  box-sizing: border-box;
+}
+
+.shop-root.wg-new-ui .wg-hero-search-panel .exp-trip-builder-cta-copy strong {
+  font-size: 0.88rem;
+}
+
+.shop-root.wg-new-ui .wg-hero-search-panel .exp-trip-builder-cta-copy span {
+  font-size: 0.74rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  white-space: normal;
+}
+
+.shop-root.wg-new-ui .wg-hero-search-panel .exp-trip-builder-cta-btn {
+  background: var(--tv-primary);
+  border-radius: 999px;
+  flex-shrink: 0;
+  padding: 0.5rem 0.85rem;
+  font-size: 0.8rem;
+}
+
+.shop-root.wg-new-ui .wg-hero-search-panel .exp-trip-builder-cta-copy {
+  min-width: 0;
+  flex: 1;
+}
+
+.shop-root.wg-new-ui .wg-hero-search-panel .exp-dialog-msg {
+  margin: 0.15rem 0 0;
+  padding: 0.35rem 0.55rem;
+  font-size: 0.82rem;
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 10px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.shop-root.wg-new-ui .wg-hero-search-panel .exp-pill-tab.on {
+  background: var(--tv-primary);
+  border-color: var(--tv-primary);
+}
+
+.shop-root.wg-new-ui .wg-hero-search-panel .exp-travelers-panel {
+  position: absolute;
+  z-index: 60;
+  inset-inline: 0.7rem auto;
+  width: min(320px, calc(100% - 1.4rem));
+  margin-top: 0.35rem;
+  box-shadow: 0 16px 36px rgba(15, 23, 42, 0.18);
+}
+
+.shop-root.wg-new-ui .exp-home-tagline {
+  display: none;
+}
+
+/* —— Bottom decorative arc removed per request —— */
+.wg-travela-bottom-arc,
+.wg-travela-bottom-arc-cap {
+  display: none !important;
+}
+
+/* —— Landing sections (Travela accents) —— */
+.shop-root.wg-new-ui .shop-kicker,
+.shop-root.wg-new-ui .wg-section-kicker {
+  position: relative;
+  display: inline-block;
+  text-transform: uppercase;
+  color: var(--tv-primary);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  padding-inline: 3.5rem;
+}
+
+.shop-root.wg-new-ui .shop-kicker::before,
+.shop-root.wg-new-ui .shop-kicker::after,
+.shop-root.wg-new-ui .wg-section-kicker::before,
+.shop-root.wg-new-ui .wg-section-kicker::after {
+  content: "";
+  width: 2.5rem;
+  position: absolute;
+  top: 50%;
+  border-top: 1px solid var(--tv-primary);
+}
+
+.shop-root.wg-new-ui .shop-kicker::before,
+.shop-root.wg-new-ui .wg-section-kicker::before {
+  inset-inline-start: 0;
+}
+
+.shop-root.wg-new-ui .shop-kicker::after,
+.shop-root.wg-new-ui .wg-section-kicker::after {
+  inset-inline-end: 0;
+}
+
+.shop-root.wg-new-ui .shop-section h2 {
+  color: var(--tv-dark);
+}
+
+.shop-root.wg-new-ui .shop-section h2 span,
+.shop-root.wg-new-ui .shop-footer-brand {
+  color: var(--tv-primary);
+}
+
+.shop-root.wg-new-ui .shop-btn,
+.shop-root.wg-new-ui .shop-cta {
+  background: var(--tv-primary);
+  box-shadow: 0 8px 20px rgba(19, 53, 123, 0.25);
+}
+
+.shop-root.wg-new-ui .shop-btn-ghost {
+  color: var(--tv-primary);
+  border-color: var(--tv-primary);
+}
+
+.shop-root.wg-new-ui .shop-dest-card:hover,
+.shop-root.wg-new-ui .shop-offer-card:hover {
+  border-color: var(--tv-primary);
+}
+
+/* —— Footer (Travela dark) —— */
+.shop-root.wg-new-ui .shop-footer.exp-footer {
+  background: var(--tv-primary);
+  color: rgba(255, 255, 255, 0.85);
+  border-top: 0;
+  margin-top: 0;
+}
+
+.shop-root.wg-new-ui .shop-footer-grid strong {
+  color: #fff;
+}
+
+.shop-root.wg-new-ui .shop-footer-grid a,
+.shop-root.wg-new-ui .shop-footer-grid span {
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.shop-root.wg-new-ui .shop-footer-grid a:hover {
+  color: #fbbf24;
+}
+
+.shop-root.wg-new-ui .shop-footer-copy {
+  color: rgba(255, 255, 255, 0.55);
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.shop-root.wg-new-ui .shop-assist-toggle {
+  background: var(--tv-primary);
+}
+
+@media (max-width: 767px) {
+  .wg-travela-carousel {
+    min-height: 88svh;
+  }
+
+  .wg-travela-caption {
+    display: none;
+  }
+
+  .wg-hero-search-panel {
+    inset: 0;
+    right: 0;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    transform: none;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: clamp(4.75rem, 14vw, 6.5rem) 0.75rem 1.5rem;
+    margin-top: 0;
+  }
+
+  .wg-hero-ticket-shell,
+  .wg-hero-dock-shell {
+    width: 100%;
+    max-height: 100%;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    gap: 0.7rem;
+  }
+
+  .wg-hero-dock-modes {
+    gap: 0.1rem 0.85rem;
+    justify-content: flex-start;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    padding-bottom: 0.15rem;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .wg-hero-acc-modes {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    overflow: hidden;
+    flex-wrap: unset;
+  }
+
+  .wg-hero-acc-mode {
+    min-height: 3.85rem;
+    padding: 0.7rem 0.65rem;
+    gap: 0.4rem;
+  }
+
+  .wg-hero-acc-title {
+    font-size: 0.86rem;
+  }
+
+  .wg-hero-acc-hint {
+    font-size: 0.66rem;
+    white-space: normal;
+  }
+
+  .wg-hero-acc-shell[data-mode="flights"] .wg-hero-acc-panel.is-open::before,
+  .wg-hero-acc-shell[data-mode="stays"] .wg-hero-acc-panel.is-open::before,
+  .wg-hero-acc-shell[data-mode="cars"] .wg-hero-acc-panel.is-open::before,
+  .wg-hero-acc-shell[data-mode="activities"] .wg-hero-acc-panel.is-open::before {
+    inset-inline-start: 50%;
+    margin-inline-start: -7px;
+  }
+
+  .wg-hero-dock-mode {
+    flex: 0 0 auto;
+    font-size: 0.86rem;
+    white-space: nowrap;
+  }
+
+  .wg-hero-dock {
+    padding: 0.7rem;
+    border-radius: 14px;
+  }
+
+  .shop-root.wg-new-ui .wg-hero-search-panel .wg-hero-ticket-search.exp-search-link {
+    width: 100%;
+    min-width: 0;
+    margin-inline-start: 0;
+    margin-top: 0.35rem;
+  }
+
+  .shop-root.wg-new-ui .wg-hero-search-panel .exp-unified-card .exp-form-row {
+    grid-template-columns: 1fr !important;
+    gap: 0.35rem;
+  }
+
+  .shop-root.wg-new-ui .wg-hero-search-panel .exp-unified-card .exp-input-cell,
+  .shop-root.wg-new-ui .wg-hero-search-panel .exp-unified-card .exp-form-row > .exp-input-cell:first-child,
+  .shop-root.wg-new-ui .wg-hero-search-panel .exp-unified-card .exp-form-flights > .exp-input-cell:first-of-type {
+    border-inline-start: 0;
+    border-radius: 10px;
+    background: #f8fafc;
+    padding: 0.35rem 0.65rem;
+  }
+
+  .shop-root.wg-new-ui .wg-hero-search-panel .exp-flight-toolbar,
+  .shop-root.wg-new-ui .wg-hero-search-panel .exp-transfer-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .shop-root.wg-new-ui .wg-hero-search-panel .exp-cabin-pill,
+  .shop-root.wg-new-ui .wg-hero-search-panel .exp-direct-pill {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .shop-root.wg-new-ui .wg-hero-search-panel .exp-travelers-panel {
+    position: static;
+    width: 100%;
+    inset: auto;
+    margin-top: 0.35rem;
+  }
+
+  .wg-hero-dock-ruhelti-link {
+    font-size: 0.92rem;
+  }
+
+  .wg-travela-bottom-arc {
+    display: none !important;
+  }
+
+  .wg-travela-bottom-arc-cap {
+    width: calc(100% - 1rem);
+    height: calc(var(--wg-blue-pill-pad-y) + 0.85rem);
+    border-radius: 28px 28px 0 0;
+  }
+
+  .shop-root.wg-new-ui .wg-topbar,
+  .shop-root.wg-new-ui .exp-header-hero-overlay .wg-topbar,
+  .shop-root.wg-new-ui .exp-header-white .wg-topbar {
+    width: calc(100% - 2cm);
+    max-width: calc(100% - 2cm);
+    padding: 0.75rem 0;
+    padding-inline: 0;
+    gap: 0.65rem;
+  }
+
+  .shop-root.wg-new-ui .wg-topbar-logo .wg-logo-lockup-img {
+    height: 1.85rem;
+  }
+
+  .shop-root.wg-new-ui .wg-topbar-logo .wg-logo-mark {
+    height: 1.35rem;
+  }
+
+  .shop-root.wg-new-ui .wg-topbar-nav {
+    display: none;
+  }
+
+  .shop-root.wg-new-ui .wg-topbar-menu-btn {
+    display: inline-flex;
+  }
+
+  .shop-root.wg-new-ui .wg-topbar-utils {
+    display: none;
+  }
+
+  .shop-root.wg-new-ui .wg-header-pill-nav {
+    display: none;
+  }
+
+  .wg-travela-carousel-btn {
+    display: none;
+  }
+
+  .wg-travela-dots {
+    bottom: 1.5rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .shop-root.wg-new-ui .wg-header-row {
+    flex-wrap: nowrap;
+  }
+
+  .shop-root.wg-new-ui .wg-header-pill-nav {
+    margin-inline: auto;
+  }
+
+  .shop-root.wg-new-ui .wg-topbar-mobile,
+  .shop-root.wg-new-ui .wg-header-cap-mobile {
+    display: none !important;
+  }
+}
+
+/* WG_ACCORDION_REF_SKIN */
+.shop-root.wg-new-ui .wg-hero-acc-shell.wg-hero-dock-shell,
+.wg-hero-acc-shell.wg-hero-dock-shell {
+  gap: 0 !important;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+.shop-root.wg-new-ui .wg-hero-acc-modes,
+.wg-hero-acc-modes {
+  border-radius: 18px 18px 0 0 !important;
+  background: #13357b !important;
+  border: 1px solid rgba(251, 191, 36, 0.35) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
+}
+
+.shop-root.wg-new-ui .wg-hero-acc-shell:not(.is-open) .wg-hero-acc-modes {
+  border-radius: 18px !important;
+}
+
+/* Hide AI chip if still rendered anywhere in search panel */
+.wg-hero-search-panel .wg-hero-acc-ai,
+.wg-hero-acc-shell .wg-hero-acc-ai {
+  display: none !important;
+}
+
+.shop-root.wg-new-ui .wg-hero-dock.wg-hero-acc-panel,
+.wg-hero-dock.wg-hero-acc-panel {
+  background: #13357b !important;
+  border: 1px solid rgba(251, 191, 36, 0.35) !important;
+  border-top: 0 !important;
+  border-radius: 0 0 18px 18px !important;
+  box-shadow: 0 18px 40px rgba(10, 22, 48, 0.35) !important;
+  padding: 0.85rem 0.85rem 0.95rem !important;
+}
+
+.shop-root.wg-new-ui .wg-hero-acc-panel.is-open::before {
+  background: #13357b !important;
+  border-color: rgba(251, 191, 36, 0.35) !important;
+}
+
+.shop-root.wg-new-ui .wg-hero-acc-panel .exp-dialog,
+.shop-root.wg-new-ui .wg-hero-acc-panel .exp-unified-card,
+.shop-root.wg-new-ui .wg-hero-acc-panel .wg-hero-ticket-card,
+.shop-root.wg-new-ui .wg-hero-acc-panel .wg-hero-dock-card {
+  background: transparent !important;
+  box-shadow: none !important;
+  border: 0 !important;
+  padding: 0 !important;
+}
+
+.shop-root.wg-new-ui .wg-hero-acc-panel .exp-flight-toolbar,
+.shop-root.wg-new-ui .wg-hero-acc-panel .exp-transfer-toolbar {
+  padding: 0 0.25rem 0.45rem !important;
+}
+
+.shop-root.wg-new-ui .wg-hero-acc-panel .exp-pill-tab {
+  color: rgba(255, 255, 255, 0.78) !important;
+  border-color: rgba(255, 255, 255, 0.22) !important;
+  background: transparent !important;
+}
+
+.shop-root.wg-new-ui .wg-hero-acc-panel .exp-pill-tab.on {
+  background: rgba(251, 191, 36, 0.18) !important;
+  color: #fde68a !important;
+  border-color: #fbbf24 !important;
+}
+
+.shop-root.wg-new-ui .wg-hero-acc-panel .exp-cabin-pill,
+.shop-root.wg-new-ui .wg-hero-acc-panel .exp-direct-pill {
+  background: rgba(255, 255, 255, 0.06) !important;
+  border-color: rgba(255, 255, 255, 0.16) !important;
+  color: rgba(255, 255, 255, 0.88) !important;
+}
+
+.shop-root.wg-new-ui .wg-hero-acc-panel .exp-cabin-pill select {
+  color: #fff !important;
+  background: transparent !important;
+}
+
+.shop-root.wg-new-ui .wg-hero-acc-panel .exp-form-row {
+  background: rgba(8, 28, 72, 0.55) !important;
+  border: 1px solid rgba(251, 191, 36, 0.28) !important;
+  border-radius: 14px !important;
+  padding: 0.35rem !important;
+  gap: 0 !important;
+  align-items: stretch !important;
+}
+
+.shop-root.wg-new-ui .wg-hero-acc-panel .exp-input-cell,
+.shop-root.wg-new-ui .wg-hero-acc-panel .exp-unified-card .exp-input-cell,
+.shop-root.wg-new-ui .wg-hero-acc-panel .exp-unified-card .exp-form-row > .exp-input-cell:first-child,
+.shop-root.wg-new-ui .wg-hero-acc-panel .exp-unified-card .exp-form-flights > .exp-input-cell:first-of-type {
+  background: transparent !important;
+  border: 0 !important;
+  border-inline-end: 1px solid rgba(255, 255, 255, 0.14) !important;
+  border-radius: 0 !important;
+  color: #fff !important;
+  box-shadow: none !important;
+  padding: 0.55rem 0.75rem !important;
+}
+
+.shop-root.wg-new-ui .wg-hero-acc-panel .exp-cell-label,
+.shop-root.wg-new-ui .wg-hero-acc-panel .exp-input-cell .shop-ac-inline > span:first-child,
+.shop-root.wg-new-ui .wg-hero-acc-panel .exp-travelers-trigger .exp-cell-label {
+  color: #fbbf24 !important;
+  font-weight: 700 !important;
+}
+
+.shop-root.wg-new-ui .wg-hero-acc-panel .exp-input-cell input,
+.shop-root.wg-new-ui .wg-hero-acc-panel .exp-input-cell strong,
+.shop-root.wg-new-ui .wg-hero-acc-panel .exp-travelers-trigger strong,
+.shop-root.wg-new-ui .wg-hero-acc-panel .shop-ac-inline input {
+  color: #fff !important;
+  background: transparent !important;
+}
+
+.shop-root.wg-new-ui .wg-hero-acc-panel .exp-travelers-trigger {
+  background: transparent !important;
+  border: 0 !important;
+  color: #fff !important;
+  width: 100%;
+  text-align: start;
+}
+
+.shop-root.wg-new-ui .wg-hero-acc-panel .exp-swap-btn {
+  background: rgba(251, 191, 36, 0.15) !important;
+  border-color: #fbbf24 !important;
+  color: #fbbf24 !important;
+}
+
+.shop-root.wg-new-ui .wg-hero-search-panel .wg-hero-ticket-search.exp-search-link,
+.shop-root.wg-new-ui .wg-hero-acc-panel .wg-hero-ticket-search.exp-search-link {
+  background: #fbbf24 !important;
+  color: #13357b !important;
+  border: 0 !important;
+  border-radius: 12px !important;
+  font-weight: 800 !important;
+  min-width: 8.5rem !important;
+  box-shadow: 0 8px 18px rgba(251, 191, 36, 0.28) !important;
+}
+
+.shop-root.wg-new-ui .wg-hero-search-panel .wg-hero-ticket-search.exp-search-link:hover:not(:disabled),
+.shop-root.wg-new-ui .wg-hero-acc-panel .wg-hero-ticket-search.exp-search-link:hover:not(:disabled) {
+  background: #f59e0b !important;
+  color: #0f172a !important;
+}
+
+.shop-root.wg-new-ui .wg-hero-acc-panel .exp-travelers-panel {
+  background: #fff !important;
+  color: #0f172a !important;
+  border-radius: 12px !important;
+}
+
+@media (max-width: 767px) {
+  .shop-root.wg-new-ui .wg-hero-acc-panel .exp-form-row {
+    border-radius: 12px !important;
+  }
+  .shop-root.wg-new-ui .wg-hero-acc-panel .exp-input-cell {
+    border-inline-end: 0 !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
+  }
+}
+
+/* WG_ACCORDION_NO_NEWUI_FIX — root may lack .wg-new-ui */
+.wg-hero-acc-modes.wg-hero-dock-modes {
+  background: #13357b !important;
+  background-image: none !important;
+}
+.wg-hero-dock.wg-hero-acc-panel {
+  background: #13357b !important;
+}
+.wg-hero-search-panel .wg-hero-ticket-search.exp-search-link,
+.wg-hero-acc-panel .wg-hero-ticket-search.exp-search-link,
+.wg-hero-search-panel a.wg-hero-ticket-search.exp-search-link,
+.wg-hero-search-panel button.wg-hero-ticket-search.exp-search-link {
+  background: #fbbf24 !important;
+  background-image: none !important;
+  color: #13357b !important;
+  border: 0 !important;
+  border-radius: 12px !important;
+  font-weight: 800 !important;
+}
+.wg-hero-search-panel .wg-hero-ticket-search.exp-search-link:hover:not(:disabled),
+.wg-hero-acc-panel .wg-hero-ticket-search.exp-search-link:hover:not(:disabled) {
+  background: #f59e0b !important;
+  color: #0f172a !important;
+}
+.wg-hero-acc-panel .exp-form-row {
+  background: rgba(8, 28, 72, 0.55) !important;
+  border: 1px solid rgba(251, 191, 36, 0.28) !important;
+  border-radius: 14px !important;
+}
+.wg-hero-acc-panel .exp-input-cell,
+.wg-hero-acc-panel .exp-form-row > .exp-input-cell {
+  background: transparent !important;
+  color: #fff !important;
+  border-color: rgba(255,255,255,0.14) !important;
+}
+.wg-hero-acc-panel .exp-cell-label,
+.wg-hero-acc-panel .shop-ac-inline > span:first-child {
+  color: #fbbf24 !important;
+}
+.wg-hero-acc-panel .exp-input-cell input,
+.wg-hero-acc-panel .exp-input-cell strong,
+.wg-hero-acc-panel .shop-ac-inline input {
+  color: #fff !important;
+}
+.wg-hero-acc-panel .exp-pill-tab.on {
+  background: rgba(251, 191, 36, 0.18) !important;
+  color: #fde68a !important;
+  border-color: #fbbf24 !important;
+}
+
+/* WG_ACCORDION_REF_SHAPE — match agreed screenshot field row */
+.wg-hero-acc-shell {
+  border-radius: 18px !important;
+  overflow: hidden;
+  background: #13357b !important;
+  border: 1px solid rgba(251, 191, 36, 0.35) !important;
+  box-shadow: 0 18px 42px rgba(10, 22, 48, 0.35) !important;
+}
+.wg-hero-acc-modes {
+  border: 0 !important;
+  border-bottom: 1px solid rgba(255,255,255,0.14) !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+.wg-hero-acc-panel.wg-hero-dock {
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  padding: 0.55rem 0.65rem 0.75rem !important;
+}
+.wg-hero-acc-panel.is-open::before { display: none !important; }
+.wg-hero-acc-panel .exp-form-row {
+  display: grid !important;
+  grid-template-columns: minmax(0,1.35fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1.1fr) auto !important;
+  align-items: stretch !important;
+  gap: 0 !important;
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+}
+.wg-hero-acc-panel .exp-form-row.exp-form-flights {
+  grid-template-columns: minmax(0,1.1fr) auto minmax(0,1.1fr) minmax(0,1.35fr) minmax(0,1fr) auto !important;
+}
+.wg-hero-acc-panel .exp-form-row.exp-form-cars {
+  grid-template-columns: minmax(0,1fr) minmax(0,1.2fr) minmax(0,1.2fr) minmax(0,.9fr) minmax(0,.9fr) minmax(0,1fr) auto !important;
+}
+.wg-hero-acc-panel .exp-form-row.exp-form-activities {
+  grid-template-columns: minmax(0,1.3fr) minmax(0,1.2fr) minmax(0,1fr) auto !important;
+}
+.wg-hero-acc-field {
+  display: grid !important;
+  grid-template-columns: auto minmax(0,1fr) auto !important;
+  align-items: center !important;
+  gap: 0.55rem !important;
+  min-height: 4.4rem !important;
+  padding: 0.55rem 0.75rem !important;
+  border: 0 !important;
+  border-inline-end: 1px solid rgba(255,255,255,0.16) !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+}
+.wg-hero-acc-field-ico {
+  width: 1.35rem;
+  height: 1.35rem;
+  flex: 0 0 auto;
+  background: currentColor;
+  color: #fbbf24;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5A2.5 2.5 0 1 1 12 6a2.5 2.5 0 0 1 0 5.5z'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5A2.5 2.5 0 1 1 12 6a2.5 2.5 0 0 1 0 5.5z'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+.wg-hero-acc-field[data-field="checkin"] .wg-hero-acc-field-ico,
+.wg-hero-acc-field[data-field="checkout"] .wg-hero-acc-field-ico,
+.wg-hero-acc-field[data-field="dates"] .wg-hero-acc-field-ico {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M19 4h-1V2h-2v2H8V2H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zm0-12H5V6h14v2z'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M19 4h-1V2h-2v2H8V2H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zm0-12H5V6h14v2z'/%3E%3C/svg%3E");
+}
+.wg-hero-acc-field[data-field="guests"] .wg-hero-acc-field-ico,
+.wg-hero-acc-field[data-field="travelers"] .wg-hero-acc-field-ico {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5C15 14.17 10.33 13 8 13zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5C15 14.17 10.33 13 8 13zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z'/%3E%3C/svg%3E");
+}
+.wg-hero-acc-field-body {
+  min-width: 0;
+  display: grid;
+  gap: 0.12rem;
+}
+.wg-hero-acc-field-chevron {
+  width: 0.7rem;
+  height: 0.7rem;
+  color: rgba(255,255,255,0.7);
+  background: currentColor;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M7.41 8.59 12 13.17l4.59-4.58L18 10l-6 6-6-6z'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M7.41 8.59 12 13.17l4.59-4.58L18 10l-6 6-6-6z'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+.wg-hero-acc-field .exp-cell-label,
+.wg-hero-acc-field .shop-ac-inline > span:first-child,
+.wg-hero-acc-field .exp-travelers-trigger .exp-cell-label {
+  color: #fbbf24 !important;
+  font-size: 0.78rem !important;
+  font-weight: 700 !important;
+}
+.wg-hero-acc-field .exp-date-btn,
+.wg-hero-acc-field .exp-travelers-trigger strong,
+.wg-hero-acc-field .shop-ac-inline input,
+.wg-hero-acc-field strong {
+  color: #fff !important;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  font-size: 0.95rem !important;
+  font-weight: 700 !important;
+  text-align: start !important;
+}
+.wg-hero-acc-field .exp-travelers-trigger {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  gap: 0.12rem !important;
+  width: 100% !important;
+  background: transparent !important;
+  border: 0 !important;
+  padding: 0 !important;
+}
+.wg-hero-acc-search-btn.exp-search-link,
+.wg-hero-acc-panel .wg-hero-ticket-search.exp-search-link {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.4rem !important;
+  min-width: 10.5rem !important;
+  min-height: 3.35rem !important;
+  margin: 0.45rem 0.25rem !important;
+  padding: 0.7rem 1.1rem !important;
+  border-radius: 12px !important;
+  background: #fbbf24 !important;
+  color: #13357b !important;
+  font-weight: 800 !important;
+  white-space: nowrap !important;
+}
+.wg-hero-acc-mode .wg-hero-acc-hint {
+  color: rgba(253, 230, 138, 0.9) !important;
+}
+.wg-hero-acc-mode {
+  border-inline-end: 1px solid rgba(255,255,255,0.14) !important;
+}
+.wg-hero-acc-mode:last-child { border-inline-end: 0 !important; }
+@media (max-width: 767px) {
+  .wg-hero-acc-panel .exp-form-row,
+  .wg-hero-acc-panel .exp-form-row.exp-form-flights,
+  .wg-hero-acc-panel .exp-form-row.exp-form-cars,
+  .wg-hero-acc-panel .exp-form-row.exp-form-activities {
+    grid-template-columns: 1fr !important;
+  }
+  .wg-hero-acc-field {
+    border-inline-end: 0 !important;
+    border-bottom: 1px solid rgba(255,255,255,0.14) !important;
+  }
+}
+
+/* WG_ACCORDION_REF_SHAPE_POLISH */
+.wg-hero-acc-panel.is-open::before,
+.wg-hero-acc-shell[data-mode] .wg-hero-acc-panel.is-open::before {
+  display: none !important;
+  content: none !important;
+}
+.wg-hero-acc-shell.wg-hero-dock-shell {
+  background: #13357b !important;
+  border-radius: 18px !important;
+  overflow: hidden !important;
+  border: 1px solid rgba(251, 191, 36, 0.38) !important;
+}
+.wg-hero-acc-modes.wg-hero-dock-modes {
+  background: transparent !important;
+  background-image: none !important;
+}
+.wg-hero-acc-mode .wg-hero-acc-title {
+  font-size: 1rem !important;
+  font-weight: 800 !important;
+}
+.wg-hero-acc-mode .wg-hero-acc-hint {
+  font-size: 0.72rem !important;
+}
+.wg-hero-acc-mode.on .wg-hero-acc-icon,
+.wg-hero-acc-mode.is-expanded .wg-hero-acc-icon {
+  background: #fbbf24 !important;
+  color: #13357b !important;
+}
+
+/* WG_ACCORDION_AGREEMENT_EXACT */
+.wg-hero-acc-mode {
+  grid-template-columns: auto minmax(0, 1fr) !important;
+  justify-items: start !important;
+  align-items: center !important;
+  gap: 0.7rem !important;
+  padding: 0.95rem 1rem !important;
+}
+.wg-hero-acc-copy {
+  display: grid !important;
+  justify-items: start !important;
+  gap: 0.1rem !important;
+  width: 100%;
+}
+.wg-hero-acc-copy .wg-hero-acc-chevron {
+  margin-top: 0.15rem;
+  color: rgba(255,255,255,0.75) !important;
+  width: 14px !important;
+  height: 14px !important;
+}
+.wg-hero-acc-mode.on .wg-hero-acc-copy .wg-hero-acc-chevron,
+.wg-hero-acc-mode.is-expanded .wg-hero-acc-copy .wg-hero-acc-chevron {
+  color: #fbbf24 !important;
+}
+.wg-hero-acc-mode.on {
+  position: relative;
+}
+.wg-hero-acc-mode.on::after,
+.wg-hero-acc-mode.is-expanded::after {
+  display: none !important;
+}
+/* gold connector caret under active category into fields row */
+.wg-hero-acc-shell.is-open .wg-hero-acc-modes {
+  position: relative;
+}
+.wg-hero-acc-shell.is-open[data-mode="stays"] .wg-hero-acc-modes::after,
+.wg-hero-acc-shell.is-open[data-mode="flights"] .wg-hero-acc-modes::after,
+.wg-hero-acc-shell.is-open[data-mode="cars"] .wg-hero-acc-modes::after,
+.wg-hero-acc-shell.is-open[data-mode="activities"] .wg-hero-acc-modes::after {
+  content: "";
+  position: absolute;
+  bottom: -1px;
+  width: 0;
+  height: 0;
+  border-inline: 8px solid transparent;
+  border-bottom: 9px solid #0b1f4d;
+  z-index: 3;
+}
+.wg-hero-acc-shell.is-open[data-mode="stays"] .wg-hero-acc-modes::after { inset-inline-start: 12.5%; transform: translateX(50%); }
+.wg-hero-acc-shell.is-open[data-mode="flights"] .wg-hero-acc-modes::after { inset-inline-start: 37.5%; transform: translateX(50%); }
+.wg-hero-acc-shell.is-open[data-mode="cars"] .wg-hero-acc-modes::after { inset-inline-start: 62.5%; transform: translateX(50%); }
+.wg-hero-acc-shell.is-open[data-mode="activities"] .wg-hero-acc-modes::after { inset-inline-start: 87.5%; transform: translateX(50%); }
+[dir="rtl"] .wg-hero-acc-shell.is-open[data-mode="stays"] .wg-hero-acc-modes::after { transform: translateX(-50%); }
+[dir="rtl"] .wg-hero-acc-shell.is-open[data-mode="flights"] .wg-hero-acc-modes::after { transform: translateX(-50%); }
+[dir="rtl"] .wg-hero-acc-shell.is-open[data-mode="cars"] .wg-hero-acc-modes::after { transform: translateX(-50%); }
+[dir="rtl"] .wg-hero-acc-shell.is-open[data-mode="activities"] .wg-hero-acc-modes::after { transform: translateX(-50%); }
+
+.wg-hero-acc-panel {
+  background: #0b1f4d !important;
+}
+.wg-hero-acc-shell {
+  background: #13357b !important;
+}
+.wg-hero-acc-title {
+  font-size: 1.05rem !important;
+  font-weight: 800 !important;
+  color: #fff !important;
+}
+.wg-hero-acc-hint {
+  font-size: 0.78rem !important;
+  color: rgba(255,255,255,0.88) !important;
+  font-weight: 500 !important;
+}
+
+/* WG_ACCORDION_PHOTO_MATCH */
+.wg-hero-acc-shell {
+  background: #0a1a3a !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  overflow: visible !important;
+}
+.wg-hero-acc-modes {
+  background: #0d2248 !important;
+  background-image: none !important;
+  border: 0 !important;
+  border-bottom: 1px solid rgba(255,255,255,0.18) !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+.wg-hero-acc-mode {
+  background: transparent !important;
+  min-height: 5.1rem !important;
+}
+.wg-hero-acc-mode.on,
+.wg-hero-acc-mode.is-expanded {
+  background: transparent !important;
+}
+.wg-hero-acc-icon {
+  width: 2.5rem !important;
+  height: 2.5rem !important;
+  background: transparent !important;
+  border: 1.5px solid rgba(255,255,255,0.55) !important;
+  color: #fff !important;
+  box-shadow: none !important;
+}
+.wg-hero-acc-mode.on .wg-hero-acc-icon,
+.wg-hero-acc-mode.is-expanded .wg-hero-acc-icon {
+  background: #c9a227 !important;
+  border-color: #c9a227 !important;
+  color: #0a1a3a !important;
+  box-shadow: none !important;
+}
+.wg-hero-acc-title { color: #fff !important; }
+.wg-hero-acc-hint { color: rgba(255,255,255,0.82) !important; }
+.wg-hero-acc-copy .wg-hero-acc-chevron { color: rgba(255,255,255,0.75) !important; }
+.wg-hero-acc-mode.on .wg-hero-acc-copy .wg-hero-acc-chevron,
+.wg-hero-acc-mode.is-expanded .wg-hero-acc-copy .wg-hero-acc-chevron {
+  color: #c9a227 !important;
+}
+
+.wg-hero-acc-panel.wg-hero-dock {
+  background: #081531 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  padding: 0.35rem 0.25rem 0.45rem !important;
+  position: relative !important;
+}
+/* gold caret pointing up to active tab */
+.wg-hero-acc-panel.is-open::before {
+  display: block !important;
+  content: "" !important;
+  position: absolute !important;
+  top: -8px !important;
+  width: 0 !important;
+  height: 0 !important;
+  border-inline: 8px solid transparent !important;
+  border-bottom: 8px solid #081531 !important;
+  border-top: 0 !important;
+  background: transparent !important;
+  transform: none !important;
+  z-index: 4 !important;
+}
+.wg-hero-acc-shell[data-mode="stays"] .wg-hero-acc-panel.is-open::before { inset-inline-start: 12.5%; margin-inline-start: -8px; }
+.wg-hero-acc-shell[data-mode="flights"] .wg-hero-acc-panel.is-open::before { inset-inline-start: 37.5%; margin-inline-start: -8px; }
+.wg-hero-acc-shell[data-mode="cars"] .wg-hero-acc-panel.is-open::before { inset-inline-start: 62.5%; margin-inline-start: -8px; }
+.wg-hero-acc-shell[data-mode="activities"] .wg-hero-acc-panel.is-open::before { inset-inline-start: 87.5%; margin-inline-start: -8px; }
+
+.wg-hero-acc-panel .exp-form-row {
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+  box-shadow: none !important;
+}
+.wg-hero-acc-field {
+  border-inline-end: 1px solid rgba(255,255,255,0.2) !important;
+  min-height: 4.75rem !important;
+  padding: 0.7rem 0.9rem !important;
+}
+.wg-hero-acc-field .exp-cell-label,
+.wg-hero-acc-field .shop-ac-inline > span:first-child {
+  color: #fff !important;
+  font-size: 0.86rem !important;
+  font-weight: 700 !important;
+}
+.wg-hero-acc-field .exp-date-btn,
+.wg-hero-acc-field .exp-travelers-trigger strong,
+.wg-hero-acc-field .shop-ac-inline input,
+.wg-hero-acc-field strong {
+  color: rgba(255,255,255,0.88) !important;
+  font-weight: 600 !important;
+}
+.wg-hero-acc-field-ico {
+  color: #c9a227 !important;
+}
+.wg-hero-acc-search-btn.exp-search-link,
+.wg-hero-acc-panel .wg-hero-ticket-search.exp-search-link {
+  background: #c9a227 !important;
+  color: #111 !important;
+  border-radius: 10px !important;
+  min-width: 11rem !important;
+  min-height: 3.2rem !important;
+  margin: 0.65rem 0.55rem !important;
+}
+.wg-hero-search-panel .wg-hero-ticket-search.exp-search-link {
+  background: #c9a227 !important;
+  color: #111 !important;
+}
+
+/* WG_COMPARE_FIX — match user comparison photo exactly */
+.wg-hero-acc-shell {
+  background: #0b1c3d !important;
+  border: 0 !important;
+  border-radius: 14px !important;
+  overflow: hidden !important;
+  box-shadow: 0 16px 40px rgba(0,0,0,.35) !important;
+}
+.wg-hero-acc-modes.wg-hero-dock-modes {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0,1fr)) !important;
+  background: #0b1c3d !important;
+  background-image: none !important;
+  border: 0 !important;
+  border-bottom: 1px solid rgba(255,255,255,.14) !important;
+  gap: 0 !important;
+  padding: 0 !important;
+}
+.wg-hero-acc-mode {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+  gap: 0.35rem !important;
+  min-height: 6.2rem !important;
+  padding: 0.85rem 0.5rem 1rem !important;
+  border: 0 !important;
+  border-inline-end: 1px solid rgba(255,255,255,.14) !important;
+  background: transparent !important;
+  grid-template-columns: none !important;
+  position: relative !important;
+}
+.wg-hero-acc-mode:last-child { border-inline-end: 0 !important; }
+.wg-hero-acc-mode.on,
+.wg-hero-acc-mode.is-expanded {
+  background: transparent !important;
+}
+.wg-hero-acc-icon {
+  width: 2.7rem !important;
+  height: 2.7rem !important;
+  margin: 0 auto !important;
+  background: transparent !important;
+  border: 0 !important;
+  color: #fff !important;
+  box-shadow: none !important;
+}
+.wg-hero-acc-mode.on .wg-hero-acc-icon,
+.wg-hero-acc-mode.is-expanded .wg-hero-acc-icon {
+  background: #c9a227 !important;
+  border: 0 !important;
+  color: #0b1c3d !important;
+  border-radius: 999px !important;
+}
+.wg-hero-acc-copy {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 0.15rem !important;
+  width: 100% !important;
+}
+.wg-hero-acc-title {
+  font-size: 1.05rem !important;
+  font-weight: 800 !important;
+  color: #fff !important;
+  line-height: 1.2 !important;
+}
+.wg-hero-acc-hint {
+  font-size: 0.72rem !important;
+  color: rgba(255,255,255,.78) !important;
+  font-weight: 500 !important;
+  line-height: 1.25 !important;
+  white-space: normal !important;
+  max-width: 11rem;
+}
+.wg-hero-acc-copy .wg-hero-acc-chevron {
+  color: rgba(255,255,255,.7) !important;
+  width: 14px !important;
+  height: 14px !important;
+}
+.wg-hero-acc-mode.on .wg-hero-acc-copy .wg-hero-acc-chevron,
+.wg-hero-acc-mode.is-expanded .wg-hero-acc-copy .wg-hero-acc-chevron {
+  color: #c9a227 !important;
+}
+/* gold connector under active tab */
+.wg-hero-acc-mode.on::after,
+.wg-hero-acc-mode.is-expanded::after {
+  display: block !important;
+  content: "" !important;
+  position: absolute !important;
+  left: 50% !important;
+  bottom: -1px !important;
+  transform: translateX(-50%) !important;
+  width: 0 !important;
+  height: 0 !important;
+  border-left: 8px solid transparent !important;
+  border-right: 8px solid transparent !important;
+  border-bottom: 8px solid #08122c !important;
+  border-top: 0 !important;
+  background: none !important;
+  inset-inline: auto !important;
+  z-index: 5 !important;
+}
+
+.wg-hero-acc-panel.wg-hero-dock {
+  background: #08122c !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  position: relative !important;
+}
+.wg-hero-acc-panel.is-open::before { display: none !important; content: none !important; }
+
+.wg-hero-acc-panel .exp-form-row {
+  display: grid !important;
+  grid-template-columns: minmax(0,1.25fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1.1fr) auto !important;
+  align-items: stretch !important;
+  gap: 0 !important;
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+  min-height: 5.1rem !important;
+}
+.wg-hero-acc-panel .exp-form-row.exp-form-flights {
+  grid-template-columns: minmax(0,1.05fr) auto minmax(0,1.05fr) minmax(0,1.2fr) minmax(0,1fr) auto !important;
+}
+.wg-hero-acc-field {
+  display: grid !important;
+  grid-template-columns: auto minmax(0,1fr) auto !important;
+  align-items: center !important;
+  gap: 0.55rem !important;
+  min-height: 5.1rem !important;
+  padding: 0.75rem 0.95rem !important;
+  border: 0 !important;
+  border-inline-end: 1px solid rgba(255,255,255,.12) !important;
+  background: transparent !important;
+  border-radius: 0 !important;
+}
+.wg-hero-acc-field .exp-cell-label,
+.wg-hero-acc-field .shop-ac-inline > span:first-child {
+  color: rgba(255,255,255,.92) !important;
+  font-size: 0.84rem !important;
+  font-weight: 700 !important;
+}
+.wg-hero-acc-field .exp-date-btn,
+.wg-hero-acc-field .exp-travelers-trigger strong,
+.wg-hero-acc-field .shop-ac-inline input,
+.wg-hero-acc-field strong {
+  color: rgba(255,255,255,.82) !important;
+}
+.wg-hero-acc-field-ico { color: #c9a227 !important; }
+.wg-hero-acc-field-chevron {
+  color: rgba(255,255,255,.55) !important;
+  transform: rotate(180deg); /* up caret like reference */
+}
+
+/* search button fills panel height */
+.wg-hero-acc-panel .wg-hero-ticket-search.exp-search-link,
+.wg-hero-acc-search-btn.exp-search-link,
+.wg-hero-search-panel .wg-hero-ticket-search.exp-search-link {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-direction: row !important;
+  gap: 0.45rem !important;
+  align-self: stretch !important;
+  height: auto !important;
+  min-height: 5.1rem !important;
+  margin: 0 !important;
+  border-radius: 0 !important;
+  padding: 0 1.35rem !important;
+  min-width: 11.5rem !important;
+  background: #c9a227 !important;
+  color: #111 !important;
+  font-weight: 800 !important;
+  box-shadow: none !important;
+}
+/* icon after text in DOM appears on left in RTL = icon left of text visually? 
+   In RTL flex row: first child (svg) goes to the right. Reference wants magnifier on left of text.
+   So put text first in markup OR use row-reverse. Using row-reverse here. */
+.wg-hero-acc-panel .wg-hero-ticket-search.exp-search-link,
+.wg-hero-acc-search-btn.exp-search-link {
+  flex-direction: row-reverse !important;
+}
+
+@media (max-width: 767px) {
+  .wg-hero-acc-modes.wg-hero-dock-modes {
+    grid-template-columns: repeat(2, minmax(0,1fr)) !important;
+  }
+  .wg-hero-acc-panel .exp-form-row,
+  .wg-hero-acc-panel .exp-form-row.exp-form-flights {
+    grid-template-columns: 1fr !important;
+  }
+  .wg-hero-acc-field { border-inline-end: 0 !important; border-bottom: 1px solid rgba(255,255,255,.12) !important; }
+  .wg-hero-acc-panel .wg-hero-ticket-search.exp-search-link,
+  .wg-hero-acc-search-btn.exp-search-link {
+    min-height: 3.4rem !important;
+    width: 100% !important;
+    border-radius: 0 !important;
+  }
+}
+
+/* WG_V2_SHIP — approved accordion: icon-left, soft overlap, wide bar, trip pills */
+.wg-hero-search-panel {
+  width: min(1280px, calc(100% - 2rem)) !important;
+}
+
+.wg-hero-acc-shell.wg-hero-dock-shell,
+.wg-hero-acc-shell {
+  display: grid !important;
+  gap: 0 !important;
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  overflow: visible !important;
+}
+
+.wg-hero-acc-modes.wg-hero-dock-modes,
+.wg-hero-acc-modes {
+  position: relative !important;
+  z-index: 3 !important;
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 0 !important;
+  padding: 0 !important;
+  background: #13357b !important;
+  background-image: none !important;
+  border: 1px solid rgba(201, 162, 39, 0.38) !important;
+  border-radius: 16px !important;
+  box-shadow:
+    0 14px 32px rgba(8, 18, 40, 0.35),
+    0 2px 0 rgba(255, 255, 255, 0.06) inset !important;
+  overflow: hidden !important;
+}
+
+.wg-hero-acc-shell.is-open .wg-hero-acc-modes {
+  border-radius: 16px 16px 14px 14px !important;
+  margin-bottom: -12px !important;
+  box-shadow:
+    0 16px 34px rgba(8, 18, 40, 0.42),
+    0 2px 0 rgba(255, 255, 255, 0.06) inset !important;
+}
+
+.wg-hero-dock-mode.wg-hero-acc-mode,
+.wg-hero-acc-mode {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 0.7rem !important;
+  min-height: 5rem !important;
+  padding: 0.85rem 1rem !important;
+  text-align: start !important;
+  direction: ltr !important; /* icon physically left of text */
+  border: 0 !important;
+  border-inline-end: 1px solid rgba(255, 255, 255, 0.14) !important;
+  background: transparent !important;
+  grid-template-columns: none !important;
+  position: relative !important;
+}
+
+.wg-hero-acc-mode:last-child {
+  border-inline-end: 0 !important;
+}
+
+.wg-hero-acc-mode.on,
+.wg-hero-acc-mode.is-expanded {
+  background: rgba(201, 162, 39, 0.1) !important;
+}
+
+.wg-hero-acc-icon {
+  width: 2.75rem !important;
+  height: 2.75rem !important;
+  margin: 0 !important;
+  flex: 0 0 auto !important;
+  border-radius: 999px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: transparent !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.45) !important;
+  color: #fff !important;
+  box-shadow: none !important;
+}
+
+.wg-hero-acc-mode.on .wg-hero-acc-icon,
+.wg-hero-acc-mode.is-expanded .wg-hero-acc-icon {
+  background: #c9a227 !important;
+  border-color: #c9a227 !important;
+  color: #13357b !important;
+  box-shadow: 0 0 0 3px rgba(201, 162, 39, 0.22) !important;
+}
+
+.wg-hero-acc-copy {
+  display: grid !important;
+  gap: 0.12rem !important;
+  min-width: 0 !important;
+  width: auto !important;
+  flex: 1 1 auto !important;
+  direction: rtl !important;
+  text-align: right !important;
+  justify-items: end !important;
+  align-items: end !important;
+}
+
+.wg-hero-acc-title {
+  font-size: 1.05rem !important;
+  font-weight: 800 !important;
+  color: #fff !important;
+  line-height: 1.2 !important;
+}
+
+.wg-hero-acc-hint {
+  font-size: 0.74rem !important;
+  font-weight: 500 !important;
+  color: rgba(255, 255, 255, 0.78) !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  max-width: 100% !important;
+}
+
+.wg-hero-acc-mode > .wg-hero-acc-chevron {
+  flex: 0 0 auto !important;
+  color: rgba(255, 255, 255, 0.7) !important;
+  width: 15px !important;
+  height: 15px !important;
+  margin-inline-start: auto !important;
+}
+
+.wg-hero-acc-mode.on > .wg-hero-acc-chevron,
+.wg-hero-acc-mode.is-expanded > .wg-hero-acc-chevron {
+  color: #c9a227 !important;
+}
+
+.wg-hero-acc-mode.on::after,
+.wg-hero-acc-mode.is-expanded::after,
+.wg-hero-acc-shell.is-open .wg-hero-acc-modes::after {
+  display: none !important;
+  content: none !important;
+}
+
+/* Trip-type pills between modes and fields (flights) */
+.wg-hero-acc-tripstrip {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.45rem;
+  padding: 1.05rem 1rem 0.55rem;
+  margin: 0;
+  background: #13357b;
+  border-inline: 1px solid rgba(201, 162, 39, 0.38);
+  box-shadow: 0 14px 28px rgba(8, 18, 40, 0.28);
+}
+
+.wg-hero-acc-shell.is-open .wg-hero-acc-tripstrip {
+  margin-top: 0;
+  padding-top: 1.25rem;
+}
+
+.wg-hero-acc-trip {
+  appearance: none;
+  border: 1px solid rgba(201, 162, 39, 0.65);
+  background: transparent;
+  color: #fde68a;
+  border-radius: 999px;
+  padding: 0.35rem 0.95rem;
+  font: inherit;
+  font-size: 0.86rem;
+  font-weight: 700;
+  cursor: pointer;
+  line-height: 1.3;
+}
+
+.wg-hero-acc-trip.on {
+  background: #c9a227;
+  border-color: #c9a227;
+  color: #13357b;
+}
+
+.wg-hero-acc-trip:hover:not(.on) {
+  background: rgba(201, 162, 39, 0.12);
+}
+
+.wg-hero-dock.wg-hero-acc-panel,
+.wg-hero-acc-panel.wg-hero-dock {
+  position: relative !important;
+  z-index: 1 !important;
+  background: #13357b !important;
+  border: 1px solid rgba(201, 162, 39, 0.38) !important;
+  border-radius: 16px !important;
+  box-shadow: 0 18px 42px rgba(8, 18, 40, 0.38) !important;
+  padding: 0.75rem 0.75rem 0.85rem !important;
+  overflow: visible !important;
+}
+
+.wg-hero-acc-shell.is-open:has(.wg-hero-acc-tripstrip) .wg-hero-acc-panel {
+  border-radius: 0 0 16px 16px !important;
+  border-top: 0 !important;
+  margin-top: 0 !important;
+  box-shadow: 0 18px 42px rgba(8, 18, 40, 0.38) !important;
+}
+
+.wg-hero-acc-shell.is-open:has(.wg-hero-acc-tripstrip) .wg-hero-acc-tripstrip {
+  border-radius: 0;
+  border-bottom: 0;
+}
+
+.wg-hero-acc-panel.is-open::before {
+  display: none !important;
+  content: none !important;
+}
+
+.wg-hero-acc-panel .exp-flight-toolbar.wg-hero-acc-flight-meta,
+.wg-hero-acc-panel .wg-hero-acc-flight-meta {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  gap: 0.55rem !important;
+  padding: 0.15rem 0.35rem 0.55rem !important;
+}
+
+.wg-hero-acc-panel .exp-form-row {
+  background: rgba(8, 28, 72, 0.35) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 14px !important;
+  padding: 0.15rem !important;
+  min-height: 4.6rem !important;
+}
+
+.wg-hero-acc-field {
+  min-height: 4.4rem !important;
+  padding: 0.65rem 0.85rem !important;
+  border-inline-end: 1px solid rgba(255, 255, 255, 0.12) !important;
+}
+
+.wg-hero-acc-panel .wg-hero-ticket-search.exp-search-link,
+.wg-hero-acc-search-btn.exp-search-link,
+.wg-hero-search-panel .wg-hero-ticket-search.exp-search-link {
+  align-self: center !important;
+  min-height: 3.35rem !important;
+  min-width: 11rem !important;
+  margin: 0.45rem 0.4rem !important;
+  padding: 0.7rem 1.15rem !important;
+  border-radius: 12px !important;
+  background: #c9a227 !important;
+  color: #13357b !important;
+  font-weight: 800 !important;
+  box-shadow: 0 8px 18px rgba(201, 162, 39, 0.28) !important;
+  flex-direction: row-reverse !important;
+}
+
+@media (max-width: 767px) {
+  .wg-hero-search-panel {
+    width: 100% !important;
+  }
+  .wg-hero-acc-modes.wg-hero-dock-modes,
+  .wg-hero-acc-modes {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    margin-bottom: 0 !important;
+  }
+  .wg-hero-acc-shell.is-open .wg-hero-acc-modes {
+    margin-bottom: -8px !important;
+  }
+  .wg-hero-acc-mode {
+    min-height: 4.25rem !important;
+    padding: 0.7rem 0.7rem !important;
+    gap: 0.5rem !important;
+  }
+  .wg-hero-acc-title {
+    font-size: 0.92rem !important;
+  }
+  .wg-hero-acc-hint {
+    font-size: 0.66rem !important;
+    white-space: normal !important;
+  }
+  .wg-hero-acc-tripstrip {
+    padding: 0.95rem 0.75rem 0.45rem !important;
+  }
+  .wg-hero-acc-panel .wg-hero-ticket-search.exp-search-link,
+  .wg-hero-acc-search-btn.exp-search-link {
+    width: calc(100% - 0.8rem) !important;
+    min-height: 3.2rem !important;
+  }
+}
+
+/* WG_REF_MATCH — exact approved mock: one navy shell, soft shadow, clean fields */
+.wg-hero-search-panel {
+  width: min(1240px, calc(100% - 1.5rem)) !important;
+}
+
+.wg-hero-acc-shell.wg-hero-dock-shell,
+.wg-hero-acc-shell {
+  display: grid !important;
+  gap: 0 !important;
+  background: #13357b !important;
+  border: 0 !important;
+  border-radius: 18px !important;
+  overflow: hidden !important;
+  box-shadow:
+    0 22px 48px rgba(6, 14, 32, 0.45),
+    0 2px 0 rgba(255, 255, 255, 0.05) inset !important;
+}
+
+.wg-hero-acc-modes.wg-hero-dock-modes,
+.wg-hero-acc-modes {
+  z-index: 2 !important;
+  margin: 0 !important;
+  background: transparent !important;
+  background-image: none !important;
+  border: 0 !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  overflow: visible !important;
+}
+
+.wg-hero-acc-shell.is-open .wg-hero-acc-modes {
+  margin-bottom: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+.wg-hero-acc-mode {
+  min-height: 5.15rem !important;
+  padding: 0.9rem 1.05rem !important;
+  gap: 0.75rem !important;
+  background: transparent !important;
+  border-inline-end: 1px solid rgba(255, 255, 255, 0.14) !important;
+}
+
+.wg-hero-acc-mode.on,
+.wg-hero-acc-mode.is-expanded {
+  background: rgba(201, 162, 39, 0.08) !important;
+}
+
+.wg-hero-acc-icon {
+  width: 2.85rem !important;
+  height: 2.85rem !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.5) !important;
+  background: transparent !important;
+  color: #fff !important;
+  box-shadow: none !important;
+}
+
+.wg-hero-acc-mode.on .wg-hero-acc-icon,
+.wg-hero-acc-mode.is-expanded .wg-hero-acc-icon {
+  background: #c9a227 !important;
+  border-color: #c9a227 !important;
+  color: #13357b !important;
+  box-shadow: none !important;
+}
+
+.wg-hero-acc-title {
+  font-size: 1.08rem !important;
+  font-weight: 800 !important;
+  color: #fff !important;
+}
+
+.wg-hero-acc-hint {
+  font-size: 0.76rem !important;
+  color: rgba(255, 255, 255, 0.82) !important;
+}
+
+.wg-hero-acc-mode > .wg-hero-acc-chevron {
+  color: rgba(255, 255, 255, 0.72) !important;
+}
+.wg-hero-acc-mode.on > .wg-hero-acc-chevron,
+.wg-hero-acc-mode.is-expanded > .wg-hero-acc-chevron {
+  color: #c9a227 !important;
+}
+
+/* trip pills strip — inside same shell */
+.wg-hero-acc-tripstrip {
+  z-index: 1 !important;
+  justify-content: flex-start !important;
+  gap: 0.5rem !important;
+  padding: 0.85rem 1.1rem 0.55rem !important;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+.wg-hero-acc-trip {
+  border: 1.5px solid #c9a227 !important;
+  background: transparent !important;
+  color: #fde68a !important;
+  border-radius: 999px !important;
+  padding: 0.38rem 1.05rem !important;
+  font-size: 0.88rem !important;
+  font-weight: 700 !important;
+}
+
+.wg-hero-acc-trip.on {
+  background: #c9a227 !important;
+  border-color: #c9a227 !important;
+  color: #13357b !important;
+}
+
+.wg-hero-dock.wg-hero-acc-panel,
+.wg-hero-acc-panel.wg-hero-dock {
+  z-index: 1 !important;
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  padding: 0.35rem 0.55rem 0.7rem !important;
+}
+
+.wg-hero-acc-shell.is-open:has(.wg-hero-acc-tripstrip) .wg-hero-acc-panel,
+.wg-hero-acc-shell.is-open:has(.wg-hero-acc-tripstrip) .wg-hero-acc-tripstrip {
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+/* cabin / direct — quiet navy meta, not white chrome */
+.wg-hero-acc-panel .wg-hero-acc-flight-meta,
+.wg-hero-acc-panel .exp-flight-toolbar.wg-hero-acc-flight-meta {
+  padding: 0.15rem 0.55rem 0.45rem !important;
+  gap: 0.65rem !important;
+}
+
+.wg-hero-acc-panel .exp-cabin-pill,
+.wg-hero-acc-panel .exp-direct-pill {
+  background: rgba(255, 255, 255, 0.06) !important;
+  border: 1px solid rgba(255, 255, 255, 0.16) !important;
+  color: rgba(255, 255, 255, 0.9) !important;
+  border-radius: 999px !important;
+  box-shadow: none !important;
+}
+
+.wg-hero-acc-panel .exp-cabin-pill select {
+  color: #fff !important;
+  background: transparent !important;
+}
+
+.wg-hero-acc-panel .exp-form-row,
+.wg-hero-acc-panel .exp-form-row.exp-form-flights,
+.wg-hero-acc-panel .exp-form-row.exp-form-stays,
+.wg-hero-acc-panel .exp-form-row.exp-form-cars,
+.wg-hero-acc-panel .exp-form-row.exp-form-activities {
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  min-height: 4.85rem !important;
+}
+
+.wg-hero-acc-field {
+  min-height: 4.85rem !important;
+  padding: 0.7rem 0.95rem !important;
+  border: 0 !important;
+  border-inline-end: 1px solid rgba(255, 255, 255, 0.14) !important;
+  background: transparent !important;
+}
+
+.wg-hero-acc-field-ico {
+  color: #c9a227 !important;
+}
+
+.wg-hero-acc-field[data-field="from"] .wg-hero-acc-field-ico,
+.wg-hero-acc-field[data-field="to"] .wg-hero-acc-field-ico,
+.wg-hero-acc-field[data-field="destination"] .wg-hero-acc-field-ico {
+  color: #c9a227 !important;
+}
+
+.wg-hero-acc-field .exp-cell-label,
+.wg-hero-acc-field .shop-ac-inline > span:first-child,
+.wg-hero-acc-field .exp-travelers-trigger .exp-cell-label {
+  color: #c9a227 !important;
+  font-weight: 700 !important;
+  font-size: 0.82rem !important;
+}
+
+.wg-hero-acc-field .exp-date-btn,
+.wg-hero-acc-field .exp-travelers-trigger strong,
+.wg-hero-acc-field .shop-ac-inline input,
+.wg-hero-acc-field strong {
+  color: #fff !important;
+  font-weight: 650 !important;
+}
+
+.wg-hero-acc-panel .wg-hero-ticket-search.exp-search-link,
+.wg-hero-acc-search-btn.exp-search-link,
+.wg-hero-search-panel .wg-hero-ticket-search.exp-search-link {
+  align-self: stretch !important;
+  min-height: 4.85rem !important;
+  min-width: 11.5rem !important;
+  margin: 0 !important;
+  padding: 0 1.25rem !important;
+  border-radius: 14px !important;
+  background: #c9a227 !important;
+  color: #13357b !important;
+  font-weight: 800 !important;
+  box-shadow: none !important;
+  flex-direction: row-reverse !important;
+}
+
+@media (max-width: 767px) {
+  .wg-hero-acc-shell {
+    border-radius: 14px !important;
+  }
+  .wg-hero-acc-panel .wg-hero-ticket-search.exp-search-link,
+  .wg-hero-acc-search-btn.exp-search-link {
+    min-height: 3.25rem !important;
+    width: 100% !important;
+    border-radius: 12px !important;
+  }
+}
+
+/* WG_REF_CLEAN — hide cabin/direct chrome in hero to match approved mock (handlers unchanged) */
+.wg-hero-acc-panel .wg-hero-acc-flight-meta,
+.wg-hero-acc-panel .exp-flight-toolbar.wg-hero-acc-flight-meta {
+  display: none !important;
+}
+
+/* WG_AGREE_FINAL — soft two-row overlap exactly as approved v2 mocks */
+.wg-hero-search-panel {
+  width: min(1220px, calc(100% - 1.25rem)) !important;
+}
+
+.wg-hero-acc-shell.wg-hero-dock-shell,
+.wg-hero-acc-shell {
+  display: grid !important;
+  gap: 0 !important;
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  overflow: visible !important;
+}
+
+/* TOP row — modes */
+.wg-hero-acc-modes.wg-hero-dock-modes,
+.wg-hero-acc-modes {
+  position: relative !important;
+  z-index: 3 !important;
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  background: #13357b !important;
+  background-image: none !important;
+  border: 0 !important;
+  border-radius: 16px !important;
+  box-shadow:
+    0 14px 34px rgba(8, 18, 40, 0.4),
+    0 1px 0 rgba(255, 255, 255, 0.06) inset !important;
+  overflow: hidden !important;
+}
+
+.wg-hero-acc-shell.is-open .wg-hero-acc-modes {
+  border-radius: 16px !important;
+  margin-bottom: -14px !important; /* soft overlap onto bottom */
+  box-shadow:
+    0 18px 36px rgba(8, 18, 40, 0.48),
+    0 1px 0 rgba(255, 255, 255, 0.06) inset !important;
+}
+
+.wg-hero-dock-mode.wg-hero-acc-mode,
+.wg-hero-acc-mode {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 0.72rem !important;
+  min-height: 5.35rem !important;
+  padding: 0.95rem 1rem !important;
+  direction: ltr !important; /* icon physically left of Arabic text */
+  text-align: start !important;
+  background: transparent !important;
+  border: 0 !important;
+  border-inline-end: 1px solid rgba(255, 255, 255, 0.16) !important;
+  box-shadow: none !important;
+}
+
+.wg-hero-acc-mode:last-child { border-inline-end: 0 !important; }
+
+.wg-hero-acc-mode.on,
+.wg-hero-acc-mode.is-expanded {
+  background: rgba(201, 162, 39, 0.12) !important;
+}
+
+.wg-hero-acc-icon {
+  width: 2.9rem !important;
+  height: 2.9rem !important;
+  border-radius: 999px !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.55) !important;
+  background: transparent !important;
+  color: #fff !important;
+  box-shadow: none !important;
+  flex: 0 0 auto !important;
+}
+
+.wg-hero-acc-mode.on .wg-hero-acc-icon,
+.wg-hero-acc-mode.is-expanded .wg-hero-acc-icon {
+  background: #c9a227 !important;
+  border-color: #c9a227 !important;
+  color: #13357b !important;
+  box-shadow: none !important;
+}
+
+.wg-hero-acc-copy {
+  display: grid !important;
+  gap: 0.18rem !important;
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  direction: rtl !important;
+  text-align: right !important;
+  justify-items: end !important;
+}
+
+.wg-hero-acc-title {
+  display: block !important;
+  font-size: 1.12rem !important;
+  font-weight: 800 !important;
+  line-height: 1.2 !important;
+  color: #fff !important;
+}
+
+.wg-hero-acc-hint {
+  display: block !important;
+  font-size: 0.8rem !important;
+  font-weight: 500 !important;
+  line-height: 1.25 !important;
+  color: rgba(255, 255, 255, 0.86) !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  max-width: 100% !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  height: auto !important;
+}
+
+.wg-hero-acc-mode > .wg-hero-acc-chevron {
+  color: rgba(255, 255, 255, 0.75) !important;
+  width: 16px !important;
+  height: 16px !important;
+  flex: 0 0 auto !important;
+  margin-inline-start: auto !important;
+}
+.wg-hero-acc-mode.on > .wg-hero-acc-chevron,
+.wg-hero-acc-mode.is-expanded > .wg-hero-acc-chevron {
+  color: #c9a227 !important;
+}
+
+.wg-hero-acc-mode.on::after,
+.wg-hero-acc-mode.is-expanded::after,
+.wg-hero-acc-panel.is-open::before,
+.wg-hero-acc-shell.is-open .wg-hero-acc-modes::after {
+  display: none !important;
+  content: none !important;
+}
+
+/* Trip pills between rows */
+.wg-hero-acc-tripstrip {
+  position: relative !important;
+  z-index: 2 !important;
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 0.5rem !important;
+  justify-content: flex-start !important;
+  align-items: center !important;
+  margin: 0 !important;
+  padding: 1.35rem 1rem 0.55rem !important;
+  background: #13357b !important;
+  border: 0 !important;
+  border-radius: 16px 16px 0 0 !important;
+  box-shadow: 0 16px 36px rgba(8, 18, 40, 0.34) !important;
+}
+
+.wg-hero-acc-trip {
+  border: 1.5px solid #c9a227 !important;
+  background: transparent !important;
+  color: #fde68a !important;
+  border-radius: 999px !important;
+  padding: 0.4rem 1.1rem !important;
+  font-size: 0.9rem !important;
+  font-weight: 700 !important;
+}
+.wg-hero-acc-trip.on {
+  background: #c9a227 !important;
+  color: #13357b !important;
+}
+
+/* BOTTOM row — fields */
+.wg-hero-dock.wg-hero-acc-panel,
+.wg-hero-acc-panel.wg-hero-dock {
+  position: relative !important;
+  z-index: 1 !important;
+  background: #13357b !important;
+  border: 0 !important;
+  border-radius: 16px !important;
+  box-shadow: 0 20px 44px rgba(8, 18, 40, 0.4) !important;
+  padding: 0.55rem 0.55rem 0.65rem !important;
+  overflow: visible !important;
+}
+
+.wg-hero-acc-shell.is-open:has(.wg-hero-acc-tripstrip) .wg-hero-acc-panel {
+  border-radius: 0 0 16px 16px !important;
+  margin-top: 0 !important;
+  box-shadow: 0 20px 44px rgba(8, 18, 40, 0.4) !important;
+}
+.wg-hero-acc-shell.is-open:has(.wg-hero-acc-tripstrip) .wg-hero-acc-tripstrip {
+  margin-top: 0 !important;
+}
+
+.wg-hero-acc-panel .wg-hero-acc-flight-meta,
+.wg-hero-acc-panel .exp-flight-toolbar.wg-hero-acc-flight-meta {
+  display: none !important;
+}
+
+.wg-hero-acc-panel .exp-form-row,
+.wg-hero-acc-panel .exp-form-row.exp-form-flights,
+.wg-hero-acc-panel .exp-form-row.exp-form-stays,
+.wg-hero-acc-panel .exp-form-row.exp-form-cars,
+.wg-hero-acc-panel .exp-form-row.exp-form-activities {
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  min-height: 4.9rem !important;
+}
+
+.wg-hero-acc-field {
+  min-height: 4.9rem !important;
+  padding: 0.75rem 1rem !important;
+  border: 0 !important;
+  border-inline-end: 1px solid rgba(255, 255, 255, 0.14) !important;
+  background: transparent !important;
+}
+
+.wg-hero-acc-field-ico { color: #c9a227 !important; }
+
+.wg-hero-acc-field .exp-cell-label,
+.wg-hero-acc-field .shop-ac-inline > span:first-child,
+.wg-hero-acc-field .exp-travelers-trigger .exp-cell-label {
+  color: #c9a227 !important;
+  font-size: 0.84rem !important;
+  font-weight: 700 !important;
+}
+
+.wg-hero-acc-field .exp-date-btn,
+.wg-hero-acc-field .exp-travelers-trigger strong,
+.wg-hero-acc-field .shop-ac-inline input,
+.wg-hero-acc-field strong {
+  color: #fff !important;
+  font-weight: 650 !important;
+}
+
+.wg-hero-acc-panel .wg-hero-ticket-search.exp-search-link,
+.wg-hero-acc-search-btn.exp-search-link,
+.wg-hero-search-panel .wg-hero-ticket-search.exp-search-link {
+  align-self: stretch !important;
+  min-height: 4.9rem !important;
+  min-width: 11.75rem !important;
+  margin: 0 !important;
+  padding: 0 1.3rem !important;
+  border-radius: 14px !important;
+  background: #c9a227 !important;
+  color: #13357b !important;
+  font-weight: 800 !important;
+  font-size: 1rem !important;
+  box-shadow: none !important;
+  flex-direction: row-reverse !important;
+}
+
+@media (max-width: 767px) {
+  .wg-hero-acc-modes { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; margin-bottom: 0 !important; }
+  .wg-hero-acc-shell.is-open .wg-hero-acc-modes { margin-bottom: -10px !important; }
+  .wg-hero-acc-hint { white-space: normal !important; font-size: 0.72rem !important; }
+  .wg-hero-acc-panel .wg-hero-ticket-search.exp-search-link,
+  .wg-hero-acc-search-btn.exp-search-link {
+    min-height: 3.3rem !important;
+    width: 100% !important;
+  }
+}
+
+html body .shop-root .wg-hero-acc-hint,
+html body .wg-hero-acc-hint {
+  display: block !important;
+  font-size: 0.82rem !important;
+  line-height: 1.3 !important;
+  color: rgba(255, 255, 255, 0.88) !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  height: auto !important;
+  max-height: none !important;
+}
+html body .shop-root .wg-hero-acc-title,
+html body .wg-hero-acc-title {
+  font-size: 1.12rem !important;
+  color: #fff !important;
+}
+
+/* WG_TUNE — colors, type, width, chevron under text (match agreed mock) */
+:root {
+  --wg-acc-navy: #0d2248;
+  --wg-acc-navy-deep: #0a1a3a;
+  --wg-acc-gold: #c9a227;
+  --wg-acc-gold-bright: #d4af37;
+  --wg-acc-text: #ffffff;
+  --wg-acc-muted: rgba(255, 255, 255, 0.86);
+  --wg-acc-line: rgba(255, 255, 255, 0.16);
+}
+
+html body .wg-hero-search-panel,
+.wg-hero-search-panel {
+  width: min(1380px, calc(100% - 0.75rem)) !important;
+}
+
+html body .wg-hero-acc-shell,
+.wg-hero-acc-shell {
+  background: transparent !important;
+  box-shadow: none !important;
+  border: 0 !important;
+  overflow: visible !important;
+}
+
+html body .wg-hero-acc-modes,
+.wg-hero-acc-modes.wg-hero-dock-modes {
+  background: var(--wg-acc-navy) !important;
+  background-image: none !important;
+  border: 0 !important;
+  border-radius: 16px !important;
+  box-shadow: 0 16px 38px rgba(4, 12, 28, 0.48) !important;
+}
+
+html body .wg-hero-acc-shell.is-open .wg-hero-acc-modes {
+  margin-bottom: -12px !important;
+  border-radius: 16px !important;
+  box-shadow: 0 18px 40px rgba(4, 12, 28, 0.52) !important;
+}
+
+html body .wg-hero-acc-mode,
+.wg-hero-dock-mode.wg-hero-acc-mode {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 0.85rem !important;
+  min-height: 5.6rem !important;
+  padding: 1rem 1.15rem !important;
+  direction: ltr !important;
+  background: transparent !important;
+  border: 0 !important;
+  border-inline-end: 1px solid var(--wg-acc-line) !important;
+}
+
+html body .wg-hero-acc-mode.on,
+html body .wg-hero-acc-mode.is-expanded {
+  background: rgba(201, 162, 39, 0.1) !important;
+}
+
+html body .wg-hero-acc-icon {
+  width: 3rem !important;
+  height: 3rem !important;
+  border-radius: 999px !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.5) !important;
+  background: transparent !important;
+  color: #fff !important;
+  box-shadow: none !important;
+}
+
+html body .wg-hero-acc-mode.on .wg-hero-acc-icon,
+html body .wg-hero-acc-mode.is-expanded .wg-hero-acc-icon {
+  background: var(--wg-acc-gold) !important;
+  border-color: var(--wg-acc-gold) !important;
+  color: var(--wg-acc-navy) !important;
+  box-shadow: none !important;
+}
+
+/* text block + chevron under subtitle (reference placement) */
+html body .wg-hero-acc-copy {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  justify-items: start !important;
+  align-content: center !important;
+  gap: 0.2rem !important;
+  direction: rtl !important;
+  text-align: right !important;
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  width: auto !important;
+}
+
+html body .wg-hero-acc-title {
+  font-size: 1.2rem !important;
+  font-weight: 800 !important;
+  line-height: 1.25 !important;
+  color: var(--wg-acc-text) !important;
+  letter-spacing: 0 !important;
+}
+
+html body .wg-hero-acc-hint {
+  display: block !important;
+  font-size: 0.88rem !important;
+  font-weight: 500 !important;
+  line-height: 1.35 !important;
+  color: var(--wg-acc-muted) !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  max-width: 100% !important;
+  opacity: 1 !important;
+  height: auto !important;
+}
+
+html body .wg-hero-acc-copy .wg-hero-acc-chevron {
+  margin-top: 0.12rem !important;
+  width: 15px !important;
+  height: 15px !important;
+  color: rgba(255, 255, 255, 0.72) !important;
+  justify-self: center !important;
+}
+html body .wg-hero-acc-mode.on .wg-hero-acc-copy .wg-hero-acc-chevron,
+html body .wg-hero-acc-mode.is-expanded .wg-hero-acc-copy .wg-hero-acc-chevron {
+  color: var(--wg-acc-gold) !important;
+}
+
+html body .wg-hero-acc-tripstrip {
+  background: var(--wg-acc-navy) !important;
+  box-shadow: 0 16px 36px rgba(4, 12, 28, 0.4) !important;
+  padding: 1.4rem 1.15rem 0.6rem !important;
+  gap: 0.55rem !important;
+}
+
+html body .wg-hero-acc-trip {
+  border: 1.5px solid var(--wg-acc-gold) !important;
+  color: #f5e6a8 !important;
+  background: transparent !important;
+  font-size: 0.92rem !important;
+  font-weight: 700 !important;
+  padding: 0.42rem 1.15rem !important;
+}
+html body .wg-hero-acc-trip.on {
+  background: var(--wg-acc-gold) !important;
+  border-color: var(--wg-acc-gold) !important;
+  color: var(--wg-acc-navy) !important;
+}
+
+html body .wg-hero-acc-panel.wg-hero-dock,
+html body .wg-hero-dock.wg-hero-acc-panel {
+  background: var(--wg-acc-navy) !important;
+  border: 0 !important;
+  border-radius: 16px !important;
+  box-shadow: 0 20px 44px rgba(4, 12, 28, 0.46) !important;
+  padding: 0.65rem 0.7rem 0.75rem !important;
+}
+
+html body .wg-hero-acc-panel .exp-form-row {
+  min-height: 5.15rem !important;
+  gap: 0 !important;
+  background: transparent !important;
+  border: 0 !important;
+}
+
+html body .wg-hero-acc-field {
+  min-height: 5.15rem !important;
+  padding: 0.85rem 1.15rem !important;
+  border-inline-end: 1px solid var(--wg-acc-line) !important;
+  gap: 0.65rem !important;
+}
+
+html body .wg-hero-acc-field-ico {
+  color: var(--wg-acc-gold) !important;
+  width: 1.35rem !important;
+  height: 1.35rem !important;
+}
+
+html body .wg-hero-acc-field .exp-cell-label,
+html body .wg-hero-acc-field .shop-ac-inline > span:first-child,
+html body .wg-hero-acc-field .exp-travelers-trigger .exp-cell-label {
+  color: var(--wg-acc-gold) !important;
+  font-size: 0.9rem !important;
+  font-weight: 700 !important;
+  line-height: 1.3 !important;
+}
+
+html body .wg-hero-acc-field .exp-date-btn,
+html body .wg-hero-acc-field .exp-travelers-trigger strong,
+html body .wg-hero-acc-field .shop-ac-inline input,
+html body .wg-hero-acc-field strong {
+  color: #fff !important;
+  font-size: 1.02rem !important;
+  font-weight: 700 !important;
+  line-height: 1.35 !important;
+}
+
+html body .wg-hero-acc-panel .wg-hero-ticket-search.exp-search-link,
+html body .wg-hero-acc-search-btn.exp-search-link,
+html body .wg-hero-search-panel .wg-hero-ticket-search.exp-search-link {
+  min-height: 5.15rem !important;
+  min-width: 12.5rem !important;
+  margin: 0 !important;
+  padding: 0 1.4rem !important;
+  border-radius: 14px !important;
+  background: var(--wg-acc-gold) !important;
+  color: var(--wg-acc-navy) !important;
+  font-size: 1.05rem !important;
+  font-weight: 800 !important;
+  box-shadow: none !important;
+  flex-direction: row-reverse !important;
+  gap: 0.5rem !important;
+}
+
+@media (max-width: 1100px) {
+  html body .wg-hero-search-panel {
+    width: min(100%, calc(100% - 0.75rem)) !important;
+  }
+  html body .wg-hero-acc-title { font-size: 1.05rem !important; }
+  html body .wg-hero-acc-hint { font-size: 0.78rem !important; }
+}
+
+/* WG_TUNE2 — more field room, unify gold, hide flex-date chrome clash */
+html body .wg-hero-search-panel {
+  width: min(1420px, calc(100% - 0.5rem)) !important;
+}
+
+html body .wg-hero-acc-modes,
+html body .wg-hero-acc-panel.wg-hero-dock,
+html body .wg-hero-dock.wg-hero-acc-panel,
+html body .wg-hero-acc-tripstrip {
+  background: #0d2248 !important;
+}
+
+html body .wg-hero-acc-field-ico,
+html body .wg-hero-acc-field .exp-cell-label,
+html body .wg-hero-acc-field .shop-ac-inline > span:first-child,
+html body .wg-hero-acc-field .exp-travelers-trigger .exp-cell-label,
+html body .wg-hero-acc-mode.on .wg-hero-acc-copy .wg-hero-acc-chevron,
+html body .wg-hero-acc-mode.is-expanded .wg-hero-acc-copy .wg-hero-acc-chevron {
+  color: #c9a227 !important;
+}
+
+html body .wg-hero-acc-mode.on .wg-hero-acc-icon,
+html body .wg-hero-acc-mode.is-expanded .wg-hero-acc-icon,
+html body .wg-hero-acc-trip.on,
+html body .wg-hero-acc-panel .wg-hero-ticket-search.exp-search-link,
+html body .wg-hero-acc-search-btn.exp-search-link,
+html body .wg-hero-search-panel .wg-hero-ticket-search.exp-search-link {
+  background: #c9a227 !important;
+  border-color: #c9a227 !important;
+  color: #0d2248 !important;
+}
+
+html body .wg-hero-acc-trip:not(.on) {
+  border-color: #c9a227 !important;
+  color: #e8d48a !important;
+}
+
+/* give fields breathing room */
+html body .wg-hero-acc-panel .exp-form-row {
+  min-height: 5.35rem !important;
+}
+html body .wg-hero-acc-field {
+  min-height: 5.35rem !important;
+  padding: 0.9rem 1.35rem !important;
+  min-width: 0 !important;
+}
+html body .wg-hero-acc-field .exp-date-btn,
+html body .wg-hero-acc-field .exp-travelers-trigger strong,
+html body .wg-hero-acc-field .shop-ac-inline input,
+html body .wg-hero-acc-field strong {
+  font-size: 0.98rem !important;
+  font-weight: 700 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  max-width: 100% !important;
+}
+html body .wg-hero-acc-field .exp-cell-label,
+html body .wg-hero-acc-field .shop-ac-inline > span:first-child {
+  font-size: 0.92rem !important;
+}
+
+html body .wg-hero-acc-panel .wg-hero-ticket-search.exp-search-link,
+html body .wg-hero-acc-search-btn.exp-search-link {
+  min-width: 11.75rem !important;
+  min-height: 5.35rem !important;
+  font-size: 1.02rem !important;
+}
+
+/* hide flexible-dates chip in hero (was white clash / crowding) — handler untouched */
+html body .wg-hero-acc-panel .exp-flex-dates {
+  display: none !important;
+}
+
+/* chevron under subtitle, centered on text block */
+html body .wg-hero-acc-copy {
+  justify-items: center !important;
+  text-align: center !important;
+}
+html body .wg-hero-acc-title,
+html body .wg-hero-acc-hint {
+  justify-self: stretch !important;
+  text-align: right !important;
+}
+html body .wg-hero-acc-copy .wg-hero-acc-chevron {
+  justify-self: center !important;
+  margin-top: 0.2rem !important;
+}
+
+/* mode title/hint a bit larger & cleaner */
+html body .wg-hero-acc-title {
+  font-size: 1.22rem !important;
+  font-weight: 800 !important;
+}
+html body .wg-hero-acc-hint {
+  font-size: 0.9rem !important;
+  color: rgba(255, 255, 255, 0.88) !important;
+}
+html body .wg-hero-acc-panel .exp-flex-dates {
+  display: none !important;
+}
+
+/* ============================================================
+   WG_PIXEL_V2 — literal match to user reference JPGs
+   Colors sampled: navy ~#0e182c, gold ~#be9242 / #d4a35d
+   RTL: icons on physical RIGHT; chevron beside title
+   ============================================================ */
+:root {
+  --wg-v2-navy: #0a1121;
+  --wg-v2-navy-soft: #0e182c;
+  --wg-v2-gold: #d4a35d;
+  --wg-v2-gold-deep: #c49654;
+  --wg-v2-ink: #0a1121;
+  --wg-v2-white: #ffffff;
+  --wg-v2-muted: rgba(255, 255, 255, 0.78);
+  --wg-v2-line: rgba(255, 255, 255, 0.18);
+}
+
+html body .wg-hero-search-panel,
+.wg-hero-search-panel {
+  width: min(1420px, calc(100% - 0.5rem)) !important;
+  max-width: 1420px !important;
+}
+
+html body .wg-hero-acc-shell,
+.wg-hero-acc-shell {
+  background: transparent !important;
+  box-shadow: none !important;
+  border: 0 !important;
+  overflow: visible !important;
+}
+
+/* unified navy panels */
+html body .wg-hero-acc-modes,
+html body .wg-hero-acc-modes.wg-hero-dock-modes,
+html body .wg-hero-acc-tripstrip,
+html body .wg-hero-acc-panel.wg-hero-dock,
+html body .wg-hero-dock.wg-hero-acc-panel {
+  background: var(--wg-v2-navy) !important;
+  background-image: none !important;
+  border: 0 !important;
+  color: var(--wg-v2-white) !important;
+}
+
+html body .wg-hero-acc-modes,
+html body .wg-hero-acc-modes.wg-hero-dock-modes {
+  border-radius: 18px !important;
+  box-shadow: 0 18px 42px rgba(4, 10, 24, 0.55) !important;
+  overflow: hidden !important;
+}
+
+html body .wg-hero-acc-shell.is-open .wg-hero-acc-modes {
+  margin-bottom: -14px !important;
+  border-radius: 18px !important;
+  box-shadow: 0 18px 42px rgba(4, 10, 24, 0.55) !important;
+}
+
+html body .wg-hero-acc-tripstrip {
+  margin-top: 0 !important;
+  padding: 1.35rem 1.1rem 0.55rem !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  display: flex !important;
+  justify-content: center !important;
+  gap: 0.55rem !important;
+  flex-wrap: wrap !important;
+}
+
+html body .wg-hero-acc-panel.wg-hero-dock,
+html body .wg-hero-dock.wg-hero-acc-panel {
+  border-radius: 18px !important;
+  box-shadow: 0 20px 46px rgba(4, 10, 24, 0.5) !important;
+  padding: 0.55rem 0.65rem 0.7rem !important;
+}
+
+/* ---- MODE TABS: RTL icon on right, chevron beside title ---- */
+html body .wg-hero-dock-mode.wg-hero-acc-mode,
+html body .wg-hero-acc-mode {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 0.85rem !important;
+  min-height: 5.75rem !important;
+  padding: 1rem 1.2rem !important;
+  direction: rtl !important; /* icon (first) sits on physical right */
+  text-align: right !important;
+  background: transparent !important;
+  border: 0 !important;
+  border-inline-end: 1px solid var(--wg-v2-line) !important;
+  box-shadow: none !important;
+}
+
+html body .wg-hero-acc-mode:last-child {
+  border-inline-end: 0 !important;
+}
+
+html body .wg-hero-acc-mode.on,
+html body .wg-hero-acc-mode.is-expanded {
+  background: rgba(212, 163, 93, 0.08) !important;
+}
+
+html body .wg-hero-acc-icon {
+  width: 2.85rem !important;
+  height: 2.85rem !important;
+  border-radius: 999px !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.55) !important;
+  background: transparent !important;
+  color: #fff !important;
+  box-shadow: none !important;
+  flex: 0 0 auto !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+html body .wg-hero-acc-icon svg {
+  width: 1.35rem !important;
+  height: 1.35rem !important;
+}
+
+html body .wg-hero-acc-mode.on .wg-hero-acc-icon,
+html body .wg-hero-acc-mode.is-expanded .wg-hero-acc-icon {
+  background: var(--wg-v2-gold) !important;
+  border-color: var(--wg-v2-gold) !important;
+  color: var(--wg-v2-ink) !important; /* dark glyph on gold — hotels ref */
+  box-shadow: none !important;
+}
+
+html body .wg-hero-acc-copy {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-start !important; /* in RTL = physical right */
+  justify-content: center !important;
+  gap: 0.18rem !important;
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  direction: rtl !important;
+  text-align: right !important;
+  width: auto !important;
+}
+
+html body .wg-hero-acc-title-row {
+  display: inline-flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: 0.35rem !important;
+  direction: rtl !important; /* title right, chevron to its left */
+}
+
+html body .wg-hero-acc-title {
+  font-size: 1.28rem !important;
+  font-weight: 800 !important;
+  line-height: 1.2 !important;
+  color: #fff !important;
+  letter-spacing: 0 !important;
+}
+
+html body .wg-hero-acc-hint {
+  display: block !important;
+  font-size: 0.86rem !important;
+  font-weight: 500 !important;
+  line-height: 1.35 !important;
+  color: var(--wg-v2-muted) !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  max-width: 100% !important;
+  opacity: 1 !important;
+  height: auto !important;
+  visibility: visible !important;
+}
+
+html body .wg-hero-acc-title-row .wg-hero-acc-chevron,
+html body .wg-hero-acc-copy .wg-hero-acc-chevron {
+  width: 14px !important;
+  height: 14px !important;
+  margin: 0 !important;
+  color: rgba(255, 255, 255, 0.75) !important;
+  flex: 0 0 auto !important;
+  justify-self: unset !important;
+}
+
+html body .wg-hero-acc-mode.on .wg-hero-acc-title-row .wg-hero-acc-chevron,
+html body .wg-hero-acc-mode.is-expanded .wg-hero-acc-title-row .wg-hero-acc-chevron {
+  color: var(--wg-v2-gold) !important;
+}
+
+html body .wg-hero-acc-chevron.open {
+  transform: rotate(180deg) !important;
+}
+
+/* trip pills */
+html body .wg-hero-acc-trip {
+  border: 1.5px solid var(--wg-v2-gold) !important;
+  color: #f0d9a8 !important;
+  background: transparent !important;
+  font-size: 0.92rem !important;
+  font-weight: 700 !important;
+  padding: 0.42rem 1.2rem !important;
+  border-radius: 999px !important;
+}
+html body .wg-hero-acc-trip.on {
+  background: var(--wg-v2-gold) !important;
+  border-color: var(--wg-v2-gold) !important;
+  color: var(--wg-v2-ink) !important;
+}
+
+/* hide cabin/direct in hero — logic kept */
+html body .wg-hero-acc-panel .wg-hero-acc-flight-meta,
+html body .wg-hero-acc-panel .exp-flight-toolbar.wg-hero-acc-flight-meta,
+html body .wg-hero-acc-panel .exp-transfer-toolbar {
+  display: none !important;
+}
+
+/* hide airport swap to match mock field row */
+html body .wg-hero-acc-panel .exp-swap-inline {
+  display: none !important;
+}
+
+html body .wg-hero-acc-panel .exp-dialog,
+html body .wg-hero-acc-panel .exp-unified-card,
+html body .wg-hero-acc-panel .wg-hero-ticket-card,
+html body .wg-hero-acc-panel .wg-hero-dock-card {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+
+html body .wg-hero-acc-panel .exp-form-row {
+  min-height: 5.4rem !important;
+  gap: 0 !important;
+  background: transparent !important;
+  border: 0 !important;
+  align-items: stretch !important;
+}
+
+/* ---- FIELDS: icon RIGHT, chevron LEFT, white labels ---- */
+html body .wg-hero-acc-field {
+  display: grid !important;
+  grid-template-columns: auto minmax(0, 1fr) auto !important;
+  align-items: center !important;
+  gap: 0.7rem !important;
+  min-height: 5.4rem !important;
+  padding: 0.9rem 1.35rem !important;
+  border: 0 !important;
+  border-inline-end: 1px solid var(--wg-v2-line) !important;
+  background: transparent !important;
+  direction: rtl !important; /* ico | body | chevron → ico on right */
+  min-width: 0 !important;
+}
+
+html body .wg-hero-acc-field-ico {
+  width: 1.25rem !important;
+  height: 1.25rem !important;
+  color: var(--wg-v2-gold) !important;
+  background: currentColor !important;
+  flex: 0 0 auto !important;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5A2.5 2.5 0 1 1 12 6a2.5 2.5 0 0 1 0 5.5z'/%3E%3C/svg%3E") center / contain no-repeat !important;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5A2.5 2.5 0 1 1 12 6a2.5 2.5 0 0 1 0 5.5z'/%3E%3C/svg%3E") center / contain no-repeat !important;
+}
+
+html body .wg-hero-acc-field[data-field="checkin"] .wg-hero-acc-field-ico,
+html body .wg-hero-acc-field[data-field="checkout"] .wg-hero-acc-field-ico,
+html body .wg-hero-acc-field[data-field="dates"] .wg-hero-acc-field-ico {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M19 4h-1V2h-2v2H8V2H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zm0-12H5V6h14v2z'/%3E%3C/svg%3E") !important;
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M19 4h-1V2h-2v2H8V2H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zm0-12H5V6h14v2z'/%3E%3C/svg%3E") !important;
+}
+
+html body .wg-hero-acc-field[data-field="guests"] .wg-hero-acc-field-ico,
+html body .wg-hero-acc-field[data-field="travelers"] .wg-hero-acc-field-ico {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5C15 14.17 10.33 13 8 13zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z'/%3E%3C/svg%3E") !important;
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5C15 14.17 10.33 13 8 13zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z'/%3E%3C/svg%3E") !important;
+}
+
+html body .wg-hero-acc-field[data-field="airport"] .wg-hero-acc-field-ico {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z'/%3E%3C/svg%3E") !important;
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z'/%3E%3C/svg%3E") !important;
+}
+
+html body .wg-hero-acc-field[data-field="time"] .wg-hero-acc-field-ico {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67V7z'/%3E%3C/svg%3E") !important;
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67V7z'/%3E%3C/svg%3E") !important;
+}
+
+html body .wg-hero-acc-field-body {
+  min-width: 0 !important;
+  display: grid !important;
+  gap: 0.15rem !important;
+  text-align: right !important;
+}
+
+html body .wg-hero-acc-field-chevron {
+  width: 0.72rem !important;
+  height: 0.72rem !important;
+  color: rgba(255, 255, 255, 0.72) !important;
+  background: currentColor !important;
+  flex: 0 0 auto !important;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M7.41 8.59 12 13.17l4.59-4.58L18 10l-6 6-6-6z'/%3E%3C/svg%3E") center / contain no-repeat !important;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M7.41 8.59 12 13.17l4.59-4.58L18 10l-6 6-6-6z'/%3E%3C/svg%3E") center / contain no-repeat !important;
+}
+
+/* WHITE labels (hotels/flights refs) — not gold */
+html body .wg-hero-acc-field .exp-cell-label,
+html body .wg-hero-acc-field .shop-ac-inline > span:first-child,
+html body .wg-hero-acc-field .exp-travelers-trigger .exp-cell-label,
+html body .wg-hero-acc-field .exp-cell-label {
+  color: rgba(255, 255, 255, 0.92) !important;
+  font-size: 0.78rem !important;
+  font-weight: 600 !important;
+  line-height: 1.25 !important;
+}
+
+html body .wg-hero-acc-field .exp-date-btn,
+html body .wg-hero-acc-field .exp-travelers-trigger strong,
+html body .wg-hero-acc-field .shop-ac-inline input,
+html body .wg-hero-acc-field strong,
+html body .wg-hero-acc-field .exp-time-select {
+  color: #fff !important;
+  font-size: 1.02rem !important;
+  font-weight: 700 !important;
+  line-height: 1.35 !important;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  max-width: 100% !important;
+  text-align: right !important;
+}
+
+html body .wg-hero-acc-panel .exp-flex-dates {
+  display: none !important;
+}
+
+/* CTA */
+html body .wg-hero-acc-panel .wg-hero-ticket-search.exp-search-link,
+html body .wg-hero-acc-search-btn.exp-search-link,
+html body .wg-hero-search-panel .wg-hero-ticket-search.exp-search-link,
+html body .wg-hero-acc-panel .exp-search-link.wg-hero-acc-search-btn {
+  align-self: stretch !important;
+  min-height: 5.4rem !important;
+  min-width: 12.25rem !important;
+  margin: 0 !important;
+  padding: 0 1.35rem !important;
+  border-radius: 14px !important;
+  background: var(--wg-v2-gold) !important;
+  color: var(--wg-v2-ink) !important;
+  font-weight: 800 !important;
+  font-size: 1.05rem !important;
+  box-shadow: none !important;
+  flex-direction: row-reverse !important;
+  gap: 0.45rem !important;
+  border: 0 !important;
+}
+
+@media (max-width: 1100px) {
+  html body .wg-hero-search-panel {
+    width: min(100%, calc(100% - 0.5rem)) !important;
+  }
+  html body .wg-hero-acc-title { font-size: 1.08rem !important; }
+  html body .wg-hero-acc-hint { font-size: 0.78rem !important; }
+}
+
+@media (max-width: 767px) {
+  html body .wg-hero-acc-modes {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+  html body .wg-hero-acc-field {
+    border-inline-end: 0 !important;
+    border-bottom: 1px solid var(--wg-v2-line) !important;
+  }
+  html body .wg-hero-acc-panel .wg-hero-ticket-search.exp-search-link,
+  html body .wg-hero-acc-search-btn.exp-search-link {
+    min-height: 3.4rem !important;
+    width: 100% !important;
+  }
+}
+
+/* WG_PIXEL_V2b — CTA + travelers trigger class fixes */
+html body .wg-hero-acc-search-btn.exp-search-link,
+html body .exp-search-link.wg-hero-acc-search-btn,
+html body .wg-hero-acc-panel .wg-hero-ticket-search.exp-search-link,
+html body .wg-hero-acc-panel .exp-search-link.wg-hero-ticket-search {
+  align-self: stretch !important;
+  min-height: 5.4rem !important;
+  min-width: 12.25rem !important;
+  margin: 0 !important;
+  padding: 0 1.35rem !important;
+  border-radius: 14px !important;
+  background: #d4a35d !important;
+  color: #0a1121 !important;
+  font-weight: 800 !important;
+  font-size: 1.05rem !important;
+  box-shadow: none !important;
+  flex-direction: row-reverse !important;
+  gap: 0.45rem !important;
+  border: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+html body .wg-hero-acc-field .exp-travelers-trigger,
+html body .wg-hero-acc-field .exp-travelers-trigger.wg-hero-acc-field-body {
+  display: grid !important;
+  gap: 0.15rem !important;
+  width: 100% !important;
+  background: transparent !important;
+  border: 0 !important;
+  padding: 0 !important;
+  text-align: right !important;
+  color: inherit !important;
+}
+
+html body .wg-hero-acc-modes {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+}
+
+/* soft overlap when open */
+html body .wg-hero-acc-shell.is-open .wg-hero-acc-modes {
+  position: relative !important;
+  z-index: 2 !important;
+}
+html body .wg-hero-acc-shell.is-open .wg-hero-acc-tripstrip,
+html body .wg-hero-acc-shell.is-open .wg-hero-acc-panel {
+  position: relative !important;
+  z-index: 1 !important;
+}
+
+/* ============================================================
+   WG_TUNE_USER — bigger titles/icons, icon other side,
+   gold chevron under text, full-width trip strip
+   ============================================================ */
+
+/* Mode row: logo on physical LEFT (other side), text on right */
+html body .wg-hero-dock-mode.wg-hero-acc-mode,
+html body .wg-hero-acc-mode {
+  direction: ltr !important; /* icon first → physical left */
+  justify-content: flex-start !important;
+  gap: 1rem !important;
+  min-height: 6.35rem !important;
+  padding: 1.05rem 1.25rem !important;
+}
+
+html body .wg-hero-acc-copy {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-start !important; /* RTL start = physical right */
+  justify-content: center !important;
+  gap: 0.22rem !important;
+  direction: rtl !important;
+  text-align: right !important;
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+}
+
+/* Bigger mode titles */
+html body .wg-hero-acc-title {
+  font-size: 1.55rem !important;
+  font-weight: 800 !important;
+  line-height: 1.2 !important;
+  color: #fff !important;
+}
+
+html body .wg-hero-acc-hint {
+  font-size: 0.9rem !important;
+  font-weight: 500 !important;
+  color: rgba(255, 255, 255, 0.82) !important;
+  text-align: right !important;
+  width: 100% !important;
+}
+
+/* Bigger logo/icon circle on the other side */
+html body .wg-hero-acc-icon {
+  width: 3.65rem !important;
+  height: 3.65rem !important;
+  border-radius: 999px !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.55) !important;
+  flex: 0 0 auto !important;
+  order: 0 !important;
+}
+
+html body .wg-hero-acc-icon svg {
+  width: 1.75rem !important;
+  height: 1.75rem !important;
+}
+
+html body .wg-hero-acc-mode.on .wg-hero-acc-icon,
+html body .wg-hero-acc-mode.is-expanded .wg-hero-acc-icon {
+  background: #d4a35d !important;
+  border-color: #d4a35d !important;
+  color: #0a1121 !important;
+}
+
+/* Gold chevron UNDER the text (not beside title) */
+html body .wg-hero-acc-title-row {
+  display: contents !important;
+}
+
+html body .wg-hero-acc-copy .wg-hero-acc-chevron {
+  display: block !important;
+  width: 16px !important;
+  height: 16px !important;
+  margin: 0.15rem auto 0 !important;
+  color: #d4a35d !important;
+  align-self: center !important;
+  justify-self: center !important;
+  flex: 0 0 auto !important;
+}
+
+html body .wg-hero-acc-mode.on .wg-hero-acc-copy .wg-hero-acc-chevron,
+html body .wg-hero-acc-mode.is-expanded .wg-hero-acc-copy .wg-hero-acc-chevron {
+  color: #d4a35d !important;
+}
+
+html body .wg-hero-acc-chevron.open {
+  transform: rotate(180deg) !important;
+}
+
+/* Trip strip: full width of the bar, pills span the whole row */
+html body .wg-hero-acc-tripstrip {
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 0.65rem !important;
+  padding: 1.15rem 1.1rem 0.65rem !important;
+  justify-content: stretch !important;
+  align-items: stretch !important;
+  flex-wrap: nowrap !important;
+}
+
+html body .wg-hero-acc-trip {
+  width: 100% !important;
+  min-width: 0 !important;
+  justify-content: center !important;
+  text-align: center !important;
+  padding: 0.55rem 0.75rem !important;
+  font-size: 0.98rem !important;
+}
+
+@media (max-width: 767px) {
+  html body .wg-hero-acc-title { font-size: 1.2rem !important; }
+  html body .wg-hero-acc-icon {
+    width: 3rem !important;
+    height: 3rem !important;
+  }
+  html body .wg-hero-acc-icon svg {
+    width: 1.4rem !important;
+    height: 1.4rem !important;
+  }
+  html body .wg-hero-acc-tripstrip {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* trip strip spans full accordion width */
+html body .wg-hero-acc-shell .wg-hero-acc-tripstrip {
+  width: 100% !important;
+  margin-inline: 0 !important;
+  border-radius: 0 !important;
+}
+html body .wg-hero-acc-shell.is-open .wg-hero-acc-modes + .wg-hero-acc-tripstrip {
+  /* connect visually under modes across full width */
+  box-shadow: none !important;
+}
+
+/* WG_TUNE_USER2 — beat shop-root specificity; chevron under text block */
+html body .shop-root .wg-hero-acc-title,
+html body .wg-hero-search-panel .wg-hero-acc-title,
+html body .wg-hero-acc-mode .wg-hero-acc-title,
+html body .wg-hero-acc-title {
+  font-size: 1.65rem !important;
+  font-weight: 800 !important;
+  line-height: 1.2 !important;
+  color: #fff !important;
+}
+
+html body .shop-root .wg-hero-acc-hint,
+html body .wg-hero-acc-mode .wg-hero-acc-hint,
+html body .wg-hero-acc-hint {
+  font-size: 0.92rem !important;
+}
+
+html body .shop-root .wg-hero-acc-icon,
+html body .wg-hero-acc-mode .wg-hero-acc-icon,
+html body .wg-hero-acc-icon {
+  width: 3.75rem !important;
+  height: 3.75rem !important;
+}
+
+html body .shop-root .wg-hero-acc-icon svg,
+html body .wg-hero-acc-icon svg {
+  width: 1.85rem !important;
+  height: 1.85rem !important;
+}
+
+/* Shrink text stack so gold chevron centers under the words */
+html body .shop-root .wg-hero-acc-copy,
+html body .wg-hero-acc-mode .wg-hero-acc-copy,
+html body .wg-hero-acc-copy {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  width: max-content !important;
+  max-width: 100% !important;
+  margin-left: auto !important; /* push block to the right in LTR mode cell */
+  margin-right: 0 !important;
+  direction: rtl !important;
+  text-align: center !important;
+  gap: 0.2rem !important;
+  flex: 0 1 auto !important;
+}
+
+html body .wg-hero-acc-copy .wg-hero-acc-title,
+html body .wg-hero-acc-copy .wg-hero-acc-hint {
+  text-align: center !important;
+  width: auto !important;
+}
+
+html body .shop-root .wg-hero-acc-copy .wg-hero-acc-chevron,
+html body .wg-hero-acc-copy .wg-hero-acc-chevron {
+  color: #d4a35d !important;
+  fill: #d4a35d !important;
+  margin: 0.2rem 0 0 !important;
+  align-self: center !important;
+  width: 18px !important;
+  height: 18px !important;
+}
+
+/* Icon stays on LEFT (other side) */
+html body .shop-root .wg-hero-acc-mode,
+html body .wg-hero-acc-mode {
+  direction: ltr !important;
+}
+
+/* Full-width trip row */
+html body .shop-root .wg-hero-acc-tripstrip,
+html body .wg-hero-acc-shell .wg-hero-acc-tripstrip,
+html body .wg-hero-acc-tripstrip {
+  width: 100% !important;
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 0.65rem !important;
+  padding-inline: 1.1rem !important;
+}
+
+html body .shop-root .wg-hero-acc-trip,
+html body .wg-hero-acc-trip {
+  width: 100% !important;
+}
+
+/* WG_TUNE_CENTER — bigger titles, logo beside text, centered in cell */
+html body .shop-root .wg-hero-acc-mode,
+html body .wg-hero-dock-mode.wg-hero-acc-mode,
+html body .wg-hero-acc-mode {
+  display: flex !important;
+  flex-direction: row !important;
+  direction: ltr !important;
+  justify-content: center !important;
+  align-items: center !important;
+  gap: 0.85rem !important;
+  min-height: 6.6rem !important;
+  padding: 1rem 0.85rem !important;
+  text-align: center !important;
+}
+
+html body .shop-root .wg-hero-acc-icon,
+html body .wg-hero-acc-mode .wg-hero-acc-icon,
+html body .wg-hero-acc-icon {
+  width: 4rem !important;
+  height: 4rem !important;
+  flex: 0 0 auto !important;
+  margin: 0 !important;
+}
+
+html body .shop-root .wg-hero-acc-icon svg,
+html body .wg-hero-acc-icon svg {
+  width: 2rem !important;
+  height: 2rem !important;
+}
+
+html body .shop-root .wg-hero-acc-copy,
+html body .wg-hero-acc-mode .wg-hero-acc-copy,
+html body .wg-hero-acc-copy {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: max-content !important;
+  max-width: calc(100% - 5rem) !important;
+  margin: 0 !important;
+  direction: rtl !important;
+  text-align: center !important;
+  gap: 0.18rem !important;
+  flex: 0 1 auto !important;
+}
+
+html body .shop-root .wg-hero-acc-title,
+html body .wg-hero-search-panel .wg-hero-acc-title,
+html body .wg-hero-acc-mode .wg-hero-acc-title,
+html body .wg-hero-acc-title {
+  font-size: 1.85rem !important;
+  font-weight: 800 !important;
+  line-height: 1.15 !important;
+  text-align: center !important;
+  color: #fff !important;
+}
+
+html body .shop-root .wg-hero-acc-hint,
+html body .wg-hero-acc-mode .wg-hero-acc-hint,
+html body .wg-hero-acc-hint {
+  font-size: 0.95rem !important;
+  text-align: center !important;
+  width: auto !important;
+  max-width: 14rem !important;
+}
+
+html body .shop-root .wg-hero-acc-copy .wg-hero-acc-chevron,
+html body .wg-hero-acc-copy .wg-hero-acc-chevron {
+  color: #d4a35d !important;
+  margin: 0.15rem 0 0 !important;
+  align-self: center !important;
+  width: 18px !important;
+  height: 18px !important;
+}
+
+@media (max-width: 1100px) {
+  html body .shop-root .wg-hero-acc-title,
+  html body .wg-hero-acc-title {
+    font-size: 1.45rem !important;
+  }
+  html body .shop-root .wg-hero-acc-icon,
+  html body .wg-hero-acc-icon {
+    width: 3.35rem !important;
+    height: 3.35rem !important;
+  }
+}
+
+@media (max-width: 767px) {
+  html body .shop-root .wg-hero-acc-title,
+  html body .wg-hero-acc-title {
+    font-size: 1.25rem !important;
+  }
+}
+
+/* ============================================================
+   WG_FINAL_CENTER — RTL logo beside title, centered cell, big type
+   ============================================================ */
+html body .shop-root .wg-hero-acc-mode,
+html body .wg-hero-dock-mode.wg-hero-acc-mode,
+html body .wg-hero-acc-mode {
+  display: flex !important;
+  flex-direction: row !important;
+  direction: rtl !important; /* icon first in DOM → physical RIGHT */
+  justify-content: center !important;
+  align-items: center !important;
+  gap: 0.9rem !important;
+  min-height: 7rem !important;
+  padding: 1.05rem 0.9rem !important;
+  text-align: center !important;
+}
+
+html body .shop-root .wg-hero-acc-icon,
+html body .wg-hero-acc-mode .wg-hero-acc-icon,
+html body .wg-hero-acc-icon {
+  width: 4.25rem !important;
+  height: 4.25rem !important;
+  flex: 0 0 auto !important;
+  margin: 0 !important;
+  order: 0 !important;
+}
+
+html body .shop-root .wg-hero-acc-icon svg,
+html body .wg-hero-acc-icon svg {
+  width: 2.1rem !important;
+  height: 2.1rem !important;
+}
+
+html body .shop-root .wg-hero-acc-copy,
+html body .wg-hero-acc-mode .wg-hero-acc-copy,
+html body .wg-hero-acc-copy {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: max-content !important;
+  max-width: min(100%, 13.5rem) !important;
+  margin: 0 !important;
+  direction: rtl !important;
+  text-align: center !important;
+  gap: 0.2rem !important;
+  flex: 0 1 auto !important;
+}
+
+html body .shop-root .wg-hero-acc-title,
+html body .wg-hero-search-panel .wg-hero-acc-title,
+html body .wg-hero-acc-mode .wg-hero-acc-title,
+html body .wg-hero-acc-title {
+  font-size: 2rem !important;
+  font-weight: 800 !important;
+  line-height: 1.15 !important;
+  text-align: center !important;
+  color: #fff !important;
+  letter-spacing: 0 !important;
+}
+
+html body .shop-root .wg-hero-acc-hint,
+html body .wg-hero-acc-mode .wg-hero-acc-hint,
+html body .wg-hero-acc-hint {
+  font-size: 0.95rem !important;
+  font-weight: 500 !important;
+  line-height: 1.3 !important;
+  text-align: center !important;
+  color: rgba(255, 255, 255, 0.84) !important;
+  width: auto !important;
+  max-width: 13rem !important;
+}
+
+html body .shop-root .wg-hero-acc-copy .wg-hero-acc-chevron,
+html body .wg-hero-acc-copy .wg-hero-acc-chevron {
+  color: #d4a35d !important;
+  fill: currentColor !important;
+  width: 18px !important;
+  height: 18px !important;
+  margin: 0.2rem 0 0 !important;
+  align-self: center !important;
+}
+
+/* Trip strip: full bleed equal columns */
+html body .shop-root .wg-hero-acc-tripstrip,
+html body .wg-hero-acc-shell .wg-hero-acc-tripstrip,
+html body .wg-hero-acc-tripstrip {
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 0.75rem !important;
+  padding: 1.05rem 1rem 0.7rem !important;
+  margin: 0 !important;
+}
+
+html body .shop-root .wg-hero-acc-trip,
+html body .wg-hero-acc-trip {
+  width: 100% !important;
+  min-width: 0 !important;
+  min-height: 2.75rem !important;
+  justify-content: center !important;
+  text-align: center !important;
+  font-size: 1.02rem !important;
+  font-weight: 700 !important;
+  border-radius: 999px !important;
+}
+
+@media (max-width: 1100px) {
+  html body .shop-root .wg-hero-acc-title,
+  html body .wg-hero-acc-title { font-size: 1.45rem !important; }
+  html body .shop-root .wg-hero-acc-icon,
+  html body .wg-hero-acc-icon { width: 3.4rem !important; height: 3.4rem !important; }
+}
+@media (max-width: 767px) {
+  html body .shop-root .wg-hero-acc-title,
+  html body .wg-hero-acc-title { font-size: 1.25rem !important; }
+  html body .shop-root .wg-hero-acc-tripstrip {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* ============================================================
+   WG_COMPACT_V3 — smaller tabs, icon after title (no circle),
+   overflow for dropdowns, travelers popover above + aligned
+   ============================================================ */
+
+html body .wg-hero-acc-shell,
+html body .shop-root .wg-hero-acc-shell,
+html body .wg-hero-ticket-shell.wg-hero-acc-shell {
+  overflow: visible !important;
+  z-index: 40 !important;
+}
+
+html body .wg-hero-acc-modes,
+html body .shop-root .wg-hero-acc-modes {
+  overflow: visible !important;
+  min-height: 0 !important;
+}
+
+html body .wg-hero-acc-panel,
+html body .wg-hero-dock.wg-hero-acc-panel,
+html body .shop-root .wg-hero-acc-panel,
+html body .wg-hero-acc-panel .exp-dialog,
+html body .wg-hero-acc-panel .exp-unified-card,
+html body .wg-hero-acc-panel .exp-form-row,
+html body .wg-hero-acc-field,
+html body .exp-input-cell.wg-hero-acc-field {
+  overflow: visible !important;
+}
+
+html body .shop-root .wg-hero-acc-mode,
+html body .wg-hero-dock-mode.wg-hero-acc-mode,
+html body .wg-hero-acc-mode {
+  display: flex !important;
+  flex-direction: row !important;
+  direction: rtl !important;
+  justify-content: center !important;
+  align-items: center !important;
+  gap: 0.35rem !important;
+  min-height: 3.35rem !important;
+  max-height: none !important;
+  padding: 0.55rem 0.65rem !important;
+  text-align: center !important;
+}
+
+html body .shop-root .wg-hero-acc-copy,
+html body .wg-hero-acc-mode .wg-hero-acc-copy,
+html body .wg-hero-acc-copy {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.1rem !important;
+  width: auto !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  direction: rtl !important;
+  text-align: center !important;
+  flex: 0 1 auto !important;
+}
+
+html body .wg-hero-acc-title-row {
+  display: inline-flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.4rem !important;
+  direction: rtl !important; /* title then icon → icon after the word */
+}
+
+html body .shop-root .wg-hero-acc-title,
+html body .wg-hero-search-panel .wg-hero-acc-title,
+html body .wg-hero-acc-mode .wg-hero-acc-title,
+html body .wg-hero-acc-title {
+  font-size: 1.05rem !important;
+  font-weight: 800 !important;
+  line-height: 1.2 !important;
+  text-align: center !important;
+  color: #fff !important;
+  letter-spacing: 0 !important;
+}
+
+html body .shop-root .wg-hero-acc-hint,
+html body .wg-hero-acc-mode .wg-hero-acc-hint,
+html body .wg-hero-acc-hint {
+  font-size: 0.72rem !important;
+  font-weight: 500 !important;
+  line-height: 1.25 !important;
+  color: rgba(255, 255, 255, 0.78) !important;
+  max-width: 11rem !important;
+  text-align: center !important;
+}
+
+/* Logo after word, NO circle */
+html body .shop-root .wg-hero-acc-icon,
+html body .wg-hero-acc-mode .wg-hero-acc-icon,
+html body .wg-hero-acc-title-row .wg-hero-acc-icon,
+html body .wg-hero-acc-icon {
+  width: auto !important;
+  height: auto !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: #fff !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex: 0 0 auto !important;
+  order: 0 !important;
+}
+
+html body .shop-root .wg-hero-acc-icon svg,
+html body .wg-hero-acc-icon svg {
+  width: 1.15rem !important;
+  height: 1.15rem !important;
+}
+
+html body .wg-hero-acc-mode.on .wg-hero-acc-icon,
+html body .wg-hero-acc-mode.is-expanded .wg-hero-acc-icon {
+  background: transparent !important;
+  border: 0 !important;
+  color: #d4a35d !important;
+}
+
+html body .wg-hero-acc-copy .wg-hero-acc-chevron,
+html body .wg-hero-acc-mode .wg-hero-acc-chevron {
+  width: 14px !important;
+  height: 14px !important;
+  margin: 0.05rem 0 0 !important;
+  color: #d4a35d !important;
+  align-self: center !important;
+}
+
+/* Autocomplete menus above content below */
+html body .wg-hero-acc-panel .prc-suggest,
+html body .wg-hero-acc-panel .exp-ac-menu,
+html body .wg-hero-acc-field .prc-suggest,
+html body .wg-hero-acc-field .exp-ac-menu,
+html body .exp-input-cell .prc-suggest,
+html body .exp-input-cell .exp-ac-menu,
+html body .shop-ac .prc-suggest,
+html body .shop-ac .exp-ac-menu {
+  position: absolute !important;
+  top: auto !important;
+  bottom: calc(100% + 6px) !important;
+  inset-inline-start: 0 !important;
+  inset-inline-end: auto !important;
+  z-index: 5000 !important;
+  max-height: min(50vh, 280px) !important;
+  overflow-y: auto !important;
+  background: #fff !important;
+  color: #0f172a !important;
+  border-radius: 12px !important;
+  box-shadow: 0 16px 40px rgba(10, 22, 48, 0.28) !important;
+  min-width: min(100%, 280px) !important;
+  width: max(100%, 260px) !important;
+}
+
+/* Travelers / guests popover: above field, aligned to travelers cell */
+html body .wg-hero-acc-panel .exp-travelers-panel,
+html body .exp-cell-travelers .exp-travelers-panel,
+html body .wg-hero-acc-field[data-field="travelers"] .exp-travelers-panel,
+html body .wg-hero-acc-field[data-field="guests"] .exp-travelers-panel,
+html body .shop-root .wg-hero-acc-panel .exp-travelers-panel {
+  position: absolute !important;
+  top: auto !important;
+  bottom: calc(100% + 8px) !important;
+  inset-inline-start: auto !important;
+  inset-inline-end: 0 !important;
+  left: auto !important;
+  right: 0 !important;
+  z-index: 5100 !important;
+  margin: 0 !important;
+  min-width: 280px !important;
+  max-width: min(92vw, 340px) !important;
+  background: #fff !important;
+  color: #0f172a !important;
+  border-radius: 12px !important;
+  box-shadow: 0 16px 40px rgba(10, 22, 48, 0.28) !important;
+}
+
+html body .exp-cell-travelers,
+html body .wg-hero-acc-field[data-field="travelers"],
+html body .wg-hero-acc-field[data-field="guests"] {
+  position: relative !important;
+  overflow: visible !important;
+  z-index: 30 !important;
+}
+
+html body .wg-hero-acc-field[data-field="destination"],
+html body .wg-hero-acc-field[data-field="from"],
+html body .wg-hero-acc-field[data-field="to"],
+html body .wg-hero-acc-field[data-field="airport"],
+html body .wg-hero-acc-field[data-field="address"] {
+  position: relative !important;
+  z-index: 20 !important;
+  overflow: visible !important;
+}
+
+html body .wg-hero-search-panel,
+html body .wg-travela-hero,
+html body .shop-root .wg-hero-search-panel {
+  overflow: visible !important;
+  z-index: 35 !important;
+}
+
+/* Compact trip strip */
+html body .wg-hero-acc-tripstrip,
+html body .shop-root .wg-hero-acc-tripstrip {
+  padding: 0.55rem 0.75rem 0.35rem !important;
+  gap: 0.45rem !important;
+}
+
+html body .wg-hero-acc-trip,
+html body .shop-root .wg-hero-acc-trip {
+  min-height: 2.15rem !important;
+  font-size: 0.88rem !important;
+  padding: 0.35rem 0.55rem !important;
+}
+
+html body .wg-hero-acc-panel.wg-hero-dock,
+html body .wg-hero-dock.wg-hero-acc-panel {
+  padding: 0.45rem 0.55rem 0.55rem !important;
+}
+
+@media (max-width: 767px) {
+  html body .shop-root .wg-hero-acc-title,
+  html body .wg-hero-acc-title {
+    font-size: 0.95rem !important;
+  }
+  html body .shop-root .wg-hero-acc-mode,
+  html body .wg-hero-acc-mode {
+    min-height: 3.1rem !important;
+    padding: 0.45rem 0.4rem !important;
+  }
+  html body .wg-hero-acc-panel .prc-suggest,
+  html body .wg-hero-acc-panel .exp-ac-menu,
+  html body .exp-cell-travelers .exp-travelers-panel {
+    inset-inline: 0 !important;
+    width: 100% !important;
+  }
+}
+
+
+/* WG_OVERLAY_FIX — ensure suggest/guests escape clipping */
+html body .wg-hero-acc-shell,
+html body .wg-hero-acc-shell.is-open,
+html body .wg-hero-ticket-shell,
+html body .wg-hero-dock-shell,
+html body .wg-hero-search-panel,
+html body .wg-travela-hero,
+html body .wg-hero-acc-panel,
+html body .wg-hero-acc-panel .exp-dialog,
+html body .wg-hero-acc-panel .exp-unified-card,
+html body .wg-hero-acc-panel .exp-form-row,
+html body .shop-ac,
+html body .shop-ac-inline,
+html body .exp-ac-field {
+  overflow: visible !important;
+}
+
+html body .shop-ac,
+html body .shop-ac-inline,
+html body .exp-ac-field,
+html body .exp-input-cell,
+html body .wg-hero-acc-field {
+  position: relative !important;
+}
+
+html body .prc-suggest.exp-ac-menu,
+html body .exp-ac-menu.prc-suggest {
+  position: absolute !important;
+  top: auto !important;
+  bottom: calc(100% + 8px) !important;
+  inset-inline-start: 0 !important;
+  z-index: 8000 !important;
+  display: grid !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+  background: #fff !important;
+  color: #0f172a !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 12px !important;
+  box-shadow: 0 18px 44px rgba(10, 22, 48, 0.32) !important;
+  max-height: min(52vh, 300px) !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  min-width: 260px !important;
+  width: max(100%, 260px) !important;
+}
+
+html body .exp-travelers-panel {
+  position: absolute !important;
+  top: auto !important;
+  bottom: calc(100% + 8px) !important;
+  inset-inline-end: 0 !important;
+  inset-inline-start: auto !important;
+  z-index: 8100 !important;
+  pointer-events: auto !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  background: #fff !important;
+  color: #0f172a !important;
+}
+
+
+/* ============================================================
+   WG_FORCE_COMPACT — last word: row title+icon, no circle, short tabs,
+   guests hit-area, overlays glued to fields
+   ============================================================ */
+html body .wg-hero-acc-title-row,
+html body .shop-root .wg-hero-acc-title-row,
+html body .wg-hero-acc-mode .wg-hero-acc-title-row {
+  display: inline-flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.4rem !important;
+  direction: rtl !important;
+}
+
+html body .shop-root .wg-hero-dock-mode.wg-hero-acc-mode,
+html body .shop-root .wg-hero-acc-mode,
+html body .wg-hero-dock-mode.wg-hero-acc-mode,
+html body .wg-hero-acc-mode {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-height: 3.25rem !important;
+  height: auto !important;
+  max-height: 4.25rem !important;
+  padding: 0.45rem 0.55rem !important;
+  gap: 0.25rem !important;
+}
+
+html body .shop-root .wg-hero-acc-copy,
+html body .wg-hero-acc-mode .wg-hero-acc-copy,
+html body .wg-hero-acc-copy {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.08rem !important;
+}
+
+html body .shop-root .wg-hero-acc-title,
+html body .wg-hero-acc-title {
+  font-size: 1rem !important;
+  line-height: 1.15 !important;
+  font-weight: 800 !important;
+}
+
+html body .shop-root .wg-hero-acc-hint,
+html body .wg-hero-acc-hint {
+  font-size: 0.7rem !important;
+  line-height: 1.2 !important;
+  max-width: 10.5rem !important;
+}
+
+html body .shop-root .wg-hero-acc-icon,
+html body .wg-hero-acc-mode .wg-hero-acc-icon,
+html body .wg-hero-acc-title-row .wg-hero-acc-icon,
+html body .wg-hero-acc-icon,
+html body .wg-hero-acc-mode.on .wg-hero-acc-icon,
+html body .wg-hero-acc-mode.is-expanded .wg-hero-acc-icon {
+  width: 1.2rem !important;
+  height: 1.2rem !important;
+  min-width: 1.2rem !important;
+  min-height: 1.2rem !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  display: inline-flex !important;
+  color: #fff !important;
+}
+
+html body .wg-hero-acc-mode.on .wg-hero-acc-icon,
+html body .wg-hero-acc-mode.is-expanded .wg-hero-acc-icon {
+  color: #d4a35d !important;
+}
+
+html body .wg-hero-acc-icon svg {
+  width: 1.15rem !important;
+  height: 1.15rem !important;
+}
+
+/* Guests/travelers: whole cell is the hit target */
+html body .exp-cell-travelers.wg-hero-acc-field,
+html body .wg-hero-acc-field[data-field="travelers"],
+html body .wg-hero-acc-field[data-field="guests"] {
+  position: relative !important;
+  overflow: visible !important;
+  z-index: 40 !important;
+}
+
+html body .exp-cell-travelers .exp-travelers-panel,
+html body .wg-hero-acc-field[data-field="travelers"] .exp-travelers-panel,
+html body .wg-hero-acc-field[data-field="guests"] .exp-travelers-panel,
+html body .shop-root.wg-new-ui .wg-hero-acc-panel .exp-travelers-panel,
+html body .shop-root.wg-new-ui .wg-hero-search-panel .exp-travelers-panel {
+  position: absolute !important;
+  top: auto !important;
+  bottom: calc(100% + 8px) !important;
+  inset-inline-end: 0 !important;
+  inset-inline-start: auto !important;
+  left: auto !important;
+  right: auto !important;
+  margin: 0 !important;
+  z-index: 9000 !important;
+  display: grid !important;
+}
+
+/* Suggest glued to the input box, not the whole shell */
+html body .shop-ac,
+html body .shop-ac-inline,
+html body .exp-ac-field {
+  position: relative !important;
+  overflow: visible !important;
+}
+
+html body .shop-ac > .prc-suggest,
+html body .shop-ac > .exp-ac-menu,
+html body .exp-ac-field > .prc-suggest,
+html body .exp-ac-field > .exp-ac-menu {
+  position: absolute !important;
+  top: auto !important;
+  bottom: calc(100% + 6px) !important;
+  inset-inline-start: 0 !important;
+  inset-inline-end: auto !important;
+  z-index: 9000 !important;
+}

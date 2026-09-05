@@ -114,7 +114,7 @@ const PRODUCT_KEYS: Array<{
 function ModeGlyph({ mode }: { mode: Mode }) {
   if (mode === "stays") {
     return (
-      <svg viewBox="0 0 24 24" width="28" height="28" aria-hidden>
+      <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden>
         <path
           fill="currentColor"
           d="M12 7V3H2v18h20V7H12zM6 19H4v-2h2v2zm0-4H4v-2h2v2zm0-4H4V9h2v2zm0-4H4V5h2v2zm4 12H8v-2h2v2zm0-4H8v-2h2v2zm0-4H8V9h2v2zm0-4H8V5h2v2zm10 12h-8v-2h2v-2h-2v-2h2v-2h-2V9h8v10zm-4-6h2v2h-2v-2zm0 4h2v2h-2v-2z"
@@ -124,7 +124,7 @@ function ModeGlyph({ mode }: { mode: Mode }) {
   }
   if (mode === "flights") {
     return (
-      <svg viewBox="0 0 24 24" width="28" height="28" aria-hidden>
+      <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden>
         <path
           fill="currentColor"
           d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"
@@ -134,7 +134,7 @@ function ModeGlyph({ mode }: { mode: Mode }) {
   }
   if (mode === "cars") {
     return (
-      <svg viewBox="0 0 24 24" width="28" height="28" aria-hidden>
+      <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden>
         <path
           fill="currentColor"
           d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"
@@ -143,7 +143,7 @@ function ModeGlyph({ mode }: { mode: Mode }) {
     );
   }
   return (
-    <svg viewBox="0 0 24 24" width="28" height="28" aria-hidden>
+    <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden>
       <path
         fill="currentColor"
         d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 2c4.41 0 8 3.59 8 8s-3.59 8-8 8-8-3.59-8-8 3.59-8 8-8zm1.5 3.5-5 2-2 5 5-2 2-5zm-2.2 3.3 1.4 1.4-2.5 1-1-2.5 2.1-0.9z"
@@ -241,8 +241,9 @@ export function ShopHeroBanner(props: Props) {
   const [travelersOpen, setTravelersOpen] = useState(false);
   const [occError, setOccError] = useState("");
   const [slideIdx, setSlideIdx] = useState(0);
-  /** Accordion panel open — visual only; search handlers unchanged */
-  const [dockOpen, setDockOpen] = useState(true);
+  /** Accordion panel open — visual only; search handlers unchanged. Hidden until chevron/tab opens it. */
+  const [dockOpen, setDockOpen] = useState(false);
+  const travelersWrapRef = useRef<HTMLDivElement | null>(null);
   const infants = props.infants ?? 0;
   const { locale, t } = useShopI18n();
   const slides = heroSlidesFor(locale);
@@ -261,6 +262,24 @@ export function ShopHeroBanner(props: Props) {
     }, 6000);
     return () => window.clearInterval(timer);
   }, [slides.length]);
+
+  useEffect(() => {
+    if (!travelersOpen) return;
+    function onDoc(e: MouseEvent) {
+      if (!travelersWrapRef.current?.contains(e.target as Node)) {
+        setTravelersOpen(false);
+      }
+    }
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setTravelersOpen(false);
+    }
+    document.addEventListener("mousedown", onDoc);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDoc);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [travelersOpen]);
 
   function prevSlide() {
     setSlideIdx((idx) => (idx - 1 + slides.length) % slides.length);
@@ -532,7 +551,11 @@ export function ShopHeroBanner(props: Props) {
 
   function renderTravelersCell() {
     return (
-      <div className="exp-input-cell exp-cell-travelers wg-hero-acc-field" data-field={props.mode === "stays" ? "guests" : "travelers"}>
+      <div
+        className="exp-input-cell exp-cell-travelers wg-hero-acc-field"
+        data-field={props.mode === "stays" ? "guests" : "travelers"}
+        ref={travelersWrapRef}
+      >
         <span className="wg-hero-acc-field-ico" aria-hidden />
         <button
           type="button"
@@ -544,6 +567,7 @@ export function ShopHeroBanner(props: Props) {
           <strong>{travelerSummary}</strong>
         </button>
         <span className="wg-hero-acc-field-chevron" aria-hidden />
+        {renderTravelersPanel()}
       </div>
     );
   }
@@ -675,15 +699,22 @@ export function ShopHeroBanner(props: Props) {
                     aria-selected={on}
                     aria-expanded={expanded}
                     onClick={() => {
-                      props.onModeChange(key);
-                      setDockOpen(true);
+                      if (props.mode === key) {
+                        setDockOpen((v) => !v);
+                      } else {
+                        props.onModeChange(key);
+                        setDockOpen(true);
+                      }
+                      setTravelersOpen(false);
                     }}
                   >
-                    <span className="wg-hero-acc-icon" aria-hidden>
-                      <ModeGlyph mode={key} />
-                    </span>
                     <span className="wg-hero-acc-copy">
-                      <span className="wg-hero-acc-title">{t(label)}</span>
+                      <span className="wg-hero-acc-title-row">
+                        <span className="wg-hero-acc-title">{t(label)}</span>
+                        <span className="wg-hero-acc-icon" aria-hidden>
+                          <ModeGlyph mode={key} />
+                        </span>
+                      </span>
                       <span className="wg-hero-acc-hint">{t(hint)}</span>
                       <AccordionChevron open={expanded} />
                     </span>
@@ -918,7 +949,6 @@ export function ShopHeroBanner(props: Props) {
                 {renderSearchButton("wg-hero-ticket-search")}
               </div>
               )}
-              {renderTravelersPanel()}
             </>
           ) : (
             <>
@@ -1158,7 +1188,6 @@ export function ShopHeroBanner(props: Props) {
             {renderTravelersCell()}
             {renderSearchButton("wg-hero-ticket-search")}
             </div>
-            {renderTravelersPanel()}
             </>
           )}
           </div>

@@ -38,8 +38,8 @@ function addDays(iso: string, days: number) {
 function formatShort(iso: string, locale: string) {
   const d = parseIso(iso);
   if (!d) return "—";
+  // Compact hero trigger: day + month (avoid long weekday that truncates the cell)
   return d.toLocaleDateString(locale === "en" ? "en-GB" : "ar-KW", {
-    weekday: "short",
     day: "numeric",
     month: "short",
   });
@@ -254,7 +254,11 @@ export function ShopDateRangePicker({
   const panel = (
     <div
       className={`shop-date-range-pop shop-date-range-pop-dual${
-        usePortal ? " shop-date-range-pop-mobile shop-date-range-pop-portal" : ""
+        usePortal
+          ? isMobile
+            ? " shop-date-range-pop-mobile shop-date-range-pop-portal"
+            : " shop-date-range-pop-portal shop-date-range-pop-float"
+          : ""
       }`}
       role="dialog"
       aria-modal={usePortal ? true : undefined}

@@ -56,6 +56,29 @@ export function ShopAutocomplete({
     };
   }, []);
 
+  async function runQuery(text: string) {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    abortRef.current?.abort();
+
+    const trimmed = text.trim();
+    if (trimmed.length > 0 && trimmed.length < minChars) {
+      setItems([]);
+      return;
+    }
+
+    const seq = ++seqRef.current;
+    const ac = new AbortController();
+    abortRef.current = ac;
+    try {
+      const next = await onQueryRef.current(trimmed);
+      if (ac.signal.aborted || seq !== seqRef.current) return;
+      setItems(next);
+    } catch {
+      if (ac.signal.aborted || seq !== seqRef.current) return;
+      setItems([]);
+    }
+  }
+
   function scheduleQuery(text: string, immediate = false) {
     onClearText(text);
     setOpen(true);
@@ -69,27 +92,25 @@ export function ShopAutocomplete({
       return;
     }
 
-    const run = async () => {
-      const seq = ++seqRef.current;
-      const ac = new AbortController();
-      abortRef.current = ac;
-      try {
-        const next = await onQueryRef.current(trimmed);
-        if (ac.signal.aborted || seq !== seqRef.current) return;
-        setItems(next);
-      } catch {
-        if (ac.signal.aborted || seq !== seqRef.current) return;
-        setItems([]);
-      }
-    };
-
     if (immediate) {
-      void run();
+      void runQuery(trimmed);
       return;
     }
     timerRef.current = setTimeout(() => {
-      void run();
+      void runQuery(trimmed);
     }, debounceMs);
+  }
+
+  /** Focus: open popular list without requiring the user to erase the current value. */
+  function handleFocus(e: React.FocusEvent<HTMLInputElement>) {
+    setOpen(true);
+    // Keep selection until the user types; empty query returns popular airports/cities.
+    void runQuery("");
+    try {
+      e.currentTarget.select();
+    } catch {
+      /* ignore */
+    }
   }
 
   const menu =
@@ -122,10 +143,7 @@ export function ShopAutocomplete({
           value={display || value}
           placeholder={placeholder}
           onChange={(e) => scheduleQuery(e.target.value)}
-          onFocus={() => {
-            setOpen(true);
-            scheduleQuery(display || value || "", true);
-          }}
+          onFocus={handleFocus}
           autoComplete="off"
         />
         {menu}
@@ -141,10 +159,7 @@ export function ShopAutocomplete({
         value={display || value}
         placeholder={placeholder}
         onChange={(e) => scheduleQuery(e.target.value)}
-        onFocus={() => {
-          setOpen(true);
-          if (!items.length) scheduleQuery(display || value || "", true);
-        }}
+        onFocus={handleFocus}
         autoComplete="off"
       />
       {menu}

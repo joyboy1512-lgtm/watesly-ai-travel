@@ -236,6 +236,96 @@ export class HotelbedsActivityProvider implements ActivityProviderAdapter {
       .sort((a, b) => a.costAmountMinor - b.costAmountMinor);
   }
 
+  /**
+   * Connectivity check for Activities suite keys.
+   * Hotelbeds Activities often has no public /status — try status paths, then a
+   * 1-item authenticated search (proves the key works for activity-api).
+   */
+  async pingStatus(): Promise<{ ok: boolean; message: string; path?: string }> {
+    try {
+      this.ensureConfigured();
+      const candidates = [
+        "/activity-api/3.0/status",
+        "/activity-booking-api/1.0/status",
+        "/hotel-api/1.0/status",
+      ];
+      for (const path of candidates) {
+        const res = await fetch(`${this.creds.baseUrl}${path}`, {
+          method: "GET",
+          headers: hotelbedsHeaders(this.creds),
+        });
+        const json = (await res.json().catch(() => ({}))) as {
+          status?: string;
+          error?: { message?: string };
+          message?: string;
+        };
+        if (res.ok) {
+          return {
+            ok: true,
+            path,
+            message: json.status || `Activities credentials accepted via ${path}`,
+          };
+        }
+        if (res.status === 401 || res.status === 403) {
+          return {
+            ok: false,
+            path,
+            message:
+              json.error?.message ||
+              json.message ||
+              `رفض المصادقة على ${path} (HTTP ${res.status}) — تأكد أن المفاتيح لـ Activities`,
+          };
+        }
+      }
+
+      // Fallback: authenticated 1-item search (status routes are often 404).
+      const from = new Date(Date.now() + 21 * 864e5).toISOString().slice(0, 10);
+      const to = new Date(Date.now() + 28 * 864e5).toISOString().slice(0, 10);
+      const searchPath = "/activity-api/3.0/activities";
+      const searchRes = await fetch(`${this.creds.baseUrl}${searchPath}`, {
+        method: "POST",
+        headers: hotelbedsHeaders(this.creds),
+        body: JSON.stringify({
+          filters: [
+            {
+              searchFilterItems: [{ type: "destination", value: "DXB" }],
+            },
+          ],
+          from,
+          to,
+          language: "en",
+          paxes: [{ age: 30 }],
+          pagination: { itemsPerPage: 1, page: 1 },
+          order: "DEFAULT",
+        }),
+      });
+      if (searchRes.ok) {
+        return {
+          ok: true,
+          path: searchPath,
+          message: "Activities keys OK (search probe DXB)",
+        };
+      }
+      if (searchRes.status === 401 || searchRes.status === 403) {
+        return {
+          ok: false,
+          path: searchPath,
+          message: `رفض المصادقة على البحث (HTTP ${searchRes.status}) — راجع مفاتيح Activities`,
+        };
+      }
+      return {
+        ok: false,
+        path: searchPath,
+        message: `تعذر التحقق من Activities (HTTP ${searchRes.status})`,
+      };
+    } catch (error) {
+      return {
+        ok: false,
+        message: error instanceof Error ? error.message : "فشل الاتصال",
+      };
+    }
+  }
+
   async createBooking(
     _offer: ActivityOffer,
     _guests?: unknown,

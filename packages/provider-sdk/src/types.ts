@@ -147,6 +147,8 @@ export interface ActivityProviderAdapter {
   readonly displayName: string;
   readonly liveMode: boolean;
   searchActivities(params: ActivitySearchParams): Promise<ActivityOffer[]>;
+  /** Optional connectivity check — Activities suite often lacks /status. */
+  pingStatus?(): Promise<{ ok: boolean; message: string; path?: string }>;
   createBooking?(
     offer: ActivityOffer,
     guests: unknown,

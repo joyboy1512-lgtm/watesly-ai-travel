@@ -683,11 +683,9 @@ export function ShopHeroBanner(props: Props) {
                       <ModeGlyph mode={key} />
                     </span>
                     <span className="wg-hero-acc-copy">
-                      <span className="wg-hero-acc-title-row">
-                        <span className="wg-hero-acc-title">{t(label)}</span>
-                        <AccordionChevron open={expanded} />
-                      </span>
+                      <span className="wg-hero-acc-title">{t(label)}</span>
                       <span className="wg-hero-acc-hint">{t(hint)}</span>
+                      <AccordionChevron open={expanded} />
                     </span>
                   </button>
                 );

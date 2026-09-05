@@ -4,13 +4,13 @@
  */
 
 .shop-root.wg-new-ui {
-  --tv-primary: #001B35;
+  --tv-primary: #13357b;
   --tv-secondary: #f97316;
   --tv-light: #f2f2f2;
   --tv-dark: #14141f;
-  --exp-navy: #001B35;
-  --exp-blue: #001B35;
-  --exp-sky: #1A3348;
+  --exp-navy: #13357b;
+  --exp-blue: #13357b;
+  --exp-sky: #1a4a9e;
   --shop-bg: #fff;
   --exp-bg: #fff;
   background: #fff;
@@ -19,8 +19,8 @@
   --wg-blue-pill-pad-x: clamp(2rem, 4.5vw, 3.25rem);
   --wg-blue-pill-pad-y: 1.25rem;
   --wg-blue-pill-inner-inset: 6cm;
-  --wg-blue-pill-bg: #001B35;
-  --wg-blue-pill-shadow: 0 16px 40px rgba(0, 27, 53, 0.35);
+  --wg-blue-pill-bg: #13357b;
+  --wg-blue-pill-shadow: 0 16px 40px rgba(19, 53, 123, 0.35);
 }
 
 .shop-root.wg-new-ui .exp-main,
@@ -4951,14 +4951,7 @@ html body .exp-ac-field > .exp-ac-menu {
   --wg-acc-muted: #A9B0BE;
 }
 
-html body .shop-root.wg-new-ui {
-  --tv-primary: #001B35;
-  --exp-navy: #001B35;
-  --exp-blue: #001B35;
-  --exp-sky: #1A3348;
-  --wg-blue-pill-bg: #001B35;
-  --wg-blue-pill-shadow: 0 16px 40px rgba(0, 27, 53, 0.38);
-}
+/* site-wide token override removed — search dock only */
 
 /* Dock surfaces: deep night navy, never bright royal blue */
 html body .wg-hero-acc-modes,
@@ -5119,23 +5112,32 @@ html body .wg-hero-acc-mode {
 }
 
 /* ============================================================
-   WG_USER_NAVY_001B35 — exact picker RGB(0,27,53)
+   WG_SEARCH_NAVY_001B35 — SEARCH ENGINE ONLY (approved)
+   Navy #001B35 · Gold unchanged #D99A3E
+   Does NOT recolor the rest of the shop.
    ============================================================ */
-:root {
+.wg-hero-search-panel,
+.wg-hero-acc-shell,
+.wg-hero-acc-modes,
+.wg-hero-acc-panel,
+.wg-hero-dock {
+  --wg-search-navy: #001B35;
+  --wg-search-navy-soft: #002445;
+  --wg-search-navy-deep: #000F1F;
+  --wg-search-navy-mid: #1A3348;
+  --wg-search-gold: #D99A3E;
+  --wg-search-gold-bright: #E5B15A;
   --wg-v2-navy: #001B35;
   --wg-v2-navy-soft: #002445;
   --wg-v2-navy-deep: #000F1F;
-  --wg-v2-navy-mid: #1A3348;
+  --wg-v2-gold: #D99A3E;
+  --wg-v2-gold-deep: #C48932;
+  --wg-v2-gold-bright: #E5B15A;
   --wg-v2-ink: #001B35;
   --wg-acc-navy: #001B35;
   --wg-acc-navy-deep: #000F1F;
-}
-
-html body .shop-root.wg-new-ui {
-  --tv-primary: #001B35;
-  --exp-navy: #001B35;
-  --exp-blue: #001B35;
-  --wg-blue-pill-bg: #001B35;
+  --wg-acc-gold: #D99A3E;
+  --wg-acc-gold-bright: #E5B15A;
 }
 
 html body .wg-hero-acc-modes,
@@ -5145,6 +5147,19 @@ html body .wg-hero-acc-panel.wg-hero-dock,
 html body .wg-hero-dock.wg-hero-acc-panel {
   background: #001B35 !important;
   background-image: none !important;
+  color: #F5F5F5 !important;
+}
+
+html body .wg-hero-acc-modes,
+html body .wg-hero-acc-modes.wg-hero-dock-modes {
+  border: 1px solid rgba(217, 154, 62, 0.18) !important;
+  box-shadow: 0 18px 44px rgba(0, 15, 31, 0.55) !important;
+}
+
+html body .wg-hero-acc-panel.wg-hero-dock,
+html body .wg-hero-dock.wg-hero-acc-panel {
+  border: 1px solid rgba(217, 154, 62, 0.14) !important;
+  box-shadow: 0 22px 48px rgba(0, 15, 31, 0.5) !important;
 }
 
 html body .wg-hero-acc-mode.on,
@@ -5153,4 +5168,42 @@ html body .wg-hero-dock-mode.wg-hero-acc-mode.on,
 html body .wg-hero-dock-mode.wg-hero-acc-mode.is-expanded {
   background: #1A3348 !important;
   background-image: none !important;
+  box-shadow: inset 0 -2px 0 #D99A3E !important;
+}
+
+html body .wg-hero-acc-mode.on .wg-hero-acc-icon,
+html body .wg-hero-acc-mode.is-expanded .wg-hero-acc-icon,
+html body .wg-hero-acc-mode.on .wg-hero-acc-title-row .wg-hero-acc-icon,
+html body .wg-hero-acc-mode.is-expanded .wg-hero-acc-title-row .wg-hero-acc-icon {
+  color: #D99A3E !important;
+  background: transparent !important;
+}
+
+html body .wg-hero-acc-field-ico,
+html body .wg-hero-acc-field .wg-hero-acc-field-ico {
+  color: #D99A3E !important;
+}
+
+html body .wg-hero-acc-tripstrip .exp-trip-pill.is-on,
+html body .wg-hero-acc-tripstrip button.is-on,
+html body .wg-hero-acc-tripstrip .exp-trip-type.is-on {
+  background: #D99A3E !important;
+  border-color: #D99A3E !important;
+  color: #001B35 !important;
+}
+
+html body .wg-hero-ticket-search.exp-search-link,
+html body .wg-hero-acc-search-btn,
+html body .wg-hero-acc-panel .exp-search-link.wg-hero-ticket-search,
+html body .wg-hero-acc-panel button.wg-hero-acc-search-btn {
+  background: #D99A3E !important;
+  border-color: #D99A3E !important;
+  color: #001B35 !important;
+  box-shadow: 0 8px 22px rgba(217, 154, 62, 0.35) !important;
+}
+
+html body .wg-hero-ticket-search.exp-search-link:hover,
+html body .wg-hero-acc-search-btn:hover {
+  background: #E5B15A !important;
+  border-color: #E5B15A !important;
 }

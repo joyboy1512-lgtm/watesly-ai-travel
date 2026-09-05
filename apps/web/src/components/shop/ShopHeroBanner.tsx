@@ -100,12 +100,71 @@ type Props = {
   onRuheltiClick?: () => void;
 };
 
-const PRODUCT_KEYS: Array<{ key: Mode; label: "searchFlights" | "searchHotels" | "searchCars" | "searchActivities" }> = [
-  { key: "flights", label: "searchFlights" },
-  { key: "stays", label: "searchHotels" },
-  { key: "cars", label: "searchCars" },
-  { key: "activities", label: "searchActivities" },
+const PRODUCT_KEYS: Array<{
+  key: Mode;
+  label: "searchFlights" | "searchHotels" | "searchCars" | "searchActivities";
+  hint: "searchFlightsHint" | "searchHotelsHint" | "searchCarsHint" | "searchActivitiesHint";
+}> = [
+  { key: "flights", label: "searchFlights", hint: "searchFlightsHint" },
+  { key: "stays", label: "searchHotels", hint: "searchHotelsHint" },
+  { key: "cars", label: "searchCars", hint: "searchCarsHint" },
+  { key: "activities", label: "searchActivities", hint: "searchActivitiesHint" },
 ];
+
+function ModeGlyph({ mode }: { mode: Mode }) {
+  if (mode === "stays") {
+    return (
+      <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden>
+        <path
+          fill="currentColor"
+          d="M7 13c1.66 0 3-1.34 3-3S8.66 7 7 7s-3 1.34-3 3 1.34 3 3 3zm12-6h-8v7H3V5H1v15h2v-3h18v3h2v-9c0-2.21-1.79-4-4-4z"
+        />
+      </svg>
+    );
+  }
+  if (mode === "flights") {
+    return (
+      <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden>
+        <path
+          fill="currentColor"
+          d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"
+        />
+      </svg>
+    );
+  }
+  if (mode === "cars") {
+    return (
+      <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden>
+        <path
+          fill="currentColor"
+          d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"
+        />
+      </svg>
+    );
+  }
+  return (
+    <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden>
+      <path
+        fill="currentColor"
+        d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5A2.5 2.5 0 1 1 12 6a2.5 2.5 0 0 1 0 5.5z"
+      />
+    </svg>
+  );
+}
+
+function AccordionChevron({ open }: { open?: boolean }) {
+  return (
+    <svg
+      className={`wg-hero-acc-chevron${open ? " open" : ""}`}
+      viewBox="0 0 24 24"
+      width="16"
+      height="16"
+      aria-hidden
+    >
+      <path fill="currentColor" d="M7.41 8.59 12 13.17l4.59-4.58L18 10l-6 6-6-6z" />
+    </svg>
+  );
+}
 
 function IconSwap() {
   return (
@@ -182,6 +241,8 @@ export function ShopHeroBanner(props: Props) {
   const [travelersOpen, setTravelersOpen] = useState(false);
   const [occError, setOccError] = useState("");
   const [slideIdx, setSlideIdx] = useState(0);
+  /** Accordion panel open — visual only; search handlers unchanged */
+  const [dockOpen, setDockOpen] = useState(true);
   const infants = props.infants ?? 0;
   const { locale, t } = useShopI18n();
   const slides = heroSlidesFor(locale);
@@ -584,38 +645,58 @@ export function ShopHeroBanner(props: Props) {
         </div>
 
         <div className="wg-hero-search-panel" id="search">
-          <div className="wg-hero-ticket-shell wg-hero-dock-shell" data-mode={props.mode}>
+          <div className={`wg-hero-ticket-shell wg-hero-dock-shell wg-hero-acc-shell${dockOpen ? " is-open" : ""}`} data-mode={props.mode}>
             <div
-              className="wg-hero-dock-modes"
+              className="wg-hero-dock-modes wg-hero-acc-modes"
               role="tablist"
               aria-label={t("bookingType")}
             >
-              {PRODUCT_KEYS.map(({ key, label }) => {
+              {PRODUCT_KEYS.map(({ key, label, hint }) => {
                 const on = props.mode === key;
+                const expanded = on && dockOpen;
                 return (
                   <button
                     key={key}
                     type="button"
                     role="tab"
-                    className={`wg-hero-dock-mode${on ? " on" : ""}`}
+                    className={`wg-hero-dock-mode wg-hero-acc-mode${on ? " on" : ""}${expanded ? " is-expanded" : ""}`}
                     aria-selected={on}
-                    onClick={() => props.onModeChange(key)}
+                    aria-expanded={expanded}
+                    onClick={() => {
+                      if (on) {
+                        setDockOpen((v) => !v);
+                        return;
+                      }
+                      props.onModeChange(key);
+                      setDockOpen(true);
+                    }}
                   >
-                    {t(label)}
+                    <span className="wg-hero-acc-icon" aria-hidden>
+                      <ModeGlyph mode={key} />
+                    </span>
+                    <span className="wg-hero-acc-copy">
+                      <span className="wg-hero-acc-title">{t(label)}</span>
+                      <span className="wg-hero-acc-hint">{t(hint)}</span>
+                    </span>
+                    <AccordionChevron open={expanded} />
                   </button>
                 );
               })}
+            </div>
               <Link
                 href="/chat"
-                className="wg-hero-dock-mode wg-hero-dock-mode-ai"
+                className="wg-hero-dock-mode wg-hero-dock-mode-ai wg-hero-acc-ai"
                 title={t("aiAssistantTitle")}
                 aria-label={t("openAiAssistant")}
               >
                 AI
               </Link>
-            </div>
 
-            <div className="wg-hero-dock">
+            <div
+              className={`wg-hero-dock wg-hero-acc-panel${dockOpen ? " is-open" : ""}`}
+              hidden={!dockOpen}
+              id="wg-hero-search-fields"
+            >
         <div className="exp-dialog">
           <div className="exp-unified-card wg-hero-ticket-card wg-hero-dock-card">
           {props.mode === "flights" ? (

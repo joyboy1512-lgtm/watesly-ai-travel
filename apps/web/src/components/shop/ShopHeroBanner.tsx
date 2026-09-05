@@ -246,9 +246,10 @@ export function ShopHeroBanner(props: Props) {
   const infants = props.infants ?? 0;
   const { locale, t } = useShopI18n();
   const slides = heroSlidesFor(locale);
-  const fromLabel = t("from");
+  /* Flight hero labels match approved v2 reference (من / إلى); other modes keep existing copy */
+  const fromLabel = props.mode === "flights" ? t("fromShort") : t("from");
   const fromPlaceholder = t("fromPlaceholder");
-  const toLabel = t("destination");
+  const toLabel = props.mode === "flights" ? t("toShort") : t("destination");
   const toPlaceholder = t("whereTo");
   const datesLabel = t("dates");
   const dateLabel = t("date");
@@ -695,10 +696,10 @@ export function ShopHeroBanner(props: Props) {
               <div className="wg-hero-acc-tripstrip" role="group" aria-label={t("tripType")}>
                 <button
                   type="button"
-                  className={`wg-hero-acc-trip${props.tripType === "roundtrip" ? " on" : ""}`}
-                  onClick={() => props.onTripTypeChange("roundtrip")}
+                  className={`wg-hero-acc-trip${props.tripType === "multicity" ? " on" : ""}`}
+                  onClick={() => props.onTripTypeChange("multicity")}
                 >
-                  {t("roundTrip")}
+                  {t("multiCity")}
                 </button>
                 <button
                   type="button"
@@ -709,10 +710,10 @@ export function ShopHeroBanner(props: Props) {
                 </button>
                 <button
                   type="button"
-                  className={`wg-hero-acc-trip${props.tripType === "multicity" ? " on" : ""}`}
-                  onClick={() => props.onTripTypeChange("multicity")}
+                  className={`wg-hero-acc-trip${props.tripType === "roundtrip" ? " on" : ""}`}
+                  onClick={() => props.onTripTypeChange("roundtrip")}
                 >
-                  {t("multiCity")}
+                  {t("roundTrip")}
                 </button>
               </div>
             ) : null}
@@ -838,17 +839,21 @@ export function ShopHeroBanner(props: Props) {
                 </div>
               ) : (
               <div className="exp-form-row exp-form-flights">
-                <div className="exp-input-cell exp-cell-grow">
-                  <ShopAutocomplete
-                    inline
-                    label={fromLabel}
-                    value={props.origin}
-                    display={props.originLabel}
-                    placeholder={fromPlaceholder}
-                    onQuery={props.searchAirports}
-                    onClearText={props.onOriginClear}
-                    onPick={props.onOriginPick}
-                  />
+                <div className="exp-input-cell exp-cell-grow wg-hero-acc-field" data-field="from">
+                  <span className="wg-hero-acc-field-ico" aria-hidden />
+                  <span className="wg-hero-acc-field-body">
+                    <ShopAutocomplete
+                      inline
+                      label={fromLabel}
+                      value={props.origin}
+                      display={props.originLabel}
+                      placeholder={fromPlaceholder}
+                      onQuery={props.searchAirports}
+                      onClearText={props.onOriginClear}
+                      onPick={props.onOriginPick}
+                    />
+                  </span>
+                  <span className="wg-hero-acc-field-chevron" aria-hidden />
                 </div>
                 <button
                   type="button"
@@ -858,48 +863,56 @@ export function ShopHeroBanner(props: Props) {
                 >
                   <IconSwap />
                 </button>
-                <div className="exp-input-cell exp-cell-grow">
-                  <ShopAutocomplete
-                    inline
-                    label={toLabel}
-                    value={props.destination}
-                    display={props.destinationLabel}
-                    placeholder={toPlaceholder}
-                    onQuery={props.searchAirports}
-                    onClearText={props.onDestinationClear}
-                    onPick={props.onDestinationPick}
-                  />
+                <div className="exp-input-cell exp-cell-grow wg-hero-acc-field" data-field="to">
+                  <span className="wg-hero-acc-field-ico" aria-hidden />
+                  <span className="wg-hero-acc-field-body">
+                    <ShopAutocomplete
+                      inline
+                      label={toLabel}
+                      value={props.destination}
+                      display={props.destinationLabel}
+                      placeholder={toPlaceholder}
+                      onQuery={props.searchAirports}
+                      onClearText={props.onDestinationClear}
+                      onPick={props.onDestinationPick}
+                    />
+                  </span>
+                  <span className="wg-hero-acc-field-chevron" aria-hidden />
                 </div>
-                <div className="exp-input-cell exp-cell-dates">
-                  <span className="exp-cell-label">{datesLabel}</span>
-                  {showReturnDate ? (
-                    <ShopDateRangePicker
-                      forcePortal
-                      checkIn={props.departDate}
-                      checkOut={props.returnDate}
-                      onChange={(checkIn, checkOut) => {
-                        props.onDepartDateChange(checkIn);
-                        props.onReturnDateChange(checkOut);
-                      }}
-                      startLabel={t("departDate")}
-                      endLabel={t("returnDate")}
-                      placeholder={t("selectTravelDates")}
-                    />
-                  ) : (
-                    <DatePick
-                      value={props.departDate}
-                      onChange={props.onDepartDateChange}
-                      label={t("departDate")}
-                    />
-                  )}
-                  <label className={`exp-flex-dates${props.flexibleDates ? " on" : ""}`}>
-                    <input
-                      type="checkbox"
-                      checked={props.flexibleDates}
-                      onChange={(e) => props.onFlexibleDatesChange(e.target.checked)}
-                    />
-                    <span>{t("flexibleDates")}</span>
-                  </label>
+                <div className="exp-input-cell exp-cell-dates wg-hero-acc-field" data-field="dates">
+                  <span className="wg-hero-acc-field-ico" aria-hidden />
+                  <span className="wg-hero-acc-field-body">
+                    <span className="exp-cell-label">{datesLabel}</span>
+                    {showReturnDate ? (
+                      <ShopDateRangePicker
+                        forcePortal
+                        checkIn={props.departDate}
+                        checkOut={props.returnDate}
+                        onChange={(checkIn, checkOut) => {
+                          props.onDepartDateChange(checkIn);
+                          props.onReturnDateChange(checkOut);
+                        }}
+                        startLabel={t("departDate")}
+                        endLabel={t("returnDate")}
+                        placeholder={t("selectTravelDates")}
+                      />
+                    ) : (
+                      <DatePick
+                        value={props.departDate}
+                        onChange={props.onDepartDateChange}
+                        label={t("departDate")}
+                      />
+                    )}
+                    <label className={`exp-flex-dates${props.flexibleDates ? " on" : ""}`}>
+                      <input
+                        type="checkbox"
+                        checked={props.flexibleDates}
+                        onChange={(e) => props.onFlexibleDatesChange(e.target.checked)}
+                      />
+                      <span>{t("flexibleDates")}</span>
+                    </label>
+                  </span>
+                  <span className="wg-hero-acc-field-chevron" aria-hidden />
                 </div>
                 {renderTravelersCell()}
                 {renderSearchButton("wg-hero-ticket-search")}

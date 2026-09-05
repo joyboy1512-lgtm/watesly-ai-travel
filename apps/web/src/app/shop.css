@@ -17,7 +17,7 @@
 
 /* —— Expedia-inspired theme —— */
 .shop-root.exp-theme {
-  --exp-navy: #00255d;
+  --exp-navy: #01153E;
   --exp-ink: #191e3b;
   --exp-blue: #1668e3;
   --exp-yellow: #ffc72c;
@@ -1701,7 +1701,7 @@
   --sea-ink: #163640;
   --sea-muted: #5b7a84;
   --sea-line: #d4e8ec;
-  --sea-gold: #c9954a;
+  --sea-gold: #D99A3E;
   --sea-gold-soft: #f4e8d4;
   --shop-bg: linear-gradient(180deg, #f7fcfd 0%, #eef7f9 40%, #f4fafb 100%);
   min-height: 100dvh;

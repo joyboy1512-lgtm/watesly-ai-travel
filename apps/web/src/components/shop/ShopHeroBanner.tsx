@@ -114,7 +114,7 @@ const PRODUCT_KEYS: Array<{
 function ModeGlyph({ mode }: { mode: Mode }) {
   if (mode === "stays") {
     return (
-      <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden>
+      <svg viewBox="0 0 24 24" width="28" height="28" aria-hidden>
         <path
           fill="currentColor"
           d="M12 7V3H2v18h20V7H12zM6 19H4v-2h2v2zm0-4H4v-2h2v2zm0-4H4V9h2v2zm0-4H4V5h2v2zm4 12H8v-2h2v2zm0-4H8v-2h2v2zm0-4H8V9h2v2zm0-4H8V5h2v2zm10 12h-8v-2h2v-2h-2v-2h2v-2h-2V9h8v10zm-4-6h2v2h-2v-2zm0 4h2v2h-2v-2z"
@@ -124,7 +124,7 @@ function ModeGlyph({ mode }: { mode: Mode }) {
   }
   if (mode === "flights") {
     return (
-      <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden>
+      <svg viewBox="0 0 24 24" width="28" height="28" aria-hidden>
         <path
           fill="currentColor"
           d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"
@@ -134,7 +134,7 @@ function ModeGlyph({ mode }: { mode: Mode }) {
   }
   if (mode === "cars") {
     return (
-      <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden>
+      <svg viewBox="0 0 24 24" width="28" height="28" aria-hidden>
         <path
           fill="currentColor"
           d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"
@@ -143,7 +143,7 @@ function ModeGlyph({ mode }: { mode: Mode }) {
     );
   }
   return (
-    <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden>
+    <svg viewBox="0 0 24 24" width="28" height="28" aria-hidden>
       <path
         fill="currentColor"
         d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 2c4.41 0 8 3.59 8 8s-3.59 8-8 8-8-3.59-8-8 3.59-8 8-8zm1.5 3.5-5 2-2 5 5-2 2-5zm-2.2 3.3 1.4 1.4-2.5 1-1-2.5 2.1-0.9z"
@@ -684,12 +684,38 @@ export function ShopHeroBanner(props: Props) {
                     <span className="wg-hero-acc-copy">
                       <span className="wg-hero-acc-title">{t(label)}</span>
                       <span className="wg-hero-acc-hint">{t(hint)}</span>
-                      <AccordionChevron open={expanded} />
                     </span>
+                    <AccordionChevron open={expanded} />
                   </button>
                 );
               })}
             </div>
+
+            {props.mode === "flights" && dockOpen ? (
+              <div className="wg-hero-acc-tripstrip" role="group" aria-label={t("tripType")}>
+                <button
+                  type="button"
+                  className={`wg-hero-acc-trip${props.tripType === "roundtrip" ? " on" : ""}`}
+                  onClick={() => props.onTripTypeChange("roundtrip")}
+                >
+                  {t("roundTrip")}
+                </button>
+                <button
+                  type="button"
+                  className={`wg-hero-acc-trip${props.tripType === "oneway" ? " on" : ""}`}
+                  onClick={() => props.onTripTypeChange("oneway")}
+                >
+                  {t("oneWay")}
+                </button>
+                <button
+                  type="button"
+                  className={`wg-hero-acc-trip${props.tripType === "multicity" ? " on" : ""}`}
+                  onClick={() => props.onTripTypeChange("multicity")}
+                >
+                  {t("multiCity")}
+                </button>
+              </div>
+            ) : null}
 
             <div
               className={`wg-hero-dock wg-hero-acc-panel${dockOpen ? " is-open" : ""}`}
@@ -700,30 +726,7 @@ export function ShopHeroBanner(props: Props) {
           <div className="exp-unified-card wg-hero-ticket-card wg-hero-dock-card">
           {props.mode === "flights" ? (
             <>
-              <div className="exp-flight-toolbar">
-                <div className="exp-pill-tabs exp-pill-tabs-inset" role="group" aria-label={t("tripType")}>
-                  <button
-                    type="button"
-                    className={`exp-pill-tab${props.tripType === "roundtrip" ? " on" : ""}`}
-                    onClick={() => props.onTripTypeChange("roundtrip")}
-                  >
-                    {t("roundTrip")}
-                  </button>
-                   <button
-                    type="button"
-                    className={`exp-pill-tab${props.tripType === "oneway" ? " on" : ""}`}
-                    onClick={() => props.onTripTypeChange("oneway")}
-                  >
-                     {t("oneWay")}
-                  </button>
-                   <button
-                    type="button"
-                    className={`exp-pill-tab${props.tripType === "multicity" ? " on" : ""}`}
-                    onClick={() => props.onTripTypeChange("multicity")}
-                  >
-                     {t("multiCity")}
-                  </button>
-                </div>
+              <div className="exp-flight-toolbar wg-hero-acc-flight-meta">
                  <label className="exp-cabin-pill">
                    <span>{t("cabinClass")}</span>
                   <select

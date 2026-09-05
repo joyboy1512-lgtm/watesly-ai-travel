@@ -105,8 +105,8 @@ const PRODUCT_KEYS: Array<{
   label: "searchFlights" | "searchHotels" | "searchCars" | "searchActivities";
   hint: "searchFlightsHint" | "searchHotelsHint" | "searchCarsHint" | "searchActivitiesHint";
 }> = [
-  { key: "flights", label: "searchFlights", hint: "searchFlightsHint" },
   { key: "stays", label: "searchHotels", hint: "searchHotelsHint" },
+  { key: "flights", label: "searchFlights", hint: "searchFlightsHint" },
   { key: "cars", label: "searchCars", hint: "searchCarsHint" },
   { key: "activities", label: "searchActivities", hint: "searchActivitiesHint" },
 ];
@@ -663,10 +663,6 @@ export function ShopHeroBanner(props: Props) {
                     aria-selected={on}
                     aria-expanded={expanded}
                     onClick={() => {
-                      if (on) {
-                        setDockOpen((v) => !v);
-                        return;
-                      }
                       props.onModeChange(key);
                       setDockOpen(true);
                     }}
@@ -683,14 +679,6 @@ export function ShopHeroBanner(props: Props) {
                 );
               })}
             </div>
-              <Link
-                href="/chat"
-                className="wg-hero-dock-mode wg-hero-dock-mode-ai wg-hero-acc-ai"
-                title={t("aiAssistantTitle")}
-                aria-label={t("openAiAssistant")}
-              >
-                AI
-              </Link>
 
             <div
               className={`wg-hero-dock wg-hero-acc-panel${dockOpen ? " is-open" : ""}`}

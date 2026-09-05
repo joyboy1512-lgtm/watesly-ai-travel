@@ -1076,11 +1076,11 @@
   z-index: 1;
 }
 
-.wg-hero-acc-shell[data-mode="flights"] .wg-hero-acc-panel.is-open::before {
+.wg-hero-acc-shell[data-mode="stays"] .wg-hero-acc-panel.is-open::before {
   inset-inline-start: calc(12.5% - 7px);
 }
 
-.wg-hero-acc-shell[data-mode="stays"] .wg-hero-acc-panel.is-open::before {
+.wg-hero-acc-shell[data-mode="flights"] .wg-hero-acc-panel.is-open::before {
   inset-inline-start: calc(37.5% - 7px);
 }
 
@@ -1694,3 +1694,219 @@
     display: none !important;
   }
 }
+
+/* WG_ACCORDION_REF_SKIN */
+.shop-root.wg-new-ui .wg-hero-acc-shell.wg-hero-dock-shell,
+.wg-hero-acc-shell.wg-hero-dock-shell {
+  gap: 0 !important;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+.shop-root.wg-new-ui .wg-hero-acc-modes,
+.wg-hero-acc-modes {
+  border-radius: 18px 18px 0 0 !important;
+  background: #13357b !important;
+  border: 1px solid rgba(251, 191, 36, 0.35) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
+}
+
+.shop-root.wg-new-ui .wg-hero-acc-shell:not(.is-open) .wg-hero-acc-modes {
+  border-radius: 18px !important;
+}
+
+/* Hide AI chip if still rendered anywhere in search panel */
+.wg-hero-search-panel .wg-hero-acc-ai,
+.wg-hero-acc-shell .wg-hero-acc-ai {
+  display: none !important;
+}
+
+.shop-root.wg-new-ui .wg-hero-dock.wg-hero-acc-panel,
+.wg-hero-dock.wg-hero-acc-panel {
+  background: #13357b !important;
+  border: 1px solid rgba(251, 191, 36, 0.35) !important;
+  border-top: 0 !important;
+  border-radius: 0 0 18px 18px !important;
+  box-shadow: 0 18px 40px rgba(10, 22, 48, 0.35) !important;
+  padding: 0.85rem 0.85rem 0.95rem !important;
+}
+
+.shop-root.wg-new-ui .wg-hero-acc-panel.is-open::before {
+  background: #13357b !important;
+  border-color: rgba(251, 191, 36, 0.35) !important;
+}
+
+.shop-root.wg-new-ui .wg-hero-acc-panel .exp-dialog,
+.shop-root.wg-new-ui .wg-hero-acc-panel .exp-unified-card,
+.shop-root.wg-new-ui .wg-hero-acc-panel .wg-hero-ticket-card,
+.shop-root.wg-new-ui .wg-hero-acc-panel .wg-hero-dock-card {
+  background: transparent !important;
+  box-shadow: none !important;
+  border: 0 !important;
+  padding: 0 !important;
+}
+
+.shop-root.wg-new-ui .wg-hero-acc-panel .exp-flight-toolbar,
+.shop-root.wg-new-ui .wg-hero-acc-panel .exp-transfer-toolbar {
+  padding: 0 0.25rem 0.45rem !important;
+}
+
+.shop-root.wg-new-ui .wg-hero-acc-panel .exp-pill-tab {
+  color: rgba(255, 255, 255, 0.78) !important;
+  border-color: rgba(255, 255, 255, 0.22) !important;
+  background: transparent !important;
+}
+
+.shop-root.wg-new-ui .wg-hero-acc-panel .exp-pill-tab.on {
+  background: rgba(251, 191, 36, 0.18) !important;
+  color: #fde68a !important;
+  border-color: #fbbf24 !important;
+}
+
+.shop-root.wg-new-ui .wg-hero-acc-panel .exp-cabin-pill,
+.shop-root.wg-new-ui .wg-hero-acc-panel .exp-direct-pill {
+  background: rgba(255, 255, 255, 0.06) !important;
+  border-color: rgba(255, 255, 255, 0.16) !important;
+  color: rgba(255, 255, 255, 0.88) !important;
+}
+
+.shop-root.wg-new-ui .wg-hero-acc-panel .exp-cabin-pill select {
+  color: #fff !important;
+  background: transparent !important;
+}
+
+.shop-root.wg-new-ui .wg-hero-acc-panel .exp-form-row {
+  background: rgba(8, 28, 72, 0.55) !important;
+  border: 1px solid rgba(251, 191, 36, 0.28) !important;
+  border-radius: 14px !important;
+  padding: 0.35rem !important;
+  gap: 0 !important;
+  align-items: stretch !important;
+}
+
+.shop-root.wg-new-ui .wg-hero-acc-panel .exp-input-cell,
+.shop-root.wg-new-ui .wg-hero-acc-panel .exp-unified-card .exp-input-cell,
+.shop-root.wg-new-ui .wg-hero-acc-panel .exp-unified-card .exp-form-row > .exp-input-cell:first-child,
+.shop-root.wg-new-ui .wg-hero-acc-panel .exp-unified-card .exp-form-flights > .exp-input-cell:first-of-type {
+  background: transparent !important;
+  border: 0 !important;
+  border-inline-end: 1px solid rgba(255, 255, 255, 0.14) !important;
+  border-radius: 0 !important;
+  color: #fff !important;
+  box-shadow: none !important;
+  padding: 0.55rem 0.75rem !important;
+}
+
+.shop-root.wg-new-ui .wg-hero-acc-panel .exp-cell-label,
+.shop-root.wg-new-ui .wg-hero-acc-panel .exp-input-cell .shop-ac-inline > span:first-child,
+.shop-root.wg-new-ui .wg-hero-acc-panel .exp-travelers-trigger .exp-cell-label {
+  color: #fbbf24 !important;
+  font-weight: 700 !important;
+}
+
+.shop-root.wg-new-ui .wg-hero-acc-panel .exp-input-cell input,
+.shop-root.wg-new-ui .wg-hero-acc-panel .exp-input-cell strong,
+.shop-root.wg-new-ui .wg-hero-acc-panel .exp-travelers-trigger strong,
+.shop-root.wg-new-ui .wg-hero-acc-panel .shop-ac-inline input {
+  color: #fff !important;
+  background: transparent !important;
+}
+
+.shop-root.wg-new-ui .wg-hero-acc-panel .exp-travelers-trigger {
+  background: transparent !important;
+  border: 0 !important;
+  color: #fff !important;
+  width: 100%;
+  text-align: start;
+}
+
+.shop-root.wg-new-ui .wg-hero-acc-panel .exp-swap-btn {
+  background: rgba(251, 191, 36, 0.15) !important;
+  border-color: #fbbf24 !important;
+  color: #fbbf24 !important;
+}
+
+.shop-root.wg-new-ui .wg-hero-search-panel .wg-hero-ticket-search.exp-search-link,
+.shop-root.wg-new-ui .wg-hero-acc-panel .wg-hero-ticket-search.exp-search-link {
+  background: #fbbf24 !important;
+  color: #13357b !important;
+  border: 0 !important;
+  border-radius: 12px !important;
+  font-weight: 800 !important;
+  min-width: 8.5rem !important;
+  box-shadow: 0 8px 18px rgba(251, 191, 36, 0.28) !important;
+}
+
+.shop-root.wg-new-ui .wg-hero-search-panel .wg-hero-ticket-search.exp-search-link:hover:not(:disabled),
+.shop-root.wg-new-ui .wg-hero-acc-panel .wg-hero-ticket-search.exp-search-link:hover:not(:disabled) {
+  background: #f59e0b !important;
+  color: #0f172a !important;
+}
+
+.shop-root.wg-new-ui .wg-hero-acc-panel .exp-travelers-panel {
+  background: #fff !important;
+  color: #0f172a !important;
+  border-radius: 12px !important;
+}
+
+@media (max-width: 767px) {
+  .shop-root.wg-new-ui .wg-hero-acc-panel .exp-form-row {
+    border-radius: 12px !important;
+  }
+  .shop-root.wg-new-ui .wg-hero-acc-panel .exp-input-cell {
+    border-inline-end: 0 !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
+  }
+}
+
+/* WG_ACCORDION_NO_NEWUI_FIX — root may lack .wg-new-ui */
+.wg-hero-acc-modes.wg-hero-dock-modes {
+  background: #13357b !important;
+  background-image: none !important;
+}
+.wg-hero-dock.wg-hero-acc-panel {
+  background: #13357b !important;
+}
+.wg-hero-search-panel .wg-hero-ticket-search.exp-search-link,
+.wg-hero-acc-panel .wg-hero-ticket-search.exp-search-link,
+.wg-hero-search-panel a.wg-hero-ticket-search.exp-search-link,
+.wg-hero-search-panel button.wg-hero-ticket-search.exp-search-link {
+  background: #fbbf24 !important;
+  background-image: none !important;
+  color: #13357b !important;
+  border: 0 !important;
+  border-radius: 12px !important;
+  font-weight: 800 !important;
+}
+.wg-hero-search-panel .wg-hero-ticket-search.exp-search-link:hover:not(:disabled),
+.wg-hero-acc-panel .wg-hero-ticket-search.exp-search-link:hover:not(:disabled) {
+  background: #f59e0b !important;
+  color: #0f172a !important;
+}
+.wg-hero-acc-panel .exp-form-row {
+  background: rgba(8, 28, 72, 0.55) !important;
+  border: 1px solid rgba(251, 191, 36, 0.28) !important;
+  border-radius: 14px !important;
+}
+.wg-hero-acc-panel .exp-input-cell,
+.wg-hero-acc-panel .exp-form-row > .exp-input-cell {
+  background: transparent !important;
+  color: #fff !important;
+  border-color: rgba(255,255,255,0.14) !important;
+}
+.wg-hero-acc-panel .exp-cell-label,
+.wg-hero-acc-panel .shop-ac-inline > span:first-child {
+  color: #fbbf24 !important;
+}
+.wg-hero-acc-panel .exp-input-cell input,
+.wg-hero-acc-panel .exp-input-cell strong,
+.wg-hero-acc-panel .shop-ac-inline input {
+  color: #fff !important;
+}
+.wg-hero-acc-panel .exp-pill-tab.on {
+  background: rgba(251, 191, 36, 0.18) !important;
+  color: #fde68a !important;
+  border-color: #fbbf24 !important;
+}
+

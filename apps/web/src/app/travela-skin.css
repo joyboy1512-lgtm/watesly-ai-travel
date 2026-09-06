@@ -5832,3 +5832,68 @@ html body .shop-root.wg-new-ui .wg-travela-hero,
 html body .shop-root .wg-travela-hero {
   overflow: visible !important;
 }
+
+/* ============================================================
+   WG_FIX_OPEN_STRIP_STACK — tripstrip visible; menus above modes
+   ============================================================ */
+
+/* Soft-overlap negative margins were burying the trip options row */
+html body .shop-root.wg-new-ui .wg-hero-acc-shell.is-open .wg-hero-acc-modes.wg-hero-dock-modes,
+html body .shop-root .wg-hero-acc-shell.is-open .wg-hero-acc-modes.wg-hero-dock-modes,
+html body .shop-root .wg-hero-acc-shell.is-open .wg-hero-acc-modes,
+html body .wg-hero-acc-shell.is-open .wg-hero-acc-modes.wg-hero-dock-modes,
+html body .wg-hero-acc-shell.is-open .wg-hero-acc-modes {
+  margin-bottom: 0 !important;
+}
+
+html body .shop-root .wg-hero-acc-shell.is-open .wg-hero-acc-tripstrip,
+html body .wg-hero-acc-shell.is-open .wg-hero-acc-tripstrip,
+html body .shop-root .wg-hero-acc-tripstrip,
+html body .wg-hero-acc-tripstrip {
+  position: relative !important;
+  z-index: 6 !important;
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  grid-template-columns: none !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  height: auto !important;
+  max-height: none !important;
+  min-height: 2.2rem !important;
+  overflow-x: auto !important;
+  overflow-y: visible !important;
+  margin: 0 !important;
+  background: #001B35 !important;
+}
+
+/* Modes stay below open suggest/travelers menus */
+html body .shop-root .wg-hero-acc-modes.wg-hero-dock-modes,
+html body .wg-hero-acc-modes.wg-hero-dock-modes,
+html body .wg-hero-acc-modes {
+  z-index: 2 !important;
+}
+
+html body .shop-root .wg-hero-acc-shell:has(.prc-suggest) .wg-hero-acc-panel,
+html body .shop-root .wg-hero-acc-shell:has(.exp-ac-menu) .wg-hero-acc-panel,
+html body .shop-root .wg-hero-acc-shell:has(.exp-travelers-panel) .wg-hero-acc-panel,
+html body .shop-root .wg-hero-acc-shell:has(.exp-occupancy-panel) .wg-hero-acc-panel,
+html body .wg-hero-acc-shell:has(.prc-suggest) .wg-hero-acc-panel,
+html body .wg-hero-acc-shell:has(.exp-ac-menu) .wg-hero-acc-panel,
+html body .wg-hero-acc-shell:has(.exp-travelers-panel) .wg-hero-acc-panel {
+  z-index: 90 !important;
+  position: relative !important;
+}
+
+html body .shop-root .wg-hero-acc-shell:has(.prc-suggest) .wg-hero-acc-modes,
+html body .shop-root .wg-hero-acc-shell:has(.exp-ac-menu) .wg-hero-acc-modes,
+html body .shop-root .wg-hero-acc-shell:has(.exp-travelers-panel) .wg-hero-acc-modes,
+html body .wg-hero-acc-shell:has(.prc-suggest) .wg-hero-acc-modes,
+html body .wg-hero-acc-shell:has(.exp-travelers-panel) .wg-hero-acc-modes {
+  z-index: 1 !important;
+}
+
+html body .shop-root .wg-hero-acc-shell:has(.prc-suggest) .wg-hero-acc-tripstrip,
+html body .wg-hero-acc-shell:has(.exp-travelers-panel) .wg-hero-acc-tripstrip,
+html body .wg-hero-acc-shell:has(.exp-ac-menu) .wg-hero-acc-tripstrip {
+  z-index: 2 !important;
+}

@@ -243,7 +243,7 @@ export function ShopHeroBanner(props: Props) {
   const [occError, setOccError] = useState("");
   const [slideIdx, setSlideIdx] = useState(0);
   /** Accordion panel open — visual only; search handlers unchanged. Hidden until chevron/tab opens it. */
-  const [dockOpen, setDockOpen] = useState(false);
+  const [dockOpen, setDockOpen] = useState(true);
   const [enabledModes, setEnabledModes] = useState<Mode[]>(["stays", "flights", "cars", "activities"]);
   const [showMyTrip, setShowMyTrip] = useState(true);
   useEffect(() => {

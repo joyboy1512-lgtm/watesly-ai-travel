@@ -6612,3 +6612,205 @@ html body .wg-hero-acc-chevron {
     gap: 0.45rem !important;
   }
 }
+
+/* ============================================================
+   WG_HERO_TABS_CONTAIN_ROW_V7
+   Keep title+hint+chevron INSIDE the modes bar height.
+   Icon LEFT of the text block, same row, with clear gap.
+   ============================================================ */
+
+html body .shop-root.wg-new-ui .wg-hero-acc-modes.wg-hero-dock-modes,
+html body .shop-root .wg-hero-acc-modes.wg-hero-dock-modes,
+html body .wg-hero-acc-modes.wg-hero-dock-modes,
+html body .wg-hero-acc-modes {
+  height: 4.35rem !important;
+  min-height: 4.35rem !important;
+  max-height: 4.35rem !important;
+  overflow: hidden !important;
+  align-items: stretch !important;
+}
+
+html body .shop-root .wg-hero-dock-mode.wg-hero-acc-mode,
+html body .shop-root .wg-hero-acc-mode,
+html body .wg-hero-dock-mode.wg-hero-acc-mode,
+html body .wg-hero-acc-mode {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: center !important;
+  height: 4.35rem !important;
+  min-height: 4.35rem !important;
+  max-height: 4.35rem !important;
+  padding: 0.35rem 0.45rem !important;
+  gap: 0 !important;
+  overflow: hidden !important;
+  box-sizing: border-box !important;
+}
+
+/* One horizontal row: text block (right) + icon (left / يسار) */
+html body .shop-root .wg-hero-acc-copy,
+html body .wg-hero-acc-mode .wg-hero-acc-copy,
+html body .wg-hero-acc-copy {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+  direction: rtl !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.7rem !important; /* مسافة بين الكتابة والأيقونة */
+  width: 100% !important;
+  max-width: 100% !important;
+  height: 100% !important;
+  max-height: 100% !important;
+  overflow: hidden !important;
+  box-sizing: border-box !important;
+}
+
+html body .shop-root .wg-hero-acc-textcol,
+html body .wg-hero-acc-mode .wg-hero-acc-textcol,
+html body .wg-hero-acc-textcol {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.1rem !important;
+  flex: 0 1 auto !important;
+  min-width: 0 !important;
+  max-width: calc(100% - 3.2rem) !important;
+  overflow: hidden !important;
+  order: 1 !important;
+}
+
+html body .shop-root .wg-hero-acc-title-row,
+html body .wg-hero-acc-title-row {
+  display: contents !important;
+}
+
+html body .shop-root .wg-hero-acc-icon,
+html body .shop-root .wg-hero-acc-mode .wg-hero-acc-icon,
+html body .wg-hero-acc-icon {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 2.45rem !important;
+  height: 2.45rem !important;
+  min-width: 2.45rem !important;
+  min-height: 2.45rem !important;
+  max-width: 2.45rem !important;
+  max-height: 2.45rem !important;
+  margin: 0 !important;
+  border-radius: 999px !important;
+  background: rgba(217, 154, 62, 0.2) !important;
+  color: #D99A3E !important;
+  box-shadow: inset 0 0 0 1.5px rgba(217, 154, 62, 0.55) !important;
+  flex: 0 0 auto !important;
+  order: 2 !important; /* يسار النص في RTL */
+  align-self: center !important;
+}
+
+html body .shop-root .wg-hero-acc-mode.on .wg-hero-acc-icon,
+html body .wg-hero-acc-mode.is-expanded .wg-hero-acc-icon {
+  background: #D99A3E !important;
+  color: #001B35 !important;
+}
+
+html body .shop-root .wg-hero-acc-icon svg,
+html body .wg-hero-acc-icon svg {
+  width: 1.28rem !important;
+  height: 1.28rem !important;
+}
+
+html body .shop-root .wg-hero-acc-title,
+html body .wg-hero-acc-mode .wg-hero-acc-title,
+html body .wg-hero-acc-title {
+  display: block !important;
+  width: auto !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  font-size: 1.05rem !important;
+  font-weight: 800 !important;
+  line-height: 1.15 !important;
+  color: #fff !important;
+  text-align: center !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  order: unset !important;
+}
+
+html body .shop-root .wg-hero-acc-hint,
+html body .wg-hero-acc-mode .wg-hero-acc-hint,
+html body .wg-hero-acc-hint {
+  display: block !important;
+  width: 100% !important;
+  max-width: 9.5rem !important;
+  margin: 0 !important;
+  font-size: 0.64rem !important;
+  font-weight: 500 !important;
+  line-height: 1.15 !important;
+  color: rgba(255, 255, 255, 0.78) !important;
+  text-align: center !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+html body .shop-root .wg-hero-acc-chevron,
+html body .shop-root .wg-hero-acc-mode .wg-hero-acc-chevron,
+html body .wg-hero-acc-chevron {
+  display: block !important;
+  width: 11px !important;
+  height: 11px !important;
+  margin: 0 auto !important;
+  flex-shrink: 0 !important;
+  color: #D99A3E !important;
+  fill: #D99A3E !important;
+}
+
+html body .shop-root .wg-hero-acc-mode-ruhelti .wg-hero-acc-copy,
+html body .wg-hero-acc-mode-ruhelti .wg-hero-acc-copy {
+  justify-content: center !important;
+}
+
+@media (max-width: 900px) {
+  html body .shop-root .wg-hero-acc-modes,
+  html body .wg-hero-acc-modes {
+    height: 4rem !important;
+    min-height: 4rem !important;
+    max-height: 4rem !important;
+  }
+  html body .shop-root .wg-hero-acc-mode,
+  html body .wg-hero-acc-mode {
+    height: 4rem !important;
+    min-height: 4rem !important;
+    max-height: 4rem !important;
+    padding: 0.25rem 0.25rem !important;
+  }
+  html body .shop-root .wg-hero-acc-copy,
+  html body .wg-hero-acc-copy {
+    gap: 0.45rem !important;
+  }
+  html body .shop-root .wg-hero-acc-icon,
+  html body .wg-hero-acc-icon {
+    width: 2.1rem !important;
+    height: 2.1rem !important;
+    min-width: 2.1rem !important;
+    min-height: 2.1rem !important;
+    max-width: 2.1rem !important;
+    max-height: 2.1rem !important;
+  }
+  html body .shop-root .wg-hero-acc-icon svg,
+  html body .wg-hero-acc-icon svg {
+    width: 1.05rem !important;
+    height: 1.05rem !important;
+  }
+  html body .shop-root .wg-hero-acc-title,
+  html body .wg-hero-acc-title {
+    font-size: 0.92rem !important;
+  }
+  html body .shop-root .wg-hero-acc-hint,
+  html body .wg-hero-acc-hint {
+    font-size: 0.58rem !important;
+    max-width: 7.5rem !important;
+  }
+}

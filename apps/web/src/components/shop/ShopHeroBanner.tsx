@@ -736,14 +736,14 @@ export function ShopHeroBanner(props: Props) {
                     }}
                   >
                     <span className="wg-hero-acc-copy">
-                      <span className="wg-hero-acc-title-row">
+                      <span className="wg-hero-acc-textcol">
                         <span className="wg-hero-acc-title">{t(label)}</span>
-                        <span className="wg-hero-acc-icon" aria-hidden>
-                          <ModeGlyph mode={key} />
-                        </span>
+                        <span className="wg-hero-acc-hint">{t(hint)}</span>
+                        <AccordionChevron open={expanded} />
                       </span>
-                      <span className="wg-hero-acc-hint">{t(hint)}</span>
-                      <AccordionChevron open={expanded} />
+                      <span className="wg-hero-acc-icon" aria-hidden>
+                        <ModeGlyph mode={key} />
+                      </span>
                     </span>
                   </button>
                 );
@@ -757,7 +757,7 @@ export function ShopHeroBanner(props: Props) {
                     aria-haspopup="dialog"
                   >
                     <span className="wg-hero-acc-copy">
-                      <span className="wg-hero-acc-title-row">
+                      <span className="wg-hero-acc-textcol">
                         <span className="wg-hero-acc-title">{t("myTrip")}</span>
                       </span>
                     </span>
@@ -768,7 +768,7 @@ export function ShopHeroBanner(props: Props) {
                     className="wg-hero-dock-mode wg-hero-acc-mode wg-hero-acc-mode-ruhelti"
                   >
                     <span className="wg-hero-acc-copy">
-                      <span className="wg-hero-acc-title-row">
+                      <span className="wg-hero-acc-textcol">
                         <span className="wg-hero-acc-title">{t("myTrip")}</span>
                       </span>
                     </span>

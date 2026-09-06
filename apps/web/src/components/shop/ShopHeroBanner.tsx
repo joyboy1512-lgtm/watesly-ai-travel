@@ -580,6 +580,7 @@ export function ShopHeroBanner(props: Props) {
         data-field={props.mode === "stays" ? "guests" : "travelers"}
         ref={travelersWrapRef}
       >
+        <span className="wg-hero-acc-field-ico" aria-hidden />
         <button
           type="button"
           className={`exp-travelers-trigger wg-hero-acc-field-body${travelersOpen ? " open" : ""}`}
@@ -589,11 +590,10 @@ export function ShopHeroBanner(props: Props) {
             setTravelersOpen((v) => !v);
           }}
         >
-          <span className="wg-hero-acc-field-ico" aria-hidden />
           <span className="exp-cell-label">{props.mode === "stays" ? t("guests") : t("travelers")}</span>
           <strong>{travelerSummary}</strong>
-          <span className="wg-hero-acc-field-chevron" aria-hidden />
         </button>
+        <span className="wg-hero-acc-field-chevron" aria-hidden />
         {renderTravelersPanel()}
       </div>
     );

@@ -7024,3 +7024,181 @@ html body .wg-hero-acc-mode-ruhelti {
     gap: 0.4rem !important;
   }
 }
+
+/* ============================================================
+   WG_FIELD_SIDE_ICONS_CABIN_TIME_V9
+   - Travelers/guests icon beside text (like destination/dates)
+   - Cabin <option> dark text on white (not white-on-white)
+   - Cars time labels fully visible (no ellipsis)
+   ============================================================ */
+
+html body .shop-root .wg-hero-acc-field[data-field="guests"],
+html body .shop-root .wg-hero-acc-field[data-field="travelers"],
+html body .wg-hero-acc-field[data-field="guests"],
+html body .wg-hero-acc-field[data-field="travelers"] {
+  display: grid !important;
+  grid-template-columns: auto minmax(0, 1fr) auto !important;
+  align-items: center !important;
+  column-gap: 0.45rem !important;
+  direction: rtl !important;
+}
+
+html body .shop-root .wg-hero-acc-field[data-field="guests"] .wg-hero-acc-field-ico,
+html body .shop-root .wg-hero-acc-field[data-field="travelers"] .wg-hero-acc-field-ico,
+html body .wg-hero-acc-field[data-field="guests"] .wg-hero-acc-field-ico,
+html body .wg-hero-acc-field[data-field="travelers"] .wg-hero-acc-field-ico {
+  display: inline-block !important;
+  width: 1.15rem !important;
+  height: 1.15rem !important;
+  min-width: 1.15rem !important;
+  margin: 0 !important;
+  align-self: center !important;
+  grid-column: 1 !important;
+  grid-row: 1 !important;
+}
+
+html body .shop-root .wg-hero-acc-field[data-field="guests"] .exp-travelers-trigger,
+html body .shop-root .wg-hero-acc-field[data-field="travelers"] .exp-travelers-trigger,
+html body .shop-root .wg-hero-acc-field[data-field="guests"] .wg-hero-acc-field-body,
+html body .shop-root .wg-hero-acc-field[data-field="travelers"] .wg-hero-acc-field-body,
+html body .wg-hero-acc-field[data-field="guests"] .exp-travelers-trigger,
+html body .wg-hero-acc-field[data-field="travelers"] .exp-travelers-trigger,
+html body .wg-hero-acc-field[data-field="guests"] .exp-travelers-trigger.wg-hero-acc-field-body,
+html body .wg-hero-acc-field[data-field="travelers"] .exp-travelers-trigger.wg-hero-acc-field-body {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  justify-content: center !important;
+  gap: 0.08rem !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  grid-column: 2 !important;
+  grid-row: 1 !important;
+  grid-template-columns: unset !important;
+  background: transparent !important;
+  border: 0 !important;
+  padding: 0 !important;
+  text-align: start !important;
+}
+
+html body .shop-root .wg-hero-acc-field[data-field="guests"] .wg-hero-acc-field-chevron,
+html body .shop-root .wg-hero-acc-field[data-field="travelers"] .wg-hero-acc-field-chevron,
+html body .wg-hero-acc-field[data-field="guests"] .wg-hero-acc-field-chevron,
+html body .wg-hero-acc-field[data-field="travelers"] .wg-hero-acc-field-chevron {
+  display: inline-block !important;
+  grid-column: 3 !important;
+  grid-row: 1 !important;
+  align-self: center !important;
+}
+
+html body .shop-root .wg-hero-acc-field[data-field="guests"] .exp-travelers-panel,
+html body .shop-root .wg-hero-acc-field[data-field="travelers"] .exp-travelers-panel,
+html body .wg-hero-acc-field[data-field="guests"] .exp-travelers-panel,
+html body .wg-hero-acc-field[data-field="travelers"] .exp-travelers-panel {
+  grid-column: 1 / -1 !important;
+}
+
+/* Cabin class options: dark on white (native dropdown) */
+html body .shop-root .wg-hero-acc-cabin select,
+html body .wg-hero-acc-cabin select {
+  color: #F5F5F5 !important;
+  -webkit-text-fill-color: #F5F5F5 !important;
+  background: transparent !important;
+}
+
+html body .shop-root .wg-hero-acc-cabin select option,
+html body .wg-hero-acc-cabin select option,
+html body .wg-hero-acc-trip-extra.wg-hero-acc-cabin select option,
+html body select.wg-hero-acc-cabin-select option {
+  color: #0f172a !important;
+  -webkit-text-fill-color: #0f172a !important;
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+}
+
+html body .shop-root .wg-hero-acc-cabin select option:checked,
+html body .wg-hero-acc-cabin select option:checked,
+html body .shop-root .wg-hero-acc-cabin select option:hover,
+html body .wg-hero-acc-cabin select option:hover {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  background: #1668e3 !important;
+  background-color: #1668e3 !important;
+}
+
+/* Cars time cells: show full Arabic labels */
+html body .shop-root .exp-cell-time-compact.wg-hero-acc-field,
+html body .shop-root .exp-cell-time.exp-cell-time-compact,
+html body .wg-hero-acc-field.exp-cell-time-compact,
+html body .exp-cell-time-compact {
+  max-width: none !important;
+  min-width: 6.8rem !important;
+  width: auto !important;
+  flex: 1 1 6.8rem !important;
+}
+
+html body .shop-root .exp-cell-time-compact .exp-cell-label,
+html body .shop-root .wg-hero-acc-field[data-field="time"] .exp-cell-label,
+html body .wg-hero-acc-field[data-field="time"] .exp-cell-label,
+html body .exp-cell-time-compact .exp-cell-label {
+  font-size: 0.72rem !important;
+  white-space: nowrap !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  max-width: none !important;
+  width: auto !important;
+}
+
+html body .shop-root .wg-hero-acc-field[data-field="time"],
+html body .wg-hero-acc-field[data-field="time"] {
+  min-width: 6.8rem !important;
+}
+
+html body .shop-root .wg-hero-acc-field[data-field="time"] .wg-hero-acc-field-body,
+html body .wg-hero-acc-field[data-field="time"] .wg-hero-acc-field-body {
+  min-width: 0 !important;
+  overflow: visible !important;
+}
+
+/* Give cars time columns real width so Arabic labels fit */
+html body .shop-root .wg-hero-acc-panel .exp-form-row.exp-form-cars,
+html body .wg-hero-acc-panel .exp-form-row.exp-form-cars,
+html body .shop-root.wg-new-ui .wg-hero-search-panel .exp-unified-card .exp-form-cars {
+  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr) minmax(0, 1.1fr) minmax(6.6rem, 0.75fr) minmax(6.6rem, 0.75fr) minmax(0, 0.95fr) auto !important;
+}
+
+html body .shop-root .wg-hero-acc-panel .exp-form-row.exp-form-cars:not(:has(.exp-cell-time-compact + .exp-cell-time-compact)),
+html body .shop-root.wg-new-ui .wg-hero-search-panel .exp-unified-card .exp-form-cars:not(:has(.exp-cell-time-compact + .exp-cell-time-compact)) {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr) minmax(0, 1.2fr) minmax(6.6rem, 0.85fr) minmax(0, 1fr) auto !important;
+}
+
+/* Suggest dropdown: clearer spacing like reference (readable options) */
+html body .prc-suggest,
+html body .exp-ac-menu,
+html body .shop-ac .prc-suggest {
+  padding: 0.35rem !important;
+  border: 1px solid #dbe2ea !important;
+  border-radius: 0.55rem !important;
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.16) !important;
+  background: #fff !important;
+}
+
+html body .prc-suggest button,
+html body .exp-ac-menu button,
+html body .prc-suggest [role="option"],
+html body .exp-ac-menu [role="option"] {
+  padding: 0.55rem 0.7rem !important;
+  margin: 0.08rem 0 !important;
+  border-radius: 0.4rem !important;
+  color: #0f172a !important;
+  -webkit-text-fill-color: #0f172a !important;
+  line-height: 1.35 !important;
+}
+
+html body .prc-suggest button strong,
+html body .exp-ac-menu button strong {
+  color: #0f172a !important;
+  -webkit-text-fill-color: #0f172a !important;
+  font-size: 0.95rem !important;
+  font-weight: 700 !important;
+}

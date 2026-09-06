@@ -7202,3 +7202,20 @@ html body .exp-ac-menu button strong {
   font-size: 0.95rem !important;
   font-weight: 700 !important;
 }
+
+/* Align guests/travelers icon with value row (like destination pin) */
+html body .shop-root .wg-hero-acc-field[data-field="guests"] .wg-hero-acc-field-ico,
+html body .shop-root .wg-hero-acc-field[data-field="travelers"] .wg-hero-acc-field-ico,
+html body .wg-hero-acc-field[data-field="guests"] .wg-hero-acc-field-ico,
+html body .wg-hero-acc-field[data-field="travelers"] .wg-hero-acc-field-ico {
+  align-self: end !important;
+  margin-bottom: 0.15rem !important;
+}
+
+html body .shop-root .wg-hero-acc-field[data-field="guests"] .wg-hero-acc-field-chevron,
+html body .shop-root .wg-hero-acc-field[data-field="travelers"] .wg-hero-acc-field-chevron,
+html body .wg-hero-acc-field[data-field="guests"] .wg-hero-acc-field-chevron,
+html body .wg-hero-acc-field[data-field="travelers"] .wg-hero-acc-field-chevron {
+  align-self: end !important;
+  margin-bottom: 0.2rem !important;
+}

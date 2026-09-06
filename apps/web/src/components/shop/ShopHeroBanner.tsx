@@ -738,8 +738,10 @@ export function ShopHeroBanner(props: Props) {
                     <span className="wg-hero-acc-copy">
                       <span className="wg-hero-acc-textcol">
                         <span className="wg-hero-acc-title">{t(label)}</span>
-                        <span className="wg-hero-acc-hint">{t(hint)}</span>
-                        <AccordionChevron open={expanded} />
+                        <span className="wg-hero-acc-meta">
+                          <span className="wg-hero-acc-hint">{t(hint)}</span>
+                          <AccordionChevron open={expanded} />
+                        </span>
                       </span>
                       <span className="wg-hero-acc-icon" aria-hidden>
                         <ModeGlyph mode={key} />

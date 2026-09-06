@@ -5207,3 +5207,266 @@ html body .wg-hero-acc-search-btn:hover {
   background: #E5B15A !important;
   border-color: #E5B15A !important;
 }
+
+/* ============================================================
+   WG_SEARCH_UX_POLISH — approved UX fixes (no full redesign)
+   Navy #001B35 · Gold #D99A3E unchanged
+   ============================================================ */
+
+/* Modes row: brand + compact tabs + رحلتي, fixed height */
+html body .wg-hero-acc-modes,
+html body .wg-hero-dock-modes {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  align-items: stretch !important;
+  gap: 0 !important;
+  min-height: 3.6rem !important;
+  max-height: 3.85rem !important;
+  overflow: visible !important;
+  position: relative !important;
+  z-index: 40 !important;
+}
+
+html body .wg-hero-acc-brand {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex: 0 0 auto !important;
+  padding: 0 0.65rem 0 0.85rem !important;
+  max-height: 3.85rem !important;
+}
+
+html body .wg-hero-acc-brand .wg-logo-lockup-img {
+  height: 34px !important;
+  width: auto !important;
+  max-height: 34px !important;
+}
+
+html body .wg-hero-acc-mode,
+html body .wg-hero-dock-mode {
+  flex: 1 1 0 !important;
+  min-width: 0 !important;
+  min-height: 3.6rem !important;
+  max-height: 3.85rem !important;
+  padding: 0.35rem 0.45rem !important;
+  overflow: visible !important;
+}
+
+html body .wg-hero-acc-mode-ruhelti {
+  flex: 0.9 1 0 !important;
+  border-inline-start: 1px solid rgba(217, 154, 62, 0.28) !important;
+}
+
+html body .wg-hero-acc-hint {
+  display: none !important; /* keep row short */
+}
+
+html body .wg-hero-acc-title {
+  font-size: 0.92rem !important;
+  white-space: nowrap !important;
+}
+
+html body .wg-hero-acc-icon {
+  width: 1.15rem !important;
+  height: 1.15rem !important;
+}
+
+/* Middle trip strip: compact chips, wrap for multicity extras */
+html body .wg-hero-acc-tripstrip {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 0.35rem 0.4rem !important;
+  padding: 0.45rem 0.65rem !important;
+  min-height: 0 !important;
+  overflow: visible !important;
+  background: #001B35 !important;
+  position: relative !important;
+  z-index: 35 !important;
+}
+
+html body .wg-hero-acc-trip,
+html body .wg-hero-acc-trip-extra {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0.3rem !important;
+  min-height: 1.85rem !important;
+  max-height: 2rem !important;
+  padding: 0.2rem 0.7rem !important;
+  border-radius: 999px !important;
+  border: 1px solid rgba(245, 245, 245, 0.22) !important;
+  background: transparent !important;
+  color: #F5F5F5 !important;
+  font-size: 0.78rem !important;
+  font-weight: 700 !important;
+  white-space: nowrap !important;
+  line-height: 1.2 !important;
+  box-shadow: none !important;
+}
+
+html body .wg-hero-acc-trip.on,
+html body .wg-hero-acc-trip-extra.on {
+  background: #D99A3E !important;
+  border-color: #D99A3E !important;
+  color: #001B35 !important;
+}
+
+html body .wg-hero-acc-cabin select {
+  background: transparent !important;
+  border: 0 !important;
+  color: inherit !important;
+  font: inherit !important;
+  max-width: 7.5rem !important;
+}
+
+/* Bottom fields: no nested card chrome, shorter row */
+html body .wg-hero-acc-panel .exp-dialog,
+html body .wg-hero-acc-panel .exp-unified-card,
+html body .wg-hero-acc-panel .wg-hero-ticket-card,
+html body .wg-hero-acc-panel .wg-hero-dock-card {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border-radius: 0 !important;
+}
+
+html body .wg-hero-acc-panel,
+html body .wg-hero-dock.wg-hero-acc-panel {
+  padding: 0.35rem 0.45rem 0.45rem !important;
+  overflow: visible !important;
+  position: relative !important;
+  z-index: 30 !important;
+}
+
+html body .wg-hero-acc-panel .exp-form-row,
+html body .wg-hero-acc-panel .wg-hero-acc-fields {
+  min-height: 3.55rem !important;
+  gap: 0 !important;
+  align-items: stretch !important;
+  overflow: visible !important;
+}
+
+html body .wg-hero-acc-panel .wg-hero-acc-field,
+html body .wg-hero-acc-panel .exp-input-cell {
+  padding: 0.4rem 0.65rem !important;
+  min-height: 3.35rem !important;
+  overflow: visible !important;
+  position: relative !important;
+  z-index: 1 !important;
+}
+
+html body .wg-hero-acc-panel .wg-hero-acc-field:focus-within,
+html body .wg-hero-acc-panel .exp-cell-travelers:focus-within,
+html body .wg-hero-acc-panel .exp-input-cell.exp-cell-travelers {
+  z-index: 80 !important;
+}
+
+/* Dates / values: always white on navy */
+html body .wg-hero-acc-panel .exp-date-btn,
+html body .wg-hero-acc-panel .exp-date-btn span,
+html body .wg-hero-acc-panel input,
+html body .wg-hero-acc-panel .shop-ac-inline input,
+html body .wg-hero-acc-panel .exp-travelers-trigger,
+html body .wg-hero-acc-panel .exp-travelers-trigger strong,
+html body .wg-hero-acc-panel .exp-time-select,
+html body .wg-hero-acc-panel .exp-value {
+  color: #F5F5F5 !important;
+  -webkit-text-fill-color: #F5F5F5 !important;
+}
+
+html body .wg-hero-acc-panel .exp-label,
+html body .wg-hero-acc-panel .wg-hero-acc-field-label,
+html body .wg-hero-acc-panel .shop-ac-inline label {
+  color: #A9B0BE !important;
+}
+
+/* Suggest menus: above dock, tight spacing, no huge gaps */
+html body .wg-hero-acc-shell,
+html body .wg-hero-acc-panel,
+html body .wg-hero-search-panel,
+html body .wg-travela-hero {
+  overflow: visible !important;
+}
+
+html body .wg-hero-acc-panel .prc-suggest,
+html body .wg-hero-acc-panel .exp-ac-menu,
+html body .wg-hero-acc-panel .shop-ac > .prc-suggest,
+html body .exp-travelers-panel,
+html body .exp-occupancy-panel {
+  position: absolute !important;
+  top: auto !important;
+  bottom: calc(100% + 6px) !important;
+  inset-inline-start: 0 !important;
+  z-index: 9000 !important;
+  max-height: min(260px, 40vh) !important;
+  overflow: auto !important;
+  padding: 0.3rem !important;
+  gap: 0 !important;
+  background: #fff !important;
+  border-radius: 12px !important;
+  box-shadow: 0 14px 36px rgba(0, 15, 31, 0.28) !important;
+  border: 1px solid rgba(0, 27, 53, 0.1) !important;
+}
+
+html body .prc-suggest button,
+html body .exp-ac-menu button,
+html body .prc-suggest [role="option"] {
+  padding: 0.45rem 0.65rem !important;
+  margin: 0 !important;
+  min-height: 0 !important;
+  border-radius: 8px !important;
+  display: grid !important;
+  gap: 0.08rem !important;
+  color: #001B35 !important;
+}
+
+html body .prc-suggest button strong,
+html body .exp-ac-menu button strong {
+  font-size: 0.9rem !important;
+  line-height: 1.25 !important;
+}
+
+html body .prc-suggest button span,
+html body .exp-ac-menu button span {
+  font-size: 0.75rem !important;
+  opacity: 0.75 !important;
+  line-height: 1.2 !important;
+}
+
+/* Multicity: stack under strip, compact cards */
+html body .exp-multicity-stack {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0.35rem !important;
+  padding: 0.35rem 0 !important;
+}
+
+html body .exp-flight-leg-row,
+html body .exp-multicity-stack .exp-form-row {
+  min-height: 3.2rem !important;
+  padding: 0.25rem 0 !important;
+  background: rgba(255, 255, 255, 0.04) !important;
+  border-radius: 10px !important;
+}
+
+/* Hide bottom duplicate WhatsApp FAB if any leftover markup */
+html body .wg-whatsapp-fab,
+html body a.wg-whatsapp-fab {
+  display: none !important;
+}
+
+html body .wg-float-actions {
+  gap: 0.4rem !important;
+}
+
+@media (max-width: 900px) {
+  html body .wg-hero-acc-brand .wg-logo-lockup-img {
+    height: 28px !important;
+  }
+  html body .wg-hero-acc-title {
+    font-size: 0.8rem !important;
+  }
+}

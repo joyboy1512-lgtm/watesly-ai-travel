@@ -4,6 +4,11 @@ import { FormEvent, useEffect, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { apiFetch } from "@/lib/api";
 import type { WeekendDeal } from "@watesly-travel/shared";
+import {
+  DEFAULT_HERO_SERVICES,
+  readHeroServices,
+  writeHeroServices,
+} from "@/lib/hero-services";
 
 /**
  * Staff CMS for platform deals and funnel stats.
@@ -144,6 +149,114 @@ export default function DashboardCmsPage() {
           ))}
         </ul>
       </section>
+
+      <HeroServicesCmsCard />
     </AppShell>
+  );
+}
+
+function HeroServicesCmsCard() {
+  const [items, setItems] = useState(DEFAULT_HERO_SERVICES);
+  const [customLabel, setCustomLabel] = useState("");
+  const [customHref, setCustomHref] = useState("");
+  const [saved, setSaved] = useState("");
+
+  useEffect(() => {
+    setItems(readHeroServices());
+  }, []);
+
+  function toggle(key: string) {
+    setItems((prev) =>
+      prev.map((row) =>
+        row.key === key ? { ...row, enabled: !row.enabled } : row,
+      ),
+    );
+  }
+
+  function persist() {
+    writeHeroServices(items);
+    setSaved("تم حفظ خدمات صف البحث — حدّث الصفحة الرئيسية لترى التغيير");
+  }
+
+  function addCustom(e: FormEvent) {
+    e.preventDefault();
+    if (!customLabel.trim()) return;
+    const key = `custom-${Date.now()}`;
+    setItems((prev) => [
+      ...prev,
+      {
+        key,
+        labelAr: customLabel.trim(),
+        labelEn: customLabel.trim(),
+        enabled: true,
+        kind: "link",
+        href: customHref.trim() || "#",
+      },
+    ]);
+    setCustomLabel("");
+    setCustomHref("");
+  }
+
+  return (
+    <section className="card" style={{ marginTop: "1.5rem" }}>
+      <h2>خدمات صف البحث الأول</h2>
+      <p className="hint">
+        تشغيل/إيقاف التبويبات في محرك البحث (فنادق، رحلات، سيارات، أنشطة، رحلتي) وإضافة خدمات
+        مخصّصة. التغيير يُحفظ في المتصفح للإدارة حالياً ويظهر فوراً على الصفحة الرئيسية بعد
+        التحديث.
+      </p>
+      <ul style={{ listStyle: "none", padding: 0 }}>
+        {items.map((row) => (
+          <li
+            key={row.key}
+            style={{
+              display: "flex",
+              gap: "0.75rem",
+              alignItems: "center",
+              marginBottom: "0.5rem",
+            }}
+          >
+            <label style={{ display: "flex", gap: "0.5rem", alignItems: "center", flex: 1 }}>
+              <input
+                type="checkbox"
+                checked={row.enabled}
+                onChange={() => toggle(row.key)}
+              />
+              <strong>{row.labelAr}</strong>
+              <span className="hint">({row.kind})</span>
+            </label>
+          </li>
+        ))}
+      </ul>
+      <form
+        onSubmit={addCustom}
+        className="form-grid"
+        style={{ maxWidth: 420, marginTop: "0.75rem" }}
+      >
+        <label>
+          خدمة جديدة (اسم)
+          <input
+            value={customLabel}
+            onChange={(e) => setCustomLabel(e.target.value)}
+            placeholder="مثال: تأمين سفر"
+          />
+        </label>
+        <label>
+          رابط اختياري
+          <input
+            value={customHref}
+            onChange={(e) => setCustomHref(e.target.value)}
+            placeholder="/insurance"
+          />
+        </label>
+        <button type="submit" className="btn">
+          إضافة خدمة
+        </button>
+      </form>
+      <button type="button" className="btn primary" style={{ marginTop: "0.75rem" }} onClick={persist}>
+        حفظ خدمات البحث
+      </button>
+      {saved ? <p className="hint">{saved}</p> : null}
+    </section>
   );
 }

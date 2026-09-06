@@ -107,10 +107,12 @@ export class ShopService {
         orderBy: { city: "asc" },
       });
     }
+    // Allow 2+ chars; IATA codes are often 3 letters (KWI) — prioritize code matches.
     if (query.length < 2) {
       return [];
     }
-    return this.prisma.airport.findMany({
+    const needle = query.toUpperCase();
+    const rows = await this.prisma.airport.findMany({
       where: {
         OR: [
           { iataCode: { contains: query, mode: "insensitive" } },
@@ -119,43 +121,126 @@ export class ShopService {
           { country: { contains: query, mode: "insensitive" } },
         ],
       },
-      take,
+      take: Math.min(80, take * 3),
       orderBy: { city: "asc" },
     });
+    const score = (row: {
+      iataCode: string | null;
+      name: string;
+      city: string | null;
+      country: string | null;
+    }) => {
+      const iata = (row.iataCode || "").toUpperCase();
+      const name = (row.name || "").toUpperCase();
+      const city = (row.city || "").toUpperCase();
+      const country = (row.country || "").toUpperCase();
+      if (iata === needle) return 0;
+      if (iata.startsWith(needle)) return 1;
+      if (iata.includes(needle)) return 2;
+      if (city === needle || city.startsWith(needle)) return 3;
+      if (name.startsWith(needle) || name.includes(needle)) return 4;
+      if (country.startsWith(needle) || country.includes(needle)) return 5;
+      // Arabic / mixed: keep contains hits after codes
+      return 6;
+    };
+    return rows
+      .map((row) => ({ row, s: score(row) }))
+      .sort((a, b) => a.s - b.s || (a.row.city || "").localeCompare(b.row.city || ""))
+      .slice(0, take)
+      .map((x) => x.row);
   }
 
   async cities(q?: string) {
     const query = String(q || "").trim();
     if (query.length < 2) {
       return [
-        { city: "الكويت", country: "الكويت", iataCode: "KWI" },
-        { city: "دبي", country: "الإمارات", iataCode: "DXB" },
-        { city: "الدوحة", country: "قطر", iataCode: "DOH" },
+        { city: "الكويت", country: "الكويت", iataCode: "KWI", kind: "city" },
+        { city: "دبي", country: "الإمارات", iataCode: "DXB", kind: "city" },
+        { city: "الدوحة", country: "قطر", iataCode: "DOH", kind: "city" },
       ];
     }
+    const needle = query.toLowerCase();
     const rows = await this.prisma.airport.findMany({
       where: {
         OR: [
           { city: { contains: query, mode: "insensitive" } },
           { country: { contains: query, mode: "insensitive" } },
+          { name: { contains: query, mode: "insensitive" } },
           { iataCode: { contains: query, mode: "insensitive" } },
         ],
       },
-      take: 40,
+      take: 60,
       orderBy: { city: "asc" },
     });
     const seen = new Set<string>();
-    const out: Array<{ city: string | null; country: string | null; iataCode?: string | null }> =
-      [];
-    for (const row of rows) {
-      const key = `${row.city || ""}|${row.country || ""}`;
-      if (seen.has(key)) continue;
-      seen.add(key);
-      out.push({
-        city: row.city,
-        country: row.country,
-        iataCode: row.iataCode,
-      });
+    const out: Array<{
+      city: string | null;
+      country: string | null;
+      iataCode?: string | null;
+      kind?: string;
+      label?: string;
+    }> = [];
+
+    // Prefer country hits, then city, then airport/hotel-like name matches.
+    const ranked = [...rows].sort((a, b) => {
+      const rank = (r: (typeof rows)[number]) => {
+        const city = (r.city || "").toLowerCase();
+        const country = (r.country || "").toLowerCase();
+        const name = (r.name || "").toLowerCase();
+        if (country === needle || country.startsWith(needle)) return 0;
+        if (city === needle || city.startsWith(needle)) return 1;
+        if (city.includes(needle)) return 2;
+        if (name.includes(needle)) return 3;
+        return 4;
+      };
+      return rank(a) - rank(b);
+    });
+
+    for (const row of ranked) {
+      const cityKey = `${row.city || ""}|${row.country || ""}`;
+      if (row.city && !seen.has(`city:${cityKey}`)) {
+        seen.add(`city:${cityKey}`);
+        out.push({
+          city: row.city,
+          country: row.country,
+          iataCode: row.iataCode,
+          kind: "city",
+          label: row.city,
+        });
+      }
+      const country = row.country;
+      if (country && !seen.has(`country:${country}`)) {
+        const countryHit =
+          country.toLowerCase().includes(needle) ||
+          (row.city || "").toLowerCase().includes(needle);
+        if (countryHit) {
+          seen.add(`country:${country}`);
+          out.push({
+            city: country,
+            country,
+            iataCode: row.iataCode,
+            kind: "country",
+            label: country,
+          });
+        }
+      }
+      // Airport / venue name can stand in for hotel-area text search (AR/EN).
+      const name = row.name;
+      if (
+        name &&
+        name.toLowerCase().includes(needle) &&
+        !seen.has(`place:${name}`)
+      ) {
+        seen.add(`place:${name}`);
+        out.push({
+          city: row.city || name,
+          country: row.country,
+          iataCode: row.iataCode,
+          kind: "place",
+          label: name,
+        });
+      }
+      if (out.length >= 30) break;
     }
     return out;
   }

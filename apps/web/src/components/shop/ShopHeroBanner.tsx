@@ -7,6 +7,8 @@ import { ShopAutocomplete, type SuggestItem } from "@/components/shop/ShopAutoco
 import { ShopDateRangePicker } from "@/components/shop/ShopDateRangePicker";
 import { formatDay } from "@/lib/flight-search";
 import { useShopI18n } from "@/components/shop/ShopI18nProvider";
+import { WeekendGateLogo } from "@/components/shop/WeekendGateLogo";
+import { readHeroServices } from "@/lib/hero-services";
 import {
   emptyRoom,
   occupancyTotals,
@@ -243,6 +245,28 @@ export function ShopHeroBanner(props: Props) {
   const [slideIdx, setSlideIdx] = useState(0);
   /** Accordion panel open — visual only; search handlers unchanged. Hidden until chevron/tab opens it. */
   const [dockOpen, setDockOpen] = useState(false);
+  const [enabledModes, setEnabledModes] = useState<Mode[]>(["stays", "flights", "cars", "activities"]);
+  const [showMyTrip, setShowMyTrip] = useState(true);
+  useEffect(() => {
+    const services = readHeroServices();
+    const modes = services
+      .filter((s) => s.enabled && s.kind === "mode")
+      .map((s) => s.key)
+      .filter((k): k is Mode => ["stays", "flights", "cars", "activities"].includes(k));
+    if (modes.length) setEnabledModes(modes);
+    setShowMyTrip(services.some((s) => s.key === "myTrip" && s.enabled));
+    const onChange = () => {
+      const next = readHeroServices();
+      const m = next
+        .filter((s) => s.enabled && s.kind === "mode")
+        .map((s) => s.key)
+        .filter((k): k is Mode => ["stays", "flights", "cars", "activities"].includes(k));
+      if (m.length) setEnabledModes(m);
+      setShowMyTrip(next.some((s) => s.key === "myTrip" && s.enabled));
+    };
+    window.addEventListener("wg-hero-services-changed", onChange);
+    return () => window.removeEventListener("wg-hero-services-changed", onChange);
+  }, []);
   const travelersWrapRef = useRef<HTMLDivElement | null>(null);
   const infants = props.infants ?? 0;
   const { locale, t } = useShopI18n();
@@ -691,7 +715,10 @@ export function ShopHeroBanner(props: Props) {
               role="tablist"
               aria-label={t("bookingType")}
             >
-              {PRODUCT_KEYS.map(({ key, label, hint }) => {
+              <div className="wg-hero-acc-brand" aria-hidden={false}>
+                <WeekendGateLogo light />
+              </div>
+              {PRODUCT_KEYS.filter((p) => enabledModes.includes(p.key)).map(({ key, label, hint }) => {
                 const on = props.mode === key;
                 const expanded = on && dockOpen;
                 return (
@@ -725,6 +752,35 @@ export function ShopHeroBanner(props: Props) {
                   </button>
                 );
               })}
+              {showMyTrip && (props.onRuheltiClick || props.tripBuilderHref) ? (
+                props.onRuheltiClick ? (
+                  <button
+                    type="button"
+                    className="wg-hero-dock-mode wg-hero-acc-mode wg-hero-acc-mode-ruhelti"
+                    onClick={() => props.onRuheltiClick?.()}
+                    aria-haspopup="dialog"
+                  >
+                    <span className="wg-hero-acc-copy">
+                      <span className="wg-hero-acc-title-row">
+                        <span className="wg-hero-acc-title">{t("myTrip")}</span>
+                      </span>
+                      <span className="wg-hero-acc-hint">{t("tripBuilderCta")}</span>
+                    </span>
+                  </button>
+                ) : (
+                  <Link
+                    href={props.tripBuilderHref || "/trip-builder"}
+                    className="wg-hero-dock-mode wg-hero-acc-mode wg-hero-acc-mode-ruhelti"
+                  >
+                    <span className="wg-hero-acc-copy">
+                      <span className="wg-hero-acc-title-row">
+                        <span className="wg-hero-acc-title">{t("myTrip")}</span>
+                      </span>
+                      <span className="wg-hero-acc-hint">{t("tripBuilderCta")}</span>
+                    </span>
+                  </Link>
+                )
+              ) : null}
             </div>
 
             {props.mode === "flights" && dockOpen ? (
@@ -750,6 +806,46 @@ export function ShopHeroBanner(props: Props) {
                 >
                   {t("multiCity")}
                 </button>
+                <label className={`wg-hero-acc-trip-extra${props.directOnly ? " on" : ""}`}>
+                  <input
+                    type="checkbox"
+                    checked={props.directOnly}
+                    onChange={(e) => props.onDirectOnlyChange(e.target.checked)}
+                  />
+                  <span>{t("directOnly")}</span>
+                </label>
+                <label className="wg-hero-acc-trip-extra wg-hero-acc-cabin">
+                  <span>{t("cabinClass")}</span>
+                  <select
+                    value={props.cabinClass}
+                    onChange={(e) => props.onCabinClassChange(e.target.value)}
+                    aria-label={t("cabinClass")}
+                  >
+                    <option value="economy">{t("cabinEconomy")}</option>
+                    <option value="premium_economy">{t("cabinPremium")}</option>
+                    <option value="business">{t("cabinBusiness")}</option>
+                    <option value="first">{t("cabinFirst")}</option>
+                  </select>
+                </label>
+              </div>
+            ) : null}
+
+            {props.mode === "cars" && dockOpen ? (
+              <div className="wg-hero-acc-tripstrip" role="group" aria-label={t("tripType")}>
+                <button
+                  type="button"
+                  className={`wg-hero-acc-trip${!props.transferRoundtrip ? " on" : ""}`}
+                  onClick={() => props.onTransferRoundtripChange(false)}
+                >
+                  {t("arrivalOnly")}
+                </button>
+                <button
+                  type="button"
+                  className={`wg-hero-acc-trip${props.transferRoundtrip ? " on" : ""}`}
+                  onClick={() => props.onTransferRoundtripChange(true)}
+                >
+                  {t("arrivalAndReturn")}
+                </button>
               </div>
             ) : null}
 
@@ -762,32 +858,6 @@ export function ShopHeroBanner(props: Props) {
           <div className="exp-unified-card wg-hero-ticket-card wg-hero-dock-card">
           {props.mode === "flights" ? (
             <>
-              <div className="exp-flight-toolbar wg-hero-acc-flight-meta">
-                 <label className="exp-cabin-pill">
-                   <span>{t("cabinClass")}</span>
-                  <select
-                    value={props.cabinClass}
-                    onChange={(e) => props.onCabinClassChange(e.target.value)}
-                     aria-label={t("cabinClass")}
-                  >
-                     <option value="economy">{t("cabinEconomy")}</option>
-                     <option value="premium_economy">
-                       {t("cabinPremium")}
-                     </option>
-                     <option value="business">{t("cabinBusiness")}</option>
-                     <option value="first">{t("cabinFirst")}</option>
-                  </select>
-                </label>
-                <label className={`exp-direct-pill${props.directOnly ? " on" : ""}`}>
-                  <input
-                    type="checkbox"
-                    checked={props.directOnly}
-                    onChange={(e) => props.onDirectOnlyChange(e.target.checked)}
-                  />
-                   <span>{t("directOnly")}</span>
-                </label>
-              </div>
-
               {isMulticity ? (
                 <div className="exp-multicity-stack">
                   {props.flightLegs.map((leg, index) => (
@@ -957,23 +1027,7 @@ export function ShopHeroBanner(props: Props) {
           ) : (
             <>
             {props.mode === "cars" ? (
-              <div className="exp-transfer-toolbar">
-                <div className="exp-pill-tabs exp-pill-tabs-inset" role="group" aria-label={t("tripType")}>
-                  <button
-                    type="button"
-                    className={`exp-pill-tab${!props.transferRoundtrip ? " on" : ""}`}
-                    onClick={() => props.onTransferRoundtripChange(false)}
-                  >
-                    {t("arrivalOnly")}
-                  </button>
-                  <button
-                    type="button"
-                    className={`exp-pill-tab${props.transferRoundtrip ? " on" : ""}`}
-                    onClick={() => props.onTransferRoundtripChange(true)}
-                  >
-                    {t("arrivalAndReturn")}
-                  </button>
-                </div>
+              <div className="exp-transfer-toolbar wg-hero-acc-cars-meta">
                 <label className={`exp-direct-pill${props.transferAirport ? " on" : ""}`}>
                   <input
                     type="checkbox"
@@ -1197,41 +1251,6 @@ export function ShopHeroBanner(props: Props) {
           </div>
         </div>
             </div>
-
-            {props.onRuheltiClick || props.tripBuilderHref ? (
-              <div className="wg-hero-dock-ruhelti">
-                {props.onRuheltiClick ? (
-                  <button
-                    type="button"
-                    className="wg-hero-dock-ruhelti-link wg-ruhelti-hero-btn"
-                    onClick={props.onRuheltiClick}
-                    aria-haspopup="dialog"
-                  >
-                    {t("myTrip")}
-                  </button>
-                ) : props.tripBuilderHref ? (
-                  <Link
-                    href={props.tripBuilderHref}
-                    className="wg-hero-dock-ruhelti-link"
-                    onClick={() => {
-                      try {
-                        sessionStorage.setItem(
-                          "wg_trip_builder_search",
-                          JSON.stringify({
-                            href: props.tripBuilderHref,
-                            at: Date.now(),
-                          }),
-                        );
-                      } catch {
-                        /* ignore */
-                      }
-                    }}
-                  >
-                    {t("myTrip")}
-                  </Link>
-                ) : null}
-              </div>
-            ) : null}
 
           {props.error ? <p className="shop-error exp-dialog-msg">{props.error}</p> : null}
           {props.message ? <p className="shop-status exp-dialog-msg">{props.message}</p> : null}

@@ -139,24 +139,40 @@ function ShopHomeInner() {
         country?: string | null;
       }>
     >(`/shop/airports?q=${encodeURIComponent(q)}&limit=40`);
-    return rows.map((a) => ({
-      id: a.id,
-      code: (a.iataCode || "").toUpperCase(),
-      title: `${a.iataCode || "—"} · ${a.city || a.name}`,
-      subtitle: `${a.name}${a.country ? ` — ${a.country}` : ""}`,
-    }));
+    return rows.map((a) => {
+      const code = (a.iataCode || "").toUpperCase();
+      return {
+        id: a.id,
+        code,
+        // IATA first — search priority is airport code
+        title: code ? `${code} — ${a.city || a.name}` : a.city || a.name,
+        subtitle: `${a.name}${a.country ? ` · ${a.country}` : ""}`,
+      };
+    });
   }
 
   async function searchCities(q: string): Promise<SuggestItem[]> {
     const rows = await shopFetch<
-      Array<{ city: string | null; country: string | null; iataCode?: string | null }>
+      Array<{
+        city: string | null;
+        country: string | null;
+        iataCode?: string | null;
+        kind?: string;
+        label?: string;
+      }>
     >(`/shop/cities?q=${encodeURIComponent(q)}`);
-    return rows.map((c, idx) => ({
-      id: `${c.city}-${idx}`,
-      code: c.iataCode || c.city || q,
-      title: c.city || q,
-      subtitle: c.country || undefined,
-    }));
+    return rows.map((c, idx) => {
+      const kind = c.kind || "city";
+      const label = c.label || c.city || q;
+      const prefix =
+        kind === "country" ? "دولة" : kind === "place" ? "مكان" : "مدينة";
+      return {
+        id: `${kind}-${c.city}-${idx}`,
+        code: c.iataCode || c.city || q,
+        title: label,
+        subtitle: [prefix, c.country].filter(Boolean).join(" · ") || undefined,
+      };
+    });
   }
 
   function handleTripTypeChange(next: FlightTripType) {

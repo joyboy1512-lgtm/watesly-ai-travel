@@ -7,7 +7,6 @@ import { ShopAutocomplete, type SuggestItem } from "@/components/shop/ShopAutoco
 import { ShopDateRangePicker } from "@/components/shop/ShopDateRangePicker";
 import { formatDay } from "@/lib/flight-search";
 import { useShopI18n } from "@/components/shop/ShopI18nProvider";
-import { WeekendGateLogo } from "@/components/shop/WeekendGateLogo";
 import { readHeroServices } from "@/lib/hero-services";
 import {
   emptyRoom,
@@ -715,9 +714,6 @@ export function ShopHeroBanner(props: Props) {
               role="tablist"
               aria-label={t("bookingType")}
             >
-              <div className="wg-hero-acc-brand" aria-hidden={false}>
-                <WeekendGateLogo light />
-              </div>
               {PRODUCT_KEYS.filter((p) => enabledModes.includes(p.key)).map(({ key, label, hint }) => {
                 const on = props.mode === key;
                 const expanded = on && dockOpen;
@@ -764,7 +760,6 @@ export function ShopHeroBanner(props: Props) {
                       <span className="wg-hero-acc-title-row">
                         <span className="wg-hero-acc-title">{t("myTrip")}</span>
                       </span>
-                      <span className="wg-hero-acc-hint">{t("tripBuilderCta")}</span>
                     </span>
                   </button>
                 ) : (
@@ -776,7 +771,6 @@ export function ShopHeroBanner(props: Props) {
                       <span className="wg-hero-acc-title-row">
                         <span className="wg-hero-acc-title">{t("myTrip")}</span>
                       </span>
-                      <span className="wg-hero-acc-hint">{t("tripBuilderCta")}</span>
                     </span>
                   </Link>
                 )

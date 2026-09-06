@@ -5515,3 +5515,185 @@ html body .wg-hero-acc-icon svg {
   width: 16px !important;
   height: 16px !important;
 }
+
+/* ============================================================
+   WG_FIX_ROW_DROPDOWNS_V2 — user screenshot fixes
+   - NO logo inside search dock
+   - All service tabs + رحلتي on ONE row
+   - Flight options on ONE row
+   - Dropdowns above rows (no clipping)
+   ============================================================ */
+
+/* Never show brand/logo inside the search dock */
+html body .wg-hero-acc-brand,
+html body .wg-hero-dock-modes .wg-logo,
+html body .wg-hero-acc-modes .wg-logo-lockup {
+  display: none !important;
+}
+
+/* First row: equal tabs on one line */
+html body .wg-hero-acc-modes,
+html body .wg-hero-dock-modes {
+  display: grid !important;
+  grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+  align-items: stretch !important;
+  gap: 0 !important;
+  flex-wrap: nowrap !important;
+  min-height: 3.35rem !important;
+  max-height: 3.45rem !important;
+  height: 3.4rem !important;
+  overflow: hidden !important;
+  width: 100% !important;
+}
+
+html body .wg-hero-acc-mode,
+html body .wg-hero-dock-mode,
+html body a.wg-hero-acc-mode {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-width: 0 !important;
+  width: auto !important;
+  max-width: none !important;
+  flex: unset !important;
+  min-height: 3.35rem !important;
+  max-height: 3.45rem !important;
+  height: 3.4rem !important;
+  padding: 0.2rem 0.25rem !important;
+  margin: 0 !important;
+}
+
+html body .wg-hero-acc-copy {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.1rem !important;
+  width: 100% !important;
+  min-width: 0 !important;
+}
+
+html body .wg-hero-acc-title-row {
+  display: inline-flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.28rem !important;
+  max-width: 100% !important;
+}
+
+html body .wg-hero-acc-title {
+  font-size: 0.86rem !important;
+  line-height: 1.1 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+html body .wg-hero-acc-hint,
+html body .wg-hero-acc-chevron,
+html body .wg-hero-acc-mode .wg-hero-acc-chevron {
+  display: none !important;
+}
+
+html body .wg-hero-acc-icon,
+html body .wg-hero-acc-icon svg {
+  width: 15px !important;
+  height: 15px !important;
+  min-width: 15px !important;
+}
+
+/* Flight / cars option strip: ONE compact row */
+html body .wg-hero-acc-tripstrip {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 0.3rem !important;
+  padding: 0.35rem 0.55rem !important;
+  min-height: 2.2rem !important;
+  max-height: 2.4rem !important;
+  height: auto !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  scrollbar-width: none !important;
+  white-space: nowrap !important;
+}
+
+html body .wg-hero-acc-tripstrip::-webkit-scrollbar { display: none !important; }
+
+html body .wg-hero-acc-trip,
+html body .wg-hero-acc-trip-extra,
+html body .wg-hero-acc-cabin {
+  flex: 0 0 auto !important;
+  white-space: nowrap !important;
+  min-height: 1.7rem !important;
+  max-height: 1.85rem !important;
+  padding: 0.15rem 0.55rem !important;
+  font-size: 0.74rem !important;
+}
+
+html body .wg-hero-acc-cabin select {
+  max-width: 6.5rem !important;
+  font-size: 0.74rem !important;
+}
+
+/* Shell/panel must NOT clip dropdowns */
+html body .wg-travela-hero,
+html body .wg-hero-search-panel,
+html body .wg-hero-ticket-shell,
+html body .wg-hero-dock-shell,
+html body .wg-hero-acc-shell,
+html body .wg-hero-acc-shell.is-open,
+html body .wg-hero-acc-panel,
+html body .wg-hero-dock.wg-hero-acc-panel,
+html body .wg-hero-acc-panel .exp-dialog,
+html body .wg-hero-acc-panel .exp-unified-card,
+html body .wg-hero-acc-field,
+html body .exp-input-cell,
+html body .shop-ac,
+html body .exp-ac-field {
+  overflow: visible !important;
+}
+
+html body .wg-hero-acc-shell,
+html body .wg-hero-acc-panel {
+  position: relative !important;
+  z-index: 50 !important;
+}
+
+html body .wg-hero-acc-field:focus-within,
+html body .exp-input-cell:focus-within,
+html body .exp-cell-travelers:focus-within,
+html body .shop-ac:focus-within {
+  z-index: 200 !important;
+  position: relative !important;
+}
+
+/* Suggest + travelers panels ABOVE everything in the dock */
+html body .prc-suggest,
+html body .exp-ac-menu,
+html body .shop-ac .prc-suggest,
+html body .exp-ac-field .exp-ac-menu,
+html body .exp-travelers-panel,
+html body .exp-occupancy-panel {
+  position: absolute !important;
+  top: auto !important;
+  bottom: calc(100% + 8px) !important;
+  inset-inline-start: 0 !important;
+  inset-inline-end: auto !important;
+  z-index: 100000 !important;
+  max-height: min(280px, 45vh) !important;
+  overflow: auto !important;
+  transform: none !important;
+}
+
+@media (max-width: 720px) {
+  html body .wg-hero-acc-modes,
+  html body .wg-hero-dock-modes {
+    grid-template-columns: repeat(5, minmax(3.6rem, 1fr)) !important;
+  }
+  html body .wg-hero-acc-title {
+    font-size: 0.72rem !important;
+  }
+}

@@ -152,14 +152,220 @@ export class ShopService {
 
   async cities(q?: string) {
     const query = String(q || "").trim();
-    if (query.length < 2) {
-      return [
-        { city: "الكويت", country: "الكويت", iataCode: "KWI", kind: "city" },
-        { city: "دبي", country: "الإمارات", iataCode: "DXB", kind: "city" },
-        { city: "الدوحة", country: "قطر", iataCode: "DOH", kind: "city" },
-      ];
-    }
+    const isArabic = /[\u0600-\u06FF]/.test(query);
     const needle = query.toLowerCase();
+    const needleUpper = query.toUpperCase();
+
+    /** Bilingual city aliases so AR query → AR label and EN query → EN label. */
+    const CITY_ALIASES: Array<{
+      ar: string;
+      en: string;
+      countryAr: string;
+      countryEn: string;
+      iata: string;
+      hotels?: Array<{ ar: string; en: string }>;
+    }> = [
+      {
+        ar: "الكويت",
+        en: "Kuwait City",
+        countryAr: "الكويت",
+        countryEn: "Kuwait",
+        iata: "KWI",
+        hotels: [
+          { ar: "فندق جي دبليو ماريوت الكويت", en: "JW Marriott Kuwait" },
+          { ar: "فندق فورسيزونز الكويت", en: "Four Seasons Kuwait" },
+          { ar: "فندق شيراتون الكويت", en: "Sheraton Kuwait" },
+        ],
+      },
+      {
+        ar: "دبي",
+        en: "Dubai",
+        countryAr: "الإمارات",
+        countryEn: "United Arab Emirates",
+        iata: "DXB",
+        hotels: [
+          { ar: "برج العرب", en: "Burj Al Arab" },
+          { ar: "أتلانتس النخلة", en: "Atlantis The Palm" },
+          { ar: "فندق العنوان داونتاون", en: "Address Downtown" },
+        ],
+      },
+      {
+        ar: "أبوظبي",
+        en: "Abu Dhabi",
+        countryAr: "الإمارات",
+        countryEn: "United Arab Emirates",
+        iata: "AUH",
+        hotels: [
+          { ar: "قصر الإمارات", en: "Emirates Palace" },
+          { ar: "فندق ستيهان ياس", en: "St. Regis Saadiyat" },
+        ],
+      },
+      {
+        ar: "الدوحة",
+        en: "Doha",
+        countryAr: "قطر",
+        countryEn: "Qatar",
+        iata: "DOH",
+        hotels: [
+          { ar: "فندق شيراتون الدوحة", en: "Sheraton Grand Doha" },
+          { ar: "منتجع باندرا", en: "Banana Island Resort" },
+        ],
+      },
+      {
+        ar: "الرياض",
+        en: "Riyadh",
+        countryAr: "السعودية",
+        countryEn: "Saudi Arabia",
+        iata: "RUH",
+        hotels: [
+          { ar: "فندق الريتز كارلتون الرياض", en: "The Ritz-Carlton Riyadh" },
+          { ar: "فندق فورسيزونز الرياض", en: "Four Seasons Riyadh" },
+        ],
+      },
+      {
+        ar: "جدة",
+        en: "Jeddah",
+        countryAr: "السعودية",
+        countryEn: "Saudi Arabia",
+        iata: "JED",
+      },
+      {
+        ar: "المنامة",
+        en: "Manama",
+        countryAr: "البحرين",
+        countryEn: "Bahrain",
+        iata: "BAH",
+      },
+      {
+        ar: "مسقط",
+        en: "Muscat",
+        countryAr: "عُمان",
+        countryEn: "Oman",
+        iata: "MCT",
+      },
+      {
+        ar: "القاهرة",
+        en: "Cairo",
+        countryAr: "مصر",
+        countryEn: "Egypt",
+        iata: "CAI",
+      },
+      {
+        ar: "إسطنبول",
+        en: "Istanbul",
+        countryAr: "تركيا",
+        countryEn: "Turkey",
+        iata: "IST",
+        hotels: [
+          { ar: "فندق جاير فيرا إسطنبول", en: "Ciragan Palace Kempinski" },
+        ],
+      },
+      {
+        ar: "لندن",
+        en: "London",
+        countryAr: "بريطانيا",
+        countryEn: "United Kingdom",
+        iata: "LHR",
+      },
+      {
+        ar: "باريس",
+        en: "Paris",
+        countryAr: "فرنسا",
+        countryEn: "France",
+        iata: "CDG",
+      },
+    ];
+
+    type CityHit = {
+      city: string | null;
+      country: string | null;
+      iataCode?: string | null;
+      kind?: string;
+      label?: string;
+      subtitle?: string;
+    };
+
+    const out: CityHit[] = [];
+    const seen = new Set<string>();
+    const push = (item: CityHit, key: string) => {
+      if (seen.has(key) || out.length >= 12) return;
+      seen.add(key);
+      out.push(item);
+    };
+
+    if (query.length < 2) {
+      return CITY_ALIASES.slice(0, 8).map((c) => ({
+        city: isArabic ? c.ar : c.en,
+        country: isArabic ? c.countryAr : c.countryEn,
+        iataCode: c.iata,
+        kind: "city",
+        label: isArabic ? c.ar : c.en,
+        subtitle: isArabic ? c.countryAr : c.countryEn,
+      }));
+    }
+
+    // Exact / prefix IATA → city of that airport (AR or EN label).
+    if (/^[A-Za-z]{3}$/.test(query)) {
+      const alias = CITY_ALIASES.find((c) => c.iata === needleUpper);
+      if (alias) {
+        push(
+          {
+            city: isArabic ? alias.ar : alias.en,
+            country: isArabic ? alias.countryAr : alias.countryEn,
+            iataCode: alias.iata,
+            kind: "city",
+            label: isArabic ? alias.ar : alias.en,
+            subtitle: isArabic
+              ? `مطار ${alias.iata}`
+              : `${alias.iata} Airport`,
+          },
+          `iata:${alias.iata}`,
+        );
+      }
+    }
+
+    // Alias dictionary (AR ↔ EN) — prefer cities, then hotels matching the query language.
+    for (const c of CITY_ALIASES) {
+      const cityHit =
+        c.ar.includes(query) ||
+        c.en.toLowerCase().includes(needle) ||
+        c.iata.toLowerCase() === needle ||
+        c.countryAr.includes(query) ||
+        c.countryEn.toLowerCase().includes(needle);
+      if (cityHit) {
+        push(
+          {
+            city: isArabic ? c.ar : c.en,
+            country: isArabic ? c.countryAr : c.countryEn,
+            iataCode: c.iata,
+            kind: "city",
+            label: isArabic ? c.ar : c.en,
+            subtitle: isArabic ? c.countryAr : c.countryEn,
+          },
+          `alias-city:${c.iata}`,
+        );
+      }
+      for (const h of c.hotels || []) {
+        const hotelHit =
+          h.ar.includes(query) || h.en.toLowerCase().includes(needle);
+        if (hotelHit) {
+          push(
+            {
+              city: isArabic ? h.ar : h.en,
+              country: isArabic ? c.ar : c.en,
+              iataCode: c.iata,
+              kind: "hotel",
+              label: isArabic ? h.ar : h.en,
+              subtitle: isArabic
+                ? `فندق · ${c.ar}`
+                : `Hotel · ${c.en}`,
+            },
+            `hotel:${h.en}`,
+          );
+        }
+      }
+    }
+
     const rows = await this.prisma.airport.findMany({
       where: {
         OR: [
@@ -169,29 +375,23 @@ export class ShopService {
           { iataCode: { contains: query, mode: "insensitive" } },
         ],
       },
-      take: 60,
+      take: 80,
       orderBy: { city: "asc" },
     });
-    const seen = new Set<string>();
-    const out: Array<{
-      city: string | null;
-      country: string | null;
-      iataCode?: string | null;
-      kind?: string;
-      label?: string;
-    }> = [];
 
-    // Prefer country hits, then city, then airport/hotel-like name matches.
+    // Prefer city, then airport/place, then country — never bury cities under countries.
     const ranked = [...rows].sort((a, b) => {
       const rank = (r: (typeof rows)[number]) => {
+        const iata = (r.iataCode || "").toUpperCase();
         const city = (r.city || "").toLowerCase();
         const country = (r.country || "").toLowerCase();
         const name = (r.name || "").toLowerCase();
-        if (country === needle || country.startsWith(needle)) return 0;
+        if (iata === needleUpper) return 0;
         if (city === needle || city.startsWith(needle)) return 1;
         if (city.includes(needle)) return 2;
-        if (name.includes(needle)) return 3;
-        return 4;
+        if (name.includes(needle) || iata.includes(needleUpper)) return 3;
+        if (country === needle || country.startsWith(needle)) return 4;
+        return 5;
       };
       return rank(a) - rank(b);
     });
@@ -199,48 +399,66 @@ export class ShopService {
     for (const row of ranked) {
       const cityKey = `${row.city || ""}|${row.country || ""}`;
       if (row.city && !seen.has(`city:${cityKey}`)) {
-        seen.add(`city:${cityKey}`);
-        out.push({
-          city: row.city,
-          country: row.country,
-          iataCode: row.iataCode,
-          kind: "city",
-          label: row.city,
-        });
-      }
-      const country = row.country;
-      if (country && !seen.has(`country:${country}`)) {
-        const countryHit =
-          country.toLowerCase().includes(needle) ||
-          (row.city || "").toLowerCase().includes(needle);
-        if (countryHit) {
-          seen.add(`country:${country}`);
-          out.push({
-            city: country,
-            country,
+        const iataHit =
+          (row.iataCode || "").toUpperCase() === needleUpper ||
+          (row.iataCode || "").toUpperCase().startsWith(needleUpper);
+        push(
+          {
+            city: row.city,
+            country: row.country,
             iataCode: row.iataCode,
-            kind: "country",
-            label: country,
-          });
-        }
+            kind: "city",
+            label: row.city,
+            subtitle: iataHit
+              ? isArabic
+                ? `مطار ${row.iataCode} · ${row.country || ""}`
+                : `${row.iataCode} Airport · ${row.country || ""}`
+              : row.country || undefined,
+          },
+          `city:${cityKey}`,
+        );
       }
-      // Airport / venue name can stand in for hotel-area text search (AR/EN).
       const name = row.name;
       if (
         name &&
         name.toLowerCase().includes(needle) &&
         !seen.has(`place:${name}`)
       ) {
-        seen.add(`place:${name}`);
-        out.push({
-          city: row.city || name,
-          country: row.country,
-          iataCode: row.iataCode,
-          kind: "place",
-          label: name,
-        });
+        push(
+          {
+            city: row.city || name,
+            country: row.country,
+            iataCode: row.iataCode,
+            kind: "place",
+            label: name,
+            subtitle: row.city
+              ? isArabic
+                ? `منطقة · ${row.city}`
+                : `Area · ${row.city}`
+              : row.country || undefined,
+          },
+          `place:${name}`,
+        );
       }
-      if (out.length >= 30) break;
+      const country = row.country;
+      if (
+        country &&
+        country.toLowerCase().includes(needle) &&
+        !seen.has(`country:${country}`)
+      ) {
+        push(
+          {
+            city: country,
+            country,
+            iataCode: row.iataCode,
+            kind: "country",
+            label: country,
+            subtitle: isArabic ? "دولة" : "Country",
+          },
+          `country:${country}`,
+        );
+      }
+      if (out.length >= 12) break;
     }
     return out;
   }

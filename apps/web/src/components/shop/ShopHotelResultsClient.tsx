@@ -335,14 +335,47 @@ export function ShopHotelResultsClient() {
 
   async function searchCities(q: string): Promise<SuggestItem[]> {
     const rows = await shopFetch<
-      Array<{ city: string | null; country: string | null; iataCode?: string | null }>
+      Array<{
+        city: string | null;
+        country: string | null;
+        iataCode?: string | null;
+        kind?: string;
+        label?: string;
+        subtitle?: string;
+      }>
     >(`/shop/cities?q=${encodeURIComponent(q)}`);
-    return rows.map((c, idx) => ({
-      id: `${c.city}-${idx}`,
+    const items = rows.map((c, idx) => ({
+      id: `${c.kind || "city"}-${c.city}-${c.iataCode || idx}`,
       code: c.iataCode || c.city || q,
-      title: c.city || q,
-      subtitle: c.country || undefined,
+      title: c.label || c.city || q,
+      subtitle:
+        c.subtitle ||
+        (c.kind === "hotel" ? `فندق · ${c.country || ""}` : c.country || undefined),
     }));
+    const trimmed = q.trim();
+    if (trimmed.length >= 3) {
+      try {
+        const hotelRes = await shopFetch<{
+          items?: Array<{ code: string; name: string; city: string }>;
+        }>("/shop/suggest-hotels", {
+          method: "POST",
+          body: JSON.stringify({ query: trimmed }),
+        });
+        const seen = new Set(items.map((i) => i.title.toLowerCase()));
+        for (const h of (hotelRes.items || []).slice(0, 6)) {
+          if (seen.has(h.name.toLowerCase())) continue;
+          items.push({
+            id: `hotel-${h.code}`,
+            code: h.code,
+            title: h.name,
+            subtitle: h.city ? `فندق · ${h.city}` : "فندق",
+          });
+        }
+      } catch {
+        /* optional */
+      }
+    }
+    return items.slice(0, 12);
   }
 
   function applyEdit(e: FormEvent) {

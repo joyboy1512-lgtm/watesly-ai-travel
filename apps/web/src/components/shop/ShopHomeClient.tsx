@@ -159,20 +159,58 @@ function ShopHomeInner() {
         iataCode?: string | null;
         kind?: string;
         label?: string;
+        subtitle?: string;
       }>
     >(`/shop/cities?q=${encodeURIComponent(q)}`);
-    return rows.map((c, idx) => {
+
+    const cityItems = rows.map((c, idx) => {
       const kind = c.kind || "city";
       const label = c.label || c.city || q;
-      const prefix =
-        kind === "country" ? "دولة" : kind === "place" ? "مكان" : "مدينة";
+      const kindLabel =
+        kind === "country"
+          ? "دولة"
+          : kind === "hotel"
+            ? "فندق"
+            : kind === "place"
+              ? "مكان"
+              : "مدينة";
       return {
-        id: `${kind}-${c.city}-${idx}`,
+        id: `${kind}-${c.city}-${c.iataCode || idx}`,
         code: c.iataCode || c.city || q,
         title: label,
-        subtitle: [prefix, c.country].filter(Boolean).join(" · ") || undefined,
+        subtitle:
+          c.subtitle ||
+          [kindLabel, c.country].filter(Boolean).join(" · ") ||
+          undefined,
       };
     });
+
+    // Also search by hotel name when the query looks like more than a short city token.
+    const trimmed = q.trim();
+    if (trimmed.length >= 3) {
+      try {
+        const hotelRes = await shopFetch<{
+          items?: Array<{ code: string; name: string; city: string }>;
+        }>("/shop/suggest-hotels", {
+          method: "POST",
+          body: JSON.stringify({ query: trimmed }),
+        });
+        const hotels = (hotelRes.items || []).slice(0, 6).map((h) => ({
+          id: `hotel-${h.code}`,
+          code: h.code,
+          title: h.name,
+          subtitle: h.city ? `فندق · ${h.city}` : "فندق",
+        }));
+        const seen = new Set(cityItems.map((i) => i.title.toLowerCase()));
+        for (const h of hotels) {
+          if (!seen.has(h.title.toLowerCase())) cityItems.push(h);
+        }
+      } catch {
+        /* hotel suggest is optional — cities still work */
+      }
+    }
+
+    return cityItems.slice(0, 12);
   }
 
   function handleTripTypeChange(next: FlightTripType) {

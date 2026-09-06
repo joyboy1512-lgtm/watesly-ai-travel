@@ -5470,3 +5470,48 @@ html body .wg-float-actions {
     font-size: 0.8rem !important;
   }
 }
+
+/* Keep first service row on ONE line (logo + tabs + رحلتي) */
+html body .wg-hero-acc-modes,
+html body .wg-hero-dock-modes {
+  flex-wrap: nowrap !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  max-height: 3.5rem !important;
+  min-height: 3.5rem !important;
+  scrollbar-width: none !important;
+}
+html body .wg-hero-acc-modes::-webkit-scrollbar { display: none !important; }
+
+html body .wg-hero-acc-brand {
+  padding: 0 0.4rem 0 0.55rem !important;
+  max-height: 3.5rem !important;
+}
+html body .wg-hero-acc-brand .wg-logo-lockup-img {
+  height: 30px !important;
+  max-height: 30px !important;
+}
+
+html body .wg-hero-acc-mode,
+html body .wg-hero-dock-mode {
+  flex: 1 1 0 !important;
+  min-width: 4.2rem !important;
+  max-height: 3.5rem !important;
+  min-height: 3.5rem !important;
+  padding: 0.25rem 0.3rem !important;
+}
+html body .wg-hero-acc-mode-ruhelti {
+  flex: 0 0 auto !important;
+  min-width: 4.6rem !important;
+  max-width: 5.5rem !important;
+}
+html body .wg-hero-acc-mode-ruhelti .wg-hero-acc-hint {
+  display: none !important;
+}
+html body .wg-hero-acc-title {
+  font-size: 0.82rem !important;
+}
+html body .wg-hero-acc-icon svg {
+  width: 16px !important;
+  height: 16px !important;
+}

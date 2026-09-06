@@ -851,7 +851,7 @@
 .shop-root.wg-new-ui .wg-hero-acc-modes.wg-hero-dock-modes,
 .wg-hero-acc-modes.wg-hero-dock-modes {
   display: grid !important;
-  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
   flex-wrap: nowrap;
   background: linear-gradient(180deg, #002445 0%, #001B35 100%) !important;
   border: 1px solid rgba(251, 191, 36, 0.35) !important;
@@ -916,7 +916,7 @@
 
 .wg-hero-acc-modes {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 0;
   width: 100%;
   padding: 0;
@@ -1544,7 +1544,7 @@
 
   .wg-hero-acc-modes {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(5, minmax(0, 1fr));
     overflow: hidden;
     flex-wrap: unset;
   }
@@ -2292,7 +2292,7 @@
 }
 .wg-hero-acc-modes.wg-hero-dock-modes {
   display: grid !important;
-  grid-template-columns: repeat(4, minmax(0,1fr)) !important;
+  grid-template-columns: repeat(5, minmax(0,1fr)) !important;
   background: #0b1c3d !important;
   background-image: none !important;
   border: 0 !important;
@@ -2471,7 +2471,7 @@
 
 @media (max-width: 767px) {
   .wg-hero-acc-modes.wg-hero-dock-modes {
-    grid-template-columns: repeat(2, minmax(0,1fr)) !important;
+    grid-template-columns: repeat(5, minmax(0,1fr)) !important;
   }
   .wg-hero-acc-panel .exp-form-row,
   .wg-hero-acc-panel .exp-form-row.exp-form-flights {
@@ -2507,7 +2507,7 @@
   position: relative !important;
   z-index: 3 !important;
   display: grid !important;
-  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
   gap: 0 !important;
   padding: 0 !important;
   background: #001B35 !important;
@@ -2746,7 +2746,7 @@
   }
   .wg-hero-acc-modes.wg-hero-dock-modes,
   .wg-hero-acc-modes {
-    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
     margin-bottom: 0 !important;
   }
   .wg-hero-acc-shell.is-open .wg-hero-acc-modes {
@@ -3028,7 +3028,7 @@
   position: relative !important;
   z-index: 3 !important;
   display: grid !important;
-  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
   gap: 0 !important;
   margin: 0 !important;
   padding: 0 !important;
@@ -3261,7 +3261,7 @@
 }
 
 @media (max-width: 767px) {
-  .wg-hero-acc-modes { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; margin-bottom: 0 !important; }
+  .wg-hero-acc-modes { grid-template-columns: repeat(5, minmax(0, 1fr)) !important; margin-bottom: 0 !important; }
   .wg-hero-acc-shell.is-open .wg-hero-acc-modes { margin-bottom: -10px !important; }
   .wg-hero-acc-hint { white-space: normal !important; font-size: 0.72rem !important; }
   .wg-hero-acc-panel .wg-hero-ticket-search.exp-search-link,
@@ -3972,13 +3972,13 @@ html body .wg-hero-acc-panel .exp-search-link.wg-hero-acc-search-btn {
   html body .wg-hero-search-panel {
     width: min(100%, calc(100% - 0.5rem)) !important;
   }
-  html body .wg-hero-acc-title { font-size: 1.08rem !important; }
+  html body .wg-hero-acc-title { font-size: 0.84rem !important; }
   html body .wg-hero-acc-hint { font-size: 0.78rem !important; }
 }
 
 @media (max-width: 767px) {
   html body .wg-hero-acc-modes {
-    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
   }
   html body .wg-hero-acc-field {
     border-inline-end: 0 !important;
@@ -4029,7 +4029,7 @@ html body .wg-hero-acc-field .exp-travelers-trigger.wg-hero-acc-field-body {
 
 html body .wg-hero-acc-modes {
   display: grid !important;
-  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
 }
 
 /* soft overlap when open */
@@ -4138,36 +4138,38 @@ html body .wg-hero-acc-tripstrip {
   width: 100% !important;
   max-width: 100% !important;
   box-sizing: border-box !important;
-  display: grid !important;
-  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-  gap: 0.65rem !important;
-  padding: 1.15rem 1.1rem 0.65rem !important;
-  justify-content: stretch !important;
-  align-items: stretch !important;
+  display: flex !important;
   flex-wrap: nowrap !important;
+  gap: 0.45rem !important;
+  padding: 0.55rem 0.85rem !important;
+  justify-content: flex-start !important;
+  align-items: center !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
 }
 
 html body .wg-hero-acc-trip {
-  width: 100% !important;
+  width: auto !important;
   min-width: 0 !important;
+  flex: 0 0 auto !important;
   justify-content: center !important;
   text-align: center !important;
-  padding: 0.55rem 0.75rem !important;
-  font-size: 0.98rem !important;
+  padding: 0.35rem 0.7rem !important;
+  font-size: 0.82rem !important;
 }
 
 @media (max-width: 767px) {
-  html body .wg-hero-acc-title { font-size: 1.2rem !important; }
+  html body .wg-hero-acc-title { font-size: 0.78rem !important; }
   html body .wg-hero-acc-icon {
-    width: 3rem !important;
-    height: 3rem !important;
+    width: 1.15rem !important;
+    height: 1.15rem !important;
   }
   html body .wg-hero-acc-icon svg {
-    width: 1.4rem !important;
-    height: 1.4rem !important;
+    width: 0.95rem !important;
+    height: 0.95rem !important;
   }
   html body .wg-hero-acc-tripstrip {
-    grid-template-columns: 1fr !important;
+    flex-wrap: nowrap !important;
   }
 }
 
@@ -4251,20 +4253,23 @@ html body .wg-hero-acc-mode {
   direction: ltr !important;
 }
 
-/* Full-width trip row */
+/* Full-width trip row — single flex line (not 3-col grid) */
 html body .shop-root .wg-hero-acc-tripstrip,
 html body .wg-hero-acc-shell .wg-hero-acc-tripstrip,
 html body .wg-hero-acc-tripstrip {
   width: 100% !important;
-  display: grid !important;
-  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-  gap: 0.65rem !important;
-  padding-inline: 1.1rem !important;
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  grid-template-columns: none !important;
+  gap: 0.45rem !important;
+  padding-inline: 0.85rem !important;
+  overflow-x: auto !important;
 }
 
 html body .shop-root .wg-hero-acc-trip,
 html body .wg-hero-acc-trip {
-  width: 100% !important;
+  width: auto !important;
+  flex: 0 0 auto !important;
 }
 
 /* WG_TUNE_CENTER — bigger titles, logo beside text, centered in cell */
@@ -4345,7 +4350,7 @@ html body .wg-hero-acc-copy .wg-hero-acc-chevron {
 @media (max-width: 1100px) {
   html body .shop-root .wg-hero-acc-title,
   html body .wg-hero-acc-title {
-    font-size: 1.45rem !important;
+    font-size: 0.82rem !important;
   }
   html body .shop-root .wg-hero-acc-icon,
   html body .wg-hero-acc-icon {
@@ -4444,43 +4449,49 @@ html body .wg-hero-acc-copy .wg-hero-acc-chevron {
   align-self: center !important;
 }
 
-/* Trip strip: full bleed equal columns */
+/* Trip strip: one compact row (not 3 equal columns) */
 html body .shop-root .wg-hero-acc-tripstrip,
 html body .wg-hero-acc-shell .wg-hero-acc-tripstrip,
 html body .wg-hero-acc-tripstrip {
   width: 100% !important;
   max-width: 100% !important;
   box-sizing: border-box !important;
-  display: grid !important;
-  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-  gap: 0.75rem !important;
-  padding: 1.05rem 1rem 0.7rem !important;
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  grid-template-columns: none !important;
+  gap: 0.4rem !important;
+  padding: 0.45rem 0.75rem !important;
   margin: 0 !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
 }
 
 html body .shop-root .wg-hero-acc-trip,
 html body .wg-hero-acc-trip {
-  width: 100% !important;
+  width: auto !important;
   min-width: 0 !important;
-  min-height: 2.75rem !important;
+  min-height: 1.85rem !important;
+  flex: 0 0 auto !important;
   justify-content: center !important;
   text-align: center !important;
-  font-size: 1.02rem !important;
+  font-size: 0.8rem !important;
   font-weight: 700 !important;
   border-radius: 999px !important;
 }
 
 @media (max-width: 1100px) {
   html body .shop-root .wg-hero-acc-title,
-  html body .wg-hero-acc-title { font-size: 1.45rem !important; }
+  html body .wg-hero-acc-title { font-size: 0.82rem !important; }
   html body .shop-root .wg-hero-acc-icon,
-  html body .wg-hero-acc-icon { width: 3.4rem !important; height: 3.4rem !important; }
+  html body .wg-hero-acc-icon { width: 1.15rem !important; height: 1.15rem !important; }
 }
 @media (max-width: 767px) {
   html body .shop-root .wg-hero-acc-title,
-  html body .wg-hero-acc-title { font-size: 1.25rem !important; }
+  html body .wg-hero-acc-title { font-size: 0.72rem !important; }
   html body .shop-root .wg-hero-acc-tripstrip {
-    grid-template-columns: 1fr !important;
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    grid-template-columns: none !important;
   }
 }
 
@@ -5206,4 +5217,2005 @@ html body .wg-hero-ticket-search.exp-search-link:hover,
 html body .wg-hero-acc-search-btn:hover {
   background: #E5B15A !important;
   border-color: #E5B15A !important;
+}
+
+/* ============================================================
+   WG_SEARCH_UX_POLISH — approved UX fixes (no full redesign)
+   Navy #001B35 · Gold #D99A3E unchanged
+   ============================================================ */
+
+/* Modes row: brand + compact tabs + رحلتي, fixed height */
+html body .wg-hero-acc-modes,
+html body .wg-hero-dock-modes {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  align-items: stretch !important;
+  gap: 0 !important;
+  min-height: 3.6rem !important;
+  max-height: 3.85rem !important;
+  overflow: visible !important;
+  position: relative !important;
+  z-index: 40 !important;
+}
+
+html body .wg-hero-acc-brand {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex: 0 0 auto !important;
+  padding: 0 0.65rem 0 0.85rem !important;
+  max-height: 3.85rem !important;
+}
+
+html body .wg-hero-acc-brand .wg-logo-lockup-img {
+  height: 34px !important;
+  width: auto !important;
+  max-height: 34px !important;
+}
+
+html body .wg-hero-acc-mode,
+html body .wg-hero-dock-mode {
+  flex: 1 1 0 !important;
+  min-width: 0 !important;
+  min-height: 3.6rem !important;
+  max-height: 3.85rem !important;
+  padding: 0.35rem 0.45rem !important;
+  overflow: visible !important;
+}
+
+html body .wg-hero-acc-mode-ruhelti {
+  flex: 0.9 1 0 !important;
+  border-inline-start: 1px solid rgba(217, 154, 62, 0.28) !important;
+}
+
+html body .wg-hero-acc-hint {
+  display: none !important; /* keep row short */
+}
+
+html body .wg-hero-acc-title {
+  font-size: 0.92rem !important;
+  white-space: nowrap !important;
+}
+
+html body .wg-hero-acc-icon {
+  width: 1.15rem !important;
+  height: 1.15rem !important;
+}
+
+/* Middle trip strip: compact chips, wrap for multicity extras */
+html body .wg-hero-acc-tripstrip {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 0.35rem 0.4rem !important;
+  padding: 0.45rem 0.65rem !important;
+  min-height: 0 !important;
+  overflow: visible !important;
+  background: #001B35 !important;
+  position: relative !important;
+  z-index: 35 !important;
+}
+
+html body .wg-hero-acc-trip,
+html body .wg-hero-acc-trip-extra {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0.3rem !important;
+  min-height: 1.85rem !important;
+  max-height: 2rem !important;
+  padding: 0.2rem 0.7rem !important;
+  border-radius: 999px !important;
+  border: 1px solid rgba(245, 245, 245, 0.22) !important;
+  background: transparent !important;
+  color: #F5F5F5 !important;
+  font-size: 0.78rem !important;
+  font-weight: 700 !important;
+  white-space: nowrap !important;
+  line-height: 1.2 !important;
+  box-shadow: none !important;
+}
+
+html body .wg-hero-acc-trip.on,
+html body .wg-hero-acc-trip-extra.on {
+  background: #D99A3E !important;
+  border-color: #D99A3E !important;
+  color: #001B35 !important;
+}
+
+html body .wg-hero-acc-cabin select {
+  background: transparent !important;
+  border: 0 !important;
+  color: inherit !important;
+  font: inherit !important;
+  max-width: 7.5rem !important;
+}
+
+/* Bottom fields: no nested card chrome, shorter row */
+html body .wg-hero-acc-panel .exp-dialog,
+html body .wg-hero-acc-panel .exp-unified-card,
+html body .wg-hero-acc-panel .wg-hero-ticket-card,
+html body .wg-hero-acc-panel .wg-hero-dock-card {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border-radius: 0 !important;
+}
+
+html body .wg-hero-acc-panel,
+html body .wg-hero-dock.wg-hero-acc-panel {
+  padding: 0.35rem 0.45rem 0.45rem !important;
+  overflow: visible !important;
+  position: relative !important;
+  z-index: 30 !important;
+}
+
+html body .wg-hero-acc-panel .exp-form-row,
+html body .wg-hero-acc-panel .wg-hero-acc-fields {
+  min-height: 3.55rem !important;
+  gap: 0 !important;
+  align-items: stretch !important;
+  overflow: visible !important;
+}
+
+html body .wg-hero-acc-panel .wg-hero-acc-field,
+html body .wg-hero-acc-panel .exp-input-cell {
+  padding: 0.4rem 0.65rem !important;
+  min-height: 3.35rem !important;
+  overflow: visible !important;
+  position: relative !important;
+  z-index: 1 !important;
+}
+
+html body .wg-hero-acc-panel .wg-hero-acc-field:focus-within,
+html body .wg-hero-acc-panel .exp-cell-travelers:focus-within,
+html body .wg-hero-acc-panel .exp-input-cell.exp-cell-travelers {
+  z-index: 80 !important;
+}
+
+/* Dates / values: always white on navy */
+html body .wg-hero-acc-panel .exp-date-btn,
+html body .wg-hero-acc-panel .exp-date-btn span,
+html body .wg-hero-acc-panel input,
+html body .wg-hero-acc-panel .shop-ac-inline input,
+html body .wg-hero-acc-panel .exp-travelers-trigger,
+html body .wg-hero-acc-panel .exp-travelers-trigger strong,
+html body .wg-hero-acc-panel .exp-time-select,
+html body .wg-hero-acc-panel .exp-value {
+  color: #F5F5F5 !important;
+  -webkit-text-fill-color: #F5F5F5 !important;
+}
+
+html body .wg-hero-acc-panel .exp-label,
+html body .wg-hero-acc-panel .wg-hero-acc-field-label,
+html body .wg-hero-acc-panel .shop-ac-inline label {
+  color: #A9B0BE !important;
+}
+
+/* Suggest menus: above dock, tight spacing, no huge gaps */
+html body .wg-hero-acc-shell,
+html body .wg-hero-acc-panel,
+html body .wg-hero-search-panel,
+html body .wg-travela-hero {
+  overflow: visible !important;
+}
+
+html body .wg-hero-acc-panel .prc-suggest,
+html body .wg-hero-acc-panel .exp-ac-menu,
+html body .wg-hero-acc-panel .shop-ac > .prc-suggest,
+html body .exp-travelers-panel,
+html body .exp-occupancy-panel {
+  position: absolute !important;
+  top: auto !important;
+  bottom: calc(100% + 6px) !important;
+  inset-inline-start: 0 !important;
+  z-index: 9000 !important;
+  max-height: min(260px, 40vh) !important;
+  overflow: auto !important;
+  padding: 0.3rem !important;
+  gap: 0 !important;
+  background: #fff !important;
+  border-radius: 12px !important;
+  box-shadow: 0 14px 36px rgba(0, 15, 31, 0.28) !important;
+  border: 1px solid rgba(0, 27, 53, 0.1) !important;
+}
+
+html body .prc-suggest button,
+html body .exp-ac-menu button,
+html body .prc-suggest [role="option"] {
+  padding: 0.45rem 0.65rem !important;
+  margin: 0 !important;
+  min-height: 0 !important;
+  border-radius: 8px !important;
+  display: grid !important;
+  gap: 0.08rem !important;
+  color: #001B35 !important;
+}
+
+html body .prc-suggest button strong,
+html body .exp-ac-menu button strong {
+  font-size: 0.9rem !important;
+  line-height: 1.25 !important;
+}
+
+html body .prc-suggest button span,
+html body .exp-ac-menu button span {
+  font-size: 0.75rem !important;
+  opacity: 0.75 !important;
+  line-height: 1.2 !important;
+}
+
+/* Multicity: stack under strip, compact cards */
+html body .exp-multicity-stack {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0.35rem !important;
+  padding: 0.35rem 0 !important;
+}
+
+html body .exp-flight-leg-row,
+html body .exp-multicity-stack .exp-form-row {
+  min-height: 3.2rem !important;
+  padding: 0.25rem 0 !important;
+  background: rgba(255, 255, 255, 0.04) !important;
+  border-radius: 10px !important;
+}
+
+/* Hide bottom duplicate WhatsApp FAB if any leftover markup */
+html body .wg-whatsapp-fab,
+html body a.wg-whatsapp-fab {
+  display: none !important;
+}
+
+html body .wg-float-actions {
+  gap: 0.4rem !important;
+}
+
+@media (max-width: 900px) {
+  html body .wg-hero-acc-brand .wg-logo-lockup-img {
+    height: 28px !important;
+  }
+  html body .wg-hero-acc-title {
+    font-size: 0.8rem !important;
+  }
+}
+
+/* Keep first service row on ONE line (logo + tabs + رحلتي) */
+html body .wg-hero-acc-modes,
+html body .wg-hero-dock-modes {
+  flex-wrap: nowrap !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  max-height: 3.5rem !important;
+  min-height: 3.5rem !important;
+  scrollbar-width: none !important;
+}
+html body .wg-hero-acc-modes::-webkit-scrollbar { display: none !important; }
+
+html body .wg-hero-acc-brand {
+  padding: 0 0.4rem 0 0.55rem !important;
+  max-height: 3.5rem !important;
+}
+html body .wg-hero-acc-brand .wg-logo-lockup-img {
+  height: 30px !important;
+  max-height: 30px !important;
+}
+
+html body .wg-hero-acc-mode,
+html body .wg-hero-dock-mode {
+  flex: 1 1 0 !important;
+  min-width: 4.2rem !important;
+  max-height: 3.5rem !important;
+  min-height: 3.5rem !important;
+  padding: 0.25rem 0.3rem !important;
+}
+html body .wg-hero-acc-mode-ruhelti {
+  flex: 0 0 auto !important;
+  min-width: 4.6rem !important;
+  max-width: 5.5rem !important;
+}
+html body .wg-hero-acc-mode-ruhelti .wg-hero-acc-hint {
+  display: none !important;
+}
+html body .wg-hero-acc-title {
+  font-size: 0.82rem !important;
+}
+html body .wg-hero-acc-icon svg {
+  width: 16px !important;
+  height: 16px !important;
+}
+
+/* ============================================================
+   WG_FIX_ROW_DROPDOWNS_V3 — beat ALL prior !important layers
+   Root cause: older blocks used higher specificity
+   (.shop-root + double classes) with repeat(4) / trip grid(3)
+   and overflow:hidden — those won over V2.
+   ============================================================ */
+
+/* Kill any logo/brand inside the search dock (legacy markup) */
+html body .shop-root .wg-hero-acc-modes .wg-hero-acc-brand,
+html body .shop-root .wg-hero-dock-modes .wg-hero-acc-brand,
+html body .shop-root .wg-hero-acc-shell .wg-hero-acc-brand,
+html body .wg-hero-acc-brand,
+html body .wg-hero-acc-modes .wg-logo,
+html body .wg-hero-acc-modes .wg-logo-lockup,
+html body .wg-hero-acc-modes .wg-logo-lockup-img,
+html body .wg-hero-dock-modes .wg-logo,
+html body .wg-hero-dock-modes a.wg-topbar-logo {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  overflow: hidden !important;
+  pointer-events: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Modes row: exactly 5 equal cells, ONE line */
+html body .shop-root.wg-new-ui .wg-hero-acc-modes.wg-hero-dock-modes,
+html body .shop-root .wg-hero-acc-modes.wg-hero-dock-modes,
+html body .shop-root .wg-hero-acc-shell .wg-hero-acc-modes,
+html body .shop-root .wg-hero-search-panel .wg-hero-acc-modes,
+html body .wg-hero-acc-shell .wg-hero-acc-modes.wg-hero-dock-modes,
+html body .wg-hero-search-panel .wg-hero-acc-modes.wg-hero-dock-modes,
+html body .wg-hero-acc-modes.wg-hero-dock-modes,
+html body .wg-hero-acc-modes,
+html body .wg-hero-dock-modes {
+  display: grid !important;
+  grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+  grid-auto-flow: column !important;
+  grid-auto-columns: minmax(0, 1fr) !important;
+  grid-template-rows: 1fr !important;
+  align-items: stretch !important;
+  gap: 0 !important;
+  flex-wrap: nowrap !important;
+  width: 100% !important;
+  min-height: 3.25rem !important;
+  max-height: 3.5rem !important;
+  height: 3.35rem !important;
+  overflow: hidden !important;
+  overflow-x: hidden !important;
+  overflow-y: hidden !important;
+}
+
+html body .shop-root .wg-hero-dock-mode.wg-hero-acc-mode,
+html body .shop-root .wg-hero-acc-mode,
+html body .shop-root a.wg-hero-acc-mode,
+html body .wg-hero-dock-mode.wg-hero-acc-mode,
+html body .wg-hero-acc-mode,
+html body a.wg-hero-acc-mode {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: center !important;
+  direction: rtl !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  width: auto !important;
+  flex: unset !important;
+  min-height: 3.25rem !important;
+  max-height: 3.5rem !important;
+  height: 3.35rem !important;
+  padding: 0.2rem 0.2rem !important;
+  margin: 0 !important;
+  gap: 0.3rem !important;
+  overflow: hidden !important;
+}
+
+html body .shop-root .wg-hero-acc-copy,
+html body .wg-hero-acc-mode .wg-hero-acc-copy,
+html body .wg-hero-acc-copy {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0 !important;
+  width: 100% !important;
+  min-width: 0 !important;
+}
+
+html body .shop-root .wg-hero-acc-title-row,
+html body .wg-hero-acc-title-row {
+  display: inline-flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.28rem !important;
+  max-width: 100% !important;
+}
+
+html body .shop-root .wg-hero-acc-title,
+html body .shop-root .wg-hero-acc-mode .wg-hero-acc-title,
+html body .wg-hero-search-panel .wg-hero-acc-title,
+html body .wg-hero-acc-mode .wg-hero-acc-title,
+html body .wg-hero-acc-title {
+  font-size: 0.84rem !important;
+  font-weight: 800 !important;
+  line-height: 1.15 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  max-width: 100% !important;
+}
+
+html body .shop-root .wg-hero-acc-hint,
+html body .shop-root .wg-hero-acc-mode .wg-hero-acc-hint,
+html body .wg-hero-acc-hint,
+html body .shop-root .wg-hero-acc-chevron,
+html body .wg-hero-acc-mode .wg-hero-acc-chevron,
+html body .wg-hero-acc-chevron {
+  display: none !important;
+  height: 0 !important;
+  width: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+}
+
+html body .shop-root .wg-hero-acc-icon,
+html body .shop-root .wg-hero-acc-mode .wg-hero-acc-icon,
+html body .wg-hero-acc-icon {
+  width: 1.15rem !important;
+  height: 1.15rem !important;
+  min-width: 1.15rem !important;
+  min-height: 1.15rem !important;
+  max-width: 1.15rem !important;
+  max-height: 1.15rem !important;
+  border-radius: 0.35rem !important;
+  padding: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+html body .shop-root .wg-hero-acc-icon svg,
+html body .wg-hero-acc-icon svg {
+  width: 14px !important;
+  height: 14px !important;
+}
+
+/* Flight/cars options: ONE row always */
+html body .shop-root .wg-hero-acc-tripstrip,
+html body .shop-root .wg-hero-acc-shell .wg-hero-acc-tripstrip,
+html body .wg-hero-acc-shell .wg-hero-acc-tripstrip,
+html body .wg-hero-acc-tripstrip {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+  grid-template-columns: none !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 0.35rem !important;
+  padding: 0.4rem 0.65rem !important;
+  width: 100% !important;
+  min-height: 2.15rem !important;
+  max-height: 2.45rem !important;
+  height: auto !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  scrollbar-width: none !important;
+  white-space: nowrap !important;
+}
+
+html body .shop-root .wg-hero-acc-tripstrip::-webkit-scrollbar,
+html body .wg-hero-acc-tripstrip::-webkit-scrollbar {
+  display: none !important;
+}
+
+html body .shop-root .wg-hero-acc-trip,
+html body .shop-root .wg-hero-acc-trip-extra,
+html body .shop-root .wg-hero-acc-cabin,
+html body .wg-hero-acc-trip,
+html body .wg-hero-acc-trip-extra,
+html body .wg-hero-acc-cabin {
+  flex: 0 0 auto !important;
+  width: auto !important;
+  min-width: fit-content !important;
+  white-space: nowrap !important;
+  min-height: 1.7rem !important;
+  max-height: 1.9rem !important;
+  padding: 0.15rem 0.55rem !important;
+  font-size: 0.74rem !important;
+}
+
+html body .shop-root .wg-hero-acc-cabin select,
+html body .wg-hero-acc-cabin select {
+  max-width: 6.5rem !important;
+  font-size: 0.74rem !important;
+}
+
+/* Shell must NOT clip dropdowns (beats overflow:hidden !important) */
+html body .shop-root.wg-new-ui .wg-travela-hero,
+html body .shop-root .wg-travela-hero,
+html body .wg-travela-hero,
+html body .shop-root .wg-hero-search-panel,
+html body .wg-hero-search-panel,
+html body .shop-root .wg-hero-ticket-shell.wg-hero-dock-shell.wg-hero-acc-shell,
+html body .shop-root .wg-hero-acc-shell.wg-hero-dock-shell,
+html body .shop-root .wg-hero-acc-shell,
+html body .wg-hero-ticket-shell.wg-hero-dock-shell.wg-hero-acc-shell,
+html body .wg-hero-acc-shell.wg-hero-dock-shell,
+html body .wg-hero-acc-shell,
+html body .wg-hero-acc-shell.is-open,
+html body .shop-root .wg-hero-acc-panel,
+html body .shop-root .wg-hero-dock.wg-hero-acc-panel,
+html body .wg-hero-acc-panel,
+html body .wg-hero-dock.wg-hero-acc-panel,
+html body .wg-hero-acc-panel .exp-dialog,
+html body .wg-hero-acc-panel .exp-unified-card,
+html body .wg-hero-acc-panel .wg-hero-ticket-card,
+html body .wg-hero-acc-field,
+html body .exp-input-cell,
+html body .shop-ac,
+html body .exp-ac-field,
+html body .exp-form-row {
+  overflow: visible !important;
+}
+
+html body .shop-root .wg-hero-acc-shell,
+html body .wg-hero-acc-shell,
+html body .shop-root .wg-hero-acc-panel,
+html body .wg-hero-acc-panel {
+  position: relative !important;
+  z-index: 60 !important;
+}
+
+html body .shop-root .wg-hero-acc-field:focus-within,
+html body .shop-root .exp-input-cell:focus-within,
+html body .exp-cell-travelers:focus-within,
+html body .shop-ac:focus-within,
+html body .wg-hero-acc-field:focus-within,
+html body .exp-input-cell:focus-within {
+  z-index: 300 !important;
+  position: relative !important;
+}
+
+/* Suggest + travelers ABOVE dock rows */
+html body .shop-root .prc-suggest,
+html body .shop-root .exp-ac-menu,
+html body .shop-root .shop-ac .prc-suggest,
+html body .shop-root .exp-travelers-panel,
+html body .shop-root .exp-occupancy-panel,
+html body .prc-suggest,
+html body .exp-ac-menu,
+html body .shop-ac .prc-suggest,
+html body .exp-ac-field .exp-ac-menu,
+html body .exp-travelers-panel,
+html body .exp-occupancy-panel {
+  position: absolute !important;
+  top: auto !important;
+  bottom: calc(100% + 8px) !important;
+  inset-inline-start: 0 !important;
+  inset-inline-end: auto !important;
+  z-index: 100000 !important;
+  max-height: min(280px, 45vh) !important;
+  overflow: auto !important;
+  transform: none !important;
+}
+
+@media (max-width: 720px) {
+  html body .shop-root.wg-new-ui .wg-hero-acc-modes.wg-hero-dock-modes,
+  html body .shop-root .wg-hero-acc-modes.wg-hero-dock-modes,
+  html body .wg-hero-acc-modes.wg-hero-dock-modes,
+  html body .wg-hero-acc-modes {
+    grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+    height: 3.1rem !important;
+    min-height: 3.1rem !important;
+    max-height: 3.1rem !important;
+  }
+  html body .shop-root .wg-hero-acc-title,
+  html body .wg-hero-acc-title {
+    font-size: 0.7rem !important;
+  }
+  html body .shop-root .wg-hero-acc-mode,
+  html body .wg-hero-acc-mode {
+    height: 3.1rem !important;
+    min-height: 3.1rem !important;
+    max-height: 3.1rem !important;
+    padding: 0.15rem 0.1rem !important;
+  }
+}
+
+/* WG_OVERFLOW_FINAL — last word on clipping */
+html body .shop-root.wg-new-ui .wg-hero-acc-shell.wg-hero-dock-shell,
+html body .shop-root .wg-hero-acc-shell.wg-hero-dock-shell,
+html body .wg-hero-acc-shell.wg-hero-dock-shell,
+html body .shop-root .wg-hero-acc-shell,
+html body .wg-hero-acc-shell {
+  overflow: visible !important;
+}
+html body .shop-root.wg-new-ui .wg-travela-hero,
+html body .shop-root .wg-travela-hero {
+  overflow: visible !important;
+}
+
+/* ============================================================
+   WG_FIX_OPEN_STRIP_STACK — tripstrip visible; menus above modes
+   ============================================================ */
+
+/* Soft-overlap negative margins were burying the trip options row */
+html body .shop-root.wg-new-ui .wg-hero-acc-shell.is-open .wg-hero-acc-modes.wg-hero-dock-modes,
+html body .shop-root .wg-hero-acc-shell.is-open .wg-hero-acc-modes.wg-hero-dock-modes,
+html body .shop-root .wg-hero-acc-shell.is-open .wg-hero-acc-modes,
+html body .wg-hero-acc-shell.is-open .wg-hero-acc-modes.wg-hero-dock-modes,
+html body .wg-hero-acc-shell.is-open .wg-hero-acc-modes {
+  margin-bottom: 0 !important;
+}
+
+html body .shop-root .wg-hero-acc-shell.is-open .wg-hero-acc-tripstrip,
+html body .wg-hero-acc-shell.is-open .wg-hero-acc-tripstrip,
+html body .shop-root .wg-hero-acc-tripstrip,
+html body .wg-hero-acc-tripstrip {
+  position: relative !important;
+  z-index: 6 !important;
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  grid-template-columns: none !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  height: auto !important;
+  max-height: none !important;
+  min-height: 2.2rem !important;
+  overflow-x: auto !important;
+  overflow-y: visible !important;
+  margin: 0 !important;
+  background: #001B35 !important;
+}
+
+/* Modes stay below open suggest/travelers menus */
+html body .shop-root .wg-hero-acc-modes.wg-hero-dock-modes,
+html body .wg-hero-acc-modes.wg-hero-dock-modes,
+html body .wg-hero-acc-modes {
+  z-index: 2 !important;
+}
+
+html body .shop-root .wg-hero-acc-shell:has(.prc-suggest) .wg-hero-acc-panel,
+html body .shop-root .wg-hero-acc-shell:has(.exp-ac-menu) .wg-hero-acc-panel,
+html body .shop-root .wg-hero-acc-shell:has(.exp-travelers-panel) .wg-hero-acc-panel,
+html body .shop-root .wg-hero-acc-shell:has(.exp-occupancy-panel) .wg-hero-acc-panel,
+html body .wg-hero-acc-shell:has(.prc-suggest) .wg-hero-acc-panel,
+html body .wg-hero-acc-shell:has(.exp-ac-menu) .wg-hero-acc-panel,
+html body .wg-hero-acc-shell:has(.exp-travelers-panel) .wg-hero-acc-panel {
+  z-index: 90 !important;
+  position: relative !important;
+}
+
+html body .shop-root .wg-hero-acc-shell:has(.prc-suggest) .wg-hero-acc-modes,
+html body .shop-root .wg-hero-acc-shell:has(.exp-ac-menu) .wg-hero-acc-modes,
+html body .shop-root .wg-hero-acc-shell:has(.exp-travelers-panel) .wg-hero-acc-modes,
+html body .wg-hero-acc-shell:has(.prc-suggest) .wg-hero-acc-modes,
+html body .wg-hero-acc-shell:has(.exp-travelers-panel) .wg-hero-acc-modes {
+  z-index: 1 !important;
+}
+
+html body .shop-root .wg-hero-acc-shell:has(.prc-suggest) .wg-hero-acc-tripstrip,
+html body .wg-hero-acc-shell:has(.exp-travelers-panel) .wg-hero-acc-tripstrip,
+html body .wg-hero-acc-shell:has(.exp-ac-menu) .wg-hero-acc-tripstrip {
+  z-index: 2 !important;
+}
+
+/* ============================================================
+   WG_HERO_RESTORE_HINTS_ICONS_NUMBERS_V4
+   Restore gold chevrons + hints, larger left icons,
+   visible guest/traveler numbers, white dates, denser suggests,
+   calendar not too high, cars time readable.
+   ============================================================ */
+
+/* Mode row: taller to fit hint + gold chevron */
+html body .shop-root.wg-new-ui .wg-hero-acc-modes.wg-hero-dock-modes,
+html body .shop-root .wg-hero-acc-modes.wg-hero-dock-modes,
+html body .wg-hero-acc-modes.wg-hero-dock-modes,
+html body .wg-hero-acc-modes {
+  display: grid !important;
+  grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+  min-height: 5.6rem !important;
+  max-height: none !important;
+  height: auto !important;
+  overflow: visible !important;
+  align-items: stretch !important;
+}
+
+html body .shop-root .wg-hero-dock-mode.wg-hero-acc-mode,
+html body .shop-root .wg-hero-acc-mode,
+html body .wg-hero-dock-mode.wg-hero-acc-mode,
+html body .wg-hero-acc-mode {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.2rem !important;
+  min-height: 5.4rem !important;
+  max-height: none !important;
+  height: auto !important;
+  padding: 0.55rem 0.4rem 0.35rem !important;
+  overflow: visible !important;
+}
+
+html body .shop-root .wg-hero-acc-copy,
+html body .wg-hero-acc-mode .wg-hero-acc-copy,
+html body .wg-hero-acc-copy {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.15rem !important;
+  width: 100% !important;
+}
+
+/* Icon on the LEFT of title (physical left), larger gold circle */
+html body .shop-root .wg-hero-acc-title-row,
+html body .wg-hero-acc-title-row {
+  display: flex !important;
+  flex-direction: row !important;
+  direction: ltr !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.55rem !important;
+  width: 100% !important;
+}
+
+html body .shop-root .wg-hero-acc-text,
+html body .wg-hero-acc-text {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  gap: 0.1rem !important;
+  min-width: 0 !important;
+  text-align: start !important;
+}
+
+html body .shop-root .wg-hero-acc-icon,
+html body .shop-root .wg-hero-acc-mode .wg-hero-acc-icon,
+html body .wg-hero-acc-icon {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 2.65rem !important;
+  height: 2.65rem !important;
+  min-width: 2.65rem !important;
+  min-height: 2.65rem !important;
+  max-width: 2.65rem !important;
+  max-height: 2.65rem !important;
+  border-radius: 999px !important;
+  background: rgba(217, 154, 62, 0.18) !important;
+  color: #D99A3E !important;
+  box-shadow: inset 0 0 0 1px rgba(217, 154, 62, 0.45) !important;
+  padding: 0 !important;
+}
+
+html body .shop-root .wg-hero-acc-mode.on .wg-hero-acc-icon,
+html body .wg-hero-acc-mode.is-expanded .wg-hero-acc-icon,
+html body .wg-hero-acc-mode.on .wg-hero-acc-icon {
+  background: #D99A3E !important;
+  color: #001B35 !important;
+  box-shadow: none !important;
+}
+
+html body .shop-root .wg-hero-acc-icon svg,
+html body .wg-hero-acc-icon svg {
+  width: 1.35rem !important;
+  height: 1.35rem !important;
+}
+
+html body .shop-root .wg-hero-acc-title,
+html body .wg-hero-acc-mode .wg-hero-acc-title,
+html body .wg-hero-acc-title {
+  display: block !important;
+  font-size: 1rem !important;
+  font-weight: 800 !important;
+  line-height: 1.2 !important;
+  color: #fff !important;
+  white-space: nowrap !important;
+}
+
+/* RESTORE hints (were display:none) */
+html body .shop-root .wg-hero-acc-hint,
+html body .shop-root .wg-hero-acc-mode .wg-hero-acc-hint,
+html body .wg-hero-acc-hint {
+  display: block !important;
+  height: auto !important;
+  width: auto !important;
+  max-width: 9.5rem !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+  font-size: 0.72rem !important;
+  font-weight: 500 !important;
+  line-height: 1.25 !important;
+  color: rgba(255, 255, 255, 0.72) !important;
+  opacity: 1 !important;
+}
+
+/* RESTORE gold chevrons under each mode */
+html body .shop-root .wg-hero-acc-chevron,
+html body .shop-root .wg-hero-acc-mode .wg-hero-acc-chevron,
+html body .wg-hero-acc-chevron,
+html body .wg-hero-acc-chevron.open {
+  display: block !important;
+  width: 14px !important;
+  height: 14px !important;
+  margin: 0.1rem auto 0 !important;
+  padding: 0 !important;
+  overflow: visible !important;
+  color: #D99A3E !important;
+  fill: #D99A3E !important;
+  opacity: 1 !important;
+  flex: 0 0 auto !important;
+}
+
+html body .wg-hero-acc-mode.on .wg-hero-acc-chevron,
+html body .wg-hero-acc-mode.is-expanded .wg-hero-acc-chevron {
+  color: #D99A3E !important;
+  transform: rotate(180deg) !important;
+}
+
+html body .wg-hero-acc-mode-ruhelti .wg-hero-acc-hint,
+html body .wg-hero-acc-mode-ruhelti .wg-hero-acc-chevron {
+  display: none !important;
+}
+
+/* ---- Guest / traveler numbers on WHITE panels (not white-on-white) ---- */
+html body .exp-travelers-panel,
+html body .exp-occupancy-panel,
+html body .shop-root .exp-travelers-panel,
+html body .shop-root .exp-occupancy-panel {
+  background: #fff !important;
+  color: #0f172a !important;
+}
+
+html body .exp-travelers-panel .exp-travelers-row,
+html body .exp-occupancy-panel .exp-travelers-row,
+html body .exp-travelers-panel .exp-travelers-row > span,
+html body .exp-occupancy-panel .exp-travelers-row > span,
+html body .exp-travelers-panel .exp-traveler-hint,
+html body .exp-occupancy-panel small,
+html body .exp-travelers-panel label,
+html body .exp-occupancy-panel label {
+  color: #0f172a !important;
+  -webkit-text-fill-color: #0f172a !important;
+  opacity: 1 !important;
+}
+
+html body .exp-travelers-panel .exp-stepper strong,
+html body .exp-occupancy-panel .exp-stepper strong,
+html body .exp-travelers-panel strong,
+html body .exp-occupancy-panel strong,
+html body .wg-hero-acc-field .exp-travelers-panel strong,
+html body .wg-hero-acc-field .exp-occupancy-panel strong,
+html body .wg-hero-acc-field .exp-stepper strong {
+  color: #001B35 !important;
+  -webkit-text-fill-color: #001B35 !important;
+  font-size: 1.05rem !important;
+  font-weight: 800 !important;
+  min-width: 1.4rem !important;
+  text-align: center !important;
+  display: inline-block !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+html body .exp-travelers-panel .exp-stepper button,
+html body .exp-occupancy-panel .exp-stepper button {
+  color: #001B35 !important;
+  border-color: #cbd5e1 !important;
+  background: #fff !important;
+}
+
+/* Room count label */
+html body .exp-occupancy-panel .exp-travelers-row > span,
+html body .exp-occupancy-panel .exp-travelers-row {
+  color: #0f172a !important;
+  -webkit-text-fill-color: #0f172a !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+/* Date trigger on navy: white (not black) */
+html body .wg-hero-acc-panel .exp-date-btn,
+html body .wg-hero-acc-panel .exp-date-btn span,
+html body .wg-hero-acc-panel .shop-date-range-trigger,
+html body .wg-hero-acc-panel .shop-date-range-trigger span,
+html body .wg-hero-acc-field .shop-date-range-trigger,
+html body .wg-hero-acc-field .exp-date-btn {
+  color: #F5F5F5 !important;
+  -webkit-text-fill-color: #F5F5F5 !important;
+}
+
+/* Calendar popup: center-ish, not stuck at top; day numbers dark on white */
+html body .shop-date-range-pop-float,
+html body .shop-date-range-pop.shop-date-range-pop-float {
+  top: max(18vh, 7rem) !important;
+  max-height: min(70vh, 560px) !important;
+}
+
+html body .shop-date-range-pop,
+html body .shop-date-range-pop td,
+html body .shop-date-range-pop button,
+html body .shop-date-range-pop .shop-date-range-day,
+html body .shop-date-range-pop .shop-cal-day {
+  color: #0f172a !important;
+}
+
+html body .shop-date-range-pop .shop-date-range-day.is-selected,
+html body .shop-date-range-pop .shop-cal-day.is-selected,
+html body .shop-date-range-pop button.is-selected {
+  color: #fff !important;
+  -webkit-text-fill-color: #fff !important;
+}
+
+/* Suggest menus denser + more visible options */
+html body .prc-suggest,
+html body .exp-ac-menu,
+html body .shop-ac .prc-suggest {
+  padding: 0.25rem !important;
+  gap: 0 !important;
+  max-height: min(320px, 50vh) !important;
+}
+
+html body .prc-suggest button,
+html body .exp-ac-menu button {
+  padding: 0.4rem 0.55rem !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  gap: 0.05rem !important;
+  color: #001B35 !important;
+}
+
+html body .prc-suggest button strong,
+html body .exp-ac-menu button strong {
+  color: #001B35 !important;
+  font-size: 0.9rem !important;
+}
+
+html body .prc-suggest button span,
+html body .exp-ac-menu button span {
+  color: #475569 !important;
+  font-size: 0.75rem !important;
+}
+
+/* Cars time select: readable on navy + open list */
+html body .wg-hero-acc-panel .exp-time-select,
+html body .wg-hero-acc-field .exp-time-select,
+html body .exp-cell-time .exp-time-select {
+  color: #F5F5F5 !important;
+  -webkit-text-fill-color: #F5F5F5 !important;
+  background: transparent !important;
+  border: 0 !important;
+  font-size: 0.95rem !important;
+  font-weight: 700 !important;
+  min-height: 1.6rem !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+html body .wg-hero-acc-panel .exp-time-select option,
+html body .exp-time-select option {
+  color: #0f172a !important;
+  background: #fff !important;
+}
+
+@media (max-width: 900px) {
+  html body .shop-root .wg-hero-acc-modes.wg-hero-dock-modes,
+  html body .wg-hero-acc-modes {
+    min-height: 4.8rem !important;
+  }
+  html body .shop-root .wg-hero-acc-mode,
+  html body .wg-hero-acc-mode {
+    min-height: 4.6rem !important;
+    padding: 0.4rem 0.25rem 0.3rem !important;
+  }
+  html body .shop-root .wg-hero-acc-icon,
+  html body .wg-hero-acc-icon {
+    width: 2.2rem !important;
+    height: 2.2rem !important;
+    min-width: 2.2rem !important;
+    min-height: 2.2rem !important;
+  }
+  html body .shop-root .wg-hero-acc-title,
+  html body .wg-hero-acc-title {
+    font-size: 0.86rem !important;
+  }
+  html body .shop-root .wg-hero-acc-hint,
+  html body .wg-hero-acc-hint {
+    font-size: 0.64rem !important;
+    max-width: 6.5rem !important;
+  }
+}
+
+/* ============================================================
+   WG_HERO_TABS_CENTER_BIG_V5
+   Bigger centered tab titles + larger icons with spacing;
+   cars time value always visible after selection.
+   ============================================================ */
+
+html body .shop-root.wg-new-ui .wg-hero-acc-modes.wg-hero-dock-modes,
+html body .shop-root .wg-hero-acc-modes.wg-hero-dock-modes,
+html body .wg-hero-acc-modes.wg-hero-dock-modes,
+html body .wg-hero-acc-modes {
+  min-height: 7.25rem !important;
+  max-height: none !important;
+  height: auto !important;
+  align-items: stretch !important;
+}
+
+html body .shop-root .wg-hero-dock-mode.wg-hero-acc-mode,
+html body .shop-root .wg-hero-acc-mode,
+html body .wg-hero-dock-mode.wg-hero-acc-mode,
+html body .wg-hero-acc-mode {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-height: 7rem !important;
+  max-height: none !important;
+  height: auto !important;
+  padding: 0.7rem 0.45rem 0.45rem !important;
+  gap: 0 !important;
+}
+
+html body .shop-root .wg-hero-acc-copy,
+html body .wg-hero-acc-mode .wg-hero-acc-copy,
+html body .wg-hero-acc-copy {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+  gap: 0.35rem !important;
+  width: 100% !important;
+}
+
+html body .shop-root .wg-hero-acc-title-row,
+html body .wg-hero-acc-title-row {
+  display: contents !important;
+}
+
+html body .shop-root .wg-hero-acc-text,
+html body .wg-hero-acc-text {
+  display: contents !important;
+}
+
+/* Bigger gold icon with clear gap above title */
+html body .shop-root .wg-hero-acc-icon,
+html body .shop-root .wg-hero-acc-mode .wg-hero-acc-icon,
+html body .wg-hero-acc-icon {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 3.35rem !important;
+  height: 3.35rem !important;
+  min-width: 3.35rem !important;
+  min-height: 3.35rem !important;
+  max-width: 3.35rem !important;
+  max-height: 3.35rem !important;
+  margin: 0 0 0.2rem !important;
+  border-radius: 999px !important;
+  background: rgba(217, 154, 62, 0.2) !important;
+  color: #D99A3E !important;
+  box-shadow: inset 0 0 0 1.5px rgba(217, 154, 62, 0.55) !important;
+}
+
+html body .shop-root .wg-hero-acc-mode.on .wg-hero-acc-icon,
+html body .wg-hero-acc-mode.is-expanded .wg-hero-acc-icon,
+html body .wg-hero-acc-mode.on .wg-hero-acc-icon {
+  background: #D99A3E !important;
+  color: #001B35 !important;
+}
+
+html body .shop-root .wg-hero-acc-icon svg,
+html body .wg-hero-acc-icon svg {
+  width: 1.7rem !important;
+  height: 1.7rem !important;
+}
+
+/* Bigger centered titles */
+html body .shop-root .wg-hero-acc-title,
+html body .shop-root .wg-hero-acc-mode .wg-hero-acc-title,
+html body .wg-hero-acc-title {
+  display: block !important;
+  width: 100% !important;
+  margin: 0.15rem 0 0 !important;
+  font-size: 1.28rem !important;
+  font-weight: 800 !important;
+  line-height: 1.2 !important;
+  letter-spacing: 0 !important;
+  color: #fff !important;
+  text-align: center !important;
+  white-space: nowrap !important;
+}
+
+html body .shop-root .wg-hero-acc-hint,
+html body .shop-root .wg-hero-acc-mode .wg-hero-acc-hint,
+html body .wg-hero-acc-hint {
+  display: block !important;
+  width: 100% !important;
+  max-width: 11rem !important;
+  margin: 0.05rem 0 0 !important;
+  font-size: 0.78rem !important;
+  font-weight: 500 !important;
+  line-height: 1.3 !important;
+  color: rgba(255, 255, 255, 0.78) !important;
+  text-align: center !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+html body .shop-root .wg-hero-acc-chevron,
+html body .shop-root .wg-hero-acc-mode .wg-hero-acc-chevron,
+html body .wg-hero-acc-chevron {
+  display: block !important;
+  width: 16px !important;
+  height: 16px !important;
+  margin: 0.2rem auto 0 !important;
+  color: #D99A3E !important;
+  fill: #D99A3E !important;
+}
+
+/* Cars time: show selected value clearly (native select text often invisible) */
+html body .wg-hero-acc-field .exp-time-wrap,
+html body .exp-cell-time .exp-time-wrap {
+  position: relative !important;
+  display: block !important;
+  width: 100% !important;
+  min-height: 1.55rem !important;
+}
+
+html body .wg-hero-acc-field .exp-time-display,
+html body .exp-cell-time .exp-time-display {
+  display: block !important;
+  color: #F5F5F5 !important;
+  -webkit-text-fill-color: #F5F5F5 !important;
+  font-size: 1.05rem !important;
+  font-weight: 800 !important;
+  line-height: 1.35 !important;
+  white-space: nowrap !important;
+  pointer-events: none !important;
+}
+
+html body .wg-hero-acc-field .exp-time-wrap .exp-time-select,
+html body .exp-cell-time .exp-time-wrap .exp-time-select {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  opacity: 0 !important;
+  color: transparent !important;
+  -webkit-text-fill-color: transparent !important;
+  background: transparent !important;
+  border: 0 !important;
+  cursor: pointer !important;
+  font-size: 1rem !important;
+  z-index: 2 !important;
+}
+
+html body .wg-hero-acc-field .exp-time-wrap .exp-time-select option,
+html body .exp-time-wrap .exp-time-select option {
+  color: #0f172a !important;
+  background: #fff !important;
+  -webkit-text-fill-color: #0f172a !important;
+}
+
+@media (max-width: 900px) {
+  html body .shop-root .wg-hero-acc-modes,
+  html body .wg-hero-acc-modes {
+    min-height: 6.2rem !important;
+  }
+  html body .shop-root .wg-hero-acc-mode,
+  html body .wg-hero-acc-mode {
+    min-height: 6rem !important;
+    padding: 0.5rem 0.2rem 0.35rem !important;
+  }
+  html body .shop-root .wg-hero-acc-icon,
+  html body .wg-hero-acc-icon {
+    width: 2.75rem !important;
+    height: 2.75rem !important;
+    min-width: 2.75rem !important;
+    min-height: 2.75rem !important;
+  }
+  html body .shop-root .wg-hero-acc-icon svg,
+  html body .wg-hero-acc-icon svg {
+    width: 1.4rem !important;
+    height: 1.4rem !important;
+  }
+  html body .shop-root .wg-hero-acc-title,
+  html body .wg-hero-acc-title {
+    font-size: 1.05rem !important;
+  }
+  html body .shop-root .wg-hero-acc-hint,
+  html body .wg-hero-acc-hint {
+    font-size: 0.68rem !important;
+    max-width: 7.5rem !important;
+  }
+}
+
+/* ============================================================
+   WG_HERO_TABS_ICON_AFTER_COMPACT_V6
+   Icon AFTER the title (beside, not above), ~2-space gap,
+   shorter modes row height.
+   ============================================================ */
+
+html body .shop-root.wg-new-ui .wg-hero-acc-modes.wg-hero-dock-modes,
+html body .shop-root .wg-hero-acc-modes.wg-hero-dock-modes,
+html body .wg-hero-acc-modes.wg-hero-dock-modes,
+html body .wg-hero-acc-modes {
+  min-height: 4.15rem !important;
+  max-height: 4.45rem !important;
+  height: 4.3rem !important;
+  align-items: stretch !important;
+}
+
+html body .shop-root .wg-hero-dock-mode.wg-hero-acc-mode,
+html body .shop-root .wg-hero-acc-mode,
+html body .wg-hero-dock-mode.wg-hero-acc-mode,
+html body .wg-hero-acc-mode {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-height: 4.15rem !important;
+  max-height: 4.45rem !important;
+  height: 4.3rem !important;
+  padding: 0.28rem 0.3rem 0.2rem !important;
+  gap: 0.06rem !important;
+}
+
+html body .shop-root .wg-hero-acc-copy,
+html body .wg-hero-acc-mode .wg-hero-acc-copy,
+html body .wg-hero-acc-copy {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+  gap: 0.04rem !important;
+  width: 100% !important;
+}
+
+/* Title + icon on ONE horizontal row; icon AFTER title (left of word in RTL) */
+html body .shop-root .wg-hero-acc-title-row,
+html body .wg-hero-acc-title-row {
+  display: inline-flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+  direction: rtl !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.6rem !important; /* ~مسافتين بعد العنوان */
+  width: auto !important;
+  max-width: 100% !important;
+  line-height: 1 !important;
+}
+
+html body .shop-root .wg-hero-acc-text,
+html body .wg-hero-acc-text {
+  display: contents !important;
+}
+
+html body .shop-root .wg-hero-acc-icon,
+html body .shop-root .wg-hero-acc-mode .wg-hero-acc-icon,
+html body .wg-hero-acc-icon {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 3rem !important;
+  height: 3rem !important;
+  min-width: 3rem !important;
+  min-height: 3rem !important;
+  max-width: 3rem !important;
+  max-height: 3rem !important;
+  margin: 0 !important;
+  border-radius: 999px !important;
+  background: rgba(217, 154, 62, 0.2) !important;
+  color: #D99A3E !important;
+  box-shadow: inset 0 0 0 1.5px rgba(217, 154, 62, 0.55) !important;
+  flex: 0 0 auto !important;
+  order: 2 !important; /* after title → left of Arabic word */
+}
+
+html body .shop-root .wg-hero-acc-mode.on .wg-hero-acc-icon,
+html body .wg-hero-acc-mode.is-expanded .wg-hero-acc-icon,
+html body .wg-hero-acc-mode.on .wg-hero-acc-icon {
+  background: #D99A3E !important;
+  color: #001B35 !important;
+}
+
+html body .shop-root .wg-hero-acc-icon svg,
+html body .wg-hero-acc-icon svg {
+  width: 1.55rem !important;
+  height: 1.55rem !important;
+}
+
+html body .shop-root .wg-hero-acc-title,
+html body .shop-root .wg-hero-acc-mode .wg-hero-acc-title,
+html body .wg-hero-acc-title {
+  display: inline-block !important;
+  width: auto !important;
+  margin: 0 !important;
+  font-size: 1.18rem !important;
+  font-weight: 800 !important;
+  line-height: 1.1 !important;
+  color: #fff !important;
+  text-align: center !important;
+  white-space: nowrap !important;
+  order: 1 !important;
+}
+
+html body .shop-root .wg-hero-acc-hint,
+html body .shop-root .wg-hero-acc-mode .wg-hero-acc-hint,
+html body .wg-hero-acc-hint {
+  display: block !important;
+  width: 100% !important;
+  max-width: 10.5rem !important;
+  margin: 0 !important;
+  font-size: 0.68rem !important;
+  font-weight: 500 !important;
+  line-height: 1.15 !important;
+  color: rgba(255, 255, 255, 0.78) !important;
+  text-align: center !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+html body .shop-root .wg-hero-acc-chevron,
+html body .shop-root .wg-hero-acc-mode .wg-hero-acc-chevron,
+html body .wg-hero-acc-chevron {
+  display: block !important;
+  width: 12px !important;
+  height: 12px !important;
+  margin: 0 auto !important;
+  color: #D99A3E !important;
+  fill: #D99A3E !important;
+}
+
+@media (max-width: 900px) {
+  html body .shop-root .wg-hero-acc-modes,
+  html body .wg-hero-acc-modes {
+    min-height: 3.85rem !important;
+    max-height: 4.15rem !important;
+    height: 4rem !important;
+  }
+  html body .shop-root .wg-hero-acc-mode,
+  html body .wg-hero-acc-mode {
+    min-height: 3.85rem !important;
+    max-height: 4.15rem !important;
+    height: 4rem !important;
+    padding: 0.22rem 0.18rem 0.16rem !important;
+  }
+  html body .shop-root .wg-hero-acc-icon,
+  html body .wg-hero-acc-icon {
+    width: 2.55rem !important;
+    height: 2.55rem !important;
+    min-width: 2.55rem !important;
+    min-height: 2.55rem !important;
+    max-width: 2.55rem !important;
+    max-height: 2.55rem !important;
+  }
+  html body .shop-root .wg-hero-acc-icon svg,
+  html body .wg-hero-acc-icon svg {
+    width: 1.28rem !important;
+    height: 1.28rem !important;
+  }
+  html body .shop-root .wg-hero-acc-title,
+  html body .wg-hero-acc-title {
+    font-size: 1rem !important;
+  }
+  html body .shop-root .wg-hero-acc-title-row,
+  html body .wg-hero-acc-title-row {
+    gap: 0.45rem !important;
+  }
+}
+
+/* ============================================================
+   WG_HERO_TABS_CONTAIN_ROW_V7
+   Keep title+hint+chevron INSIDE the modes bar height.
+   Icon LEFT of the text block, same row, with clear gap.
+   ============================================================ */
+
+html body .shop-root.wg-new-ui .wg-hero-acc-modes.wg-hero-dock-modes,
+html body .shop-root .wg-hero-acc-modes.wg-hero-dock-modes,
+html body .wg-hero-acc-modes.wg-hero-dock-modes,
+html body .wg-hero-acc-modes {
+  height: 4.35rem !important;
+  min-height: 4.35rem !important;
+  max-height: 4.35rem !important;
+  overflow: hidden !important;
+  align-items: stretch !important;
+}
+
+html body .shop-root .wg-hero-dock-mode.wg-hero-acc-mode,
+html body .shop-root .wg-hero-acc-mode,
+html body .wg-hero-dock-mode.wg-hero-acc-mode,
+html body .wg-hero-acc-mode {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: center !important;
+  height: 4.35rem !important;
+  min-height: 4.35rem !important;
+  max-height: 4.35rem !important;
+  padding: 0.35rem 0.45rem !important;
+  gap: 0 !important;
+  overflow: hidden !important;
+  box-sizing: border-box !important;
+}
+
+/* One horizontal row: text block (right) + icon (left / يسار) */
+html body .shop-root .wg-hero-acc-copy,
+html body .wg-hero-acc-mode .wg-hero-acc-copy,
+html body .wg-hero-acc-copy {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+  direction: rtl !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.7rem !important; /* مسافة بين الكتابة والأيقونة */
+  width: 100% !important;
+  max-width: 100% !important;
+  height: 100% !important;
+  max-height: 100% !important;
+  overflow: hidden !important;
+  box-sizing: border-box !important;
+}
+
+html body .shop-root .wg-hero-acc-textcol,
+html body .wg-hero-acc-mode .wg-hero-acc-textcol,
+html body .wg-hero-acc-textcol {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.1rem !important;
+  flex: 0 1 auto !important;
+  min-width: 0 !important;
+  max-width: calc(100% - 3.2rem) !important;
+  overflow: hidden !important;
+  order: 1 !important;
+}
+
+html body .shop-root .wg-hero-acc-title-row,
+html body .wg-hero-acc-title-row {
+  display: contents !important;
+}
+
+html body .shop-root .wg-hero-acc-icon,
+html body .shop-root .wg-hero-acc-mode .wg-hero-acc-icon,
+html body .wg-hero-acc-icon {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 2.45rem !important;
+  height: 2.45rem !important;
+  min-width: 2.45rem !important;
+  min-height: 2.45rem !important;
+  max-width: 2.45rem !important;
+  max-height: 2.45rem !important;
+  margin: 0 !important;
+  border-radius: 999px !important;
+  background: rgba(217, 154, 62, 0.2) !important;
+  color: #D99A3E !important;
+  box-shadow: inset 0 0 0 1.5px rgba(217, 154, 62, 0.55) !important;
+  flex: 0 0 auto !important;
+  order: 2 !important; /* يسار النص في RTL */
+  align-self: center !important;
+}
+
+html body .shop-root .wg-hero-acc-mode.on .wg-hero-acc-icon,
+html body .wg-hero-acc-mode.is-expanded .wg-hero-acc-icon {
+  background: #D99A3E !important;
+  color: #001B35 !important;
+}
+
+html body .shop-root .wg-hero-acc-icon svg,
+html body .wg-hero-acc-icon svg {
+  width: 1.28rem !important;
+  height: 1.28rem !important;
+}
+
+html body .shop-root .wg-hero-acc-title,
+html body .wg-hero-acc-mode .wg-hero-acc-title,
+html body .wg-hero-acc-title {
+  display: block !important;
+  width: auto !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  font-size: 1.05rem !important;
+  font-weight: 800 !important;
+  line-height: 1.15 !important;
+  color: #fff !important;
+  text-align: center !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  order: unset !important;
+}
+
+html body .shop-root .wg-hero-acc-hint,
+html body .wg-hero-acc-mode .wg-hero-acc-hint,
+html body .wg-hero-acc-hint {
+  display: block !important;
+  width: 100% !important;
+  max-width: 9.5rem !important;
+  margin: 0 !important;
+  font-size: 0.64rem !important;
+  font-weight: 500 !important;
+  line-height: 1.15 !important;
+  color: rgba(255, 255, 255, 0.78) !important;
+  text-align: center !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+html body .shop-root .wg-hero-acc-chevron,
+html body .shop-root .wg-hero-acc-mode .wg-hero-acc-chevron,
+html body .wg-hero-acc-chevron {
+  display: block !important;
+  width: 11px !important;
+  height: 11px !important;
+  margin: 0 auto !important;
+  flex-shrink: 0 !important;
+  color: #D99A3E !important;
+  fill: #D99A3E !important;
+}
+
+html body .shop-root .wg-hero-acc-mode-ruhelti .wg-hero-acc-copy,
+html body .wg-hero-acc-mode-ruhelti .wg-hero-acc-copy {
+  justify-content: center !important;
+}
+
+@media (max-width: 900px) {
+  html body .shop-root .wg-hero-acc-modes,
+  html body .wg-hero-acc-modes {
+    height: 4rem !important;
+    min-height: 4rem !important;
+    max-height: 4rem !important;
+  }
+  html body .shop-root .wg-hero-acc-mode,
+  html body .wg-hero-acc-mode {
+    height: 4rem !important;
+    min-height: 4rem !important;
+    max-height: 4rem !important;
+    padding: 0.25rem 0.25rem !important;
+  }
+  html body .shop-root .wg-hero-acc-copy,
+  html body .wg-hero-acc-copy {
+    gap: 0.45rem !important;
+  }
+  html body .shop-root .wg-hero-acc-icon,
+  html body .wg-hero-acc-icon {
+    width: 2.1rem !important;
+    height: 2.1rem !important;
+    min-width: 2.1rem !important;
+    min-height: 2.1rem !important;
+    max-width: 2.1rem !important;
+    max-height: 2.1rem !important;
+  }
+  html body .shop-root .wg-hero-acc-icon svg,
+  html body .wg-hero-acc-icon svg {
+    width: 1.05rem !important;
+    height: 1.05rem !important;
+  }
+  html body .shop-root .wg-hero-acc-title,
+  html body .wg-hero-acc-title {
+    font-size: 0.92rem !important;
+  }
+  html body .shop-root .wg-hero-acc-hint,
+  html body .wg-hero-acc-hint {
+    font-size: 0.58rem !important;
+    max-width: 7.5rem !important;
+  }
+}
+
+/* ============================================================
+   WG_HERO_TABS_FIT_INSIDE_V8
+   Fit title+hint+chevron inside fixed bar height (no spill, no clip).
+   Icon LEFT of text with gap. Full titles (no ellipsis). 5 tabs.
+   ============================================================ */
+
+html body .shop-root.wg-new-ui .wg-hero-acc-modes.wg-hero-dock-modes,
+html body .shop-root .wg-hero-acc-modes.wg-hero-dock-modes,
+html body .shop-root .wg-hero-acc-shell .wg-hero-acc-modes,
+html body .shop-root .wg-hero-search-panel .wg-hero-acc-modes,
+html body .wg-hero-acc-shell .wg-hero-acc-modes.wg-hero-dock-modes,
+html body .wg-hero-search-panel .wg-hero-acc-modes.wg-hero-dock-modes,
+html body .wg-hero-acc-modes.wg-hero-dock-modes,
+html body .wg-hero-acc-modes,
+html body .wg-hero-dock-modes {
+  display: grid !important;
+  grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+  grid-template-rows: 1fr !important;
+  align-items: stretch !important;
+  height: 4.5rem !important;
+  min-height: 4.5rem !important;
+  max-height: 4.5rem !important;
+  overflow: hidden !important;
+}
+
+html body .shop-root .wg-hero-dock-mode.wg-hero-acc-mode,
+html body .shop-root .wg-hero-acc-mode,
+html body .shop-root a.wg-hero-acc-mode,
+html body .wg-hero-dock-mode.wg-hero-acc-mode,
+html body .wg-hero-acc-mode,
+html body a.wg-hero-acc-mode {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: center !important;
+  height: 4.5rem !important;
+  min-height: 4.5rem !important;
+  max-height: 4.5rem !important;
+  padding: 0.3rem 0.35rem !important;
+  overflow: hidden !important;
+  box-sizing: border-box !important;
+}
+
+html body .shop-root .wg-hero-acc-copy,
+html body .wg-hero-acc-mode .wg-hero-acc-copy,
+html body .wg-hero-acc-copy {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+  direction: rtl !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.55rem !important;
+  width: 100% !important;
+  height: auto !important;
+  max-height: 100% !important;
+  overflow: visible !important;
+}
+
+html body .shop-root .wg-hero-acc-textcol,
+html body .wg-hero-acc-mode .wg-hero-acc-textcol,
+html body .wg-hero-acc-textcol {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.08rem !important;
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  overflow: visible !important;
+  order: 1 !important;
+}
+
+html body .shop-root .wg-hero-acc-meta,
+html body .wg-hero-acc-mode .wg-hero-acc-meta,
+html body .wg-hero-acc-meta {
+  display: inline-flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.2rem !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+}
+
+html body .shop-root .wg-hero-acc-icon,
+html body .shop-root .wg-hero-acc-mode .wg-hero-acc-icon,
+html body .wg-hero-acc-icon {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 2.25rem !important;
+  height: 2.25rem !important;
+  min-width: 2.25rem !important;
+  min-height: 2.25rem !important;
+  max-width: 2.25rem !important;
+  max-height: 2.25rem !important;
+  margin: 0 !important;
+  border-radius: 999px !important;
+  background: rgba(217, 154, 62, 0.2) !important;
+  color: #D99A3E !important;
+  box-shadow: inset 0 0 0 1.5px rgba(217, 154, 62, 0.55) !important;
+  flex: 0 0 auto !important;
+  order: 2 !important;
+  align-self: center !important;
+}
+
+html body .shop-root .wg-hero-acc-mode.on .wg-hero-acc-icon,
+html body .wg-hero-acc-mode.is-expanded .wg-hero-acc-icon {
+  background: #D99A3E !important;
+  color: #001B35 !important;
+}
+
+html body .shop-root .wg-hero-acc-icon svg,
+html body .wg-hero-acc-icon svg {
+  width: 1.15rem !important;
+  height: 1.15rem !important;
+}
+
+html body .shop-root .wg-hero-acc-title,
+html body .shop-root .wg-hero-acc-mode .wg-hero-acc-title,
+html body .wg-hero-search-panel .wg-hero-acc-title,
+html body .wg-hero-acc-title {
+  display: block !important;
+  width: auto !important;
+  max-width: none !important;
+  margin: 0 !important;
+  font-size: 0.98rem !important;
+  font-weight: 800 !important;
+  line-height: 1.1 !important;
+  color: #fff !important;
+  text-align: center !important;
+  white-space: nowrap !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  order: unset !important;
+}
+
+html body .shop-root .wg-hero-acc-hint,
+html body .shop-root .wg-hero-acc-mode .wg-hero-acc-hint,
+html body .wg-hero-acc-hint {
+  display: inline-block !important;
+  width: auto !important;
+  max-width: 8.5rem !important;
+  margin: 0 !important;
+  font-size: 0.6rem !important;
+  font-weight: 500 !important;
+  line-height: 1.1 !important;
+  color: rgba(255, 255, 255, 0.78) !important;
+  text-align: center !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+html body .shop-root .wg-hero-acc-chevron,
+html body .shop-root .wg-hero-acc-mode .wg-hero-acc-chevron,
+html body .wg-hero-acc-chevron {
+  display: inline-block !important;
+  width: 10px !important;
+  height: 10px !important;
+  margin: 0 !important;
+  flex-shrink: 0 !important;
+  color: #D99A3E !important;
+  fill: #D99A3E !important;
+  vertical-align: middle !important;
+}
+
+html body .shop-root .wg-hero-acc-mode-ruhelti,
+html body .wg-hero-acc-mode-ruhelti {
+  display: flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+@media (max-width: 900px) {
+  html body .shop-root.wg-new-ui .wg-hero-acc-modes.wg-hero-dock-modes,
+  html body .shop-root .wg-hero-acc-modes,
+  html body .wg-hero-acc-modes {
+    height: 4.15rem !important;
+    min-height: 4.15rem !important;
+    max-height: 4.15rem !important;
+  }
+  html body .shop-root .wg-hero-acc-mode,
+  html body .wg-hero-acc-mode {
+    height: 4.15rem !important;
+    min-height: 4.15rem !important;
+    max-height: 4.15rem !important;
+  }
+  html body .shop-root .wg-hero-acc-icon,
+  html body .wg-hero-acc-icon {
+    width: 2rem !important;
+    height: 2rem !important;
+    min-width: 2rem !important;
+    min-height: 2rem !important;
+    max-width: 2rem !important;
+    max-height: 2rem !important;
+  }
+  html body .shop-root .wg-hero-acc-title,
+  html body .wg-hero-acc-title {
+    font-size: 0.88rem !important;
+  }
+  html body .shop-root .wg-hero-acc-copy,
+  html body .wg-hero-acc-copy {
+    gap: 0.4rem !important;
+  }
+}
+
+/* ============================================================
+   WG_FIELD_SIDE_ICONS_CABIN_TIME_V9
+   - Travelers/guests icon beside text (like destination/dates)
+   - Cabin <option> dark text on white (not white-on-white)
+   - Cars time labels fully visible (no ellipsis)
+   ============================================================ */
+
+html body .shop-root .wg-hero-acc-field[data-field="guests"],
+html body .shop-root .wg-hero-acc-field[data-field="travelers"],
+html body .wg-hero-acc-field[data-field="guests"],
+html body .wg-hero-acc-field[data-field="travelers"] {
+  display: grid !important;
+  grid-template-columns: auto minmax(0, 1fr) auto !important;
+  align-items: center !important;
+  column-gap: 0.45rem !important;
+  direction: rtl !important;
+}
+
+html body .shop-root .wg-hero-acc-field[data-field="guests"] .wg-hero-acc-field-ico,
+html body .shop-root .wg-hero-acc-field[data-field="travelers"] .wg-hero-acc-field-ico,
+html body .wg-hero-acc-field[data-field="guests"] .wg-hero-acc-field-ico,
+html body .wg-hero-acc-field[data-field="travelers"] .wg-hero-acc-field-ico {
+  display: inline-block !important;
+  width: 1.15rem !important;
+  height: 1.15rem !important;
+  min-width: 1.15rem !important;
+  margin: 0 !important;
+  align-self: center !important;
+  grid-column: 1 !important;
+  grid-row: 1 !important;
+}
+
+html body .shop-root .wg-hero-acc-field[data-field="guests"] .exp-travelers-trigger,
+html body .shop-root .wg-hero-acc-field[data-field="travelers"] .exp-travelers-trigger,
+html body .shop-root .wg-hero-acc-field[data-field="guests"] .wg-hero-acc-field-body,
+html body .shop-root .wg-hero-acc-field[data-field="travelers"] .wg-hero-acc-field-body,
+html body .wg-hero-acc-field[data-field="guests"] .exp-travelers-trigger,
+html body .wg-hero-acc-field[data-field="travelers"] .exp-travelers-trigger,
+html body .wg-hero-acc-field[data-field="guests"] .exp-travelers-trigger.wg-hero-acc-field-body,
+html body .wg-hero-acc-field[data-field="travelers"] .exp-travelers-trigger.wg-hero-acc-field-body {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  justify-content: center !important;
+  gap: 0.08rem !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  grid-column: 2 !important;
+  grid-row: 1 !important;
+  grid-template-columns: unset !important;
+  background: transparent !important;
+  border: 0 !important;
+  padding: 0 !important;
+  text-align: start !important;
+}
+
+html body .shop-root .wg-hero-acc-field[data-field="guests"] .wg-hero-acc-field-chevron,
+html body .shop-root .wg-hero-acc-field[data-field="travelers"] .wg-hero-acc-field-chevron,
+html body .wg-hero-acc-field[data-field="guests"] .wg-hero-acc-field-chevron,
+html body .wg-hero-acc-field[data-field="travelers"] .wg-hero-acc-field-chevron {
+  display: inline-block !important;
+  grid-column: 3 !important;
+  grid-row: 1 !important;
+  align-self: center !important;
+}
+
+html body .shop-root .wg-hero-acc-field[data-field="guests"] .exp-travelers-panel,
+html body .shop-root .wg-hero-acc-field[data-field="travelers"] .exp-travelers-panel,
+html body .wg-hero-acc-field[data-field="guests"] .exp-travelers-panel,
+html body .wg-hero-acc-field[data-field="travelers"] .exp-travelers-panel {
+  grid-column: 1 / -1 !important;
+}
+
+/* Cabin class options: dark on white (native dropdown) */
+html body .shop-root .wg-hero-acc-cabin select,
+html body .wg-hero-acc-cabin select {
+  color: #F5F5F5 !important;
+  -webkit-text-fill-color: #F5F5F5 !important;
+  background: transparent !important;
+}
+
+html body .shop-root .wg-hero-acc-cabin select option,
+html body .wg-hero-acc-cabin select option,
+html body .wg-hero-acc-trip-extra.wg-hero-acc-cabin select option,
+html body select.wg-hero-acc-cabin-select option {
+  color: #0f172a !important;
+  -webkit-text-fill-color: #0f172a !important;
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+}
+
+html body .shop-root .wg-hero-acc-cabin select option:checked,
+html body .wg-hero-acc-cabin select option:checked,
+html body .shop-root .wg-hero-acc-cabin select option:hover,
+html body .wg-hero-acc-cabin select option:hover {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  background: #1668e3 !important;
+  background-color: #1668e3 !important;
+}
+
+/* Cars time cells: show full Arabic labels */
+html body .shop-root .exp-cell-time-compact.wg-hero-acc-field,
+html body .shop-root .exp-cell-time.exp-cell-time-compact,
+html body .wg-hero-acc-field.exp-cell-time-compact,
+html body .exp-cell-time-compact {
+  max-width: none !important;
+  min-width: 6.8rem !important;
+  width: auto !important;
+  flex: 1 1 6.8rem !important;
+}
+
+html body .shop-root .exp-cell-time-compact .exp-cell-label,
+html body .shop-root .wg-hero-acc-field[data-field="time"] .exp-cell-label,
+html body .wg-hero-acc-field[data-field="time"] .exp-cell-label,
+html body .exp-cell-time-compact .exp-cell-label {
+  font-size: 0.72rem !important;
+  white-space: nowrap !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  max-width: none !important;
+  width: auto !important;
+}
+
+html body .shop-root .wg-hero-acc-field[data-field="time"],
+html body .wg-hero-acc-field[data-field="time"] {
+  min-width: 6.8rem !important;
+}
+
+html body .shop-root .wg-hero-acc-field[data-field="time"] .wg-hero-acc-field-body,
+html body .wg-hero-acc-field[data-field="time"] .wg-hero-acc-field-body {
+  min-width: 0 !important;
+  overflow: visible !important;
+}
+
+/* Give cars time columns real width so Arabic labels fit */
+html body .shop-root .wg-hero-acc-panel .exp-form-row.exp-form-cars,
+html body .wg-hero-acc-panel .exp-form-row.exp-form-cars,
+html body .shop-root.wg-new-ui .wg-hero-search-panel .exp-unified-card .exp-form-cars {
+  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr) minmax(0, 1.1fr) minmax(6.6rem, 0.75fr) minmax(6.6rem, 0.75fr) minmax(0, 0.95fr) auto !important;
+}
+
+html body .shop-root .wg-hero-acc-panel .exp-form-row.exp-form-cars:not(:has(.exp-cell-time-compact + .exp-cell-time-compact)),
+html body .shop-root.wg-new-ui .wg-hero-search-panel .exp-unified-card .exp-form-cars:not(:has(.exp-cell-time-compact + .exp-cell-time-compact)) {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr) minmax(0, 1.2fr) minmax(6.6rem, 0.85fr) minmax(0, 1fr) auto !important;
+}
+
+/* Suggest dropdown: clearer spacing like reference (readable options) */
+html body .prc-suggest,
+html body .exp-ac-menu,
+html body .shop-ac .prc-suggest {
+  padding: 0.35rem !important;
+  border: 1px solid #dbe2ea !important;
+  border-radius: 0.55rem !important;
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.16) !important;
+  background: #fff !important;
+}
+
+html body .prc-suggest button,
+html body .exp-ac-menu button,
+html body .prc-suggest [role="option"],
+html body .exp-ac-menu [role="option"] {
+  padding: 0.55rem 0.7rem !important;
+  margin: 0.08rem 0 !important;
+  border-radius: 0.4rem !important;
+  color: #0f172a !important;
+  -webkit-text-fill-color: #0f172a !important;
+  line-height: 1.35 !important;
+}
+
+html body .prc-suggest button strong,
+html body .exp-ac-menu button strong {
+  color: #0f172a !important;
+  -webkit-text-fill-color: #0f172a !important;
+  font-size: 0.95rem !important;
+  font-weight: 700 !important;
+}
+
+/* Align guests/travelers icon with value row (like destination pin) */
+html body .shop-root .wg-hero-acc-field[data-field="guests"] .wg-hero-acc-field-ico,
+html body .shop-root .wg-hero-acc-field[data-field="travelers"] .wg-hero-acc-field-ico,
+html body .wg-hero-acc-field[data-field="guests"] .wg-hero-acc-field-ico,
+html body .wg-hero-acc-field[data-field="travelers"] .wg-hero-acc-field-ico {
+  align-self: end !important;
+  margin-bottom: 0.15rem !important;
+}
+
+html body .shop-root .wg-hero-acc-field[data-field="guests"] .wg-hero-acc-field-chevron,
+html body .shop-root .wg-hero-acc-field[data-field="travelers"] .wg-hero-acc-field-chevron,
+html body .wg-hero-acc-field[data-field="guests"] .wg-hero-acc-field-chevron,
+html body .wg-hero-acc-field[data-field="travelers"] .wg-hero-acc-field-chevron {
+  align-self: end !important;
+  margin-bottom: 0.2rem !important;
 }

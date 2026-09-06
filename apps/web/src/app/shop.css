@@ -7503,3 +7503,98 @@ html body .shop-date-range-backdrop {
   }
 }
 
+
+/* WG_HERO_TABS_FIT_INSIDE_V8_SHOP — last-wins override for hero modes bar */
+html body .shop-root.wg-new-ui .wg-hero-acc-modes.wg-hero-dock-modes,
+html body .shop-root .wg-hero-acc-modes.wg-hero-dock-modes,
+html body .wg-hero-acc-modes {
+  display: grid !important;
+  grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+  height: 4.5rem !important;
+  min-height: 4.5rem !important;
+  max-height: 4.5rem !important;
+  overflow: hidden !important;
+}
+html body .shop-root .wg-hero-acc-mode,
+html body .wg-hero-acc-mode {
+  height: 4.5rem !important;
+  min-height: 4.5rem !important;
+  max-height: 4.5rem !important;
+  overflow: hidden !important;
+}
+html body .shop-root .wg-hero-acc-copy,
+html body .wg-hero-acc-copy {
+  display: flex !important;
+  flex-direction: row !important;
+  direction: rtl !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.55rem !important;
+}
+html body .shop-root .wg-hero-acc-title,
+html body .wg-hero-acc-title {
+  overflow: visible !important;
+  text-overflow: clip !important;
+  white-space: nowrap !important;
+  font-size: 0.98rem !important;
+}
+html body .shop-root .wg-hero-acc-icon,
+html body .wg-hero-acc-icon {
+  width: 2.25rem !important;
+  height: 2.25rem !important;
+  min-width: 2.25rem !important;
+  order: 2 !important;
+  flex: 0 0 auto !important;
+}
+html body .shop-root .wg-hero-acc-textcol,
+html body .wg-hero-acc-textcol {
+  order: 1 !important;
+}
+html body .shop-root .wg-hero-acc-meta,
+html body .wg-hero-acc-meta {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0.2rem !important;
+}
+
+/* WG_FIELD_SIDE_ICONS_CABIN_TIME_V9_SHOP — last-wins */
+html body .shop-root .wg-hero-acc-field[data-field="guests"],
+html body .shop-root .wg-hero-acc-field[data-field="travelers"],
+html body .wg-hero-acc-field[data-field="guests"],
+html body .wg-hero-acc-field[data-field="travelers"] {
+  display: grid !important;
+  grid-template-columns: auto minmax(0, 1fr) auto !important;
+  align-items: center !important;
+  column-gap: 0.45rem !important;
+  direction: rtl !important;
+}
+html body .wg-hero-acc-field[data-field="guests"] .exp-travelers-trigger,
+html body .wg-hero-acc-field[data-field="travelers"] .exp-travelers-trigger,
+html body .wg-hero-acc-field[data-field="guests"] .exp-travelers-trigger.wg-hero-acc-field-body,
+html body .wg-hero-acc-field[data-field="travelers"] .exp-travelers-trigger.wg-hero-acc-field-body {
+  display: flex !important;
+  flex-direction: column !important;
+  grid-template-columns: unset !important;
+  align-items: flex-start !important;
+  gap: 0.08rem !important;
+  width: 100% !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+}
+html body .wg-hero-acc-cabin select option {
+  color: #0f172a !important;
+  -webkit-text-fill-color: #0f172a !important;
+  background: #fff !important;
+}
+html body .exp-cell-time-compact {
+  max-width: none !important;
+  min-width: 6.8rem !important;
+}
+html body .exp-cell-time-compact .exp-cell-label,
+html body .wg-hero-acc-field[data-field="time"] .exp-cell-label {
+  font-size: 0.72rem !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  white-space: nowrap !important;
+}

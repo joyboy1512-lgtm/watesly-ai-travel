@@ -139,24 +139,78 @@ function ShopHomeInner() {
         country?: string | null;
       }>
     >(`/shop/airports?q=${encodeURIComponent(q)}&limit=40`);
-    return rows.map((a) => ({
-      id: a.id,
-      code: (a.iataCode || "").toUpperCase(),
-      title: `${a.iataCode || "—"} · ${a.city || a.name}`,
-      subtitle: `${a.name}${a.country ? ` — ${a.country}` : ""}`,
-    }));
+    return rows.map((a) => {
+      const code = (a.iataCode || "").toUpperCase();
+      return {
+        id: a.id,
+        code,
+        // IATA first — search priority is airport code
+        title: code ? `${code} — ${a.city || a.name}` : a.city || a.name,
+        subtitle: `${a.name}${a.country ? ` · ${a.country}` : ""}`,
+      };
+    });
   }
 
   async function searchCities(q: string): Promise<SuggestItem[]> {
     const rows = await shopFetch<
-      Array<{ city: string | null; country: string | null; iataCode?: string | null }>
+      Array<{
+        city: string | null;
+        country: string | null;
+        iataCode?: string | null;
+        kind?: string;
+        label?: string;
+        subtitle?: string;
+      }>
     >(`/shop/cities?q=${encodeURIComponent(q)}`);
-    return rows.map((c, idx) => ({
-      id: `${c.city}-${idx}`,
-      code: c.iataCode || c.city || q,
-      title: c.city || q,
-      subtitle: c.country || undefined,
-    }));
+
+    const cityItems = rows.map((c, idx) => {
+      const kind = c.kind || "city";
+      const label = c.label || c.city || q;
+      const kindLabel =
+        kind === "country"
+          ? "دولة"
+          : kind === "hotel"
+            ? "فندق"
+            : kind === "place"
+              ? "مكان"
+              : "مدينة";
+      return {
+        id: `${kind}-${c.city}-${c.iataCode || idx}`,
+        code: c.iataCode || c.city || q,
+        title: label,
+        subtitle:
+          c.subtitle ||
+          [kindLabel, c.country].filter(Boolean).join(" · ") ||
+          undefined,
+      };
+    });
+
+    // Also search by hotel name when the query looks like more than a short city token.
+    const trimmed = q.trim();
+    if (trimmed.length >= 3) {
+      try {
+        const hotelRes = await shopFetch<{
+          items?: Array<{ code: string; name: string; city: string }>;
+        }>("/shop/suggest-hotels", {
+          method: "POST",
+          body: JSON.stringify({ query: trimmed }),
+        });
+        const hotels = (hotelRes.items || []).slice(0, 6).map((h) => ({
+          id: `hotel-${h.code}`,
+          code: h.code,
+          title: h.name,
+          subtitle: h.city ? `فندق · ${h.city}` : "فندق",
+        }));
+        const seen = new Set(cityItems.map((i) => i.title.toLowerCase()));
+        for (const h of hotels) {
+          if (!seen.has(h.title.toLowerCase())) cityItems.push(h);
+        }
+      } catch {
+        /* hotel suggest is optional — cities still work */
+      }
+    }
+
+    return cityItems.slice(0, 12);
   }
 
   function handleTripTypeChange(next: FlightTripType) {

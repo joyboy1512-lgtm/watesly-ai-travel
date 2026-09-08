@@ -55,16 +55,15 @@ const BADGE_WHY: Record<"best" | "cheapest" | "fastest", string> = {
   fastest: "أقصر مدة إجمالية للرحلة",
 };
 
-function dayOffsetLabel(departAt?: string, arriveAt?: string) {
-  if (!departAt || !arriveAt) return "";
+function dayOffsetDays(departAt?: string, arriveAt?: string): number {
+  if (!departAt || !arriveAt) return 0;
   const d = new Date(departAt);
   const a = new Date(arriveAt);
-  if (!Number.isFinite(d.getTime()) || !Number.isFinite(a.getTime())) return "";
+  if (!Number.isFinite(d.getTime()) || !Number.isFinite(a.getTime())) return 0;
   const dDay = Date.UTC(d.getFullYear(), d.getMonth(), d.getDate());
   const aDay = Date.UTC(a.getFullYear(), a.getMonth(), a.getDate());
   const diff = Math.round((aDay - dDay) / 86400000);
-  if (diff <= 0) return "";
-  return `+${diff}`;
+  return diff > 0 ? diff : 0;
 }
 
 function legDurationLabel(segs: FlightSeg[], fallbackRaw: unknown) {
@@ -136,6 +135,15 @@ function stopDurationHint(segs: FlightSeg[]): string | null {
   return parts.length ? parts.join(" · ") : null;
 }
 
+function stopAirportCodes(segs: FlightSeg[]): string[] {
+  const codes: string[] = [];
+  for (let i = 0; i < segs.length - 1; i += 1) {
+    const code = String(segs[i]?.to || "").trim().toUpperCase();
+    if (code) codes.push(code);
+  }
+  return codes;
+}
+
 function LegBlock({
   segs,
   details,
@@ -174,13 +182,14 @@ function LegBlock({
     .filter(Boolean)
     .join(" · ");
   const duration = legDurationLabel(segs, durationRaw);
-  const offset = dayOffsetLabel(
+  const offsetDays = dayOffsetDays(
     depRaw.includes("T") ? depRaw : undefined,
     arrRaw.includes("T") ? arrRaw : undefined,
   );
   const codeshare = codeshareNote(segs, packageCode);
   const airportChange = airportChangeNote(segs);
   const stopHint = stopDurationHint(segs);
+  const stopCodes = stopAirportCodes(segs);
   const depTerminal = first?.departureTerminal
     ? `صالة ${first.departureTerminal}`
     : null;
@@ -189,6 +198,7 @@ function LegBlock({
     : null;
   const depDay = formatDay(depRaw.includes("T") ? depRaw.slice(0, 10) : depRaw);
   const arrDay = formatDay(arrRaw.includes("T") ? arrRaw.slice(0, 10) : arrRaw);
+  const stopNodes = Math.min(Math.max(stops, stopCodes.length), 3);
 
   return (
     <div
@@ -224,69 +234,61 @@ function LegBlock({
         </div>
       </div>
 
-      <strong className="shop-ticket-clock">{formatClock(depRaw)}</strong>
-      <strong className="shop-ticket-clock end">
-        {formatClock(arrRaw)}
-        {offset ? <sup className="shop-ticket-day-offset">{offset}</sup> : null}
-      </strong>
-
-      <span className="shop-ticket-iata">
-        {from}
-        {depTerminal ? ` · ${depTerminal}` : ""}
-      </span>
+      <div className="shop-ticket-od dep">
+        <strong className="shop-ticket-clock">{formatClock(depRaw)}</strong>
+        {depDay ? <small className="shop-ticket-day">{depDay}</small> : null}
+        <span className="shop-ticket-iata">
+          {from}
+          {depTerminal ? ` · ${depTerminal}` : ""}
+        </span>
+      </div>
 
       <div className="shop-ticket-path">
+        <strong className="shop-ticket-meta-duration">المدة: {duration}</strong>
         <div className="shop-ticket-route" aria-hidden>
-          <svg
-            className="shop-ticket-route-svg"
-            viewBox="0 0 160 28"
-            preserveAspectRatio="none"
-            focusable="false"
-          >
-            <path
-              className="shop-ticket-route-arc"
-              d="M0 20 C 26 20, 42 6, 80 6 C 118 6, 134 20, 160 20"
-              fill="none"
-              stroke="#2a6f97"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeDasharray="3 4"
-            />
-            <circle cx="0" cy="20" r="2.5" fill="#fff" stroke="#2a6f97" strokeWidth="1.5" />
-            <circle cx="160" cy="20" r="2.5" fill="#fff" stroke="#2a6f97" strokeWidth="1.5" />
-            <g className="shop-ticket-route-plane" transform="translate(80 7)">
-              <circle r="7.5" fill="#fff" stroke="#d5e3ef" strokeWidth="1" />
-              <path
-                fill="#2a6f97"
-                transform="rotate(90) scale(0.55) translate(-12 -12)"
-                d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"
-              />
-            </g>
-          </svg>
+          <span className="shop-ticket-route-line" />
+          {stopNodes > 0
+            ? Array.from({ length: stopNodes }, (_, i) => (
+                <span
+                  key={`stop-${i}`}
+                  className="shop-ticket-route-stop"
+                  style={{
+                    insetInlineStart: `${((i + 1) / (stopNodes + 1)) * 100}%`,
+                  }}
+                />
+              ))
+            : null}
         </div>
         <div className="shop-ticket-path-meta">
-          <strong className="shop-ticket-meta-duration">{duration}</strong>
+          {stopHint ? <small className="shop-ticket-stop-hint">توقف: {stopHint}</small> : null}
           <span className={`shop-ticket-meta-stops${stops === 0 ? " direct" : ""}`}>
-            {stopsLabel(stops)}
+            {stops === 0
+              ? stopsLabel(stops)
+              : stopCodes.length
+                ? `${stopsLabel(stops)} — (${stopCodes.join(", ")})`
+                : stopsLabel(stops)}
           </span>
-          {stopHint ? <small className="shop-ticket-stop-hint">{stopHint}</small> : null}
           {airportChange ? (
             <small className="shop-ticket-airport-change">{airportChange}</small>
           ) : null}
         </div>
       </div>
 
-      <span className="shop-ticket-iata end">
-        {to}
-        {arrTerminal ? ` · ${arrTerminal}` : ""}
-      </span>
-
-      {depDay ? <small className="shop-ticket-day">{depDay}</small> : <span className="shop-ticket-day is-empty" />}
-      {arrDay ? (
-        <small className="shop-ticket-day end">{arrDay}</small>
-      ) : (
-        <span className="shop-ticket-day end is-empty" />
-      )}
+      <div className="shop-ticket-od arr">
+        <strong className="shop-ticket-clock">
+          {formatClock(arrRaw)}
+          {offsetDays > 0 ? (
+            <span className="shop-ticket-day-offset">
+              +{offsetDays} {offsetDays === 1 ? "يوم" : "أيام"}
+            </span>
+          ) : null}
+        </strong>
+        {arrDay ? <small className="shop-ticket-day">{arrDay}</small> : null}
+        <span className="shop-ticket-iata">
+          {to}
+          {arrTerminal ? ` · ${arrTerminal}` : ""}
+        </span>
+      </div>
     </div>
   );
 }

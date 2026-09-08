@@ -5963,15 +5963,12 @@ html[dir="ltr"] .shop-ticket-card-v2.shop-ticket-card-bp > .shop-ticket-body-v2:
 
 .shop-ticket-card-bp .shop-ticket-leg-v2 {
   display: grid;
-  grid-template-columns: minmax(100px, 0.9fr) minmax(3.4rem, auto) minmax(0, 1fr) minmax(3.4rem, auto);
-  grid-template-areas:
-    "airline dep-clock path arr-clock"
-    "airline dep-iata  path arr-iata"
-    "airline dep-day   path arr-day";
-  column-gap: 0;
-  row-gap: 0.08rem;
+  grid-template-columns: minmax(100px, 0.85fr) minmax(5.5rem, 1fr) minmax(7rem, 1.35fr) minmax(5.5rem, 1fr);
+  grid-template-rows: auto auto auto auto;
+  column-gap: 0.35rem;
+  row-gap: 0.16rem;
   align-items: center;
-  padding: 0.55rem 0.5rem;
+  padding: 0.65rem 0.55rem 0.75rem;
   border: 1px solid #dfe7f0;
   border-radius: 12px;
   background: #fff;
@@ -5979,15 +5976,12 @@ html[dir="ltr"] .shop-ticket-card-v2.shop-ticket-card-bp > .shop-ticket-body-v2:
 }
 
 .shop-ticket-card-bp .shop-ticket-leg-v2.kayak-leg {
-  grid-template-columns: 22px minmax(96px, 0.88fr) minmax(3.4rem, auto) minmax(0, 1fr) minmax(3.4rem, auto);
-  grid-template-areas:
-    "check airline dep-clock path arr-clock"
-    "check airline dep-iata  path arr-iata"
-    "check airline dep-day   path arr-day";
+  grid-template-columns: 22px minmax(96px, 0.8fr) minmax(5.5rem, 1fr) minmax(7rem, 1.35fr) minmax(5.5rem, 1fr);
 }
 
 .shop-ticket-card-bp .shop-ticket-kayak-check {
-  grid-area: check;
+  grid-column: 1;
+  grid-row: 1 / -1;
   align-self: center;
 }
 
@@ -6004,10 +5998,15 @@ html[dir="ltr"] .shop-ticket-card-v2.shop-ticket-card-bp > .shop-ticket-body-v2:
 }
 
 .shop-ticket-card-bp .shop-ticket-airline-col {
-  grid-area: airline;
+  grid-column: 1;
+  grid-row: 1 / span 4;
   grid-template-columns: 36px 1fr;
   gap: 0.4rem;
   align-self: center;
+}
+
+.shop-ticket-card-bp .shop-ticket-leg-v2.kayak-leg .shop-ticket-airline-col {
+  grid-column: 2;
 }
 
 .shop-ticket-card-bp .shop-ticket-airline-logo img,
@@ -6031,132 +6030,100 @@ html[dir="ltr"] .shop-ticket-card-v2.shop-ticket-card-bp > .shop-ticket-body-v2:
   letter-spacing: 0.02em;
 }
 
-.shop-ticket-card-bp .shop-ticket-clock {
-  grid-area: dep-clock;
-  display: block;
+/* Origin / destination stack: time → date → IATA */
+.shop-ticket-card-bp .shop-ticket-od {
+  display: grid;
+  grid-template-rows: subgrid;
+  grid-row: 1 / span 3;
+  row-gap: inherit;
+  min-width: 0;
+}
+
+.shop-ticket-card-bp .shop-ticket-od.dep {
+  grid-column: 2;
+  justify-items: end;
   text-align: end;
+}
+
+.shop-ticket-card-bp .shop-ticket-leg-v2.kayak-leg .shop-ticket-od.dep {
+  grid-column: 3;
+}
+
+.shop-ticket-card-bp .shop-ticket-od.arr {
+  grid-column: 4;
+  justify-items: start;
+  text-align: start;
+}
+
+.shop-ticket-card-bp .shop-ticket-leg-v2.kayak-leg .shop-ticket-od.arr {
+  grid-column: 5;
+}
+
+.shop-ticket-card-bp .shop-ticket-clock {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-wrap: wrap;
   font-size: 1.28rem;
   line-height: 1;
-  color: #001b35;
+  color: #0f172a;
   font-weight: 800;
   letter-spacing: 0.01em;
-  padding-inline: 0.1rem;
 }
 
-.shop-ticket-card-bp .shop-ticket-clock.end {
-  grid-area: arr-clock;
-  text-align: start;
+.shop-ticket-card-bp .shop-ticket-od.arr .shop-ticket-clock {
+  justify-content: flex-start;
 }
 
-.shop-ticket-card-bp .shop-ticket-iata {
-  grid-area: dep-iata;
-  display: block;
-  text-align: end;
-  font-size: 0.82rem;
-  font-weight: 800;
-  color: #0a2f55;
-  letter-spacing: 0.04em;
-  line-height: 1.1;
-  padding-inline: 0.05rem;
-  white-space: nowrap;
+.shop-ticket-card-bp .shop-ticket-od.dep .shop-ticket-clock {
+  justify-content: flex-end;
 }
 
-.shop-ticket-card-bp .shop-ticket-iata.end {
-  grid-area: arr-iata;
-  text-align: start;
+.shop-ticket-card-bp .shop-ticket-day-offset {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.12rem 0.4rem;
+  border-radius: 999px;
+  background: #e8edf3;
+  color: #475569;
+  font-size: 0.62rem;
+  font-weight: 700;
+  line-height: 1.2;
+  vertical-align: middle;
 }
 
 .shop-ticket-card-bp .shop-ticket-day {
-  grid-area: dep-day;
   display: block;
-  text-align: end;
-  font-size: 0.64rem;
+  font-size: 0.72rem;
   color: #64748b;
-  font-weight: 600;
-  line-height: 1.2;
-  padding-inline: 0.05rem;
-}
-
-.shop-ticket-card-bp .shop-ticket-day.end {
-  grid-area: arr-day;
-  text-align: start;
-}
-
-.shop-ticket-card-bp .shop-ticket-day.is-empty {
-  visibility: hidden;
-  min-height: 0.7rem;
-}
-
-.shop-ticket-card-bp .shop-ticket-path {
-  grid-area: path;
-  text-align: center;
-  display: grid;
-  grid-template-rows: subgrid;
-  grid-row: 1 / 4;
-  gap: 0;
-  justify-items: stretch;
-  align-items: center;
-  min-width: 0;
-  margin-inline: -0.85rem;
-  padding-inline: 0;
-}
-
-.shop-ticket-card-bp .shop-ticket-route {
-  position: relative;
-  width: 100%;
-  max-width: none;
-  display: grid;
-  justify-items: center;
-  gap: 0;
-  grid-row: 2;
-  align-self: center;
+  font-weight: 500;
+  line-height: 1.25;
 }
 
 .shop-ticket-card-bp .shop-ticket-iata {
-  grid-area: dep-iata;
   display: block;
-  text-align: end;
-  font-size: 0.82rem;
+  font-size: 0.84rem;
   font-weight: 800;
-  color: #0a2f55;
-  letter-spacing: 0.04em;
-  line-height: 1.1;
-  padding-inline-end: 0;
-  padding-inline-start: 0.05rem;
+  color: #0f172a;
+  letter-spacing: 0.03em;
+  line-height: 1.15;
   white-space: nowrap;
 }
 
-.shop-ticket-card-bp .shop-ticket-iata.end {
-  grid-area: arr-iata;
-  text-align: start;
-  padding-inline-start: 0;
-  padding-inline-end: 0.05rem;
-}
-
-.shop-ticket-card-bp .shop-ticket-route-svg {
-  display: block;
-  width: 100%;
-  height: 1.55rem;
-  max-width: none;
-  overflow: visible;
-}
-
-.shop-ticket-card-bp .shop-ticket-route-arc {
-  opacity: 0.95;
-}
-
-.shop-ticket-card-bp .shop-ticket-route-plane {
-  transform-box: fill-box;
-  transform-origin: center;
-}
-
-.shop-ticket-card-bp .shop-ticket-path-meta {
-  grid-row: 3;
+.shop-ticket-card-bp .shop-ticket-path {
+  grid-column: 3;
+  grid-row: 1 / span 4;
   display: grid;
-  justify-items: center;
-  gap: 0.02rem;
-  align-self: start;
-  padding-top: 0.02rem;
+  grid-template-rows: subgrid;
+  row-gap: inherit;
+  justify-items: stretch;
+  align-items: center;
+  min-width: 0;
+  text-align: center;
+}
+
+.shop-ticket-card-bp .shop-ticket-leg-v2.kayak-leg .shop-ticket-path {
+  grid-column: 4;
 }
 
 .shop-ticket-card-bp .shop-ticket-meta-duration {
@@ -6169,9 +6136,51 @@ html[dir="ltr"] .shop-ticket-card-v2.shop-ticket-card-bp > .shop-ticket-body-v2:
   padding: 0;
   margin: 0;
   font-size: 0.7rem;
-  font-weight: 800;
-  color: #12233a;
-  line-height: 1.1;
+  font-weight: 600;
+  color: #64748b;
+  line-height: 1.2;
+  grid-row: 2;
+  align-self: end;
+  justify-self: center;
+}
+
+.shop-ticket-card-bp .shop-ticket-route {
+  position: relative;
+  width: 100%;
+  height: 0.9rem;
+  display: flex;
+  align-items: center;
+  margin: 0;
+  grid-row: 3;
+  align-self: center;
+}
+
+.shop-ticket-card-bp .shop-ticket-route-line {
+  display: block;
+  width: 100%;
+  height: 2px;
+  background: #94a3b8;
+  border-radius: 999px;
+}
+
+.shop-ticket-card-bp .shop-ticket-route-stop {
+  position: absolute;
+  top: 50%;
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+  background: #fff;
+  border: 1.5px solid #94a3b8;
+  transform: translate(-50%, -50%);
+  box-sizing: border-box;
+}
+
+.shop-ticket-card-bp .shop-ticket-path-meta {
+  grid-row: 4;
+  display: grid;
+  justify-items: center;
+  gap: 0.08rem;
+  align-self: start;
 }
 
 .shop-ticket-card-bp .shop-ticket-meta-stops.direct {
@@ -6194,9 +6203,13 @@ html[dir="ltr"] .shop-ticket-card-v2.shop-ticket-card-bp > .shop-ticket-body-v2:
 .shop-ticket-card-bp .shop-ticket-stop-hint,
 .shop-ticket-card-bp .shop-ticket-airport-change {
   font-size: 0.6rem;
+  color: #64748b;
 }
 
-/* Legacy arc helpers — keep inert under boarding-pass cards */
+/* Hide legacy arc/SVG helpers under boarding-pass cards */
+.shop-ticket-card-bp .shop-ticket-route-svg,
+.shop-ticket-card-bp .shop-ticket-route-arc,
+.shop-ticket-card-bp .shop-ticket-route-plane,
 .shop-ticket-card-bp .shop-ticket-path-arc,
 .shop-ticket-card-bp .shop-ticket-path-bar,
 .shop-ticket-card-bp .shop-ticket-path-plane {
@@ -7119,73 +7132,90 @@ html[dir="rtl"] .shop-ticket-stub {
 
   .shop-ticket-card-bp .shop-ticket-leg-v2 {
     grid-template-columns: 1fr 1fr;
-    grid-template-areas:
-      "airline airline"
-      "dep-clock arr-clock"
-      "dep-iata arr-iata"
-      "path path"
-      "dep-day arr-day";
-    row-gap: 0.12rem;
+    grid-template-rows: auto auto auto;
+    align-items: start;
+    row-gap: 0.35rem;
   }
 
   .shop-ticket-card-bp .shop-ticket-leg-v2.kayak-leg {
     grid-template-columns: 24px 1fr 1fr;
-    grid-template-areas:
-      "check airline airline"
-      "check dep-clock arr-clock"
-      "check dep-iata arr-iata"
-      "check path path"
-      "check dep-day arr-day";
   }
 
+  .shop-ticket-card-bp .shop-ticket-kayak-check,
   .shop-ticket-card-bp .shop-ticket-leg-v2.kayak-leg .shop-ticket-kayak-check {
-    grid-area: check;
+    grid-column: 1;
+    grid-row: 1 / -1;
     align-self: start;
     padding-top: 0.35rem;
   }
 
-  .shop-ticket-card-bp .shop-ticket-airline-col {
-    grid-area: airline;
+  .shop-ticket-card-bp .shop-ticket-airline-col,
+  .shop-ticket-card-bp .shop-ticket-leg-v2.kayak-leg .shop-ticket-airline-col {
+    grid-column: 1 / -1;
+    grid-row: 1;
   }
 
-  .shop-ticket-card-bp .shop-ticket-clock {
-    text-align: start;
+  .shop-ticket-card-bp .shop-ticket-leg-v2.kayak-leg .shop-ticket-airline-col {
+    grid-column: 2 / -1;
   }
 
-  .shop-ticket-card-bp .shop-ticket-clock.end {
-    text-align: end;
-  }
-
-  .shop-ticket-card-bp .shop-ticket-iata {
-    text-align: start;
-  }
-
-  .shop-ticket-card-bp .shop-ticket-iata.end {
-    text-align: end;
-  }
-
-  .shop-ticket-card-bp .shop-ticket-day {
-    text-align: start;
-  }
-
-  .shop-ticket-card-bp .shop-ticket-day.end {
-    text-align: end;
-  }
-
+  .shop-ticket-card-bp .shop-ticket-od,
   .shop-ticket-card-bp .shop-ticket-path {
-    grid-area: path;
-    grid-row: auto;
     display: grid;
-    grid-template-rows: auto auto;
-    margin-inline: 0;
-    justify-items: center;
-  }
-
-  .shop-ticket-card-bp .shop-ticket-route {
+    grid-template-rows: auto;
     grid-row: auto;
-    width: min(100%, 16rem);
   }
 
+  .shop-ticket-card-bp .shop-ticket-od.dep,
+  .shop-ticket-card-bp .shop-ticket-leg-v2.kayak-leg .shop-ticket-od.dep {
+    grid-column: 1;
+    grid-row: 2;
+    justify-items: start;
+    text-align: start;
+    gap: 0.16rem;
+  }
+
+  .shop-ticket-card-bp .shop-ticket-leg-v2.kayak-leg .shop-ticket-od.dep {
+    grid-column: 2;
+  }
+
+  .shop-ticket-card-bp .shop-ticket-od.arr,
+  .shop-ticket-card-bp .shop-ticket-leg-v2.kayak-leg .shop-ticket-od.arr {
+    grid-column: 2;
+    grid-row: 2;
+    justify-items: end;
+    text-align: end;
+    gap: 0.16rem;
+  }
+
+  .shop-ticket-card-bp .shop-ticket-leg-v2.kayak-leg .shop-ticket-od.arr {
+    grid-column: 3;
+  }
+
+  .shop-ticket-card-bp .shop-ticket-od.dep .shop-ticket-clock {
+    justify-content: flex-start;
+  }
+
+  .shop-ticket-card-bp .shop-ticket-od.arr .shop-ticket-clock {
+    justify-content: flex-end;
+  }
+
+  .shop-ticket-card-bp .shop-ticket-path,
+  .shop-ticket-card-bp .shop-ticket-leg-v2.kayak-leg .shop-ticket-path {
+    grid-column: 1 / -1;
+    grid-row: 3;
+    width: 100%;
+    max-width: 18rem;
+    margin-inline: auto;
+    gap: 0.2rem;
+  }
+
+  .shop-ticket-card-bp .shop-ticket-leg-v2.kayak-leg .shop-ticket-path {
+    grid-column: 2 / -1;
+  }
+
+  .shop-ticket-card-bp .shop-ticket-meta-duration,
+  .shop-ticket-card-bp .shop-ticket-route,
   .shop-ticket-card-bp .shop-ticket-path-meta {
     grid-row: auto;
   }

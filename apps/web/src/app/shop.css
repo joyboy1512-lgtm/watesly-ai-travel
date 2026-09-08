@@ -3791,7 +3791,18 @@ html body .shop-date-range-backdrop {
 
 .shop-ticket-list {
   display: grid;
-  gap: 0.5rem;
+  gap: 0.85rem;
+  justify-items: stretch;
+}
+
+@media (min-width: 901px) {
+  .shop-ticket-list {
+    justify-items: start;
+  }
+
+  .shop-ticket-list > .shop-ticket-card-bp {
+    width: min(100%, 860px);
+  }
 }
 
 .shop-ticket-card {
@@ -5845,9 +5856,9 @@ html body .shop-date-range-backdrop {
   color: #78350f;
 }
 
-.shop-ticket-card-v2 {
+.shop-ticket-card-v2.shop-ticket-card-bp {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(9.5rem, 10.75rem);
+  grid-template-columns: minmax(0, 1fr) 11.25rem;
   grid-template-areas:
     "badges badges"
     "body side";
@@ -5856,87 +5867,374 @@ html body .shop-date-range-backdrop {
   padding: 0;
   overflow: visible;
   background: #fff;
-  border: 1px solid #d7e0ea;
-  border-radius: 14px;
-  box-shadow: 0 10px 26px rgba(0, 27, 53, 0.1);
+  border: 1px solid #cfd9e6;
+  border-radius: 16px;
+  box-shadow: 0 12px 28px rgba(0, 27, 53, 0.12);
   max-width: 860px;
-}
-
-.shop-ticket-card-v2.shop-ticket-card-bp {
   position: relative;
+  color: #12233a;
 }
 
 .shop-ticket-card-v2.shop-ticket-card-bp::before,
 .shop-ticket-card-v2.shop-ticket-card-bp::after {
   content: "";
   position: absolute;
-  inset-inline-start: calc(100% - 10.75rem);
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
   border-radius: 50%;
-  background: var(--shop-page-bg, #e8eef5);
-  transform: translateX(50%);
-  z-index: 4;
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.04);
+  background: #e8eef5;
+  z-index: 5;
   pointer-events: none;
-}
-
-html[dir="rtl"] .shop-ticket-card-v2.shop-ticket-card-bp::before,
-html[dir="rtl"] .shop-ticket-card-v2.shop-ticket-card-bp::after {
+  box-shadow: inset 0 0 0 1px rgba(15, 35, 70, 0.06);
+  /* RTL: stub is on the left → notch at stub/body boundary */
+  left: 11.25rem;
   transform: translateX(-50%);
 }
 
+html[dir="ltr"] .shop-ticket-card-v2.shop-ticket-card-bp::before,
+html[dir="ltr"] .shop-ticket-card-v2.shop-ticket-card-bp::after {
+  left: auto;
+  right: 11.25rem;
+  transform: translateX(50%);
+}
+
 .shop-ticket-card-v2.shop-ticket-card-bp::before {
-  top: -8px;
+  top: -9px;
 }
 
 .shop-ticket-card-v2.shop-ticket-card-bp::after {
-  bottom: -8px;
+  bottom: -9px;
 }
 
-.shop-ticket-card-v2.shop-ticket-card-roundtrip {
-  background: #fff;
-}
-
-.shop-ticket-card-v2.is-picked,
-.shop-ticket-card-v2.is-expanded {
-  border-color: var(--exp-navy, #00255d);
+.shop-ticket-card-v2.shop-ticket-card-bp.is-picked,
+.shop-ticket-card-v2.shop-ticket-card-bp.is-expanded {
+  border-color: #0a2f55;
   box-shadow:
-    0 10px 26px rgba(0, 27, 53, 0.12),
-    0 0 0 1px rgba(0, 37, 93, 0.18);
+    0 14px 32px rgba(0, 27, 53, 0.14),
+    0 0 0 1px rgba(10, 47, 85, 0.2);
 }
 
-.shop-ticket-card-v2 > .shop-ticket-badges {
+.shop-ticket-card-v2.shop-ticket-card-bp > .shop-ticket-badges {
   grid-area: badges;
-  padding: 0.45rem 0.7rem 0;
+  padding: 0.55rem 0.8rem 0.15rem;
   margin: 0;
+  gap: 0.35rem;
 }
 
-.shop-ticket-card-v2 > .shop-ticket-body-v2 {
+.shop-ticket-card-v2.shop-ticket-card-bp > .shop-ticket-body-v2 {
   grid-area: body;
   min-width: 0;
-  background: #f3f6fa;
-  border-radius: 14px 0 0 14px;
-  padding: 0.65rem 0.75rem 0.6rem;
+  background: #f2f6fa;
+  border-radius: 0 16px 16px 0;
+  padding: 0.7rem 0.85rem 0.7rem 1rem;
   position: relative;
 }
 
-html[dir="rtl"] .shop-ticket-card-v2 > .shop-ticket-body-v2 {
-  border-radius: 0 14px 14px 0;
+html[dir="ltr"] .shop-ticket-card-v2.shop-ticket-card-bp > .shop-ticket-body-v2 {
+  border-radius: 16px 0 0 16px;
+  padding: 0.7rem 1rem 0.7rem 0.85rem;
 }
 
-.shop-ticket-card-v2 > .shop-ticket-body-v2::after {
+.shop-ticket-card-v2.shop-ticket-card-bp > .shop-ticket-body-v2::after {
   content: "";
   position: absolute;
-  inset-inline-start: 0;
-  top: 12px;
-  bottom: 12px;
-  border-inline-start: 2px dashed #b8c7d8;
+  top: 14px;
+  bottom: 14px;
+  left: 0;
+  border-left: 2px dashed #a9bacd;
 }
 
-.shop-ticket-card-v2 > .shop-ticket-side-v2 {
+html[dir="ltr"] .shop-ticket-card-v2.shop-ticket-card-bp > .shop-ticket-body-v2::after {
+  left: auto;
+  right: 0;
+  border-left: 0;
+  border-right: 2px dashed #a9bacd;
+}
+
+.shop-ticket-card-v2.shop-ticket-card-bp > .shop-ticket-side-v2 {
   grid-area: side;
   align-self: stretch;
+}
+
+.shop-ticket-card-bp .shop-ticket-legs-v2 {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.shop-ticket-card-bp .shop-ticket-leg-v2 {
+  display: grid;
+  grid-template-columns: minmax(118px, 1.05fr) minmax(78px, 0.95fr) minmax(112px, 1.2fr) minmax(78px, 0.95fr);
+  gap: 0.3rem 0.4rem;
+  align-items: center;
+  padding: 0.6rem 0.65rem;
+  border: 1px solid #dfe7f0;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(15, 35, 70, 0.03);
+}
+
+.shop-ticket-card-bp .shop-ticket-leg-v2.kayak-leg {
+  grid-template-columns: 24px minmax(110px, 1.05fr) minmax(78px, 0.95fr) minmax(112px, 1.2fr) minmax(78px, 0.95fr);
+}
+
+.shop-ticket-card-bp .shop-ticket-kayak-check input {
+  width: 16px;
+  height: 16px;
+  accent-color: #001b35;
+}
+
+.shop-ticket-card-bp .shop-ticket-leg-v2.is-leg-selected {
+  border-color: #0a2f55;
+  box-shadow: inset 0 0 0 1px #0a2f55;
+  background: #f3f7fc;
+}
+
+.shop-ticket-card-bp .shop-ticket-airline-col {
+  grid-template-columns: 36px 1fr;
+  gap: 0.4rem;
+}
+
+.shop-ticket-card-bp .shop-ticket-airline-logo img,
+.shop-ticket-card-bp .shop-ticket-airline-logo .shop-ticket-logo-fallback {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  border: 1px solid #e8eef5;
+  background: #f8fafc;
+}
+
+.shop-ticket-card-bp .shop-ticket-airline-text strong {
+  font-size: 0.8rem;
+  color: #001b35;
+}
+
+.shop-ticket-card-bp .shop-ticket-airline-text span {
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: #64748b;
+  letter-spacing: 0.02em;
+}
+
+.shop-ticket-card-bp .shop-ticket-time {
+  text-align: center;
+}
+
+.shop-ticket-card-bp .shop-ticket-time strong {
+  display: block;
+  font-size: 1.28rem;
+  line-height: 1;
+  color: #001b35;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+}
+
+.shop-ticket-card-bp .shop-ticket-time span {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 0.76rem;
+  font-weight: 800;
+  color: #1e293b;
+}
+
+.shop-ticket-card-bp .shop-ticket-time .shop-ticket-day {
+  display: block;
+  margin-top: 0.12rem;
+  font-size: 0.64rem;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.shop-ticket-card-bp .shop-ticket-path {
+  text-align: center;
+}
+
+.shop-ticket-card-bp .shop-ticket-path-arc {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 0.1rem;
+  min-height: 2.15rem;
+}
+
+.shop-ticket-card-bp .shop-ticket-path-arc .shop-ticket-path-bar {
+  display: block;
+  width: min(100%, 8rem);
+  height: 20px;
+  border: 2px dashed #2a6f97;
+  border-bottom: none;
+  border-radius: 999px 999px 0 0;
+  background: transparent;
+  opacity: 0.95;
+}
+
+.shop-ticket-card-bp .shop-ticket-path-plane {
+  position: absolute;
+  top: -1px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 1.35rem;
+  height: 1.35rem;
+  border-radius: 50%;
+  background: #fff;
+  color: #2a6f97;
+  font-size: 0.72rem;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+  line-height: 1;
+}
+
+.shop-ticket-card-bp .shop-ticket-meta-duration {
+  font-size: 0.74rem;
+  font-weight: 800;
+  color: #12233a;
+}
+
+.shop-ticket-card-bp .shop-ticket-meta-stops.direct {
+  display: inline-block;
+  margin-top: 0.1rem;
+  padding: 0.05rem 0.4rem;
+  border-radius: 999px;
+  background: #e8f7ef;
+  color: #147a45;
+  font-size: 0.68rem;
+  font-weight: 800;
+}
+
+.shop-ticket-card-bp .shop-ticket-side-v2,
+.shop-ticket-card-bp .shop-ticket-stub {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  justify-content: stretch;
+  align-items: stretch;
+  min-width: 0;
+  border: 0;
+  padding: 0;
+  background: #fff;
+  border-radius: 16px 0 0 16px;
+  overflow: hidden;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+html[dir="ltr"] .shop-ticket-card-bp .shop-ticket-side-v2,
+html[dir="ltr"] .shop-ticket-card-bp .shop-ticket-stub {
+  border-radius: 0 16px 16px 0;
+}
+
+.shop-ticket-card-bp .shop-ticket-price-block {
+  background: linear-gradient(180deg, #0a2f55 0%, #001b35 100%);
+  color: #fff;
+  padding: 0.9rem 0.65rem 0.8rem;
+}
+
+.shop-ticket-card-bp .shop-ticket-side-v2 .shop-ticket-price {
+  display: block;
+  font-size: 1.35rem;
+  line-height: 1.05;
+  text-align: center;
+  margin: 0;
+  width: 100%;
+  color: #fff !important;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+}
+
+.shop-ticket-card-bp .shop-ticket-side-v2 .shop-ticket-price-note {
+  display: block;
+  text-align: center;
+  line-height: 1.35;
+  margin: 0.4rem 0 0;
+  font-size: 0.66rem;
+  color: rgba(255, 255, 255, 0.92) !important;
+  width: 100%;
+  font-weight: 600;
+}
+
+.shop-ticket-card-bp .shop-ticket-stub-bags {
+  display: grid;
+  gap: 0.35rem;
+  padding: 0.55rem 0.5rem;
+  background: #f7fafc;
+  border-bottom: 1px solid #e4ebf3;
+}
+
+.shop-ticket-card-bp .shop-ticket-bag-row {
+  display: grid;
+  grid-template-columns: 1.1rem 1fr;
+  gap: 0.3rem;
+  align-items: start;
+  padding: 0.35rem 0.4rem;
+  border: 1px solid #e2eaf2;
+  border-radius: 8px;
+  background: #fff;
+  text-align: start;
+  font-size: 0.66rem;
+  line-height: 1.35;
+  color: #0a2f55;
+  font-weight: 700;
+}
+
+.shop-ticket-card-bp .shop-ticket-bag-row.off {
+  opacity: 0.62;
+  color: #64748b;
+}
+
+.shop-ticket-card-bp .shop-ticket-bag-ico {
+  font-size: 0.78rem;
+  line-height: 1.2;
+}
+
+.shop-ticket-card-bp .shop-ticket-bags-policy {
+  margin: 0.05rem 0 0;
+  color: #7a8a9b;
+  font-size: 0.6rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+.shop-ticket-card-bp .shop-ticket-side-v2 .shop-ticket-cta-group {
+  margin-top: auto;
+  padding: 0.6rem 0.55rem 0.75rem;
+  gap: 0.4rem;
+  align-items: center;
+  display: grid;
+  background: #fff;
+}
+
+.shop-ticket-card-bp .shop-ticket-side-v2 .shop-ticket-details-btn {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  white-space: normal;
+  line-height: 1.25;
+  min-height: 2.35rem;
+  padding: 0.6rem 0.55rem;
+  font-size: 0.8rem;
+  font-weight: 800;
+  border-radius: 999px;
+  background: #001b35 !important;
+  border: 0 !important;
+  color: #fff !important;
+  box-shadow: 0 4px 10px rgba(0, 27, 53, 0.18);
+}
+
+.shop-ticket-card-bp .shop-ticket-side-v2 .shop-ticket-details-link {
+  padding: 0.05rem;
+  font-size: 0.72rem;
+  text-align: center;
+  color: #0a2f55 !important;
+  text-decoration: underline;
+  background: transparent !important;
+  border: 0;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* Keep older v2 selectors harmless if any non-bp cards remain */
+.shop-ticket-card-v2 {
+  border-radius: 14px;
 }
 
 .shop-ticket-body-v2 {
@@ -6682,7 +6980,7 @@ html[dir="rtl"] .shop-ticket-stub {
 }
 
 @media (max-width: 900px) {
-  .shop-ticket-card-v2 {
+  .shop-ticket-card-v2.shop-ticket-card-bp {
     grid-template-columns: 1fr;
     grid-template-areas:
       "badges"
@@ -6692,6 +6990,7 @@ html[dir="rtl"] .shop-ticket-stub {
     padding: 0;
     max-width: none;
     overflow: hidden;
+    width: 100%;
   }
 
   .shop-ticket-card-v2.shop-ticket-card-bp::before,
@@ -6699,29 +6998,24 @@ html[dir="rtl"] .shop-ticket-stub {
     display: none;
   }
 
-  .shop-ticket-card-v2 > .shop-ticket-badges {
-    padding: 0.55rem 0.7rem 0;
-  }
-
-  .shop-ticket-card-v2 > .shop-ticket-body-v2 {
-    border-radius: 14px 14px 0 0;
-    padding: 0.55rem 0.65rem 0.5rem;
-  }
-
-  html[dir="rtl"] .shop-ticket-card-v2 > .shop-ticket-body-v2 {
-    border-radius: 14px 14px 0 0;
-  }
-
-  .shop-ticket-card-v2 > .shop-ticket-body-v2::after {
-    content: none;
-  }
-
-  .shop-ticket-card-v2 > .shop-ticket-badges {
+  .shop-ticket-card-v2.shop-ticket-card-bp > .shop-ticket-badges {
+    padding: 0.55rem 0.7rem 0.1rem;
     flex-direction: row;
     flex-wrap: wrap;
   }
 
-  .shop-ticket-leg-v2 {
+  .shop-ticket-card-v2.shop-ticket-card-bp > .shop-ticket-body-v2,
+  html[dir="ltr"] .shop-ticket-card-v2.shop-ticket-card-bp > .shop-ticket-body-v2,
+  html[dir="rtl"] .shop-ticket-card-v2.shop-ticket-card-bp > .shop-ticket-body-v2 {
+    border-radius: 16px 16px 0 0;
+    padding: 0.55rem 0.65rem 0.55rem;
+  }
+
+  .shop-ticket-card-v2.shop-ticket-card-bp > .shop-ticket-body-v2::after {
+    content: none;
+  }
+
+  .shop-ticket-card-bp .shop-ticket-leg-v2 {
     grid-template-columns: 1fr 1fr;
     grid-template-areas:
       "airline airline"
@@ -6729,64 +7023,73 @@ html[dir="rtl"] .shop-ticket-stub {
       "path path";
   }
 
-  .shop-ticket-leg-v2.kayak-leg {
-    grid-template-columns: 26px 1fr 1fr;
+  .shop-ticket-card-bp .shop-ticket-leg-v2.kayak-leg {
+    grid-template-columns: 24px 1fr 1fr;
     grid-template-areas:
       "check airline airline"
       "check dep arr"
       "check path path";
   }
 
-  .shop-ticket-leg-v2.kayak-leg .shop-ticket-kayak-check {
+  .shop-ticket-card-bp .shop-ticket-leg-v2.kayak-leg .shop-ticket-kayak-check {
     grid-area: check;
     align-self: start;
     padding-top: 0.35rem;
   }
 
-  .shop-ticket-airline-col {
+  .shop-ticket-card-bp .shop-ticket-airline-col {
     grid-area: airline;
   }
 
-  .shop-ticket-leg-v2 .shop-ticket-time:not(.end) {
+  .shop-ticket-card-bp .shop-ticket-leg-v2 .shop-ticket-time:not(.end) {
     grid-area: dep;
   }
 
-  .shop-ticket-leg-v2 .shop-ticket-time.end {
+  .shop-ticket-card-bp .shop-ticket-leg-v2 .shop-ticket-time.end {
     grid-area: arr;
     text-align: end;
   }
 
-  .shop-ticket-leg-v2 .shop-ticket-path {
+  .shop-ticket-card-bp .shop-ticket-leg-v2 .shop-ticket-path {
     grid-area: path;
   }
 
-  .shop-ticket-side-v2,
-  .shop-ticket-stub {
-    border-radius: 0 0 14px 14px;
-    border-top: 2px dashed #b8c7d8;
+  .shop-ticket-card-bp .shop-ticket-time strong {
+    font-size: 1.12rem;
   }
 
-  html[dir="rtl"] .shop-ticket-side-v2,
-  html[dir="rtl"] .shop-ticket-stub {
-    border-radius: 0 0 14px 14px;
+  .shop-ticket-card-bp .shop-ticket-side-v2,
+  .shop-ticket-card-bp .shop-ticket-stub,
+  html[dir="ltr"] .shop-ticket-card-bp .shop-ticket-side-v2,
+  html[dir="ltr"] .shop-ticket-card-bp .shop-ticket-stub {
+    border-radius: 0 0 16px 16px;
+    border-top: 2px dashed #a9bacd;
   }
 
-  .shop-ticket-stub-bags {
+  .shop-ticket-card-bp .shop-ticket-price-block {
+    padding: 0.8rem 0.75rem 0.7rem;
+  }
+
+  .shop-ticket-card-bp .shop-ticket-side-v2 .shop-ticket-price {
+    font-size: 1.4rem;
+  }
+
+  .shop-ticket-card-bp .shop-ticket-stub-bags {
     grid-template-columns: 1fr 1fr;
-    text-align: start;
+    gap: 0.4rem;
   }
 
-  .shop-ticket-bags-policy {
+  .shop-ticket-card-bp .shop-ticket-bags-policy {
     grid-column: 1 / -1;
-    text-align: center;
   }
 
-  .shop-ticket-side-v2 .shop-ticket-cta-group {
+  .shop-ticket-card-bp .shop-ticket-side-v2 .shop-ticket-cta-group {
     grid-template-columns: 1fr auto;
     align-items: center;
+    padding: 0.65rem 0.65rem 0.8rem;
   }
 
-  .shop-ticket-side-v2 .shop-ticket-details-btn {
+  .shop-ticket-card-bp .shop-ticket-side-v2 .shop-ticket-details-btn {
     width: 100%;
   }
 
@@ -7044,9 +7347,11 @@ html[dir="rtl"] .shop-ticket-stub {
   margin-bottom: 0;
 }
 
-.shop-ticket-card.shop-ticket-card-v2 {
-  border: 1px solid var(--exp-blue, #1668e3);
-  box-shadow: inset 0 -3px 0 var(--exp-blue, #1668e3);
+.shop-ticket-card.shop-ticket-card-v2.shop-ticket-card-bp {
+  border: 1px solid #cfd9e6;
+  box-shadow: 0 12px 28px rgba(0, 27, 53, 0.12);
+  overflow: visible;
+  background: #fff;
 }
 
 .shop-ticket-bags-text .off {

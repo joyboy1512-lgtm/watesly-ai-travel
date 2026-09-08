@@ -398,13 +398,19 @@ export function ShopFlightCard({
         </div>
 
         <div className="shop-ticket-stub-bags" aria-label="الأمتعة">
-          <span className={hasCabin ? "" : "off"}>
-            🎒 {hasCabin ? cabinBag : "مقصورة حسب الفئة"}
-          </span>
-          <span className={hasChecked ? "" : "off"}>
-            🧳 {hasChecked ? checkedBag : "مسجّلة حسب الفئة"}
-          </span>
-          <span className="shop-ticket-bags-policy">ℹ حسب سياسة الناقلة</span>
+          <div className={`shop-ticket-bag-row${hasCabin ? "" : " off"}`}>
+            <span className="shop-ticket-bag-ico" aria-hidden>
+              🎒
+            </span>
+            <span>{hasCabin ? cabinBag : "حقيبة يد حسب الفئة"}</span>
+          </div>
+          <div className={`shop-ticket-bag-row${hasChecked ? "" : " off"}`}>
+            <span className="shop-ticket-bag-ico" aria-hidden>
+              🧳
+            </span>
+            <span>{hasChecked ? checkedBag : "حقيبة مسجّلة حسب الفئة"}</span>
+          </div>
+          <p className="shop-ticket-bags-policy">ℹ حسب سياسة الناقلة</p>
         </div>
 
         <div className="shop-ticket-cta-group">

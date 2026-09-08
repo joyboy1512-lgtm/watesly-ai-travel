@@ -11,8 +11,19 @@ import { searchAndPriceTravel } from "@watesly-travel/travel-core";
 import { PrismaService } from "../prisma/prisma.service";
 import { AuditService } from "../common/audit.service";
 import { TravelAiService } from "../ai/travel-ai.service";
-import { getHotelProviderForOrg } from "../common/provider-runtime";
+import {
+  getFlightProviderForOrg,
+  getHotelProviderForOrg,
+} from "../common/provider-runtime";
 import { formatMoneyMinor } from "../common/money";
+
+const FLIGHT_PROVIDER_KEYS = [
+  "duffel",
+  "amadeus",
+  "travelport",
+  "travelfusion",
+  "mock",
+] as const;
 
 function asJson(value: unknown): Prisma.InputJsonValue {
   return value as Prisma.InputJsonValue;
@@ -353,6 +364,31 @@ export class BotPipelineService {
       orderBy: { priority: "asc" },
     });
 
+    // Prefer an enabled flight provider that has credentials (e.g. Duffel
+    // activated from /dashboard/providers), even when FLIGHT_PROVIDER=mock in env.
+    const flightRows = await this.prisma.travelProviderConfig.findMany({
+      where: {
+        organizationId: input.organizationId,
+        enabled: true,
+        providerKey: { in: [...FLIGHT_PROVIDER_KEYS] },
+      },
+      orderBy: { priority: "asc" },
+      select: {
+        providerKey: true,
+        configEncrypted: true,
+      },
+    });
+    const flightWithCreds = flightRows.find(
+      (row) => row.providerKey !== "mock" && Boolean(row.configEncrypted),
+    );
+    const flightProviderKey =
+      flightWithCreds?.providerKey ||
+      process.env.FLIGHT_PROVIDER ||
+      flightRows[0]?.providerKey ||
+      provider?.providerKey ||
+      process.env.TRAVEL_DEFAULT_PROVIDER ||
+      "mock";
+
     const rules = await this.prisma.pricingRule.findMany({
       where: { organizationId: input.organizationId, isActive: true },
       orderBy: { priority: "asc" },
@@ -451,14 +487,19 @@ export class BotPipelineService {
         )
       : undefined;
 
-    // Flight/hotel providers resolve independently via FLIGHT_PROVIDER / HOTEL_PROVIDER.
+    // Flight/hotel providers resolve independently.
     // Org-level credentials from /dashboard/providers override env when configured.
+    const flightProvider = wantFlights
+      ? await getFlightProviderForOrg(
+          this.prisma,
+          input.organizationId,
+          flightProviderKey,
+        )
+      : undefined;
+
     const search = await searchAndPriceTravel({
-      flightProviderKey:
-        process.env.FLIGHT_PROVIDER ||
-        provider?.providerKey ||
-        process.env.TRAVEL_DEFAULT_PROVIDER ||
-        "mock",
+      flightProviderKey,
+      flightProvider,
       hotelProviderKey,
       hotelProvider,
       rules,

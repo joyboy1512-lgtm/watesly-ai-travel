@@ -7,6 +7,7 @@ import {
   durationMinutes,
   flightAirlineNameAr,
   formatClock,
+  formatDay,
   formatMinutesLabel,
   getReturnSegments,
   getSegments,
@@ -54,16 +55,15 @@ const BADGE_WHY: Record<"best" | "cheapest" | "fastest", string> = {
   fastest: "أقصر مدة إجمالية للرحلة",
 };
 
-function dayOffsetLabel(departAt?: string, arriveAt?: string) {
-  if (!departAt || !arriveAt) return "";
+function dayOffsetDays(departAt?: string, arriveAt?: string): number {
+  if (!departAt || !arriveAt) return 0;
   const d = new Date(departAt);
   const a = new Date(arriveAt);
-  if (!Number.isFinite(d.getTime()) || !Number.isFinite(a.getTime())) return "";
+  if (!Number.isFinite(d.getTime()) || !Number.isFinite(a.getTime())) return 0;
   const dDay = Date.UTC(d.getFullYear(), d.getMonth(), d.getDate());
   const aDay = Date.UTC(a.getFullYear(), a.getMonth(), a.getDate());
   const diff = Math.round((aDay - dDay) / 86400000);
-  if (diff <= 0) return "";
-  return `+${diff}`;
+  return diff > 0 ? diff : 0;
 }
 
 function legDurationLabel(segs: FlightSeg[], fallbackRaw: unknown) {
@@ -135,6 +135,15 @@ function stopDurationHint(segs: FlightSeg[]): string | null {
   return parts.length ? parts.join(" · ") : null;
 }
 
+function stopAirportCodes(segs: FlightSeg[]): string[] {
+  const codes: string[] = [];
+  for (let i = 0; i < segs.length - 1; i += 1) {
+    const code = String(segs[i]?.to || "").trim().toUpperCase();
+    if (code) codes.push(code);
+  }
+  return codes;
+}
+
 function LegBlock({
   segs,
   details,
@@ -173,23 +182,27 @@ function LegBlock({
     .filter(Boolean)
     .join(" · ");
   const duration = legDurationLabel(segs, durationRaw);
-  const offset = dayOffsetLabel(
+  const offsetDays = dayOffsetDays(
     depRaw.includes("T") ? depRaw : undefined,
     arrRaw.includes("T") ? arrRaw : undefined,
   );
   const codeshare = codeshareNote(segs, packageCode);
   const airportChange = airportChangeNote(segs);
   const stopHint = stopDurationHint(segs);
+  const stopCodes = stopAirportCodes(segs);
   const depTerminal = first?.departureTerminal
     ? `صالة ${first.departureTerminal}`
     : null;
   const arrTerminal = segs[segs.length - 1]?.arrivalTerminal
     ? `صالة ${segs[segs.length - 1]!.arrivalTerminal}`
     : null;
+  const depDay = formatDay(depRaw.includes("T") ? depRaw.slice(0, 10) : depRaw);
+  const arrDay = formatDay(arrRaw.includes("T") ? arrRaw.slice(0, 10) : arrRaw);
+  const stopNodes = Math.min(Math.max(stops, stopCodes.length), 3);
 
   return (
     <div
-      className={`shop-ticket-leg-v2 shop-ticket-leg-p1${mixEnabled ? " kayak-leg" : ""}${
+      className={`shop-ticket-leg-v2 shop-ticket-leg-p1 shop-ticket-leg-bp${mixEnabled ? " kayak-leg" : ""}${
         isReturn ? " is-return" : ""
       }${legSelected ? " is-leg-selected" : ""}`}
       dir="ltr"
@@ -221,34 +234,57 @@ function LegBlock({
         </div>
       </div>
 
-      <div className="shop-ticket-time">
-        <strong>{formatClock(depRaw)}</strong>
-        <span>
+      <div className="shop-ticket-od dep">
+        <strong className="shop-ticket-clock">{formatClock(depRaw)}</strong>
+        {depDay ? <small className="shop-ticket-day">{depDay}</small> : null}
+        <span className="shop-ticket-iata">
           {from}
           {depTerminal ? ` · ${depTerminal}` : ""}
         </span>
       </div>
 
       <div className="shop-ticket-path">
-        <div className="shop-ticket-path-line">
-          <i className="shop-ticket-path-bar" />
-          <span className="shop-ticket-meta-duration">{duration}</span>
+        <strong className="shop-ticket-meta-duration">المدة: {duration}</strong>
+        <div className="shop-ticket-route" aria-hidden>
+          <span className="shop-ticket-route-line" />
+          {stopNodes > 0
+            ? Array.from({ length: stopNodes }, (_, i) => (
+                <span
+                  key={`stop-${i}`}
+                  className="shop-ticket-route-stop"
+                  style={{
+                    insetInlineStart: `${((i + 1) / (stopNodes + 1)) * 100}%`,
+                  }}
+                />
+              ))
+            : null}
         </div>
-        <span className={`shop-ticket-meta-stops${stops === 0 ? " direct" : ""}`}>
-          {stopsLabel(stops)}
-        </span>
-        {stopHint ? <small className="shop-ticket-stop-hint">{stopHint}</small> : null}
-        {airportChange ? (
-          <small className="shop-ticket-airport-change">{airportChange}</small>
-        ) : null}
+        <div className="shop-ticket-path-meta">
+          {stopHint ? <small className="shop-ticket-stop-hint">توقف: {stopHint}</small> : null}
+          <span className={`shop-ticket-meta-stops${stops === 0 ? " direct" : ""}`}>
+            {stops === 0
+              ? stopsLabel(stops)
+              : stopCodes.length
+                ? `${stopsLabel(stops)} — (${stopCodes.join(", ")})`
+                : stopsLabel(stops)}
+          </span>
+          {airportChange ? (
+            <small className="shop-ticket-airport-change">{airportChange}</small>
+          ) : null}
+        </div>
       </div>
 
-      <div className="shop-ticket-time end">
-        <strong>
+      <div className="shop-ticket-od arr">
+        <strong className="shop-ticket-clock">
           {formatClock(arrRaw)}
-          {offset ? <sup className="shop-ticket-day-offset">{offset}</sup> : null}
+          {offsetDays > 0 ? (
+            <span className="shop-ticket-day-offset">
+              +{offsetDays} {offsetDays === 1 ? "يوم" : "أيام"}
+            </span>
+          ) : null}
         </strong>
-        <span>
+        {arrDay ? <small className="shop-ticket-day">{arrDay}</small> : null}
+        <span className="shop-ticket-iata">
           {to}
           {arrTerminal ? ` · ${arrTerminal}` : ""}
         </span>
@@ -323,7 +359,7 @@ export function ShopFlightCard({
 
   return (
     <article
-      className={`shop-ticket-card shop-ticket-card-v2 shop-ticket-card-p1 shop-ticket-card-${displayLeg}${
+      className={`shop-ticket-card shop-ticket-card-v2 shop-ticket-card-bp shop-ticket-card-p1 shop-ticket-card-${displayLeg}${
         hasReturn && displayLeg === "both" ? " shop-ticket-card-roundtrip" : ""
       }${picked ? " is-picked" : ""}${isExpanded ? " is-expanded" : ""}`}
     >
@@ -381,11 +417,30 @@ export function ShopFlightCard({
         </div>
       </div>
 
-      <div className="shop-ticket-side-v2">
-        <strong className="shop-ticket-price" data-display-currency={displayCurrency}>
-          {formatMoney(flight.sellAmountMinor, flight.currency)}
-        </strong>
-        <small className="shop-ticket-price-note">{priceNote}</small>
+      <aside className="shop-ticket-side-v2 shop-ticket-stub">
+        <div className="shop-ticket-price-block">
+          <strong className="shop-ticket-price" data-display-currency={displayCurrency}>
+            {formatMoney(flight.sellAmountMinor, flight.currency)}
+          </strong>
+          <small className="shop-ticket-price-note">{priceNote}</small>
+        </div>
+
+        <div className="shop-ticket-stub-bags" aria-label="الأمتعة">
+          <div className={`shop-ticket-bag-row${hasCabin ? "" : " off"}`}>
+            <span className="shop-ticket-bag-ico" aria-hidden>
+              🎒
+            </span>
+            <span>{hasCabin ? cabinBag : "حقيبة يد حسب الفئة"}</span>
+          </div>
+          <div className={`shop-ticket-bag-row${hasChecked ? "" : " off"}`}>
+            <span className="shop-ticket-bag-ico" aria-hidden>
+              🧳
+            </span>
+            <span>{hasChecked ? checkedBag : "حقيبة مسجّلة حسب الفئة"}</span>
+          </div>
+          <p className="shop-ticket-bags-policy">ℹ حسب سياسة الناقلة</p>
+        </div>
+
         <div className="shop-ticket-cta-group">
           <button
             type="button"
@@ -409,16 +464,7 @@ export function ShopFlightCard({
             التفاصيل والشروط
           </button>
         </div>
-      </div>
-
-      <div className="shop-ticket-bags shop-ticket-bags-text shop-ticket-card-footer" aria-label="الأمتعة">
-        <span className={hasCabin ? "" : "off"}>
-          🎒 {hasCabin ? cabinBag : "مقصورة حسب الفئة"}
-        </span>
-        <span className={hasChecked ? "" : "off"}>
-          🧳 {hasChecked ? checkedBag : "مسجّلة حسب الفئة"}
-        </span>
-      </div>
+      </aside>
     </article>
   );
 }

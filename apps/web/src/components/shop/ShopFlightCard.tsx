@@ -224,65 +224,69 @@ function LegBlock({
         </div>
       </div>
 
-      <div className="shop-ticket-time">
-        <strong>{formatClock(depRaw)}</strong>
-        <span>
-          {from}
-          {depTerminal ? ` · ${depTerminal}` : ""}
-        </span>
-        {depDay ? <small className="shop-ticket-day">{depDay}</small> : null}
-      </div>
+      <strong className="shop-ticket-clock">{formatClock(depRaw)}</strong>
+      <strong className="shop-ticket-clock end">
+        {formatClock(arrRaw)}
+        {offset ? <sup className="shop-ticket-day-offset">{offset}</sup> : null}
+      </strong>
+
+      <span className="shop-ticket-iata">
+        {from}
+        {depTerminal ? ` · ${depTerminal}` : ""}
+      </span>
 
       <div className="shop-ticket-path">
         <div className="shop-ticket-route" aria-hidden>
           <svg
             className="shop-ticket-route-svg"
-            viewBox="0 0 160 34"
+            viewBox="0 0 160 28"
             preserveAspectRatio="none"
             focusable="false"
           >
             <path
               className="shop-ticket-route-arc"
-              d="M0 26 C 24 26, 40 7, 80 7 C 120 7, 136 26, 160 26"
+              d="M0 20 C 26 20, 42 6, 80 6 C 118 6, 134 20, 160 20"
               fill="none"
               stroke="#2a6f97"
               strokeWidth="2"
               strokeLinecap="round"
               strokeDasharray="3 4"
             />
-            <circle cx="0" cy="26" r="2.6" fill="#fff" stroke="#2a6f97" strokeWidth="1.5" />
-            <circle cx="160" cy="26" r="2.6" fill="#fff" stroke="#2a6f97" strokeWidth="1.5" />
-            <g className="shop-ticket-route-plane" transform="translate(80 8)">
-              <circle r="8" fill="#fff" stroke="#d5e3ef" strokeWidth="1" />
+            <circle cx="0" cy="20" r="2.5" fill="#fff" stroke="#2a6f97" strokeWidth="1.5" />
+            <circle cx="160" cy="20" r="2.5" fill="#fff" stroke="#2a6f97" strokeWidth="1.5" />
+            <g className="shop-ticket-route-plane" transform="translate(80 7)">
+              <circle r="7.5" fill="#fff" stroke="#d5e3ef" strokeWidth="1" />
               <path
                 fill="#2a6f97"
-                transform="rotate(90) scale(0.58) translate(-12 -12)"
+                transform="rotate(90) scale(0.55) translate(-12 -12)"
                 d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"
               />
             </g>
           </svg>
-          <strong className="shop-ticket-meta-duration">{duration}</strong>
         </div>
-        <span className={`shop-ticket-meta-stops${stops === 0 ? " direct" : ""}`}>
-          {stopsLabel(stops)}
-        </span>
-        {stopHint ? <small className="shop-ticket-stop-hint">{stopHint}</small> : null}
-        {airportChange ? (
-          <small className="shop-ticket-airport-change">{airportChange}</small>
-        ) : null}
+        <div className="shop-ticket-path-meta">
+          <strong className="shop-ticket-meta-duration">{duration}</strong>
+          <span className={`shop-ticket-meta-stops${stops === 0 ? " direct" : ""}`}>
+            {stopsLabel(stops)}
+          </span>
+          {stopHint ? <small className="shop-ticket-stop-hint">{stopHint}</small> : null}
+          {airportChange ? (
+            <small className="shop-ticket-airport-change">{airportChange}</small>
+          ) : null}
+        </div>
       </div>
 
-      <div className="shop-ticket-time end">
-        <strong>
-          {formatClock(arrRaw)}
-          {offset ? <sup className="shop-ticket-day-offset">{offset}</sup> : null}
-        </strong>
-        <span>
-          {to}
-          {arrTerminal ? ` · ${arrTerminal}` : ""}
-        </span>
-        {arrDay ? <small className="shop-ticket-day">{arrDay}</small> : null}
-      </div>
+      <span className="shop-ticket-iata end">
+        {to}
+        {arrTerminal ? ` · ${arrTerminal}` : ""}
+      </span>
+
+      {depDay ? <small className="shop-ticket-day">{depDay}</small> : <span className="shop-ticket-day is-empty" />}
+      {arrDay ? (
+        <small className="shop-ticket-day end">{arrDay}</small>
+      ) : (
+        <span className="shop-ticket-day end is-empty" />
+      )}
     </div>
   );
 }

@@ -5963,8 +5963,13 @@ html[dir="ltr"] .shop-ticket-card-v2.shop-ticket-card-bp > .shop-ticket-body-v2:
 
 .shop-ticket-card-bp .shop-ticket-leg-v2 {
   display: grid;
-  grid-template-columns: minmax(100px, 0.9fr) minmax(58px, 0.62fr) minmax(170px, 1.75fr) minmax(58px, 0.62fr);
-  gap: 0.2rem 0;
+  grid-template-columns: minmax(100px, 0.9fr) minmax(3.4rem, auto) minmax(0, 1fr) minmax(3.4rem, auto);
+  grid-template-areas:
+    "airline dep-clock path arr-clock"
+    "airline dep-iata  path arr-iata"
+    "airline dep-day   path arr-day";
+  column-gap: 0;
+  row-gap: 0.08rem;
   align-items: center;
   padding: 0.55rem 0.5rem;
   border: 1px solid #dfe7f0;
@@ -5974,7 +5979,16 @@ html[dir="ltr"] .shop-ticket-card-v2.shop-ticket-card-bp > .shop-ticket-body-v2:
 }
 
 .shop-ticket-card-bp .shop-ticket-leg-v2.kayak-leg {
-  grid-template-columns: 22px minmax(96px, 0.88fr) minmax(56px, 0.6fr) minmax(170px, 1.75fr) minmax(56px, 0.6fr);
+  grid-template-columns: 22px minmax(96px, 0.88fr) minmax(3.4rem, auto) minmax(0, 1fr) minmax(3.4rem, auto);
+  grid-template-areas:
+    "check airline dep-clock path arr-clock"
+    "check airline dep-iata  path arr-iata"
+    "check airline dep-day   path arr-day";
+}
+
+.shop-ticket-card-bp .shop-ticket-kayak-check {
+  grid-area: check;
+  align-self: center;
 }
 
 .shop-ticket-card-bp .shop-ticket-kayak-check input {
@@ -5990,8 +6004,10 @@ html[dir="ltr"] .shop-ticket-card-v2.shop-ticket-card-bp > .shop-ticket-body-v2:
 }
 
 .shop-ticket-card-bp .shop-ticket-airline-col {
+  grid-area: airline;
   grid-template-columns: 36px 1fr;
   gap: 0.4rem;
+  align-self: center;
 }
 
 .shop-ticket-card-bp .shop-ticket-airline-logo img,
@@ -6015,52 +6031,74 @@ html[dir="ltr"] .shop-ticket-card-v2.shop-ticket-card-bp > .shop-ticket-body-v2:
   letter-spacing: 0.02em;
 }
 
-.shop-ticket-card-bp .shop-ticket-time {
-  text-align: end;
-  padding-inline: 0;
-  min-width: 0;
-}
-
-.shop-ticket-card-bp .shop-ticket-time.end {
-  text-align: start;
-}
-
-.shop-ticket-card-bp .shop-ticket-time strong {
+.shop-ticket-card-bp .shop-ticket-clock {
+  grid-area: dep-clock;
   display: block;
+  text-align: end;
   font-size: 1.28rem;
   line-height: 1;
   color: #001b35;
   font-weight: 800;
   letter-spacing: 0.01em;
+  padding-inline: 0.1rem;
 }
 
-.shop-ticket-card-bp .shop-ticket-time span {
+.shop-ticket-card-bp .shop-ticket-clock.end {
+  grid-area: arr-clock;
+  text-align: start;
+}
+
+.shop-ticket-card-bp .shop-ticket-iata {
+  grid-area: dep-iata;
   display: block;
-  margin-top: 0.12rem;
-  font-size: 0.8rem;
+  text-align: end;
+  font-size: 0.82rem;
   font-weight: 800;
   color: #0a2f55;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.04em;
+  line-height: 1.1;
+  padding-inline: 0.05rem;
+  white-space: nowrap;
 }
 
-.shop-ticket-card-bp .shop-ticket-time .shop-ticket-day {
+.shop-ticket-card-bp .shop-ticket-iata.end {
+  grid-area: arr-iata;
+  text-align: start;
+}
+
+.shop-ticket-card-bp .shop-ticket-day {
+  grid-area: dep-day;
   display: block;
-  margin-top: 0.1rem;
+  text-align: end;
   font-size: 0.64rem;
   color: #64748b;
   font-weight: 600;
+  line-height: 1.2;
+  padding-inline: 0.05rem;
+}
+
+.shop-ticket-card-bp .shop-ticket-day.end {
+  grid-area: arr-day;
+  text-align: start;
+}
+
+.shop-ticket-card-bp .shop-ticket-day.is-empty {
+  visibility: hidden;
+  min-height: 0.7rem;
 }
 
 .shop-ticket-card-bp .shop-ticket-path {
+  grid-area: path;
   text-align: center;
   display: grid;
-  gap: 0.02rem;
-  justify-items: center;
+  grid-template-rows: subgrid;
+  grid-row: 1 / 4;
+  gap: 0;
+  justify-items: stretch;
+  align-items: center;
   min-width: 0;
-  /* Overlap path into the code columns so endpoints kiss the IATA codes */
-  margin-inline: -0.95rem;
+  margin-inline: -0.4rem;
   padding-inline: 0;
-  align-self: center;
 }
 
 .shop-ticket-card-bp .shop-ticket-route {
@@ -6070,12 +6108,14 @@ html[dir="ltr"] .shop-ticket-card-v2.shop-ticket-card-bp > .shop-ticket-body-v2:
   display: grid;
   justify-items: center;
   gap: 0;
+  grid-row: 2;
+  align-self: center;
 }
 
 .shop-ticket-card-bp .shop-ticket-route-svg {
   display: block;
   width: 100%;
-  height: 1.95rem;
+  height: 1.55rem;
   max-width: none;
   overflow: visible;
 }
@@ -6089,6 +6129,15 @@ html[dir="ltr"] .shop-ticket-card-v2.shop-ticket-card-bp > .shop-ticket-body-v2:
   transform-origin: center;
 }
 
+.shop-ticket-card-bp .shop-ticket-path-meta {
+  grid-row: 3;
+  display: grid;
+  justify-items: center;
+  gap: 0.02rem;
+  align-self: start;
+  padding-top: 0.02rem;
+}
+
 .shop-ticket-card-bp .shop-ticket-meta-duration {
   position: static;
   left: auto;
@@ -6097,28 +6146,33 @@ html[dir="ltr"] .shop-ticket-card-v2.shop-ticket-card-bp > .shop-ticket-body-v2:
   border: 0;
   border-radius: 0;
   padding: 0;
-  margin-top: -0.05rem;
-  font-size: 0.72rem;
+  margin: 0;
+  font-size: 0.7rem;
   font-weight: 800;
   color: #12233a;
-  line-height: 1.15;
+  line-height: 1.1;
 }
 
 .shop-ticket-card-bp .shop-ticket-meta-stops.direct {
   display: inline-block;
-  margin-top: 0.02rem;
-  padding: 0.06rem 0.4rem;
+  margin-top: 0;
+  padding: 0.05rem 0.38rem;
   border-radius: 999px;
   background: #e8f7ef;
   color: #147a45;
-  font-size: 0.66rem;
+  font-size: 0.64rem;
   font-weight: 800;
 }
 
 .shop-ticket-card-bp .shop-ticket-meta-stops:not(.direct) {
-  font-size: 0.66rem;
+  font-size: 0.64rem;
   font-weight: 700;
   color: #64748b;
+}
+
+.shop-ticket-card-bp .shop-ticket-stop-hint,
+.shop-ticket-card-bp .shop-ticket-airport-change {
+  font-size: 0.6rem;
 }
 
 /* Legacy arc helpers — keep inert under boarding-pass cards */
@@ -7046,16 +7100,21 @@ html[dir="rtl"] .shop-ticket-stub {
     grid-template-columns: 1fr 1fr;
     grid-template-areas:
       "airline airline"
-      "dep arr"
-      "path path";
+      "dep-clock arr-clock"
+      "dep-iata arr-iata"
+      "path path"
+      "dep-day arr-day";
+    row-gap: 0.12rem;
   }
 
   .shop-ticket-card-bp .shop-ticket-leg-v2.kayak-leg {
     grid-template-columns: 24px 1fr 1fr;
     grid-template-areas:
       "check airline airline"
-      "check dep arr"
-      "check path path";
+      "check dep-clock arr-clock"
+      "check dep-iata arr-iata"
+      "check path path"
+      "check dep-day arr-day";
   }
 
   .shop-ticket-card-bp .shop-ticket-leg-v2.kayak-leg .shop-ticket-kayak-check {
@@ -7068,20 +7127,49 @@ html[dir="rtl"] .shop-ticket-stub {
     grid-area: airline;
   }
 
-  .shop-ticket-card-bp .shop-ticket-leg-v2 .shop-ticket-time:not(.end) {
-    grid-area: dep;
+  .shop-ticket-card-bp .shop-ticket-clock {
+    text-align: start;
   }
 
-  .shop-ticket-card-bp .shop-ticket-leg-v2 .shop-ticket-time.end {
-    grid-area: arr;
+  .shop-ticket-card-bp .shop-ticket-clock.end {
     text-align: end;
   }
 
-  .shop-ticket-card-bp .shop-ticket-leg-v2 .shop-ticket-path {
-    grid-area: path;
+  .shop-ticket-card-bp .shop-ticket-iata {
+    text-align: start;
   }
 
-  .shop-ticket-card-bp .shop-ticket-time strong {
+  .shop-ticket-card-bp .shop-ticket-iata.end {
+    text-align: end;
+  }
+
+  .shop-ticket-card-bp .shop-ticket-day {
+    text-align: start;
+  }
+
+  .shop-ticket-card-bp .shop-ticket-day.end {
+    text-align: end;
+  }
+
+  .shop-ticket-card-bp .shop-ticket-path {
+    grid-area: path;
+    grid-row: auto;
+    display: grid;
+    grid-template-rows: auto auto;
+    margin-inline: 0;
+    justify-items: center;
+  }
+
+  .shop-ticket-card-bp .shop-ticket-route {
+    grid-row: auto;
+    width: min(100%, 16rem);
+  }
+
+  .shop-ticket-card-bp .shop-ticket-path-meta {
+    grid-row: auto;
+  }
+
+  .shop-ticket-card-bp .shop-ticket-clock {
     font-size: 1.12rem;
   }
 

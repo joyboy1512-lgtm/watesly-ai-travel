@@ -25,10 +25,10 @@ export async function getFlightProviderForOrg(
     where: {
       organizationId_providerKey: { organizationId, providerKey: key },
     },
-    select: { configEncrypted: true, enabled: true },
+    select: { configEncrypted: true, enabled: true, archivedAt: true },
   });
   const creds =
-    row?.enabled && row.configEncrypted
+    row?.enabled && !row.archivedAt && row.configEncrypted
       ? decryptProviderConfig<Record<string, string>>(row.configEncrypted) ||
         undefined
       : undefined;
@@ -55,10 +55,10 @@ export async function getHotelProviderForOrg(
     where: {
       organizationId_providerKey: { organizationId, providerKey: key },
     },
-    select: { configEncrypted: true, enabled: true },
+    select: { configEncrypted: true, enabled: true, archivedAt: true },
   });
   const creds =
-    row?.enabled && row.configEncrypted
+    row?.enabled && !row.archivedAt && row.configEncrypted
       ? decryptProviderConfig<Record<string, string>>(row.configEncrypted) ||
         undefined
       : undefined;
@@ -80,10 +80,10 @@ export async function getTransferProviderForOrg(
     where: {
       organizationId_providerKey: { organizationId, providerKey: key },
     },
-    select: { configEncrypted: true, enabled: true },
+    select: { configEncrypted: true, enabled: true, archivedAt: true },
   });
   let creds =
-    row?.enabled && row.configEncrypted
+    row?.enabled && !row.archivedAt && row.configEncrypted
       ? decryptProviderConfig<Record<string, string>>(row.configEncrypted) ||
         undefined
       : undefined;
@@ -97,9 +97,9 @@ export async function getTransferProviderForOrg(
           providerKey: "hotelbeds",
         },
       },
-      select: { configEncrypted: true, enabled: true },
+      select: { configEncrypted: true, enabled: true, archivedAt: true },
     });
-    if (legacy?.enabled && legacy.configEncrypted) {
+    if (legacy?.enabled && !legacy.archivedAt && legacy.configEncrypted) {
       const legacyCreds =
         decryptProviderConfig<Record<string, string>>(legacy.configEncrypted) ||
         {};
@@ -128,10 +128,10 @@ export async function getActivityProviderForOrg(
     where: {
       organizationId_providerKey: { organizationId, providerKey: key },
     },
-    select: { configEncrypted: true, enabled: true },
+    select: { configEncrypted: true, enabled: true, archivedAt: true },
   });
   const creds =
-    row?.enabled && row.configEncrypted
+    row?.enabled && !row.archivedAt && row.configEncrypted
       ? decryptProviderConfig<Record<string, string>>(row.configEncrypted) ||
         undefined
       : undefined;

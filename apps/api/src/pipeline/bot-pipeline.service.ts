@@ -22,7 +22,6 @@ const FLIGHT_PROVIDER_KEYS = [
   "amadeus",
   "travelport",
   "travelfusion",
-  "mock",
 ] as const;
 
 function asJson(value: unknown): Prisma.InputJsonValue {
@@ -356,20 +355,32 @@ export class BotPipelineService {
       process.env.DEFAULT_CURRENCY ||
       "KWD";
 
+    const fxRows = await this.prisma.organizationFxRate.findMany({
+      where: { organizationId: input.organizationId },
+      select: { fromCurrency: true, toCurrency: true, rate: true },
+    });
+    const fxRates = fxRows.map((r) => ({
+      fromCurrency: r.fromCurrency,
+      toCurrency: r.toCurrency,
+      rate: r.rate,
+    }));
+
     const provider = await this.prisma.travelProviderConfig.findFirst({
       where: {
         organizationId: input.organizationId,
         enabled: true,
+        archivedAt: null,
+        providerKey: { not: "mock" },
       },
       orderBy: { priority: "asc" },
     });
 
-    // Prefer an enabled flight provider that has credentials (e.g. Duffel
-    // activated from /dashboard/providers), even when FLIGHT_PROVIDER=mock in env.
+    // Fan-out every enabled non-mock flight engine; cheapest itinerary wins.
     const flightRows = await this.prisma.travelProviderConfig.findMany({
       where: {
         organizationId: input.organizationId,
         enabled: true,
+        archivedAt: null,
         providerKey: { in: [...FLIGHT_PROVIDER_KEYS] },
       },
       orderBy: { priority: "asc" },
@@ -378,16 +389,28 @@ export class BotPipelineService {
         configEncrypted: true,
       },
     });
-    const flightWithCreds = flightRows.find(
-      (row) => row.providerKey !== "mock" && Boolean(row.configEncrypted),
-    );
+    const flightKeys = new Set<string>();
+    for (const row of flightRows) {
+      if (row.providerKey === "mock") continue;
+      // Prefer engines with org credentials; also keep env-ready rows without creds.
+      flightKeys.add(row.providerKey);
+    }
+    const envFlight = (process.env.FLIGHT_PROVIDER || "").trim().toLowerCase();
+    if (envFlight && envFlight !== "mock" && FLIGHT_PROVIDER_KEYS.includes(envFlight as (typeof FLIGHT_PROVIDER_KEYS)[number])) {
+      flightKeys.add(envFlight);
+    }
+    if (!flightKeys.size && process.env.DUFFEL_ACCESS_TOKEN?.trim()) {
+      flightKeys.add("duffel");
+    }
+    if (!flightKeys.size && process.env.AMADEUS_CLIENT_ID?.trim()) {
+      flightKeys.add("amadeus");
+    }
+    const flightProviderKeys = [...flightKeys];
     const flightProviderKey =
-      flightWithCreds?.providerKey ||
-      process.env.FLIGHT_PROVIDER ||
-      flightRows[0]?.providerKey ||
+      flightProviderKeys[0] ||
       provider?.providerKey ||
       process.env.TRAVEL_DEFAULT_PROVIDER ||
-      "mock";
+      "duffel";
 
     const rules = await this.prisma.pricingRule.findMany({
       where: { organizationId: input.organizationId, isActive: true },
@@ -476,9 +499,9 @@ export class BotPipelineService {
 
     const hotelProviderKey =
       process.env.HOTEL_PROVIDER ||
-      provider?.providerKey ||
+      (provider?.providerKey === "hotelbeds" ? "hotelbeds" : undefined) ||
       process.env.TRAVEL_DEFAULT_PROVIDER ||
-      "mock";
+      "hotelbeds";
     const hotelProvider = wantHotels
       ? await getHotelProviderForOrg(
           this.prisma,
@@ -488,21 +511,24 @@ export class BotPipelineService {
       : undefined;
 
     // Flight/hotel providers resolve independently.
-    // Org-level credentials from /dashboard/providers override env when configured.
-    const flightProvider = wantFlights
-      ? await getFlightProviderForOrg(
-          this.prisma,
-          input.organizationId,
-          flightProviderKey,
+    // Search ALL enabled flight engines in parallel; merge by cheapest itinerary.
+    const flightProviders = wantFlights
+      ? await Promise.all(
+          (flightProviderKeys.length ? flightProviderKeys : [flightProviderKey]).map(
+            (key) =>
+              getFlightProviderForOrg(this.prisma, input.organizationId, key),
+          ),
         )
-      : undefined;
+      : [];
 
     const search = await searchAndPriceTravel({
-      flightProviderKey,
-      flightProvider,
+      flightProviderKey: flightProviders[0]?.providerKey || flightProviderKey,
+      flightProviders: flightProviders.length ? flightProviders : undefined,
       hotelProviderKey,
       hotelProvider,
       rules,
+      displayCurrency: searchCurrency,
+      fxRates,
       searchFlights: wantFlights,
       searchHotels: wantHotels,
       flightParams:

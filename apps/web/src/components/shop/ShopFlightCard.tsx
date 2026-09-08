@@ -237,28 +237,26 @@ function LegBlock({
         <div className="shop-ticket-route" aria-hidden>
           <svg
             className="shop-ticket-route-svg"
-            viewBox="0 0 160 44"
-            width="160"
-            height="44"
+            viewBox="0 0 160 38"
+            preserveAspectRatio="none"
             focusable="false"
           >
             <path
               className="shop-ticket-route-arc"
-              d="M12 34 C 40 34, 48 10, 80 10 C 112 10, 120 34, 148 34"
+              d="M2 30 C 28 30, 42 8, 80 8 C 118 8, 132 30, 158 30"
               fill="none"
               stroke="#2a6f97"
               strokeWidth="2"
               strokeLinecap="round"
-              strokeDasharray="3.5 4.5"
+              strokeDasharray="3 4"
             />
-            <circle cx="12" cy="34" r="3.2" fill="#fff" stroke="#2a6f97" strokeWidth="1.6" />
-            <circle cx="148" cy="34" r="3.2" fill="#fff" stroke="#2a6f97" strokeWidth="1.6" />
-            <g className="shop-ticket-route-plane" transform="translate(80 11)">
-              <circle r="10" fill="#fff" stroke="#d5e3ef" strokeWidth="1" />
-              {/* Material-style flight icon, rotated to face arrival → */}
+            <circle cx="2" cy="30" r="2.8" fill="#fff" stroke="#2a6f97" strokeWidth="1.5" />
+            <circle cx="158" cy="30" r="2.8" fill="#fff" stroke="#2a6f97" strokeWidth="1.5" />
+            <g className="shop-ticket-route-plane" transform="translate(80 9)">
+              <circle r="8.5" fill="#fff" stroke="#d5e3ef" strokeWidth="1" />
               <path
                 fill="#2a6f97"
-                transform="translate(0.2 0.2) rotate(90) scale(0.72) translate(-12 -12)"
+                transform="rotate(90) scale(0.62) translate(-12 -12)"
                 d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"
               />
             </g>

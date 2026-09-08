@@ -1,5 +1,6 @@
 "use client";
 
+import "@/app/hotel-rich.css";
 import { formatMoneyMinor } from "@/lib/format";
 import { HotelLiveBadge } from "./HotelLiveBadge";
 

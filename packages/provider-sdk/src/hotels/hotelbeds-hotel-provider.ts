@@ -31,6 +31,64 @@ import {
   hotelbedsDisplayCurrency,
   hotelbedsSourceMarket,
 } from "./hotelbeds-currency";
+import { CircuitBreaker } from "../ops/circuit-breaker";
+import { isTransientProviderError, providerErrorCode } from "../ops/errors";
+import { singleflight } from "../ops/inflight";
+import { logProviderOps, newRequestId } from "../ops/provider-log";
+import { withTimeoutSignal } from "../ops/with-timeout";
+
+const SEARCH_CACHE_TTL_MS = 8 * 60 * 1000;
+const SEARCH_STALE_TTL_MS = 60 * 60 * 1000;
+const REQUEST_TIMEOUT_MS = 35_000;
+
+const hotelbedsCircuit = new CircuitBreaker({
+  name: "hotelbeds",
+  failureThreshold: 5,
+  resetMs: 60_000,
+});
+
+type SearchCacheEntry = {
+  offers: HotelOffer[];
+  savedAt: number;
+};
+
+const hotelSearchCache = new Map<string, SearchCacheEntry>();
+
+function humanizeHotelbedsError(message: string): string {
+  const m = String(message || "").trim();
+  if (/quota has been exceeded/i.test(m)) {
+    return "تم تجاوز حد طلبات مزود الفنادق التجريبي مؤقتًا. أعد المحاولة بعد قليل.";
+  }
+  if (/too many requests|rate limit/i.test(m)) {
+    return "طلبات كثيرة جدًا على مزود الفنادق. انتظر لحظات ثم أعد المحاولة.";
+  }
+  return m || "تعذر الاتصال بمزود الفنادق";
+}
+
+function isQuotaError(message: string): boolean {
+  return /quota has been exceeded|too many requests|rate limit/i.test(message);
+}
+
+function searchCacheKey(params: HotelSearchParams): string {
+  return JSON.stringify({
+    location: String(params.location || "").trim().toLowerCase(),
+    hotelCode: String(params.hotelCode || "").trim(),
+    checkIn: params.checkInDate,
+    checkOut: params.checkOutDate,
+    rooms: params.rooms || 1,
+    adults: params.adults,
+    children: params.children || 0,
+    childrenAges: String(params.childrenAges || ""),
+    roomOccupancies: params.roomOccupancies || null,
+    currency: params.currency || "",
+    maxHotels: params.maxHotels ?? 30,
+    radiusKm: params.radiusKm || 25,
+    boardCode: params.boardCode || "",
+    paymentType: params.paymentType || "",
+    minStars: params.minStars || null,
+    maxStars: params.maxStars || null,
+  });
+}
 
 function normalizeChildrenAges(children: number, raw?: string): number[] {
   const count = Math.max(0, children);
@@ -39,9 +97,10 @@ function normalizeChildrenAges(children: number, raw?: string): number[] {
     .split(",")
     .map((part) => Number(part.trim()))
     .filter((n) => Number.isFinite(n) && n >= 0 && n <= 17);
-  const ages = [...parsed];
-  while (ages.length < count) ages.push(6);
-  return ages.slice(0, count);
+  if (parsed.length < count) {
+    throw new Error("يجب تحديد عمر كل طفل قبل البحث عن الفنادق");
+  }
+  return parsed.slice(0, count);
 }
 
 function firstHbRate(hotel?: HbHotel): HbRate | undefined {
@@ -78,24 +137,57 @@ export class HotelbedsHotelProvider implements HotelProviderAdapter {
     method: "GET" | "POST" = "POST",
   ): Promise<T> {
     this.ensureConfigured();
-    const url = `${this.creds.baseUrl}${path}`;
-    const response = await fetch(url, {
-      method,
-      headers: hotelbedsHeaders(this.creds),
-      ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
-    });
-    const json = (await response.json().catch(() => ({}))) as T & {
-      error?: { message?: string; code?: string };
-    };
-    if (!response.ok) {
-      const err = json as { error?: { message?: string }; message?: string };
-      throw new Error(
-        err.error?.message ||
-          err.message ||
-          `Hotelbeds HTTP ${response.status}`,
-      );
+    if (!hotelbedsCircuit.allow()) {
+      throw new Error("مزود الفنادق غير متاح مؤقتًا (CIRCUIT_OPEN). أعد المحاولة بعد قليل.");
     }
-    return json;
+    const url = `${this.creds.baseUrl}${path}`;
+    const { signal, clear } = withTimeoutSignal(REQUEST_TIMEOUT_MS);
+    const started = Date.now();
+    const requestId = newRequestId();
+    try {
+      const response = await fetch(url, {
+        method,
+        headers: hotelbedsHeaders(this.creds),
+        ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
+        signal,
+      });
+      const json = (await response.json().catch(() => ({}))) as T & {
+        error?: { message?: string; code?: string };
+      };
+      if (!response.ok) {
+        const err = json as { error?: { message?: string }; message?: string };
+        throw new Error(
+          humanizeHotelbedsError(
+            err.error?.message ||
+              err.message ||
+              `Hotelbeds HTTP ${response.status}`,
+          ),
+        );
+      }
+      hotelbedsCircuit.recordSuccess();
+      logProviderOps({
+        requestId,
+        provider: "hotelbeds",
+        operation: path,
+        durationMs: Date.now() - started,
+        status: "ok",
+      });
+      return json;
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : String(error);
+      hotelbedsCircuit.recordFailure();
+      logProviderOps({
+        requestId,
+        provider: "hotelbeds",
+        operation: path,
+        durationMs: Date.now() - started,
+        status: /timeout|abort/i.test(msg) ? "timeout" : "error",
+        errorCode: providerErrorCode(error),
+      });
+      throw error instanceof Error ? error : new Error(humanizeHotelbedsError(msg));
+    } finally {
+      clear();
+    }
   }
 
   async pingStatus(): Promise<{ ok: boolean; message: string }> {
@@ -127,6 +219,26 @@ export class HotelbedsHotelProvider implements HotelProviderAdapter {
   }
 
   async searchHotels(params: HotelSearchParams): Promise<HotelOffer[]> {
+    const cacheKey = searchCacheKey(params);
+    return singleflight(`hb-search:${cacheKey}`, () => this.searchHotelsInner(params, cacheKey));
+  }
+
+  private async searchHotelsInner(
+    params: HotelSearchParams,
+    cacheKey: string,
+  ): Promise<HotelOffer[]> {
+    const cached = hotelSearchCache.get(cacheKey);
+    const cacheAge = cached ? Date.now() - cached.savedAt : Number.POSITIVE_INFINITY;
+    if (cached && cacheAge < SEARCH_CACHE_TTL_MS) {
+      logProviderOps({
+        provider: "hotelbeds",
+        operation: "searchHotels",
+        durationMs: 0,
+        status: "cache_hit",
+      });
+      return cached.offers.map((offer) => ({ ...offer }));
+    }
+
     const hotelCodeRaw = String(params.hotelCode || "").trim();
     const hotelCodeNum = hotelCodeRaw
       ? Number(hotelCodeRaw.replace(/^hb-/i, ""))
@@ -162,22 +274,66 @@ export class HotelbedsHotelProvider implements HotelProviderAdapter {
       filter.paymentType = params.paymentType;
     }
 
+    const roomOccupancies = Array.isArray(params.roomOccupancies)
+      ? params.roomOccupancies.filter((r) => r && Math.max(1, r.adults || 0) >= 1)
+      : [];
+
+    let occupancies: Array<Record<string, unknown>>;
+    if (roomOccupancies.length > 0) {
+      occupancies = roomOccupancies.map((room) => {
+        const adults = Math.max(1, room.adults || 1);
+        const childAges = (room.childrenAges || [])
+          .map((a) => Number(a))
+          .filter((a) => Number.isFinite(a) && a >= 0 && a <= 17);
+        const childCount = Math.max(
+          0,
+          room.children != null ? Number(room.children) : childAges.length,
+        );
+        if (childCount > 0 && childAges.length < childCount) {
+          throw new Error("يجب تحديد عمر كل طفل في كل غرفة قبل البحث");
+        }
+        const agesForRoom = childAges.slice(0, childCount);
+        return {
+          rooms: 1,
+          adults,
+          children: agesForRoom.length,
+          ...(agesForRoom.length
+            ? { paxes: agesForRoom.map((age) => ({ type: "CH", age })) }
+            : {}),
+        };
+      });
+    } else {
+      const roomCount = rooms;
+      const totalAdults = Math.max(1, params.adults);
+      const distributed: Array<{ adults: number; childAges: number[] }> = [];
+      let remainingAdults = totalAdults;
+      let remainingAges = [...ages];
+      for (let i = 0; i < roomCount; i += 1) {
+        const left = roomCount - i;
+        const a = Math.max(1, Math.floor(remainingAdults / left));
+        const c = Math.floor(remainingAges.length / left);
+        distributed.push({ adults: a, childAges: remainingAges.splice(0, c) });
+        remainingAdults -= a;
+      }
+      if (remainingAdults > 0) distributed[0]!.adults += remainingAdults;
+      if (remainingAges.length) distributed[0]!.childAges.push(...remainingAges);
+      occupancies = distributed.map((room) => ({
+        rooms: 1,
+        adults: room.adults,
+        children: room.childAges.length,
+        ...(room.childAges.length
+          ? { paxes: room.childAges.map((age) => ({ type: "CH", age })) }
+          : {}),
+      }));
+    }
+
     const payload: Record<string, unknown> = {
       stay: {
         checkIn: params.checkInDate,
         checkOut: params.checkOutDate,
         ...(shiftDays > 0 ? { shiftDays } : {}),
       },
-      occupancies: [
-        {
-          rooms,
-          adults: Math.max(1, params.adults),
-          children,
-          ...(children > 0
-            ? { paxes: ages.map((age) => ({ type: "CH", age })) }
-            : {}),
-        },
-      ],
+      occupancies,
       filter,
       language: "ENG",
       sourceMarket,
@@ -205,10 +361,48 @@ export class HotelbedsHotelProvider implements HotelProviderAdapter {
       delete payload.geolocation;
     }
 
-    const result = await this.request<HbAvailabilityResponse>(
-      "/hotel-api/1.0/hotels",
-      payload,
-    );
+    const availStarted = Date.now();
+    let result: HbAvailabilityResponse;
+    try {
+      result = await this.request<HbAvailabilityResponse>(
+        "/hotel-api/1.0/hotels",
+        payload,
+      );
+      console.info(
+        `[hotelbeds-availability] ok hotels=${hotelsFromHotelbedsPayload(result).length} ms=${Date.now() - availStarted}`,
+      );
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      console.warn(
+        `[hotelbeds-availability] fail ms=${Date.now() - availStarted}`,
+        msg,
+      );
+      if (isQuotaError(msg) && cached && cacheAge < SEARCH_STALE_TTL_MS) {
+        console.info(
+          `[hotelbeds-availability] stale-cache after quota ageMs=${Math.round(cacheAge)} hotels=${cached.offers.length}`,
+        );
+        return cached.offers.map((offer) => ({
+          ...offer,
+        }));
+      }
+      // One retry on timeout/network only — never retry quota/auth
+      if (isTransientProviderError(err) && !isQuotaError(msg)) {
+        const retryStarted = Date.now();
+        result = await this.request<HbAvailabilityResponse>(
+          "/hotel-api/1.0/hotels",
+          payload,
+        );
+        logProviderOps({
+          provider: "hotelbeds",
+          operation: "searchHotels.retry",
+          durationMs: Date.now() - retryStarted,
+          status: "ok",
+          retryCount: 1,
+        });
+      } else {
+        throw err instanceof Error ? err : new Error(humanizeHotelbedsError(msg));
+      }
+    }
 
     const hotels = hotelsFromHotelbedsPayload(result);
     const expiresAt = new Date(Date.now() + 25 * 60 * 1000).toISOString();
@@ -243,7 +437,16 @@ export class HotelbedsHotelProvider implements HotelProviderAdapter {
       if (offer) offers.push(offer);
     }
 
-    return offers.sort((a, b) => a.costAmountMinor - b.costAmountMinor);
+    const sorted = offers.sort((a, b) => a.costAmountMinor - b.costAmountMinor);
+    hotelSearchCache.set(cacheKey, { offers: sorted, savedAt: Date.now() });
+    // Bound memory: drop oldest when oversized
+    if (hotelSearchCache.size > 40) {
+      const oldest = [...hotelSearchCache.entries()].sort(
+        (a, b) => a[1].savedAt - b[1].savedAt,
+      )[0];
+      if (oldest) hotelSearchCache.delete(oldest[0]);
+    }
+    return sorted;
   }
 
   async fetchRateComments(

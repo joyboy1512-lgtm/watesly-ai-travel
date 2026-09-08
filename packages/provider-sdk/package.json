@@ -15,6 +15,7 @@
     "build": "tsc -p tsconfig.json",
     "dev": "tsc -p tsconfig.json --watch",
     "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "node --import ../shared/node_modules/tsx/dist/loader.mjs --test src/activities/activity-provider.test.ts",
     "lint": "echo No lint config yet for provider-sdk",
     "clean": "rimraf dist"
   },

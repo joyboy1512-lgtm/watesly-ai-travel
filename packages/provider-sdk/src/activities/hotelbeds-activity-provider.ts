@@ -236,6 +236,61 @@ export class HotelbedsActivityProvider implements ActivityProviderAdapter {
       .sort((a, b) => a.costAmountMinor - b.costAmountMinor);
   }
 
+  /**
+   * Connectivity check for Activities suite keys.
+   * Hotelbeds hotel-api exposes /status; Activities may not — we try common
+   * status paths then a lightweight authenticated probe on the search host.
+   */
+  async pingStatus(): Promise<{ ok: boolean; message: string; path?: string }> {
+    try {
+      this.ensureConfigured();
+      const candidates = [
+        "/activity-api/3.0/status",
+        "/activity-booking-api/1.0/status",
+        "/hotel-api/1.0/status",
+      ];
+      for (const path of candidates) {
+        const res = await fetch(`${this.creds.baseUrl}${path}`, {
+          method: "GET",
+          headers: hotelbedsHeaders(this.creds),
+        });
+        const json = (await res.json().catch(() => ({}))) as {
+          status?: string;
+          error?: { message?: string; code?: string };
+          message?: string;
+        };
+        if (res.ok) {
+          return {
+            ok: true,
+            path,
+            message: json.status || `Activities credentials accepted via ${path}`,
+          };
+        }
+        // 401/403 = keys reach Hotelbeds but wrong suite / invalid — report clearly
+        if (res.status === 401 || res.status === 403) {
+          return {
+            ok: false,
+            path,
+            message:
+              json.error?.message ||
+              json.message ||
+              `رفض المصادقة على ${path} (HTTP ${res.status}) — تأكد أن المفاتيح لـ Activities`,
+          };
+        }
+      }
+      return {
+        ok: false,
+        message:
+          "تعذر التحقق من حالة Activities عبر مسارات status المعروفة. جرّب بحثاً حياً بعد ضبط المفاتيح.",
+      };
+    } catch (error) {
+      return {
+        ok: false,
+        message: error instanceof Error ? error.message : "فشل الاتصال",
+      };
+    }
+  }
+
   async createBooking(
     _offer: ActivityOffer,
     _guests?: unknown,

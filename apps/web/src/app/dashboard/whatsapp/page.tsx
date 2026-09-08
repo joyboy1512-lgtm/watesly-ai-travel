@@ -1,5 +1,8 @@
 "use client";
 
+import "../../wa-suite.css";
+import "../../customers-crm.css";
+
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { AppShell } from "@/components/AppShell";
@@ -236,7 +239,7 @@ export default function WhatsAppPage() {
               <p>أدخل بيانات Meta Business API. للتطوير المحلي استخدم التوكن mock.</p>
             </div>
             <div className="wa-form-grid">
-              <label className="cust-field"><span>اسم الحساب / القناة</span><input value={form.channelName} onChange={(e) => setForm({ ...form, channelName: e.target.value })} placeholder="Watesly Travel" /></label>
+              <label className="cust-field"><span>اسم الحساب / القناة</span><input value={form.channelName} onChange={(e) => setForm({ ...form, channelName: e.target.value })} placeholder="WeekendGate" /></label>
               <label className="cust-field"><span>رقم العرض</span><input value={form.displayPhone} onChange={(e) => setForm({ ...form, displayPhone: e.target.value })} placeholder="+965..." /></label>
               <label className="cust-field"><span>Phone Number ID</span><input value={form.phoneNumberId} onChange={(e) => setForm({ ...form, phoneNumberId: e.target.value })} placeholder="من Meta" /></label>
               <label className="cust-field"><span>WABA / Business Account ID</span><input value={form.businessAccountId} onChange={(e) => setForm({ ...form, businessAccountId: e.target.value })} /></label>

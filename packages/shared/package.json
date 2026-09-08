@@ -16,10 +16,12 @@
     "dev": "tsc -p tsconfig.json --watch",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "echo \"No lint config yet for shared\"",
+    "test": "node --import tsx --test src/trip/trip.test.ts",
     "clean": "rimraf dist"
   },
   "devDependencies": {
     "rimraf": "^6.0.1",
+    "tsx": "^4.19.4",
     "typescript": "^5.8.3"
   }
 }

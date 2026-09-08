@@ -37,7 +37,8 @@ export const PROVIDER_CATALOG: ProviderCatalogEntry[] = [
     providerKey: "duffel",
     displayName: "Duffel",
     displayNameAr: "Duffel",
-    description: "مزود حي للطيران والفنادق عبر Duffel",
+    description:
+      "بحث عروض الطيران عبر Duffel (Test/Live). استخدم duffel_test_… للحساب التجريبي",
     capabilities: ["flight", "hotel"],
     status: "live",
     envKeys: ["DUFFEL_ACCESS_TOKEN"],
@@ -50,6 +51,8 @@ export const PROVIDER_CATALOG: ProviderCatalogEntry[] = [
         placeholder: "duffel_test_… أو duffel_live_…",
       },
     ],
+    notes:
+      "الطيران: Offer Requests فعّال. الفنادق والحجز النهائي Orders ما زالا قيد التوسعة.",
   },
   {
     providerKey: "amadeus",

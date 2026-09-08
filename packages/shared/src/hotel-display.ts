@@ -1,5 +1,7 @@
 /** Rich hotel display model — provider-agnostic UI shape. */
 
+import { normalizeBoardLabelAr, normalizePaymentTypeAr } from "./provider-content-ar";
+
 export type HotelBoardCode =
   | "RO"
   | "BB"
@@ -24,7 +26,13 @@ export type HotelRateOption = {
   roomName: string;
   boardCode: string;
   boardName: string;
+  /**
+   * Stay total in MAJOR currency units (not minor, not per-night).
+   * Hotelbeds `net` is the full-stay amount for the requested occupancy.
+   */
   net: number;
+  /** Explicit basis — defaults to "stay" when omitted. */
+  netBasis?: "stay" | "night";
   sellingRate?: number;
   currency: string;
   paymentType?: string;
@@ -132,6 +140,11 @@ export type HotelPropertyDetails = {
   roomImages?: Record<string, string>;
   facilityLabels?: string[];
   ranking?: number;
+  /** Official guest review score — only when provider supplies a real source. */
+  guestRatingScore?: number;
+  guestRatingScale?: 5 | 10;
+  guestReviewCount?: number;
+  guestRatingSource?: string;
   distanceToCenterKm?: number;
   distanceToCenterLabel?: string;
   poiDistances?: HotelPoiDistance[];
@@ -152,24 +165,25 @@ export type HotelPropertyDetails = {
 
 export const BOARD_LABELS_AR: Record<string, string> = {
   RO: "غرفة فقط",
-  BB: "إفطار",
+  BB: "شامل الإفطار",
   HB: "نصف إقامة",
   FB: "إقامة كاملة",
-  AI: "شامل كليًا",
+  AI: "شامل جميع الوجبات",
   SC: "خدمة ذاتية",
   DB: "إفطار وعشاء",
 };
 
 export function boardLabelAr(code?: string, name?: string): string {
   if (code && BOARD_LABELS_AR[code]) return BOARD_LABELS_AR[code];
+  const fromCentral = normalizeBoardLabelAr(code || name).ar;
+  if (fromCentral && fromCentral !== (code || name)) return fromCentral;
   if (name?.trim()) return name.trim();
   return code || "—";
 }
 
 export function paymentTypeLabelAr(type?: string): string {
-  if (type === "AT_HOTEL") return "الدفع في الفندق";
-  if (type === "AT_WEB") return "الدفع أونلاين";
-  return type || "—";
+  const ar = normalizePaymentTypeAr(type).ar;
+  return ar || type || "—";
 }
 
 export function taxTypeLabelAr(type?: string): string {

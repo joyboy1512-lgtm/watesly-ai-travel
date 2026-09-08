@@ -11,6 +11,7 @@ import {
   type FlightBookingDraft,
 } from "@/lib/booking-draft";
 import { formatMoneyMinor } from "@/lib/format";
+import { COMPANY_LEGAL } from "@watesly-travel/shared";
 
 const STEPS = [
   "بياناتك",
@@ -953,7 +954,7 @@ export default function FlightBookPage() {
                       </li>
                       <li>
                         <span>المستفيد</span>
-                        <strong>Watesly Travel AI</strong>
+                        <strong>{COMPANY_LEGAL.legalNameAr}</strong>
                       </li>
                     </ul>
                     <p className="pay-secure-note">

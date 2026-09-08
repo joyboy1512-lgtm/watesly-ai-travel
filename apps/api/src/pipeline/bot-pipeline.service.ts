@@ -11,8 +11,19 @@ import { searchAndPriceTravel } from "@watesly-travel/travel-core";
 import { PrismaService } from "../prisma/prisma.service";
 import { AuditService } from "../common/audit.service";
 import { TravelAiService } from "../ai/travel-ai.service";
-import { getHotelProviderForOrg } from "../common/provider-runtime";
+import {
+  getFlightProviderForOrg,
+  getHotelProviderForOrg,
+} from "../common/provider-runtime";
 import { formatMoneyMinor } from "../common/money";
+
+const FLIGHT_PROVIDER_KEYS = [
+  "duffel",
+  "amadeus",
+  "travelport",
+  "travelfusion",
+  "mock",
+] as const;
 
 function asJson(value: unknown): Prisma.InputJsonValue {
   return value as Prisma.InputJsonValue;
@@ -351,6 +362,31 @@ export class BotPipelineService {
       orderBy: { priority: "asc" },
     });
 
+    // Prefer an enabled flight provider that has credentials (e.g. Duffel
+    // activated from /dashboard/providers), even when FLIGHT_PROVIDER=mock in env.
+    const flightRows = await this.prisma.travelProviderConfig.findMany({
+      where: {
+        organizationId: input.organizationId,
+        enabled: true,
+        providerKey: { in: [...FLIGHT_PROVIDER_KEYS] },
+      },
+      orderBy: { priority: "asc" },
+      select: {
+        providerKey: true,
+        configEncrypted: true,
+      },
+    });
+    const flightWithCreds = flightRows.find(
+      (row) => row.providerKey !== "mock" && Boolean(row.configEncrypted),
+    );
+    const flightProviderKey =
+      flightWithCreds?.providerKey ||
+      process.env.FLIGHT_PROVIDER ||
+      flightRows[0]?.providerKey ||
+      provider?.providerKey ||
+      process.env.TRAVEL_DEFAULT_PROVIDER ||
+      "mock";
+
     const rules = await this.prisma.pricingRule.findMany({
       where: { organizationId: input.organizationId, isActive: true },
       orderBy: { priority: "asc" },
@@ -390,6 +426,9 @@ export class BotPipelineService {
     let hotelLocation = inquiry.destination || inquiry.origin || "";
     let hotelRooms = 1;
     let childrenAges: string | undefined;
+    let roomOccupancies:
+      | Array<{ adults: number; children?: number; childrenAges?: number[] }>
+      | undefined;
     let shiftDays: number | undefined;
     let minRate: number | undefined;
     let maxRate: number | undefined;
@@ -402,6 +441,11 @@ export class BotPipelineService {
           rooms?: number;
           preferredHotel?: string;
           childrenAges?: string;
+          roomOccupancies?: Array<{
+            adults: number;
+            children?: number;
+            childrenAges?: number[];
+          }>;
           shiftDays?: number;
           minRate?: number;
           maxRate?: number;
@@ -415,6 +459,10 @@ export class BotPipelineService {
           hotelLocation;
         if (pref.rooms && pref.rooms > 0) hotelRooms = pref.rooms;
         if (pref.childrenAges?.trim()) childrenAges = pref.childrenAges.trim();
+        if (Array.isArray(pref.roomOccupancies) && pref.roomOccupancies.length) {
+          roomOccupancies = pref.roomOccupancies;
+          hotelRooms = pref.roomOccupancies.length;
+        }
         if (pref.shiftDays && pref.shiftDays > 0) shiftDays = pref.shiftDays;
         if (pref.minRate && pref.minRate > 0) minRate = pref.minRate;
         if (pref.maxRate && pref.maxRate > 0) maxRate = pref.maxRate;
@@ -438,14 +486,19 @@ export class BotPipelineService {
         )
       : undefined;
 
-    // Flight/hotel providers resolve independently via FLIGHT_PROVIDER / HOTEL_PROVIDER.
+    // Flight/hotel providers resolve independently.
     // Org-level credentials from /dashboard/providers override env when configured.
+    const flightProvider = wantFlights
+      ? await getFlightProviderForOrg(
+          this.prisma,
+          input.organizationId,
+          flightProviderKey,
+        )
+      : undefined;
+
     const search = await searchAndPriceTravel({
-      flightProviderKey:
-        process.env.FLIGHT_PROVIDER ||
-        provider?.providerKey ||
-        process.env.TRAVEL_DEFAULT_PROVIDER ||
-        "mock",
+      flightProviderKey,
+      flightProvider,
       hotelProviderKey,
       hotelProvider,
       rules,
@@ -470,21 +523,53 @@ export class BotPipelineService {
             location: hotelLocation,
             checkInDate: departDate,
             checkOutDate: hotelCheckOut,
-            adults: inquiry.adults,
-            children: inquiry.children + Math.max(0, inquiry.infants || 0),
+            adults: roomOccupancies?.length
+              ? roomOccupancies.reduce((s, r) => s + Math.max(1, r.adults || 1), 0)
+              : inquiry.adults,
+            children: roomOccupancies?.length
+              ? roomOccupancies.reduce(
+                  (s, r) =>
+                    s +
+                    Math.max(
+                      0,
+                      r.childrenAges?.length ??
+                        r.children ??
+                        0,
+                    ),
+                  0,
+                )
+              : inquiry.children + Math.max(0, inquiry.infants || 0),
             childrenAges: (() => {
+              if (roomOccupancies?.length) {
+                const ages = roomOccupancies.flatMap((r) =>
+                  (r.childrenAges || []).map((a) => String(a)),
+                );
+                return ages.length ? ages.join(",") : undefined;
+              }
               const childCount = Math.max(0, inquiry.children || 0);
               const infantCount = Math.max(0, inquiry.infants || 0);
               const parsed = (childrenAges || "")
                 .split(",")
                 .map((part) => part.trim())
                 .filter(Boolean);
+              if (childCount > 0 && parsed.length < childCount) {
+                throw new Error(
+                  "يجب تحديد عمر كل طفل قبل البحث عن الفنادق (Hotelbeds)",
+                );
+              }
               const ages = parsed.slice(0, childCount);
-              while (ages.length < childCount) ages.push("6");
               for (let i = 0; i < infantCount; i += 1) ages.push("1");
               return ages.length ? ages.join(",") : undefined;
             })(),
             rooms: hotelRooms,
+            roomOccupancies: roomOccupancies?.map((r) => ({
+              adults: Math.max(1, r.adults || 1),
+              children: Math.max(
+                0,
+                r.childrenAges?.length ?? r.children ?? 0,
+              ),
+              childrenAges: r.childrenAges || [],
+            })),
             currency: searchCurrency,
             shiftDays,
             minRate,

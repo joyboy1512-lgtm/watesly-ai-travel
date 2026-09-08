@@ -1,5 +1,10 @@
 "use client";
 
+import "../../prc-suite.css";
+import "../../prc-search.css";
+import "../../prc-extras.css";
+import "../../customers-crm.css";
+
 import { useEffect, useMemo, useRef, useState } from "react";
 import { SUPPORTED_CURRENCIES } from "@watesly-travel/shared";
 import { AppShell } from "@/components/AppShell";

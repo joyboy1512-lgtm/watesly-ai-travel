@@ -1,4 +1,7 @@
-export const APP_NAME = "Watesly Travel AI" as const;
+import { COMPANY_LEGAL } from "./company-legal";
+
+/** Staff dashboard product name — matches customer-facing WeekendGate brand. */
+export const APP_NAME = COMPANY_LEGAL.brandName;
 
 export { DEFAULT_CURRENCY, DEFAULT_TIMEZONE } from "./currency";
 

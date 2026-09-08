@@ -1,5 +1,8 @@
 "use client";
 
+import "../../wa-suite.css";
+import "../../customers-crm.css";
+
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { AppShell } from "@/components/AppShell";

@@ -33,17 +33,54 @@ function normalizeDate(value?: string | null): string | undefined {
   const iso = trimmed.match(/^(20\d{2}|19\d{2})-(\d{2})-(\d{2})$/);
   if (iso) return trimmed;
 
+  // YYYY/MM/DD or YYYY.MM.DD
+  const ymd = trimmed.match(/^(19\d{2}|20\d{2})[\/.\-](\d{1,2})[\/.\-](\d{1,2})$/);
+  if (ymd) {
+    return `${ymd[1]}-${ymd[2]!.padStart(2, "0")}-${ymd[3]!.padStart(2, "0")}`;
+  }
+
+  // DD/MM/YYYY (common on GCC passports visual zone)
   const dmy = trimmed.match(/^(\d{1,2})[\/.\-](\d{1,2})[\/.\-](19\d{2}|20\d{2})$/);
   if (dmy) {
     return `${dmy[3]}-${dmy[2]!.padStart(2, "0")}-${dmy[1]!.padStart(2, "0")}`;
   }
 
-  // YYMMDD from MRZ
+  // 15 JAN 1990 / 15 January 1990
+  const months: Record<string, string> = {
+    JAN: "01",
+    FEB: "02",
+    MAR: "03",
+    APR: "04",
+    MAY: "05",
+    JUN: "06",
+    JUL: "07",
+    AUG: "08",
+    SEP: "09",
+    OCT: "10",
+    NOV: "11",
+    DEC: "12",
+  };
+  const named = trimmed
+    .toUpperCase()
+    .match(/^(\d{1,2})\s+([A-Z]{3,9})\.?\s+(19\d{2}|20\d{2})$/);
+  if (named) {
+    const mon = months[named[2]!.slice(0, 3)];
+    if (mon) {
+      return `${named[3]}-${mon}-${named[1]!.padStart(2, "0")}`;
+    }
+  }
+
+  // YYMMDD from MRZ — birth years: if resulting year is > current+1, use 1900s
   const mrz = trimmed.match(/^(\d{2})(\d{2})(\d{2})$/);
   if (mrz) {
     const yy = Number(mrz[1]);
+    const mm = mrz[2]!;
+    const dd = mrz[3]!;
+    if (Number(mm) < 1 || Number(mm) > 12 || Number(dd) < 1 || Number(dd) > 31) {
+      return undefined;
+    }
     const year = yy >= 50 ? 1900 + yy : 2000 + yy;
-    return `${year}-${mrz[2]}-${mrz[3]}`;
+    return `${year}-${mm}-${dd}`;
   }
   return undefined;
 }
@@ -151,10 +188,46 @@ function aiConfig() {
   ).replace(/\/$/, "");
   const model =
     process.env.AI_VISION_MODEL ||
-    process.env.AI_MODEL ||
+    process.env.OPENAI_VISION_MODEL ||
     "gpt-4o-mini";
   const timeoutMs = Number(process.env.AI_TIMEOUT_MS || 30000);
   return { apiKey, baseUrl, model, timeoutMs };
+}
+
+function completionLimitBody(model: string, tokens: number) {
+  // Newer OpenAI/Cursor models reject max_tokens on chat/completions.
+  if (/gpt-5|o[134]|gpt-4\.1/i.test(model)) {
+    return { max_completion_tokens: tokens };
+  }
+  return { max_tokens: tokens };
+}
+
+function chatCompletionBody(model: string, prompt: string, mime: string, rawBase64: string) {
+  const tokens = Number(process.env.AI_PASSPORT_MAX_TOKENS || 500);
+  const body: Record<string, unknown> = {
+    model,
+    ...completionLimitBody(model, tokens),
+    messages: [
+      {
+        role: "user",
+        content: [
+          { type: "text", text: prompt },
+          {
+            type: "image_url",
+            image_url: {
+              url: `data:${mime};base64,${rawBase64}`,
+              detail: "high",
+            },
+          },
+        ],
+      },
+    ],
+  };
+  // gpt-5+ on Cursor/OpenAI only supports default temperature.
+  if (!/gpt-5|o[134]|gpt-4\.1/i.test(model)) {
+    body.temperature = 0;
+  }
+  return body;
 }
 
 /**
@@ -190,21 +263,14 @@ export async function extractPassportFromImage(
     };
   }
 
-  const prompt = `You are a passport MRZ/OCR assistant for a travel booking system.
-Read the passport image carefully (visual zone and MRZ if visible).
-Return ONLY valid JSON with these keys:
-{
-  "firstName": string,
-  "lastName": string,
-  "birthDate": "YYYY-MM-DD",
-  "nationality": "ISO3 like SAU or 2-letter like SA if that is what appears",
-  "passportNumber": string,
-  "passportExpiry": "YYYY-MM-DD",
-  "sex": "M or F",
-  "mrzText": "optional raw MRZ lines",
-  "confidence": number between 0 and 1
-}
-Use empty string for unknown fields. Do not invent values.`;
+  const prompt = `Extract passport data from this image (visual zone AND MRZ if visible).
+Return ONLY valid JSON:
+{"firstName":"given names exactly as printed","lastName":"surname/family name exactly as printed","birthDate":"YYYY-MM-DD","nationality":"ISO2 or ISO3","passportNumber":"document number","passportExpiry":"YYYY-MM-DD","sex":"M or F","mrzText":"optional raw MRZ","confidence":0.0}
+Rules:
+- firstName = given names (not surname). lastName = surname/family name.
+- birthDate is Date of Birth (NOT expiry). passportExpiry is Date of Expiry (NOT birth).
+- Prefer MRZ YYMMDD for dates when readable: birth at positions 14-19 of line 2, expiry at 22-27.
+- Empty string for unknown. Never invent values. Do not swap birth and expiry.`;
 
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
@@ -217,25 +283,7 @@ Use empty string for unknown fields. Do not invent values.`;
         "Content-Type": "application/json",
       },
       signal: controller.signal,
-      body: JSON.stringify({
-        model,
-        temperature: 0,
-        max_tokens: Number(process.env.AI_MAX_OUTPUT_TOKENS || 800),
-        messages: [
-          {
-            role: "user",
-            content: [
-              { type: "text", text: prompt },
-              {
-                type: "image_url",
-                image_url: {
-                  url: `data:${mime};base64,${rawBase64}`,
-                },
-              },
-            ],
-          },
-        ],
-      }),
+      body: JSON.stringify(chatCompletionBody(model, prompt, mime, rawBase64)),
     });
 
     if (!response.ok) {

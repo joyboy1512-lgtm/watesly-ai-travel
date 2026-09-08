@@ -134,6 +134,7 @@ function mapRate(
     boardCode,
     boardName,
     net: convert(netRaw),
+    netBasis: "stay",
     sellingRate: Number.isFinite(selling) ? convert(selling as number) : undefined,
     currency: displayCurrency,
     paymentType: rate.paymentType,
@@ -204,7 +205,7 @@ function sourceMeta(liveMode: boolean, baseUrl?: string) {
     return { source: "mock", sourceLabel: "تجريبي" };
   }
   return sandbox
-    ? { source: "hotelbeds-sandbox" as const, sourceLabel: "Hotelbeds Sandbox" }
+    ? { source: "hotelbeds-sandbox" as const, sourceLabel: "نتيجة تجريبية من Hotelbeds Sandbox" }
     : { source: "hotelbeds-live" as const, sourceLabel: "Hotelbeds Live" };
 }
 

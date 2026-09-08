@@ -38,7 +38,8 @@ export function buildMockHotelRateTree(input: {
   for (const room of roomVariants(hotel)) {
     const mappedRates: HotelRateOption[] = [];
     for (const board of BOARD_VARIANTS) {
-      const net = Number((nightMajor * room.mult * board.mult).toFixed(2));
+      const nightNet = Number((nightMajor * room.mult * board.mult).toFixed(3));
+      const net = Number((nightNet * nights).toFixed(3));
       const freeCancellation = hotel.freeCancellation && board.code !== "RO";
       const paymentType = hotel.noPrepayment ? "AT_HOTEL" : "AT_WEB";
       const rateKey = `${providerOfferRef}-${room.code}-${board.code}-${idx}`;
@@ -51,6 +52,7 @@ export function buildMockHotelRateTree(input: {
         boardCode: board.code,
         boardName: boardLabelAr(board.code),
         net,
+        netBasis: "stay",
         currency,
         paymentType,
         freeCancellation,
@@ -64,7 +66,7 @@ export function buildMockHotelRateTree(input: {
             ]
           : [
               {
-                amount: net * nights,
+                amount: net,
                 currency,
                 from: new Date().toISOString(),
               },
@@ -78,6 +80,10 @@ export function buildMockHotelRateTree(input: {
             ? [{ name: "عرض إفطار مجاني", remark: "Mock promotion" }]
             : [],
         allotment: Math.max(0, hotel.roomsAvailable - idx % 3),
+        dailyRates: Array.from({ length: nights }, (_, offset) => ({
+          offset,
+          net: nightNet,
+        })),
       };
       mappedRates.push(rate);
       rateOptions.push(rate);

@@ -18,7 +18,7 @@ Dashboard: `/dashboard/providers` — catalog, encrypted credentials, enable/dis
 | Provider | Status | Activate |
 |----------|--------|----------|
 | Mock | live | `FLIGHT_PROVIDER=mock` |
-| Duffel | live | `FLIGHT_PROVIDER=duffel` + `DUFFEL_ACCESS_TOKEN` |
+| Duffel | live (flight search) | `FLIGHT_PROVIDER=duffel` + `DUFFEL_ACCESS_TOKEN` (`duffel_test_…` للتجربة) |
 | Amadeus | ready (live search) | `FLIGHT_PROVIDER=amadeus` + `AMADEUS_CLIENT_ID` / `AMADEUS_CLIENT_SECRET` |
 | Travelport | scaffold | `FLIGHT_PROVIDER=travelport` + `TRAVELPORT_*` |
 | Travelfusion (LCC/domestic) | scaffold | `FLIGHT_PROVIDER=travelfusion` + `TRAVELFUSION_*` |

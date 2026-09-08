@@ -41,3 +41,5 @@ export { AmadeusFlightProvider } from "./flights/amadeus-flight-provider";
 export { TravelportFlightProvider } from "./flights/travelport-flight-provider";
 export { TravelfusionFlightProvider } from "./flights/travelfusion-flight-provider";
 export { DuffelTravelProvider } from "./duffel";
+export * from "./ops";
+export * from "./payments/payment-gateway";

@@ -541,3 +541,5 @@ export {
   type PassportScanInput,
   type PassportScanResult,
 } from "./passport";
+
+export * from "./voice";

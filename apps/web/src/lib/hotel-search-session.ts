@@ -4,6 +4,7 @@ export type StoredHotelOffer = {
   id: string;
   description: string;
   sellAmountMinor: number;
+  costAmountMinor?: number;
   currency: string;
   details: Record<string, unknown>;
 };
@@ -11,7 +12,7 @@ export type StoredHotelOffer = {
 export type HotelSearchSession = {
   hotels: StoredHotelOffer[];
   filters: HotelSearchFilters;
-  sortKey: "price_asc" | "price_desc" | "rating_desc" | "best";
+  sortKey: "price_asc" | "price_desc" | "rating_desc" | "best" | "distance";
   meta: {
     stayQuery: string;
     departDate: string;

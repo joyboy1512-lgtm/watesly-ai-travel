@@ -237,26 +237,26 @@ function LegBlock({
         <div className="shop-ticket-route" aria-hidden>
           <svg
             className="shop-ticket-route-svg"
-            viewBox="0 0 160 38"
+            viewBox="0 0 160 34"
             preserveAspectRatio="none"
             focusable="false"
           >
             <path
               className="shop-ticket-route-arc"
-              d="M2 30 C 28 30, 42 8, 80 8 C 118 8, 132 30, 158 30"
+              d="M0 26 C 24 26, 40 7, 80 7 C 120 7, 136 26, 160 26"
               fill="none"
               stroke="#2a6f97"
               strokeWidth="2"
               strokeLinecap="round"
               strokeDasharray="3 4"
             />
-            <circle cx="2" cy="30" r="2.8" fill="#fff" stroke="#2a6f97" strokeWidth="1.5" />
-            <circle cx="158" cy="30" r="2.8" fill="#fff" stroke="#2a6f97" strokeWidth="1.5" />
-            <g className="shop-ticket-route-plane" transform="translate(80 9)">
-              <circle r="8.5" fill="#fff" stroke="#d5e3ef" strokeWidth="1" />
+            <circle cx="0" cy="26" r="2.6" fill="#fff" stroke="#2a6f97" strokeWidth="1.5" />
+            <circle cx="160" cy="26" r="2.6" fill="#fff" stroke="#2a6f97" strokeWidth="1.5" />
+            <g className="shop-ticket-route-plane" transform="translate(80 8)">
+              <circle r="8" fill="#fff" stroke="#d5e3ef" strokeWidth="1" />
               <path
                 fill="#2a6f97"
-                transform="rotate(90) scale(0.62) translate(-12 -12)"
+                transform="rotate(90) scale(0.58) translate(-12 -12)"
                 d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"
               />
             </g>

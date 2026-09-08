@@ -5963,10 +5963,10 @@ html[dir="ltr"] .shop-ticket-card-v2.shop-ticket-card-bp > .shop-ticket-body-v2:
 
 .shop-ticket-card-bp .shop-ticket-leg-v2 {
   display: grid;
-  grid-template-columns: minmax(108px, 0.95fr) minmax(70px, 0.78fr) minmax(150px, 1.55fr) minmax(70px, 0.78fr);
-  gap: 0.25rem 0.12rem;
+  grid-template-columns: minmax(100px, 0.9fr) minmax(58px, 0.62fr) minmax(170px, 1.75fr) minmax(58px, 0.62fr);
+  gap: 0.2rem 0;
   align-items: center;
-  padding: 0.55rem 0.55rem;
+  padding: 0.55rem 0.5rem;
   border: 1px solid #dfe7f0;
   border-radius: 12px;
   background: #fff;
@@ -5974,7 +5974,7 @@ html[dir="ltr"] .shop-ticket-card-v2.shop-ticket-card-bp > .shop-ticket-body-v2:
 }
 
 .shop-ticket-card-bp .shop-ticket-leg-v2.kayak-leg {
-  grid-template-columns: 22px minmax(100px, 0.95fr) minmax(68px, 0.78fr) minmax(150px, 1.55fr) minmax(68px, 0.78fr);
+  grid-template-columns: 22px minmax(96px, 0.88fr) minmax(56px, 0.6fr) minmax(170px, 1.75fr) minmax(56px, 0.6fr);
 }
 
 .shop-ticket-card-bp .shop-ticket-kayak-check input {
@@ -6016,7 +6016,13 @@ html[dir="ltr"] .shop-ticket-card-v2.shop-ticket-card-bp > .shop-ticket-body-v2:
 }
 
 .shop-ticket-card-bp .shop-ticket-time {
-  text-align: center;
+  text-align: end;
+  padding-inline: 0;
+  min-width: 0;
+}
+
+.shop-ticket-card-bp .shop-ticket-time.end {
+  text-align: start;
 }
 
 .shop-ticket-card-bp .shop-ticket-time strong {
@@ -6030,15 +6036,16 @@ html[dir="ltr"] .shop-ticket-card-v2.shop-ticket-card-bp > .shop-ticket-body-v2:
 
 .shop-ticket-card-bp .shop-ticket-time span {
   display: block;
-  margin-top: 0.2rem;
-  font-size: 0.76rem;
+  margin-top: 0.12rem;
+  font-size: 0.8rem;
   font-weight: 800;
-  color: #1e293b;
+  color: #0a2f55;
+  letter-spacing: 0.03em;
 }
 
 .shop-ticket-card-bp .shop-ticket-time .shop-ticket-day {
   display: block;
-  margin-top: 0.12rem;
+  margin-top: 0.1rem;
   font-size: 0.64rem;
   color: #64748b;
   font-weight: 600;
@@ -6050,8 +6057,8 @@ html[dir="ltr"] .shop-ticket-card-v2.shop-ticket-card-bp > .shop-ticket-body-v2:
   gap: 0.02rem;
   justify-items: center;
   min-width: 0;
-  /* Pull the arc toward the airport-code columns */
-  margin-inline: -0.55rem;
+  /* Overlap path into the code columns so endpoints kiss the IATA codes */
+  margin-inline: -0.95rem;
   padding-inline: 0;
   align-self: center;
 }
@@ -6068,7 +6075,7 @@ html[dir="ltr"] .shop-ticket-card-v2.shop-ticket-card-bp > .shop-ticket-body-v2:
 .shop-ticket-card-bp .shop-ticket-route-svg {
   display: block;
   width: 100%;
-  height: 2.15rem;
+  height: 1.95rem;
   max-width: none;
   overflow: visible;
 }
@@ -6112,21 +6119,6 @@ html[dir="ltr"] .shop-ticket-card-v2.shop-ticket-card-bp > .shop-ticket-body-v2:
   font-size: 0.66rem;
   font-weight: 700;
   color: #64748b;
-}
-
-.shop-ticket-card-bp .shop-ticket-time {
-  text-align: center;
-  padding-inline: 0.05rem;
-  min-width: 0;
-}
-
-.shop-ticket-card-bp .shop-ticket-time span {
-  display: block;
-  margin-top: 0.12rem;
-  font-size: 0.78rem;
-  font-weight: 800;
-  color: #0a2f55;
-  letter-spacing: 0.02em;
 }
 
 /* Legacy arc helpers — keep inert under boarding-pass cards */

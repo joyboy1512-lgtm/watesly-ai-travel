@@ -208,7 +208,7 @@ export function AppShell({
         localStorage.setItem("watesly_travel_session", JSON.stringify(next));
         setSession(next);
         setNameDraft(me.user.name);
-        const stored = localStorage.getItem("watesly_travel_currency");
+        const stored = localStorage.getItem("weekendgate_preferred_currency");
         if (!stored && me.organization.defaultCurrency) {
           setPreferredCurrency(me.organization.defaultCurrency);
           setCurrency(me.organization.defaultCurrency);

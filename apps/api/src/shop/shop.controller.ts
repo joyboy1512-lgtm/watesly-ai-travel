@@ -38,6 +38,11 @@ export class ShopController {
     return this.shop.bootstrap();
   }
 
+  @Get("fx")
+  fx() {
+    return this.shop.fx();
+  }
+
   @Get("airports")
   airports(@Query("q") q?: string, @Query("limit") limit?: string) {
     return this.shop.airports(q, limit ? Number(limit) : 20);

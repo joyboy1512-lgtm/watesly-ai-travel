@@ -20,9 +20,17 @@ import {
   type ShopUiKey,
   type ShopUiVars,
 } from "@watesly-travel/shared";
+import { shopFetch } from "@/lib/shop-session";
+import { configureShopMoney, formatShopMoneyMinor } from "@/lib/shop-money";
 
 const LOCALE_KEY = "weekendgate_locale";
 const CURRENCY_KEY = "weekendgate_preferred_currency";
+
+type FxRate = {
+  fromCurrency: string;
+  toCurrency: string;
+  rate: number;
+};
 
 type ShopI18nValue = {
   locale: ShopLocale;
@@ -32,6 +40,8 @@ type ShopI18nValue = {
   setCurrency: (currency: ShopCurrency) => void;
   t: (key: ShopUiKey, vars?: ShopUiVars) => string;
   formatKwdMinor: (kwdMinor: number) => string;
+  /** Convert + format any priced amount into the selected shop currency. */
+  formatMoney: (amountMinor: number, fromCurrency?: string) => string;
   locales: readonly ShopLocale[];
   currencies: readonly ShopCurrency[];
 };
@@ -63,6 +73,9 @@ function readCurrency(): ShopCurrency {
 export function ShopI18nProvider({ children }: { children: ReactNode }) {
   const [locale, setLocaleState] = useState<ShopLocale>("ar");
   const [currency, setCurrencyState] = useState<ShopCurrency>("KWD");
+  const [baseCurrency, setBaseCurrency] = useState("KWD");
+  const [rates, setRates] = useState<FxRate[]>([]);
+  const [moneyTick, setMoneyTick] = useState(0);
 
   useEffect(() => {
     const nextLocale = readLocale();
@@ -72,6 +85,44 @@ export function ShopI18nProvider({ children }: { children: ReactNode }) {
     document.documentElement.lang = nextLocale;
     document.documentElement.dir = localeDir(nextLocale);
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    shopFetch<{
+      displayCurrency?: string;
+      rates?: FxRate[];
+    }>("/shop/fx")
+      .then((payload) => {
+        if (cancelled) return;
+        setBaseCurrency((payload.displayCurrency || "KWD").toUpperCase());
+        setRates(Array.isArray(payload.rates) ? payload.rates : []);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setRates([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    configureShopMoney({
+      preferredCurrency: currency,
+      baseCurrency,
+      rates,
+      active: true,
+    });
+    setMoneyTick((n) => n + 1);
+    return () => {
+      configureShopMoney({
+        preferredCurrency: "KWD",
+        baseCurrency: "KWD",
+        rates: [],
+        active: false,
+      });
+    };
+  }, [currency, baseCurrency, rates]);
 
   const setLocale = useCallback((next: ShopLocale) => {
     setLocaleState(next);
@@ -100,14 +151,16 @@ export function ShopI18nProvider({ children }: { children: ReactNode }) {
       dir: localeDir(locale),
       setLocale,
       setCurrency,
-      // Use the selected locale for UI dictionary.
-      // Previously it was hardcoded to Arabic, so choosing EN only changed direction.
-        t: (key, vars) => tShop(locale, key, vars),
+      t: (key, vars) => tShop(locale, key, vars),
       formatKwdMinor: (kwdMinor) => formatFromKwdMinor(kwdMinor, currency, locale),
+      formatMoney: (amountMinor, fromCurrency) =>
+        formatShopMoneyMinor(amountMinor, fromCurrency || baseCurrency),
       locales: SHOP_LOCALES,
       currencies: SHOP_CURRENCIES,
     }),
-    [locale, currency, setLocale, setCurrency],
+    // moneyTick forces consumers that read formatMoney via context to refresh labels
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [locale, currency, setLocale, setCurrency, baseCurrency, moneyTick],
   );
 
   return <ShopI18nContext.Provider value={value}>{children}</ShopI18nContext.Provider>;
@@ -121,6 +174,8 @@ const FALLBACK_I18N: ShopI18nValue = {
   setCurrency: () => undefined,
   t: (key, vars) => tShop("ar", key, vars),
   formatKwdMinor: (kwdMinor) => formatFromKwdMinor(kwdMinor, "KWD", "ar"),
+  formatMoney: (amountMinor, fromCurrency) =>
+    formatShopMoneyMinor(amountMinor, fromCurrency || "KWD"),
   locales: SHOP_LOCALES,
   currencies: SHOP_CURRENCIES,
 };

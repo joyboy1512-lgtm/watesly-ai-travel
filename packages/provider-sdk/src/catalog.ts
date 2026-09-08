@@ -22,17 +22,8 @@ export type ProviderCatalogEntry = {
   notes?: string;
 };
 
+/** Live / ready / scaffold adapters. Experimental mock is intentionally omitted. */
 export const PROVIDER_CATALOG: ProviderCatalogEntry[] = [
-  {
-    providerKey: "mock",
-    displayName: "Mock",
-    displayNameAr: "تجريبي (Mock)",
-    description: "مزود تجريبي للاختبار بدون API خارجي",
-    capabilities: ["flight", "hotel"],
-    status: "live",
-    envKeys: ["TRAVEL_MOCK_ENABLED"],
-    credentialFields: [],
-  },
   {
     providerKey: "duffel",
     displayName: "Duffel",
@@ -81,7 +72,8 @@ export const PROVIDER_CATALOG: ProviderCatalogEntry[] = [
         placeholder: "test.api.amadeus.com أو api.amadeus.com",
       },
     ],
-    notes: "فعّل FLIGHT_PROVIDER=amadeus بعد إدخال المفاتيح",
+    notes:
+      "يُبحث بالتوازي مع باقي محركات الطيران المفعّلة — الأولوية للسعر الأرخص",
   },
   {
     providerKey: "travelport",

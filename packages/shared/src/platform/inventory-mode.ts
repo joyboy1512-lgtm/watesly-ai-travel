@@ -31,8 +31,16 @@ function paymentEnv(): "sandbox" | "production" {
 }
 
 export function getInventoryMode(): InventoryMode {
-  const flightProvider = normalizeProvider(envGet("FLIGHT_PROVIDER"), "mock");
-  const hotelProvider = normalizeProvider(envGet("HOTEL_PROVIDER"), "mock");
+  const flightProvider = normalizeProvider(
+    envGet("FLIGHT_PROVIDER") ||
+      (envGet("DUFFEL_ACCESS_TOKEN") ? "duffel" : undefined),
+    "duffel",
+  );
+  const hotelProvider = normalizeProvider(
+    envGet("HOTEL_PROVIDER") ||
+      (envGet("HOTELBEDS_API_KEY") ? "hotelbeds" : undefined),
+    "hotelbeds",
+  );
   const pay = paymentEnv();
   return {
     flightProvider,

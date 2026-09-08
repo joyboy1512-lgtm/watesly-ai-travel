@@ -45,6 +45,7 @@ export const NAV_PERMISSIONS: Record<string, string | null> = {
   "/dashboard/quotes": "conversations.read",
   "/dashboard/bookings": "conversations.read",
   "/dashboard/providers": "providers.manage",
+  "/dashboard/currency": "settings.manage",
   "/dashboard/pricing": "pricing.manage",
   "/dashboard/campaigns": "campaigns.manage",
   "/dashboard/templates": "campaigns.manage",

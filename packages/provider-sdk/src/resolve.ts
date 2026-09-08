@@ -19,8 +19,9 @@ import type {
   TravelProviderAdapter,
 } from "./types";
 
+/** Mock is opt-in only. Production / multi-provider search never falls back to it. */
 function mockFallbackAllowed(): boolean {
-  return process.env.TRAVEL_MOCK_ENABLED !== "false";
+  return process.env.TRAVEL_MOCK_ENABLED === "true";
 }
 
 function normalizeProviderAlias(raw: string): string {
@@ -60,11 +61,20 @@ export function isHotelbedsTransferKey(raw?: string): boolean {
  * Priority: explicit preferred → FLIGHT_PROVIDER → TRAVEL_DEFAULT_PROVIDER → mock
  */
 export function resolveFlightProviderKey(preferred?: string): string {
-  const fromEnv =
+  const raw =
+    preferred?.trim() ||
     process.env.FLIGHT_PROVIDER?.trim() ||
     process.env.TRAVEL_DEFAULT_PROVIDER?.trim() ||
-    "mock";
-  return normalizeProviderAlias(preferred || fromEnv);
+    (process.env.DUFFEL_ACCESS_TOKEN?.trim() ? "duffel" : "") ||
+    (process.env.AMADEUS_CLIENT_ID?.trim() ? "amadeus" : "") ||
+    (mockFallbackAllowed() ? "mock" : "duffel");
+  const key = normalizeProviderAlias(raw);
+  // Prefer live engines over experimental mock unless explicitly requested.
+  if (key === "mock" && preferred?.trim().toLowerCase() !== "mock" && !mockFallbackAllowed()) {
+    if (process.env.DUFFEL_ACCESS_TOKEN?.trim()) return "duffel";
+    if (process.env.AMADEUS_CLIENT_ID?.trim()) return "amadeus";
+  }
+  return key;
 }
 
 /**

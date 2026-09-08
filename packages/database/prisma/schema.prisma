@@ -48,6 +48,7 @@ model Organization {
   referrals            Referral[]
   customerNotifications CustomerNotification[]
   cmsDeals             CmsDeal[]
+  fxRates              OrganizationFxRate[]
 
   @@index([status])
 }
@@ -520,21 +521,41 @@ model AiUsageLog {
 }
 
 model TravelProviderConfig {
-  id               String   @id @default(uuid())
+  id               String    @id @default(uuid())
   organizationId   String
   providerKey      String
   displayName      String
-  enabled          Boolean  @default(true)
+  enabled          Boolean   @default(true)
   capabilities     Json?
-  priority         Int      @default(100)
+  priority         Int       @default(100)
   configEncrypted  String?
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  archivedAt       DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   @@unique([organizationId, providerKey])
   @@index([organizationId, enabled, priority])
+  @@index([organizationId, archivedAt])
+}
+
+/// Exchange rates for display currency conversion.
+/// `rate` means: 1 unit of fromCurrency = rate units of toCurrency.
+model OrganizationFxRate {
+  id             String   @id @default(uuid())
+  organizationId String
+  fromCurrency   String
+  toCurrency     String
+  rate           Float
+  source         String   @default("manual")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, fromCurrency, toCurrency])
+  @@index([organizationId, toCurrency])
 }
 
 model PricingRule {

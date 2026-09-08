@@ -108,6 +108,7 @@ const NAV = [
   { href: "/dashboard/quotes", label: "عروض الأسعار" },
   { href: "/dashboard/bookings", label: "الحجوزات" },
   { href: "/dashboard/providers", label: "مزودو السفر" },
+  { href: "/dashboard/currency", label: "العملة وسعر الصرف" },
   { href: "/dashboard/pricing", label: "قواعد التسعير" },
   { href: "/dashboard/whatsapp", label: "واتساب" },
   { href: "/dashboard/channels", label: "القنوات" },

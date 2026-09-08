@@ -1,5 +1,6 @@
 export * from "./constants";
 export * from "./currency";
+export * from "./fx";
 export * from "./types";
 export * from "./permissions";
 export * from "./mock-ancillary";

@@ -67,11 +67,16 @@ function mapDuffelSegment(seg: DuffelSegment) {
   ).trim();
   let flightNumber: string | undefined;
   if (flightNumRaw) {
-    if (/^[A-Z0-9]{2}\d/i.test(flightNumRaw)) {
-      flightNumber = flightNumRaw.toUpperCase();
+    const upper = flightNumRaw.toUpperCase();
+    // Already prefixed with a letter IATA (e.g. KU413, U21234) — keep as-is.
+    // Pure numeric values like "0641" must get the carrier prefix.
+    if (/^[A-Z]{2}\d/.test(upper) || /^[A-Z]\d{2,}/.test(upper)) {
+      flightNumber = upper;
+    } else if (code && upper.startsWith(code)) {
+      flightNumber = upper;
     } else {
-      const digits = flightNumRaw.replace(/^[A-Za-z]+/, "");
-      flightNumber = code ? `${code}${digits || flightNumRaw}` : flightNumRaw;
+      const digits = upper.replace(/^[A-Z]+/, "");
+      flightNumber = code ? `${code}${digits || upper}` : upper;
     }
   }
 

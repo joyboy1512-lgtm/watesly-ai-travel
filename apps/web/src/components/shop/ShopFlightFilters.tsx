@@ -56,7 +56,7 @@ function moneyOrEmpty(
   minor: number,
   currency: string,
   fromLabel: string,
-  formatMoney: (amountMinor: number, fromCurrency?: string) => string,
+  formatMoney: (amountMinor?: number | null, fromCurrency?: string) => string,
 ) {
   if (!Number.isFinite(minor) || minor >= Number.MAX_SAFE_INTEGER) return "";
   return `${fromLabel} ${formatMoney(minor, currency)}`;

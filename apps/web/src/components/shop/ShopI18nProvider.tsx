@@ -46,9 +46,9 @@ type ShopI18nValue = {
   t: (key: ShopUiKey, vars?: ShopUiVars) => string;
   formatKwdMinor: (kwdMinor: number) => string;
   /** Convert + format any priced amount into the selected shop currency. */
-  formatMoney: (amountMinor: number, fromCurrency?: string) => string;
+  formatMoney: (amountMinor?: number | null, fromCurrency?: string) => string;
   /** Compact one-line price for cards/tabs/calendar. */
-  formatMoneyCompact: (amountMinor: number, fromCurrency?: string) => string;
+  formatMoneyCompact: (amountMinor?: number | null, fromCurrency?: string) => string;
   locales: readonly ShopLocale[];
   currencies: readonly ShopCurrency[];
 };

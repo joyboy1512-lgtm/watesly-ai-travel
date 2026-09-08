@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect } from "react";
-import { formatMoneyMinor } from "@/lib/format";
 import { useShopCopy } from "@/components/shop/ShopI18nProvider";
 import {
   airlineLogo,
@@ -156,7 +155,7 @@ export function ShopFlightDetailModal({
   onClose,
   onContinue,
 }: Props) {
-  const { currency: displayCurrency } = useShopCopy();
+  const { currency: displayCurrency, formatMoney } = useShopCopy();
   const segs = getSegments(flight.details);
   const returnSegs = getReturnSegments(flight.details);
   const first = segs[0];
@@ -346,7 +345,7 @@ export function ShopFlightDetailModal({
               <li>
                 <span>
                   الأجرة الأساسية{" "}
-                  {formatMoneyMinor(Number(fare.baseAmountMinor), String(fare.currency || flight.currency))}
+                  {formatMoney(Number(fare.baseAmountMinor), String(fare.currency || flight.currency))}
                 </span>
               </li>
             ) : null}
@@ -372,7 +371,7 @@ export function ShopFlightDetailModal({
 
         <footer className="shop-flight-modal-foot">
           <strong data-display-currency={displayCurrency}>
-            {formatMoneyMinor(flight.sellAmountMinor, flight.currency)}
+            {formatMoney(flight.sellAmountMinor, flight.currency)}
           </strong>
           <button type="button" className="shop-flight-continue-btn" onClick={onContinue}>
             اختيار هذه الرحلة

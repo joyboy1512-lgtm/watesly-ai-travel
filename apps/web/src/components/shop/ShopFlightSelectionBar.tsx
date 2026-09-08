@@ -1,6 +1,5 @@
 "use client";
 
-import { formatMoneyMinor } from "@/lib/format";
 import { useShopCopy } from "@/components/shop/ShopI18nProvider";
 import type { ComposedTrip } from "@/lib/flight-compose";
 import {
@@ -104,7 +103,7 @@ export function ShopFlightSelectionBar({
   onClearOutbound,
   onClearReturn,
 }: Props) {
-  const { currency: displayCurrency } = useShopCopy();
+  const { currency: displayCurrency, formatMoney } = useShopCopy();
   const missingReturn = isRoundTrip && !trip.return;
   const title = "رحلة مخصصة";
 
@@ -162,7 +161,7 @@ export function ShopFlightSelectionBar({
 
         <div className="shop-custom-trip-side">
           <strong className="shop-custom-trip-price" data-display-currency={displayCurrency}>
-            {formatMoneyMinor(trip.totalPriceMinor, trip.currency)}
+            {formatMoney(trip.totalPriceMinor, trip.currency)}
           </strong>
           <small>السعر الإجمالي · شامل الضرائب</small>
           <button

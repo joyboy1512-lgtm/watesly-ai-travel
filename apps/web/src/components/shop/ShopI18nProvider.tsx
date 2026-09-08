@@ -21,7 +21,12 @@ import {
   type ShopUiVars,
 } from "@watesly-travel/shared";
 import { shopFetch } from "@/lib/shop-session";
-import { configureShopMoney, formatShopMoneyMinor } from "@/lib/shop-money";
+import {
+  buildShopFxLookup,
+  configureShopMoney,
+  formatAmountInCurrency,
+  formatAmountInCurrencyCompact,
+} from "@/lib/shop-money";
 
 const LOCALE_KEY = "weekendgate_locale";
 const CURRENCY_KEY = "weekendgate_preferred_currency";
@@ -42,6 +47,8 @@ type ShopI18nValue = {
   formatKwdMinor: (kwdMinor: number) => string;
   /** Convert + format any priced amount into the selected shop currency. */
   formatMoney: (amountMinor: number, fromCurrency?: string) => string;
+  /** Compact one-line price for cards/tabs/calendar. */
+  formatMoneyCompact: (amountMinor: number, fromCurrency?: string) => string;
   locales: readonly ShopLocale[];
   currencies: readonly ShopCurrency[];
 };
@@ -75,7 +82,6 @@ export function ShopI18nProvider({ children }: { children: ReactNode }) {
   const [currency, setCurrencyState] = useState<ShopCurrency>("KWD");
   const [baseCurrency, setBaseCurrency] = useState("KWD");
   const [rates, setRates] = useState<FxRate[]>([]);
-  const [moneyTick, setMoneyTick] = useState(0);
 
   useEffect(() => {
     const nextLocale = readLocale();
@@ -106,14 +112,21 @@ export function ShopI18nProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
+  const fxLookup = useMemo(
+    () => buildShopFxLookup(baseCurrency, rates),
+    [baseCurrency, rates],
+  );
+
+  // Keep module mirror in sync during render so any leftover formatMoneyMinor()
+  // calls in the same pass already see the selected currency (no effect lag).
+  configureShopMoney({
+    preferredCurrency: currency,
+    baseCurrency,
+    rates,
+    active: true,
+  });
+
   useEffect(() => {
-    configureShopMoney({
-      preferredCurrency: currency,
-      baseCurrency,
-      rates,
-      active: true,
-    });
-    setMoneyTick((n) => n + 1);
     return () => {
       configureShopMoney({
         preferredCurrency: "KWD",
@@ -122,7 +135,7 @@ export function ShopI18nProvider({ children }: { children: ReactNode }) {
         active: false,
       });
     };
-  }, [currency, baseCurrency, rates]);
+  }, []);
 
   const setLocale = useCallback((next: ShopLocale) => {
     setLocaleState(next);
@@ -137,12 +150,20 @@ export function ShopI18nProvider({ children }: { children: ReactNode }) {
 
   const setCurrency = useCallback((next: ShopCurrency) => {
     setCurrencyState(next);
+    // Apply immediately so the same click's re-render formats with the new currency
+    // even before the next provider render body runs configureShopMoney.
+    configureShopMoney({
+      preferredCurrency: next,
+      baseCurrency,
+      rates,
+      active: true,
+    });
     try {
       localStorage.setItem(CURRENCY_KEY, next);
     } catch {
       /* ignore */
     }
-  }, []);
+  }, [baseCurrency, rates]);
 
   const value = useMemo<ShopI18nValue>(
     () => ({
@@ -154,13 +175,25 @@ export function ShopI18nProvider({ children }: { children: ReactNode }) {
       t: (key, vars) => tShop(locale, key, vars),
       formatKwdMinor: (kwdMinor) => formatFromKwdMinor(kwdMinor, currency, locale),
       formatMoney: (amountMinor, fromCurrency) =>
-        formatShopMoneyMinor(amountMinor, fromCurrency || baseCurrency),
+        formatAmountInCurrency(
+          amountMinor,
+          fromCurrency || baseCurrency,
+          currency,
+          fxLookup,
+          baseCurrency,
+        ),
+      formatMoneyCompact: (amountMinor, fromCurrency) =>
+        formatAmountInCurrencyCompact(
+          amountMinor,
+          fromCurrency || baseCurrency,
+          currency,
+          fxLookup,
+          baseCurrency,
+        ),
       locales: SHOP_LOCALES,
       currencies: SHOP_CURRENCIES,
     }),
-    // moneyTick forces consumers that read formatMoney via context to refresh labels
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [locale, currency, setLocale, setCurrency, baseCurrency, moneyTick],
+    [locale, currency, setLocale, setCurrency, baseCurrency, fxLookup],
   );
 
   return <ShopI18nContext.Provider value={value}>{children}</ShopI18nContext.Provider>;
@@ -175,7 +208,21 @@ const FALLBACK_I18N: ShopI18nValue = {
   t: (key, vars) => tShop("ar", key, vars),
   formatKwdMinor: (kwdMinor) => formatFromKwdMinor(kwdMinor, "KWD", "ar"),
   formatMoney: (amountMinor, fromCurrency) =>
-    formatShopMoneyMinor(amountMinor, fromCurrency || "KWD"),
+    formatAmountInCurrency(
+      amountMinor,
+      fromCurrency || "KWD",
+      "KWD",
+      buildShopFxLookup("KWD"),
+      "KWD",
+    ),
+  formatMoneyCompact: (amountMinor, fromCurrency) =>
+    formatAmountInCurrencyCompact(
+      amountMinor,
+      fromCurrency || "KWD",
+      "KWD",
+      buildShopFxLookup("KWD"),
+      "KWD",
+    ),
   locales: SHOP_LOCALES,
   currencies: SHOP_CURRENCIES,
 };

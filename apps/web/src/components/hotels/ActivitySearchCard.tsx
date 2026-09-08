@@ -1,7 +1,6 @@
 "use client";
 
 import "@/app/hotel-rich.css";
-import { formatMoneyMinor } from "@/lib/format";
 import { useShopCopy } from "@/components/shop/ShopI18nProvider";
 import { HotelLiveBadge } from "./HotelLiveBadge";
 
@@ -21,6 +20,7 @@ type Props = {
 };
 
 export function ActivitySearchCard({ item, destination, onBook }: Props) {
+  const { currency: displayCurrency, formatMoney } = useShopCopy();
   const d = item.extra || {};
   const title = String(d.activityName || item.name);
   const typeLabel = String(d.activityTypeLabel || "نشاط");
@@ -69,7 +69,9 @@ export function ActivitySearchCard({ item, destination, onBook }: Props) {
         </p>
       </div>
       <div className="transfer-search-card-action">
-        <strong>{formatMoneyMinor(item.price, item.currency)}</strong>
+        <strong data-display-currency={displayCurrency}>
+          {formatMoney(item.price, item.currency)}
+        </strong>
         <small>إجمالي النشاط</small>
         {onBook ? (
           <button

@@ -271,13 +271,80 @@ export function layoverMinutes(arriveAt?: string, departAt?: string) {
 }
 
 export function getSegments(details: Record<string, unknown>): FlightSeg[] {
-  return (Array.isArray(details.segments) ? details.segments : []) as FlightSeg[];
+  if (Array.isArray(details.segments) && details.segments.length) {
+    return details.segments as FlightSeg[];
+  }
+  // Duffel nested shape fallback (older payloads before flatten)
+  const offer = details.offer as
+    | { slices?: Array<{ segments?: Array<Record<string, unknown>> }> }
+    | undefined;
+  const segs = offer?.slices?.[0]?.segments;
+  if (!Array.isArray(segs) || !segs.length) return [];
+  return segs.map((seg) => {
+    const marketing = (seg.marketing_carrier || {}) as {
+      iata_code?: string;
+      name?: string;
+    };
+    const origin = (seg.origin || {}) as { iata_code?: string };
+    const destination = (seg.destination || {}) as { iata_code?: string };
+    const code = String(marketing.iata_code || "").toUpperCase();
+    const num = String(seg.marketing_carrier_flight_number || "").trim();
+    return {
+      from: String(
+        seg.originating_airport_iata_code || origin.iata_code || "",
+      ).toUpperCase(),
+      to: String(
+        seg.destination_airport_iata_code || destination.iata_code || "",
+      ).toUpperCase(),
+      departAt: String(seg.departing_at || "") || undefined,
+      arriveAt: String(seg.arriving_at || "") || undefined,
+      airline: marketing.name || code || undefined,
+      airlineCode: code || undefined,
+      flightNumber: num
+        ? /^[A-Z0-9]{2}\d/i.test(num)
+          ? num.toUpperCase()
+          : `${code}${num}`
+        : undefined,
+    } satisfies FlightSeg;
+  });
 }
 
 export function getReturnSegments(details: Record<string, unknown>): FlightSeg[] {
-  return (Array.isArray(details.returnSegments)
-    ? details.returnSegments
-    : []) as FlightSeg[];
+  if (Array.isArray(details.returnSegments) && details.returnSegments.length) {
+    return details.returnSegments as FlightSeg[];
+  }
+  const offer = details.offer as
+    | { slices?: Array<{ segments?: Array<Record<string, unknown>> }> }
+    | undefined;
+  const segs = offer?.slices?.[1]?.segments;
+  if (!Array.isArray(segs) || !segs.length) return [];
+  return segs.map((seg) => {
+    const marketing = (seg.marketing_carrier || {}) as {
+      iata_code?: string;
+      name?: string;
+    };
+    const origin = (seg.origin || {}) as { iata_code?: string };
+    const destination = (seg.destination || {}) as { iata_code?: string };
+    const code = String(marketing.iata_code || "").toUpperCase();
+    const num = String(seg.marketing_carrier_flight_number || "").trim();
+    return {
+      from: String(
+        seg.originating_airport_iata_code || origin.iata_code || "",
+      ).toUpperCase(),
+      to: String(
+        seg.destination_airport_iata_code || destination.iata_code || "",
+      ).toUpperCase(),
+      departAt: String(seg.departing_at || "") || undefined,
+      arriveAt: String(seg.arriving_at || "") || undefined,
+      airline: marketing.name || code || undefined,
+      airlineCode: code || undefined,
+      flightNumber: num
+        ? /^[A-Z0-9]{2}\d/i.test(num)
+          ? num.toUpperCase()
+          : `${code}${num}`
+        : undefined,
+    } satisfies FlightSeg;
+  });
 }
 
 /** Stable key for the outbound itinerary (for round-trip two-step pick). */

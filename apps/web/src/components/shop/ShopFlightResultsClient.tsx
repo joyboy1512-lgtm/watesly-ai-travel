@@ -70,7 +70,7 @@ export function ShopFlightResultsClient() {
   const [inquiryId, setInquiryId] = useState("");
   const [quoteItems, setQuoteItems] = useState<QuoteItem[]>([]);
   const [filters, setFilters] = useState<FlightSearchFilters>(defaultFlightFilters());
-  const [sortKey, setSortKey] = useState<FlightSortKey>("best");
+  const [sortKey, setSortKey] = useState<FlightSortKey>("price_asc");
   const [editOpen, setEditOpen] = useState(false);
   const [draft, setDraft] = useState<FlightResultsSearchParams>(params);
 

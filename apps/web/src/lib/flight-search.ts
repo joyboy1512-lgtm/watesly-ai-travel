@@ -566,8 +566,8 @@ export function summarizeFlightSortTabs(
   const currency = flights[0]?.currency || "KWD";
   if (!flights.length) {
     return [
-      { key: "best", label: "الأفضل", priceMinor: null, durationMins: null, currency },
       { key: "price_asc", label: "الأرخص", priceMinor: null, durationMins: null, currency },
+      { key: "best", label: "الأفضل", priceMinor: null, durationMins: null, currency },
       { key: "duration_asc", label: "الأسرع", priceMinor: null, durationMins: null, currency },
     ];
   }
@@ -599,20 +599,20 @@ export function summarizeFlightSortTabs(
 
   return [
     {
-      key: "best",
-      label: "الأفضل",
-      priceMinor: byBest.sellAmountMinor,
-      durationMins: durationOf(byBest),
-      currency: byBest.currency,
-      flightId: byBest.id,
-    },
-    {
       key: "price_asc",
       label: "الأرخص",
       priceMinor: byPrice.sellAmountMinor,
       durationMins: durationOf(byPrice),
       currency: byPrice.currency,
       flightId: byPrice.id,
+    },
+    {
+      key: "best",
+      label: "الأفضل",
+      priceMinor: byBest.sellAmountMinor,
+      durationMins: durationOf(byBest),
+      currency: byBest.currency,
+      flightId: byBest.id,
     },
     {
       key: "duration_asc",

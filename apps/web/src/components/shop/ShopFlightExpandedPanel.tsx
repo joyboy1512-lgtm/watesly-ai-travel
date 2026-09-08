@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { formatMoneyMinor } from "@/lib/format";
+import { useShopCopy } from "@/components/shop/ShopI18nProvider";
 import type { ComposedTrip } from "@/lib/flight-compose";
 import {
   buildFareOptions,
@@ -214,6 +215,7 @@ export function ShopFlightExpandedPanel({
   onContinueReview,
   onRefreshResults,
 }: Props) {
+  const { currency: displayCurrency } = useShopCopy();
   const [phase, setPhase] = useState<ExpandedPanelPhase>("idle");
   const [selectedFareId, setSelectedFareId] = useState<string | null>(null);
   const [selectedProviderId, setSelectedProviderId] = useState<string | null>(null);
@@ -377,7 +379,7 @@ export function ShopFlightExpandedPanel({
                     <strong>{fare.labelAr}</strong>
                     <span>{fare.label}</span>
                   </header>
-                  <p className="shop-flight-fare-price">
+                  <p className="shop-flight-fare-price" data-display-currency={displayCurrency}>
                     {formatMoneyMinor(fare.totalPriceMinor, trip.currency)}
                   </p>
                   {passengers > 1 ? (

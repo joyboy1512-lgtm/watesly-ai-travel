@@ -1,6 +1,7 @@
 "use client";
 
 import { formatMoneyMinor } from "@/lib/format";
+import { useShopCopy } from "@/components/shop/ShopI18nProvider";
 import {
   airlineLogo,
   computeLegDurationMinutes,
@@ -278,6 +279,8 @@ export function ShopFlightCard({
   onToggleOutbound,
   onToggleReturn,
 }: Props) {
+  // Subscribe to shop currency so prices re-format when the header selector changes.
+  const { currency: displayCurrency } = useShopCopy();
   const segs = getSegments(flight.details);
   const returnSegs = getReturnSegments(flight.details);
   const first = segs[0];
@@ -380,7 +383,7 @@ export function ShopFlightCard({
       </div>
 
       <div className="shop-ticket-side-v2">
-        <strong className="shop-ticket-price">
+        <strong className="shop-ticket-price" data-display-currency={displayCurrency}>
           {formatMoneyMinor(flight.sellAmountMinor, flight.currency)}
         </strong>
         <small className="shop-ticket-price-note">{priceNote}</small>

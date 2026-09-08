@@ -65,7 +65,7 @@ export function ShopFlightFilters({
   destinationLabel,
   onChange,
 }: Props) {
-  const { t } = useShopI18n();
+  const { t, currency: displayCurrency } = useShopI18n();
   const fromWord = t("fromPrice");
   const resolvedOrigin = originLabel || t("departure");
   const resolvedDestination = destinationLabel || t("destination");
@@ -121,7 +121,7 @@ export function ShopFlightFilters({
         </button>
       </div>
 
-      <div className="shop-flight-filter-block">
+      <div className="shop-flight-filter-block" data-display-currency={displayCurrency}>
         <strong>{t("stops")}</strong>
         <label className="shop-flight-filter-radio">
           <em>{moneyOrEmpty(facets.stops.minAny, facets.stops.currency, fromWord)}</em>

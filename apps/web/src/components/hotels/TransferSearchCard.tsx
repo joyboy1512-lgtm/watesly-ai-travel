@@ -2,6 +2,7 @@
 
 import "@/app/hotel-rich.css";
 import { formatMoneyMinor } from "@/lib/format";
+import { useShopCopy } from "@/components/shop/ShopI18nProvider";
 import { HotelLiveBadge } from "./HotelLiveBadge";
 
 export type TransferRow = {

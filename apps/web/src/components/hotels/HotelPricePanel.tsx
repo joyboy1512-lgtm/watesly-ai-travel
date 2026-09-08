@@ -28,7 +28,7 @@ export function HotelPricePanel({
   boardLabel,
   emphasizeTotal = true,
 }: HotelPricePanelInput) {
-  const { t } = useShopCopy();
+  const { t, currency: displayCurrency } = useShopCopy();
   const {
     stayMinor,
     includedTaxMinor,
@@ -44,7 +44,7 @@ export function HotelPricePanel({
   if (variant === "card") {
     return (
       <div className="hotel-price-panel hotel-price-panel-card">
-        <strong className="hotel-price-panel-total">
+        <strong className="hotel-price-panel-total" data-display-currency={displayCurrency}>
           {formatMoneyMinor(tripTotalMinor, currency)}
         </strong>
         <small>

@@ -7,6 +7,7 @@ import {
   durationMinutes,
   flightAirlineNameAr,
   formatClock,
+  formatDay,
   formatMinutesLabel,
   getReturnSegments,
   getSegments,
@@ -186,10 +187,12 @@ function LegBlock({
   const arrTerminal = segs[segs.length - 1]?.arrivalTerminal
     ? `صالة ${segs[segs.length - 1]!.arrivalTerminal}`
     : null;
+  const depDay = formatDay(depRaw.includes("T") ? depRaw.slice(0, 10) : depRaw);
+  const arrDay = formatDay(arrRaw.includes("T") ? arrRaw.slice(0, 10) : arrRaw);
 
   return (
     <div
-      className={`shop-ticket-leg-v2 shop-ticket-leg-p1${mixEnabled ? " kayak-leg" : ""}${
+      className={`shop-ticket-leg-v2 shop-ticket-leg-p1 shop-ticket-leg-bp${mixEnabled ? " kayak-leg" : ""}${
         isReturn ? " is-return" : ""
       }${legSelected ? " is-leg-selected" : ""}`}
       dir="ltr"
@@ -227,11 +230,15 @@ function LegBlock({
           {from}
           {depTerminal ? ` · ${depTerminal}` : ""}
         </span>
+        {depDay ? <small className="shop-ticket-day">{depDay}</small> : null}
       </div>
 
       <div className="shop-ticket-path">
-        <div className="shop-ticket-path-line">
-          <i className="shop-ticket-path-bar" />
+        <div className="shop-ticket-path-line shop-ticket-path-arc">
+          <i className="shop-ticket-path-bar" aria-hidden />
+          <span className="shop-ticket-path-plane" aria-hidden>
+            ✈
+          </span>
           <span className="shop-ticket-meta-duration">{duration}</span>
         </div>
         <span className={`shop-ticket-meta-stops${stops === 0 ? " direct" : ""}`}>
@@ -252,6 +259,7 @@ function LegBlock({
           {to}
           {arrTerminal ? ` · ${arrTerminal}` : ""}
         </span>
+        {arrDay ? <small className="shop-ticket-day">{arrDay}</small> : null}
       </div>
     </div>
   );
@@ -323,7 +331,7 @@ export function ShopFlightCard({
 
   return (
     <article
-      className={`shop-ticket-card shop-ticket-card-v2 shop-ticket-card-p1 shop-ticket-card-${displayLeg}${
+      className={`shop-ticket-card shop-ticket-card-v2 shop-ticket-card-bp shop-ticket-card-p1 shop-ticket-card-${displayLeg}${
         hasReturn && displayLeg === "both" ? " shop-ticket-card-roundtrip" : ""
       }${picked ? " is-picked" : ""}${isExpanded ? " is-expanded" : ""}`}
     >
@@ -381,11 +389,24 @@ export function ShopFlightCard({
         </div>
       </div>
 
-      <div className="shop-ticket-side-v2">
-        <strong className="shop-ticket-price" data-display-currency={displayCurrency}>
-          {formatMoney(flight.sellAmountMinor, flight.currency)}
-        </strong>
-        <small className="shop-ticket-price-note">{priceNote}</small>
+      <aside className="shop-ticket-side-v2 shop-ticket-stub">
+        <div className="shop-ticket-price-block">
+          <strong className="shop-ticket-price" data-display-currency={displayCurrency}>
+            {formatMoney(flight.sellAmountMinor, flight.currency)}
+          </strong>
+          <small className="shop-ticket-price-note">{priceNote}</small>
+        </div>
+
+        <div className="shop-ticket-stub-bags" aria-label="الأمتعة">
+          <span className={hasCabin ? "" : "off"}>
+            🎒 {hasCabin ? cabinBag : "مقصورة حسب الفئة"}
+          </span>
+          <span className={hasChecked ? "" : "off"}>
+            🧳 {hasChecked ? checkedBag : "مسجّلة حسب الفئة"}
+          </span>
+          <span className="shop-ticket-bags-policy">ℹ حسب سياسة الناقلة</span>
+        </div>
+
         <div className="shop-ticket-cta-group">
           <button
             type="button"
@@ -409,16 +430,7 @@ export function ShopFlightCard({
             التفاصيل والشروط
           </button>
         </div>
-      </div>
-
-      <div className="shop-ticket-bags shop-ticket-bags-text shop-ticket-card-footer" aria-label="الأمتعة">
-        <span className={hasCabin ? "" : "off"}>
-          🎒 {hasCabin ? cabinBag : "مقصورة حسب الفئة"}
-        </span>
-        <span className={hasChecked ? "" : "off"}>
-          🧳 {hasChecked ? checkedBag : "مسجّلة حسب الفئة"}
-        </span>
-      </div>
+      </aside>
     </article>
   );
 }

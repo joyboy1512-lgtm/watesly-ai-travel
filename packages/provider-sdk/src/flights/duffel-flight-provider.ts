@@ -1,4 +1,5 @@
 import type { FlightOffer } from "@watesly-travel/shared";
+import { normalizeAirlineNameAr } from "@watesly-travel/shared";
 import { amountToMinor } from "../types";
 import type {
   FlightProviderAdapter,
@@ -12,6 +13,25 @@ const DUFFEL_VERSION = "v2";
 
 type DuffelPassengerType = "adult" | "child" | "infant_without_seat";
 
+type DuffelCarrier = { iata_code?: string; name?: string };
+type DuffelAirportRef = { iata_code?: string; name?: string; terminal?: string };
+
+type DuffelSegment = {
+  originating_airport_iata_code?: string;
+  destination_airport_iata_code?: string;
+  origin?: DuffelAirportRef;
+  destination?: DuffelAirportRef;
+  departing_at?: string;
+  arriving_at?: string;
+  duration?: string;
+  marketing_carrier?: DuffelCarrier;
+  operating_carrier?: DuffelCarrier;
+  marketing_carrier_flight_number?: string;
+  operating_carrier_flight_number?: string;
+  aircraft?: { name?: string; iata_code?: string };
+  passengers?: Array<{ cabin_class_marketing_name?: string }>;
+};
+
 type DuffelOffer = {
   id?: string;
   total_amount?: string;
@@ -20,16 +40,74 @@ type DuffelOffer = {
   owner?: { name?: string; iata_code?: string };
   slices?: Array<{
     duration?: string;
-    segments?: Array<{
-      originating_airport_iata_code?: string;
-      destination_airport_iata_code?: string;
-      departing_at?: string;
-      arriving_at?: string;
-      marketing_carrier?: { iata_code?: string; name?: string };
-      marketing_carrier_flight_number?: string;
-    }>;
+    segments?: DuffelSegment[];
   }>;
 };
+
+function parseIsoDurationMinutes(raw?: string | null): number | null {
+  if (!raw || typeof raw !== "string") return null;
+  const m = raw.trim().match(/^P(?:(\d+)D)?T?(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?$/i);
+  if (!m) return null;
+  const days = Number(m[1] || 0);
+  const hours = Number(m[2] || 0);
+  const mins = Number(m[3] || 0);
+  const secs = Number(m[4] || 0);
+  const total = days * 24 * 60 + hours * 60 + mins + Math.round(secs / 60);
+  return Number.isFinite(total) ? total : null;
+}
+
+function mapDuffelSegment(seg: DuffelSegment) {
+  const marketingCode = (seg.marketing_carrier?.iata_code || "").toUpperCase();
+  const operatingCode = (seg.operating_carrier?.iata_code || "").toUpperCase();
+  const code = marketingCode || operatingCode;
+  const flightNumRaw = String(
+    seg.marketing_carrier_flight_number ||
+      seg.operating_carrier_flight_number ||
+      "",
+  ).trim();
+  let flightNumber: string | undefined;
+  if (flightNumRaw) {
+    const upper = flightNumRaw.toUpperCase();
+    // Already prefixed with a letter IATA (e.g. KU413, U21234) — keep as-is.
+    // Pure numeric values like "0641" must get the carrier prefix.
+    if (/^[A-Z]{2}\d/.test(upper) || /^[A-Z]\d{2,}/.test(upper)) {
+      flightNumber = upper;
+    } else if (code && upper.startsWith(code)) {
+      flightNumber = upper;
+    } else {
+      const digits = upper.replace(/^[A-Z]+/, "");
+      flightNumber = code ? `${code}${digits || upper}` : upper;
+    }
+  }
+
+  const from =
+    seg.originating_airport_iata_code || seg.origin?.iata_code || "";
+  const to =
+    seg.destination_airport_iata_code || seg.destination?.iata_code || "";
+  const airlineName =
+    seg.marketing_carrier?.name ||
+    seg.operating_carrier?.name ||
+    code;
+  const airlineAr = normalizeAirlineNameAr(code, airlineName).ar;
+
+  return {
+    from: String(from).toUpperCase(),
+    to: String(to).toUpperCase(),
+    departAt: seg.departing_at || undefined,
+    arriveAt: seg.arriving_at || undefined,
+    airline: airlineName,
+    airlineAr,
+    airlineCode: code || undefined,
+    marketingAirlineCode: marketingCode || undefined,
+    operatingAirlineCode: operatingCode || undefined,
+    operatingAirlineName: seg.operating_carrier?.name || undefined,
+    flightNumber,
+    aircraft: seg.aircraft?.name || seg.aircraft?.iata_code || undefined,
+    durationMinutes: parseIsoDurationMinutes(seg.duration) ?? undefined,
+    departureTerminal: seg.origin?.terminal || undefined,
+    arrivalTerminal: seg.destination?.terminal || undefined,
+  };
+}
 
 /**
  * Duffel Flights — live/test via DUFFEL_ACCESS_TOKEN (duffel_test_… or duffel_live_…).
@@ -114,17 +192,47 @@ export class DuffelFlightProvider implements FlightProviderAdapter {
     const currency = (offer.total_currency || params.currency || "KWD").toUpperCase();
     const total = offer.total_amount || "0";
     const id = String(offer.id || `duffel_${index}`);
-    const owner =
+    const outSegs = (offer.slices?.[0]?.segments || []).map(mapDuffelSegment);
+    const retSegs = (offer.slices?.[1]?.segments || []).map(mapDuffelSegment);
+    const firstSeg = outSegs[0];
+    const airlineCode = (
       offer.owner?.iata_code ||
-      offer.slices?.[0]?.segments?.[0]?.marketing_carrier?.iata_code ||
-      "XX";
-    const origin = params.origin.toUpperCase();
-    const destination = params.destination.toUpperCase();
+      firstSeg?.airlineCode ||
+      "XX"
+    ).toUpperCase();
+    const airlineName =
+      offer.owner?.name ||
+      firstSeg?.airline ||
+      airlineCode;
+    const airlineAr = normalizeAirlineNameAr(airlineCode, airlineName).ar;
+    const origin = (
+      params.origin ||
+      firstSeg?.from ||
+      ""
+    ).toUpperCase();
+    const destination = (
+      params.destination ||
+      outSegs[outSegs.length - 1]?.to ||
+      ""
+    ).toUpperCase();
     const mode = this.isTestToken() ? "test" : "live";
+    const outDuration =
+      parseIsoDurationMinutes(offer.slices?.[0]?.duration) ??
+      (outSegs.reduce((s, seg) => s + (seg.durationMinutes || 0), 0) || null);
+    const retDuration =
+      parseIsoDurationMinutes(offer.slices?.[1]?.duration) ??
+      (retSegs.reduce((s, seg) => s + (seg.durationMinutes || 0), 0) || null);
+    const durationLabel = (mins: number | null) => {
+      if (mins == null || mins <= 0) return null;
+      const h = Math.floor(mins / 60);
+      const m = mins % 60;
+      return h > 0 ? `${h}س ${m}د` : `${m}د`;
+    };
+
     return {
       providerKey: this.providerKey,
       providerOfferRef: id,
-      description: `Duffel · ${String(owner).toUpperCase()} · ${origin}→${destination}`,
+      description: `${airlineAr} ${origin} → ${destination}`,
       costAmountMinor: amountToMinor(total, currency),
       currency: currency as FlightOffer["currency"],
       revalidationToken: id,
@@ -134,6 +242,25 @@ export class DuffelFlightProvider implements FlightProviderAdapter {
       raw: {
         provider: "duffel",
         mode,
+        airline: airlineName,
+        airlineAr,
+        airlineCode,
+        cabin:
+          offer.slices?.[0]?.segments?.[0]?.passengers?.[0]
+            ?.cabin_class_marketing_name || undefined,
+        duration: durationLabel(outDuration),
+        durationMinutes: outDuration,
+        stops: Math.max(0, outSegs.length - 1),
+        departAt: firstSeg?.departAt,
+        arriveAt: outSegs[outSegs.length - 1]?.arriveAt,
+        segments: outSegs,
+        returnSegments: retSegs,
+        returnDate: params.returnDate ?? null,
+        returnDuration: durationLabel(retDuration),
+        returnDurationMinutes: retDuration,
+        returnStops: Math.max(0, retSegs.length - 1),
+        tripType: retSegs.length ? "roundtrip" : "oneway",
+        // Keep nested Duffel payload for revalidate / booking.
         offer,
       },
     };

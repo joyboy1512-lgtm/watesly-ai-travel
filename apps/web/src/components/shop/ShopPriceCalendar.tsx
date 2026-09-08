@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { formatDay } from "@/lib/flight-search";
-import { formatMoneyMinorCompact } from "@/lib/format";
 import { flexibleDateCells, type FlexibleDateCell } from "@/lib/flexible-dates";
 import { shopFetch } from "@/lib/shop-session";
 import { useShopI18n } from "@/components/shop/ShopI18nProvider";
@@ -39,7 +38,7 @@ export function ShopPriceCalendar({
   currentCurrency,
   onPick,
 }: Props) {
-  const { t, locale } = useShopI18n();
+  const { t, locale, currency, formatMoneyCompact } = useShopI18n();
   const cells = useMemo(
     () =>
       flexibleDateCells({
@@ -163,10 +162,10 @@ export function ShopPriceCalendar({
 
   return (
     <section className="shop-price-calendar" aria-label={t("priceCalendar")}>
-      <div className="shop-price-calendar-head">
-        <strong>{t("priceCalendar")}</strong>
-        <span>{t("flexibleDates")}</span>
-      </div>
+          <div className="shop-price-calendar-head" data-display-currency={currency}>
+            <strong>{t("priceCalendar")}</strong>
+            <span>{t("flexibleDates")}</span>
+          </div>
       <p className="shop-hint">{t("priceCalendarHint")}</p>
       <div className="shop-price-calendar-row" role="list">
         {cells.map((cell) => {
@@ -196,7 +195,7 @@ export function ShopPriceCalendar({
                 {state.loading
                   ? "…"
                   : state.priceMinor
-                    ? formatMoneyMinorCompact(state.priceMinor, state.currency)
+                    ? formatMoneyCompact(state.priceMinor, state.currency)
                     : "—"}
               </strong>
               {selected ? <em>{t("selectedDay")}</em> : cheapest ? <em>{t("cheapestDay")}</em> : null}

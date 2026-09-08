@@ -5,8 +5,9 @@ import {
 } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import bcrypt from "bcryptjs";
-import { createHmac, randomInt, timingSafeEqual } from "crypto";
+import { createHmac, randomInt, randomUUID, timingSafeEqual } from "crypto";
 import { Prisma } from "@watesly-travel/database";
+import { defaultRatesToCurrency } from "@watesly-travel/shared";
 import { PrismaService } from "../prisma/prisma.service";
 import { BookingsService } from "../bookings/bookings.service";
 import { BotPipelineService } from "../pipeline/bot-pipeline.service";
@@ -95,6 +96,43 @@ export class ShopService {
       currency: org.defaultCurrency || "KWD",
       timezone: org.timezone || "Asia/Kuwait",
     }));
+  }
+
+  /** Public FX rates for shop display-currency conversion. */
+  async fx() {
+    const org = await this.orgs.resolve();
+    const currency = (org.defaultCurrency || "KWD").toUpperCase();
+    const count = await this.prisma.organizationFxRate.count({
+      where: { organizationId: org.id },
+    });
+    if (count === 0) {
+      const defaults = defaultRatesToCurrency(currency);
+      const now = new Date();
+      await this.prisma.organizationFxRate.createMany({
+        data: defaults.map((r) => ({
+          id: randomUUID(),
+          organizationId: org.id,
+          fromCurrency: r.fromCurrency,
+          toCurrency: r.toCurrency,
+          rate: r.rate,
+          source: "manual",
+          updatedAt: now,
+        })),
+        skipDuplicates: true,
+      });
+    }
+    const rates = await this.prisma.organizationFxRate.findMany({
+      where: { organizationId: org.id },
+      orderBy: [{ fromCurrency: "asc" }],
+    });
+    return {
+      displayCurrency: currency,
+      rates: rates.map((r) => ({
+        fromCurrency: r.fromCurrency,
+        toCurrency: r.toCurrency,
+        rate: r.rate,
+      })),
+    };
   }
 
   async airports(q?: string, limit = 20) {

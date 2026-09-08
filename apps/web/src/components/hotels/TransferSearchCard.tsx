@@ -1,7 +1,7 @@
 "use client";
 
 import "@/app/hotel-rich.css";
-import { formatMoneyMinor } from "@/lib/format";
+import { useShopCopy } from "@/components/shop/ShopI18nProvider";
 import { HotelLiveBadge } from "./HotelLiveBadge";
 
 export type TransferRow = {
@@ -21,6 +21,7 @@ type Props = {
 };
 
 export function TransferSearchCard({ item, from, to, onBook }: Props) {
+  const { currency: displayCurrency, formatMoney } = useShopCopy();
   const d = item.extra || {};
   const typeLabel = String(d.transferTypeLabel || "نقل");
   const vehicle = String(d.vehicleName || "");
@@ -66,7 +67,9 @@ export function TransferSearchCard({ item, from, to, onBook }: Props) {
         </p>
       </div>
       <div className="transfer-search-card-action">
-        <strong>{formatMoneyMinor(item.price, item.currency)}</strong>
+        <strong data-display-currency={displayCurrency}>
+          {formatMoney(item.price, item.currency)}
+        </strong>
         <small>إجمالي النقل</small>
         {onBook ? (
           <button

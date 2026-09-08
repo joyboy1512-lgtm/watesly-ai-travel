@@ -3,8 +3,8 @@
 import { useMemo, useState } from "react";
 import { ShopFlightCard, type FlightCardDisplayLeg } from "@/components/shop/ShopFlightCard";
 import { ShopFlightFilters } from "@/components/shop/ShopFlightFilters";
+import { useShopCopy } from "@/components/shop/ShopI18nProvider";
 import type { ReactNode } from "react";
-import { formatMoneyMinorCompact } from "@/lib/format";
 import {
   flightFiltersActive,
   countFlightFilters,
@@ -52,6 +52,7 @@ type Props = {
 };
 
 export function ShopFlightResults(props: Props) {
+  const { currency: displayCurrency, formatMoneyCompact } = useShopCopy();
   const [filtersOpen, setFiltersOpen] = useState(false);
   const active = flightFiltersActive(props.filters);
   const filterCount = countFlightFilters(props.filters);
@@ -92,9 +93,9 @@ export function ShopFlightResults(props: Props) {
             onClick={() => props.onSortChange(tab.key)}
           >
             <span className="shop-flight-sort-tab-label">{tab.label}</span>
-            <strong className="shop-flight-sort-tab-price">
+            <strong className="shop-flight-sort-tab-price" data-display-currency={displayCurrency}>
               {tab.priceMinor != null
-                ? formatMoneyMinorCompact(tab.priceMinor, tab.currency)
+                ? formatMoneyCompact(tab.priceMinor, tab.currency)
                 : "—"}
             </strong>
             <span className="shop-flight-sort-tab-meta">

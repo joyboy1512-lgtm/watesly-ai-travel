@@ -5,11 +5,19 @@ import {
   currencyMinorFactor,
   formatMoneyMinorShared,
 } from "@watesly-travel/shared";
+import {
+  formatShopMoneyMinor,
+  isShopMoneyActive,
+  convertToShopCurrency,
+} from "./shop-money";
 
 export function formatMoneyMinor(
   amountMinor?: number | null,
   currency: string = DEFAULT_CURRENCY,
 ) {
+  if (isShopMoneyActive()) {
+    return formatShopMoneyMinor(amountMinor, currency);
+  }
   return formatMoneyMinorShared(amountMinor, currency);
 }
 
@@ -19,9 +27,13 @@ export function formatMoneyMinorCompact(
   currency: string = DEFAULT_CURRENCY,
 ) {
   if (amountMinor == null) return "—";
-  const code = (currency || DEFAULT_CURRENCY).toUpperCase();
+  const source = currency || DEFAULT_CURRENCY;
+  const converted = isShopMoneyActive()
+    ? convertToShopCurrency(amountMinor, source)
+    : { amountMinor, currency: source.toUpperCase() };
+  const code = converted.currency;
   const exp = currencyExponent(code);
-  const major = amountMinor / currencyMinorFactor(code);
+  const major = converted.amountMinor / currencyMinorFactor(code);
   const meta = SUPPORTED_CURRENCIES.find((c) => c.code === code);
   const symbol = meta?.symbol || code;
   return `${major.toFixed(exp)} ${symbol}`;

@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { currencyExponent } from "@watesly-travel/shared";
-import { formatMoneyMinor } from "@/lib/format";
 import {
   DEPARTURE_BUCKETS,
   type FlightSearchFilters,
@@ -53,9 +52,14 @@ const BUCKET_COPY: Record<
   evening: { label: "bucketEvening", hint: "bucketEveningHint" },
 };
 
-function moneyOrEmpty(minor: number, currency: string, fromLabel: string) {
+function moneyOrEmpty(
+  minor: number,
+  currency: string,
+  fromLabel: string,
+  formatMoney: (amountMinor?: number | null, fromCurrency?: string) => string,
+) {
   if (!Number.isFinite(minor) || minor >= Number.MAX_SAFE_INTEGER) return "";
-  return `${fromLabel} ${formatMoneyMinor(minor, currency)}`;
+  return `${fromLabel} ${formatMoney(minor, currency)}`;
 }
 
 export function ShopFlightFilters({
@@ -65,7 +69,7 @@ export function ShopFlightFilters({
   destinationLabel,
   onChange,
 }: Props) {
-  const { t } = useShopI18n();
+  const { t, currency: displayCurrency, formatMoney } = useShopI18n();
   const fromWord = t("fromPrice");
   const resolvedOrigin = originLabel || t("departure");
   const resolvedDestination = destinationLabel || t("destination");
@@ -121,10 +125,10 @@ export function ShopFlightFilters({
         </button>
       </div>
 
-      <div className="shop-flight-filter-block">
+      <div className="shop-flight-filter-block" data-display-currency={displayCurrency}>
         <strong>{t("stops")}</strong>
         <label className="shop-flight-filter-radio">
-          <em>{moneyOrEmpty(facets.stops.minAny, facets.stops.currency, fromWord)}</em>
+          <em>{moneyOrEmpty(facets.stops.minAny, facets.stops.currency, fromWord, formatMoney)}</em>
           <span>{t("allCount", { n: facets.stops.any })}</span>
           <input
             type="radio"
@@ -134,7 +138,7 @@ export function ShopFlightFilters({
           />
         </label>
         <label className="shop-flight-filter-radio">
-          <em>{moneyOrEmpty(facets.stops.minDirect, facets.stops.currency, fromWord)}</em>
+          <em>{moneyOrEmpty(facets.stops.minDirect, facets.stops.currency, fromWord, formatMoney)}</em>
           <span>{t("directOnlyCount", { n: facets.stops.direct })}</span>
           <input
             type="radio"
@@ -144,7 +148,7 @@ export function ShopFlightFilters({
           />
         </label>
         <label className="shop-flight-filter-radio">
-          <em>{moneyOrEmpty(facets.stops.minOne, facets.stops.currency, fromWord)}</em>
+          <em>{moneyOrEmpty(facets.stops.minOne, facets.stops.currency, fromWord, formatMoney)}</em>
           <span>{t("oneStopMax", { n: facets.stops.one })}</span>
           <input
             type="radio"
@@ -161,7 +165,7 @@ export function ShopFlightFilters({
           const checked = filters.airlines.includes(a.code);
           return (
             <label key={a.code} className="shop-flight-filter-check">
-              <em>{moneyOrEmpty(a.minPrice, a.currency, fromWord)}</em>
+              <em>{moneyOrEmpty(a.minPrice, a.currency, fromWord, formatMoney)}</em>
               <span>
                 {a.name} ({a.count})
               </span>

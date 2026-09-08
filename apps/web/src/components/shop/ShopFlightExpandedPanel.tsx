@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { formatMoneyMinor } from "@/lib/format";
+import { useShopCopy } from "@/components/shop/ShopI18nProvider";
 import type { ComposedTrip } from "@/lib/flight-compose";
 import {
   buildFareOptions,
@@ -214,6 +214,7 @@ export function ShopFlightExpandedPanel({
   onContinueReview,
   onRefreshResults,
 }: Props) {
+  const { currency: displayCurrency, formatMoney } = useShopCopy();
   const [phase, setPhase] = useState<ExpandedPanelPhase>("idle");
   const [selectedFareId, setSelectedFareId] = useState<string | null>(null);
   const [selectedProviderId, setSelectedProviderId] = useState<string | null>(null);
@@ -292,7 +293,7 @@ export function ShopFlightExpandedPanel({
         setConfirmedPriceMinor(result.provider.totalPriceMinor);
         setValidatedOffer({ fare: result.fare, provider: result.provider });
         setStatusMessage(
-          `تغيّر السعر من ${formatMoneyMinor(result.previousTotalMinor, trip.currency)} إلى ${formatMoneyMinor(result.provider.totalPriceMinor, trip.currency)}`,
+          `تغيّر السعر من ${formatMoney(result.previousTotalMinor, trip.currency)} إلى ${formatMoney(result.provider.totalPriceMinor, trip.currency)}`,
         );
         return;
       }
@@ -377,12 +378,12 @@ export function ShopFlightExpandedPanel({
                     <strong>{fare.labelAr}</strong>
                     <span>{fare.label}</span>
                   </header>
-                  <p className="shop-flight-fare-price">
-                    {formatMoneyMinor(fare.totalPriceMinor, trip.currency)}
+                  <p className="shop-flight-fare-price" data-display-currency={displayCurrency}>
+                    {formatMoney(fare.totalPriceMinor, trip.currency)}
                   </p>
                   {passengers > 1 ? (
                     <small className="shop-flight-fare-per-pax">
-                      {formatMoneyMinor(fare.perPassengerMinor, trip.currency)} / مسافر
+                      {formatMoney(fare.perPassengerMinor, trip.currency)} / مسافر
                     </small>
                   ) : (
                     <small className="shop-flight-fare-per-pax">السعر الإجمالي لمسافر واحد</small>
@@ -431,7 +432,7 @@ export function ShopFlightExpandedPanel({
                       <strong>{prov.providerName}</strong>
                       <span>{selectedFare.labelAr}</span>
                     </div>
-                    <strong>{formatMoneyMinor(prov.totalPriceMinor, prov.currency)}</strong>
+                    <strong>{formatMoney(prov.totalPriceMinor, prov.currency)}</strong>
                   </label>
                 ))}
               </div>
@@ -489,20 +490,20 @@ export function ShopFlightExpandedPanel({
             <div className="shop-flight-expanded-foot-breakdown">
               <div>
                 <span>الأساسي</span>
-                <em>{formatMoneyMinor(footerBreakdown.baseMinor, trip.currency)}</em>
+                <em>{formatMoney(footerBreakdown.baseMinor, trip.currency)}</em>
               </div>
               <div>
                 <span>الضرائب</span>
-                <em>{formatMoneyMinor(footerBreakdown.taxesMinor, trip.currency)}</em>
+                <em>{formatMoney(footerBreakdown.taxesMinor, trip.currency)}</em>
               </div>
               <div>
                 <span>رسوم الخدمة</span>
-                <em>{formatMoneyMinor(footerBreakdown.serviceFeeMinor, trip.currency)}</em>
+                <em>{formatMoney(footerBreakdown.serviceFeeMinor, trip.currency)}</em>
               </div>
               <div className="total">
                 <span>الإجمالي</span>
                 <strong>
-                  {formatMoneyMinor(
+                  {formatMoney(
                     confirmedPriceMinor ?? footerBreakdown.totalMinor,
                     trip.currency,
                   )}
@@ -520,7 +521,7 @@ export function ShopFlightExpandedPanel({
                   <span className="shop-flight-spinner small" aria-hidden /> جاري التحقق من السعر…
                 </span>
               ) : (
-                `متابعة — ${formatMoneyMinor(
+                `متابعة — ${formatMoney(
                   confirmedPriceMinor ?? footerBreakdown.totalMinor,
                   trip.currency,
                 )}`

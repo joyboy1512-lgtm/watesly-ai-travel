@@ -2,7 +2,6 @@
 
 import { translateRoomNameAr, shopGuestCount, shopNightCount, shopRoomCount } from "@watesly-travel/shared";
 import type { HotelRateOption, HotelHighlightBadge } from "@/lib/hotel-search";
-import { formatMoneyMinor } from "@/lib/format";
 import { HotelLiveBadge } from "./HotelLiveBadge";
 import { HotelMediaImage } from "./HotelMediaImage";
 import { HotelPricePanel } from "./HotelPricePanel";
@@ -62,7 +61,7 @@ export function HotelSearchCard({
   highlightLabel,
   onOpen,
 }: Props) {
-  const { t, locale } = useShopCopy();
+  const { t, locale, currency: displayCurrency, formatMoney } = useShopCopy();
   const name = String(hotel.details.name || t("hotelFallback"));
   const stars = Number(hotel.details.stars || 0);
   const guest = guestRatingOf(hotel.details);
@@ -314,10 +313,12 @@ export function HotelSearchCard({
                 />
               ) : (
                 <>
-                  <strong>{formatMoneyMinor(hotel.displayFromMinor, hotel.currency)}</strong>
+                  <strong data-display-currency={displayCurrency}>
+                    {formatMoney(hotel.displayFromMinor, hotel.currency)}
+                  </strong>
                   <em>
                     {t("avgPerNight", {
-                      price: formatMoneyMinor(perNightMinor, hotel.currency),
+                      price: formatMoney(perNightMinor, hotel.currency),
                       taxes: taxesNote,
                     })}
                   </em>

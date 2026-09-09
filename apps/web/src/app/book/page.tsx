@@ -84,7 +84,7 @@ function emptyTraveler(): Traveler {
     nationality: "KW",
     passportNumber: "",
     passportExpiry: "",
-    gender: "",
+    gender: "male",
   };
 }
 
@@ -510,7 +510,10 @@ function FlightCheckout({
             onClick={(e) => e.stopPropagation()}
           >
             <div className="shop-traveler-modal-head">
-              <strong>* مطلوب</strong>
+              <div className="shop-traveler-modal-title">
+                <h3>بيانات المسافر</h3>
+                <span>* مطلوب</span>
+              </div>
               <button
                 type="button"
                 className="shop-flight-modal-close"
@@ -540,49 +543,73 @@ function FlightCheckout({
             </div>
             {scanHint ? <p className="shop-passport-scan-hint">{scanHint}</p> : null}
 
-            <label>
-              نوع المسافر / اللقب
-              <select
-                value={editing.gender}
-                onChange={(e) => {
-                  const gender = e.target.value;
-                  updateEditing({
-                    gender,
-                    title: genderToTitle(gender),
-                  });
-                }}
-              >
-                <option value="">اختر</option>
-                <option value="male">ذكر · Mr</option>
-                <option value="female">أنثى · Mrs</option>
-              </select>
-              <small>
-                يظهر مع الاسم كـ{" "}
-                {titleLabel(editing.title, editing.gender) || "Mr / Mrs"}
-              </small>
-            </label>
-            <label>
-              الاسم الأول
-              <input
-                value={editing.firstName}
-                onChange={(e) => updateEditing({ firstName: e.target.value })}
-              />
-              <small>أدخل الاسم كما هو مكتوب في وثيقة السفر</small>
-            </label>
-            <label>
-              اسم العائلة
-              <input
-                value={editing.lastName}
-                onChange={(e) => updateEditing({ lastName: e.target.value })}
-              />
-              <small>أدخل الاسم كما هو مكتوب في وثيقة السفر</small>
-            </label>
-            <label>
+            <fieldset className="shop-traveler-title-field">
+              <legend>اللقب</legend>
+              <div className="shop-traveler-title-seg" role="radiogroup" aria-label="اللقب">
+                <button
+                  type="button"
+                  role="radio"
+                  aria-checked={editing.title === "mr" || editing.gender === "male"}
+                  className={
+                    editing.title === "mr" || editing.gender === "male" ? "on" : ""
+                  }
+                  onClick={() => updateEditing({ title: "mr", gender: "male" })}
+                >
+                  Mr
+                </button>
+                <button
+                  type="button"
+                  role="radio"
+                  aria-checked={
+                    editing.title === "mrs" ||
+                    editing.title === "ms" ||
+                    editing.gender === "female"
+                  }
+                  className={
+                    editing.title === "mrs" ||
+                    editing.title === "ms" ||
+                    editing.gender === "female"
+                      ? "on"
+                      : ""
+                  }
+                  onClick={() => updateEditing({ title: "mrs", gender: "female" })}
+                >
+                  Mrs
+                </button>
+              </div>
+            </fieldset>
+
+            <div className="shop-traveler-name-row">
+              <label>
+                الاسم الأول
+                <input
+                  value={editing.firstName}
+                  onChange={(e) => updateEditing({ firstName: e.target.value })}
+                  placeholder="كما في الجواز"
+                  autoComplete="given-name"
+                />
+              </label>
+              <label>
+                اسم العائلة
+                <input
+                  value={editing.lastName}
+                  onChange={(e) => updateEditing({ lastName: e.target.value })}
+                  placeholder="كما في الجواز"
+                  autoComplete="family-name"
+                />
+              </label>
+            </div>
+            <p className="shop-traveler-field-hint">
+              أدخل الاسم كما هو مكتوب في وثيقة السفر (بالأحرف الإنجليزية)
+            </p>
+
+            <label className="shop-traveler-dob-field">
               تاريخ الميلاد
               <div className="shop-traveler-dob">
                 <select
                   value={dobDraft.m}
                   onChange={(e) => updateDobPart({ m: e.target.value })}
+                  aria-label="شهر الميلاد"
                 >
                   <option value="">الشهر</option>
                   {MONTHS.map((m) => (
@@ -594,6 +621,7 @@ function FlightCheckout({
                 <input
                   inputMode="numeric"
                   placeholder="يوم"
+                  aria-label="يوم الميلاد"
                   maxLength={2}
                   value={dobDraft.d}
                   onChange={(e) =>
@@ -603,6 +631,7 @@ function FlightCheckout({
                 <input
                   inputMode="numeric"
                   placeholder="سنة"
+                  aria-label="سنة الميلاد"
                   maxLength={4}
                   value={dobDraft.y}
                   onChange={(e) =>
@@ -611,27 +640,31 @@ function FlightCheckout({
                 />
               </div>
             </label>
-            <label>
-              رقم الجواز
-              <input
-                value={editing.passportNumber}
-                onChange={(e) =>
-                  updateEditing({
-                    passportNumber: e.target.value.replace(/\s+/g, "").toUpperCase(),
-                  })
-                }
-                placeholder="كما في الجواز"
-                autoCapitalize="characters"
-              />
-            </label>
-            <label>
-              تاريخ انتهاء الجواز
-              <input
-                type="date"
-                value={editing.passportExpiry || ""}
-                onChange={(e) => updateEditing({ passportExpiry: e.target.value })}
-              />
-            </label>
+
+            <div className="shop-traveler-passport-row">
+              <label>
+                رقم الجواز
+                <input
+                  value={editing.passportNumber}
+                  onChange={(e) =>
+                    updateEditing({
+                      passportNumber: e.target.value.replace(/\s+/g, "").toUpperCase(),
+                    })
+                  }
+                  placeholder="كما في الجواز"
+                  autoCapitalize="characters"
+                />
+              </label>
+              <label>
+                تاريخ انتهاء الجواز
+                <input
+                  type="date"
+                  value={editing.passportExpiry || ""}
+                  onChange={(e) => updateEditing({ passportExpiry: e.target.value })}
+                />
+              </label>
+            </div>
+
             <div className="shop-traveler-modal-foot">
               <button type="button" onClick={() => setEditIndex(null)}>
                 تم

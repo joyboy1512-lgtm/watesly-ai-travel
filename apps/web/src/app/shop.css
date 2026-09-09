@@ -4656,60 +4656,159 @@ html body .shop-date-range-backdrop {
 }
 
 .shop-traveler-modal {
-  width: min(480px, 100%);
+  width: min(560px, 100%);
+  max-height: min(92svh, 860px);
+  overflow: auto;
   background: #fff;
-  border-radius: 12px;
-  padding: 1.1rem;
+  border-radius: 16px;
+  padding: 1.15rem 1.2rem 1.25rem;
   display: grid;
-  gap: 0.75rem;
-  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.25);
+  gap: 0.85rem;
+  box-shadow: 0 24px 56px rgba(15, 23, 42, 0.28);
 }
 
 .shop-traveler-modal-head {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
+  gap: 0.75rem;
 }
 
-.shop-traveler-modal-head strong {
-  font-size: 0.78rem;
-  color: #64748b;
-}
-
-.shop-traveler-modal label {
+.shop-traveler-modal-title {
   display: grid;
-  gap: 0.3rem;
-  font-size: 0.85rem;
-  font-weight: 600;
+  gap: 0.15rem;
 }
 
-.shop-traveler-modal small {
+.shop-traveler-modal-title h3 {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #0a0a0a;
+}
+
+.shop-traveler-modal-title span {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #b91c1c;
+}
+
+.shop-traveler-modal label,
+.shop-traveler-modal .shop-traveler-dob-field,
+.shop-traveler-modal .shop-traveler-title-field {
+  display: grid;
+  gap: 0.35rem;
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.shop-traveler-modal small,
+.shop-traveler-field-hint {
+  margin: -0.35rem 0 0;
   color: #64748b;
-  font-weight: 500;
+  font-weight: 600;
   font-size: 0.74rem;
+  line-height: 1.4;
+}
+
+.shop-traveler-modal input,
+.shop-traveler-modal select {
+  border: 1px solid #c5d0de;
+  border-radius: 10px;
+  padding: 0.7rem 0.8rem;
+  font: inherit;
+  font-weight: 600;
+  color: #0a0a0a;
+  background: #fff;
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.shop-traveler-modal input:focus,
+.shop-traveler-modal select:focus {
+  outline: none;
+  border-color: #1668e3;
+  box-shadow: 0 0 0 3px rgba(22, 104, 227, 0.16);
+}
+
+.shop-traveler-title-field {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+
+.shop-traveler-title-field legend {
+  padding: 0;
+  margin-bottom: 0.35rem;
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.shop-traveler-title-seg {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+}
+
+.shop-traveler-title-seg button {
+  border: 1.5px solid #c5d0de;
+  border-radius: 10px;
+  background: #fff;
+  color: #0a0a0a;
+  font: inherit;
+  font-weight: 800;
+  font-size: 0.92rem;
+  min-height: 2.7rem;
+  cursor: pointer;
+  transition: border-color 0.12s ease, background 0.12s ease, color 0.12s ease;
+}
+
+.shop-traveler-title-seg button.on {
+  border-color: #1668e3;
+  background: #eef4ff;
+  color: #0a2f55;
+  box-shadow: inset 0 0 0 1px rgba(22, 104, 227, 0.25);
+}
+
+.shop-traveler-name-row,
+.shop-traveler-passport-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.65rem;
 }
 
 .shop-traveler-dob {
   display: grid;
-  grid-template-columns: 1.4fr 0.8fr 1fr;
-  gap: 0.45rem;
+  grid-template-columns: 1.35fr 0.85fr 1fr;
+  gap: 0.5rem;
 }
 
 .shop-traveler-modal-foot {
   display: flex;
   justify-content: flex-end;
-  margin-top: 0.25rem;
+  margin-top: 0.15rem;
+  padding-top: 0.35rem;
+  border-top: 1px solid #eef2f7;
 }
 
 .shop-traveler-modal-foot button {
   border: 0;
-  border-radius: 8px;
-  background: #0071c2;
+  border-radius: 999px;
+  background: #001b35;
   color: #fff;
   font: inherit;
   font-weight: 800;
-  padding: 0.65rem 1.25rem;
+  padding: 0.7rem 1.45rem;
   cursor: pointer;
+  min-width: 6.5rem;
+}
+
+.shop-traveler-modal-foot button:hover {
+  background: #00264a;
 }
 
 .shop-passport-file-input {
@@ -4726,35 +4825,37 @@ html body .shop-date-range-backdrop {
   gap: 0.75rem;
   align-items: center;
   justify-content: space-between;
-  padding: 0.75rem 0.85rem;
-  border-radius: 10px;
-  border: 1px solid rgba(0, 113, 194, 0.25);
-  background: linear-gradient(135deg, rgba(0, 113, 194, 0.06), rgba(0, 37, 93, 0.05));
+  padding: 0.85rem 0.95rem;
+  border-radius: 12px;
+  border: 1px solid #cfe0f5;
+  background: linear-gradient(135deg, #f3f8ff, #eef4ff);
 }
 
 .shop-passport-scan-banner strong {
   display: block;
-  color: var(--exp-navy);
-  margin-bottom: 0.15rem;
-  font-size: 0.88rem;
+  color: #001b35;
+  margin-bottom: 0.2rem;
+  font-size: 0.9rem;
+  font-weight: 800;
 }
 
 .shop-passport-scan-banner p {
   margin: 0;
-  color: var(--exp-muted);
+  color: #5b6b7c;
   font-size: 0.78rem;
   line-height: 1.5;
+  max-width: 28rem;
 }
 
 .shop-passport-scan-btn {
   border: 0;
   border-radius: 999px;
-  background: var(--exp-navy);
+  background: #001b35;
   color: #fff;
   font: inherit;
-  font-weight: 700;
+  font-weight: 800;
   font-size: 0.82rem;
-  padding: 0.55rem 0.95rem;
+  padding: 0.6rem 1rem;
   cursor: pointer;
   white-space: nowrap;
 }
@@ -4772,6 +4873,17 @@ html body .shop-date-range-backdrop {
   color: #1e40af;
   font-size: 0.78rem;
   line-height: 1.45;
+}
+
+@media (max-width: 560px) {
+  .shop-traveler-name-row,
+  .shop-traveler-passport-row {
+    grid-template-columns: 1fr;
+  }
+
+  .shop-traveler-dob {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
 }
 
 @media (max-width: 900px) {
@@ -6617,11 +6729,16 @@ html[dir="ltr"] .shop-ticket-card-v2.shop-ticket-card-bp > .shop-ticket-body-v2:
   font-size: 0.72rem;
   font-weight: 800;
   color: #0a0a0a;
-  unicode-bidi: isolate;
   white-space: nowrap;
 }
 
-.shop-ticket-card-bp .shop-ticket-meta-duration span[dir="ltr"] {
+.shop-ticket-card-bp .shop-ticket-meta-duration,
+.shop-ticket-card-bp .shop-ticket-meta-stops {
+  unicode-bidi: plaintext;
+}
+
+.shop-ticket-card-bp .shop-ticket-meta-duration bdi,
+.shop-ticket-card-bp .shop-ticket-meta-stops bdi {
   unicode-bidi: isolate;
   white-space: nowrap;
 }

@@ -106,7 +106,6 @@ function CustomLeg({
         <div className="shop-ticket-path-meta">
           <span
             className={`shop-ticket-meta-stops${stops === 0 ? " direct" : ""}`}
-            dir={(stops ?? 0) > 0 ? "ltr" : undefined}
           >
             {typeof stops === "number" ? stopsLabel(stops) : "—"}
           </span>

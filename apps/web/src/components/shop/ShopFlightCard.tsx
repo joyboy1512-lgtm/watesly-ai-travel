@@ -279,9 +279,8 @@ function LegBlock({
         <div className="shop-ticket-path-meta">
           <span
             className={`shop-ticket-meta-stops${stops === 0 ? " direct" : ""}`}
-            dir={stops > 0 ? "ltr" : undefined}
           >
-            {transitLabel(stops, stopHint, stopCodes)}
+            {stops > 0 ? <bdi>{transitLabel(stops, stopHint, stopCodes)}</bdi> : transitLabel(stops, stopHint, stopCodes)}
           </span>
           {airportChange ? (
             <small className="shop-ticket-airport-change">{airportChange}</small>

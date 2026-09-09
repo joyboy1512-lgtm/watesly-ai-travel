@@ -260,7 +260,7 @@ function LegBlock({
 
       <div className="shop-ticket-path">
         <strong className="shop-ticket-meta-duration">
-          المدة: <span dir="ltr">{duration}</span>
+          المدة: <bdi>{duration}</bdi>
         </strong>
         <div className="shop-ticket-route" aria-hidden>
           <span className="shop-ticket-route-line" />

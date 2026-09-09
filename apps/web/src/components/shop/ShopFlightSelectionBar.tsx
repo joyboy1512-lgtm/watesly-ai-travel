@@ -98,7 +98,7 @@ function CustomLeg({
 
       <div className="shop-ticket-path">
         <span className="shop-ticket-meta-duration">
-          المدة: <span dir="ltr">{durationLabel || "—"}</span>
+          المدة: <bdi>{durationLabel || "—"}</bdi>
         </span>
         <div className="shop-ticket-route" aria-hidden>
           <span className="shop-ticket-route-line" />

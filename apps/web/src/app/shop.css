@@ -6689,8 +6689,8 @@ html[dir="ltr"] .shop-ticket-card-bp .shop-ticket-stub {
 
 .shop-ticket-card-bp .shop-ticket-stub-totals {
   display: grid;
-  gap: 0.15rem;
-  padding: 0.65rem 0.55rem;
+  gap: 0.12rem;
+  padding: 0.5rem 0.55rem 0.45rem;
   background: #f7fafc;
   border-bottom: 1px solid #e4ebf3;
   text-align: center;

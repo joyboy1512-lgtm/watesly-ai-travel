@@ -130,13 +130,27 @@ function stopDurationHint(segs: FlightSeg[]): string | null {
       next.departAt || next.departTime,
     );
     const code = String(cur.to || "").trim().toUpperCase();
+    if (!code) continue;
     if (mins != null && mins > 0) {
-      parts.push(`${code || "توقف"} ${formatMinutesLabel(mins)}`);
-    } else if (code) {
-      parts.push(code);
+      parts.push(`(${code}) ${formatMinutesLabel(mins)}`);
+    } else {
+      parts.push(`(${code})`);
     }
   }
   return parts.length ? parts.join(" · ") : null;
+}
+
+function transitLabel(
+  stops: number,
+  stopHint: string | null,
+  stopCodes: string[],
+): string {
+  if (stops <= 0) return stopsLabel(0);
+  // One clear line: airport + duration, or stop count once — never both duplicated
+  if (stopHint) return stopHint;
+  if (stopCodes.length === 1) return `(${stopCodes[0]}) — ${stopsLabel(1)}`;
+  if (stopCodes.length > 1) return `(${stopCodes.join(", ")}) — ${stopsLabel(stops)}`;
+  return stopsLabel(stops);
 }
 
 function stopAirportCodes(segs: FlightSeg[]): string[] {
@@ -261,20 +275,9 @@ function LegBlock({
             : null}
         </div>
         <div className="shop-ticket-path-meta">
-          {stops === 0 ? (
-            <span className="shop-ticket-meta-stops direct">{stopsLabel(0)}</span>
-          ) : (
-            <>
-              {stopHint ? (
-                <small className="shop-ticket-stop-hint">توقف: {stopHint}</small>
-              ) : null}
-              <span className="shop-ticket-meta-stops">
-                {stopCodes.length
-                  ? `${stopsLabel(stops)} — (${stopCodes.join(", ")})`
-                  : stopsLabel(stops)}
-              </span>
-            </>
-          )}
+          <span className={`shop-ticket-meta-stops${stops === 0 ? " direct" : ""}`}>
+            {transitLabel(stops, stopHint, stopCodes)}
+          </span>
           {airportChange ? (
             <small className="shop-ticket-airport-change">{airportChange}</small>
           ) : null}

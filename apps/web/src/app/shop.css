@@ -79,7 +79,7 @@
 
 .wg-logo-lockup-img {
   display: block;
-  height: 2.65rem;
+  height: 3.35rem;
   width: auto;
   object-fit: contain;
 }
@@ -5057,20 +5057,26 @@ html body .shop-date-range-backdrop {
 
 .shop-flight-sort-tab {
   background: #fff;
-  border: 1px solid var(--exp-border);
-  border-radius: 10px;
+  border: 2px solid var(--exp-blue, #1668e3);
+  border-radius: 12px;
   padding: 0.75rem 0.9rem;
   text-align: start;
   cursor: pointer;
   display: grid;
   gap: 0.15rem;
   font: inherit;
-  transition: border-color 0.15s, box-shadow 0.15s;
+  transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+  box-shadow: inset 0 -3px 0 var(--exp-blue, #1668e3);
 }
 
 .shop-flight-sort-tab.on {
-  border-color: var(--exp-blue);
-  box-shadow: inset 0 -3px 0 var(--exp-blue);
+  border-color: var(--exp-blue, #1668e3);
+  background: #f4f8ff;
+  box-shadow: inset 0 -3px 0 var(--exp-blue, #1668e3);
+}
+
+.shop-flight-sort-tab:hover {
+  background: #f4f8ff;
 }
 
 .shop-flight-sort-tab-label {
@@ -6148,9 +6154,9 @@ html[dir="ltr"] .shop-ticket-card-v2.shop-ticket-card-bp > .shop-ticket-body-v2:
 
 .shop-ticket-card-bp .shop-ticket-day {
   display: block;
-  font-size: 0.72rem;
-  color: #64748b;
-  font-weight: 500;
+  font-size: 0.78rem;
+  color: #0a0a0a;
+  font-weight: 700;
   line-height: 1.25;
   min-height: 1.1em;
 }
@@ -6184,11 +6190,12 @@ html[dir="ltr"] .shop-ticket-card-v2.shop-ticket-card-bp > .shop-ticket-body-v2:
   border-radius: 0;
   padding: 0;
   margin: 0;
-  font-size: 0.7rem;
-  font-weight: 600;
-  color: #64748b;
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: #0a0a0a;
   line-height: 1.2;
-  grid-row: 2;
+  /* Sit above the line, aligned with the clock row */
+  grid-row: 1;
   align-self: end;
   justify-self: center;
 }
@@ -6200,7 +6207,8 @@ html[dir="ltr"] .shop-ticket-card-v2.shop-ticket-card-bp > .shop-ticket-body-v2:
   display: flex;
   align-items: center;
   margin: 0;
-  grid-row: 3;
+  /* Straight path opposite the date row */
+  grid-row: 2;
   align-self: center;
 }
 
@@ -6208,7 +6216,7 @@ html[dir="ltr"] .shop-ticket-card-v2.shop-ticket-card-bp > .shop-ticket-body-v2:
   display: block;
   width: 100%;
   height: 2px;
-  background: #94a3b8;
+  background: #334155;
   border-radius: 999px;
 }
 
@@ -6219,13 +6227,13 @@ html[dir="ltr"] .shop-ticket-card-v2.shop-ticket-card-bp > .shop-ticket-body-v2:
   height: 0.55rem;
   border-radius: 50%;
   background: #fff;
-  border: 1.5px solid #94a3b8;
+  border: 1.5px solid #334155;
   transform: translate(-50%, -50%);
   box-sizing: border-box;
 }
 
 .shop-ticket-card-bp .shop-ticket-path-meta {
-  grid-row: 4;
+  grid-row: 3;
   display: grid;
   justify-items: center;
   gap: 0.08rem;
@@ -6238,21 +6246,22 @@ html[dir="ltr"] .shop-ticket-card-v2.shop-ticket-card-bp > .shop-ticket-body-v2:
   padding: 0.05rem 0.38rem;
   border-radius: 999px;
   background: #e8f7ef;
-  color: #147a45;
-  font-size: 0.64rem;
+  color: #0a0a0a;
+  font-size: 0.7rem;
   font-weight: 800;
 }
 
 .shop-ticket-card-bp .shop-ticket-meta-stops:not(.direct) {
-  font-size: 0.64rem;
-  font-weight: 700;
-  color: #64748b;
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #0a0a0a;
 }
 
 .shop-ticket-card-bp .shop-ticket-stop-hint,
 .shop-ticket-card-bp .shop-ticket-airport-change {
-  font-size: 0.6rem;
-  color: #64748b;
+  font-size: 0.68rem;
+  color: #0a0a0a;
+  font-weight: 700;
 }
 
 /* Hide legacy arc/SVG helpers under boarding-pass cards */
@@ -6480,6 +6489,23 @@ html[dir="ltr"] .shop-ticket-card-bp .shop-ticket-stub {
   font-size: 0.68rem;
   color: var(--exp-muted);
   font-weight: 700;
+}
+
+.shop-ticket-card-bp .shop-ticket-airline-text strong {
+  font-size: 1rem;
+  color: #0f172a;
+  font-weight: 800;
+  line-height: 1.3;
+  white-space: normal !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  max-width: none;
+}
+
+.shop-ticket-card-bp .shop-ticket-airline-logo img,
+.shop-ticket-card-bp .shop-ticket-airline-logo .shop-ticket-logo-fallback {
+  width: 64px !important;
+  height: 64px !important;
 }
 
 .shop-ticket-time .shop-ticket-day {

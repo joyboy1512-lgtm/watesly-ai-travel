@@ -187,8 +187,8 @@
 }
 
 .shop-root.wg-new-ui .exp-header-white .wg-topbar {
-  min-height: 4rem;
-  padding-block: 0.55rem;
+  min-height: 4.75rem;
+  padding-block: 0.65rem;
 }
 
 .shop-root.wg-new-ui .exp-header-white .wg-topbar-contact {
@@ -215,7 +215,7 @@
 
 .shop-root.wg-new-ui .wg-topbar-logo .wg-logo-lockup-img {
   display: block;
-  height: clamp(2.35rem, 3.6vw, 2.85rem);
+  height: clamp(3.1rem, 5vw, 3.75rem);
   width: auto;
   object-fit: contain;
   filter: none;
@@ -225,7 +225,7 @@
 .shop-root.wg-new-ui .wg-header-brand .wg-logo-lockup-img,
 .shop-root.wg-new-ui .shop-brand .wg-logo-lockup-img {
   display: block;
-  height: clamp(2.35rem, 3.6vw, 2.85rem);
+  height: clamp(3.1rem, 5vw, 3.75rem);
   width: auto;
   object-fit: contain;
 }

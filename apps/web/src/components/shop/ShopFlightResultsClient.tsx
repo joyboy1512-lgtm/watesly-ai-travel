@@ -457,6 +457,7 @@ export function ShopFlightResultsClient() {
           الصفحة الرئيسية
         </Link>
       </div>
+      <h1 className="shop-flight-results-h1">نتائج البحث عن رحلات الطيران</h1>
 
       <div className="shop-flight-results-topbar">
         <div className="shop-flight-results-topbar-inner">

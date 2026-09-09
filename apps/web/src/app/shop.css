@@ -5897,11 +5897,11 @@ html body .shop-date-range-backdrop {
   padding: 0;
   overflow: visible;
   background: #fff;
-  border: 2px solid #94a3b8;
+  border: 2px solid #64748b;
   border-radius: 14px;
   box-shadow:
-    0 8px 22px rgba(0, 27, 53, 0.1),
-    0 0 0 1px rgba(15, 35, 70, 0.06);
+    0 10px 26px rgba(0, 27, 53, 0.12),
+    0 0 0 1px rgba(100, 116, 139, 0.35);
   max-width: none;
   width: 100%;
   position: relative;
@@ -6220,8 +6220,8 @@ html[dir="ltr"] .shop-ticket-card-v2.shop-ticket-card-bp > .shop-ticket-body-v2:
 .shop-ticket-card-bp .shop-ticket-route-line {
   display: block;
   width: 100%;
-  height: 2px;
-  background: var(--exp-blue, #1668e3);
+  height: 3px;
+  background: #1668e3;
   border-radius: 999px;
 }
 
@@ -6232,7 +6232,7 @@ html[dir="ltr"] .shop-ticket-card-v2.shop-ticket-card-bp > .shop-ticket-body-v2:
   height: 0.55rem;
   border-radius: 50%;
   background: #fff;
-  border: 1.5px solid var(--exp-blue, #1668e3);
+  border: 2px solid #1668e3;
   transform: translate(-50%, -50%);
   box-sizing: border-box;
 }
@@ -7590,10 +7590,10 @@ html[dir="rtl"] .shop-ticket-stub {
 }
 
 .shop-ticket-card.shop-ticket-card-v2.shop-ticket-card-bp {
-  border: 2px solid #94a3b8;
+  border: 2px solid #64748b;
   box-shadow:
-    0 12px 28px rgba(0, 27, 53, 0.12),
-    0 0 0 1px rgba(15, 35, 70, 0.08);
+    0 12px 28px rgba(0, 27, 53, 0.14),
+    0 0 0 1px rgba(100, 116, 139, 0.4);
   overflow: visible;
   background: #fff;
 }

@@ -3648,18 +3648,18 @@ html body .shop-date-range-backdrop {
 
 .shop-flight-results-layout {
   display: grid;
-  grid-template-columns: 280px 1fr;
-  gap: 1.15rem;
+  grid-template-columns: minmax(340px, 380px) minmax(0, 1fr);
+  gap: 1rem;
   align-items: start;
 }
 
 .shop-flight-filters-panel {
-  background: #fff;
-  border: 1px solid var(--exp-border, #e2e8f0);
-  border-radius: 12px;
-  padding: 0.9rem;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
   display: grid;
-  gap: 0.85rem;
+  gap: 0.65rem;
   position: sticky;
   top: 0.75rem;
   color: #0a0a0a;
@@ -3670,8 +3670,11 @@ html body .shop-date-range-backdrop {
   align-items: center;
   justify-content: space-between;
   gap: 0.5rem;
-  padding-bottom: 0.35rem;
-  border-bottom: 1px solid #f1f5f9;
+  padding: 0.75rem 0.9rem;
+  background: #fff;
+  border: 1px solid #d0dae6;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 27, 53, 0.04);
 }
 
 .shop-flight-filters-head > strong {
@@ -3696,14 +3699,23 @@ html body .shop-date-range-backdrop {
 
 .shop-flight-filter-block {
   display: grid;
-  gap: 0.4rem;
-  padding-bottom: 0.75rem;
-  border-bottom: 1px solid #f1f5f9;
+  gap: 0.45rem;
+  padding: 0.75rem 0.85rem;
+  background: #fff;
+  border: 1px solid #d0dae6;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 27, 53, 0.04);
 }
 
 .shop-flight-filter-block:last-child {
-  border-bottom: 0;
-  padding-bottom: 0;
+  padding-bottom: 0.75rem;
+}
+
+.shop-flight-filter-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.65rem;
+  align-items: stretch;
 }
 
 .shop-flight-filter-block strong {
@@ -3711,29 +3723,48 @@ html body .shop-date-range-backdrop {
   color: #0a0a0a;
 }
 
+.shop-flight-filter-options {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.shop-flight-filter-options.cols-2 {
+  grid-template-columns: 1fr 1fr;
+  gap: 0.35rem 0.45rem;
+}
+
 .shop-flight-filter-radio,
 .shop-flight-filter-check {
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.45rem;
   width: 100%;
   font-size: 0.82rem;
   color: #0a0a0a;
   direction: ltr;
   cursor: pointer;
+  min-width: 0;
 }
 
 .shop-flight-filter-radio em,
 .shop-flight-filter-check em {
   flex: 0 0 auto;
-  min-width: 4.5rem;
+  min-width: 0;
   font-style: normal;
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   color: #0a0a0a;
   white-space: nowrap;
   text-align: left;
   direction: rtl;
+}
+
+.shop-flight-filter-price,
+.shop-flight-filter-radio em.shop-flight-filter-price,
+.shop-flight-filter-check em.shop-flight-filter-price,
+.shop-flight-filter-block small .shop-flight-filter-price {
+  color: #1668e3;
+  font-weight: 800;
 }
 
 .shop-flight-filter-radio span,
@@ -3742,6 +3773,7 @@ html body .shop-date-range-backdrop {
   direction: rtl;
   text-align: right;
   color: #0a0a0a;
+  min-width: 0;
 }
 
 .shop-flight-filter-radio input,
@@ -3790,6 +3822,13 @@ html body .shop-date-range-backdrop {
   margin: 0 0 0.2rem;
   font-size: 0.75rem;
   color: #0a0a0a;
+}
+
+@media (max-width: 420px) {
+  .shop-flight-filter-row,
+  .shop-flight-filter-options.cols-2 {
+    grid-template-columns: 1fr;
+  }
 }
 
 .shop-ticket-list {
@@ -5063,43 +5102,61 @@ html body .shop-date-range-backdrop {
   border: 2px solid var(--exp-blue, #1668e3);
   border-radius: 12px;
   padding: 0.75rem 0.9rem;
-  text-align: start;
+  text-align: center;
   cursor: pointer;
   display: grid;
+  justify-items: center;
   gap: 0.15rem;
   font: inherit;
-  transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+  transition: border-color 0.15s, box-shadow 0.15s, background 0.15s, color 0.15s;
   box-shadow: inset 0 -3px 0 var(--exp-blue, #1668e3);
 }
 
 .shop-flight-sort-tab.on {
   border-color: var(--exp-blue, #1668e3);
-  background: #f4f8ff;
-  box-shadow: inset 0 -3px 0 var(--exp-blue, #1668e3);
+  background: var(--exp-blue, #1668e3);
+  box-shadow: none;
+  color: #fff;
 }
 
 .shop-flight-sort-tab:hover {
   background: #f4f8ff;
 }
 
+.shop-flight-sort-tab.on:hover {
+  background: #1258c4;
+}
+
 .shop-flight-sort-tab-label {
   font-size: 0.8rem;
-  font-weight: 700;
-  color: var(--exp-muted);
+  font-weight: 800;
+  color: #0a0a0a;
+  text-align: center;
+  width: 100%;
 }
 
 .shop-flight-sort-tab.on .shop-flight-sort-tab-label {
-  color: var(--exp-blue);
+  color: #fff;
 }
 
 .shop-flight-sort-tab-price {
   font-size: 1.15rem;
   color: var(--exp-navy);
+  text-align: center;
+}
+
+.shop-flight-sort-tab.on .shop-flight-sort-tab-price {
+  color: #fff;
 }
 
 .shop-flight-sort-tab-meta {
   font-size: 0.8rem;
-  color: var(--exp-muted);
+  color: #0a0a0a;
+  text-align: center;
+}
+
+.shop-flight-sort-tab.on .shop-flight-sort-tab-meta {
+  color: rgba(255, 255, 255, 0.92);
 }
 
 .shop-flight-results-count {

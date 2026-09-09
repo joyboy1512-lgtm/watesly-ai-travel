@@ -127,57 +127,69 @@ export function ShopFlightFilters({
 
       <div className="shop-flight-filter-block" data-display-currency={displayCurrency}>
         <strong>{t("stops")}</strong>
-        <label className="shop-flight-filter-radio">
-          <em>{moneyOrEmpty(facets.stops.minAny, facets.stops.currency, fromWord, formatMoney)}</em>
-          <span>{t("allCount", { n: facets.stops.any })}</span>
-          <input
-            type="radio"
-            name="shop-stops"
-            checked={filters.stops === "any"}
-            onChange={() => onChange({ ...filters, stops: "any" })}
-          />
-        </label>
-        <label className="shop-flight-filter-radio">
-          <em>{moneyOrEmpty(facets.stops.minDirect, facets.stops.currency, fromWord, formatMoney)}</em>
-          <span>{t("directOnlyCount", { n: facets.stops.direct })}</span>
-          <input
-            type="radio"
-            name="shop-stops"
-            checked={filters.stops === "0"}
-            onChange={() => onChange({ ...filters, stops: "0" })}
-          />
-        </label>
-        <label className="shop-flight-filter-radio">
-          <em>{moneyOrEmpty(facets.stops.minOne, facets.stops.currency, fromWord, formatMoney)}</em>
-          <span>{t("oneStopMax", { n: facets.stops.one })}</span>
-          <input
-            type="radio"
-            name="shop-stops"
-            checked={filters.stops === "1"}
-            onChange={() => onChange({ ...filters, stops: "1" })}
-          />
-        </label>
+        <div className="shop-flight-filter-options">
+          <label className="shop-flight-filter-radio">
+            <em className="shop-flight-filter-price">
+              {moneyOrEmpty(facets.stops.minAny, facets.stops.currency, fromWord, formatMoney)}
+            </em>
+            <span>{t("allCount", { n: facets.stops.any })}</span>
+            <input
+              type="radio"
+              name="shop-stops"
+              checked={filters.stops === "any"}
+              onChange={() => onChange({ ...filters, stops: "any" })}
+            />
+          </label>
+          <label className="shop-flight-filter-radio">
+            <em className="shop-flight-filter-price">
+              {moneyOrEmpty(facets.stops.minDirect, facets.stops.currency, fromWord, formatMoney)}
+            </em>
+            <span>{t("directOnlyCount", { n: facets.stops.direct })}</span>
+            <input
+              type="radio"
+              name="shop-stops"
+              checked={filters.stops === "0"}
+              onChange={() => onChange({ ...filters, stops: "0" })}
+            />
+          </label>
+          <label className="shop-flight-filter-radio">
+            <em className="shop-flight-filter-price">
+              {moneyOrEmpty(facets.stops.minOne, facets.stops.currency, fromWord, formatMoney)}
+            </em>
+            <span>{t("oneStopMax", { n: facets.stops.one })}</span>
+            <input
+              type="radio"
+              name="shop-stops"
+              checked={filters.stops === "1"}
+              onChange={() => onChange({ ...filters, stops: "1" })}
+            />
+          </label>
+        </div>
       </div>
 
       <div className="shop-flight-filter-block">
         <strong>{t("airlines")}</strong>
-        {facets.airlines.map((a) => {
-          const checked = filters.airlines.includes(a.code);
-          return (
-            <label key={a.code} className="shop-flight-filter-check">
-              <em>{moneyOrEmpty(a.minPrice, a.currency, fromWord, formatMoney)}</em>
-              <span>
-                {a.name} ({a.count})
-              </span>
-              <input
-                type="checkbox"
-                checked={checked}
-                onChange={() => toggleAirline(a.code)}
-              />
-            </label>
-          );
-        })}
-        {!facets.airlines.length ? <small>{t("noAirlines")}</small> : null}
+        <div className="shop-flight-filter-options">
+          {facets.airlines.map((a) => {
+            const checked = filters.airlines.includes(a.code);
+            return (
+              <label key={a.code} className="shop-flight-filter-check">
+                <em className="shop-flight-filter-price">
+                  {moneyOrEmpty(a.minPrice, a.currency, fromWord, formatMoney)}
+                </em>
+                <span>
+                  {a.name} ({a.count})
+                </span>
+                <input
+                  type="checkbox"
+                  checked={checked}
+                  onChange={() => toggleAirline(a.code)}
+                />
+              </label>
+            );
+          })}
+          {!facets.airlines.length ? <small>{t("noAirlines")}</small> : null}
+        </div>
       </div>
 
       <div className="shop-flight-filter-block">
@@ -209,65 +221,71 @@ export function ShopFlightFilters({
             place: timeTab === "depart" ? resolvedOrigin : resolvedDestination,
           })}
         </p>
-        {DEPARTURE_BUCKETS.map((bucket) => {
-          const checked = filters[activeField].includes(bucket.key);
-          const count = activeCounts[bucket.key] || 0;
-          const copy = BUCKET_COPY[bucket.key];
-          return (
-            <label key={`${activeField}-${bucket.key}`} className="shop-flight-filter-check">
-              <em>{t(copy.hint)}</em>
-              <span>
-                {t(copy.label)} ({count})
-              </span>
-              <input
-                type="checkbox"
-                checked={checked}
-                onChange={() => toggleBucket(activeField, bucket.key)}
-              />
-            </label>
-          );
-        })}
-      </div>
-
-      <div className="shop-flight-filter-block">
-        <strong>{t("maxDuration")}</strong>
-        <input
-          type="range"
-          min={2}
-          max={Math.max(facets.durationMaxHours, 8)}
-          value={durationValue}
-          onChange={(e) =>
-            onChange({
-              ...filters,
-              maxDurationHours:
-                Number(e.target.value) >= facets.durationMaxHours ? "" : e.target.value,
-            })
-          }
-        />
-        <small>{t("upToHours", { n: durationValue })}</small>
-      </div>
-
-      <div className="shop-flight-filter-block">
-        <strong>{t("price")}</strong>
-        <input
-          type="range"
-          min={10}
-          max={Math.max(facets.priceMaxMajor, 50)}
-          value={priceValue}
-          onChange={(e) =>
-            onChange({
-              ...filters,
-              maxPrice:
-                Number(e.target.value) >= facets.priceMaxMajor ? "" : e.target.value,
-            })
-          }
-        />
-        <small>
-          {t("upToPriceTrip", {
-            n: priceValue.toFixed(currencyExponent(facets.stops.currency)),
-            currency: facets.stops.currency,
+        <div className="shop-flight-filter-options cols-2">
+          {DEPARTURE_BUCKETS.map((bucket) => {
+            const checked = filters[activeField].includes(bucket.key);
+            const count = activeCounts[bucket.key] || 0;
+            const copy = BUCKET_COPY[bucket.key];
+            return (
+              <label key={`${activeField}-${bucket.key}`} className="shop-flight-filter-check">
+                <em>{t(copy.hint)}</em>
+                <span>
+                  {t(copy.label)} ({count})
+                </span>
+                <input
+                  type="checkbox"
+                  checked={checked}
+                  onChange={() => toggleBucket(activeField, bucket.key)}
+                />
+              </label>
+            );
           })}
-        </small>
+        </div>
+      </div>
+
+      <div className="shop-flight-filter-row">
+        <div className="shop-flight-filter-block">
+          <strong>{t("maxDuration")}</strong>
+          <input
+            type="range"
+            min={2}
+            max={Math.max(facets.durationMaxHours, 8)}
+            value={durationValue}
+            onChange={(e) =>
+              onChange({
+                ...filters,
+                maxDurationHours:
+                  Number(e.target.value) >= facets.durationMaxHours ? "" : e.target.value,
+              })
+            }
+          />
+          <small>{t("upToHours", { n: durationValue })}</small>
+        </div>
+
+        <div className="shop-flight-filter-block">
+          <strong>{t("price")}</strong>
+          <input
+            type="range"
+            min={10}
+            max={Math.max(facets.priceMaxMajor, 50)}
+            value={priceValue}
+            onChange={(e) =>
+              onChange({
+                ...filters,
+                maxPrice:
+                  Number(e.target.value) >= facets.priceMaxMajor ? "" : e.target.value,
+              })
+            }
+          />
+          <small>
+            <span className="shop-flight-filter-price">
+              {t("upToPriceTrip", {
+                n: priceValue.toFixed(currencyExponent(facets.stops.currency)),
+                currency: facets.stops.currency,
+              })}
+            </span>
+          </small>
+        </div>
       </div>
     </aside>
   );

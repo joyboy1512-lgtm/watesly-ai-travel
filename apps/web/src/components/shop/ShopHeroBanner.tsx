@@ -708,6 +708,39 @@ export function ShopHeroBanner(props: Props) {
         </div>
 
         <div className="wg-hero-search-panel" id="search">
+          {/* Visual-only: solid blue tabs + frosted glass body (beats legacy !important navy). */}
+          <style
+            dangerouslySetInnerHTML={{
+              __html: `
+#search.wg-hero-search-panel .wg-hero-acc-shell,
+#search.wg-hero-search-panel .wg-hero-ticket-shell,
+#search.wg-hero-search-panel .wg-hero-dock-shell {
+  background: transparent !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+}
+#search.wg-hero-search-panel .wg-hero-acc-modes,
+#search.wg-hero-search-panel .wg-hero-dock-modes {
+  background: #001b35 !important;
+  background-color: #001b35 !important;
+  background-image: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+#wg-hero-search-fields.wg-hero-acc-panel,
+#search.wg-hero-search-panel .wg-hero-acc-panel,
+#search.wg-hero-search-panel .wg-hero-acc-tripstrip {
+  background: rgba(0, 27, 53, 0.18) !important;
+  background-color: rgba(0, 27, 53, 0.18) !important;
+  background-image: none !important;
+  border: 1px solid rgba(255, 255, 255, 0.34) !important;
+  backdrop-filter: blur(26px) saturate(1.3) !important;
+  -webkit-backdrop-filter: blur(26px) saturate(1.3) !important;
+  box-shadow: 0 18px 42px rgba(0, 15, 31, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.18) !important;
+}
+`,
+            }}
+          />
           <div className={`wg-hero-ticket-shell wg-hero-dock-shell wg-hero-acc-shell${dockOpen ? " is-open" : ""}`} data-mode={props.mode}>
             <div
               className="wg-hero-dock-modes wg-hero-acc-modes"

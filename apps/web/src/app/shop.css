@@ -8906,6 +8906,8 @@ html body .wg-hero-search-fields {
   -webkit-backdrop-filter: blur(24px) saturate(1.25) !important;
 }
 
+html body .shop-root.wg-new-ui .wg-hero-dock.wg-hero-acc-panel,
+html body .shop-root.wg-new-ui .wg-hero-acc-panel.wg-hero-dock,
 html body .shop-root .wg-hero-dock.wg-hero-acc-panel,
 html body .shop-root .wg-hero-acc-panel.wg-hero-dock,
 html body .wg-hero-dock.wg-hero-acc-panel,
@@ -8915,10 +8917,12 @@ html body .wg-hero-acc-panel {
   border-radius: 0 0 18px 18px !important;
 }
 
+html body .shop-root.wg-new-ui .wg-hero-acc-panel.is-open::before,
 html body .shop-root .wg-hero-acc-panel.is-open::before,
 html body .wg-hero-acc-panel.is-open::before,
 html body .wg-hero-acc-shell[data-mode] .wg-hero-acc-panel.is-open::before {
-  background: rgba(0, 27, 53, 0.22) !important;
+  background: rgba(0, 27, 53, 0.2) !important;
+  background-color: rgba(0, 27, 53, 0.2) !important;
   border-color: rgba(255, 255, 255, 0.32) !important;
   backdrop-filter: blur(24px) !important;
   -webkit-backdrop-filter: blur(24px) !important;
@@ -9032,10 +9036,13 @@ html body .wg-hero-acc-search-btn:hover {
 }
 
 @media (max-width: 767px) {
+  html body .shop-root.wg-new-ui .wg-hero-dock.wg-hero-acc-panel,
+  html body .shop-root.wg-new-ui .wg-hero-acc-panel.wg-hero-dock,
   html body .shop-root .wg-hero-dock.wg-hero-acc-panel,
   html body .wg-hero-dock.wg-hero-acc-panel,
   html body .wg-hero-acc-panel,
   html body .wg-hero-acc-tripstrip {
-    background: rgba(8, 22, 42, 0.4) !important;
+    background: rgba(0, 27, 53, 0.32) !important;
+    background-color: rgba(0, 27, 53, 0.32) !important;
   }
 }

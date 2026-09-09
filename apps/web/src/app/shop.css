@@ -4867,7 +4867,7 @@ html body .shop-date-range-backdrop {
   position: sticky;
   top: 56px;
   z-index: 40;
-  overflow: visible;
+  overflow: visible !important;
   box-shadow: 0 4px 14px rgba(15, 35, 70, 0.05);
 }
 
@@ -4911,11 +4911,23 @@ html body .shop-date-range-backdrop {
   background: var(--exp-navy);
   color: #fff;
   border-radius: 999px;
-  padding: 0.55rem 1.1rem;
+  padding: 0.6rem 1.25rem;
   font: inherit;
-  font-weight: 700;
+  font-weight: 800;
   cursor: pointer;
   white-space: nowrap;
+  min-height: 2.55rem;
+  box-shadow: 0 6px 16px rgba(0, 27, 53, 0.18);
+  transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease;
+}
+
+.shop-flight-search-again:hover {
+  background: #00264a;
+  box-shadow: 0 8px 20px rgba(0, 27, 53, 0.22);
+}
+
+.shop-flight-search-again:active {
+  transform: translateY(1px);
 }
 
 .shop-flight-edit-bar {
@@ -5035,6 +5047,37 @@ html body .shop-date-range-backdrop {
 
 .shop-flight-edit-bar .prc-suggest button:hover {
   background: #eef4ff;
+}
+
+/* Beat hero "open upward" suggest rules — results bar must open downward */
+html body .shop-root .shop-flight-results-topbar,
+html body .shop-root .shop-flight-edit-bar,
+html body .shop-root .shop-flight-edit-ac,
+html body .shop-root .shop-flight-edit-bar .shop-ac,
+html body .shop-root .shop-flight-edit-bar .shop-ac-inline,
+html body .shop-root .shop-flight-edit-bar .exp-ac-field {
+  overflow: visible !important;
+}
+
+html body .shop-root .shop-flight-edit-bar .shop-ac:focus-within,
+html body .shop-root .shop-flight-edit-ac:focus-within {
+  z-index: 80 !important;
+  position: relative !important;
+}
+
+html body .shop-root .shop-flight-edit-bar .prc-suggest,
+html body .shop-root .shop-flight-edit-bar .exp-ac-menu,
+html body .shop-root .shop-flight-edit-bar .shop-ac .prc-suggest,
+html body .shop-root .shop-flight-edit-bar .exp-ac-field .exp-ac-menu {
+  position: absolute !important;
+  top: calc(100% + 6px) !important;
+  bottom: auto !important;
+  inset-inline-start: 0 !important;
+  inset-inline-end: auto !important;
+  min-width: min(18rem, 92vw) !important;
+  max-height: min(300px, 50vh) !important;
+  z-index: 100050 !important;
+  transform: none !important;
 }
 
 .shop-flight-edit-travelers {

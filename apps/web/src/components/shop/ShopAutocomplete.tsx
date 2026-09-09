@@ -113,6 +113,11 @@ export function ShopAutocomplete({
     }
   }
 
+  function handleClick() {
+    setOpen(true);
+    void runQuery("");
+  }
+
   const menu =
     open && items.length ? (
       <div className="prc-suggest exp-ac-menu" role="listbox">
@@ -144,6 +149,7 @@ export function ShopAutocomplete({
           placeholder={placeholder}
           onChange={(e) => scheduleQuery(e.target.value)}
           onFocus={handleFocus}
+          onClick={handleClick}
           autoComplete="off"
         />
         {menu}
@@ -160,6 +166,7 @@ export function ShopAutocomplete({
         placeholder={placeholder}
         onChange={(e) => scheduleQuery(e.target.value)}
         onFocus={handleFocus}
+        onClick={handleClick}
         autoComplete="off"
       />
       {menu}

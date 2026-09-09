@@ -340,7 +340,24 @@ export function ShopFlightResultsClient() {
 
   function applyEdit(e: FormEvent) {
     e.preventDefault();
-    const href = buildFlightResultsHref(draft);
+    let next = draft;
+    // Allow bare IATA codes typed without selecting from the list.
+    if (!next.origin) {
+      const raw = next.originLabel.trim().toUpperCase();
+      if (/^[A-Z]{3}$/.test(raw)) {
+        next = { ...next, origin: raw, originLabel: raw };
+      }
+    }
+    if (!next.destination) {
+      const raw = next.destinationLabel.trim().toUpperCase();
+      if (/^[A-Z]{3}$/.test(raw)) {
+        next = { ...next, destination: raw, destinationLabel: raw };
+      }
+    }
+    if (next.tripType !== "multicity" && (!next.origin || !next.destination || !next.departDate)) {
+      return;
+    }
+    const href = buildFlightResultsHref(next);
     router.push(href);
   }
 

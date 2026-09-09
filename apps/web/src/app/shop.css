@@ -5969,11 +5969,6 @@ html[dir="ltr"] .shop-ticket-card-v2.shop-ticket-card-bp::after {
   border-radius: 0 16px 16px 0;
   padding: 0.7rem 0.85rem 0.7rem 1rem;
   position: relative;
-  overflow: hidden;
-}
-
-.shop-ticket-card-v2.shop-ticket-card-bp > .shop-ticket-body-v2.has-watermark {
-  background: #f7fafc;
 }
 
 html[dir="ltr"] .shop-ticket-card-v2.shop-ticket-card-bp > .shop-ticket-body-v2 {
@@ -5988,7 +5983,6 @@ html[dir="ltr"] .shop-ticket-card-v2.shop-ticket-card-bp > .shop-ticket-body-v2 
   bottom: 14px;
   left: 0;
   border-left: 2px dashed #a9bacd;
-  z-index: 2;
 }
 
 html[dir="ltr"] .shop-ticket-card-v2.shop-ticket-card-bp > .shop-ticket-body-v2::after {
@@ -5996,30 +5990,6 @@ html[dir="ltr"] .shop-ticket-card-v2.shop-ticket-card-bp > .shop-ticket-body-v2:
   right: 0;
   border-left: 0;
   border-right: 2px dashed #a9bacd;
-}
-
-.shop-ticket-card-bp .shop-ticket-watermark {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  overflow: hidden;
-  border-radius: inherit;
-}
-
-.shop-ticket-card-bp .shop-ticket-watermark img {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: 100% 100%;
-  opacity: 0.42;
-  user-select: none;
-}
-
-html[dir="ltr"] .shop-ticket-card-bp .shop-ticket-watermark img {
-  object-position: 0% 100%;
 }
 
 .shop-ticket-card-v2.shop-ticket-card-bp > .shop-ticket-side-v2 {
@@ -6030,8 +6000,6 @@ html[dir="ltr"] .shop-ticket-card-bp .shop-ticket-watermark img {
 .shop-ticket-card-bp .shop-ticket-legs-v2 {
   display: grid;
   gap: 0.45rem;
-  position: relative;
-  z-index: 1;
 }
 
 .shop-ticket-card-bp .shop-ticket-leg-v2 {

@@ -56,13 +56,6 @@ const BADGE_WHY: Record<"best" | "cheapest" | "fastest", string> = {
   fastest: "أقصر مدة إجمالية للرحلة",
 };
 
-type BoardingWatermark = { city: "kuwait" | "dubai"; src: string };
-
-/** Soft Kuwait brand watermark inside boarding-pass result cards. */
-function boardingWatermark(): BoardingWatermark {
-  return { city: "kuwait", src: "/media/watermarks/kuwait-boarding-watermark.png" };
-}
-
 function dayOffsetDays(departAt?: string, arriveAt?: string): number {
   if (!departAt || !arriveAt) return 0;
   const d = new Date(departAt);
@@ -362,7 +355,6 @@ export function ShopFlightCard({
   const to = String(last?.to || flight.details.legDestination || flight.details.to || destinationFallback);
   const retFrom = String(retFirst?.from || to);
   const retTo = String(retLast?.to || from);
-  const watermark = boardingWatermark();
 
   const showOutbound = displayLeg === "both" || displayLeg === "outbound";
   const showReturn = displayLeg === "both" || displayLeg === "return";
@@ -397,14 +389,7 @@ export function ShopFlightCard({
         </div>
       ) : null}
 
-      <div
-        className={`shop-ticket-body-v2${watermark ? ` has-watermark watermark-${watermark.city}` : ""}`}
-      >
-        {watermark ? (
-          <div className="shop-ticket-watermark" aria-hidden="true">
-            <img src={watermark.src} alt="" decoding="async" />
-          </div>
-        ) : null}
+      <div className="shop-ticket-body-v2">
         <div className="shop-ticket-legs-v2">
           {showOutbound ? (
             <LegBlock

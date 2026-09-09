@@ -3654,15 +3654,16 @@ html body .shop-date-range-backdrop {
 }
 
 .shop-flight-filters-panel {
-  background: transparent;
-  border: 0;
-  border-radius: 0;
-  padding: 0;
+  background: #fff;
+  border: 1px solid #d0dae6;
+  border-radius: 12px;
+  padding: 0.85rem;
   display: grid;
-  gap: 0.65rem;
+  gap: 0.85rem;
   position: sticky;
   top: 0.75rem;
   color: #0a0a0a;
+  box-shadow: 0 2px 8px rgba(0, 27, 53, 0.04);
 }
 
 .shop-flight-filters-head {
@@ -3670,16 +3671,8 @@ html body .shop-date-range-backdrop {
   align-items: center;
   justify-content: space-between;
   gap: 0.5rem;
-  padding: 0.75rem 0.9rem;
-  background: #fff;
-  border: 1px solid #d0dae6;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 27, 53, 0.04);
-}
-
-.shop-flight-filters-head > strong {
-  font-size: 0.95rem;
-  color: #0a0a0a;
+  padding-bottom: 0.35rem;
+  border-bottom: 1px solid #eef2f6;
 }
 
 .shop-flight-filters-reset {
@@ -3697,40 +3690,39 @@ html body .shop-date-range-backdrop {
   text-decoration: underline;
 }
 
-.shop-flight-filter-block {
+/* Title words as cards */
+.shop-flight-filter-title {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0;
+  padding: 0.4rem 0.75rem;
+  background: #fff;
+  border: 1px solid #c5d0de;
+  border-radius: 10px;
+  box-shadow: 0 1px 3px rgba(15, 35, 70, 0.06);
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: #0a0a0a;
+  line-height: 1.2;
+}
+
+.shop-flight-filter-section {
   display: grid;
   gap: 0.45rem;
-  padding: 0.75rem 0.85rem;
-  background: #fff;
-  border: 1px solid #d0dae6;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 27, 53, 0.04);
-}
-
-.shop-flight-filter-block:last-child {
-  padding-bottom: 0.75rem;
-}
-
-.shop-flight-filter-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.65rem;
-  align-items: stretch;
-}
-
-.shop-flight-filter-block strong {
-  font-size: 0.9rem;
-  color: #0a0a0a;
 }
 
 .shop-flight-filter-options {
   display: grid;
+  grid-template-columns: 1fr;
   gap: 0.35rem;
 }
 
-.shop-flight-filter-options.cols-2 {
-  grid-template-columns: 1fr 1fr;
-  gap: 0.35rem 0.45rem;
+.shop-flight-filter-times {
+  grid-template-columns: 1fr;
+  gap: 0.4rem;
 }
 
 .shop-flight-filter-radio,
@@ -3762,7 +3754,7 @@ html body .shop-date-range-backdrop {
 .shop-flight-filter-price,
 .shop-flight-filter-radio em.shop-flight-filter-price,
 .shop-flight-filter-check em.shop-flight-filter-price,
-.shop-flight-filter-block small .shop-flight-filter-price {
+.shop-flight-filter-section small .shop-flight-filter-price {
   color: #1668e3;
   font-weight: 800;
 }
@@ -3777,18 +3769,51 @@ html body .shop-date-range-backdrop {
 }
 
 .shop-flight-filter-radio input,
-.shop-flight-filter-check input {
+.shop-flight-filter-check input,
+.shop-flight-filter-time input {
   flex: 0 0 auto;
   margin: 0;
   accent-color: #0071c2;
 }
 
-.shop-flight-filter-block input[type="range"] {
+/* Single-column time buckets with parallel columns */
+.shop-flight-filter-time {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: 0.55rem;
+  width: 100%;
+  direction: rtl;
+  cursor: pointer;
+  font-size: 0.82rem;
+  color: #0a0a0a;
+  min-width: 0;
+}
+
+.shop-flight-filter-time-label {
+  font-weight: 700;
+  color: #0a0a0a;
+  text-align: right;
+  min-width: 0;
+}
+
+.shop-flight-filter-time-range {
+  font-style: normal;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #0a0a0a;
+  white-space: nowrap;
+  text-align: left;
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+
+.shop-flight-filter-section input[type="range"] {
   width: 100%;
   accent-color: #0071c2;
 }
 
-.shop-flight-filter-block small {
+.shop-flight-filter-section small {
   color: #0a0a0a;
   font-size: 0.78rem;
 }
@@ -3797,7 +3822,7 @@ html body .shop-date-range-backdrop {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 0.35rem;
-  margin-bottom: 0.25rem;
+  margin-bottom: 0.15rem;
 }
 
 .shop-flight-time-tabs button {
@@ -3819,16 +3844,9 @@ html body .shop-date-range-backdrop {
 }
 
 .shop-flight-time-hint {
-  margin: 0 0 0.2rem;
+  margin: 0 0 0.15rem;
   font-size: 0.75rem;
   color: #0a0a0a;
-}
-
-@media (max-width: 420px) {
-  .shop-flight-filter-row,
-  .shop-flight-filter-options.cols-2 {
-    grid-template-columns: 1fr;
-  }
 }
 
 .shop-ticket-list {

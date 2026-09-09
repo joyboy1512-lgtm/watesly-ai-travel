@@ -106,7 +106,7 @@ export function ShopFlightFilters({
   return (
     <aside className="shop-flight-filters-panel">
       <div className="shop-flight-filters-head">
-        <strong>{t("filterResults")}</strong>
+        <strong className="shop-flight-filter-title">{t("filterResults")}</strong>
         <button
           type="button"
           className="shop-flight-filters-reset"
@@ -125,8 +125,8 @@ export function ShopFlightFilters({
         </button>
       </div>
 
-      <div className="shop-flight-filter-block" data-display-currency={displayCurrency}>
-        <strong>{t("stops")}</strong>
+      <section className="shop-flight-filter-section" data-display-currency={displayCurrency}>
+        <strong className="shop-flight-filter-title">{t("stops")}</strong>
         <div className="shop-flight-filter-options">
           <label className="shop-flight-filter-radio">
             <em className="shop-flight-filter-price">
@@ -165,10 +165,10 @@ export function ShopFlightFilters({
             />
           </label>
         </div>
-      </div>
+      </section>
 
-      <div className="shop-flight-filter-block">
-        <strong>{t("airlines")}</strong>
+      <section className="shop-flight-filter-section">
+        <strong className="shop-flight-filter-title">{t("airlines")}</strong>
         <div className="shop-flight-filter-options">
           {facets.airlines.map((a) => {
             const checked = filters.airlines.includes(a.code);
@@ -190,10 +190,10 @@ export function ShopFlightFilters({
           })}
           {!facets.airlines.length ? <small>{t("noAirlines")}</small> : null}
         </div>
-      </div>
+      </section>
 
-      <div className="shop-flight-filter-block">
-        <strong>{t("flightTimes")}</strong>
+      <section className="shop-flight-filter-section">
+        <strong className="shop-flight-filter-title">{t("flightTimes")}</strong>
         {facets.hasReturn ? (
           <div className="shop-flight-time-tabs" role="tablist">
             <button
@@ -221,72 +221,73 @@ export function ShopFlightFilters({
             place: timeTab === "depart" ? resolvedOrigin : resolvedDestination,
           })}
         </p>
-        <div className="shop-flight-filter-options cols-2">
+        <div className="shop-flight-filter-options shop-flight-filter-times">
           {DEPARTURE_BUCKETS.map((bucket) => {
             const checked = filters[activeField].includes(bucket.key);
             const count = activeCounts[bucket.key] || 0;
             const copy = BUCKET_COPY[bucket.key];
             return (
-              <label key={`${activeField}-${bucket.key}`} className="shop-flight-filter-check">
-                <em>{t(copy.hint)}</em>
-                <span>
-                  {t(copy.label)} ({count})
-                </span>
+              <label
+                key={`${activeField}-${bucket.key}`}
+                className="shop-flight-filter-time"
+              >
                 <input
                   type="checkbox"
                   checked={checked}
                   onChange={() => toggleBucket(activeField, bucket.key)}
                 />
+                <span className="shop-flight-filter-time-label">
+                  {t(copy.label)} ({count})
+                </span>
+                <em className="shop-flight-filter-time-range">{t(copy.hint)}</em>
               </label>
             );
           })}
         </div>
-      </div>
+      </section>
 
-      <div className="shop-flight-filter-row">
-        <div className="shop-flight-filter-block">
-          <strong>{t("maxDuration")}</strong>
-          <input
-            type="range"
-            min={2}
-            max={Math.max(facets.durationMaxHours, 8)}
-            value={durationValue}
-            onChange={(e) =>
-              onChange({
-                ...filters,
-                maxDurationHours:
-                  Number(e.target.value) >= facets.durationMaxHours ? "" : e.target.value,
-              })
-            }
-          />
-          <small>{t("upToHours", { n: durationValue })}</small>
-        </div>
+      <section className="shop-flight-filter-section">
+        <strong className="shop-flight-filter-title">{t("maxDuration")}</strong>
+        <input
+          type="range"
+          min={2}
+          max={Math.max(facets.durationMaxHours, 8)}
+          value={durationValue}
+          onChange={(e) =>
+            onChange({
+              ...filters,
+              maxDurationHours:
+                Number(e.target.value) >= facets.durationMaxHours ? "" : e.target.value,
+            })
+          }
+        />
+        <small>{t("upToHours", { n: durationValue })}</small>
+      </section>
 
-        <div className="shop-flight-filter-block">
-          <strong>{t("price")}</strong>
-          <input
-            type="range"
-            min={10}
-            max={Math.max(facets.priceMaxMajor, 50)}
-            value={priceValue}
-            onChange={(e) =>
-              onChange({
-                ...filters,
-                maxPrice:
-                  Number(e.target.value) >= facets.priceMaxMajor ? "" : e.target.value,
-              })
-            }
-          />
-          <small>
-            <span className="shop-flight-filter-price">
-              {t("upToPriceTrip", {
-                n: priceValue.toFixed(currencyExponent(facets.stops.currency)),
-                currency: facets.stops.currency,
-              })}
-            </span>
-          </small>
-        </div>
-      </div>
+      <section className="shop-flight-filter-section">
+        <strong className="shop-flight-filter-title">{t("price")}</strong>
+        <input
+          type="range"
+          min={10}
+          max={Math.max(facets.priceMaxMajor, 50)}
+          value={priceValue}
+          onChange={(e) =>
+            onChange({
+              ...filters,
+              maxPrice:
+                Number(e.target.value) >= facets.priceMaxMajor ? "" : e.target.value,
+            })
+          }
+        />
+        <small>
+          <span className="shop-flight-filter-price">
+            {t("upToPriceTrip", {
+              n: priceValue.toFixed(currencyExponent(facets.stops.currency)),
+              currency: facets.stops.currency,
+            })}
+          </span>
+        </small>
+      </section>
     </aside>
   );
 }

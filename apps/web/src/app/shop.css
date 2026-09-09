@@ -4785,7 +4785,7 @@ html body .shop-date-range-backdrop {
 }
 
 .shop-flight-results-topbar-inner {
-  width: min(1200px, calc(100% - 2rem));
+  width: min(1400px, calc(100% - 1.25rem));
   margin: 0 auto;
   padding: 0.85rem 0;
   display: flex;

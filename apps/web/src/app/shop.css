@@ -8849,3 +8849,153 @@ html body .wg-hero-acc-field[data-field="time"] .exp-cell-label {
   text-overflow: clip !important;
   white-space: nowrap !important;
 }
+
+/* WG_HERO_SEARCH_GLASS_V2 — colors only: solid blue header + dark glass body */
+html body .shop-root.wg-new-ui .wg-hero-acc-modes.wg-hero-dock-modes,
+html body .shop-root .wg-hero-acc-modes.wg-hero-dock-modes,
+html body .wg-hero-acc-modes.wg-hero-dock-modes,
+html body .wg-hero-acc-modes,
+html body .wg-hero-acc-tripstrip {
+  background: #001b35 !important;
+  background-image: none !important;
+  border-color: rgba(217, 154, 62, 0.28) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+html body .shop-root .wg-hero-dock.wg-hero-acc-panel,
+html body .shop-root .wg-hero-acc-panel.wg-hero-dock,
+html body .wg-hero-dock.wg-hero-acc-panel,
+html body .wg-hero-acc-panel.wg-hero-dock,
+html body .wg-hero-acc-panel {
+  background: rgba(0, 27, 53, 0.34) !important;
+  background-image: none !important;
+  border: 1px solid rgba(255, 255, 255, 0.22) !important;
+  border-top: 0 !important;
+  box-shadow:
+    0 18px 42px rgba(0, 15, 31, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12) !important;
+  backdrop-filter: blur(18px) saturate(1.15) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(1.15) !important;
+}
+
+html body .shop-root .wg-hero-acc-panel.is-open::before,
+html body .wg-hero-acc-panel.is-open::before,
+html body .wg-hero-acc-shell[data-mode] .wg-hero-acc-panel.is-open::before {
+  background: rgba(0, 27, 53, 0.34) !important;
+  border-color: rgba(255, 255, 255, 0.22) !important;
+  backdrop-filter: blur(18px) !important;
+  -webkit-backdrop-filter: blur(18px) !important;
+}
+
+html body .shop-root .wg-hero-acc-panel .exp-dialog,
+html body .shop-root .wg-hero-acc-panel .exp-unified-card,
+html body .shop-root .wg-hero-acc-panel .wg-hero-ticket-card,
+html body .shop-root .wg-hero-acc-panel .wg-hero-dock-card,
+html body .wg-hero-acc-panel .exp-dialog,
+html body .wg-hero-acc-panel .exp-unified-card,
+html body .wg-hero-acc-panel .wg-hero-ticket-card,
+html body .wg-hero-acc-panel .wg-hero-dock-card {
+  background: transparent !important;
+  box-shadow: none !important;
+  border: 0 !important;
+}
+
+html body .shop-root .wg-hero-acc-panel .exp-form-row,
+html body .wg-hero-acc-panel .exp-form-row,
+html body .wg-hero-acc-panel .exp-form-row.exp-form-flights,
+html body .wg-hero-acc-panel .exp-form-row.exp-form-stays,
+html body .wg-hero-acc-panel .exp-form-row.exp-form-cars,
+html body .wg-hero-acc-panel .exp-form-row.exp-form-activities {
+  background: rgba(255, 255, 255, 0.06) !important;
+  border: 1px solid rgba(255, 255, 255, 0.16) !important;
+  box-shadow: none !important;
+}
+
+html body .shop-root .wg-hero-acc-panel .exp-input-cell,
+html body .wg-hero-acc-panel .exp-input-cell,
+html body .wg-hero-acc-field {
+  background: transparent !important;
+  color: #fff !important;
+}
+
+html body .shop-root .wg-hero-acc-panel .exp-cell-label,
+html body .wg-hero-acc-panel .exp-cell-label,
+html body .wg-hero-acc-field-label,
+html body .wg-hero-acc-panel .shop-ac-inline > span:first-child,
+html body .wg-hero-acc-field-ico,
+html body .wg-hero-acc-field .wg-hero-acc-field-ico {
+  color: #d99a3e !important;
+}
+
+html body .shop-root .wg-hero-acc-panel .exp-input-cell input,
+html body .shop-root .wg-hero-acc-panel .exp-input-cell strong,
+html body .shop-root .wg-hero-acc-panel .shop-ac-inline input,
+html body .wg-hero-acc-panel .exp-input-cell input,
+html body .wg-hero-acc-panel .exp-input-cell strong,
+html body .wg-hero-acc-panel .shop-ac-inline input,
+html body .wg-hero-acc-field-value,
+html body .wg-hero-acc-field input,
+html body .wg-hero-acc-field strong {
+  color: #fff !important;
+  -webkit-text-fill-color: #fff !important;
+  background: transparent !important;
+}
+
+html body .shop-root .wg-hero-acc-panel .exp-pill-tab,
+html body .wg-hero-acc-panel .exp-pill-tab,
+html body .wg-hero-acc-tripstrip .exp-trip-pill:not(.is-on),
+html body .wg-hero-acc-tripstrip button:not(.is-on),
+html body .wg-hero-acc-trip:not(.on) {
+  color: #d99a3e !important;
+  border-color: rgba(217, 154, 62, 0.55) !important;
+  background: transparent !important;
+}
+
+html body .shop-root .wg-hero-acc-panel .exp-pill-tab.on,
+html body .wg-hero-acc-panel .exp-pill-tab.on,
+html body .wg-hero-acc-tripstrip .exp-trip-pill.is-on,
+html body .wg-hero-acc-tripstrip button.is-on,
+html body .wg-hero-acc-trip.on {
+  background: #d99a3e !important;
+  border-color: #d99a3e !important;
+  color: #001b35 !important;
+}
+
+html body .shop-root .wg-hero-acc-mode.on .wg-hero-acc-icon,
+html body .shop-root .wg-hero-acc-mode.is-expanded .wg-hero-acc-icon,
+html body .wg-hero-acc-mode.on .wg-hero-acc-icon,
+html body .wg-hero-acc-mode.is-expanded .wg-hero-acc-icon {
+  background: #d99a3e !important;
+  color: #001b35 !important;
+  border-radius: 999px !important;
+  box-shadow: 0 0 0 3px rgba(217, 154, 62, 0.28) !important;
+}
+
+html body .shop-root .wg-hero-ticket-search.exp-search-link,
+html body .shop-root .wg-hero-acc-search-btn,
+html body .shop-root .wg-hero-acc-panel .exp-search-link.wg-hero-ticket-search,
+html body .wg-hero-ticket-search.exp-search-link,
+html body .wg-hero-acc-search-btn,
+html body .wg-hero-acc-panel .exp-search-link.wg-hero-ticket-search {
+  background: #d99a3e !important;
+  border-color: #d99a3e !important;
+  color: #001b35 !important;
+  box-shadow: 0 8px 22px rgba(217, 154, 62, 0.35) !important;
+}
+
+html body .shop-root .wg-hero-ticket-search.exp-search-link:hover:not(:disabled),
+html body .wg-hero-ticket-search.exp-search-link:hover:not(:disabled),
+html body .wg-hero-acc-search-btn:hover {
+  background: #e5b15a !important;
+  border-color: #e5b15a !important;
+  color: #001b35 !important;
+}
+
+@media (max-width: 767px) {
+  html body .shop-root .wg-hero-dock.wg-hero-acc-panel,
+  html body .wg-hero-dock.wg-hero-acc-panel,
+  html body .wg-hero-acc-panel {
+    background: rgba(0, 27, 53, 0.48) !important;
+  }
+}

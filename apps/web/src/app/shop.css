@@ -6617,6 +6617,13 @@ html[dir="ltr"] .shop-ticket-card-v2.shop-ticket-card-bp > .shop-ticket-body-v2:
   font-size: 0.72rem;
   font-weight: 800;
   color: #0a0a0a;
+  unicode-bidi: isolate;
+  white-space: nowrap;
+}
+
+.shop-ticket-card-bp .shop-ticket-meta-duration span[dir="ltr"] {
+  unicode-bidi: isolate;
+  white-space: nowrap;
 }
 
 .shop-ticket-card-bp .shop-ticket-stop-hint,
@@ -6732,9 +6739,9 @@ html[dir="ltr"] .shop-ticket-card-bp .shop-ticket-stub {
 }
 
 .shop-ticket-card-bp .shop-ticket-side-v2 .shop-ticket-cta-group {
-  margin-top: auto;
-  padding: 0.6rem 0.55rem 0.75rem;
-  gap: 0.4rem;
+  margin-top: 0.45rem;
+  padding: 0.35rem 0.55rem 0.55rem;
+  gap: 0.3rem;
   align-items: center;
   display: grid;
   background: #fff;
@@ -7046,19 +7053,20 @@ html[dir="ltr"] .shop-ticket-card-bp .shop-ticket-stub {
 }
 
 .shop-custom-trip-x {
-  position: absolute;
-  inset-inline-end: 0.4rem;
-  inset-block-start: 0.4rem;
-  width: 1.5rem;
-  height: 1.5rem;
-  border: 0;
-  border-radius: 50%;
-  background: #fee2e2;
+  width: 1.45rem;
+  height: 1.45rem;
+  border: 1px solid #fecaca;
+  border-radius: 999px;
+  background: #fff;
   color: #b91c1c;
+  font: inherit;
   font-size: 1rem;
+  font-weight: 800;
   line-height: 1;
   cursor: pointer;
-  z-index: 2;
+  display: grid;
+  place-items: center;
+  padding: 0;
 }
 
 .shop-custom-trip-card .shop-custom-trip-cta,
@@ -7194,9 +7202,9 @@ html[dir="rtl"] .shop-ticket-stub {
 }
 
 .shop-ticket-side-v2 .shop-ticket-cta-group {
-  margin-top: auto;
-  padding: 0.5rem 0.5rem 0.65rem;
-  gap: 0.35rem;
+  margin-top: 0.45rem;
+  padding: 0.4rem 0.5rem 0.55rem;
+  gap: 0.3rem;
   align-items: center;
   display: grid;
 }

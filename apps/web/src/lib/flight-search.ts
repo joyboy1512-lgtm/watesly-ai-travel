@@ -257,9 +257,14 @@ export function durationMinutes(raw: unknown) {
 }
 
 export function formatMinutesLabel(mins: number) {
-  const h = Math.floor(mins / 60);
-  const m = mins % 60;
-  return [h ? `${h}س` : "", m ? `${m}د` : ""].filter(Boolean).join(" ") || "0د";
+  const total = Math.max(0, Math.round(mins));
+  const h = Math.floor(total / 60);
+  const m = total % 60;
+  // Isolate each unit so RTL pages never reorder "4س 25د" into "س 4د25".
+  const parts: string[] = [];
+  if (h > 0) parts.push(`\u2066${h}س\u2069`);
+  if (m > 0 || h === 0) parts.push(`\u2066${m}د\u2069`);
+  return parts.join(" ");
 }
 
 export function layoverMinutes(arriveAt?: string, departAt?: string) {

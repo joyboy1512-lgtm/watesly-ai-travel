@@ -259,7 +259,9 @@ function LegBlock({
       </div>
 
       <div className="shop-ticket-path">
-        <strong className="shop-ticket-meta-duration">المدة: {duration}</strong>
+        <strong className="shop-ticket-meta-duration">
+          المدة: <span dir="ltr">{duration}</span>
+        </strong>
         <div className="shop-ticket-route" aria-hidden>
           <span className="shop-ticket-route-line" />
           {stopNodes > 0
@@ -275,7 +277,10 @@ function LegBlock({
             : null}
         </div>
         <div className="shop-ticket-path-meta">
-          <span className={`shop-ticket-meta-stops${stops === 0 ? " direct" : ""}`}>
+          <span
+            className={`shop-ticket-meta-stops${stops === 0 ? " direct" : ""}`}
+            dir={stops > 0 ? "ltr" : undefined}
+          >
             {transitLabel(stops, stopHint, stopCodes)}
           </span>
           {airportChange ? (

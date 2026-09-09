@@ -54,7 +54,7 @@ function CustomLeg({
 
   if (empty) {
     return (
-      <div className="shop-ticket-leg-v2 kayak-leg shop-custom-trip-leg empty">
+      <div className="shop-ticket-leg-v2 kayak-leg shop-custom-trip-leg empty" dir="ltr">
         <div className="shop-custom-trip-empty-wrap">
           <strong>{label}</strong>
           <p>{emptyText}</p>
@@ -64,7 +64,17 @@ function CustomLeg({
   }
 
   return (
-    <div className="shop-ticket-leg-v2 kayak-leg shop-custom-trip-leg">
+    <div className="shop-ticket-leg-v2 kayak-leg shop-custom-trip-leg" dir="ltr">
+      <div className="shop-ticket-kayak-check">
+        {onClear ? (
+          <button type="button" className="shop-custom-trip-x" onClick={onClear} aria-label="إزالة">
+            ×
+          </button>
+        ) : (
+          <span aria-hidden />
+        )}
+      </div>
+
       <div className="shop-ticket-airline-col">
         <div className="shop-ticket-airline-logo">
           {logo ? (
@@ -87,12 +97,17 @@ function CustomLeg({
       </div>
 
       <div className="shop-ticket-path">
-        <span className="shop-ticket-meta-duration">المدة: {durationLabel || "—"}</span>
+        <span className="shop-ticket-meta-duration">
+          المدة: <span dir="ltr">{durationLabel || "—"}</span>
+        </span>
         <div className="shop-ticket-route" aria-hidden>
           <span className="shop-ticket-route-line" />
         </div>
         <div className="shop-ticket-path-meta">
-          <span className={`shop-ticket-meta-stops${stops === 0 ? " direct" : ""}`}>
+          <span
+            className={`shop-ticket-meta-stops${stops === 0 ? " direct" : ""}`}
+            dir={(stops ?? 0) > 0 ? "ltr" : undefined}
+          >
             {typeof stops === "number" ? stopsLabel(stops) : "—"}
           </span>
         </div>
@@ -103,12 +118,6 @@ function CustomLeg({
         <small className="shop-ticket-day">{formatDay(arriveAt) || " "}</small>
         <span className="shop-ticket-iata">{toPlace || to}</span>
       </div>
-
-      {onClear ? (
-        <button type="button" className="shop-custom-trip-x" onClick={onClear} aria-label="إزالة">
-          ×
-        </button>
-      ) : null}
     </div>
   );
 }
@@ -205,6 +214,14 @@ export function ShopFlightSelectionBar({
             ) : (
               "اختيار هذه الرحلة"
             )}
+          </button>
+          <button
+            type="button"
+            className="shop-ticket-details-link"
+            disabled={!canProceed || missingReturn}
+            onClick={onSelectTrip}
+          >
+            التفاصيل والشروط
           </button>
         </div>
       </aside>

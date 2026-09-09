@@ -4566,9 +4566,7 @@ html body .shop-date-range-backdrop {
   font-weight: 600;
 }
 
-.shop-flight-contact-grid input,
-.shop-traveler-modal input,
-.shop-traveler-modal select {
+.shop-flight-contact-grid input {
   border: 1px solid #cbd5e1;
   border-radius: 8px;
   padding: 0.65rem 0.75rem;
@@ -4656,8 +4654,8 @@ html body .shop-date-range-backdrop {
 }
 
 .shop-traveler-modal {
-  width: min(560px, 100%);
-  max-height: min(92svh, 860px);
+  width: min(640px, 100%);
+  max-height: min(92svh, 920px);
   overflow: auto;
   background: #fff;
   border-radius: 16px;
@@ -4775,10 +4773,66 @@ html body .shop-date-range-backdrop {
 }
 
 .shop-traveler-name-row,
-.shop-traveler-passport-row {
+.shop-traveler-passport-row,
+.shop-traveler-vital-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 0.65rem;
+  align-items: start;
+}
+
+.shop-traveler-name-triple {
+  grid-template-columns: 1fr 1fr 1fr;
+}
+
+.shop-traveler-id-hint {
+  margin: 0;
+  color: #475569;
+}
+
+.shop-traveler-section {
+  display: grid;
+  gap: 0.75rem;
+  padding-top: 0.35rem;
+  border-top: 1px solid #eef2f7;
+}
+
+.shop-traveler-section-title {
+  margin: 0;
+  font-size: 0.92rem;
+  font-weight: 800;
+  color: #001b35;
+}
+
+.shop-traveler-gender-field {
+  min-width: 0;
+}
+
+.shop-traveler-optional {
+  border-top: 1px solid #eef2f7;
+  padding-top: 0.35rem;
+}
+
+.shop-traveler-optional-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: #1668e3;
+  font: inherit;
+  font-weight: 800;
+  font-size: 0.88rem;
+  padding: 0.35rem 0;
+  cursor: pointer;
+  text-align: start;
+}
+
+.shop-traveler-optional-toggle i {
+  font-style: normal;
+  color: #1668e3;
 }
 
 .shop-traveler-dob {
@@ -4877,7 +4931,9 @@ html body .shop-date-range-backdrop {
 
 @media (max-width: 560px) {
   .shop-traveler-name-row,
-  .shop-traveler-passport-row {
+  .shop-traveler-name-triple,
+  .shop-traveler-passport-row,
+  .shop-traveler-vital-row {
     grid-template-columns: 1fr;
   }
 

@@ -67,10 +67,12 @@ function buildHotelRoomGuests(draft: HotelBookingDraft): HotelRoomGuestDraft[] {
 type Traveler = {
   title: string;
   firstName: string;
+  middleName: string;
   lastName: string;
   birthDate: string;
   nationality: string;
   passportNumber: string;
+  passportIssueDate: string;
   passportExpiry: string;
   gender: string;
 };
@@ -79,10 +81,12 @@ function emptyTraveler(): Traveler {
   return {
     title: "mr",
     firstName: "",
+    middleName: "",
     lastName: "",
     birthDate: "",
     nationality: "KW",
     passportNumber: "",
+    passportIssueDate: "",
     passportExpiry: "",
     gender: "male",
   };
@@ -125,7 +129,9 @@ function travelerComplete(t: Traveler) {
       t.lastName.trim() &&
       t.gender &&
       t.birthDate &&
+      t.nationality.trim() &&
       t.passportNumber.trim() &&
+      t.passportIssueDate &&
       t.passportExpiry,
   );
 }
@@ -162,6 +168,68 @@ const MONTHS = [
   { v: "12", l: "ديسمبر" },
 ];
 
+const PASSPORT_COUNTRIES = [
+  { code: "KW", label: "الكويت" },
+  { code: "SA", label: "السعودية" },
+  { code: "AE", label: "الإمارات" },
+  { code: "BH", label: "البحرين" },
+  { code: "QA", label: "قطر" },
+  { code: "OM", label: "عمان" },
+  { code: "EG", label: "مصر" },
+  { code: "JO", label: "الأردن" },
+  { code: "LB", label: "لبنان" },
+  { code: "IQ", label: "العراق" },
+  { code: "IN", label: "الهند" },
+  { code: "PK", label: "باكستان" },
+  { code: "PH", label: "الفلبين" },
+  { code: "GB", label: "المملكة المتحدة" },
+  { code: "US", label: "الولايات المتحدة" },
+  { code: "OTHER", label: "أخرى" },
+];
+
+function DatePartsRow({
+  value,
+  onChange,
+  labels,
+}: {
+  value: { y: string; m: string; d: string };
+  onChange: (part: Partial<{ y: string; m: string; d: string }>) => void;
+  labels: { month: string; day: string; year: string };
+}) {
+  return (
+    <div className="shop-traveler-dob">
+      <select
+        value={value.m}
+        onChange={(e) => onChange({ m: e.target.value })}
+        aria-label={labels.month}
+      >
+        <option value="">{labels.month}</option>
+        {MONTHS.map((m) => (
+          <option key={m.v} value={m.v}>
+            {m.l}
+          </option>
+        ))}
+      </select>
+      <input
+        inputMode="numeric"
+        placeholder="يوم"
+        aria-label={labels.day}
+        maxLength={2}
+        value={value.d}
+        onChange={(e) => onChange({ d: e.target.value.replace(/\D/g, "") })}
+      />
+      <input
+        inputMode="numeric"
+        placeholder="سنة"
+        aria-label={labels.year}
+        maxLength={4}
+        value={value.y}
+        onChange={(e) => onChange({ y: e.target.value.replace(/\D/g, "") })}
+      />
+    </div>
+  );
+}
+
 function FlightCheckout({
   draft,
   travelers,
@@ -191,6 +259,9 @@ function FlightCheckout({
 }) {
   const [editIndex, setEditIndex] = useState<number | null>(null);
   const [dobDraft, setDobDraft] = useState({ y: "", m: "", d: "" });
+  const [issueDraft, setIssueDraft] = useState({ y: "", m: "", d: "" });
+  const [expiryDraft, setExpiryDraft] = useState({ y: "", m: "", d: "" });
+  const [showOptional, setShowOptional] = useState(false);
   const [scanning, setScanning] = useState(false);
   const [scanHint, setScanHint] = useState("");
   const passportInputRef = useRef<HTMLInputElement | null>(null);
@@ -215,7 +286,11 @@ function FlightCheckout({
 
   useEffect(() => {
     if (editIndex == null) return;
-    setDobDraft(splitBirthDate(travelers[editIndex]?.birthDate || ""));
+    const row = travelers[editIndex];
+    setDobDraft(splitBirthDate(row?.birthDate || ""));
+    setIssueDraft(splitBirthDate(row?.passportIssueDate || ""));
+    setExpiryDraft(splitBirthDate(row?.passportExpiry || ""));
+    setShowOptional(false);
     setScanHint("");
   }, [editIndex]);
 
@@ -226,10 +301,23 @@ function FlightCheckout({
     );
   }
 
-  function updateDobPart(part: Partial<{ y: string; m: string; d: string }>) {
-    const next = { ...dobDraft, ...part };
-    setDobDraft(next);
-    updateEditing({ birthDate: joinBirthDate(next.y, next.m, next.d) });
+  function updateDatePart(
+    kind: "dob" | "issue" | "expiry",
+    part: Partial<{ y: string; m: string; d: string }>,
+  ) {
+    const current =
+      kind === "dob" ? dobDraft : kind === "issue" ? issueDraft : expiryDraft;
+    const next = { ...current, ...part };
+    if (kind === "dob") {
+      setDobDraft(next);
+      updateEditing({ birthDate: joinBirthDate(next.y, next.m, next.d) });
+    } else if (kind === "issue") {
+      setIssueDraft(next);
+      updateEditing({ passportIssueDate: joinBirthDate(next.y, next.m, next.d) });
+    } else {
+      setExpiryDraft(next);
+      updateEditing({ passportExpiry: joinBirthDate(next.y, next.m, next.d) });
+    }
   }
 
   function openPassportPicker() {
@@ -300,6 +388,9 @@ function FlightCheckout({
       }
       const gender =
         titleToGender(f.title) ||
+        (typeof (f as { gender?: string }).gender === "string"
+          ? String((f as { gender?: string }).gender).toLowerCase()
+          : "") ||
         travelers[targetIndex]?.gender ||
         "";
       const title = gender
@@ -309,27 +400,44 @@ function FlightCheckout({
           : f.title === "mr"
             ? "mr"
             : travelers[targetIndex]?.title || "mr";
+      const nextBirth = f.birthDate ? String(f.birthDate).slice(0, 10) : "";
+      const nextIssue = f.passportIssueDate
+        ? String(f.passportIssueDate).slice(0, 10)
+        : "";
+      const nextExpiry = f.passportExpiry
+        ? String(f.passportExpiry).slice(0, 10)
+        : "";
       setTravelers((rows) =>
         rows.map((row, i) =>
           i === targetIndex
             ? {
                 ...row,
                 ...(f.firstName ? { firstName: String(f.firstName).trim() } : {}),
+                ...(f.middleName
+                  ? { middleName: String(f.middleName).trim() }
+                  : {}),
                 ...(f.lastName ? { lastName: String(f.lastName).trim() } : {}),
-                ...(f.birthDate ? { birthDate: String(f.birthDate).slice(0, 10) } : {}),
-                ...(f.nationality ? { nationality: String(f.nationality).toUpperCase() } : {}),
+                ...(nextBirth ? { birthDate: nextBirth } : {}),
+                ...(f.nationality
+                  ? { nationality: String(f.nationality).toUpperCase() }
+                  : {}),
                 ...(f.passportNumber
-                  ? { passportNumber: String(f.passportNumber).replace(/\s+/g, "").toUpperCase() }
+                  ? {
+                      passportNumber: String(f.passportNumber)
+                        .replace(/\s+/g, "")
+                        .toUpperCase(),
+                    }
                   : {}),
-                ...(f.passportExpiry
-                  ? { passportExpiry: String(f.passportExpiry).slice(0, 10) }
-                  : {}),
+                ...(nextIssue ? { passportIssueDate: nextIssue } : {}),
+                ...(nextExpiry ? { passportExpiry: nextExpiry } : {}),
                 ...(gender ? { gender, title } : f.title ? { title } : {}),
               }
             : row,
         ),
       );
-      if (f.birthDate) setDobDraft(splitBirthDate(String(f.birthDate).slice(0, 10)));
+      if (nextBirth) setDobDraft(splitBirthDate(nextBirth));
+      if (nextIssue) setIssueDraft(splitBirthDate(nextIssue));
+      if (nextExpiry) setExpiryDraft(splitBirthDate(nextExpiry));
       const pct = Math.round((result.confidence || 0) * 100);
       setScanHint(
         result.notes ||
@@ -511,7 +619,10 @@ function FlightCheckout({
           >
             <div className="shop-traveler-modal-head">
               <div className="shop-traveler-modal-title">
-                <h3>بيانات المسافر</h3>
+                <h3>
+                  المسافر {editIndex + 1}:{" "}
+                  {editIndex < draft.adults ? "بالغ" : "طفل"}
+                </h3>
                 <span>* مطلوب</span>
               </div>
               <button
@@ -529,7 +640,7 @@ function FlightCheckout({
                 <strong>مسح جواز السفر بالصورة</strong>
                 <p>
                   ارفع صورة واضحة لصفحة الجواز لملء الاسم وتاريخ الميلاد والجنسية
-                  تلقائيًا.
+                  وبيانات الجواز تلقائيًا.
                 </p>
               </div>
               <button
@@ -543,8 +654,23 @@ function FlightCheckout({
             </div>
             {scanHint ? <p className="shop-passport-scan-hint">{scanHint}</p> : null}
 
+            <label>
+              البريد الإلكتروني*
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="name@example.com"
+                autoComplete="email"
+              />
+            </label>
+
+            <p className="shop-traveler-field-hint shop-traveler-id-hint">
+              * يجب أن يطابق الاسم وثيقة الهوية الرسمية حرفًا بحرف
+            </p>
+
             <fieldset className="shop-traveler-title-field">
-              <legend>اللقب</legend>
+              <legend>اللقب*</legend>
               <div className="shop-traveler-title-seg" role="radiogroup" aria-label="اللقب">
                 <button
                   type="button"
@@ -579,9 +705,9 @@ function FlightCheckout({
               </div>
             </fieldset>
 
-            <div className="shop-traveler-name-row">
+            <div className="shop-traveler-name-row shop-traveler-name-triple">
               <label>
-                الاسم الأول
+                الاسم الأول*
                 <input
                   value={editing.firstName}
                   onChange={(e) => updateEditing({ firstName: e.target.value })}
@@ -590,7 +716,16 @@ function FlightCheckout({
                 />
               </label>
               <label>
-                اسم العائلة
+                الاسم الأوسط
+                <input
+                  value={editing.middleName}
+                  onChange={(e) => updateEditing({ middleName: e.target.value })}
+                  placeholder="اختياري"
+                  autoComplete="additional-name"
+                />
+              </label>
+              <label>
+                اسم العائلة*
                 <input
                   value={editing.lastName}
                   onChange={(e) => updateEditing({ lastName: e.target.value })}
@@ -599,70 +734,141 @@ function FlightCheckout({
                 />
               </label>
             </div>
-            <p className="shop-traveler-field-hint">
-              أدخل الاسم كما هو مكتوب في وثيقة السفر (بالأحرف الإنجليزية)
-            </p>
 
-            <label className="shop-traveler-dob-field">
-              تاريخ الميلاد
-              <div className="shop-traveler-dob">
-                <select
-                  value={dobDraft.m}
-                  onChange={(e) => updateDobPart({ m: e.target.value })}
-                  aria-label="شهر الميلاد"
+            <div className="shop-traveler-vital-row">
+              <label className="shop-traveler-dob-field">
+                تاريخ الميلاد*
+                <DatePartsRow
+                  value={dobDraft}
+                  onChange={(part) => updateDatePart("dob", part)}
+                  labels={{ month: "الشهر*", day: "اليوم*", year: "السنة*" }}
+                />
+              </label>
+              <fieldset className="shop-traveler-title-field shop-traveler-gender-field">
+                <legend>الجنس*</legend>
+                <div
+                  className="shop-traveler-title-seg"
+                  role="radiogroup"
+                  aria-label="الجنس"
                 >
-                  <option value="">الشهر</option>
-                  {MONTHS.map((m) => (
-                    <option key={m.v} value={m.v}>
-                      {m.l}
-                    </option>
-                  ))}
-                </select>
-                <input
-                  inputMode="numeric"
-                  placeholder="يوم"
-                  aria-label="يوم الميلاد"
-                  maxLength={2}
-                  value={dobDraft.d}
-                  onChange={(e) =>
-                    updateDobPart({ d: e.target.value.replace(/\D/g, "") })
-                  }
-                />
-                <input
-                  inputMode="numeric"
-                  placeholder="سنة"
-                  aria-label="سنة الميلاد"
-                  maxLength={4}
-                  value={dobDraft.y}
-                  onChange={(e) =>
-                    updateDobPart({ y: e.target.value.replace(/\D/g, "") })
-                  }
-                />
-              </div>
-            </label>
+                  <button
+                    type="button"
+                    role="radio"
+                    aria-checked={editing.gender === "male"}
+                    className={editing.gender === "male" ? "on" : ""}
+                    onClick={() => updateEditing({ gender: "male", title: "mr" })}
+                  >
+                    ذكر
+                  </button>
+                  <button
+                    type="button"
+                    role="radio"
+                    aria-checked={editing.gender === "female"}
+                    className={editing.gender === "female" ? "on" : ""}
+                    onClick={() =>
+                      updateEditing({ gender: "female", title: "mrs" })
+                    }
+                  >
+                    أنثى
+                  </button>
+                </div>
+              </fieldset>
+            </div>
 
-            <div className="shop-traveler-passport-row">
-              <label>
-                رقم الجواز
-                <input
-                  value={editing.passportNumber}
-                  onChange={(e) =>
-                    updateEditing({
-                      passportNumber: e.target.value.replace(/\s+/g, "").toUpperCase(),
-                    })
-                  }
-                  placeholder="كما في الجواز"
-                  autoCapitalize="characters"
+            <div className="shop-traveler-section">
+              <h4 className="shop-traveler-section-title">بيانات الجواز</h4>
+              <div className="shop-traveler-passport-row">
+                <label>
+                  رقم الجواز*
+                  <input
+                    value={editing.passportNumber}
+                    onChange={(e) =>
+                      updateEditing({
+                        passportNumber: e.target.value
+                          .replace(/\s+/g, "")
+                          .toUpperCase(),
+                      })
+                    }
+                    placeholder="كما في الجواز"
+                    autoCapitalize="characters"
+                  />
+                </label>
+                <label>
+                  دولة الإصدار*
+                  <select
+                    value={
+                      PASSPORT_COUNTRIES.some((c) => c.code === editing.nationality)
+                        ? editing.nationality
+                        : "OTHER"
+                    }
+                    onChange={(e) =>
+                      updateEditing({
+                        nationality:
+                          e.target.value === "OTHER" ? "" : e.target.value,
+                      })
+                    }
+                  >
+                    {PASSPORT_COUNTRIES.map((c) => (
+                      <option key={c.code} value={c.code}>
+                        {c.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+              {!PASSPORT_COUNTRIES.some((c) => c.code === editing.nationality) ||
+              editing.nationality === "" ? (
+                <label>
+                  رمز الدولة (ISO)
+                  <input
+                    value={editing.nationality}
+                    onChange={(e) =>
+                      updateEditing({
+                        nationality: e.target.value
+                          .replace(/[^a-zA-Z]/g, "")
+                          .toUpperCase()
+                          .slice(0, 3),
+                      })
+                    }
+                    placeholder="مثال: KW"
+                    maxLength={3}
+                  />
+                </label>
+              ) : null}
+              <label className="shop-traveler-dob-field">
+                تاريخ الإصدار*
+                <DatePartsRow
+                  value={issueDraft}
+                  onChange={(part) => updateDatePart("issue", part)}
+                  labels={{ month: "الشهر*", day: "اليوم*", year: "السنة*" }}
                 />
               </label>
-              <label>
-                تاريخ انتهاء الجواز
-                <input
-                  type="date"
-                  value={editing.passportExpiry || ""}
-                  onChange={(e) => updateEditing({ passportExpiry: e.target.value })}
+              <label className="shop-traveler-dob-field">
+                تاريخ الانتهاء*
+                <DatePartsRow
+                  value={expiryDraft}
+                  onChange={(part) => updateDatePart("expiry", part)}
+                  labels={{ month: "الشهر*", day: "اليوم*", year: "السنة*" }}
                 />
               </label>
+            </div>
+
+            <div className="shop-traveler-optional">
+              <button
+                type="button"
+                className="shop-traveler-optional-toggle"
+                aria-expanded={showOptional}
+                onClick={() => setShowOptional((v) => !v)}
+              >
+                <span>برامج الولاء والطلبات الاختيارية</span>
+                <i aria-hidden="true">{showOptional ? "▾" : "◂"}</i>
+              </button>
+              {showOptional ? (
+                <p className="shop-traveler-field-hint" style={{ marginTop: "0.5rem" }}>
+                  يمكن إضافة رقم المسافر الدائم والطلبات الخاصة في خطوة لاحقة عند
+                  توفرها من مزوّد التذاكر.
+                </p>
+              ) : null}
             </div>
 
             <div className="shop-traveler-modal-foot">
@@ -763,10 +969,12 @@ export default function PublicBookPage() {
       travelers: Array<{
         title: string;
         firstName: string;
+        middleName?: string | null;
         lastName: string;
         birthDate?: string | null;
         nationality?: string | null;
         passportNumber?: string | null;
+        passportIssueDate?: string | null;
         passportExpiry?: string | null;
       }>;
     }>("/shop/me")
@@ -779,13 +987,19 @@ export default function PublicBookPage() {
             const gender =
               saved.title === "ms" || saved.title === "mrs" ? "female" : "male";
             return {
+              ...emptyTraveler(),
+              ...row,
               title: saved.title === "ms" ? "mrs" : saved.title || "mr",
-              firstName: saved.firstName,
-              lastName: saved.lastName,
-              birthDate: saved.birthDate?.slice(0, 10) || "",
-              nationality: saved.nationality || "KW",
-              passportNumber: saved.passportNumber || "",
-              passportExpiry: saved.passportExpiry?.slice(0, 10) || "",
+              firstName: saved.firstName || row.firstName,
+              middleName: saved.middleName || row.middleName || "",
+              lastName: saved.lastName || row.lastName,
+              birthDate: saved.birthDate?.slice(0, 10) || row.birthDate,
+              nationality: saved.nationality || row.nationality || "KW",
+              passportNumber: saved.passportNumber || row.passportNumber || "",
+              passportIssueDate:
+                saved.passportIssueDate?.slice(0, 10) || row.passportIssueDate || "",
+              passportExpiry:
+                saved.passportExpiry?.slice(0, 10) || row.passportExpiry || "",
               gender,
             };
           }),

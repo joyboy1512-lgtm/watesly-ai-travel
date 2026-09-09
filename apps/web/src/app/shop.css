@@ -8850,14 +8850,33 @@ html body .wg-hero-acc-field[data-field="time"] .exp-cell-label {
   white-space: nowrap !important;
 }
 
-/* WG_HERO_SEARCH_GLASS_V2 — colors only: solid blue header + dark glass body */
+/* WG_HERO_SEARCH_GLASS_V2 — colors only: solid blue header + dark glass body
+   Critical: shell must be transparent, otherwise glass body looks solid. */
+html body .shop-root .wg-hero-search-panel,
+html body .wg-hero-search-panel,
+html body .shop-root .wg-hero-ticket-shell,
+html body .shop-root .wg-hero-dock-shell,
+html body .shop-root .wg-hero-acc-shell,
+html body .wg-hero-ticket-shell,
+html body .wg-hero-dock-shell,
+html body .wg-hero-acc-shell,
+html body .wg-hero-ticket-shell.wg-hero-dock-shell.wg-hero-acc-shell {
+  background: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  border-color: transparent !important;
+}
+
 html body .shop-root.wg-new-ui .wg-hero-acc-modes.wg-hero-dock-modes,
 html body .shop-root .wg-hero-acc-modes.wg-hero-dock-modes,
 html body .wg-hero-acc-modes.wg-hero-dock-modes,
 html body .wg-hero-acc-modes {
   background: #001b35 !important;
   background-image: none !important;
-  border-color: rgba(217, 154, 62, 0.28) !important;
+  border: 1px solid rgba(217, 154, 62, 0.35) !important;
+  border-bottom: 0 !important;
+  border-radius: 18px 18px 0 0 !important;
+  box-shadow: 0 10px 28px rgba(0, 15, 31, 0.35) !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
 }
@@ -8869,15 +8888,16 @@ html body .shop-root .wg-hero-dock.wg-hero-acc-panel,
 html body .shop-root .wg-hero-acc-panel.wg-hero-dock,
 html body .wg-hero-dock.wg-hero-acc-panel,
 html body .wg-hero-acc-panel.wg-hero-dock,
-html body .wg-hero-acc-panel {
-  background: rgba(8, 22, 42, 0.28) !important;
+html body .wg-hero-acc-panel,
+html body .wg-hero-search-fields {
+  background: rgba(0, 27, 53, 0.22) !important;
   background-image: none !important;
-  border: 1px solid rgba(255, 255, 255, 0.28) !important;
+  border: 1px solid rgba(255, 255, 255, 0.32) !important;
   box-shadow:
-    0 18px 42px rgba(0, 15, 31, 0.22),
-    inset 0 1px 0 rgba(255, 255, 255, 0.14) !important;
-  backdrop-filter: blur(22px) saturate(1.2) !important;
-  -webkit-backdrop-filter: blur(22px) saturate(1.2) !important;
+    0 18px 42px rgba(0, 15, 31, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.16) !important;
+  backdrop-filter: blur(24px) saturate(1.25) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(1.25) !important;
 }
 
 html body .shop-root .wg-hero-dock.wg-hero-acc-panel,
@@ -8886,15 +8906,16 @@ html body .wg-hero-dock.wg-hero-acc-panel,
 html body .wg-hero-acc-panel.wg-hero-dock,
 html body .wg-hero-acc-panel {
   border-top: 0 !important;
+  border-radius: 0 0 18px 18px !important;
 }
 
 html body .shop-root .wg-hero-acc-panel.is-open::before,
 html body .wg-hero-acc-panel.is-open::before,
 html body .wg-hero-acc-shell[data-mode] .wg-hero-acc-panel.is-open::before {
-  background: rgba(8, 22, 42, 0.28) !important;
-  border-color: rgba(255, 255, 255, 0.28) !important;
-  backdrop-filter: blur(22px) !important;
-  -webkit-backdrop-filter: blur(22px) !important;
+  background: rgba(0, 27, 53, 0.22) !important;
+  border-color: rgba(255, 255, 255, 0.32) !important;
+  backdrop-filter: blur(24px) !important;
+  -webkit-backdrop-filter: blur(24px) !important;
 }
 
 html body .shop-root .wg-hero-acc-panel .exp-dialog,

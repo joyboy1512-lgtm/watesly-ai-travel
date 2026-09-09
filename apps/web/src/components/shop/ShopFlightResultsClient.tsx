@@ -71,8 +71,8 @@ export function ShopFlightResultsClient() {
   const [quoteItems, setQuoteItems] = useState<QuoteItem[]>([]);
   const [filters, setFilters] = useState<FlightSearchFilters>(defaultFlightFilters());
   const [sortKey, setSortKey] = useState<FlightSortKey>("price_asc");
-  const [editOpen, setEditOpen] = useState(false);
   const [draft, setDraft] = useState<FlightResultsSearchParams>(params);
+  const [travelersOpen, setTravelersOpen] = useState(false);
 
   const [selectedOutboundKey, setSelectedOutboundKey] = useState<string | null>(null);
   const [selectedReturnKey, setSelectedReturnKey] = useState<string | null>(null);
@@ -319,7 +319,6 @@ export function ShopFlightResultsClient() {
   function applyEdit(e: FormEvent) {
     e.preventDefault();
     const href = buildFlightResultsHref(draft);
-    setEditOpen(false);
     router.push(href);
   }
 
@@ -453,6 +452,12 @@ export function ShopFlightResultsClient() {
 
   return (
     <div className="shop-flight-results-page">
+      <div className="shop-flight-results-home-row">
+        <Link href="/#search" className="shop-flight-home-link">
+          الصفحة الرئيسية
+        </Link>
+      </div>
+
       <div className="shop-flight-results-topbar">
         <div className="shop-flight-results-topbar-inner">
           <div className="shop-flight-results-summary">
@@ -463,101 +468,194 @@ export function ShopFlightResultsClient() {
             </span>
             {params.directOnly ? <span className="shop-flight-chip">مباشر فقط</span> : null}
           </div>
-          <div className="shop-flight-results-topbar-actions">
-            <button
-              type="button"
-              className="shop-flight-change-btn"
-              onClick={() => setEditOpen((v) => !v)}
-            >
-              {editOpen ? "إغلاق" : "تعديل البحث"}
-            </button>
-            <Link href="/#search" className="shop-flight-home-link">
-              الصفحة الرئيسية
-            </Link>
-          </div>
         </div>
 
-        {editOpen ? (
-          <form className="shop-flight-edit-bar" onSubmit={applyEdit}>
+        <form
+          className="shop-flight-edit-bar"
+          onSubmit={(e) => {
+            setTravelersOpen(false);
+            applyEdit(e);
+          }}
+        >
+          <label>
+            من
+            <input
+              value={draft.origin}
+              onChange={(e) =>
+                setDraft((d) => ({
+                  ...d,
+                  origin: e.target.value.toUpperCase(),
+                  originLabel: e.target.value.toUpperCase(),
+                }))
+              }
+              placeholder="KWI"
+              required={draft.tripType !== "multicity"}
+            />
+          </label>
+          <label>
+            إلى
+            <input
+              value={draft.destination}
+              onChange={(e) =>
+                setDraft((d) => ({
+                  ...d,
+                  destination: e.target.value.toUpperCase(),
+                  destinationLabel: e.target.value.toUpperCase(),
+                }))
+              }
+              placeholder="DXB"
+              required={draft.tripType !== "multicity"}
+            />
+          </label>
+          <label>
+            المغادرة
+            <input
+              type="date"
+              value={draft.departDate}
+              onChange={(e) => setDraft((d) => ({ ...d, departDate: e.target.value }))}
+              required={draft.tripType !== "multicity"}
+            />
+          </label>
+          {draft.tripType === "roundtrip" ? (
             <label>
-              من
-              <input
-                value={draft.origin}
-                onChange={(e) =>
-                  setDraft((d) => ({
-                    ...d,
-                    origin: e.target.value.toUpperCase(),
-                    originLabel: e.target.value.toUpperCase(),
-                  }))
-                }
-                placeholder="KWI"
-                required={draft.tripType !== "multicity"}
-              />
-            </label>
-            <label>
-              إلى
-              <input
-                value={draft.destination}
-                onChange={(e) =>
-                  setDraft((d) => ({
-                    ...d,
-                    destination: e.target.value.toUpperCase(),
-                    destinationLabel: e.target.value.toUpperCase(),
-                  }))
-                }
-                placeholder="DXB"
-                required={draft.tripType !== "multicity"}
-              />
-            </label>
-            <label>
-              المغادرة
+              العودة
               <input
                 type="date"
-                value={draft.departDate}
-                onChange={(e) => setDraft((d) => ({ ...d, departDate: e.target.value }))}
-                required={draft.tripType !== "multicity"}
+                value={draft.returnDate}
+                onChange={(e) => setDraft((d) => ({ ...d, returnDate: e.target.value }))}
               />
             </label>
-            {draft.tripType === "roundtrip" ? (
-              <label>
-                العودة
-                <input
-                  type="date"
-                  value={draft.returnDate}
-                  onChange={(e) => setDraft((d) => ({ ...d, returnDate: e.target.value }))}
-                />
-              </label>
-            ) : null}
+          ) : (
             <label>
-              بالغون
-              <input
-                type="number"
-                min={1}
-                value={draft.adults}
-                onChange={(e) => setDraft((d) => ({ ...d, adults: Number(e.target.value) || 1 }))}
-              />
+              العودة
+              <input type="date" value="" disabled />
             </label>
-            <label className="shop-flight-edit-check">
-              <input
-                type="checkbox"
-                checked={draft.directOnly}
-                onChange={(e) => setDraft((d) => ({ ...d, directOnly: e.target.checked }))}
-              />
-              مباشر فقط
-            </label>
-            <label className="shop-flight-edit-check">
-              <input
-                type="checkbox"
-                checked={draft.flexibleDates}
-                onChange={(e) => setDraft((d) => ({ ...d, flexibleDates: e.target.checked }))}
-              />
-              تواريخ مرنة
-            </label>
-            <button type="submit" className="shop-flight-search-again">
-              بحث
+          )}
+          <label className="shop-flight-edit-travelers">
+            المسافرون
+            <button
+              type="button"
+              className="shop-flight-edit-travelers-toggle"
+              aria-expanded={travelersOpen}
+              onClick={() => setTravelersOpen((v) => !v)}
+            >
+              {draft.adults} بالغ
+              {draft.children > 0 ? ` · ${draft.children} طفل` : ""}
+              {draft.infants > 0 ? ` · ${draft.infants} رضيع` : ""}
             </button>
-          </form>
-        ) : null}
+            {travelersOpen ? (
+              <div className="shop-flight-edit-travelers-panel" role="dialog" aria-label="المسافرون">
+                <div className="shop-flight-edit-traveler-row">
+                  <span>
+                    بالغ
+                    <small>12+ سنة</small>
+                  </span>
+                  <div className="shop-flight-edit-stepper">
+                    <button
+                      type="button"
+                      aria-label="تقليل البالغين"
+                      onClick={() =>
+                        setDraft((d) => ({
+                          ...d,
+                          adults: Math.max(1, d.adults - 1),
+                          infants: Math.min(d.infants, Math.max(1, d.adults - 1)),
+                        }))
+                      }
+                    >
+                      −
+                    </button>
+                    <strong>{draft.adults}</strong>
+                    <button
+                      type="button"
+                      aria-label="زيادة البالغين"
+                      onClick={() =>
+                        setDraft((d) => ({ ...d, adults: Math.min(9, d.adults + 1) }))
+                      }
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+                <div className="shop-flight-edit-traveler-row">
+                  <span>
+                    طفل
+                    <small>2–11 سنة</small>
+                  </span>
+                  <div className="shop-flight-edit-stepper">
+                    <button
+                      type="button"
+                      aria-label="تقليل الأطفال"
+                      onClick={() =>
+                        setDraft((d) => ({ ...d, children: Math.max(0, d.children - 1) }))
+                      }
+                    >
+                      −
+                    </button>
+                    <strong>{draft.children}</strong>
+                    <button
+                      type="button"
+                      aria-label="زيادة الأطفال"
+                      onClick={() =>
+                        setDraft((d) => ({ ...d, children: Math.min(8, d.children + 1) }))
+                      }
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+                <div className="shop-flight-edit-traveler-row">
+                  <span>
+                    رضيع
+                    <small>أقل من سنتين</small>
+                  </span>
+                  <div className="shop-flight-edit-stepper">
+                    <button
+                      type="button"
+                      aria-label="تقليل الرضع"
+                      onClick={() =>
+                        setDraft((d) => ({ ...d, infants: Math.max(0, d.infants - 1) }))
+                      }
+                    >
+                      −
+                    </button>
+                    <strong>{draft.infants}</strong>
+                    <button
+                      type="button"
+                      aria-label="زيادة الرضع"
+                      onClick={() =>
+                        setDraft((d) => ({
+                          ...d,
+                          infants: Math.min(d.adults, d.infants + 1),
+                        }))
+                      }
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : null}
+          </label>
+          <label className="shop-flight-edit-check">
+            <input
+              type="checkbox"
+              checked={draft.directOnly}
+              onChange={(e) => setDraft((d) => ({ ...d, directOnly: e.target.checked }))}
+            />
+            مباشر فقط
+          </label>
+          <label className="shop-flight-edit-check">
+            <input
+              type="checkbox"
+              checked={draft.flexibleDates}
+              onChange={(e) => setDraft((d) => ({ ...d, flexibleDates: e.target.checked }))}
+            />
+            تواريخ مرنة
+          </label>
+          <button type="submit" className="shop-flight-search-again">
+            تعديل البحث
+          </button>
+        </form>
       </div>
 
       {loading ? (

@@ -1,10 +1,12 @@
 "use client";
 
 import { useShopCopy } from "@/components/shop/ShopI18nProvider";
+import { airportPlaceLabel } from "@/lib/airport-cities";
 import type { ComposedTrip } from "@/lib/flight-compose";
 import {
   airlineLogo,
   formatClock,
+  formatDay,
   stopsLabel,
 } from "@/lib/flight-search";
 
@@ -19,7 +21,7 @@ type Props = {
   onClearReturn?: () => void;
 };
 
-function MiniLeg({
+function CustomLeg({
   label,
   airlineCode,
   airlineName,
@@ -47,42 +49,61 @@ function MiniLeg({
   onClear?: () => void;
 }) {
   const logo = airlineLogo(airlineCode, 64);
+  const fromPlace = airportPlaceLabel(from || "");
+  const toPlace = airportPlaceLabel(to || "");
 
   if (empty) {
     return (
-      <div className="shop-custom-trip-leg empty" dir="ltr">
-        <span className="shop-custom-trip-leg-label">{label}</span>
-        <p className="shop-custom-trip-empty">{emptyText}</p>
+      <div className="shop-ticket-leg-v2 kayak-leg shop-custom-trip-leg empty">
+        <div className="shop-custom-trip-empty-wrap">
+          <strong>{label}</strong>
+          <p>{emptyText}</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="shop-custom-trip-leg" dir="ltr">
-      <span className="shop-custom-trip-leg-label">{label}</span>
-      <div className="shop-custom-trip-leg-main">
-        <div className="shop-custom-trip-airline">
+    <div className="shop-ticket-leg-v2 kayak-leg shop-custom-trip-leg">
+      <div className="shop-ticket-airline-col">
+        <div className="shop-ticket-airline-logo">
           {logo ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={logo} alt={airlineName || ""} width={28} height={28} />
+            <img src={logo} alt={airlineName || ""} width={64} height={64} />
           ) : (
-            <div className="shop-ticket-logo-fallback small">{airlineCode || "✈"}</div>
+            <div className="shop-ticket-logo-fallback">{airlineCode || "✈"}</div>
           )}
-          <span>{airlineName}</span>
         </div>
-        <div className="shop-custom-trip-times">
-          <strong>{formatClock(departAt)}</strong>
-          <span className="shop-custom-trip-dash">
-            {durationLabel || "—"}
-            {typeof stops === "number" ? ` · ${stopsLabel(stops)}` : ""}
-          </span>
-          <strong>{formatClock(arriveAt)}</strong>
-        </div>
-        <div className="shop-custom-trip-airports">
-          <span>{from}</span>
-          <span>{to}</span>
+        <div className="shop-ticket-airline-text">
+          <strong title={airlineName}>{airlineName || airlineCode}</strong>
+          <span>{label}</span>
         </div>
       </div>
+
+      <div className="shop-ticket-od dep">
+        <strong className="shop-ticket-clock">{formatClock(departAt)}</strong>
+        <small className="shop-ticket-day">{formatDay(departAt) || " "}</small>
+        <span className="shop-ticket-iata">{fromPlace || from}</span>
+      </div>
+
+      <div className="shop-ticket-path">
+        <span className="shop-ticket-meta-duration">المدة: {durationLabel || "—"}</span>
+        <div className="shop-ticket-route" aria-hidden>
+          <span className="shop-ticket-route-line" />
+        </div>
+        <div className="shop-ticket-path-meta">
+          <span className={`shop-ticket-meta-stops${stops === 0 ? " direct" : ""}`}>
+            {typeof stops === "number" ? stopsLabel(stops) : "—"}
+          </span>
+        </div>
+      </div>
+
+      <div className="shop-ticket-od arr">
+        <strong className="shop-ticket-clock">{formatClock(arriveAt)}</strong>
+        <small className="shop-ticket-day">{formatDay(arriveAt) || " "}</small>
+        <span className="shop-ticket-iata">{toPlace || to}</span>
+      </div>
+
       {onClear ? (
         <button type="button" className="shop-custom-trip-x" onClick={onClear} aria-label="إزالة">
           ×
@@ -92,7 +113,7 @@ function MiniLeg({
   );
 }
 
-/** Kayak-style custom trip card pinned above results after checkbox selection. */
+/** Custom trip card — same boarding-pass shape as result cards, red accents. */
 export function ShopFlightSelectionBar({
   trip,
   isRoundTrip,
@@ -105,29 +126,23 @@ export function ShopFlightSelectionBar({
 }: Props) {
   const { currency: displayCurrency, formatMoney } = useShopCopy();
   const missingReturn = isRoundTrip && !trip.return;
-  const title = "رحلة مخصصة";
 
   return (
-    <article className="shop-custom-trip-card" role="region" aria-label="رحلة مخصصة">
-      <header className="shop-custom-trip-head">
-        <div>
-          <strong className="shop-custom-trip-badge">{title}</strong>
-          <p>
-            {trip.isMixMatch
-              ? "تم دمج ذهاب وعودة من عروض مختلفة"
-              : missingReturn
-                ? "اختر رحلة العودة من البطاقات أدناه"
-                : "يمكنك متابعة الحجز أو تعديل الاختيار"}
-          </p>
-        </div>
+    <article
+      className="shop-ticket-card shop-ticket-card-v2 shop-ticket-card-bp shop-custom-trip-card"
+      role="region"
+      aria-label="رحلة مخصصة"
+    >
+      <div className="shop-ticket-badges shop-custom-trip-badges">
+        <span className="shop-ticket-badge shop-custom-trip-title">رحلة مخصصة</span>
         <button type="button" className="shop-custom-trip-clear" onClick={onClear}>
           مسح الاختيار
         </button>
-      </header>
+      </div>
 
-      <div className="shop-custom-trip-body">
-        <div className="shop-custom-trip-legs">
-          <MiniLeg
+      <div className="shop-ticket-body-v2">
+        <div className="shop-ticket-legs-v2">
+          <CustomLeg
             label="ذهاب"
             airlineCode={trip.outbound.airlineCode}
             airlineName={trip.outbound.airlineName}
@@ -141,7 +156,7 @@ export function ShopFlightSelectionBar({
           />
           {isRoundTrip ? (
             trip.return ? (
-              <MiniLeg
+              <CustomLeg
                 label="عودة"
                 airlineCode={trip.return.airlineCode}
                 airlineName={trip.return.airlineName}
@@ -154,19 +169,30 @@ export function ShopFlightSelectionBar({
                 onClear={onClearReturn}
               />
             ) : (
-              <MiniLeg label="عودة" empty emptyText="اختر رحلة العودة ✓ من البطاقات أدناه" />
+              <CustomLeg
+                label="عودة"
+                empty
+                emptyText="اختر رحلة العودة ✓ من البطاقات أدناه"
+              />
             )
           ) : null}
         </div>
+      </div>
 
-        <div className="shop-custom-trip-side">
-          <strong className="shop-custom-trip-price" data-display-currency={displayCurrency}>
+      <aside className="shop-ticket-side-v2 shop-ticket-stub">
+        <div className="shop-ticket-price-block">
+          <strong className="shop-ticket-price" data-display-currency={displayCurrency}>
             {formatMoney(trip.totalPriceMinor, trip.currency)}
           </strong>
-          <small>السعر الإجمالي · شامل الضرائب</small>
+        </div>
+        <div className="shop-ticket-stub-totals">
+          <span>السعر الإجمالي للرحلة</span>
+          <span>شامل الضرائب</span>
+        </div>
+        <div className="shop-ticket-cta-group">
           <button
             type="button"
-            className="shop-custom-trip-cta"
+            className="shop-ticket-details-btn primary shop-custom-trip-cta"
             disabled={!canProceed || loading || missingReturn}
             onClick={onSelectTrip}
           >
@@ -181,7 +207,7 @@ export function ShopFlightSelectionBar({
             )}
           </button>
         </div>
-      </div>
+      </aside>
     </article>
   );
 }

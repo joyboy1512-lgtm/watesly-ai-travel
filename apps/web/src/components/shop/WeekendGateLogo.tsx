@@ -20,7 +20,7 @@ export function WeekendGateLogo({ light = false }: { light?: boolean }) {
         src={src}
         srcSet={srcSet}
         alt="WeekendGate"
-        height={40}
+        height={32}
       />
     </span>
   );

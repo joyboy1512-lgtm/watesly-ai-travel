@@ -90,31 +90,40 @@ export function ShopFlightResults(props: Props) {
   return (
     <section className="shop-flight-results kayak">
       <div className="shop-flight-sort-tabs" role="tablist" aria-label="ترتيب النتائج">
-        {sortTabs.map((tab) => (
-          <button
-            key={tab.key}
-            type="button"
-            role="tab"
-            aria-selected={props.sortKey === tab.key}
-            className={`shop-flight-sort-tab${props.sortKey === tab.key ? " on" : ""}`}
-            onClick={() => {
-              setVisibleCount(10);
-              props.onSortChange(tab.key);
-            }}
-          >
-            <span className="shop-flight-sort-tab-label">{tab.label}</span>
-            <strong className="shop-flight-sort-tab-price" data-display-currency={displayCurrency}>
-              {tab.priceMinor != null
-                ? formatMoneyCompact(tab.priceMinor, tab.currency)
-                : "—"}
-            </strong>
-            <span className="shop-flight-sort-tab-meta">
-              {tab.durationMins != null && tab.durationMins < Number.MAX_SAFE_INTEGER
-                ? formatMinutesLabel(tab.durationMins)
-                : "—"}
-            </span>
-          </button>
-        ))}
+        {sortTabs.map((tab) => {
+          const why =
+            tab.key === "best"
+              ? "توازن بين السعر والمدة وعدد التوقفات"
+              : tab.key === "price_asc"
+                ? "أقل سعر إجمالي لهذه البحث"
+                : "أقصر مدة إجمالية للرحلة";
+          return (
+            <button
+              key={tab.key}
+              type="button"
+              role="tab"
+              aria-selected={props.sortKey === tab.key}
+              className={`shop-flight-sort-tab${props.sortKey === tab.key ? " on" : ""}`}
+              onClick={() => {
+                setVisibleCount(10);
+                props.onSortChange(tab.key);
+              }}
+            >
+              <span className="shop-flight-sort-tab-label">{tab.label}</span>
+              <strong className="shop-flight-sort-tab-price" data-display-currency={displayCurrency}>
+                {tab.priceMinor != null
+                  ? formatMoneyCompact(tab.priceMinor, tab.currency)
+                  : "—"}
+              </strong>
+              <span className="shop-flight-sort-tab-meta">
+                {tab.durationMins != null && tab.durationMins < Number.MAX_SAFE_INTEGER
+                  ? formatMinutesLabel(tab.durationMins)
+                  : "—"}
+              </span>
+              <em className="shop-flight-sort-tab-why">{why}</em>
+            </button>
+          );
+        })}
       </div>
 
       <div className="shop-flight-results-count">

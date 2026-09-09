@@ -376,7 +376,6 @@ export function ShopFlightCard({
               title={BADGE_WHY[b]}
             >
               {BADGE_LABEL[b]}
-              <em className="shop-ticket-badge-why">{BADGE_WHY[b]}</em>
             </span>
           ))}
         </div>

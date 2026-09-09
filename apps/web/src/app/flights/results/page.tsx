@@ -19,7 +19,6 @@ export const metadata: Metadata = {
 export default function FlightResultsPage() {
   return (
     <StoreFront wide>
-      <h1 className="shop-flight-results-h1">نتائج البحث عن رحلات الطيران</h1>
       <Suspense
         fallback={
           <div className="shop-flight-results-loading">

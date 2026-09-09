@@ -8854,8 +8854,7 @@ html body .wg-hero-acc-field[data-field="time"] .exp-cell-label {
 html body .shop-root.wg-new-ui .wg-hero-acc-modes.wg-hero-dock-modes,
 html body .shop-root .wg-hero-acc-modes.wg-hero-dock-modes,
 html body .wg-hero-acc-modes.wg-hero-dock-modes,
-html body .wg-hero-acc-modes,
-html body .wg-hero-acc-tripstrip {
+html body .wg-hero-acc-modes {
   background: #001b35 !important;
   background-image: none !important;
   border-color: rgba(217, 154, 62, 0.28) !important;
@@ -8863,29 +8862,39 @@ html body .wg-hero-acc-tripstrip {
   -webkit-backdrop-filter: none !important;
 }
 
+/* Everything below the tabs: transparent dark glass */
+html body .shop-root .wg-hero-acc-tripstrip,
+html body .wg-hero-acc-tripstrip,
 html body .shop-root .wg-hero-dock.wg-hero-acc-panel,
 html body .shop-root .wg-hero-acc-panel.wg-hero-dock,
 html body .wg-hero-dock.wg-hero-acc-panel,
 html body .wg-hero-acc-panel.wg-hero-dock,
 html body .wg-hero-acc-panel {
-  background: rgba(0, 27, 53, 0.34) !important;
+  background: rgba(8, 22, 42, 0.28) !important;
   background-image: none !important;
-  border: 1px solid rgba(255, 255, 255, 0.22) !important;
-  border-top: 0 !important;
+  border: 1px solid rgba(255, 255, 255, 0.28) !important;
   box-shadow:
-    0 18px 42px rgba(0, 15, 31, 0.28),
-    inset 0 1px 0 rgba(255, 255, 255, 0.12) !important;
-  backdrop-filter: blur(18px) saturate(1.15) !important;
-  -webkit-backdrop-filter: blur(18px) saturate(1.15) !important;
+    0 18px 42px rgba(0, 15, 31, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.14) !important;
+  backdrop-filter: blur(22px) saturate(1.2) !important;
+  -webkit-backdrop-filter: blur(22px) saturate(1.2) !important;
+}
+
+html body .shop-root .wg-hero-dock.wg-hero-acc-panel,
+html body .shop-root .wg-hero-acc-panel.wg-hero-dock,
+html body .wg-hero-dock.wg-hero-acc-panel,
+html body .wg-hero-acc-panel.wg-hero-dock,
+html body .wg-hero-acc-panel {
+  border-top: 0 !important;
 }
 
 html body .shop-root .wg-hero-acc-panel.is-open::before,
 html body .wg-hero-acc-panel.is-open::before,
 html body .wg-hero-acc-shell[data-mode] .wg-hero-acc-panel.is-open::before {
-  background: rgba(0, 27, 53, 0.34) !important;
-  border-color: rgba(255, 255, 255, 0.22) !important;
-  backdrop-filter: blur(18px) !important;
-  -webkit-backdrop-filter: blur(18px) !important;
+  background: rgba(8, 22, 42, 0.28) !important;
+  border-color: rgba(255, 255, 255, 0.28) !important;
+  backdrop-filter: blur(22px) !important;
+  -webkit-backdrop-filter: blur(22px) !important;
 }
 
 html body .shop-root .wg-hero-acc-panel .exp-dialog,
@@ -8895,10 +8904,13 @@ html body .shop-root .wg-hero-acc-panel .wg-hero-dock-card,
 html body .wg-hero-acc-panel .exp-dialog,
 html body .wg-hero-acc-panel .exp-unified-card,
 html body .wg-hero-acc-panel .wg-hero-ticket-card,
-html body .wg-hero-acc-panel .wg-hero-dock-card {
+html body .wg-hero-acc-panel .wg-hero-dock-card,
+html body .wg-hero-acc-panel .exp-flight-toolbar,
+html body .wg-hero-acc-panel .exp-transfer-toolbar,
+html body .wg-hero-acc-panel .wg-hero-acc-flight-meta {
   background: transparent !important;
   box-shadow: none !important;
-  border: 0 !important;
+  border-color: transparent !important;
 }
 
 html body .shop-root .wg-hero-acc-panel .exp-form-row,
@@ -8907,8 +8919,8 @@ html body .wg-hero-acc-panel .exp-form-row.exp-form-flights,
 html body .wg-hero-acc-panel .exp-form-row.exp-form-stays,
 html body .wg-hero-acc-panel .exp-form-row.exp-form-cars,
 html body .wg-hero-acc-panel .exp-form-row.exp-form-activities {
-  background: rgba(255, 255, 255, 0.06) !important;
-  border: 1px solid rgba(255, 255, 255, 0.16) !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
   box-shadow: none !important;
 }
 
@@ -8995,7 +9007,8 @@ html body .wg-hero-acc-search-btn:hover {
 @media (max-width: 767px) {
   html body .shop-root .wg-hero-dock.wg-hero-acc-panel,
   html body .wg-hero-dock.wg-hero-acc-panel,
-  html body .wg-hero-acc-panel {
-    background: rgba(0, 27, 53, 0.48) !important;
+  html body .wg-hero-acc-panel,
+  html body .wg-hero-acc-tripstrip {
+    background: rgba(8, 22, 42, 0.4) !important;
   }
 }

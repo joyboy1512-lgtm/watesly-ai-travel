@@ -95,6 +95,7 @@ export function ShopFlightResultsClient() {
   const [sortKey, setSortKey] = useState<FlightSortKey>("price_asc");
   const [draft, setDraft] = useState<FlightResultsSearchParams>(params);
   const [travelersOpen, setTravelersOpen] = useState(false);
+  const travelersRef = useRef<HTMLDivElement | null>(null);
 
   const [selectedOutboundKey, setSelectedOutboundKey] = useState<string | null>(null);
   const [selectedReturnKey, setSelectedReturnKey] = useState<string | null>(null);
@@ -111,6 +112,24 @@ export function ShopFlightResultsClient() {
   useEffect(() => {
     setDraft(params);
   }, [params]);
+
+  useEffect(() => {
+    if (!travelersOpen) return;
+    function onDoc(e: MouseEvent) {
+      if (!travelersRef.current?.contains(e.target as Node)) {
+        setTravelersOpen(false);
+      }
+    }
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setTravelersOpen(false);
+    }
+    document.addEventListener("mousedown", onDoc);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDoc);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [travelersOpen]);
 
   const facets = useMemo(() => collectFlightFacets(flightsRaw), [flightsRaw]);
   const flights = useMemo(
@@ -489,14 +508,23 @@ export function ShopFlightResultsClient() {
     router.push("/book/review");
   }
 
+  function openDatePicker(input: HTMLInputElement | null) {
+    if (!input || input.disabled) return;
+    try {
+      input.showPicker?.();
+    } catch {
+      input.focus();
+    }
+  }
+
   return (
     <div className="shop-flight-results-page">
-      <div className="shop-flight-results-home-row">
+      <div className="shop-flight-results-title-row">
+        <h1 className="shop-flight-results-h1">نتائج البحث عن رحلات الطيران</h1>
         <Link href="/#search" className="shop-flight-home-link">
           الصفحة الرئيسية
         </Link>
       </div>
-      <h1 className="shop-flight-results-h1">نتائج البحث عن رحلات الطيران</h1>
 
       <div className="shop-flight-results-topbar">
         <div className="shop-flight-results-topbar-inner">
@@ -526,20 +554,22 @@ export function ShopFlightResultsClient() {
               placeholder="مطار أو مدينة"
               minChars={2}
               onQuery={searchAirports}
-              onClearText={(text) =>
+              onClearText={(text) => {
+                setTravelersOpen(false);
                 setDraft((d) => ({
                   ...d,
                   origin: "",
                   originLabel: text,
-                }))
-              }
-              onPick={(item) =>
+                }));
+              }}
+              onPick={(item) => {
+                setTravelersOpen(false);
                 setDraft((d) => ({
                   ...d,
                   origin: item.code,
                   originLabel: item.title,
-                }))
-              }
+                }));
+              }}
             />
           </div>
           <div className="shop-flight-edit-ac">
@@ -551,47 +581,67 @@ export function ShopFlightResultsClient() {
               placeholder="مطار أو مدينة"
               minChars={2}
               onQuery={searchAirports}
-              onClearText={(text) =>
+              onClearText={(text) => {
+                setTravelersOpen(false);
                 setDraft((d) => ({
                   ...d,
                   destination: "",
                   destinationLabel: text,
-                }))
-              }
-              onPick={(item) =>
+                }));
+              }}
+              onPick={(item) => {
+                setTravelersOpen(false);
                 setDraft((d) => ({
                   ...d,
                   destination: item.code,
                   destinationLabel: item.title,
-                }))
-              }
+                }));
+              }}
             />
           </div>
-          <label>
+          <label
+            className="shop-flight-edit-date"
+            onClick={(e) => {
+              setTravelersOpen(false);
+              openDatePicker(
+                e.currentTarget.querySelector("input[type='date']") as HTMLInputElement | null,
+              );
+            }}
+          >
             المغادرة
             <input
               type="date"
               value={draft.departDate}
               onChange={(e) => setDraft((d) => ({ ...d, departDate: e.target.value }))}
+              onFocus={() => setTravelersOpen(false)}
               required={draft.tripType !== "multicity"}
             />
           </label>
           {draft.tripType === "roundtrip" ? (
-            <label>
+            <label
+              className="shop-flight-edit-date"
+              onClick={(e) => {
+                setTravelersOpen(false);
+                openDatePicker(
+                e.currentTarget.querySelector("input[type='date']") as HTMLInputElement | null,
+              );
+              }}
+            >
               العودة
               <input
                 type="date"
                 value={draft.returnDate}
                 onChange={(e) => setDraft((d) => ({ ...d, returnDate: e.target.value }))}
+                onFocus={() => setTravelersOpen(false)}
               />
             </label>
           ) : (
-            <label>
+            <label className="shop-flight-edit-date">
               العودة
               <input type="date" value="" disabled />
             </label>
           )}
-          <div className="shop-flight-edit-travelers">
+          <div className="shop-flight-edit-travelers" ref={travelersRef}>
             <span className="shop-flight-edit-field-label">المسافرون</span>
             <button
               type="button"

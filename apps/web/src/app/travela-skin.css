@@ -7230,3 +7230,28 @@ html body .wg-hero-acc-field[data-field="travelers"] .wg-hero-acc-field-chevron 
   align-self: end !important;
   margin-bottom: 0.2rem !important;
 }
+
+/* Flight results edit bar — menus OPEN DOWN (hero rules open upward into the header) */
+html body .shop-root .shop-flight-results-topbar {
+  z-index: 80 !important;
+  overflow: visible !important;
+}
+
+html body .shop-root .shop-flight-results-page .shop-flight-edit-bar .prc-suggest,
+html body .shop-root .shop-flight-results-page .shop-flight-edit-bar .exp-ac-menu,
+html body .shop-root .shop-flight-edit-bar .prc-suggest,
+html body .shop-root .shop-flight-edit-bar .exp-ac-menu,
+html body .shop-root .shop-flight-edit-bar .shop-ac > .prc-suggest,
+html body .shop-root .shop-flight-edit-bar .shop-ac > .exp-ac-menu,
+html body .shop-root .shop-flight-edit-bar .exp-ac-field > .prc-suggest,
+html body .shop-root .shop-flight-edit-bar .exp-ac-field > .exp-ac-menu {
+  position: absolute !important;
+  top: calc(100% + 6px) !important;
+  bottom: auto !important;
+  inset-inline-start: 0 !important;
+  inset-inline-end: auto !important;
+  z-index: 100060 !important;
+  max-height: min(320px, 55vh) !important;
+  overflow: auto !important;
+  transform: none !important;
+}

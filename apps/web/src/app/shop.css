@@ -4853,11 +4853,29 @@ html body .shop-date-range-backdrop {
   justify-content: flex-start;
 }
 
+.shop-flight-results-title-row {
+  width: min(1400px, calc(100% - 1.25rem));
+  margin: 0.55rem auto 0.35rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
 .shop-flight-home-link {
   color: var(--exp-blue);
   font-weight: 700;
   text-decoration: none;
-  font-size: 0.88rem;
+  font-size: 0.92rem;
+  padding: 0.35rem 0.65rem;
+  border-radius: 999px;
+  background: #eef4ff;
+  white-space: nowrap;
+}
+
+.shop-flight-home-link:hover {
+  background: #e0ebff;
 }
 
 .shop-flight-results-topbar {
@@ -4866,7 +4884,7 @@ html body .shop-date-range-backdrop {
   margin-bottom: 0.85rem;
   position: sticky;
   top: 56px;
-  z-index: 40;
+  z-index: 80;
   overflow: visible !important;
   box-shadow: 0 4px 14px rgba(15, 35, 70, 0.05);
 }
@@ -4948,6 +4966,15 @@ html body .shop-date-range-backdrop {
   font-weight: 800;
   color: #0a0a0a;
   min-width: 0;
+}
+
+.shop-flight-edit-date {
+  cursor: pointer;
+}
+
+.shop-flight-edit-date input[type="date"] {
+  cursor: pointer;
+  min-height: 2.55rem;
 }
 
 .shop-flight-edit-ac {
@@ -6189,11 +6216,13 @@ html body .shop-root .shop-flight-edit-bar .exp-ac-field .exp-ac-menu {
 
 /* —— Flight card v2 + polish —— */
 .shop-flight-results-h1 {
-  width: min(1400px, calc(100% - 1.25rem));
-  margin: 0.45rem auto 0.35rem;
+  width: auto;
+  margin: 0;
   font-size: 1.2rem;
   font-weight: 800;
   color: #0a0a0a;
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .shop-flight-mock-banner {
@@ -8229,15 +8258,45 @@ html[dir="rtl"] .shop-ticket-stub {
   font-size: 0.82rem;
 }
 
+.shop-price-calendar-nav {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 0.45rem;
+  align-items: stretch;
+  margin-top: 0.55rem;
+}
+
+.shop-price-calendar-arrow {
+  width: 2.4rem;
+  border: 1px solid #c5d0de;
+  border-radius: 12px;
+  background: #fff;
+  color: #0a0a0a;
+  font-size: 1.55rem;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  transition: background 0.12s ease, border-color 0.12s ease;
+}
+
+.shop-price-calendar-arrow:hover {
+  background: #eef4ff;
+  border-color: var(--exp-blue, #1668e3);
+  color: var(--exp-blue, #1668e3);
+}
+
 .shop-price-calendar-row {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: 0;
-  margin-top: 0.55rem;
+  margin-top: 0;
   border: 1px solid #dbe3ee;
   border-radius: 10px;
   overflow: hidden;
   background: #e8eef5;
+  min-width: 0;
 }
 
 .shop-price-calendar-cell {
@@ -8286,9 +8345,30 @@ html[dir="rtl"] .shop-ticket-stub {
 }
 
 .shop-price-calendar-day {
-  font-size: 0.74rem;
+  font-size: 0.72rem;
   color: #64748b;
-  font-weight: 600;
+  font-weight: 700;
+  text-align: center;
+  line-height: 1.25;
+  max-width: 100%;
+  padding: 0 0.15rem;
+}
+
+.shop-price-calendar-cell {
+  border: 0;
+  border-inline-end: 1px solid #dbe3ee;
+  background: #fff;
+  border-radius: 0;
+  padding: 0.65rem 0.25rem;
+  font: inherit;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.2rem;
+  min-height: 5.6rem;
+  transition: background 0.15s, color 0.15s;
 }
 
 .shop-price-calendar-cell strong {
@@ -8488,6 +8568,10 @@ html[dir="rtl"] .shop-ticket-stub {
 }
 
 @media (max-width: 720px) {
+  .shop-price-calendar-nav {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+
   .shop-price-calendar-row {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }

@@ -2,7 +2,12 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { formatDay } from "@/lib/flight-search";
-import { flexibleDateCells, type FlexibleDateCell } from "@/lib/flexible-dates";
+import {
+  flexibleDateCells,
+  nightsBetweenIso,
+  shiftIsoDate,
+  type FlexibleDateCell,
+} from "@/lib/flexible-dates";
 import { shopFetch } from "@/lib/shop-session";
 import { useShopI18n } from "@/components/shop/ShopI18nProvider";
 import type { FlightOfferRow } from "@/lib/flight-search";
@@ -39,15 +44,27 @@ export function ShopPriceCalendar({
   onPick,
 }: Props) {
   const { t, locale, currency, formatMoneyCompact } = useShopI18n();
-  const cells = useMemo(
-    () =>
-      flexibleDateCells({
-        departDate: search.departDate,
-        returnDate: search.tripType === "roundtrip" ? search.returnDate : undefined,
-        span: 3,
-      }),
-    [search.departDate, search.returnDate, search.tripType],
-  );
+  /** Shifts the visible ±3 day window without changing the active search until a day is picked. */
+  const [windowShift, setWindowShift] = useState(0);
+
+  useEffect(() => {
+    setWindowShift(0);
+  }, [search.departDate, search.returnDate]);
+
+  const tripNights = useMemo(() => {
+    if (search.tripType !== "roundtrip" || !search.returnDate) return 0;
+    return nightsBetweenIso(search.departDate, search.returnDate);
+  }, [search.departDate, search.returnDate, search.tripType]);
+
+  const cells = useMemo(() => {
+    const centerDepart = shiftIsoDate(search.departDate, windowShift);
+    return flexibleDateCells({
+      departDate: centerDepart,
+      returnDate: tripNights ? shiftIsoDate(centerDepart, tripNights) : undefined,
+      span: 3,
+    });
+  }, [search.departDate, tripNights, windowShift]);
+
   const [prices, setPrices] = useState<Record<string, CellState>>({});
 
   useEffect(() => {
@@ -57,16 +74,17 @@ export function ShopPriceCalendar({
     let cancelled = false;
     const next: Record<string, CellState> = {};
     for (const cell of cells) {
+      const isSelected = cell.departDate === search.departDate;
       next[cell.departDate] = {
         ...cell,
-        loading: cell.offset !== 0,
-        priceMinor: cell.offset === 0 ? currentCheapestMinor : undefined,
-        currency: cell.offset === 0 ? currentCurrency : undefined,
+        loading: !isSelected,
+        priceMinor: isSelected ? currentCheapestMinor : undefined,
+        currency: isSelected ? currentCurrency : undefined,
       };
     }
     setPrices(next);
 
-    const neighbors = cells.filter((c) => c.offset !== 0);
+    const neighbors = cells.filter((c) => c.departDate !== search.departDate);
     async function run() {
       for (let i = 0; i < neighbors.length; i += 2) {
         const batch = neighbors.slice(i, i + 2);
@@ -118,7 +136,6 @@ export function ShopPriceCalendar({
     return () => {
       cancelled = true;
     };
-    // Cheapest for the selected day is filled from the open results, not this fetch.
     // eslint-disable-next-line react-hooks/exhaustive-deps -- avoid refetch when only current price arrives
   }, [
     cells,
@@ -136,13 +153,11 @@ export function ShopPriceCalendar({
   useEffect(() => {
     if (currentCheapestMinor == null) return;
     setPrices((prev) => {
-      const selected = cells.find((c) => c.offset === 0);
-      if (!selected) return prev;
-      const row = prev[selected.departDate];
+      const row = prev[search.departDate];
       if (!row) return prev;
       return {
         ...prev,
-        [selected.departDate]: {
+        [search.departDate]: {
           ...row,
           priceMinor: currentCheapestMinor,
           currency: currentCurrency,
@@ -150,7 +165,7 @@ export function ShopPriceCalendar({
         },
       };
     });
-  }, [cells, currentCheapestMinor, currentCurrency]);
+  }, [search.departDate, currentCheapestMinor, currentCurrency]);
 
   if (search.tripType === "multicity" || !search.departDate) return null;
 
@@ -162,46 +177,61 @@ export function ShopPriceCalendar({
 
   return (
     <section className="shop-price-calendar" aria-label={t("priceCalendar")}>
-          <div className="shop-price-calendar-head" data-display-currency={currency}>
-            <strong>{t("priceCalendar")}</strong>
-            <span>{t("flexibleDates")}</span>
-          </div>
-      <p className="shop-hint">{t("priceCalendarHint")}</p>
-      <div className="shop-price-calendar-row" role="list">
-        {cells.map((cell) => {
-          const state: CellState = prices[cell.departDate] ?? {
-            ...cell,
-            loading: false,
-          };
-          const selected = cell.offset === 0;
-          const cheapest =
-            state.priceMinor != null &&
-            state.priceMinor === minPrice &&
-            minPrice < Number.MAX_SAFE_INTEGER;
-          return (
-            <button
-              key={cell.departDate}
-              type="button"
-              role="listitem"
-              className={`shop-price-calendar-cell${selected ? " on" : ""}${
-                cheapest ? " cheap" : ""
-              }`}
-              onClick={() => onPick(cell)}
-            >
-              <span className="shop-price-calendar-day">
-                {formatDay(cell.departDate, locale).split(" ").slice(0, 2).join(" ")}
-              </span>
-              <strong>
-                {state.loading
-                  ? "…"
-                  : state.priceMinor
-                    ? formatMoneyCompact(state.priceMinor, state.currency)
-                    : "—"}
-              </strong>
-              {selected ? <em>{t("selectedDay")}</em> : cheapest ? <em>{t("cheapestDay")}</em> : null}
-            </button>
-          );
-        })}
+      <div className="shop-price-calendar-head" data-display-currency={currency}>
+        <strong>{t("priceCalendar")}</strong>
+        <span>{t("flexibleDates")}</span>
+      </div>
+      <div className="shop-price-calendar-nav">
+        <button
+          type="button"
+          className="shop-price-calendar-arrow"
+          aria-label="تواريخ سابقة"
+          onClick={() => setWindowShift((s) => s - 3)}
+        >
+          ‹
+        </button>
+        <div className="shop-price-calendar-row" role="list">
+          {cells.map((cell) => {
+            const state: CellState = prices[cell.departDate] ?? {
+              ...cell,
+              loading: false,
+            };
+            const selected = cell.departDate === search.departDate;
+            const cheapest =
+              state.priceMinor != null &&
+              state.priceMinor === minPrice &&
+              minPrice < Number.MAX_SAFE_INTEGER;
+            return (
+              <button
+                key={cell.departDate}
+                type="button"
+                role="listitem"
+                className={`shop-price-calendar-cell${selected ? " on" : ""}${
+                  cheapest ? " cheap" : ""
+                }`}
+                onClick={() => onPick(cell)}
+              >
+                <span className="shop-price-calendar-day">{formatDay(cell.departDate, locale)}</span>
+                <strong>
+                  {state.loading
+                    ? "…"
+                    : state.priceMinor
+                      ? formatMoneyCompact(state.priceMinor, state.currency)
+                      : "—"}
+                </strong>
+                {selected ? <em>{t("selectedDay")}</em> : cheapest ? <em>{t("cheapestDay")}</em> : null}
+              </button>
+            );
+          })}
+        </div>
+        <button
+          type="button"
+          className="shop-price-calendar-arrow"
+          aria-label="تواريخ لاحقة"
+          onClick={() => setWindowShift((s) => s + 3)}
+        >
+          ›
+        </button>
       </div>
     </section>
   );

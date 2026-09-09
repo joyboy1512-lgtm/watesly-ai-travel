@@ -222,13 +222,13 @@ function LegBlock({
         <div className="shop-ticket-airline-logo">
           {logo ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={logo} alt={name} width={56} height={56} />
+            <img src={logo} alt={name} width={64} height={64} />
           ) : (
             <div className="shop-ticket-logo-fallback">{code || "✈"}</div>
           )}
         </div>
         <div className="shop-ticket-airline-text">
-          <strong>{name}</strong>
+          <strong title={name}>{name}</strong>
           <span>{flightNo || code}</span>
           {codeshare ? <em className="shop-ticket-codeshare">{codeshare}</em> : null}
         </div>

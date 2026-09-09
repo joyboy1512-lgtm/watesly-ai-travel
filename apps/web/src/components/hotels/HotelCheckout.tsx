@@ -82,8 +82,10 @@ export function validateHotelCheckout(input: {
   const errors: FieldErrors = {};
   if (!input.name.trim()) errors.name = "أدخل اسم صاحب الطلب";
   const phoneDigits = input.phone.replace(/\D/g, "");
-  if (phoneDigits.length < 8) errors.phone = "أدخل رقم جوال صحيح";
-  if (!input.phoneCountry) errors.phoneCountry = "اختر مفتاح الدولة";
+  // Phone is optional for guest checkout; validate only when provided
+  if (phoneDigits.length > 0 && phoneDigits.length < 8) {
+    errors.phone = "أدخل رقم جوال صحيح أو اتركه فارغاً";
+  }
   if (!input.email.trim()) errors.email = "البريد مطلوب";
   else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(input.email.trim())) {
     errors.email = "البريد غير صحيح";

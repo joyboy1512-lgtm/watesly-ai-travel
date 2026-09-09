@@ -1,6 +1,7 @@
 "use client";
 
 import { useShopCopy } from "@/components/shop/ShopI18nProvider";
+import { airportPlaceLabel } from "@/lib/airport-cities";
 import {
   airlineLogo,
   computeLegDurationMinutes,
@@ -128,8 +129,11 @@ function stopDurationHint(segs: FlightSeg[]): string | null {
       cur.arriveAt || cur.arriveTime,
       next.departAt || next.departTime,
     );
+    const code = String(cur.to || "").trim().toUpperCase();
     if (mins != null && mins > 0) {
-      parts.push(`${cur.to || "توقف"} ${formatMinutesLabel(mins)}`);
+      parts.push(`${code || "توقف"} ${formatMinutesLabel(mins)}`);
+    } else if (code) {
+      parts.push(code);
     }
   }
   return parts.length ? parts.join(" · ") : null;
@@ -175,7 +179,7 @@ function LegBlock({
 }) {
   const first = segs[0];
   const code = segmentAirlineCode(first, packageCode);
-  const logo = airlineLogo(code, 96);
+  const logo = airlineLogo(code, 128);
   const name = flightAirlineNameAr(details, first, isReturn ? "return" : "out");
   const flightNo = segs
     .map((s) => s.flightNumber)
@@ -190,15 +194,11 @@ function LegBlock({
   const airportChange = airportChangeNote(segs);
   const stopHint = stopDurationHint(segs);
   const stopCodes = stopAirportCodes(segs);
-  const depTerminal = first?.departureTerminal
-    ? `صالة ${first.departureTerminal}`
-    : null;
-  const arrTerminal = segs[segs.length - 1]?.arrivalTerminal
-    ? `صالة ${segs[segs.length - 1]!.arrivalTerminal}`
-    : null;
   const depDay = formatDay(depRaw.includes("T") ? depRaw.slice(0, 10) : depRaw);
   const arrDay = formatDay(arrRaw.includes("T") ? arrRaw.slice(0, 10) : arrRaw);
   const stopNodes = Math.min(Math.max(stops, stopCodes.length), 3);
+  const fromPlace = airportPlaceLabel(from);
+  const toPlace = airportPlaceLabel(to);
 
   return (
     <div
@@ -222,7 +222,7 @@ function LegBlock({
         <div className="shop-ticket-airline-logo">
           {logo ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={logo} alt={name} width={40} height={40} />
+            <img src={logo} alt={name} width={56} height={56} />
           ) : (
             <div className="shop-ticket-logo-fallback">{code || "✈"}</div>
           )}
@@ -236,11 +236,12 @@ function LegBlock({
 
       <div className="shop-ticket-od dep">
         <strong className="shop-ticket-clock">{formatClock(depRaw)}</strong>
-        {depDay ? <small className="shop-ticket-day">{depDay}</small> : null}
-        <span className="shop-ticket-iata">
-          {from}
-          {depTerminal ? ` · ${depTerminal}` : ""}
-        </span>
+        {depDay ? (
+          <small className="shop-ticket-day">{depDay}</small>
+        ) : (
+          <span className="shop-ticket-day is-empty" aria-hidden />
+        )}
+        <span className="shop-ticket-iata">{fromPlace}</span>
       </div>
 
       <div className="shop-ticket-path">
@@ -260,14 +261,20 @@ function LegBlock({
             : null}
         </div>
         <div className="shop-ticket-path-meta">
-          {stopHint ? <small className="shop-ticket-stop-hint">توقف: {stopHint}</small> : null}
-          <span className={`shop-ticket-meta-stops${stops === 0 ? " direct" : ""}`}>
-            {stops === 0
-              ? stopsLabel(stops)
-              : stopCodes.length
-                ? `${stopsLabel(stops)} — (${stopCodes.join(", ")})`
-                : stopsLabel(stops)}
-          </span>
+          {stops === 0 ? (
+            <span className="shop-ticket-meta-stops direct">{stopsLabel(0)}</span>
+          ) : (
+            <>
+              {stopHint ? (
+                <small className="shop-ticket-stop-hint">توقف: {stopHint}</small>
+              ) : null}
+              <span className="shop-ticket-meta-stops">
+                {stopCodes.length
+                  ? `${stopsLabel(stops)} — (${stopCodes.join(", ")})`
+                  : stopsLabel(stops)}
+              </span>
+            </>
+          )}
           {airportChange ? (
             <small className="shop-ticket-airport-change">{airportChange}</small>
           ) : null}
@@ -283,11 +290,12 @@ function LegBlock({
             </span>
           ) : null}
         </strong>
-        {arrDay ? <small className="shop-ticket-day">{arrDay}</small> : null}
-        <span className="shop-ticket-iata">
-          {to}
-          {arrTerminal ? ` · ${arrTerminal}` : ""}
-        </span>
+        {arrDay ? (
+          <small className="shop-ticket-day">{arrDay}</small>
+        ) : (
+          <span className="shop-ticket-day is-empty" aria-hidden />
+        )}
+        <span className="shop-ticket-iata">{toPlace}</span>
       </div>
     </div>
   );
@@ -361,7 +369,7 @@ export function ShopFlightCard({
     <article
       className={`shop-ticket-card shop-ticket-card-v2 shop-ticket-card-bp shop-ticket-card-p1 shop-ticket-card-${displayLeg}${
         hasReturn && displayLeg === "both" ? " shop-ticket-card-roundtrip" : ""
-      }${picked ? " is-picked" : ""}${isExpanded ? " is-expanded" : ""}`}
+      }${picked ? " is-picked is-highlighted" : ""}${isExpanded ? " is-expanded" : ""}`}
     >
       {badges.length ? (
         <div className="shop-ticket-badges">
@@ -438,7 +446,6 @@ export function ShopFlightCard({
             </span>
             <span>{hasChecked ? checkedBag : "حقيبة مسجّلة حسب الفئة"}</span>
           </div>
-          <p className="shop-ticket-bags-policy">ℹ حسب سياسة الناقلة</p>
         </div>
 
         <div className="shop-ticket-cta-group">

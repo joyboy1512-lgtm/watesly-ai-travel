@@ -5,7 +5,7 @@ import {
 } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import bcrypt from "bcryptjs";
-import { createHmac, randomInt, randomUUID, timingSafeEqual } from "crypto";
+import { createHmac, createHash, randomInt, randomUUID, timingSafeEqual } from "crypto";
 import { Prisma } from "@watesly-travel/database";
 import { defaultRatesToCurrency } from "@watesly-travel/shared";
 import { PrismaService } from "../prisma/prisma.service";
@@ -878,13 +878,26 @@ export class ShopService {
     name?: string;
     email?: string;
     code?: string;
+    guest?: boolean;
   }) {
-    const phone = normalizeShopPhone(body.phone || "");
-    if (!phone || phone.length < 8) {
+    const name = body.name?.trim() || undefined;
+    const email = body.email?.trim().toLowerCase() || undefined;
+    let phone = normalizeShopPhone(body.phone || "");
+    const asGuest =
+      Boolean(body.guest) || ((!phone || phone.length < 8) && Boolean(name || email));
+
+    if (asGuest && (!phone || phone.length < 8)) {
+      if (!name && !email) {
+        throw new BadRequestException("أدخل الاسم أو البريد للمتابعة كضيف");
+      }
+      const seed = (email || name || "guest").toLowerCase();
+      phone = `guest_${createHash("sha1").update(seed).digest("hex").slice(0, 12)}`;
+    } else if (!phone || phone.length < 8) {
       throw new BadRequestException("أدخل رقم الجوال");
     }
 
-    if (unlockRequiresOtp()) {
+    const isGuestPhone = phone.startsWith("guest_");
+    if (!isGuestPhone && unlockRequiresOtp()) {
       const code = String(body.code || "").trim();
       if (!/^\d{6}$/.test(code)) {
         throw new BadRequestException("أدخل رمز التحقق المكوّن من 6 أرقام");
@@ -906,8 +919,6 @@ export class ShopService {
     }
 
     const org = await this.orgs.resolve();
-    const name = body.name?.trim() || undefined;
-    const email = body.email?.trim().toLowerCase() || undefined;
 
     const contact = await this.prisma.contact.upsert({
       where: {
@@ -921,9 +932,9 @@ export class ShopService {
       create: {
         organizationId: org.id,
         waId: phone,
-        name: name || phone,
+        name: name || email || phone,
         email,
-        source: "web_shop",
+        source: isGuestPhone ? "web_shop_guest" : "web_shop",
         lastContactedAt: new Date(),
       },
     });
@@ -948,7 +959,7 @@ export class ShopService {
           data: {
             organizationId: org.id,
             phone,
-            name: name || phone,
+            name: name || email || phone,
             email,
             contactId: contact.id,
             status: "active",

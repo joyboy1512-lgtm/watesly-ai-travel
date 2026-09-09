@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ShopFlightCard, type FlightCardDisplayLeg } from "@/components/shop/ShopFlightCard";
 import { ShopFlightFilters } from "@/components/shop/ShopFlightFilters";
 import { useShopCopy } from "@/components/shop/ShopI18nProvider";
@@ -54,7 +54,12 @@ type Props = {
 export function ShopFlightResults(props: Props) {
   const { currency: displayCurrency, formatMoneyCompact } = useShopCopy();
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(10);
   const active = flightFiltersActive(props.filters);
+
+  useEffect(() => {
+    setVisibleCount(10);
+  }, [props.flights, props.sortKey, props.filters]);
   const filterCount = countFlightFilters(props.filters);
   const pickStep = props.pickStep || "single";
   const sortTabs = useMemo(
@@ -71,6 +76,8 @@ export function ShopFlightResults(props: Props) {
   const bestId = sortTabs.find((t) => t.key === "best")?.flightId;
   const cheapId = sortTabs.find((t) => t.key === "price_asc")?.flightId;
   const fastId = sortTabs.find((t) => t.key === "duration_asc")?.flightId;
+  const visibleFlights = props.flights.slice(0, visibleCount);
+  const hasMore = props.flights.length > visibleCount;
 
   const selectLabel =
     props.selectLabel ||
@@ -90,7 +97,10 @@ export function ShopFlightResults(props: Props) {
             role="tab"
             aria-selected={props.sortKey === tab.key}
             className={`shop-flight-sort-tab${props.sortKey === tab.key ? " on" : ""}`}
-            onClick={() => props.onSortChange(tab.key)}
+            onClick={() => {
+              setVisibleCount(10);
+              props.onSortChange(tab.key);
+            }}
           >
             <span className="shop-flight-sort-tab-label">{tab.label}</span>
             <strong className="shop-flight-sort-tab-price" data-display-currency={displayCurrency}>
@@ -109,7 +119,7 @@ export function ShopFlightResults(props: Props) {
 
       <div className="shop-flight-results-count">
         {props.stepTitle ? <strong>{props.stepTitle} · </strong> : null}
-        عرض {props.flights.length} من {props.totalCount}
+        عرض {Math.min(visibleCount, props.flights.length)} من {props.totalCount}
         {active ? " · فلاتر مفعّلة" : ""}
       </div>
 
@@ -155,7 +165,7 @@ export function ShopFlightResults(props: Props) {
         <div className="shop-flight-results-main">
           <div className="shop-ticket-list">
             {props.customTripSlot || null}
-            {props.flights.map((flight) => {
+            {visibleFlights.map((flight) => {
               const badges: Array<"best" | "cheapest" | "fastest"> = [];
               if (flight.id === bestId) badges.push("best");
               if (flight.id === cheapId) badges.push("cheapest");
@@ -195,6 +205,15 @@ export function ShopFlightResults(props: Props) {
                 />
               );
             })}
+            {hasMore ? (
+              <button
+                type="button"
+                className="shop-flight-show-more"
+                onClick={() => setVisibleCount((n) => n + 10)}
+              >
+                إظهار المزيد ({props.flights.length - visibleCount})
+              </button>
+            ) : null}
             {props.flights.length === 0 ? (
               <div className="shop-ticket-empty">
                 <strong>لا توجد رحلات مطابقة للفلاتر الحالية</strong>

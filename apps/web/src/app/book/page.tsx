@@ -447,7 +447,7 @@ function FlightCheckout({
                 <small>سنرسل تأكيد الرحلة إلى هذا البريد</small>
               </label>
               <label>
-                رقم الجوال
+                رقم الجوال <small>(اختياري)</small>
                 <input
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
@@ -673,11 +673,22 @@ export default function PublicBookPage() {
     setDraft(stored);
     const session = getShopSession();
     if (!session) {
-      setNeedLogin(true);
+      // Guest checkout: show booking form without forcing phone unlock
+      setNeedLogin(false);
       if (stored.serviceType === "hotel") {
         setName(stored.contactName || "");
         setEmail(stored.contactEmail || "");
         setPhone(stored.contactPhone || "");
+      }
+      const count =
+        stored.serviceType === "activity"
+          ? Math.max(1, stored.adults)
+          : Math.max(1, stored.adults + stored.children);
+      setTravelers(Array.from({ length: count }, emptyTraveler));
+      if (stored.serviceType === "hotel") {
+        setSpecialRequests(stored.specialRequests || "");
+        setPaymentMethod(stored.paymentMethod || null);
+        setRoomGuests(buildHotelRoomGuests(stored));
       }
       return;
     }
@@ -807,8 +818,8 @@ export default function PublicBookPage() {
         setError("أكمل الحقول المطلوبة في نموذج الضيوف");
         return;
       }
-    } else if (!name.trim() || !phone.trim()) {
-      setError("أدخل الاسم والجوال");
+    } else if (!name.trim()) {
+      setError("أدخل الاسم للتواصل");
       return;
     }
     if (draft.serviceType === "flight") {
@@ -821,6 +832,26 @@ export default function PublicBookPage() {
     setSubmitting(true);
     setError("");
     try {
+      if (!getShopSession()) {
+        const guestResult = await unlockShopCustomer({
+          phone: phone.trim() || undefined,
+          name: name.trim(),
+          email: email.trim() || undefined,
+          guest: !phone.trim(),
+        });
+        if (guestResult.needsCode) {
+          setNeedLogin(true);
+          setNeedsUnlockCode(true);
+          if (guestResult.debugCode) setUnlockCode(guestResult.debugCode);
+          setError("أدخل رمز التحقق للمتابعة، أو اترك الجوال فارغاً للمتابعة كضيف");
+          setSubmitting(false);
+          return;
+        }
+        saveShopSession({
+          accessToken: guestResult.accessToken,
+          customer: guestResult.customer,
+        });
+      }
       const payload =
         draft.serviceType === "flight"
           ? {

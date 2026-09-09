@@ -137,10 +137,13 @@ export default function HotelGuestsPage() {
     setRoomGuests(buildRoomGuests(stored));
     const session = getShopSession();
     if (!session) {
-      setNeedLogin(true);
+      setNeedLogin(false);
       setName(stored.contactName || "");
       setEmail(stored.contactEmail || "");
+      setEmailConfirm(stored.contactEmail || "");
       setPhone(stored.contactPhone || "");
+      setSpecialRequests(stored.specialRequests || "");
+      setPaymentMethod(stored.paymentMethod || null);
       return;
     }
     setName(stored.contactName || session.customer.name || "");
@@ -155,7 +158,10 @@ export default function HotelGuestsPage() {
     e.preventDefault();
     const errors: Record<string, string> = {};
     if (!name.trim()) errors.name = "أدخل الاسم";
-    if (!phone.trim() || phone.trim().length < 8) errors.phone = "أدخل رقم جوال صحيح";
+    // Phone optional for guest checkout
+    if (phone.trim() && phone.trim().length < 8) {
+      errors.phone = "أدخل رقم جوال صحيح أو اتركه فارغاً";
+    }
     if (email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
       errors.email = "البريد غير صحيح";
     }
@@ -184,7 +190,12 @@ export default function HotelGuestsPage() {
         setPhone(result.customer.phone);
         return;
       }
-      const result = await unlockShopCustomer({ phone, name, email });
+      const result = await unlockShopCustomer({
+        phone: phone.trim() || undefined,
+        name,
+        email,
+        guest: !phone.trim(),
+      });
       if (result.needsCode) {
         setNeedsUnlockCode(true);
         if (result.debugCode) setUnlockCode(result.debugCode);
@@ -223,6 +234,25 @@ export default function HotelGuestsPage() {
     setSubmitting(true);
     setError("");
     try {
+      if (!getShopSession()) {
+        const guestResult = await unlockShopCustomer({
+          phone: phone.trim() || undefined,
+          name: name.trim(),
+          email: email.trim() || undefined,
+          guest: !phone.trim(),
+        });
+        if (guestResult.needsCode) {
+          setNeedLogin(true);
+          setNeedsUnlockCode(true);
+          if (guestResult.debugCode) setUnlockCode(guestResult.debugCode);
+          setError("أدخل رمز التحقق أو اترك الجوال فارغاً للمتابعة كضيف");
+          return;
+        }
+        saveShopSession({
+          accessToken: guestResult.accessToken,
+          customer: guestResult.customer,
+        });
+      }
       const { serviceType: _s, ...payload } = {
         ...draft,
         contactName: name,

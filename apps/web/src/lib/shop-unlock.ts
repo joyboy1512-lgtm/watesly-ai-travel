@@ -29,10 +29,11 @@ export async function requestShopUnlockOtp(phone: string) {
 }
 
 export async function verifyShopUnlock(body: {
-  phone: string;
+  phone?: string;
   code?: string;
   name?: string;
   email?: string;
+  guest?: boolean;
 }) {
   return shopFetch<ShopUnlockResult>("/shop/unlock", {
     method: "POST",
@@ -40,14 +41,26 @@ export async function verifyShopUnlock(body: {
   });
 }
 
-/** Request OTP when required; otherwise unlock immediately. */
+/** Request OTP when required; otherwise unlock immediately. Guest mode skips OTP. */
 export async function unlockShopCustomer(input: {
-  phone: string;
+  phone?: string;
   name?: string;
   email?: string;
   code?: string;
+  guest?: boolean;
 }): Promise<ShopUnlockResult & { needsCode?: boolean; debugCode?: string }> {
-  const phone = input.phone.trim();
+  const phone = String(input.phone || "").trim();
+  const asGuest = Boolean(input.guest) || !phone;
+
+  if (asGuest) {
+    return verifyShopUnlock({
+      phone: phone || undefined,
+      name: input.name,
+      email: input.email,
+      guest: true,
+    });
+  }
+
   if (input.code && /^\d{6}$/.test(input.code.trim())) {
     return verifyShopUnlock({
       phone,

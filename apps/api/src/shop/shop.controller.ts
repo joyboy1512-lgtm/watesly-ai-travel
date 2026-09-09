@@ -164,7 +164,7 @@ export class ShopController {
 
   @Post("unlock")
   unlock(
-    @Body() body: { phone?: string; name?: string; email?: string; code?: string },
+    @Body() body: { phone?: string; name?: string; email?: string; code?: string; guest?: boolean },
   ) {
     return this.shop.unlock(body);
   }

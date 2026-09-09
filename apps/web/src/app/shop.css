@@ -8881,16 +8881,22 @@ html body .wg-hero-acc-modes {
   -webkit-backdrop-filter: none !important;
 }
 
-/* Everything below the tabs: transparent dark glass */
+/* Everything below the tabs: transparent dark glass
+   Specificity must beat .shop-root.wg-new-ui .wg-hero-dock.wg-hero-acc-panel */
+html body .shop-root.wg-new-ui .wg-hero-acc-tripstrip,
 html body .shop-root .wg-hero-acc-tripstrip,
 html body .wg-hero-acc-tripstrip,
+html body .shop-root.wg-new-ui .wg-hero-dock.wg-hero-acc-panel,
+html body .shop-root.wg-new-ui .wg-hero-acc-panel.wg-hero-dock,
 html body .shop-root .wg-hero-dock.wg-hero-acc-panel,
 html body .shop-root .wg-hero-acc-panel.wg-hero-dock,
 html body .wg-hero-dock.wg-hero-acc-panel,
 html body .wg-hero-acc-panel.wg-hero-dock,
 html body .wg-hero-acc-panel,
+html body .shop-root.wg-new-ui .wg-hero-search-fields,
 html body .wg-hero-search-fields {
-  background: rgba(0, 27, 53, 0.22) !important;
+  background: rgba(0, 27, 53, 0.2) !important;
+  background-color: rgba(0, 27, 53, 0.2) !important;
   background-image: none !important;
   border: 1px solid rgba(255, 255, 255, 0.32) !important;
   box-shadow:

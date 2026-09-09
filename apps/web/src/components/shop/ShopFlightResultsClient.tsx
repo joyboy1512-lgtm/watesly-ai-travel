@@ -532,8 +532,8 @@ export function ShopFlightResultsClient() {
               <input type="date" value="" disabled />
             </label>
           )}
-          <label className="shop-flight-edit-travelers">
-            المسافرون
+          <div className="shop-flight-edit-travelers">
+            <span className="shop-flight-edit-field-label">المسافرون</span>
             <button
               type="button"
               className="shop-flight-edit-travelers-toggle"
@@ -636,7 +636,7 @@ export function ShopFlightResultsClient() {
                 </div>
               </div>
             ) : null}
-          </label>
+          </div>
           <label className="shop-flight-edit-check">
             <input
               type="checkbox"

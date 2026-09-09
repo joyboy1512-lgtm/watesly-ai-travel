@@ -4953,6 +4953,15 @@ html body .shop-date-range-backdrop {
 
 .shop-flight-edit-travelers {
   position: relative;
+  display: grid;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.shop-flight-edit-field-label {
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: #0a0a0a;
 }
 
 .shop-flight-edit-travelers-toggle {

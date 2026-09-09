@@ -6377,7 +6377,7 @@ html[dir="ltr"] .shop-ticket-card-bp .shop-ticket-stub {
 }
 
 .shop-ticket-card-bp .shop-ticket-price-block {
-  background: linear-gradient(180deg, #0a2f55 0%, #001b35 100%);
+  background: var(--exp-blue, #1668e3);
   color: #fff;
   padding: 0.9rem 0.65rem 0.8rem;
 }
@@ -6395,22 +6395,28 @@ html[dir="ltr"] .shop-ticket-card-bp .shop-ticket-stub {
 }
 
 .shop-ticket-card-bp .shop-ticket-side-v2 .shop-ticket-price-note {
-  display: block;
+  display: none;
+}
+
+.shop-ticket-card-bp .shop-ticket-stub-totals {
+  display: grid;
+  gap: 0.15rem;
+  padding: 0.65rem 0.55rem;
+  background: #f7fafc;
+  border-bottom: 1px solid #e4ebf3;
   text-align: center;
+}
+
+.shop-ticket-card-bp .shop-ticket-stub-totals span {
+  display: block;
+  font-size: 0.72rem;
   line-height: 1.35;
-  margin: 0.4rem 0 0;
-  font-size: 0.66rem;
-  color: rgba(255, 255, 255, 0.92) !important;
-  width: 100%;
-  font-weight: 600;
+  color: #0a0a0a;
+  font-weight: 700;
 }
 
 .shop-ticket-card-bp .shop-ticket-stub-bags {
-  display: grid;
-  gap: 0.35rem;
-  padding: 0.55rem 0.5rem;
-  background: #f7fafc;
-  border-bottom: 1px solid #e4ebf3;
+  display: none !important;
 }
 
 .shop-ticket-card-bp .shop-ticket-bag-row {
@@ -7822,8 +7828,8 @@ html[dir="rtl"] .shop-ticket-stub {
     border: 0;
     box-shadow: none;
     border-radius: 0;
-    padding: 0.75rem;
-    background: #f4f7fb;
+    padding: 0.85rem 1rem 1rem;
+    background: #fff;
   }
 
   .shop-flight-sort-tabs,

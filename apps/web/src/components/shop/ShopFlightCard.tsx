@@ -345,11 +345,6 @@ export function ShopFlightCard({
   const retArrRaw = String(retLast?.arriveAt || retLast?.arriveTime || "");
 
   const hasReturn = returnSegs.length > 0;
-  const baggage = (flight.details.baggage || {}) as Record<string, string>;
-  const cabinBag = baggage.cabin || baggage.personal || "";
-  const checkedBag = baggage.checked || "";
-  const hasCabin = Boolean(cabinBag);
-  const hasChecked = Boolean(checkedBag && !/غير|بدون|none|no /i.test(checkedBag));
 
   const from = String(first?.from || flight.details.legOrigin || flight.details.from || originFallback);
   const to = String(last?.to || flight.details.legDestination || flight.details.to || destinationFallback);
@@ -363,10 +358,8 @@ export function ShopFlightCard({
   const picked = isHighlighted || isExpanded || outSelected || retSelected;
 
   const pax = Math.max(1, passengers);
-  const priceNote =
-    pax > 1
-      ? `السعر الإجمالي لـ ${pax} مسافرين · شامل الضرائب`
-      : "السعر الإجمالي لمسافر واحد · شامل الضرائب";
+  const totalPriceLine =
+    pax > 1 ? `السعر الإجمالي لـ ${pax} مسافرين` : "السعر الإجمالي لمسافر واحد";
 
   return (
     <article
@@ -433,22 +426,11 @@ export function ShopFlightCard({
           <strong className="shop-ticket-price" data-display-currency={displayCurrency}>
             {formatMoney(flight.sellAmountMinor, flight.currency)}
           </strong>
-          <small className="shop-ticket-price-note">{priceNote}</small>
         </div>
 
-        <div className="shop-ticket-stub-bags" aria-label="الأمتعة">
-          <div className={`shop-ticket-bag-row${hasCabin ? "" : " off"}`}>
-            <span className="shop-ticket-bag-ico" aria-hidden>
-              🎒
-            </span>
-            <span>{hasCabin ? cabinBag : "حقيبة يد حسب الفئة"}</span>
-          </div>
-          <div className={`shop-ticket-bag-row${hasChecked ? "" : " off"}`}>
-            <span className="shop-ticket-bag-ico" aria-hidden>
-              🧳
-            </span>
-            <span>{hasChecked ? checkedBag : "حقيبة مسجّلة حسب الفئة"}</span>
-          </div>
+        <div className="shop-ticket-stub-totals">
+          <span>{totalPriceLine}</span>
+          <span>شامل الضرائب</span>
         </div>
 
         <div className="shop-ticket-cta-group">

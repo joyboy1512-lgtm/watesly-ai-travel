@@ -48,8 +48,30 @@ import { trackFunnel } from "@/lib/funnel-analytics";
 import { ShopPriceCalendar } from "@/components/shop/ShopPriceCalendar";
 import { ShopWatchPrice } from "@/components/shop/ShopWatchPrice";
 import { ShopWishlistButton } from "@/components/shop/ShopWishlistButton";
+import { ShopAutocomplete, type SuggestItem } from "@/components/shop/ShopAutocomplete";
 
 type QuoteItem = { id: string; providerOfferRef: string; serviceType: string };
+
+async function searchAirports(q: string): Promise<SuggestItem[]> {
+  const rows = await shopFetch<
+    Array<{
+      id: string;
+      iataCode?: string | null;
+      name: string;
+      city?: string | null;
+      country?: string | null;
+    }>
+  >(`/shop/airports?q=${encodeURIComponent(q)}&limit=40`);
+  return rows.map((a) => {
+    const code = (a.iataCode || "").toUpperCase();
+    return {
+      id: a.id,
+      code,
+      title: code ? `${code} — ${a.city || a.name}` : a.city || a.name,
+      subtitle: `${a.name}${a.country ? ` · ${a.country}` : ""}`,
+    };
+  });
+}
 
 export function ShopFlightResultsClient() {
   const router = useRouter();
@@ -478,36 +500,56 @@ export function ShopFlightResultsClient() {
             applyEdit(e);
           }}
         >
-          <label>
-            من
-            <input
+          <div className="shop-flight-edit-ac">
+            <ShopAutocomplete
+              inline
+              label="من"
               value={draft.origin}
-              onChange={(e) =>
+              display={draft.originLabel || draft.origin}
+              placeholder="مطار أو مدينة"
+              minChars={2}
+              onQuery={searchAirports}
+              onClearText={(text) =>
                 setDraft((d) => ({
                   ...d,
-                  origin: e.target.value.toUpperCase(),
-                  originLabel: e.target.value.toUpperCase(),
+                  origin: "",
+                  originLabel: text,
                 }))
               }
-              placeholder="KWI"
-              required={draft.tripType !== "multicity"}
+              onPick={(item) =>
+                setDraft((d) => ({
+                  ...d,
+                  origin: item.code,
+                  originLabel: item.title,
+                }))
+              }
             />
-          </label>
-          <label>
-            إلى
-            <input
+          </div>
+          <div className="shop-flight-edit-ac">
+            <ShopAutocomplete
+              inline
+              label="إلى"
               value={draft.destination}
-              onChange={(e) =>
+              display={draft.destinationLabel || draft.destination}
+              placeholder="مطار أو مدينة"
+              minChars={2}
+              onQuery={searchAirports}
+              onClearText={(text) =>
                 setDraft((d) => ({
                   ...d,
-                  destination: e.target.value.toUpperCase(),
-                  destinationLabel: e.target.value.toUpperCase(),
+                  destination: "",
+                  destinationLabel: text,
                 }))
               }
-              placeholder="DXB"
-              required={draft.tripType !== "multicity"}
+              onPick={(item) =>
+                setDraft((d) => ({
+                  ...d,
+                  destination: item.code,
+                  destinationLabel: item.title,
+                }))
+              }
             />
-          </label>
+          </div>
           <label>
             المغادرة
             <input

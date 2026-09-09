@@ -4866,7 +4866,8 @@ html body .shop-date-range-backdrop {
   margin-bottom: 0.85rem;
   position: sticky;
   top: 56px;
-  z-index: 30;
+  z-index: 40;
+  overflow: visible;
   box-shadow: 0 4px 14px rgba(15, 35, 70, 0.05);
 }
 
@@ -4920,11 +4921,12 @@ html body .shop-date-range-backdrop {
 .shop-flight-edit-bar {
   width: min(1400px, calc(100% - 1.25rem));
   margin: 0 auto;
-  padding: 0.35rem 0 0.85rem;
+  padding: 0.45rem 0 0.95rem;
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr)) minmax(8.5rem, 0.95fr) auto auto auto;
-  gap: 0.55rem 0.65rem;
+  grid-template-columns: minmax(9rem, 1.15fr) minmax(9rem, 1.15fr) repeat(2, minmax(7.5rem, 0.95fr)) minmax(8.5rem, 0.95fr) auto auto auto;
+  gap: 0.55rem 0.7rem;
   align-items: end;
+  overflow: visible;
 }
 
 .shop-flight-edit-bar label {
@@ -4936,19 +4938,103 @@ html body .shop-date-range-backdrop {
   min-width: 0;
 }
 
+.shop-flight-edit-ac {
+  position: relative;
+  z-index: 2;
+  min-width: 0;
+  overflow: visible;
+}
+
+.shop-flight-edit-ac:focus-within {
+  z-index: 50;
+}
+
+.shop-flight-edit-bar .shop-ac-inline {
+  display: grid;
+  gap: 0.25rem;
+  position: relative;
+  min-width: 0;
+}
+
+.shop-flight-edit-bar .shop-ac-inline .exp-cell-label,
+.shop-flight-edit-bar .shop-ac-inline > span:first-child {
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: #0a0a0a;
+}
+
+.shop-flight-edit-bar .shop-ac-inline input,
 .shop-flight-edit-bar input[type="text"],
 .shop-flight-edit-bar input[type="date"],
 .shop-flight-edit-bar input[type="number"],
 .shop-flight-edit-travelers-toggle {
-  border: 1px solid var(--exp-border);
-  border-radius: 8px;
-  padding: 0.5rem 0.65rem;
+  border: 1px solid #c5d0de;
+  border-radius: 10px;
+  padding: 0.55rem 0.7rem;
   font: inherit;
+  font-weight: 600;
   min-width: 0;
   width: 100%;
   background: #fff;
-  color: var(--exp-ink);
+  color: #0a0a0a;
   box-sizing: border-box;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.shop-flight-edit-bar .shop-ac-inline input:focus,
+.shop-flight-edit-bar input[type="date"]:focus,
+.shop-flight-edit-bar input[type="number"]:focus,
+.shop-flight-edit-travelers-toggle:focus {
+  outline: none;
+  border-color: var(--exp-blue, #1668e3);
+  box-shadow: 0 0 0 3px rgba(22, 104, 227, 0.16);
+}
+
+.shop-flight-edit-bar .shop-ac-inline .prc-suggest,
+.shop-flight-edit-bar .shop-ac-inline .exp-ac-menu {
+  position: absolute;
+  z-index: 60;
+  top: calc(100% + 0.25rem);
+  inset-inline: 0;
+  min-width: 16rem;
+  max-height: 280px;
+  overflow: auto;
+  display: grid;
+  gap: 0.15rem;
+  padding: 0.4rem;
+  border-radius: 12px;
+  border: 1px solid #d0dae6;
+  background: #fff;
+  box-shadow: 0 16px 36px rgba(15, 35, 70, 0.16);
+}
+
+.shop-flight-edit-bar .prc-suggest button {
+  display: grid;
+  gap: 0.12rem;
+  width: 100%;
+  text-align: start;
+  padding: 0.55rem 0.65rem;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #0a0a0a;
+  cursor: pointer;
+}
+
+.shop-flight-edit-bar .prc-suggest button strong {
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: #0a0a0a;
+}
+
+.shop-flight-edit-bar .prc-suggest button span {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.shop-flight-edit-bar .prc-suggest button:hover {
+  background: #eef4ff;
 }
 
 .shop-flight-edit-travelers {

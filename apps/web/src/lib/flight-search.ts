@@ -73,10 +73,10 @@ export const DEPARTURE_BUCKETS: Array<{
   label: string;
   hint: string;
 }> = [
-  { key: "night", label: "منتصف الليل – الفجر", hint: "12:00 ص – 5:59 ص" },
-  { key: "morning", label: "الصباح", hint: "6:00 ص – 11:59 ص" },
-  { key: "afternoon", label: "بعد الظهر", hint: "12:00 م – 5:59 م" },
-  { key: "evening", label: "المساء", hint: "6:00 م – 11:59 م" },
+  { key: "night", label: "منتصف الليل – الفجر", hint: "00:00 ص – 05:59 ص" },
+  { key: "morning", label: "الصباح", hint: "06:00 ص – 11:59 ص" },
+  { key: "afternoon", label: "بعد الظهر", hint: "12:00 م – 05:59 م" },
+  { key: "evening", label: "المساء", hint: "06:00 م – 11:59 م" },
 ];
 
 export const defaultFlightFilters = (): FlightSearchFilters => ({

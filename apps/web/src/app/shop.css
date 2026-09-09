@@ -3733,6 +3733,7 @@ html body .shop-date-range-backdrop {
   gap: 0.45rem;
   width: 100%;
   font-size: 0.82rem;
+  font-weight: 800;
   color: #0a0a0a;
   direction: ltr;
   cursor: pointer;
@@ -3742,9 +3743,10 @@ html body .shop-date-range-backdrop {
 .shop-flight-filter-radio em,
 .shop-flight-filter-check em {
   flex: 0 0 auto;
-  min-width: 0;
+  min-width: 5.75rem;
   font-style: normal;
-  font-size: 0.7rem;
+  font-size: 0.82rem;
+  font-weight: 800;
   color: #0a0a0a;
   white-space: nowrap;
   text-align: left;
@@ -3755,8 +3757,9 @@ html body .shop-date-range-backdrop {
 .shop-flight-filter-radio em.shop-flight-filter-price,
 .shop-flight-filter-check em.shop-flight-filter-price,
 .shop-flight-filter-section small .shop-flight-filter-price {
-  color: #1668e3;
+  color: #1668e3 !important;
   font-weight: 800;
+  font-size: 0.82rem;
 }
 
 .shop-flight-filter-radio span,
@@ -3765,6 +3768,8 @@ html body .shop-date-range-backdrop {
   direction: rtl;
   text-align: right;
   color: #0a0a0a;
+  font-weight: 800;
+  font-size: 0.82rem;
   min-width: 0;
 }
 
@@ -3779,33 +3784,39 @@ html body .shop-date-range-backdrop {
 /* Single-column time buckets with parallel columns */
 .shop-flight-filter-time {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-columns: auto minmax(0, 1fr) 7.75rem;
   align-items: center;
   column-gap: 0.55rem;
   width: 100%;
   direction: rtl;
   cursor: pointer;
   font-size: 0.82rem;
+  font-weight: 800;
   color: #0a0a0a;
   min-width: 0;
 }
 
 .shop-flight-filter-time-label {
-  font-weight: 700;
+  font-weight: 800;
+  font-size: 0.82rem;
   color: #0a0a0a;
   text-align: right;
   min-width: 0;
 }
 
 .shop-flight-filter-time-range {
+  display: inline-block;
   font-style: normal;
-  font-size: 0.72rem;
-  font-weight: 600;
-  color: #0a0a0a;
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: #1668e3;
   white-space: nowrap;
-  text-align: left;
+  text-align: center;
   direction: ltr;
   unicode-bidi: isolate;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
+  min-width: 7.75rem;
 }
 
 .shop-flight-filter-section input[type="range"] {

@@ -9047,7 +9047,7 @@ html body .wg-hero-acc-search-btn:hover {
   }
 }
 
-/* WG_SEARCH_BLUE_POLISH_V2 — wider panel, true blue labels, travelers readable, notebook rings */
+/* WG_SEARCH_BLUE_POLISH_V3 — Wire-O chrome rings + gold labels matching reference */
 html body .shop-root .wg-hero-search-panel,
 html body .wg-hero-search-panel {
   width: min(1180px, calc(100% - 3.25cm)) !important;
@@ -9058,6 +9058,13 @@ html body .wg-hero-acc-shell,
 html body .shop-root .wg-hero-search-panel .wg-hero-acc-panel,
 html body .wg-hero-search-panel .wg-hero-acc-field {
   overflow: visible !important;
+}
+html body .shop-root .wg-hero-acc-spiral,
+html body .wg-hero-acc-spiral {
+  background-image: url("/media/travela/notebook-wireo-strip.png?v=chrome4") !important;
+  background-repeat: no-repeat !important;
+  background-position: center top !important;
+  background-size: 100% 2.85rem !important;
 }
 html body .shop-root .wg-hero-acc-trip-extra,
 html body .wg-hero-acc-trip-extra,
@@ -9092,15 +9099,15 @@ html body .shop-root .wg-hero-acc-panel .exp-cell-label,
 html body .wg-hero-acc-panel .exp-cell-label,
 html body .wg-hero-acc-field-label,
 html body .wg-hero-acc-panel .shop-ac-inline > span:first-child {
-  color: #111111 !important;
-  -webkit-text-fill-color: #111111 !important;
+  color: #f5c518 !important;
+  -webkit-text-fill-color: #f5c518 !important;
   font-size: 0.98rem !important;
   font-weight: 800 !important;
 }
 html body .wg-hero-acc-field-ico,
 html body .wg-hero-acc-field .wg-hero-acc-field-ico {
-  color: #1565c0 !important;
-  -webkit-text-fill-color: #1565c0 !important;
+  color: #f5c518 !important;
+  -webkit-text-fill-color: #f5c518 !important;
 }
 html body .wg-hero-acc-field-ico,
 html body .wg-hero-acc-field .wg-hero-acc-field-ico {
@@ -9126,19 +9133,20 @@ html body .shop-root .wg-hero-acc-search-btn,
 html body .wg-hero-ticket-search.exp-search-link,
 html body .wg-hero-acc-search-btn,
 html body .wg-hero-acc-panel .exp-search-link.wg-hero-ticket-search {
-  background: rgba(255, 255, 255, 0.14) !important;
-  border-color: rgba(255, 255, 255, 0.55) !important;
-  color: #fff !important;
-  box-shadow: none !important;
+  background: #f5c518 !important;
+  border-color: #f5c518 !important;
+  color: #111111 !important;
+  -webkit-text-fill-color: #111111 !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.28) !important;
   min-width: 10.75rem !important;
 }
 html body .shop-root .wg-hero-acc-mode.on .wg-hero-acc-icon,
 html body .shop-root .wg-hero-acc-mode.is-expanded .wg-hero-acc-icon,
 html body .wg-hero-acc-mode.on .wg-hero-acc-icon,
 html body .wg-hero-acc-mode.is-expanded .wg-hero-acc-icon {
-  background: rgba(255, 255, 255, 0.95) !important;
-  color: #1565c0 !important;
-  box-shadow: none !important;
+  background: #f5c518 !important;
+  color: #111111 !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25) !important;
 }
 html body .shop-root .wg-hero-acc-hint,
 html body .wg-hero-acc-hint {

@@ -714,7 +714,8 @@ export function ShopHeroBanner(props: Props) {
               __html: `
 #search.wg-hero-search-panel {
   --wg-search-blue: #1565c0;
-  --wg-search-label: #111111;
+  --wg-search-gold: #f5c518;
+  --wg-search-label: #f5c518;
   --wg-search-ink: #0d47a1;
   width: min(1180px, calc(100% - 3.25cm)) !important;
   max-width: 1180px !important;
@@ -730,47 +731,30 @@ export function ShopHeroBanner(props: Props) {
   overflow: visible !important;
   position: relative !important;
 }
-/* Notebook spiral rings — decorative only */
+/* Photoreal Wire-O metallic twin-loop rings (decorative only; holes baked into strip) */
 #search.wg-hero-search-panel .wg-hero-acc-spiral {
   position: absolute !important;
-  top: -1.05rem !important;
-  inset-inline: 0.85rem !important;
-  height: 2.15rem !important;
-  display: flex !important;
-  align-items: flex-start !important;
-  justify-content: space-between !important;
-  gap: 0 !important;
-  pointer-events: none !important;
-  z-index: 12 !important;
-}
-#search.wg-hero-search-panel .wg-hero-acc-spiral-pair {
-  flex: 0 0 auto !important;
-  width: 1.55rem !important;
-  height: 2.15rem !important;
+  top: -1.35rem !important;
+  inset-inline: 0.45rem !important;
+  height: 2.85rem !important;
   display: block !important;
-  background-image: url("/media/travela/notebook-wireo-pair.png") !important;
+  pointer-events: none !important;
+  z-index: 14 !important;
+  background-image: url("/media/travela/notebook-wireo-strip.png?v=chrome4") !important;
   background-repeat: no-repeat !important;
   background-position: center top !important;
-  background-size: contain !important;
-  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.4)) !important;
+  background-size: 100% 2.85rem !important;
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.4)) !important;
 }
-/* Punch holes under the rings on the blue header */
+#search.wg-hero-search-panel .wg-hero-acc-spiral-pair {
+  display: none !important;
+}
 #search.wg-hero-search-panel .wg-hero-acc-modes {
   position: relative !important;
 }
 #search.wg-hero-search-panel .wg-hero-acc-modes::before {
-  content: "" !important;
-  position: absolute !important;
-  top: 0.55rem !important;
-  inset-inline: 1.05rem !important;
-  height: 0.55rem !important;
-  pointer-events: none !important;
-  z-index: 3 !important;
-  background-image: radial-gradient(circle at center, #071428 0 42%, rgba(255,255,255,0.18) 46%, transparent 52%) !important;
-  background-size: calc((100% - 0px) / 6.2) 0.55rem !important;
-  background-repeat: repeat-x !important;
-  background-position: center !important;
-  opacity: 0.95 !important;
+  content: none !important;
+  display: none !important;
 }
 /* Top tabs: solid blue */
 #search.wg-hero-search-panel .wg-hero-acc-modes,
@@ -807,10 +791,10 @@ export function ShopHeroBanner(props: Props) {
 }
 #search.wg-hero-search-panel .wg-hero-acc-mode.on .wg-hero-acc-icon,
 #search.wg-hero-search-panel .wg-hero-acc-mode.is-expanded .wg-hero-acc-icon {
-  background: rgba(255, 255, 255, 0.95) !important;
-  color: var(--wg-search-blue) !important;
+  background: var(--wg-search-gold) !important;
+  color: #111111 !important;
   border-radius: 999px !important;
-  box-shadow: none !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25) !important;
 }
 #search.wg-hero-search-panel .wg-hero-acc-textcol {
   display: flex !important;
@@ -951,11 +935,11 @@ export function ShopHeroBanner(props: Props) {
   border-radius: 0 0 18px 18px !important;
   padding: 0.55rem 0.65rem 0.7rem !important;
 }
-/* Trip type pills */
+/* Trip type pills — gold outline like notebook reference */
 #search.wg-hero-search-panel .wg-hero-acc-trip {
   background: transparent !important;
-  border: 1.5px solid var(--wg-search-blue) !important;
-  color: #e3f2fd !important;
+  border: 1.5px solid var(--wg-search-gold) !important;
+  color: #ffe082 !important;
   font-size: 0.92rem !important;
   font-weight: 800 !important;
   min-height: 2.35rem !important;
@@ -964,9 +948,9 @@ export function ShopHeroBanner(props: Props) {
   border-radius: 999px !important;
 }
 #search.wg-hero-search-panel .wg-hero-acc-trip.on {
-  background: var(--wg-search-blue) !important;
-  border-color: var(--wg-search-blue) !important;
-  color: #fff !important;
+  background: var(--wg-search-gold) !important;
+  border-color: var(--wg-search-gold) !important;
+  color: #111111 !important;
 }
 #search.wg-hero-search-panel .wg-hero-acc-trip-extra,
 #search.wg-hero-search-panel .wg-hero-acc-cabin {
@@ -999,7 +983,7 @@ export function ShopHeroBanner(props: Props) {
   height: 1.55rem !important;
   min-width: 1.55rem !important;
   min-height: 1.55rem !important;
-  color: #1565c0 !important;
+  color: var(--wg-search-gold) !important;
   background: currentColor !important;
   background-color: currentColor !important;
   align-self: flex-end !important;
@@ -1033,8 +1017,8 @@ export function ShopHeroBanner(props: Props) {
 #search.wg-hero-search-panel .wg-hero-acc-field .exp-cell-label,
 #search.wg-hero-search-panel .wg-hero-acc-field .shop-ac-inline > span:first-child,
 #search.wg-hero-search-panel .wg-hero-acc-field .exp-travelers-trigger .exp-cell-label {
-  color: #111111 !important;
-  -webkit-text-fill-color: #111111 !important;
+  color: var(--wg-search-gold) !important;
+  -webkit-text-fill-color: var(--wg-search-gold) !important;
   font-weight: 800 !important;
   font-size: 1.05rem !important;
   line-height: 1.15 !important;
@@ -1119,25 +1103,27 @@ export function ShopHeroBanner(props: Props) {
   border-color: #cbd5e1 !important;
   background: #fff !important;
 }
-/* Transparent search CTA */
+/* Solid gold search CTA — matches notebook reference */
 #search.wg-hero-search-panel .wg-hero-ticket-search.exp-search-link,
 #search.wg-hero-search-panel .wg-hero-acc-search-btn,
 #search.wg-hero-search-panel .exp-search-link.wg-hero-acc-search-btn {
-  background: rgba(255, 255, 255, 0.14) !important;
-  background-color: rgba(255, 255, 255, 0.14) !important;
-  border: 1.5px solid rgba(255, 255, 255, 0.55) !important;
-  color: #fff !important;
-  box-shadow: none !important;
-  backdrop-filter: blur(10px) !important;
-  -webkit-backdrop-filter: blur(10px) !important;
+  background: var(--wg-search-gold) !important;
+  background-color: var(--wg-search-gold) !important;
+  border: 1.5px solid var(--wg-search-gold) !important;
+  color: #111111 !important;
+  -webkit-text-fill-color: #111111 !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.28) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
   min-width: 10.75rem !important;
   white-space: nowrap !important;
+  font-weight: 800 !important;
 }
 #search.wg-hero-search-panel .wg-hero-ticket-search.exp-search-link:hover:not(:disabled),
 #search.wg-hero-search-panel .wg-hero-acc-search-btn:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.22) !important;
-  border-color: #fff !important;
-  color: #fff !important;
+  background: #ffd54f !important;
+  border-color: #ffd54f !important;
+  color: #111111 !important;
 }
 `,
             }}

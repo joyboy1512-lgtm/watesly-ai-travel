@@ -23,6 +23,8 @@ export function normalizeShopPaymentStatus(raw: string | undefined | null): Shop
     .trim()
     .toLowerCase()
     .replace(/\s+/g, "_");
+  // Authorized is NOT paid — funds not captured yet.
+  if (v === "authorized" || v === "authorised") return "pending";
   if (v === "captured" || v === "success" || v === "paid") return "paid";
   if (v === "unpaid" || v === "pending" || v === "processing") return "pending";
   if (v === "failed" || v === "cancelled" || v === "canceled" || v === "expired") {
@@ -32,4 +34,14 @@ export function normalizeShopPaymentStatus(raw: string | undefined | null): Shop
   if (v === "refunded") return "refunded";
   if ((SHOP_PAYMENT_STATUSES as readonly string[]).includes(v)) return v as ShopPaymentStatus;
   return "pending";
+}
+
+
+/** True only when gateway reports money captured (not merely authorized). */
+export function isCapturedPaymentStatus(raw: string | undefined | null): boolean {
+  const v = String(raw || "")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, "_");
+  return v === "captured" || v === "success" || v === "paid";
 }

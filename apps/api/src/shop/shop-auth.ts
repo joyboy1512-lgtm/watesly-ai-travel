@@ -10,6 +10,13 @@ import { Reflector } from "@nestjs/core";
 import { JwtService } from "@nestjs/jwt";
 import type { Request } from "express";
 import { PrismaService } from "../prisma/prisma.service";
+import {
+  CSRF_COOKIE,
+  CUSTOMER_COOKIE,
+  getSessionEpoch,
+  isSessionJtiRevoked,
+  parseCookieHeader,
+} from "../common/session-cookies";
 
 export const SHOP_CUSTOMER_OPTIONAL = "shopCustomerOptional";
 
@@ -27,6 +34,9 @@ export type CustomerJwtPayload = {
   typ: "customer";
   organizationId: string;
   phone: string;
+  /** Session epoch — bump on logout / password change. */
+  sv?: number;
+  jti?: string;
 };
 
 export const CurrentCustomer = createParamDecorator(
@@ -63,14 +73,38 @@ export class CustomerAuthGuard implements CanActivate {
     );
     const request = context
       .switchToHttp()
-      .getRequest<Request & { customer?: ShopCustomer }>();
-    const header = request.headers.authorization;
-    if (!header?.startsWith("Bearer ")) {
+      .getRequest<Request & { customer?: ShopCustomer; customerJti?: string }>();
+
+    const bearer = request.headers.authorization?.startsWith("Bearer ");
+    let token: string | null = null;
+    if (bearer) {
+      token = request.headers.authorization!.slice("Bearer ".length).trim() || null;
+    } else {
+      const cookies = parseCookieHeader(request.headers.cookie);
+      token = cookies[CUSTOMER_COOKIE] || null;
+    }
+    const usedCookieAuth = !bearer && Boolean(token);
+
+    if (!token) {
       if (optional) return true;
       throw new UnauthorizedException("مطلوب تسجيل الدخول");
     }
 
-    const token = header.slice("Bearer ".length).trim();
+    // CSRF for cookie-authenticated mutating requests.
+    if (usedCookieAuth) {
+      const method = request.method.toUpperCase();
+      if (method !== "GET" && method !== "HEAD" && method !== "OPTIONS") {
+        const cookies = parseCookieHeader(request.headers.cookie);
+        const cookieToken = cookies[CSRF_COOKIE];
+        const headerToken = String(
+          request.headers["x-csrf-token"] || request.headers["x-xsrf-token"] || "",
+        ).trim();
+        if (!cookieToken || !headerToken || cookieToken !== headerToken) {
+          throw new UnauthorizedException("طلب غير صالح (CSRF)");
+        }
+      }
+    }
+
     let payload: CustomerJwtPayload;
     try {
       payload = await this.jwt.verifyAsync<CustomerJwtPayload>(token);
@@ -82,6 +116,17 @@ export class CustomerAuthGuard implements CanActivate {
     if (payload.typ !== "customer" || !payload.sub) {
       if (optional) return true;
       throw new UnauthorizedException("جلسة غير صالحة");
+    }
+
+    if (await isSessionJtiRevoked(payload.jti)) {
+      if (optional) return true;
+      throw new UnauthorizedException("تم إنهاء الجلسة");
+    }
+
+    const epoch = await getSessionEpoch(payload.sub);
+    if (payload.sv != null && payload.sv < epoch) {
+      if (optional) return true;
+      throw new UnauthorizedException("تم إنهاء الجلسة");
     }
 
     const customer = await this.prisma.customer.findFirst({
@@ -105,6 +150,7 @@ export class CustomerAuthGuard implements CanActivate {
       name: customer.name,
       contactId: customer.contactId,
     };
+    request.customerJti = payload.jti;
     return true;
   }
 }

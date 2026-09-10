@@ -11,6 +11,8 @@ export type ShopUnlockCustomer = {
 export type ShopUnlockResult = {
   accessToken: string;
   customer: ShopUnlockCustomer;
+  /** Dev-only OTP echo — never present when NODE_ENV=production on API. */
+  debugCode?: string;
 };
 
 export type UnlockRequestResult = {

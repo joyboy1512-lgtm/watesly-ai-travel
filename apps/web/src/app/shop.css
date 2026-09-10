@@ -9047,11 +9047,17 @@ html body .wg-hero-acc-search-btn:hover {
   }
 }
 
-/* WG_SEARCH_BLUE_POLISH_V1 — blue labels/icons, transparent CTA, centered trip row */
+/* WG_SEARCH_BLUE_POLISH_V2 — wider panel, true blue labels, travelers readable, notebook rings */
 html body .shop-root .wg-hero-search-panel,
 html body .wg-hero-search-panel {
-  width: min(980px, calc(100% - 5.5cm)) !important;
-  max-width: 980px !important;
+  width: min(1180px, calc(100% - 3.25cm)) !important;
+  max-width: 1180px !important;
+}
+html body .shop-root .wg-hero-acc-shell,
+html body .wg-hero-acc-shell,
+html body .shop-root .wg-hero-search-panel .wg-hero-acc-panel,
+html body .wg-hero-search-panel .wg-hero-acc-field {
+  overflow: visible !important;
 }
 html body .shop-root .wg-hero-acc-trip-extra,
 html body .wg-hero-acc-trip-extra,
@@ -9068,7 +9074,7 @@ html body .wg-hero-acc-tripstrip {
 html body .shop-root .wg-hero-acc-trip,
 html body .wg-hero-acc-trip {
   color: #e3f2fd !important;
-  border-color: #42a5f5 !important;
+  border-color: #1565c0 !important;
   background: transparent !important;
   font-size: 0.92rem !important;
   font-weight: 800 !important;
@@ -9088,7 +9094,27 @@ html body .wg-hero-acc-field-label,
 html body .wg-hero-acc-panel .shop-ac-inline > span:first-child,
 html body .wg-hero-acc-field-ico,
 html body .wg-hero-acc-field .wg-hero-acc-field-ico {
-  color: #42a5f5 !important;
+  color: #1565c0 !important;
+  -webkit-text-fill-color: #1565c0 !important;
+}
+html body .wg-hero-acc-field-ico,
+html body .wg-hero-acc-field .wg-hero-acc-field-ico {
+  width: 1.7rem !important;
+  height: 1.7rem !important;
+  min-width: 1.7rem !important;
+  min-height: 1.7rem !important;
+  background: currentColor !important;
+}
+html body .shop-root .wg-hero-acc-field .exp-cell-label,
+html body .wg-hero-acc-field .exp-cell-label {
+  font-size: 0.9rem !important;
+  font-weight: 800 !important;
+}
+html body .shop-root .wg-hero-acc-field-body,
+html body .wg-hero-acc-field-body,
+html body .wg-hero-acc-field .exp-travelers-trigger,
+html body .wg-hero-acc-field .shop-ac-inline {
+  gap: 0.38rem !important;
 }
 html body .shop-root .wg-hero-ticket-search.exp-search-link,
 html body .shop-root .wg-hero-acc-search-btn,
@@ -9099,6 +9125,7 @@ html body .wg-hero-acc-panel .exp-search-link.wg-hero-ticket-search {
   border-color: rgba(255, 255, 255, 0.55) !important;
   color: #fff !important;
   box-shadow: none !important;
+  min-width: 10.75rem !important;
 }
 html body .shop-root .wg-hero-acc-mode.on .wg-hero-acc-icon,
 html body .shop-root .wg-hero-acc-mode.is-expanded .wg-hero-acc-icon,
@@ -9130,8 +9157,42 @@ html body .shop-root .wg-hero-acc-field,
 html body .wg-hero-acc-field[data-field="travelers"],
 html body .wg-hero-acc-field[data-field="guests"] {
   align-items: center !important;
+  min-width: 9.5rem !important;
+  overflow: visible !important;
 }
 html body .wg-hero-acc-field .wg-hero-acc-field-ico {
   align-self: center !important;
   top: 0 !important;
+}
+/* Travelers/rooms popup contrast */
+html body .shop-root .wg-hero-search-panel .exp-travelers-panel,
+html body .wg-hero-search-panel .exp-travelers-panel,
+html body .shop-root .wg-hero-search-panel .exp-occupancy-panel,
+html body .wg-hero-search-panel .exp-occupancy-panel {
+  background: #fff !important;
+  color: #0f172a !important;
+  -webkit-text-fill-color: #0f172a !important;
+  z-index: 90 !important;
+  overflow: auto !important;
+  max-height: min(70vh, 520px) !important;
+  min-width: 17rem !important;
+}
+html body .wg-hero-search-panel .exp-travelers-panel strong,
+html body .wg-hero-search-panel .exp-occupancy-panel strong,
+html body .wg-hero-search-panel .exp-stepper strong,
+html body .wg-hero-search-panel .exp-travelers-panel select,
+html body .wg-hero-search-panel .exp-occupancy-panel select,
+html body .wg-hero-search-panel .exp-travelers-panel label,
+html body .wg-hero-search-panel .exp-occupancy-panel label,
+html body .wg-hero-search-panel .exp-travelers-row > span,
+html body .wg-hero-search-panel .exp-room-occ-title {
+  color: #0f172a !important;
+  -webkit-text-fill-color: #0f172a !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+html body .wg-hero-search-panel .exp-travelers-panel select option,
+html body .wg-hero-search-panel .exp-occupancy-panel select option {
+  color: #0f172a !important;
+  background: #fff !important;
 }

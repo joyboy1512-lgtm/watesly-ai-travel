@@ -714,10 +714,12 @@ export function ShopHeroBanner(props: Props) {
               __html: `
 #search.wg-hero-search-panel {
   --wg-search-blue: #1565c0;
-  --wg-search-blue-soft: #42a5f5;
+  --wg-search-label: #1565c0;
   --wg-search-ink: #0d47a1;
-  width: min(980px, calc(100% - 5.5cm)) !important;
-  max-width: 980px !important;
+  width: min(1180px, calc(100% - 3.25cm)) !important;
+  max-width: 1180px !important;
+  overflow: visible !important;
+  margin-top: 0.55rem !important;
 }
 #search.wg-hero-search-panel .wg-hero-acc-shell,
 #search.wg-hero-search-panel .wg-hero-ticket-shell,
@@ -725,6 +727,34 @@ export function ShopHeroBanner(props: Props) {
   background: transparent !important;
   background-color: transparent !important;
   box-shadow: none !important;
+  overflow: visible !important;
+  position: relative !important;
+}
+/* Notebook spiral rings — decorative only */
+#search.wg-hero-search-panel .wg-hero-acc-spiral {
+  position: absolute !important;
+  top: -0.85rem !important;
+  inset-inline: 0.7rem !important;
+  height: 1.7rem !important;
+  display: flex !important;
+  align-items: flex-start !important;
+  justify-content: space-between !important;
+  gap: 0.15rem !important;
+  pointer-events: none !important;
+  z-index: 6 !important;
+}
+#search.wg-hero-search-panel .wg-hero-acc-spiral-ring {
+  flex: 0 0 auto !important;
+  width: 0.86rem !important;
+  height: 1.55rem !important;
+  border-radius: 999px !important;
+  border: 2px solid #9aa3ad !important;
+  background:
+    linear-gradient(90deg, #6d7682 0%, #f4f6f8 28%, #b8c0c8 52%, #f7f8fa 72%, #7a8490 100%) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.85),
+    inset 0 -1px 0 rgba(0,0,0,0.18),
+    0 2px 3px rgba(0,0,0,0.22) !important;
 }
 /* Top tabs: solid blue */
 #search.wg-hero-search-panel .wg-hero-acc-modes,
@@ -743,6 +773,8 @@ export function ShopHeroBanner(props: Props) {
   max-height: none !important;
   align-items: stretch !important;
   overflow: visible !important;
+  position: relative !important;
+  z-index: 2 !important;
 }
 #search.wg-hero-search-panel .wg-hero-acc-mode,
 #search.wg-hero-search-panel .wg-hero-dock-mode.wg-hero-acc-mode {
@@ -856,6 +888,7 @@ export function ShopHeroBanner(props: Props) {
   backdrop-filter: blur(28px) saturate(1.35) !important;
   -webkit-backdrop-filter: blur(28px) saturate(1.35) !important;
   box-shadow: none !important;
+  overflow: visible !important;
 }
 #search.wg-hero-search-panel .wg-hero-acc-panel .exp-dialog,
 #search.wg-hero-search-panel .wg-hero-acc-panel .exp-unified-card,
@@ -874,11 +907,14 @@ export function ShopHeroBanner(props: Props) {
   background-color: transparent !important;
   background-image: none !important;
   box-shadow: none !important;
+  overflow: visible !important;
 }
 #search.wg-hero-search-panel .wg-hero-acc-panel .exp-form-row {
   border: 1px solid rgba(255, 255, 255, 0.22) !important;
   border-radius: 14px !important;
   backdrop-filter: none !important;
+  min-height: 5.1rem !important;
+  overflow: visible !important;
 }
 #search.wg-hero-search-panel .wg-hero-acc-tripstrip {
   display: flex !important;
@@ -897,11 +933,12 @@ export function ShopHeroBanner(props: Props) {
 #search.wg-hero-search-panel .wg-hero-acc-panel {
   border-top: 0 !important;
   border-radius: 0 0 18px 18px !important;
+  padding: 0.55rem 0.65rem 0.7rem !important;
 }
-/* Trip type pills: blue, larger type, centered */
+/* Trip type pills */
 #search.wg-hero-search-panel .wg-hero-acc-trip {
   background: transparent !important;
-  border: 1.5px solid var(--wg-search-blue-soft) !important;
+  border: 1.5px solid var(--wg-search-blue) !important;
   color: #e3f2fd !important;
   font-size: 0.92rem !important;
   font-weight: 800 !important;
@@ -919,7 +956,7 @@ export function ShopHeroBanner(props: Props) {
 #search.wg-hero-search-panel .wg-hero-acc-cabin {
   display: none !important;
 }
-/* Field icons + labels: blue, same baseline */
+/* Fields: true blue labels/icons, roomy spacing, readable values */
 #search.wg-hero-search-panel .wg-hero-acc-field,
 #search.wg-hero-search-panel .wg-hero-acc-field[data-field="travelers"],
 #search.wg-hero-search-panel .wg-hero-acc-field[data-field="guests"] {
@@ -927,32 +964,126 @@ export function ShopHeroBanner(props: Props) {
   grid-template-columns: auto minmax(0, 1fr) auto !important;
   align-items: center !important;
   align-content: center !important;
+  min-width: 9.5rem !important;
+  min-height: 5rem !important;
+  padding: 0.65rem 0.85rem !important;
+  overflow: visible !important;
+}
+#search.wg-hero-search-panel .wg-hero-acc-field-body,
+#search.wg-hero-search-panel .wg-hero-acc-field .exp-travelers-trigger,
+#search.wg-hero-search-panel .wg-hero-acc-field .shop-ac-inline {
+  display: grid !important;
+  gap: 0.38rem !important;
+  min-width: 0 !important;
+  overflow: visible !important;
 }
 #search.wg-hero-search-panel .wg-hero-acc-field-ico,
 #search.wg-hero-search-panel .wg-hero-acc-field[data-field="travelers"] .wg-hero-acc-field-ico,
 #search.wg-hero-search-panel .wg-hero-acc-field[data-field="guests"] .wg-hero-acc-field-ico,
 #search.wg-hero-search-panel .wg-hero-acc-field[data-field="dates"] .wg-hero-acc-field-ico,
 #search.wg-hero-search-panel .wg-hero-acc-field[data-field="from"] .wg-hero-acc-field-ico,
-#search.wg-hero-search-panel .wg-hero-acc-field[data-field="to"] .wg-hero-acc-field-ico {
-  color: var(--wg-search-blue-soft) !important;
+#search.wg-hero-search-panel .wg-hero-acc-field[data-field="to"] .wg-hero-acc-field-ico,
+#search.wg-hero-search-panel .wg-hero-acc-field[data-field="destination"] .wg-hero-acc-field-ico,
+#search.wg-hero-search-panel .wg-hero-acc-field[data-field="checkin"] .wg-hero-acc-field-ico,
+#search.wg-hero-search-panel .wg-hero-acc-field[data-field="checkout"] .wg-hero-acc-field-ico {
+  width: 1.85rem !important;
+  height: 1.85rem !important;
+  min-width: 1.85rem !important;
+  min-height: 1.85rem !important;
+  color: var(--wg-search-label) !important;
+  background: currentColor !important;
   background-color: currentColor !important;
   align-self: center !important;
   margin: 0 !important;
   transform: none !important;
   position: relative !important;
   top: 0 !important;
-}
-#search.wg-hero-search-panel .wg-hero-acc-field-ico {
-  /* mask icons use background:currentColor */
-  background: currentColor !important;
+  filter: none !important;
+  opacity: 1 !important;
 }
 #search.wg-hero-search-panel .wg-hero-acc-panel .exp-cell-label,
 #search.wg-hero-search-panel .wg-hero-acc-field .exp-cell-label,
 #search.wg-hero-search-panel .wg-hero-acc-field .shop-ac-inline > span:first-child,
 #search.wg-hero-search-panel .wg-hero-acc-field .exp-travelers-trigger .exp-cell-label {
-  color: var(--wg-search-blue-soft) !important;
-  -webkit-text-fill-color: var(--wg-search-blue-soft) !important;
+  color: var(--wg-search-label) !important;
+  -webkit-text-fill-color: var(--wg-search-label) !important;
+  font-weight: 800 !important;
+  font-size: 0.9rem !important;
+  line-height: 1.2 !important;
+  margin: 0 !important;
+  opacity: 1 !important;
+}
+#search.wg-hero-search-panel .wg-hero-acc-field .shop-ac-inline input,
+#search.wg-hero-search-panel .wg-hero-acc-field .exp-date-btn,
+#search.wg-hero-search-panel .wg-hero-acc-field .exp-travelers-trigger strong,
+#search.wg-hero-search-panel .wg-hero-acc-field strong,
+#search.wg-hero-search-panel .wg-hero-acc-field .shop-date-range-trigger {
+  color: #fff !important;
+  -webkit-text-fill-color: #fff !important;
+  font-size: 0.98rem !important;
   font-weight: 700 !important;
+  white-space: nowrap !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  max-width: none !important;
+}
+/* Travelers / rooms popup: keep numbers & ages readable */
+#search.wg-hero-search-panel .exp-travelers-panel,
+#search.wg-hero-search-panel .exp-occupancy-panel {
+  display: grid !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  z-index: 90 !important;
+  max-height: min(70vh, 520px) !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  background: #fff !important;
+  color: #0f172a !important;
+  -webkit-text-fill-color: #0f172a !important;
+  min-width: 17rem !important;
+  width: max(17rem, 100%) !important;
+}
+#search.wg-hero-search-panel .exp-travelers-panel *,
+#search.wg-hero-search-panel .exp-occupancy-panel * {
+  color: inherit;
+}
+#search.wg-hero-search-panel .exp-travelers-panel strong,
+#search.wg-hero-search-panel .exp-occupancy-panel strong,
+#search.wg-hero-search-panel .exp-travelers-panel .exp-stepper strong,
+#search.wg-hero-search-panel .exp-occupancy-panel .exp-stepper strong,
+#search.wg-hero-search-panel .exp-travelers-panel .exp-travelers-row > span,
+#search.wg-hero-search-panel .exp-occupancy-panel .exp-travelers-row > span,
+#search.wg-hero-search-panel .exp-occupancy-panel .exp-room-occ-title,
+#search.wg-hero-search-panel .exp-travelers-panel label,
+#search.wg-hero-search-panel .exp-occupancy-panel label,
+#search.wg-hero-search-panel .exp-travelers-panel small,
+#search.wg-hero-search-panel .exp-occupancy-panel small {
+  color: #0f172a !important;
+  -webkit-text-fill-color: #0f172a !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  font-size: 0.95rem !important;
+}
+#search.wg-hero-search-panel .exp-travelers-panel select,
+#search.wg-hero-search-panel .exp-occupancy-panel select {
+  color: #0f172a !important;
+  -webkit-text-fill-color: #0f172a !important;
+  background: #fff !important;
+  border: 1px solid #cbd5e1 !important;
+  min-width: 5.5rem !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+#search.wg-hero-search-panel .exp-travelers-panel select option,
+#search.wg-hero-search-panel .exp-occupancy-panel select option {
+  color: #0f172a !important;
+  -webkit-text-fill-color: #0f172a !important;
+  background: #fff !important;
+}
+#search.wg-hero-search-panel .exp-stepper button {
+  color: #0f172a !important;
+  border-color: #cbd5e1 !important;
+  background: #fff !important;
 }
 /* Transparent search CTA */
 #search.wg-hero-search-panel .wg-hero-ticket-search.exp-search-link,
@@ -965,6 +1096,8 @@ export function ShopHeroBanner(props: Props) {
   box-shadow: none !important;
   backdrop-filter: blur(10px) !important;
   -webkit-backdrop-filter: blur(10px) !important;
+  min-width: 10.75rem !important;
+  white-space: nowrap !important;
 }
 #search.wg-hero-search-panel .wg-hero-ticket-search.exp-search-link:hover:not(:disabled),
 #search.wg-hero-search-panel .wg-hero-acc-search-btn:hover:not(:disabled) {
@@ -976,6 +1109,11 @@ export function ShopHeroBanner(props: Props) {
             }}
           />
           <div className={`wg-hero-ticket-shell wg-hero-dock-shell wg-hero-acc-shell${dockOpen ? " is-open" : ""}`} data-mode={props.mode}>
+            <div className="wg-hero-acc-spiral" aria-hidden="true">
+              {Array.from({ length: 16 }, (_, i) => (
+                <span key={i} className="wg-hero-acc-spiral-ring" />
+              ))}
+            </div>
             <div
               className="wg-hero-dock-modes wg-hero-acc-modes"
               role="tablist"

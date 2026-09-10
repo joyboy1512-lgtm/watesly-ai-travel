@@ -732,16 +732,16 @@ export function ShopHeroBanner(props: Props) {
   overflow: visible !important;
   position: relative !important;
 }
-/* Photoreal Wire-O metallic twin-loops — cropped from reference photo */
+/* Small tight Wire-O rings — no punch holes */
 #search.wg-hero-search-panel .wg-hero-acc-spiral {
   position: absolute !important;
-  top: -1.55rem !important;
-  inset-inline: 0.45rem !important;
-  height: 3.35rem !important;
+  top: -0.85rem !important;
+  inset-inline: 1.1rem !important;
+  height: 1.85rem !important;
   display: flex !important;
   align-items: flex-start !important;
-  justify-content: space-between !important;
-  gap: 0 !important;
+  justify-content: center !important;
+  gap: 0.18rem !important;
   pointer-events: none !important;
   z-index: 14 !important;
   background: none !important;
@@ -751,32 +751,23 @@ export function ShopHeroBanner(props: Props) {
 #search.wg-hero-search-panel .wg-hero-acc-spiral-pair {
   display: block !important;
   flex: 0 0 auto !important;
-  width: 2.05rem !important;
-  height: 3.35rem !important;
-  background-image: url("/media/travela/notebook-wireo-pair.png?v=chrome8") !important;
+  width: 0.95rem !important;
+  height: 1.85rem !important;
+  background-image: url("/media/travela/notebook-wireo-pair.png?v=chrome10") !important;
   background-repeat: no-repeat !important;
   background-position: center top !important;
   background-size: contain !important;
-  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.35)) !important;
+  filter: drop-shadow(0 1px 1.5px rgba(0, 0, 0, 0.3)) !important;
 }
-/* Tiny discrete punch holes only — no dark bar */
+/* No punch holes under the rings */
 #search.wg-hero-search-panel .wg-hero-acc-modes {
   position: relative !important;
 }
 #search.wg-hero-search-panel .wg-hero-acc-modes::before {
-  content: "" !important;
-  display: block !important;
-  position: absolute !important;
-  top: 0.28rem !important;
-  inset-inline: 0.85rem !important;
-  height: 0.42rem !important;
-  pointer-events: none !important;
-  z-index: 5 !important;
-  background-image: radial-gradient(circle, #071428 0 38%, transparent 42%) !important;
-  background-size: calc(100% / 11) 0.42rem !important;
-  background-repeat: repeat-x !important;
-  background-position: center !important;
-  opacity: 0.85 !important;
+  content: none !important;
+  display: none !important;
+  background: none !important;
+  background-image: none !important;
 }
 /* Top tabs: solid blue */
 #search.wg-hero-search-panel .wg-hero-acc-modes,
@@ -1182,7 +1173,7 @@ export function ShopHeroBanner(props: Props) {
           />
           <div className={`wg-hero-ticket-shell wg-hero-dock-shell wg-hero-acc-shell${dockOpen ? " is-open" : ""}`} data-mode={props.mode}>
             <div className="wg-hero-acc-spiral" aria-hidden="true">
-              {Array.from({ length: 11 }, (_, i) => (
+              {Array.from({ length: 18 }, (_, i) => (
                 <span key={i} className="wg-hero-acc-spiral-pair" />
               ))}
             </div>

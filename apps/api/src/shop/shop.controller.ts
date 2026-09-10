@@ -7,6 +7,7 @@ import {
   Param,
   Patch,
   Post,
+  Res,
   Query,
   Req,
   UploadedFile,
@@ -14,7 +15,7 @@ import {
   UseInterceptors,
   BadRequestException,
 } from "@nestjs/common";
-import type { Request } from "express";
+import type { Request, Response } from "express";
 import { FileInterceptor } from "@nestjs/platform-express";
 import { memoryStorage } from "multer";
 import { Public } from "../auth/decorators";
@@ -163,17 +164,51 @@ export class ShopController {
   }
 
   @Post("unlock")
-  unlock(
-    @Body() body: { phone?: string; name?: string; email?: string; code?: string; guest?: boolean },
+  async unlock(
+    @Body()
+    body: {
+      phone?: string;
+      name?: string;
+      email?: string;
+      code?: string;
+      password?: string;
+      guest?: boolean;
+    },
+    @Res({ passthrough: true }) res: Response,
   ) {
-    return this.shop.unlock(body);
+    const result = await this.shop.unlock(body);
+    for (const cookie of this.shop.sessionSetCookieHeaders(result.accessToken)) {
+      res.append("Set-Cookie", cookie);
+    }
+    return result;
   }
 
   @Post("login")
-  login(@Body() body: { phone?: string; password?: string }) {
-    return this.shop.login(body);
+  async login(
+    @Body() body: { phone?: string; password?: string },
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const result = await this.shop.login(body);
+    for (const cookie of this.shop.sessionSetCookieHeaders(result.accessToken)) {
+      res.append("Set-Cookie", cookie);
+    }
+    return result;
   }
 
+
+  @Post("logout")
+  @UseGuards(CustomerAuthGuard)
+  async logout(
+    @CurrentCustomer() customer: ShopCustomer,
+    @Req() req: Request & { customerJti?: string },
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    await this.shop.logoutCustomer(customer, req.customerJti);
+    for (const cookie of this.shop.sessionClearCookieHeaders()) {
+      res.append("Set-Cookie", cookie);
+    }
+    return { ok: true };
+  }
   @Get("me")
   @UseGuards(CustomerAuthGuard)
   me(@CurrentCustomer() customer: ShopCustomer) {

@@ -31,6 +31,7 @@ const SESSION_KEY = "weekendgate_customer_session";
 
 export function getShopToken(): string | null {
   if (typeof window === "undefined") return null;
+  if (process.env.NEXT_PUBLIC_SHOP_COOKIE_AUTH === "1") return null;
   return localStorage.getItem(TOKEN_KEY);
 }
 
@@ -46,13 +47,40 @@ export function getShopSession(): ShopSession | null {
 }
 
 export function saveShopSession(session: ShopSession) {
-  localStorage.setItem(TOKEN_KEY, session.accessToken);
-  localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+  const cookieAuth = process.env.NEXT_PUBLIC_SHOP_COOKIE_AUTH === "1";
+  if (!cookieAuth) {
+    localStorage.setItem(TOKEN_KEY, session.accessToken);
+  } else {
+    localStorage.removeItem(TOKEN_KEY);
+  }
+  localStorage.setItem(
+    SESSION_KEY,
+    JSON.stringify(
+      cookieAuth
+        ? { accessToken: "", customer: session.customer }
+        : session,
+    ),
+  );
 }
 
 export function clearShopSession() {
   localStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem(SESSION_KEY);
+  if (typeof window !== "undefined" && process.env.NEXT_PUBLIC_SHOP_COOKIE_AUTH === "1") {
+    void fetch(`${getShopApiUrl()}/shop/logout`, {
+      method: "POST",
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRF-Token":
+          document.cookie
+            .split(";")
+            .map((p) => p.trim())
+            .find((p) => p.startsWith("wg_csrf="))
+            ?.slice("wg_csrf=".length) || "",
+      },
+    }).catch(() => undefined);
+  }
 }
 
 export async function shopFetch<T>(
@@ -60,6 +88,21 @@ export async function shopFetch<T>(
   init: RequestInit & { timeoutMs?: number; auth?: boolean } = {},
 ): Promise<T> {
   const headers = new Headers(init.headers);
+  if (
+    process.env.NEXT_PUBLIC_SHOP_COOKIE_AUTH === "1" &&
+    typeof document !== "undefined" &&
+    init.method &&
+    !["GET", "HEAD"].includes(String(init.method).toUpperCase())
+  ) {
+    const csrf = document.cookie
+      .split(";")
+      .map((p) => p.trim())
+      .find((p) => p.startsWith("wg_csrf="))
+      ?.slice("wg_csrf=".length);
+    if (csrf && !headers.has("X-CSRF-Token")) {
+      headers.set("X-CSRF-Token", decodeURIComponent(csrf));
+    }
+  }
   if (!headers.has("Content-Type") && init.body) {
     headers.set("Content-Type", "application/json");
   }
@@ -81,6 +124,7 @@ export async function shopFetch<T>(
     response = await fetch(`${getShopApiUrl()}${path}`, {
       ...rest,
       headers,
+      credentials: "include",
       signal: controller.signal,
     });
   } catch (err) {

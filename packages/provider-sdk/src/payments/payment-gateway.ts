@@ -54,6 +54,7 @@ export type PaymentWebhookEvent = {
   amountMinor?: number;
   currency?: string;
   rawType?: string;
+  eventKey?: string;
 };
 
 export interface PaymentGatewayAdapter {
@@ -173,30 +174,23 @@ export class SandboxHostedPaymentAdapter implements PaymentGatewayAdapter {
     if (!secret) {
       throw new Error("PAYMENT_WEBHOOK_SECRET غير مضبوط");
     }
+    if (this.environment === "production" && secret === "sandbox-webhook-secret") {
+      throw new Error("PAYMENT_WEBHOOK_SECRET غير آمن للإنتاج");
+    }
 
-    const rawSig = headers["x-weekendgate-signature"] ?? headers["x-payment-signature"] ?? "";
+    const rawSig =
+      headers["x-weekendgate-signature"] ?? headers["x-payment-signature"] ?? "";
     const sig = Array.isArray(rawSig) ? rawSig[0] || "" : String(rawSig || "");
     const provided = sig.replace(/^sha256=/i, "").trim();
-
-    const allowLegacySandboxHeader =
-      this.environment !== "production" &&
-      process.env.PAYMENT_WEBHOOK_ALLOW_SANDBOX_HEADER === "1" &&
-      (sig === "sandbox" || sig.startsWith("sandbox"));
-
-    if (!allowLegacySandboxHeader) {
-      if (!provided) {
-        throw new Error("توقيع Webhook مفقود");
-      }
-      const expected = createHmac("sha256", secret).update(rawBody || "").digest("hex");
-      const a = Buffer.from(provided, "utf8");
-      const b = Buffer.from(expected, "utf8");
-      const match =
-        a.length === b.length && timingSafeEqual(a, b)
-          ? true
-          : provided === secret;
-      if (!match) {
-        throw new Error("توقيع Webhook غير صالح");
-      }
+    if (!provided) {
+      throw new Error("توقيع Webhook مفقود");
+    }
+    const expected = createHmac("sha256", secret).update(rawBody || "").digest("hex");
+    const a = Buffer.from(provided, "utf8");
+    const b = Buffer.from(expected, "utf8");
+    // HMAC only — never accept the raw secret as a valid signature.
+    if (a.length !== b.length || !timingSafeEqual(a, b)) {
+      throw new Error("توقيع Webhook غير صالح");
     }
 
     const body = JSON.parse(rawBody || "{}") as {
@@ -206,23 +200,44 @@ export class SandboxHostedPaymentAdapter implements PaymentGatewayAdapter {
       amountMinor?: number;
       currency?: string;
       type?: string;
+      eventId?: string;
     };
     if (!body.intentId || !body.status) {
       throw new Error("Webhook غير مكتمل");
     }
     const intent = intentStore.get(body.intentId);
-    if (intent) {
-      intent.status = body.status;
-      if (body.providerRef) intent.providerRef = body.providerRef;
-      intentStore.set(intent.id, intent);
+    if (!intent) {
+      throw new Error("PaymentIntent غير معروف — رفض الربط من جسم الطلب");
     }
+    if (
+      body.amountMinor != null &&
+      Number(body.amountMinor) !== Number(intent.amountMinor)
+    ) {
+      throw new Error("مبلغ Webhook لا يطابق نية الدفع");
+    }
+    if (
+      body.currency &&
+      String(body.currency).toUpperCase() !== intent.currency.toUpperCase()
+    ) {
+      throw new Error("عملة Webhook لا تطابق نية الدفع");
+    }
+
+    intent.status = body.status;
+    if (body.providerRef) intent.providerRef = body.providerRef;
+    intentStore.set(intent.id, intent);
+
+    const eventKey =
+      body.eventId ||
+      `${body.intentId}:${body.status}:${body.providerRef || intent.providerRef || ""}`;
+
     return {
       intentId: body.intentId,
       status: body.status,
-      providerRef: body.providerRef,
-      amountMinor: body.amountMinor,
-      currency: body.currency,
+      providerRef: body.providerRef || intent.providerRef,
+      amountMinor: intent.amountMinor,
+      currency: intent.currency,
       rawType: body.type,
+      eventKey,
     };
   }
 }
@@ -245,4 +260,11 @@ export function getPaymentGateway(): PaymentGatewayAdapter {
 
 export function setPaymentGatewayForTests(adapter: PaymentGatewayAdapter | null) {
   defaultAdapter = adapter;
+}
+
+
+
+export function resetSandboxPaymentStoresForTests() {
+  intentStore.clear();
+  idempotencyStore.clear();
 }

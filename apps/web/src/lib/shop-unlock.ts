@@ -1,4 +1,4 @@
-import { shopFetch } from "@/lib/shop-session";
+import { shopFetch, clearShopSession, saveShopSession } from "@/lib/shop-session";
 
 export type ShopUnlockCustomer = {
   id: string;
@@ -17,8 +17,6 @@ export type UnlockRequestResult = {
   ok: true;
   expiresInSec: number;
   requiresCode: boolean;
-  /** Present only in non-production for local testing */
-  debugCode?: string;
 };
 
 export async function requestShopUnlockOtp(phone: string) {
@@ -31,6 +29,7 @@ export async function requestShopUnlockOtp(phone: string) {
 export async function verifyShopUnlock(body: {
   phone?: string;
   code?: string;
+  password?: string;
   name?: string;
   email?: string;
   guest?: boolean;
@@ -41,23 +40,35 @@ export async function verifyShopUnlock(body: {
   });
 }
 
-/** Request OTP when required; otherwise unlock immediately. Guest mode skips OTP. */
+/**
+ * Secure unlock helper — never auto-issues a session without OTP/password
+ * when the server requires proof. Guest sessions are random server-side.
+ */
 export async function unlockShopCustomer(input: {
   phone?: string;
   name?: string;
   email?: string;
   code?: string;
+  password?: string;
   guest?: boolean;
-}): Promise<ShopUnlockResult & { needsCode?: boolean; debugCode?: string }> {
+}): Promise<ShopUnlockResult & { needsCode?: boolean }> {
   const phone = String(input.phone || "").trim();
   const asGuest = Boolean(input.guest) || !phone;
 
   if (asGuest) {
     return verifyShopUnlock({
-      phone: phone || undefined,
       name: input.name,
       email: input.email,
       guest: true,
+    });
+  }
+
+  if (input.password) {
+    return verifyShopUnlock({
+      phone,
+      password: input.password,
+      name: input.name,
+      email: input.email,
     });
   }
 
@@ -82,13 +93,22 @@ export async function unlockShopCustomer(input: {
         status: "pending",
       },
       needsCode: true,
-      debugCode: challenged.debugCode,
     };
   }
 
-  return verifyShopUnlock({
-    phone,
-    name: input.name,
-    email: input.email,
+  throw new Error("يلزم رمز تحقق أو كلمة مرور");
+}
+
+export function logoutShopCustomer() {
+  clearShopSession();
+}
+
+export function persistShopUnlock(result: ShopUnlockResult) {
+  if (!result.accessToken && process.env.NEXT_PUBLIC_SHOP_COOKIE_AUTH !== "1") {
+    return;
+  }
+  saveShopSession({
+    accessToken: result.accessToken,
+    customer: result.customer,
   });
 }

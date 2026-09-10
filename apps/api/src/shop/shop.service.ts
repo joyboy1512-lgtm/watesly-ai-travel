@@ -1,21 +1,31 @@
 import {
-  BadRequestException,
-  Injectable,
-  UnauthorizedException,
-} from "@nestjs/common";
-import { JwtService } from "@nestjs/jwt";
-import bcrypt from "bcryptjs";
-import { createHmac, createHash, randomInt, randomUUID, timingSafeEqual } from "crypto";
-import { Prisma } from "@watesly-travel/database";
-import { defaultRatesToCurrency } from "@watesly-travel/shared";
-import { PrismaService } from "../prisma/prisma.service";
-import { BookingsService } from "../bookings/bookings.service";
-import { BotPipelineService } from "../pipeline/bot-pipeline.service";
-import { AssistantService } from "../assistant/assistant.service";
-import { VoiceAssistantService } from "../assistant/voice-assistant.service";
-import { PublicOrgService } from "./public-org";
-import { dispatchCustomerNotification } from "./platform-notify";
-import type { CustomerJwtPayload, ShopCustomer } from "./shop-auth";
+  isProductionRuntime,
+  otpDeliveryConfigured,
+} from "../common/security-env";
+import {
+  bumpSessionEpoch,
+  buildClearCookie,
+  buildSetCookie,
+  CUSTOMER_COOKIE,
+  CSRF_COOKIE,
+  getSessionEpoch,
+  newCsrfToken,
+  newSessionJti,
+  revokeSessionJti,
+  storeCsrfToken,
+} from "../common/session-cookies";
+import {
+  buildWebhookEventKey,
+  claimWebhookReceipt,
+  clearUnlockOtp,
+  generateOtpCode,
+  hashOtp,
+  loadUnlockOtp,
+  newGuestPhone,
+  otpMatches,
+  saveUnlockOtp,
+  unlockRequiresOtp,
+} from "./shop-unlock-security";
 
 function asJson(value: unknown): Prisma.InputJsonValue {
   return value as Prisma.InputJsonValue;
@@ -41,38 +51,6 @@ function publicOffer<T extends { costAmountMinor?: number; profitAmountMinor?: n
 ) {
   const { costAmountMinor: _c, profitAmountMinor: _p, ...rest } = row;
   return rest;
-}
-
-type UnlockOtpEntry = {
-  codeHash: string;
-  expiresAt: number;
-  attempts: number;
-};
-
-const unlockOtpStore = new Map<string, UnlockOtpEntry>();
-
-function unlockRequiresOtp(): boolean {
-  const flag = process.env.SHOP_UNLOCK_REQUIRE_OTP;
-  if (flag === "0" || flag === "false") return false;
-  if (flag === "1" || flag === "true") return true;
-  // Opt-in until WhatsApp/SMS delivery is configured in production.
-  return false;
-}
-
-function hashOtp(phone: string, code: string): string {
-  return createHmac("sha256", process.env.SHOP_OTP_PEPPER || "weekendgate-otp")
-    .update(`${phone}:${code}`)
-    .digest("hex");
-}
-
-function generateOtpCode(): string {
-  return String(randomInt(100000, 1000000));
-}
-
-function otpMatches(phone: string, code: string, entry: UnlockOtpEntry): boolean {
-  const a = Buffer.from(entry.codeHash, "utf8");
-  const b = Buffer.from(hashOtp(phone, code), "utf8");
-  return a.length === b.length && timingSafeEqual(a, b);
 }
 
 @Injectable()
@@ -810,19 +788,75 @@ export class ShopService {
     });
   }
 
+  private customerTokenTtl(): `${number}${"s" | "m" | "h" | "d"}` {
+    return (process.env.CUSTOMER_JWT_TTL ||
+      (isProductionRuntime() ? "12h" : "30d")) as `${number}${"s" | "m" | "h" | "d"}`;
+  }
+
+  private customerTokenMaxAgeSec(): number {
+    const ttl = this.customerTokenTtl();
+    const n = Number(ttl.slice(0, -1));
+    const unit = ttl.slice(-1);
+    if (!Number.isFinite(n)) return 12 * 3600;
+    if (unit === "d") return n * 86400;
+    if (unit === "h") return n * 3600;
+    if (unit === "m") return n * 60;
+    return n;
+  }
+
   private async issueCustomerToken(customer: {
     id: string;
     organizationId: string;
     phone: string;
   }) {
+    const sv = await getSessionEpoch(customer.id);
+    const jti = newSessionJti();
     const payload: CustomerJwtPayload = {
       sub: customer.id,
       typ: "customer",
       organizationId: customer.organizationId,
       phone: customer.phone,
+      sv,
+      jti,
     };
-    const accessToken = await this.jwt.signAsync(payload, { expiresIn: "30d" });
+    const accessToken = await this.jwt.signAsync(payload, {
+      expiresIn: this.customerTokenTtl(),
+    });
     return accessToken;
+  }
+
+  /** HttpOnly session cookie + readable CSRF cookie for cookie-based auth. */
+  sessionSetCookieHeaders(accessToken: string): string[] {
+    const maxAge = this.customerTokenMaxAgeSec();
+    const csrf = newCsrfToken();
+    void storeCsrfToken(csrf, maxAge * 1000);
+    return [
+      buildSetCookie(CUSTOMER_COOKIE, accessToken, {
+        maxAgeSec: maxAge,
+        httpOnly: true,
+        sameSite: "Lax",
+      }),
+      buildSetCookie(CSRF_COOKIE, csrf, {
+        maxAgeSec: maxAge,
+        httpOnly: false,
+        sameSite: "Lax",
+      }),
+    ];
+  }
+
+  sessionClearCookieHeaders(): string[] {
+    return [
+      buildClearCookie(CUSTOMER_COOKIE, true),
+      buildClearCookie(CSRF_COOKIE, false),
+    ];
+  }
+
+  async logoutCustomer(customer: ShopCustomer, jti?: string) {
+    await bumpSessionEpoch(customer.id);
+    if (jti) {
+      await revokeSessionJti(jti, this.customerTokenMaxAgeSec() * 1000);
+    }
+    return { ok: true as const };
   }
 
   private serializeCustomer(row: {
@@ -848,28 +882,59 @@ export class ShopService {
     if (!phone || phone.length < 8) {
       throw new BadRequestException("أدخل رقم الجوال");
     }
+    if (phone.startsWith("guest_")) {
+      throw new BadRequestException("مسار الضيف لا يستخدم رمز تحقق");
+    }
+    if (!otpDeliveryConfigured()) {
+      throw new BadRequestException(
+        "رمز التحقق غير متاح حالياً — استخدم تسجيل الدخول بكلمة المرور",
+      );
+    }
+
     const code = generateOtpCode();
-    unlockOtpStore.set(phone, {
+    await saveUnlockOtp(phone, {
       codeHash: hashOtp(phone, code),
       expiresAt: Date.now() + 5 * 60_000,
       attempts: 0,
     });
 
-    const exposeDebug =
-      process.env.NODE_ENV !== "production" &&
-      (process.env.PAYMENT_ENV || "sandbox").toLowerCase() !== "production";
-
-    // Delivery channel: WhatsApp/SMS can be wired later; never log OTP in production.
-    if (exposeDebug || process.env.SHOP_OTP_ALLOW_LOG === "1") {
+    const mode = (process.env.SHOP_OTP_DELIVERY || "").toLowerCase();
+    if (mode === "http") {
+      const url =
+        process.env.SHOP_OTP_WEBHOOK_URL?.trim() ||
+        process.env.SHOP_OTP_HTTP_URL?.trim();
+      if (!url) {
+        await clearUnlockOtp(phone);
+        throw new BadRequestException("تعذر إرسال رمز التحقق");
+      }
+      try {
+        await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ phone, purpose: "unlock", code }),
+        });
+      } catch {
+        await clearUnlockOtp(phone);
+        throw new BadRequestException("تعذر إرسال رمز التحقق");
+      }
+    } else if (mode === "whatsapp") {
+      await clearUnlockOtp(phone);
+      throw new BadRequestException(
+        "إرسال واتساب للرموز غير مفعّل بعد — استخدم كلمة المرور",
+      );
+    } else if (
+      !isProductionRuntime() &&
+      (mode === "log" || mode === "console") &&
+      process.env.SHOP_OTP_ALLOW_LOG === "1"
+    ) {
       // eslint-disable-next-line no-console
-      console.info(`[shop.otp] unlock code for ${phone}: ${code}`);
+      console.info(`[shop.otp] unlock code issued for ${phone.slice(0, 6)}…`);
     }
 
     return {
       ok: true as const,
       expiresInSec: 300,
-      requiresCode: unlockRequiresOtp(),
-      ...(exposeDebug ? { debugCode: code } : {}),
+      requiresCode: true,
     };
   }
 
@@ -878,47 +943,126 @@ export class ShopService {
     name?: string;
     email?: string;
     code?: string;
+    password?: string;
     guest?: boolean;
   }) {
     const name = body.name?.trim() || undefined;
     const email = body.email?.trim().toLowerCase() || undefined;
     let phone = normalizeShopPhone(body.phone || "");
     const asGuest =
-      Boolean(body.guest) || ((!phone || phone.length < 8) && Boolean(name || email));
+      Boolean(body.guest) ||
+      ((!phone || phone.length < 8) && Boolean(name || email));
 
-    if (asGuest && (!phone || phone.length < 8)) {
-      if (!name && !email) {
-        throw new BadRequestException("أدخل الاسم أو البريد للمتابعة كضيف");
-      }
-      const seed = (email || name || "guest").toLowerCase();
-      phone = `guest_${createHash("sha1").update(seed).digest("hex").slice(0, 12)}`;
-    } else if (!phone || phone.length < 8) {
+    if (asGuest) {
+      phone = newGuestPhone();
+      const org = await this.orgs.resolve();
+      const contact = await this.prisma.contact.create({
+        data: {
+          organizationId: org.id,
+          waId: phone,
+          name: name || email || "ضيف",
+          email,
+          source: "web_shop_guest",
+          lastContactedAt: new Date(),
+        },
+      });
+      const customer = await this.prisma.customer.create({
+        data: {
+          organizationId: org.id,
+          phone,
+          name: name || email || "ضيف",
+          email,
+          contactId: contact.id,
+          status: "active",
+          lastLoginAt: new Date(),
+        },
+      });
+      const accessToken = await this.issueCustomerToken(customer);
+      return {
+        accessToken,
+        tokenType: "Bearer",
+        customer: this.serializeCustomer({
+          ...customer,
+          hasPassword: false,
+        }),
+      };
+    }
+
+    if (!phone || phone.length < 8) {
       throw new BadRequestException("أدخل رقم الجوال");
     }
 
-    const isGuestPhone = phone.startsWith("guest_");
-    if (!isGuestPhone && unlockRequiresOtp()) {
-      const code = String(body.code || "").trim();
+    const org = await this.orgs.resolve();
+    const existing = await this.prisma.customer.findUnique({
+      where: {
+        organizationId_phone: { organizationId: org.id, phone },
+      },
+    });
+
+    if (existing && existing.status !== "active") {
+      throw new UnauthorizedException("الحساب موقوف — تواصل مع الدعم");
+    }
+
+    const password = body.password || "";
+    const code = String(body.code || "").trim();
+    let verifiedViaPassword = false;
+    let verifiedViaOtp = false;
+
+    if (existing?.passwordHash && password) {
+      const valid = await bcrypt.compare(password, existing.passwordHash);
+      if (!valid) {
+        throw new UnauthorizedException("بيانات الدخول غير صحيحة");
+      }
+      verifiedViaPassword = true;
+    }
+
+    const needsProof =
+      Boolean(existing) || unlockRequiresOtp() || isProductionRuntime();
+    if (needsProof && !verifiedViaPassword) {
+      if (!otpDeliveryConfigured() && existing) {
+        throw new UnauthorizedException(
+          "يجب إدخال كلمة المرور — مسار الرمز غير مفعّل",
+        );
+      }
+      if (!otpDeliveryConfigured() && !existing) {
+        throw new BadRequestException(
+          "لا يمكن إنشاء حساب دون كلمة مرور أو رمز تحقق مُرسل",
+        );
+      }
       if (!/^\d{6}$/.test(code)) {
         throw new BadRequestException("أدخل رمز التحقق المكوّن من 6 أرقام");
       }
-      const entry = unlockOtpStore.get(phone);
+      const entry = await loadUnlockOtp(phone);
       if (!entry || entry.expiresAt < Date.now()) {
-        unlockOtpStore.delete(phone);
+        await clearUnlockOtp(phone);
         throw new UnauthorizedException("انتهت صلاحية الرمز — اطلب رمزاً جديداً");
       }
       entry.attempts += 1;
       if (entry.attempts > 5) {
-        unlockOtpStore.delete(phone);
+        await clearUnlockOtp(phone);
         throw new UnauthorizedException("محاولات كثيرة — اطلب رمزاً جديداً");
       }
       if (!otpMatches(phone, code, entry)) {
+        await saveUnlockOtp(phone, entry);
         throw new UnauthorizedException("رمز التحقق غير صحيح");
       }
-      unlockOtpStore.delete(phone);
+      await clearUnlockOtp(phone);
+      verifiedViaOtp = true;
     }
 
-    const org = await this.orgs.resolve();
+    if (existing && !verifiedViaPassword && !verifiedViaOtp) {
+      throw new UnauthorizedException(
+        "يلزم إثبات الهوية بكلمة مرور أو رمز تحقق",
+      );
+    }
+    if (
+      !existing &&
+      isProductionRuntime() &&
+      !verifiedViaPassword &&
+      !verifiedViaOtp
+    ) {
+      throw new UnauthorizedException("يلزم إثبات الهوية قبل إنشاء الجلسة");
+    }
 
     const contact = await this.prisma.contact.upsert({
       where: {
@@ -934,16 +1078,11 @@ export class ShopService {
         waId: phone,
         name: name || email || phone,
         email,
-        source: isGuestPhone ? "web_shop_guest" : "web_shop",
+        source: "web_shop",
         lastContactedAt: new Date(),
       },
     });
 
-    const existing = await this.prisma.customer.findUnique({
-      where: {
-        organizationId_phone: { organizationId: org.id, phone },
-      },
-    });
     const customer = existing
       ? await this.prisma.customer.update({
           where: { id: existing.id },
@@ -952,7 +1091,6 @@ export class ShopService {
             email: email || existing.email,
             contactId: contact.id,
             lastLoginAt: new Date(),
-            status: "active",
           },
         })
       : await this.prisma.customer.create({
@@ -1066,6 +1204,9 @@ export class ShopService {
         ...(passwordHash ? { passwordHash } : {}),
       },
     });
+    if (passwordHash) {
+      await bumpSessionEpoch(updated.id);
+    }
     if (updated.contactId) {
       await this.prisma.contact.update({
         where: { id: updated.contactId },
@@ -1435,11 +1576,14 @@ export class ShopService {
     });
     if (!booking) throw new BadRequestException("الحجز غير موجود");
 
-    const amountMinor = Number(body.amountMinor ?? booking.totalSellAmount);
+    const amountMinor = Number(booking.totalSellAmount);
     if (!Number.isFinite(amountMinor) || amountMinor <= 0) {
       throw new BadRequestException("مبلغ الدفع غير صالح");
     }
-    if (Math.round(amountMinor) !== Math.round(Number(booking.totalSellAmount))) {
+    if (
+      body.amountMinor != null &&
+      Math.round(Number(body.amountMinor)) !== Math.round(amountMinor)
+    ) {
       throw new BadRequestException("مبلغ الدفع لا يطابق آخر تسعير للحجز");
     }
 
@@ -1447,7 +1591,7 @@ export class ShopService {
     const gateway = getPaymentGateway();
     const intent = await gateway.createIntent({
       amountMinor: Math.round(amountMinor),
-      currency: (body.currency || booking.quote?.currency || "KWD").toUpperCase(),
+      currency: String(booking.quote?.currency || "KWD").toUpperCase(),
       bookingId: booking.id,
       weekendgateRef: booking.id,
       customerEmail: customer.email || undefined,
@@ -1472,91 +1616,144 @@ export class ShopService {
     rawBody?: string,
   ) {
     const { getPaymentGateway } = await import("@watesly-travel/provider-sdk");
-    const { normalizeShopPaymentStatus } = await import("@watesly-travel/shared");
+    const { normalizeShopPaymentStatus, isCapturedPaymentStatus } = await import(
+      "@watesly-travel/shared"
+    );
     const gateway = getPaymentGateway();
     const payload = rawBody && rawBody.length ? rawBody : JSON.stringify(body || {});
     const event = await gateway.verifyAndParseWebhook(headers, payload);
-    // Redirect alone is never enough — webhook drives Payment.status
-    const shopStatus = normalizeShopPaymentStatus(event.status);
-    const intent = await gateway.getIntent(event.intentId);
-    const bookingId =
-      intent?.bookingId ||
-      String(body.bookingId || body.weekendgateRef || "").trim() ||
-      null;
 
-    if (
-      bookingId &&
-      (shopStatus === "paid" ||
-        event.status === "captured" ||
-        event.status === "authorized")
-    ) {
+    const intent = await gateway.getIntent(event.intentId);
+    if (!intent?.bookingId) {
+      throw new BadRequestException("نية الدفع غير معروفة — رُفض الإشعار");
+    }
+    const bookingId = intent.bookingId;
+
+    const eventKey = buildWebhookEventKey({
+      provider: gateway.providerKey,
+      intentId: event.intentId,
+      status: event.status,
+      providerRef: event.providerRef,
+      eventKey: (event as { eventKey?: string }).eventKey,
+    });
+    if (!(await claimWebhookReceipt(eventKey))) {
+      return {
+        ok: true,
+        duplicate: true,
+        status: normalizeShopPaymentStatus(event.status),
+        intentId: event.intentId,
+        bookingId,
+      };
+    }
+
+    // Authorized ≠ captured — do not mark paid until capture.
+    if (event.status === "authorized") {
+      return {
+        ok: true,
+        status: "pending" as const,
+        intentId: event.intentId,
+        bookingId,
+        note: "authorized_pending_capture",
+      };
+    }
+
+    const shopStatus = normalizeShopPaymentStatus(event.status);
+    const captured = isCapturedPaymentStatus(event.status);
+
+    if (captured || shopStatus === "paid") {
       const booking = await this.prisma.booking.findFirst({
         where: { id: bookingId },
         include: { payments: true, quote: true },
       });
+      if (!booking) {
+        throw new BadRequestException("الحجز غير موجود لهذا الإشعار");
+      }
+
+      const expectedAmount = Math.round(Number(booking.totalSellAmount));
+      const expectedCurrency = String(
+        booking.quote?.currency || intent.currency || "KWD",
+      ).toUpperCase();
+      const eventAmount = Math.round(
+        Number(event.amountMinor ?? intent.amountMinor),
+      );
+      const eventCurrency = String(
+        event.currency || intent.currency || "",
+      ).toUpperCase();
+
+      if (eventAmount !== expectedAmount) {
+        throw new BadRequestException("مبلغ الإشعار لا يطابق الحجز");
+      }
+      if (eventCurrency !== expectedCurrency) {
+        throw new BadRequestException("عملة الإشعار لا تطابق الحجز");
+      }
+
+      const reference = event.providerRef || event.intentId;
+      const existingPayment = booking.payments.find(
+        (p) => p.reference === reference || p.reference === event.intentId,
+      );
+
+      if (existingPayment) {
+        await this.prisma.payment.update({
+          where: { id: existingPayment.id },
+          data: {
+            status: "paid",
+            reference,
+            method: intent.method || existingPayment.method || "hosted_card",
+            amount: expectedAmount,
+            currency: expectedCurrency,
+          },
+        });
+      } else {
+        await this.prisma.payment.create({
+          data: {
+            organizationId: booking.organizationId,
+            bookingId: booking.id,
+            status: "paid",
+            method: intent.method || "hosted_card",
+            amount: expectedAmount,
+            currency: expectedCurrency,
+            reference,
+          },
+        });
+      }
+
+      return {
+        ok: true,
+        status: "paid" as const,
+        intentId: event.intentId,
+        bookingId,
+      };
+    }
+
+    if (
+      shopStatus === "failed" ||
+      shopStatus === "refunded" ||
+      shopStatus === "partially_refunded"
+    ) {
+      const reference = event.providerRef || event.intentId;
+      const booking = await this.prisma.booking.findFirst({
+        where: { id: bookingId },
+        include: { payments: true },
+      });
       if (booking) {
-        const paidStatus = normalizeShopPaymentStatus(
-          event.status === "authorized" ? "paid" : event.status,
+        const target = booking.payments.find(
+          (p) => p.reference === reference || p.reference === event.intentId,
         );
-        if (booking.payments.length) {
-          await this.prisma.payment.updateMany({
-            where: { bookingId: booking.id },
-            data: {
-              status: paidStatus,
-              reference: event.providerRef || event.intentId,
-              method: intent?.method || booking.payments[0]?.method || "hosted_card",
-            },
-          });
-        } else {
-          await this.prisma.payment.create({
-            data: {
-              organizationId: booking.organizationId,
-              bookingId: booking.id,
-              status: paidStatus,
-              method: intent?.method || "hosted_card",
-              amount: event.amountMinor ?? booking.totalSellAmount,
-              currency:
-                event.currency ||
-                booking.quote?.currency ||
-                intent?.currency ||
-                "KWD",
-              reference: event.providerRef || event.intentId,
-            },
-          });
-        }
-        if (
-          paidStatus === "paid" &&
-          booking.status !== "issued" &&
-          booking.status !== "completed" &&
-          booking.status !== "cancelled"
-        ) {
-          await this.prisma.booking.update({
-            where: { id: booking.id },
-            data: {
-              status:
-                booking.status === "draft" || booking.status === "on_hold"
-                  ? "on_hold"
-                  : booking.status,
-            },
+        if (target) {
+          await this.prisma.payment.update({
+            where: { id: target.id },
+            data: { status: shopStatus, reference },
           });
         }
       }
-    } else if (
-      bookingId &&
-      (shopStatus === "failed" ||
-        shopStatus === "refunded" ||
-        shopStatus === "partially_refunded")
-    ) {
-      await this.prisma.payment.updateMany({
-        where: { bookingId },
-        data: {
-          status: shopStatus,
-          reference: event.providerRef || event.intentId,
-        },
-      });
     }
 
-    return { ok: true, status: shopStatus, intentId: event.intentId, bookingId };
+    return {
+      ok: true,
+      status: shopStatus,
+      intentId: event.intentId,
+      bookingId,
+    };
   }
 
   async assistantChat(customer: ShopCustomer, body: { message?: string }) {

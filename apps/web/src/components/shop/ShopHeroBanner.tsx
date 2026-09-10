@@ -708,10 +708,14 @@ export function ShopHeroBanner(props: Props) {
         </div>
 
         <div className="wg-hero-search-panel" id="search">
-          {/* Visual-only: solid blue tabs + frosted glass body (beats legacy !important navy). */}
+          {/* Visual-only: brighter blue tabs + glass body/trip row (matches reference). */}
           <style
             dangerouslySetInnerHTML={{
               __html: `
+#search.wg-hero-search-panel {
+  --wg-search-blue: #1565c0;
+  --wg-search-gold: #d99a3e;
+}
 #search.wg-hero-search-panel .wg-hero-acc-shell,
 #search.wg-hero-search-panel .wg-hero-ticket-shell,
 #search.wg-hero-search-panel .wg-hero-dock-shell {
@@ -719,24 +723,78 @@ export function ShopHeroBanner(props: Props) {
   background-color: transparent !important;
   box-shadow: none !important;
 }
+/* Top tabs: brighter blue (not navy) */
 #search.wg-hero-search-panel .wg-hero-acc-modes,
 #search.wg-hero-search-panel .wg-hero-dock-modes {
-  background: #001b35 !important;
-  background-color: #001b35 !important;
+  background: var(--wg-search-blue) !important;
+  background-color: var(--wg-search-blue) !important;
   background-image: none !important;
+  border: 1px solid rgba(255, 255, 255, 0.18) !important;
+  border-bottom: 0 !important;
+  border-radius: 18px 18px 0 0 !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
+  box-shadow: none !important;
 }
+#search.wg-hero-search-panel .wg-hero-acc-mode.on,
+#search.wg-hero-search-panel .wg-hero-acc-mode.is-expanded {
+  background: rgba(0, 0, 0, 0.14) !important;
+  box-shadow: none !important;
+}
+#search.wg-hero-search-panel .wg-hero-acc-mode.on .wg-hero-acc-icon,
+#search.wg-hero-search-panel .wg-hero-acc-mode.is-expanded .wg-hero-acc-icon {
+  background: var(--wg-search-gold) !important;
+  color: #0a2a4a !important;
+  border-radius: 999px !important;
+}
+/* Trip choices row + fields: frosted glass (NOT solid navy) */
+#search.wg-hero-search-panel .wg-hero-acc-tripstrip,
+#search.wg-hero-search-panel .wg-hero-acc-shell.is-open .wg-hero-acc-tripstrip,
+#search.wg-hero-search-panel .wg-hero-acc-shell .wg-hero-acc-tripstrip,
 #wg-hero-search-fields.wg-hero-acc-panel,
 #search.wg-hero-search-panel .wg-hero-acc-panel,
-#search.wg-hero-search-panel .wg-hero-acc-tripstrip {
-  background: rgba(0, 27, 53, 0.18) !important;
-  background-color: rgba(0, 27, 53, 0.18) !important;
+#search.wg-hero-search-panel .wg-hero-dock.wg-hero-acc-panel {
+  background: rgba(12, 28, 48, 0.28) !important;
+  background-color: rgba(12, 28, 48, 0.28) !important;
   background-image: none !important;
-  border: 1px solid rgba(255, 255, 255, 0.34) !important;
-  backdrop-filter: blur(26px) saturate(1.3) !important;
-  -webkit-backdrop-filter: blur(26px) saturate(1.3) !important;
-  box-shadow: 0 18px 42px rgba(0, 15, 31, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.18) !important;
+  border-color: rgba(255, 255, 255, 0.28) !important;
+  border-style: solid !important;
+  border-width: 1px !important;
+  backdrop-filter: blur(28px) saturate(1.35) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(1.35) !important;
+  box-shadow: none !important;
+}
+#search.wg-hero-search-panel .wg-hero-acc-tripstrip {
+  border-radius: 0 !important;
+  border-top: 0 !important;
+  border-bottom: 0 !important;
+  margin: 0 !important;
+  box-shadow: none !important;
+}
+#search.wg-hero-search-panel .wg-hero-acc-panel {
+  border-top: 0 !important;
+  border-radius: 0 0 18px 18px !important;
+}
+/* Gold trip pills on glass */
+#search.wg-hero-search-panel .wg-hero-acc-trip {
+  background: transparent !important;
+  border: 1.5px solid var(--wg-search-gold) !important;
+  color: var(--wg-search-gold) !important;
+}
+#search.wg-hero-search-panel .wg-hero-acc-trip.on {
+  background: var(--wg-search-gold) !important;
+  border-color: var(--wg-search-gold) !important;
+  color: #0a2a4a !important;
+}
+#search.wg-hero-search-panel .wg-hero-acc-field-ico,
+#search.wg-hero-search-panel .wg-hero-acc-panel .exp-cell-label {
+  color: var(--wg-search-gold) !important;
+}
+#search.wg-hero-search-panel .wg-hero-ticket-search.exp-search-link,
+#search.wg-hero-search-panel .wg-hero-acc-search-btn {
+  background: var(--wg-search-gold) !important;
+  border-color: var(--wg-search-gold) !important;
+  color: #0a2a4a !important;
 }
 `,
             }}

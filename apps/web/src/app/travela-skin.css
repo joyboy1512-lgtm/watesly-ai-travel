@@ -2649,9 +2649,9 @@
   gap: 0.45rem;
   padding: 1.05rem 1rem 0.55rem;
   margin: 0;
-  background: #001B35;
-  border-inline: 1px solid rgba(201, 162, 39, 0.38);
-  box-shadow: 0 14px 28px rgba(8, 18, 40, 0.28);
+  background: transparent;
+  border-inline: 1px solid rgba(255, 255, 255, 0.22);
+  box-shadow: none;
 }
 
 .wg-hero-acc-shell.is-open .wg-hero-acc-tripstrip {
@@ -4977,11 +4977,15 @@ html body .exp-ac-field > .exp-ac-menu {
 
 /* Dock surfaces: deep night navy, never bright royal blue */
 html body .wg-hero-acc-modes,
-html body .wg-hero-acc-modes.wg-hero-dock-modes,
+html body .wg-hero-acc-modes.wg-hero-dock-modes {
+  background: #1565c0 !important;
+  background-image: none !important;
+  color: #F5F5F5 !important;
+}
 html body .wg-hero-acc-tripstrip,
 html body .wg-hero-acc-panel.wg-hero-dock,
 html body .wg-hero-dock.wg-hero-acc-panel {
-  background: #001B35 !important;
+  background: rgba(12, 28, 48, 0.28) !important;
   background-image: none !important;
   color: #F5F5F5 !important;
 }
@@ -5163,11 +5167,15 @@ html body .wg-hero-acc-mode {
 }
 
 html body .wg-hero-acc-modes,
-html body .wg-hero-acc-modes.wg-hero-dock-modes,
+html body .wg-hero-acc-modes.wg-hero-dock-modes {
+  background: #1565c0 !important;
+  background-image: none !important;
+  color: #F5F5F5 !important;
+}
 html body .wg-hero-acc-tripstrip,
 html body .wg-hero-acc-panel.wg-hero-dock,
 html body .wg-hero-dock.wg-hero-acc-panel {
-  background: #001B35 !important;
+  background: rgba(12, 28, 48, 0.28) !important;
   background-image: none !important;
   color: #F5F5F5 !important;
 }

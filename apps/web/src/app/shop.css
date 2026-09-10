@@ -8871,12 +8871,11 @@ html body .shop-root.wg-new-ui .wg-hero-acc-modes.wg-hero-dock-modes,
 html body .shop-root .wg-hero-acc-modes.wg-hero-dock-modes,
 html body .wg-hero-acc-modes.wg-hero-dock-modes,
 html body .wg-hero-acc-modes {
-  background: #001b35 !important;
+  background: #1565c0 !important;
   background-image: none !important;
-  border: 1px solid rgba(217, 154, 62, 0.35) !important;
+  border: 1px solid rgba(255, 255, 255, 0.18) !important;
   border-bottom: 0 !important;
   border-radius: 18px 18px 0 0 !important;
-  box-shadow: 0 10px 28px rgba(0, 15, 31, 0.35) !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
 }
@@ -8895,8 +8894,8 @@ html body .wg-hero-acc-panel.wg-hero-dock,
 html body .wg-hero-acc-panel,
 html body .shop-root.wg-new-ui .wg-hero-search-fields,
 html body .wg-hero-search-fields {
-  background: rgba(0, 27, 53, 0.2) !important;
-  background-color: rgba(0, 27, 53, 0.2) !important;
+  background: rgba(12, 28, 48, 0.28) !important;
+  background-color: rgba(12, 28, 48, 0.28) !important;
   background-image: none !important;
   border: 1px solid rgba(255, 255, 255, 0.32) !important;
   box-shadow:
@@ -8921,8 +8920,8 @@ html body .shop-root.wg-new-ui .wg-hero-acc-panel.is-open::before,
 html body .shop-root .wg-hero-acc-panel.is-open::before,
 html body .wg-hero-acc-panel.is-open::before,
 html body .wg-hero-acc-shell[data-mode] .wg-hero-acc-panel.is-open::before {
-  background: rgba(0, 27, 53, 0.2) !important;
-  background-color: rgba(0, 27, 53, 0.2) !important;
+  background: rgba(12, 28, 48, 0.28) !important;
+  background-color: rgba(12, 28, 48, 0.28) !important;
   border-color: rgba(255, 255, 255, 0.32) !important;
   backdrop-filter: blur(24px) !important;
   -webkit-backdrop-filter: blur(24px) !important;
@@ -9042,7 +9041,7 @@ html body .wg-hero-acc-search-btn:hover {
   html body .wg-hero-dock.wg-hero-acc-panel,
   html body .wg-hero-acc-panel,
   html body .wg-hero-acc-tripstrip {
-    background: rgba(0, 27, 53, 0.32) !important;
-    background-color: rgba(0, 27, 53, 0.32) !important;
+    background: rgba(12, 28, 48, 0.35) !important;
+    background-color: rgba(12, 28, 48, 0.35) !important;
   }
 }

@@ -715,8 +715,9 @@ export function ShopHeroBanner(props: Props) {
 #search.wg-hero-search-panel {
   --wg-search-blue: #1565c0;
   --wg-search-gold: #d99a3e;
-  --wg-search-label: #d99a3e;
-  --wg-search-ink: #001b35;
+  --wg-search-label: #0a0a0a;
+  --wg-search-ink: #0a0a0a;
+  --wg-search-field-surface: #f3f8ff;
   width: min(1180px, calc(100% - 3.25cm)) !important;
   max-width: 1180px !important;
   overflow: visible !important;
@@ -731,51 +732,36 @@ export function ShopHeroBanner(props: Props) {
   overflow: visible !important;
   position: relative !important;
 }
-/* Photoreal Wire-O metallic twin-loops — discrete pairs (no strip stretch) */
+/* Tiny packed Wire-O rings — dense strip, no gaps, no punch holes */
 #search.wg-hero-search-panel .wg-hero-acc-spiral {
   position: absolute !important;
-  top: -1.45rem !important;
-  inset-inline: 0.55rem !important;
-  height: 3.05rem !important;
-  display: flex !important;
-  align-items: flex-start !important;
-  justify-content: space-between !important;
-  gap: 0 !important;
+  top: -0.42rem !important;
+  inset-inline: 0.65rem !important;
+  height: 0.85rem !important;
+  display: block !important;
   pointer-events: none !important;
   z-index: 14 !important;
-  background: none !important;
-  background-image: none !important;
-  filter: none !important;
+  background-color: transparent !important;
+  background-image: url("/media/travela/notebook-wireo-dense.png?v=chrome12") !important;
+  background-repeat: repeat-x !important;
+  background-position: center top !important;
+  background-size: auto 100% !important;
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.25)) !important;
 }
 #search.wg-hero-search-panel .wg-hero-acc-spiral-pair {
-  display: block !important;
-  flex: 0 0 auto !important;
-  width: 1.85rem !important;
-  height: 3.05rem !important;
-  background-image: url("/media/travela/notebook-wireo-pair.png?v=chrome6") !important;
-  background-repeat: no-repeat !important;
-  background-position: center top !important;
-  background-size: contain !important;
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.28)) !important;
+  display: none !important;
 }
-/* Tiny discrete punch holes only — no dark bar */
+/* No punch holes under the rings */
 #search.wg-hero-search-panel .wg-hero-acc-modes {
   position: relative !important;
 }
-#search.wg-hero-search-panel .wg-hero-acc-modes::before {
-  content: "" !important;
-  display: block !important;
-  position: absolute !important;
-  top: 0.28rem !important;
-  inset-inline: 0.85rem !important;
-  height: 0.42rem !important;
-  pointer-events: none !important;
-  z-index: 5 !important;
-  background-image: radial-gradient(circle, #071428 0 38%, transparent 42%) !important;
-  background-size: calc(100% / 11) 0.42rem !important;
-  background-repeat: repeat-x !important;
-  background-position: center !important;
-  opacity: 0.85 !important;
+#search.wg-hero-search-panel .wg-hero-acc-modes::before,
+#search.wg-hero-search-panel .wg-hero-acc-modes::after {
+  content: none !important;
+  display: none !important;
+  background: none !important;
+  background-image: none !important;
+  box-shadow: none !important;
 }
 /* Top tabs: solid blue */
 #search.wg-hero-search-panel .wg-hero-acc-modes,
@@ -850,7 +836,7 @@ export function ShopHeroBanner(props: Props) {
   color: rgba(255, 255, 255, 0.9) !important;
   fill: rgba(255, 255, 255, 0.9) !important;
 }
-/* رحلتي sticker */
+/* رحلتي — jagged starburst seal (discount sticker) */
 #search.wg-hero-search-panel .wg-hero-acc-mode-ruhelti {
   position: relative !important;
   overflow: visible !important;
@@ -859,41 +845,58 @@ export function ShopHeroBanner(props: Props) {
 #search.wg-hero-search-panel .wg-hero-acc-ruhelti-sticker {
   position: absolute !important;
   inset: 50% auto auto 50% !important;
-  width: 4.35rem !important;
-  height: 4.35rem !important;
+  width: 5rem !important;
+  height: 5rem !important;
   transform: translate(-50%, -50%) rotate(-8deg) !important;
-  border-radius: 999px !important;
-  border: 2px dashed rgba(255, 255, 255, 0.85) !important;
+  border-radius: 0 !important;
+  border: none !important;
+  /* 24-point jagged seal */
+  clip-path: polygon(
+    50% 0%, 53% 7%, 58.5% 1.5%, 59.5% 9.5%, 67% 4%, 65.5% 12.5%,
+    74% 8.5%, 70% 16.5%, 79.5% 14.5%, 74% 22%, 84% 22%, 76.5% 28.5%,
+    87.5% 30.5%, 78.5% 35.5%, 90% 40%, 79.5% 42.5%, 91.5% 50%, 79.5% 50%,
+    90% 60%, 78.5% 57%, 87.5% 69.5%, 76.5% 64%, 84% 78%, 74% 70.5%,
+    79.5% 85.5%, 70% 76%, 74% 91.5%, 65.5% 80%, 67% 96%, 59.5% 83%,
+    58.5% 98.5%, 53% 85.5%, 50% 100%, 47% 85.5%, 41.5% 98.5%, 40.5% 83%,
+    33% 96%, 34.5% 80%, 26% 91.5%, 30% 76%, 20.5% 85.5%, 26% 70.5%,
+    16% 78%, 23.5% 64%, 12.5% 69.5%, 21.5% 57%, 10% 60%, 20.5% 50%,
+    8.5% 50%, 20.5% 42.5%, 10% 40%, 21.5% 35.5%, 12.5% 30.5%, 23.5% 28.5%,
+    16% 22%, 26% 22%, 20.5% 14.5%, 30% 16.5%, 26% 8.5%, 34.5% 12.5%,
+    33% 4%, 40.5% 9.5%, 41.5% 1.5%, 47% 7%
+  ) !important;
   background:
-    radial-gradient(circle at 30% 30%, rgba(255,255,255,0.35), transparent 55%),
-    rgba(21, 101, 192, 0.35) !important;
+    radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.65), transparent 40%),
+    radial-gradient(circle at 50% 55%, #42a5f5 0%, #1565c0 48%, #0d47a1 100%) !important;
   box-shadow:
-    0 0 0 3px rgba(66, 165, 245, 0.35),
-    0 6px 14px rgba(0, 20, 50, 0.28) !important;
+    0 0 0 2px rgba(255, 255, 255, 0.7),
+    0 7px 18px rgba(0, 20, 50, 0.45) !important;
   pointer-events: none !important;
   z-index: 0 !important;
 }
 #search.wg-hero-search-panel .wg-hero-acc-ruhelti-stars {
   position: absolute !important;
-  inset: 0 !important;
-  border-radius: inherit !important;
+  inset: 14% !important;
+  border-radius: 50% !important;
+  border: 1.5px dashed rgba(255, 255, 255, 0.8) !important;
   background-image:
-    radial-gradient(1.5px 1.5px at 18% 28%, #fff 99%, transparent 100%),
-    radial-gradient(1.5px 1.5px at 72% 22%, #fff 99%, transparent 100%),
-    radial-gradient(1.2px 1.2px at 80% 68%, #fff 99%, transparent 100%),
-    radial-gradient(1.2px 1.2px at 28% 74%, #fff 99%, transparent 100%),
-    radial-gradient(1.4px 1.4px at 50% 12%, #ffe082 99%, transparent 100%),
-    radial-gradient(1.4px 1.4px at 58% 86%, #ffe082 99%, transparent 100%) !important;
+    radial-gradient(1.5px 1.5px at 20% 30%, #fff 99%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 78% 24%, #fff 99%, transparent 100%),
+    radial-gradient(1.3px 1.3px at 82% 70%, #ffe082 99%, transparent 100%),
+    radial-gradient(1.3px 1.3px at 24% 72%, #ffe082 99%, transparent 100%),
+    radial-gradient(1.4px 1.4px at 50% 14%, #fff 99%, transparent 100%),
+    radial-gradient(1.4px 1.4px at 52% 86%, #fff 99%, transparent 100%) !important;
 }
 #search.wg-hero-search-panel .wg-hero-acc-mode-ruhelti .wg-hero-acc-copy {
   position: relative !important;
   z-index: 1 !important;
 }
 #search.wg-hero-search-panel .wg-hero-acc-mode-ruhelti .wg-hero-acc-title {
-  font-size: 0.95rem !important;
-  text-shadow: 0 1px 2px rgba(0, 20, 50, 0.45) !important;
+  font-size: 0.9rem !important;
+  font-weight: 900 !important;
+  color: #fff !important;
+  text-shadow: 0 1px 2px rgba(0, 20, 50, 0.6) !important;
 }
-/* Trip choices row + fields: frosted glass */
+/* Trip row + fields: keep frosted glass (do not recolor the lower engine) */
 #search.wg-hero-search-panel .wg-hero-acc-tripstrip,
 #search.wg-hero-search-panel .wg-hero-acc-shell.is-open .wg-hero-acc-tripstrip,
 #search.wg-hero-search-panel .wg-hero-acc-shell .wg-hero-acc-tripstrip,
@@ -933,6 +936,8 @@ export function ShopHeroBanner(props: Props) {
 #search.wg-hero-search-panel .wg-hero-acc-panel .exp-form-row {
   border: 1px solid rgba(255, 255, 255, 0.22) !important;
   border-radius: 14px !important;
+  background: transparent !important;
+  background-color: transparent !important;
   backdrop-filter: none !important;
   min-height: 5.1rem !important;
   overflow: visible !important;
@@ -956,22 +961,26 @@ export function ShopHeroBanner(props: Props) {
   border-radius: 0 0 18px 18px !important;
   padding: 0.55rem 0.65rem 0.7rem !important;
 }
-/* Trip type pills — warm luxury gold #D99A3E */
+/* Trip type pills — black text only (glass row stays transparent) */
 #search.wg-hero-search-panel .wg-hero-acc-trip {
   background: transparent !important;
-  border: 1.5px solid var(--wg-search-gold) !important;
-  color: var(--wg-search-gold) !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.55) !important;
+  color: #0a0a0a !important;
+  -webkit-text-fill-color: #0a0a0a !important;
   font-size: 0.92rem !important;
   font-weight: 800 !important;
   min-height: 2.35rem !important;
   max-height: none !important;
   padding: 0.4rem 1.05rem !important;
   border-radius: 999px !important;
+  text-shadow: 0 0 2px rgba(255, 255, 255, 0.85), 0 1px 0 rgba(255, 255, 255, 0.55) !important;
 }
 #search.wg-hero-search-panel .wg-hero-acc-trip.on {
-  background: var(--wg-search-gold) !important;
-  border-color: var(--wg-search-gold) !important;
-  color: #001b35 !important;
+  background: rgba(255, 255, 255, 0.88) !important;
+  border-color: rgba(255, 255, 255, 0.95) !important;
+  color: #0a0a0a !important;
+  -webkit-text-fill-color: #0a0a0a !important;
+  text-shadow: none !important;
 }
 #search.wg-hero-search-panel .wg-hero-acc-trip-extra,
 #search.wg-hero-search-panel .wg-hero-acc-cabin {
@@ -1004,9 +1013,11 @@ export function ShopHeroBanner(props: Props) {
   height: 1.55rem !important;
   min-width: 1.55rem !important;
   min-height: 1.55rem !important;
-  color: var(--wg-search-gold) !important;
+  color: #1565c0 !important;
   background: currentColor !important;
   background-color: currentColor !important;
+  -webkit-mask-size: contain !important;
+  mask-size: contain !important;
   align-self: flex-end !important;
   margin: 0 0 0.12rem !important;
   transform: none !important;
@@ -1034,12 +1045,13 @@ export function ShopHeroBanner(props: Props) {
   margin-bottom: 0.28rem !important;
   order: 2 !important;
 }
+/* Labels only (من / إلى / التواريخ / المسافرون): black writing */
 #search.wg-hero-search-panel .wg-hero-acc-panel .exp-cell-label,
 #search.wg-hero-search-panel .wg-hero-acc-field .exp-cell-label,
 #search.wg-hero-search-panel .wg-hero-acc-field .shop-ac-inline > span:first-child,
 #search.wg-hero-search-panel .wg-hero-acc-field .exp-travelers-trigger .exp-cell-label {
-  color: var(--wg-search-gold) !important;
-  -webkit-text-fill-color: var(--wg-search-gold) !important;
+  color: #0a0a0a !important;
+  -webkit-text-fill-color: #0a0a0a !important;
   font-weight: 800 !important;
   font-size: 1.05rem !important;
   line-height: 1.15 !important;
@@ -1048,7 +1060,9 @@ export function ShopHeroBanner(props: Props) {
   opacity: 1 !important;
   position: relative !important;
   top: -0.22rem !important;
+  text-shadow: 0 0 2px rgba(255, 255, 255, 0.9), 0 1px 0 rgba(255, 255, 255, 0.65) !important;
 }
+/* Field values stay light on glass (unchanged engine look) */
 #search.wg-hero-search-panel .wg-hero-acc-field .shop-ac-inline input,
 #search.wg-hero-search-panel .wg-hero-acc-field .exp-date-btn,
 #search.wg-hero-search-panel .wg-hero-acc-field .exp-travelers-trigger strong,
@@ -1065,6 +1079,7 @@ export function ShopHeroBanner(props: Props) {
   line-height: 1.2 !important;
   margin: 0 !important;
   padding: 0 !important;
+  text-shadow: none !important;
 }
 /* Travelers / rooms popup: keep numbers & ages readable */
 #search.wg-hero-search-panel .exp-travelers-panel,
@@ -1124,16 +1139,16 @@ export function ShopHeroBanner(props: Props) {
   border-color: #cbd5e1 !important;
   background: #fff !important;
 }
-/* Solid warm-gold search CTA — luxury #D99A3E */
+/* Solid blue search CTA — same as header */
 #search.wg-hero-search-panel .wg-hero-ticket-search.exp-search-link,
 #search.wg-hero-search-panel .wg-hero-acc-search-btn,
 #search.wg-hero-search-panel .exp-search-link.wg-hero-acc-search-btn {
-  background: var(--wg-search-gold) !important;
-  background-color: var(--wg-search-gold) !important;
-  border: 1.5px solid var(--wg-search-gold) !important;
-  color: #001b35 !important;
-  -webkit-text-fill-color: #001b35 !important;
-  box-shadow: 0 8px 22px rgba(217, 154, 62, 0.35) !important;
+  background: var(--wg-search-blue) !important;
+  background-color: var(--wg-search-blue) !important;
+  border: 1.5px solid #0d47a1 !important;
+  color: #fff !important;
+  -webkit-text-fill-color: #fff !important;
+  box-shadow: 0 8px 22px rgba(13, 71, 161, 0.35) !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
   min-width: 10.75rem !important;
@@ -1142,16 +1157,17 @@ export function ShopHeroBanner(props: Props) {
 }
 #search.wg-hero-search-panel .wg-hero-ticket-search.exp-search-link:hover:not(:disabled),
 #search.wg-hero-search-panel .wg-hero-acc-search-btn:hover:not(:disabled) {
-  background: #e5b15a !important;
-  border-color: #e5b15a !important;
-  color: #001b35 !important;
+  background: #0d47a1 !important;
+  border-color: #0d47a1 !important;
+  color: #fff !important;
+  -webkit-text-fill-color: #fff !important;
 }
 `,
             }}
           />
           <div className={`wg-hero-ticket-shell wg-hero-dock-shell wg-hero-acc-shell${dockOpen ? " is-open" : ""}`} data-mode={props.mode}>
             <div className="wg-hero-acc-spiral" aria-hidden="true">
-              {Array.from({ length: 11 }, (_, i) => (
+              {Array.from({ length: 32 }, (_, i) => (
                 <span key={i} className="wg-hero-acc-spiral-pair" />
               ))}
             </div>

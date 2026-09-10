@@ -753,7 +753,7 @@ export function ShopHeroBanner(props: Props) {
   flex: 0 0 auto !important;
   width: 2.05rem !important;
   height: 3.35rem !important;
-  background-image: url("/media/travela/notebook-wireo-pair.png?v=chrome7") !important;
+  background-image: url("/media/travela/notebook-wireo-pair.png?v=chrome8") !important;
   background-repeat: no-repeat !important;
   background-position: center top !important;
   background-size: contain !important;
@@ -851,7 +851,7 @@ export function ShopHeroBanner(props: Props) {
   color: rgba(255, 255, 255, 0.9) !important;
   fill: rgba(255, 255, 255, 0.9) !important;
 }
-/* رحلتي — starburst seal like discount badge */
+/* رحلتي — jagged starburst seal (discount sticker) */
 #search.wg-hero-search-panel .wg-hero-acc-mode-ruhelti {
   position: relative !important;
   overflow: visible !important;
@@ -860,53 +860,56 @@ export function ShopHeroBanner(props: Props) {
 #search.wg-hero-search-panel .wg-hero-acc-ruhelti-sticker {
   position: absolute !important;
   inset: 50% auto auto 50% !important;
-  width: 4.7rem !important;
-  height: 4.7rem !important;
-  transform: translate(-50%, -50%) rotate(-6deg) !important;
+  width: 5rem !important;
+  height: 5rem !important;
+  transform: translate(-50%, -50%) rotate(-8deg) !important;
   border-radius: 0 !important;
   border: none !important;
-  /* 16-point starburst seal */
+  /* 24-point jagged seal */
   clip-path: polygon(
-    50% 0%, 54.5% 8.5%, 63% 2.5%, 64% 12%, 74.5% 7.5%, 72% 17%,
-    83% 16%, 77.5% 25%, 88% 28.5%, 80% 35.5%, 92% 42%, 81.5% 46%,
-    95% 55%, 81.5% 54%, 88% 66%, 77.5% 62%, 83% 75%, 72% 68.5%,
-    74.5% 82%, 64% 73%, 63% 87%, 54.5% 76.5%, 50% 92%, 45.5% 76.5%,
-    37% 87%, 36% 73%, 25.5% 82%, 28% 68.5%, 17% 75%, 22.5% 62%,
-    12% 66%, 18.5% 54%, 5% 55%, 18.5% 46%, 8% 42%, 20% 35.5%,
-    12% 28.5%, 22.5% 25%, 17% 16%, 28% 17%, 25.5% 7.5%, 36% 12%,
-    37% 2.5%, 45.5% 8.5%
+    50% 0%, 53% 7%, 58.5% 1.5%, 59.5% 9.5%, 67% 4%, 65.5% 12.5%,
+    74% 8.5%, 70% 16.5%, 79.5% 14.5%, 74% 22%, 84% 22%, 76.5% 28.5%,
+    87.5% 30.5%, 78.5% 35.5%, 90% 40%, 79.5% 42.5%, 91.5% 50%, 79.5% 50%,
+    90% 60%, 78.5% 57%, 87.5% 69.5%, 76.5% 64%, 84% 78%, 74% 70.5%,
+    79.5% 85.5%, 70% 76%, 74% 91.5%, 65.5% 80%, 67% 96%, 59.5% 83%,
+    58.5% 98.5%, 53% 85.5%, 50% 100%, 47% 85.5%, 41.5% 98.5%, 40.5% 83%,
+    33% 96%, 34.5% 80%, 26% 91.5%, 30% 76%, 20.5% 85.5%, 26% 70.5%,
+    16% 78%, 23.5% 64%, 12.5% 69.5%, 21.5% 57%, 10% 60%, 20.5% 50%,
+    8.5% 50%, 20.5% 42.5%, 10% 40%, 21.5% 35.5%, 12.5% 30.5%, 23.5% 28.5%,
+    16% 22%, 26% 22%, 20.5% 14.5%, 30% 16.5%, 26% 8.5%, 34.5% 12.5%,
+    33% 4%, 40.5% 9.5%, 41.5% 1.5%, 47% 7%
   ) !important;
   background:
-    radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.55), transparent 42%),
-    radial-gradient(circle at 50% 55%, #1e88e5 0%, #1565c0 55%, #0d47a1 100%) !important;
+    radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.65), transparent 40%),
+    radial-gradient(circle at 50% 55%, #42a5f5 0%, #1565c0 48%, #0d47a1 100%) !important;
   box-shadow:
-    0 0 0 2px rgba(255, 255, 255, 0.55),
-    0 6px 16px rgba(0, 20, 50, 0.4) !important;
+    0 0 0 2px rgba(255, 255, 255, 0.7),
+    0 7px 18px rgba(0, 20, 50, 0.45) !important;
   pointer-events: none !important;
   z-index: 0 !important;
 }
 #search.wg-hero-search-panel .wg-hero-acc-ruhelti-stars {
   position: absolute !important;
-  inset: 12% !important;
+  inset: 14% !important;
   border-radius: 50% !important;
-  border: 1.5px dashed rgba(255, 255, 255, 0.75) !important;
+  border: 1.5px dashed rgba(255, 255, 255, 0.8) !important;
   background-image:
-    radial-gradient(1.4px 1.4px at 20% 30%, #fff 99%, transparent 100%),
-    radial-gradient(1.4px 1.4px at 78% 24%, #fff 99%, transparent 100%),
-    radial-gradient(1.2px 1.2px at 82% 70%, #ffe082 99%, transparent 100%),
-    radial-gradient(1.2px 1.2px at 24% 72%, #ffe082 99%, transparent 100%),
-    radial-gradient(1.3px 1.3px at 50% 14%, #fff 99%, transparent 100%),
-    radial-gradient(1.3px 1.3px at 52% 86%, #fff 99%, transparent 100%) !important;
+    radial-gradient(1.5px 1.5px at 20% 30%, #fff 99%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 78% 24%, #fff 99%, transparent 100%),
+    radial-gradient(1.3px 1.3px at 82% 70%, #ffe082 99%, transparent 100%),
+    radial-gradient(1.3px 1.3px at 24% 72%, #ffe082 99%, transparent 100%),
+    radial-gradient(1.4px 1.4px at 50% 14%, #fff 99%, transparent 100%),
+    radial-gradient(1.4px 1.4px at 52% 86%, #fff 99%, transparent 100%) !important;
 }
 #search.wg-hero-search-panel .wg-hero-acc-mode-ruhelti .wg-hero-acc-copy {
   position: relative !important;
   z-index: 1 !important;
 }
 #search.wg-hero-search-panel .wg-hero-acc-mode-ruhelti .wg-hero-acc-title {
-  font-size: 0.92rem !important;
+  font-size: 0.9rem !important;
   font-weight: 900 !important;
   color: #fff !important;
-  text-shadow: 0 1px 2px rgba(0, 20, 50, 0.55) !important;
+  text-shadow: 0 1px 2px rgba(0, 20, 50, 0.6) !important;
 }
 /* Trip choices row + fields: solid blue card matching header */
 #search.wg-hero-search-panel .wg-hero-acc-tripstrip,
@@ -1024,17 +1027,13 @@ export function ShopHeroBanner(props: Props) {
   height: 1.55rem !important;
   min-width: 1.55rem !important;
   min-height: 1.55rem !important;
-  color: var(--wg-search-blue) !important;
+  color: #1565c0 !important;
   background: currentColor !important;
   background-color: currentColor !important;
-  align-self: flex-end !important;
-  margin: 0 0 0.12rem !important;
-  transform: none !important;
-  position: relative !important;
-  top: 0 !important;
+  -webkit-mask-size: contain !important;
+  mask-size: contain !important;
   filter: none !important;
   opacity: 1 !important;
-  order: 0 !important;
 }
 #search.wg-hero-search-panel .wg-hero-acc-field-body,
 #search.wg-hero-search-panel .wg-hero-acc-field .exp-travelers-trigger,

@@ -9085,20 +9085,24 @@ html body .wg-hero-acc-tripstrip {
   justify-content: center !important;
   min-height: 3.35rem !important;
   padding-block: 0.7rem !important;
-  background: #1565c0 !important;
-  background-color: #1565c0 !important;
+  background: rgba(8, 24, 48, 0.18) !important;
+  background-color: rgba(8, 24, 48, 0.18) !important;
+  backdrop-filter: blur(28px) saturate(1.35) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(1.35) !important;
 }
 html body .shop-root .wg-hero-acc-panel,
 html body .wg-hero-acc-panel {
-  background: #1565c0 !important;
-  background-color: #1565c0 !important;
+  background: rgba(8, 24, 48, 0.18) !important;
+  background-color: rgba(8, 24, 48, 0.18) !important;
+  backdrop-filter: blur(28px) saturate(1.35) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(1.35) !important;
 }
 html body .shop-root .wg-hero-acc-trip,
 html body .wg-hero-acc-trip {
   color: #0a0a0a !important;
   -webkit-text-fill-color: #0a0a0a !important;
-  border-color: rgba(255, 255, 255, 0.95) !important;
-  background: rgba(255, 255, 255, 0.92) !important;
+  border-color: rgba(255, 255, 255, 0.55) !important;
+  background: transparent !important;
   font-size: 0.92rem !important;
   font-weight: 800 !important;
   min-height: 2.35rem !important;
@@ -9107,8 +9111,8 @@ html body .wg-hero-acc-trip {
 }
 html body .shop-root .wg-hero-acc-trip.on,
 html body .wg-hero-acc-trip.on {
-  background: #fff !important;
-  border-color: #fff !important;
+  background: rgba(255, 255, 255, 0.88) !important;
+  border-color: rgba(255, 255, 255, 0.95) !important;
   color: #0a0a0a !important;
   -webkit-text-fill-color: #0a0a0a !important;
 }

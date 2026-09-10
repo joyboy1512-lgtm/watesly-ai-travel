@@ -187,7 +187,7 @@ export const SHOP_REVIEWS: ShopReview[] = [
 
 export const HERO_SLIDES = [
   {
-    image: "/media/travela/carousel-night.jpg",
+    image: "/media/travela/carousel-night.jpg?v=light3",
     kicker: "اكتشف العالم",
     title: "لنسافر معاً",
     subtitle: "سافر بمتعة",
@@ -195,14 +195,14 @@ export const HERO_SLIDES = [
       "اكتشف وجهات بحرية وثقافية — بحث موحّد للطيران والفنادق والنقل في تجربة واحدة.",
   },
   {
-    image: "/media/travela/carousel-sunset.jpg",
+    image: "/media/travela/carousel-sunset.jpg?v=light3",
     kicker: "WeekendGate",
     title: "اعثر على رحلتك المثالية",
     subtitle: "طيران وفنادق",
     description: "من الكويت إلى العالم — خطط رحلتك بخطوات بسيطة وواضحة.",
   },
   {
-    image: "/media/travela/carousel-airport.jpg",
+    image: "/media/travela/carousel-airport.jpg?v=light3",
     kicker: "إلى أين تريد الذهاب؟",
     title: "كل رحلتك من مكان واحد",
     subtitle: "حجز ذكي",

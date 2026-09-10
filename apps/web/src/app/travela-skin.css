@@ -665,7 +665,13 @@
   justify-content: center;
   text-align: center;
   padding: 6rem 3cm 13rem;
-  background: linear-gradient(rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.45));
+  /* Soft blue wash — keeps light tourist photos bright for glass search */
+  background: linear-gradient(
+    180deg,
+    rgba(12, 60, 120, 0.22) 0%,
+    rgba(8, 40, 90, 0.18) 45%,
+    rgba(6, 30, 70, 0.34) 100%
+  );
   color: #fff;
   pointer-events: none;
 }

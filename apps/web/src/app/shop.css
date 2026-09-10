@@ -9061,33 +9061,31 @@ html body .wg-hero-search-panel .wg-hero-acc-field {
 }
 html body .shop-root .wg-hero-acc-spiral,
 html body .wg-hero-acc-spiral {
-  background: none !important;
-  background-image: none !important;
-  justify-content: space-between !important;
+  display: block !important;
+  background-color: transparent !important;
+  background-image: url("/media/travela/notebook-wireo-dense.png?v=chrome12") !important;
+  background-repeat: repeat-x !important;
+  background-position: center top !important;
+  background-size: auto 100% !important;
   gap: 0 !important;
-  height: 1.15rem !important;
-  top: -0.55rem !important;
-  inset-inline: 0.85rem !important;
+  height: 0.85rem !important;
+  top: -0.42rem !important;
+  inset-inline: 0.65rem !important;
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.25)) !important;
 }
 html body .shop-root .wg-hero-acc-spiral-pair,
 html body .wg-hero-acc-spiral-pair {
-  display: block !important;
-  flex: 1 1 0 !important;
-  min-width: 0 !important;
-  width: auto !important;
-  max-width: 0.55rem !important;
-  height: 1.15rem !important;
-  background-image: url("/media/travela/notebook-wireo-pair.png?v=chrome11") !important;
-  background-repeat: no-repeat !important;
-  background-position: center top !important;
-  background-size: 100% 100% !important;
+  display: none !important;
 }
 html body .shop-root .wg-hero-acc-modes::before,
-html body .wg-hero-acc-modes::before {
+html body .wg-hero-acc-modes::before,
+html body .shop-root .wg-hero-acc-modes::after,
+html body .wg-hero-acc-modes::after {
   content: none !important;
   display: none !important;
   background: none !important;
   background-image: none !important;
+  box-shadow: none !important;
 }
 html body .shop-root .wg-hero-acc-trip-extra,
 html body .wg-hero-acc-trip-extra,

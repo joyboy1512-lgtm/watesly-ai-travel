@@ -8894,8 +8894,8 @@ html body .wg-hero-acc-panel.wg-hero-dock,
 html body .wg-hero-acc-panel,
 html body .shop-root.wg-new-ui .wg-hero-search-fields,
 html body .wg-hero-search-fields {
-  background: rgba(12, 28, 48, 0.28) !important;
-  background-color: rgba(12, 28, 48, 0.28) !important;
+  background: rgba(8, 24, 48, 0.18) !important;
+  background-color: rgba(8, 24, 48, 0.18) !important;
   background-image: none !important;
   border: 1px solid rgba(255, 255, 255, 0.32) !important;
   box-shadow:
@@ -8920,8 +8920,8 @@ html body .shop-root.wg-new-ui .wg-hero-acc-panel.is-open::before,
 html body .shop-root .wg-hero-acc-panel.is-open::before,
 html body .wg-hero-acc-panel.is-open::before,
 html body .wg-hero-acc-shell[data-mode] .wg-hero-acc-panel.is-open::before {
-  background: rgba(12, 28, 48, 0.28) !important;
-  background-color: rgba(12, 28, 48, 0.28) !important;
+  background: rgba(8, 24, 48, 0.18) !important;
+  background-color: rgba(8, 24, 48, 0.18) !important;
   border-color: rgba(255, 255, 255, 0.32) !important;
   backdrop-filter: blur(24px) !important;
   -webkit-backdrop-filter: blur(24px) !important;
@@ -8949,7 +8949,8 @@ html body .wg-hero-acc-panel .exp-form-row.exp-form-flights,
 html body .wg-hero-acc-panel .exp-form-row.exp-form-stays,
 html body .wg-hero-acc-panel .exp-form-row.exp-form-cars,
 html body .wg-hero-acc-panel .exp-form-row.exp-form-activities {
-  background: rgba(255, 255, 255, 0.08) !important;
+  background: transparent !important;
+  background-color: transparent !important;
   border: 1px solid rgba(255, 255, 255, 0.2) !important;
   box-shadow: none !important;
 }

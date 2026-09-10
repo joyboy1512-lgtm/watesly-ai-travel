@@ -754,8 +754,8 @@ export function ShopHeroBanner(props: Props) {
 #wg-hero-search-fields.wg-hero-acc-panel,
 #search.wg-hero-search-panel .wg-hero-acc-panel,
 #search.wg-hero-search-panel .wg-hero-dock.wg-hero-acc-panel {
-  background: rgba(12, 28, 48, 0.28) !important;
-  background-color: rgba(12, 28, 48, 0.28) !important;
+  background: rgba(8, 24, 48, 0.18) !important;
+  background-color: rgba(8, 24, 48, 0.18) !important;
   background-image: none !important;
   border-color: rgba(255, 255, 255, 0.28) !important;
   border-style: solid !important;
@@ -763,6 +763,30 @@ export function ShopHeroBanner(props: Props) {
   backdrop-filter: blur(28px) saturate(1.35) !important;
   -webkit-backdrop-filter: blur(28px) saturate(1.35) !important;
   box-shadow: none !important;
+}
+/* Inner destinations/dates/travelers strip must also be glass, not navy */
+#search.wg-hero-search-panel .wg-hero-acc-panel .exp-dialog,
+#search.wg-hero-search-panel .wg-hero-acc-panel .exp-unified-card,
+#search.wg-hero-search-panel .wg-hero-acc-panel .wg-hero-ticket-card,
+#search.wg-hero-search-panel .wg-hero-acc-panel .wg-hero-dock-card,
+#search.wg-hero-search-panel .wg-hero-acc-panel .exp-form-row,
+#search.wg-hero-search-panel .wg-hero-acc-panel .exp-form-row.exp-form-flights,
+#search.wg-hero-search-panel .wg-hero-acc-panel .exp-form-row.exp-form-stays,
+#search.wg-hero-search-panel .wg-hero-acc-panel .exp-form-row.exp-form-cars,
+#search.wg-hero-search-panel .wg-hero-acc-panel .exp-form-row.exp-form-activities,
+#search.wg-hero-search-panel .wg-hero-acc-panel .exp-input-cell,
+#search.wg-hero-search-panel .wg-hero-acc-field,
+#search.wg-hero-search-panel .wg-hero-acc-panel .exp-flight-toolbar,
+#search.wg-hero-search-panel .wg-hero-acc-panel .wg-hero-acc-flight-meta {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+#search.wg-hero-search-panel .wg-hero-acc-panel .exp-form-row {
+  border: 1px solid rgba(255, 255, 255, 0.22) !important;
+  border-radius: 14px !important;
+  backdrop-filter: none !important;
 }
 #search.wg-hero-search-panel .wg-hero-acc-tripstrip {
   border-radius: 0 !important;

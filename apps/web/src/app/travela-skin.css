@@ -1788,8 +1788,8 @@
 }
 
 .shop-root.wg-new-ui .wg-hero-acc-panel .exp-form-row {
-  background: rgba(8, 28, 72, 0.55) !important;
-  border: 1px solid rgba(251, 191, 36, 0.28) !important;
+  background: transparent !important;
+  border: 1px solid rgba(255, 255, 255, 0.22) !important;
   border-radius: 14px !important;
   padding: 0.35rem !important;
   gap: 0 !important;
@@ -1896,7 +1896,7 @@
   color: #0f172a !important;
 }
 .wg-hero-acc-panel .exp-form-row {
-  background: rgba(8, 28, 72, 0.55) !important;
+  background: transparent !important;
   border: 1px solid rgba(251, 191, 36, 0.28) !important;
   border-radius: 14px !important;
 }
@@ -2722,8 +2722,8 @@
 }
 
 .wg-hero-acc-panel .exp-form-row {
-  background: rgba(8, 28, 72, 0.35) !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  background: transparent !important;
+  border: 1px solid rgba(255, 255, 255, 0.18) !important;
   border-radius: 14px !important;
   padding: 0.15rem !important;
   min-height: 4.6rem !important;

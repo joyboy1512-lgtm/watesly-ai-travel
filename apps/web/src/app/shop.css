@@ -9088,8 +9088,8 @@ html body .wg-hero-acc-tripstrip {
 }
 html body .shop-root .wg-hero-acc-trip,
 html body .wg-hero-acc-trip {
-  color: #e3f2fd !important;
-  border-color: #1565c0 !important;
+  color: #d99a3e !important;
+  border-color: #d99a3e !important;
   background: transparent !important;
   font-size: 0.92rem !important;
   font-weight: 800 !important;
@@ -9099,23 +9099,23 @@ html body .wg-hero-acc-trip {
 }
 html body .shop-root .wg-hero-acc-trip.on,
 html body .wg-hero-acc-trip.on {
-  background: #1565c0 !important;
-  border-color: #1565c0 !important;
-  color: #fff !important;
+  background: #d99a3e !important;
+  border-color: #d99a3e !important;
+  color: #001b35 !important;
 }
 html body .shop-root .wg-hero-acc-panel .exp-cell-label,
 html body .wg-hero-acc-panel .exp-cell-label,
 html body .wg-hero-acc-field-label,
 html body .wg-hero-acc-panel .shop-ac-inline > span:first-child {
-  color: #f5c518 !important;
-  -webkit-text-fill-color: #f5c518 !important;
+  color: #d99a3e !important;
+  -webkit-text-fill-color: #d99a3e !important;
   font-size: 0.98rem !important;
   font-weight: 800 !important;
 }
 html body .wg-hero-acc-field-ico,
 html body .wg-hero-acc-field .wg-hero-acc-field-ico {
-  color: #f5c518 !important;
-  -webkit-text-fill-color: #f5c518 !important;
+  color: #d99a3e !important;
+  -webkit-text-fill-color: #d99a3e !important;
 }
 html body .wg-hero-acc-field-ico,
 html body .wg-hero-acc-field .wg-hero-acc-field-ico {
@@ -9141,20 +9141,20 @@ html body .shop-root .wg-hero-acc-search-btn,
 html body .wg-hero-ticket-search.exp-search-link,
 html body .wg-hero-acc-search-btn,
 html body .wg-hero-acc-panel .exp-search-link.wg-hero-ticket-search {
-  background: #f5c518 !important;
-  border-color: #f5c518 !important;
-  color: #111111 !important;
-  -webkit-text-fill-color: #111111 !important;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.28) !important;
+  background: #d99a3e !important;
+  border-color: #d99a3e !important;
+  color: #001b35 !important;
+  -webkit-text-fill-color: #001b35 !important;
+  box-shadow: 0 8px 22px rgba(217, 154, 62, 0.35) !important;
   min-width: 10.75rem !important;
 }
 html body .shop-root .wg-hero-acc-mode.on .wg-hero-acc-icon,
 html body .shop-root .wg-hero-acc-mode.is-expanded .wg-hero-acc-icon,
 html body .wg-hero-acc-mode.on .wg-hero-acc-icon,
 html body .wg-hero-acc-mode.is-expanded .wg-hero-acc-icon {
-  background: #f5c518 !important;
-  color: #111111 !important;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25) !important;
+  background: #d99a3e !important;
+  color: #001b35 !important;
+  box-shadow: 0 0 0 3px rgba(217, 154, 62, 0.28) !important;
 }
 html body .shop-root .wg-hero-acc-hint,
 html body .wg-hero-acc-hint {

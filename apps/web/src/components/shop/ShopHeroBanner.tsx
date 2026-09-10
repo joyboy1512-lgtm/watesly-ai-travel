@@ -714,9 +714,9 @@ export function ShopHeroBanner(props: Props) {
               __html: `
 #search.wg-hero-search-panel {
   --wg-search-blue: #1565c0;
-  --wg-search-gold: #f5c518;
-  --wg-search-label: #f5c518;
-  --wg-search-ink: #0d47a1;
+  --wg-search-gold: #d99a3e;
+  --wg-search-label: #d99a3e;
+  --wg-search-ink: #001b35;
   width: min(1180px, calc(100% - 3.25cm)) !important;
   max-width: 1180px !important;
   overflow: visible !important;
@@ -835,9 +835,9 @@ export function ShopHeroBanner(props: Props) {
 #search.wg-hero-search-panel .wg-hero-acc-mode.on .wg-hero-acc-icon,
 #search.wg-hero-search-panel .wg-hero-acc-mode.is-expanded .wg-hero-acc-icon {
   background: var(--wg-search-gold) !important;
-  color: #111111 !important;
+  color: #001b35 !important;
   border-radius: 999px !important;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25) !important;
+  box-shadow: 0 0 0 3px rgba(217, 154, 62, 0.28) !important;
 }
 #search.wg-hero-search-panel .wg-hero-acc-textcol {
   display: flex !important;
@@ -978,11 +978,11 @@ export function ShopHeroBanner(props: Props) {
   border-radius: 0 0 18px 18px !important;
   padding: 0.55rem 0.65rem 0.7rem !important;
 }
-/* Trip type pills — gold outline like notebook reference */
+/* Trip type pills — warm luxury gold #D99A3E */
 #search.wg-hero-search-panel .wg-hero-acc-trip {
   background: transparent !important;
   border: 1.5px solid var(--wg-search-gold) !important;
-  color: #ffe082 !important;
+  color: var(--wg-search-gold) !important;
   font-size: 0.92rem !important;
   font-weight: 800 !important;
   min-height: 2.35rem !important;
@@ -993,7 +993,7 @@ export function ShopHeroBanner(props: Props) {
 #search.wg-hero-search-panel .wg-hero-acc-trip.on {
   background: var(--wg-search-gold) !important;
   border-color: var(--wg-search-gold) !important;
-  color: #111111 !important;
+  color: #001b35 !important;
 }
 #search.wg-hero-search-panel .wg-hero-acc-trip-extra,
 #search.wg-hero-search-panel .wg-hero-acc-cabin {
@@ -1146,16 +1146,16 @@ export function ShopHeroBanner(props: Props) {
   border-color: #cbd5e1 !important;
   background: #fff !important;
 }
-/* Solid gold search CTA — matches notebook reference */
+/* Solid warm-gold search CTA — luxury #D99A3E */
 #search.wg-hero-search-panel .wg-hero-ticket-search.exp-search-link,
 #search.wg-hero-search-panel .wg-hero-acc-search-btn,
 #search.wg-hero-search-panel .exp-search-link.wg-hero-acc-search-btn {
   background: var(--wg-search-gold) !important;
   background-color: var(--wg-search-gold) !important;
   border: 1.5px solid var(--wg-search-gold) !important;
-  color: #111111 !important;
-  -webkit-text-fill-color: #111111 !important;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.28) !important;
+  color: #001b35 !important;
+  -webkit-text-fill-color: #001b35 !important;
+  box-shadow: 0 8px 22px rgba(217, 154, 62, 0.35) !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
   min-width: 10.75rem !important;
@@ -1164,9 +1164,9 @@ export function ShopHeroBanner(props: Props) {
 }
 #search.wg-hero-search-panel .wg-hero-ticket-search.exp-search-link:hover:not(:disabled),
 #search.wg-hero-search-panel .wg-hero-acc-search-btn:hover:not(:disabled) {
-  background: #ffd54f !important;
-  border-color: #ffd54f !important;
-  color: #111111 !important;
+  background: #e5b15a !important;
+  border-color: #e5b15a !important;
+  color: #001b35 !important;
 }
 `,
             }}

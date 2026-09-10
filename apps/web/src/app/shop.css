@@ -9091,7 +9091,12 @@ html body .wg-hero-acc-trip.on {
 html body .shop-root .wg-hero-acc-panel .exp-cell-label,
 html body .wg-hero-acc-panel .exp-cell-label,
 html body .wg-hero-acc-field-label,
-html body .wg-hero-acc-panel .shop-ac-inline > span:first-child,
+html body .wg-hero-acc-panel .shop-ac-inline > span:first-child {
+  color: #111111 !important;
+  -webkit-text-fill-color: #111111 !important;
+  font-size: 0.98rem !important;
+  font-weight: 800 !important;
+}
 html body .wg-hero-acc-field-ico,
 html body .wg-hero-acc-field .wg-hero-acc-field-ico {
   color: #1565c0 !important;

@@ -714,7 +714,7 @@ export function ShopHeroBanner(props: Props) {
               __html: `
 #search.wg-hero-search-panel {
   --wg-search-blue: #1565c0;
-  --wg-search-label: #1565c0;
+  --wg-search-label: #111111;
   --wg-search-ink: #0d47a1;
   width: min(1180px, calc(100% - 3.25cm)) !important;
   max-width: 1180px !important;
@@ -733,28 +733,30 @@ export function ShopHeroBanner(props: Props) {
 /* Notebook spiral rings — decorative only */
 #search.wg-hero-search-panel .wg-hero-acc-spiral {
   position: absolute !important;
-  top: -0.85rem !important;
-  inset-inline: 0.7rem !important;
-  height: 1.7rem !important;
+  top: -0.7rem !important;
+  inset-inline: 0.35rem !important;
+  height: 1.4rem !important;
   display: flex !important;
   align-items: flex-start !important;
   justify-content: space-between !important;
-  gap: 0.15rem !important;
+  gap: 0.045rem !important;
   pointer-events: none !important;
-  z-index: 6 !important;
+  z-index: 8 !important;
 }
 #search.wg-hero-search-panel .wg-hero-acc-spiral-ring {
   flex: 0 0 auto !important;
-  width: 0.86rem !important;
-  height: 1.55rem !important;
-  border-radius: 999px !important;
-  border: 2px solid #9aa3ad !important;
-  background:
-    linear-gradient(90deg, #6d7682 0%, #f4f6f8 28%, #b8c0c8 52%, #f7f8fa 72%, #7a8490 100%) !important;
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.85),
-    inset 0 -1px 0 rgba(0,0,0,0.18),
-    0 2px 3px rgba(0,0,0,0.22) !important;
+  width: 0.48rem !important;
+  height: 1.22rem !important;
+  display: block !important;
+  overflow: visible !important;
+  filter: drop-shadow(0 1px 1px rgba(0,0,0,0.35));
+}
+#search.wg-hero-search-panel .wg-hero-acc-spiral-ring ellipse {
+  fill: none !important;
+  stroke: url(#wgSpiralMetal) !important;
+  stroke-width: 2.45 !important;
+  stroke-linecap: round !important;
+  vector-effect: non-scaling-stroke;
 }
 /* Top tabs: solid blue */
 #search.wg-hero-search-panel .wg-hero-acc-modes,
@@ -956,25 +958,17 @@ export function ShopHeroBanner(props: Props) {
 #search.wg-hero-search-panel .wg-hero-acc-cabin {
   display: none !important;
 }
-/* Fields: true blue labels/icons, roomy spacing, readable values */
+/* Fields: black labels raised; icons aligned with airport/value text */
 #search.wg-hero-search-panel .wg-hero-acc-field,
 #search.wg-hero-search-panel .wg-hero-acc-field[data-field="travelers"],
 #search.wg-hero-search-panel .wg-hero-acc-field[data-field="guests"] {
-  display: grid !important;
-  grid-template-columns: auto minmax(0, 1fr) auto !important;
-  align-items: center !important;
-  align-content: center !important;
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: flex-end !important;
+  column-gap: 0.55rem !important;
   min-width: 9.5rem !important;
-  min-height: 5rem !important;
-  padding: 0.65rem 0.85rem !important;
-  overflow: visible !important;
-}
-#search.wg-hero-search-panel .wg-hero-acc-field-body,
-#search.wg-hero-search-panel .wg-hero-acc-field .exp-travelers-trigger,
-#search.wg-hero-search-panel .wg-hero-acc-field .shop-ac-inline {
-  display: grid !important;
-  gap: 0.38rem !important;
-  min-width: 0 !important;
+  min-height: 5.25rem !important;
+  padding: 0.45rem 0.85rem 0.75rem !important;
   overflow: visible !important;
 }
 #search.wg-hero-search-panel .wg-hero-acc-field-ico,
@@ -986,32 +980,55 @@ export function ShopHeroBanner(props: Props) {
 #search.wg-hero-search-panel .wg-hero-acc-field[data-field="destination"] .wg-hero-acc-field-ico,
 #search.wg-hero-search-panel .wg-hero-acc-field[data-field="checkin"] .wg-hero-acc-field-ico,
 #search.wg-hero-search-panel .wg-hero-acc-field[data-field="checkout"] .wg-hero-acc-field-ico {
-  width: 1.85rem !important;
-  height: 1.85rem !important;
-  min-width: 1.85rem !important;
-  min-height: 1.85rem !important;
-  color: var(--wg-search-label) !important;
+  flex: 0 0 auto !important;
+  width: 1.55rem !important;
+  height: 1.55rem !important;
+  min-width: 1.55rem !important;
+  min-height: 1.55rem !important;
+  color: #1565c0 !important;
   background: currentColor !important;
   background-color: currentColor !important;
-  align-self: center !important;
-  margin: 0 !important;
+  align-self: flex-end !important;
+  margin: 0 0 0.12rem !important;
   transform: none !important;
   position: relative !important;
   top: 0 !important;
   filter: none !important;
   opacity: 1 !important;
+  order: 0 !important;
+}
+#search.wg-hero-search-panel .wg-hero-acc-field-body,
+#search.wg-hero-search-panel .wg-hero-acc-field .exp-travelers-trigger,
+#search.wg-hero-search-panel .wg-hero-acc-field .shop-ac-inline {
+  flex: 1 1 auto !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: flex-end !important;
+  gap: 0.48rem !important;
+  min-width: 0 !important;
+  overflow: visible !important;
+  order: 1 !important;
+}
+#search.wg-hero-search-panel .wg-hero-acc-field-chevron {
+  flex: 0 0 auto !important;
+  align-self: flex-end !important;
+  margin-bottom: 0.28rem !important;
+  order: 2 !important;
 }
 #search.wg-hero-search-panel .wg-hero-acc-panel .exp-cell-label,
 #search.wg-hero-search-panel .wg-hero-acc-field .exp-cell-label,
 #search.wg-hero-search-panel .wg-hero-acc-field .shop-ac-inline > span:first-child,
 #search.wg-hero-search-panel .wg-hero-acc-field .exp-travelers-trigger .exp-cell-label {
-  color: var(--wg-search-label) !important;
-  -webkit-text-fill-color: var(--wg-search-label) !important;
+  color: #111111 !important;
+  -webkit-text-fill-color: #111111 !important;
   font-weight: 800 !important;
-  font-size: 0.9rem !important;
-  line-height: 1.2 !important;
+  font-size: 1.05rem !important;
+  line-height: 1.15 !important;
   margin: 0 !important;
+  padding: 0 !important;
   opacity: 1 !important;
+  position: relative !important;
+  top: -0.22rem !important;
 }
 #search.wg-hero-search-panel .wg-hero-acc-field .shop-ac-inline input,
 #search.wg-hero-search-panel .wg-hero-acc-field .exp-date-btn,
@@ -1020,12 +1037,15 @@ export function ShopHeroBanner(props: Props) {
 #search.wg-hero-search-panel .wg-hero-acc-field .shop-date-range-trigger {
   color: #fff !important;
   -webkit-text-fill-color: #fff !important;
-  font-size: 0.98rem !important;
+  font-size: 1.02rem !important;
   font-weight: 700 !important;
   white-space: nowrap !important;
   overflow: visible !important;
   text-overflow: clip !important;
   max-width: none !important;
+  line-height: 1.2 !important;
+  margin: 0 !important;
+  padding: 0 !important;
 }
 /* Travelers / rooms popup: keep numbers & ages readable */
 #search.wg-hero-search-panel .exp-travelers-panel,
@@ -1110,8 +1130,23 @@ export function ShopHeroBanner(props: Props) {
           />
           <div className={`wg-hero-ticket-shell wg-hero-dock-shell wg-hero-acc-shell${dockOpen ? " is-open" : ""}`} data-mode={props.mode}>
             <div className="wg-hero-acc-spiral" aria-hidden="true">
-              {Array.from({ length: 16 }, (_, i) => (
-                <span key={i} className="wg-hero-acc-spiral-ring" />
+              <svg width="0" height="0" aria-hidden="true" style={{ position: "absolute" }}>
+                <defs>
+                  <linearGradient id="wgSpiralMetal" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%" stopColor="#3e454e" />
+                    <stop offset="18%" stopColor="#cfd5dc" />
+                    <stop offset="36%" stopColor="#ffffff" />
+                    <stop offset="52%" stopColor="#8a929c" />
+                    <stop offset="70%" stopColor="#f4f6f8" />
+                    <stop offset="88%" stopColor="#b7bec6" />
+                    <stop offset="100%" stopColor="#4a515a" />
+                  </linearGradient>
+                </defs>
+              </svg>
+              {Array.from({ length: 42 }, (_, i) => (
+                <svg key={i} className="wg-hero-acc-spiral-ring" viewBox="0 0 10 22" aria-hidden="true">
+                  <ellipse cx="5" cy="11" rx="3.35" ry="8.6" fill="none" stroke="url(#wgSpiralMetal)" strokeWidth="2.55" />
+                </svg>
               ))}
             </div>
             <div

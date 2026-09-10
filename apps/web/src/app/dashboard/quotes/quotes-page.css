@@ -1,0 +1,165 @@
+.quotes-suite {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.quotes-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem;
+  padding: 0.65rem 0.85rem;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+}
+
+.quotes-toolbar strong {
+  font-size: 0.9rem;
+  color: #0f172a;
+}
+
+.quotes-hint {
+  margin: 0;
+  width: 100%;
+  font-size: 0.74rem;
+  color: #64748b;
+}
+
+.quotes-filter-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.quotes-filter-group span {
+  font-size: 0.78rem;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.quotes-filter-group button {
+  border: 1px solid #dbe3ea;
+  background: #fff;
+  border-radius: 999px;
+  padding: 0.28rem 0.7rem;
+  font: inherit;
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: #334155;
+  cursor: pointer;
+}
+
+.quotes-filter-group button.on {
+  background: #0071c2;
+  border-color: #0071c2;
+  color: #fff;
+}
+
+.quotes-panel {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.quotes-table-scroll {
+  overflow-x: auto;
+}
+
+.quotes-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.78rem;
+}
+
+.quotes-table th,
+.quotes-table td {
+  padding: 0.38rem 0.55rem;
+  border-bottom: 1px solid #f1f5f9;
+  text-align: start;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.quotes-table th {
+  background: #f8fafc;
+  color: #64748b;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.quotes-table tbody tr:hover {
+  background: #fafbfc;
+}
+
+.quotes-table .desc {
+  white-space: normal;
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.quotes-table .route {
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.quotes-cancel {
+  display: inline-block;
+  padding: 0.12rem 0.45rem;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+
+.quotes-cancel.free {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.quotes-cancel.non_refundable {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.quotes-cancel.unknown {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.quotes-status.expired {
+  color: #b45309;
+}
+
+.quotes-actions .btn.danger {
+  background: #fff;
+  border: 1px solid #fecaca;
+  color: #b91c1c;
+}
+
+.quotes-actions .btn.danger:hover {
+  background: #fef2f2;
+  border-color: #fca5a5;
+}
+
+.quotes-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.quotes-actions .btn {
+  padding: 0.28rem 0.55rem;
+  font-size: 0.72rem;
+  min-height: 0;
+}
+
+.quotes-empty {
+  padding: 1.25rem;
+  text-align: center;
+  color: #64748b;
+  font-size: 0.85rem;
+}

@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>معاينة بطاقة البوردينج</title>
+  <style>
+    :root {
+      --navy: #001b35;
+      --navy-2: #0a2f55;
+      --ink: #12233a;
+      --muted: #5b6b7c;
+      --line: #d7e0ea;
+      --paper: #f3f6fa;
+      --card: #ffffff;
+      --path: #2a6f97;
+      --shadow: 0 12px 30px rgba(0, 27, 53, 0.13);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Tahoma, "Noto Sans Arabic", Arial, sans-serif;
+      background:
+        radial-gradient(1100px 480px at 85% -8%, #d7e7f7 0%, transparent 55%),
+        linear-gradient(180deg, #eef3f8, #e6edf5);
+      color: var(--ink);
+      min-height: 100vh;
+      padding: 1.25rem;
+    }
+    .page { max-width: 920px; margin: 0 auto; }
+    .intro h1 {
+      margin: 0 0 0.3rem;
+      font-size: 1.25rem;
+      color: var(--navy);
+    }
+    .intro p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.88rem;
+    }
+    .viewport-label {
+      display: inline-flex;
+      margin: 1.1rem 0 0.55rem;
+      padding: 0.2rem 0.6rem;
+      border-radius: 999px;
+      background: #fff;
+      border: 1px solid var(--line);
+      color: var(--navy);
+      font-size: 0.74rem;
+      font-weight: 800;
+    }
+    .badge-row { display: flex; gap: 0.3rem; margin-bottom: 0.45rem; }
+    .badge {
+      font-size: 0.68rem;
+      font-weight: 800;
+      padding: 0.16rem 0.45rem;
+      border-radius: 999px;
+      background: #e8f1ff;
+      color: #164ea8;
+      border: 1px solid #c9dbf7;
+    }
+    .badge.cheap {
+      background: #e9f8ef;
+      color: #146b3a;
+      border-color: #bfe8cf;
+    }
+
+    /* Narrower overall ticket */
+    .bp-card {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 168px;
+      max-width: 860px;
+      background: var(--card);
+      border-radius: 14px;
+      box-shadow: var(--shadow);
+      position: relative;
+      overflow: visible;
+    }
+    .bp-card::before,
+    .bp-card::after {
+      content: "";
+      position: absolute;
+      left: 168px;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #e8eef5;
+      transform: translateX(-50%);
+      z-index: 4;
+    }
+    .bp-card::before { top: -8px; }
+    .bp-card::after { bottom: -8px; }
+
+    .bp-main {
+      background: var(--paper);
+      border-radius: 14px 0 0 14px;
+      padding: 0.7rem 0.85rem 0.65rem;
+      display: grid;
+      gap: 0.45rem;
+      position: relative;
+    }
+    .bp-main::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 14px;
+      bottom: 14px;
+      border-left: 2px dashed #b8c7d8;
+    }
+
+    .bp-leg {
+      display: grid;
+      grid-template-columns: 20px 112px minmax(88px, 1fr) minmax(110px, 1.15fr) minmax(88px, 1fr);
+      gap: 0.35rem;
+      align-items: center;
+      background: #fff;
+      border: 1px solid #e3ebf3;
+      border-radius: 11px;
+      padding: 0.55rem 0.6rem;
+    }
+    .bp-check {
+      width: 16px;
+      height: 16px;
+      border: 1.5px solid #9aa8b8;
+      border-radius: 4px;
+      display: grid;
+      place-items: center;
+      background: #fff;
+      font-size: 0.62rem;
+      color: transparent;
+    }
+    .bp-check.on {
+      background: var(--navy);
+      border-color: var(--navy);
+      color: #fff;
+    }
+    .bp-airline {
+      display: flex;
+      gap: 0.35rem;
+      align-items: center;
+      min-width: 0;
+    }
+    .bp-logo {
+      width: 34px;
+      height: 34px;
+      border-radius: 7px;
+      background: #f0f4f8;
+      border: 1px solid #e5edf5;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+    .bp-logo img { width: 100%; height: 100%; object-fit: contain; }
+    .bp-airline strong {
+      display: block;
+      font-size: 0.74rem;
+      line-height: 1.15;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .bp-airline span {
+      display: block;
+      font-size: 0.66rem;
+      color: var(--muted);
+      font-weight: 800;
+    }
+    .bp-route { display: contents; }
+    .bp-time { text-align: center; min-width: 0; }
+    .bp-time strong {
+      display: block;
+      font-size: 1.18rem;
+      color: var(--navy);
+      line-height: 1;
+    }
+    .bp-time em {
+      display: block;
+      margin-top: 0.14rem;
+      font-style: normal;
+      font-size: 0.72rem;
+      font-weight: 800;
+    }
+    .bp-time small {
+      display: block;
+      margin-top: 0.08rem;
+      color: var(--muted);
+      font-size: 0.62rem;
+    }
+    .bp-path { text-align: center; }
+    .bp-arc {
+      position: relative;
+      height: 24px;
+      max-width: 120px;
+      margin: 0 auto 0.08rem;
+    }
+    .bp-arc::before {
+      content: "";
+      position: absolute;
+      inset: 7px 4px auto;
+      height: 16px;
+      border: 2px dashed var(--path);
+      border-bottom: none;
+      border-radius: 999px 999px 0 0;
+      opacity: 0.9;
+    }
+    .bp-plane {
+      position: absolute;
+      left: 50%;
+      top: 0;
+      transform: translateX(-50%);
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #fff;
+      color: var(--path);
+      display: grid;
+      place-items: center;
+      font-size: 0.68rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    }
+    .bp-path strong { display: block; font-size: 0.7rem; }
+    .bp-path span {
+      display: inline-block;
+      margin-top: 0.06rem;
+      font-size: 0.66rem;
+      font-weight: 800;
+      color: #1f7a4d;
+      background: #e8f7ef;
+      padding: 0.04rem 0.35rem;
+      border-radius: 999px;
+    }
+
+    /* Stub: price → bags → CTA → details */
+    .bp-stub {
+      background: #fff;
+      border-radius: 0 14px 14px 0;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      text-align: center;
+    }
+    .bp-price {
+      background: linear-gradient(180deg, var(--navy-2), var(--navy));
+      color: #fff;
+      padding: 0.75rem 0.55rem 0.65rem;
+    }
+    .bp-price strong {
+      display: block;
+      font-size: 1.28rem;
+      line-height: 1.1;
+    }
+    .bp-price small {
+      display: block;
+      margin-top: 0.35rem;
+      font-size: 0.62rem;
+      line-height: 1.35;
+      opacity: 0.94;
+      font-weight: 600;
+    }
+    .bp-stub-bags {
+      padding: 0.55rem 0.5rem 0.45rem;
+      display: grid;
+      gap: 0.35rem;
+      border-bottom: 1px solid #e8eef5;
+      background: #fafcfe;
+    }
+    .bp-stub-bags span {
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      gap: 0.28rem;
+      font-size: 0.62rem;
+      line-height: 1.35;
+      color: var(--muted);
+      font-weight: 600;
+    }
+    .bp-stub-bags b {
+      color: var(--navy-2);
+      font-weight: 700;
+    }
+    .bp-stub-bags .policy {
+      color: #7a8a9b;
+      font-size: 0.58rem;
+      font-weight: 600;
+    }
+    .bp-actions {
+      padding: 0.55rem 0.55rem 0.7rem;
+      display: grid;
+      gap: 0.4rem;
+      margin-top: auto;
+    }
+    .bp-cta {
+      appearance: none;
+      border: 0;
+      border-radius: 999px;
+      background: var(--navy);
+      color: #fff;
+      font-weight: 800;
+      font-size: 0.78rem;
+      padding: 0.62rem 0.55rem;
+      line-height: 1.25;
+    }
+    .bp-link {
+      appearance: none;
+      border: 0;
+      background: transparent;
+      color: var(--navy-2);
+      text-decoration: underline;
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 0;
+    }
+
+    /* Phone */
+    .phone-frame {
+      width: 360px;
+      max-width: 100%;
+      margin: 0 auto;
+      background: #111827;
+      border-radius: 26px;
+      padding: 11px;
+      box-shadow: 0 18px 40px rgba(0,0,0,0.22);
+    }
+    .phone-notch {
+      width: 110px;
+      height: 14px;
+      background: #0b1220;
+      border-radius: 0 0 12px 12px;
+      margin: 0 auto 9px;
+    }
+    .phone-screen {
+      background: linear-gradient(180deg, #eef3f8, #e7eef6);
+      border-radius: 16px;
+      padding: 0.7rem 0.55rem 0.9rem;
+    }
+    .phone-screen .bp-card {
+      grid-template-columns: 1fr;
+      max-width: none;
+    }
+    .phone-screen .bp-card::before,
+    .phone-screen .bp-card::after { display: none; }
+    .phone-screen .bp-main {
+      border-radius: 14px 14px 0 0;
+      order: 1;
+    }
+    .phone-screen .bp-main::after { content: none; }
+    .phone-screen .bp-stub {
+      border-radius: 0 0 14px 14px;
+      order: 2;
+      border-top: 2px dashed #b8c7d8;
+    }
+    .phone-screen .bp-leg {
+      grid-template-columns: 18px 1fr;
+      grid-template-areas:
+        "check airline"
+        "route route";
+      gap: 0.35rem;
+    }
+    .phone-screen .bp-check { grid-area: check; align-self: center; }
+    .phone-screen .bp-airline { grid-area: airline; }
+    .phone-screen .bp-route {
+      grid-area: route;
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 0.2rem;
+      align-items: center;
+    }
+    .phone-screen .bp-time strong { font-size: 1.05rem; }
+    .phone-screen .bp-stub-bags {
+      grid-template-columns: 1fr 1fr;
+      text-align: start;
+    }
+    .phone-screen .bp-stub-bags .policy {
+      grid-column: 1 / -1;
+      text-align: center;
+    }
+    .phone-screen .bp-actions {
+      grid-template-columns: 1fr auto;
+      align-items: center;
+    }
+
+    @media (max-width: 900px) {
+      .desktop-block { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="intro">
+      <h1>معاينة محدّثة — كعب أضيق + أمتعة تحت السعر</h1>
+      <p>بدون شعار WeekendGate على البطاقة · الأمتعة بين السعر وزر الاختيار · الأزرار في الأسفل</p>
+    </div>
+
+    <div class="viewport-label">سطح المكتب (أضيق)</div>
+    <section class="desktop-block">
+      <div class="badge-row">
+        <span class="badge cheap">الأرخص</span>
+        <span class="badge">الأفضل</span>
+      </div>
+      <article class="bp-card" aria-label="بطاقة رحلة سطح المكتب">
+        <div class="bp-main">
+          <div class="bp-leg">
+            <div class="bp-check on">✓</div>
+            <div class="bp-airline">
+              <div class="bp-logo"><img src="https://pics.avs.io/80/80/KU.png" alt="" /></div>
+              <div>
+                <strong>الخطوط الكويتية</strong>
+                <span>KU0673</span>
+              </div>
+            </div>
+            <div class="bp-route">
+              <div class="bp-time">
+                <strong>17:55</strong>
+                <em>دبي DXB</em>
+                <small>الثلاثاء 25 مارس 2025</small>
+              </div>
+              <div class="bp-path">
+                <div class="bp-arc"><span class="bp-plane">✈</span></div>
+                <strong>2س 55د</strong>
+                <span>مباشر</span>
+              </div>
+              <div class="bp-time">
+                <strong>15:00</strong>
+                <em>الكويت KWI</em>
+                <small>الثلاثاء 25 مارس 2025</small>
+              </div>
+            </div>
+          </div>
+
+          <div class="bp-leg">
+            <div class="bp-check"></div>
+            <div class="bp-airline">
+              <div class="bp-logo"><img src="https://pics.avs.io/80/80/KU.png" alt="" /></div>
+              <div>
+                <strong>الخطوط الكويتية</strong>
+                <span>KU0678</span>
+              </div>
+            </div>
+            <div class="bp-route">
+              <div class="bp-time">
+                <strong>18:45</strong>
+                <em>الكويت KWI</em>
+                <small>الثلاثاء 1 أبريل 2025</small>
+              </div>
+              <div class="bp-path">
+                <div class="bp-arc"><span class="bp-plane">✈</span></div>
+                <strong>1س 55د</strong>
+                <span>مباشر</span>
+              </div>
+              <div class="bp-time">
+                <strong>21:40</strong>
+                <em>دبي DXB</em>
+                <small>الثلاثاء 1 أبريل 2025</small>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <aside class="bp-stub">
+          <div class="bp-price">
+            <strong>52.61 USD</strong>
+            <small>السعر الإجمالي لشخص واحد شامل الضرائب</small>
+          </div>
+          <div class="bp-stub-bags" aria-label="الأمتعة">
+            <span>🧳 <b>حقيبة أمتعة واحدة لكل مسافر</b></span>
+            <span>🎒 <b>حقيبة يد واحدة لكل مسافر</b></span>
+            <span class="policy">ℹ حسب سياسة الناقلة</span>
+          </div>
+          <div class="bp-actions">
+            <button class="bp-cta" type="button">اختيار هذه الرحلة ›</button>
+            <button class="bp-link" type="button">التفاصيل والشروط</button>
+          </div>
+        </aside>
+      </article>
+    </section>
+
+    <div class="viewport-label">موبايل</div>
+    <div class="phone-frame">
+      <div class="phone-notch"></div>
+      <div class="phone-screen">
+        <div class="badge-row"><span class="badge cheap">الأرخص</span></div>
+        <article class="bp-card" aria-label="بطاقة رحلة موبايل">
+          <div class="bp-main">
+            <div class="bp-leg">
+              <div class="bp-check on">✓</div>
+              <div class="bp-airline">
+                <div class="bp-logo"><img src="https://pics.avs.io/80/80/KU.png" alt="" /></div>
+                <div>
+                  <strong>الخطوط الكويتية</strong>
+                  <span>KU0673</span>
+                </div>
+              </div>
+              <div class="bp-route">
+                <div class="bp-time">
+                  <strong>17:55</strong>
+                  <em>دبي DXB</em>
+                  <small>الثلاثاء 25 مارس</small>
+                </div>
+                <div class="bp-path">
+                  <div class="bp-arc"><span class="bp-plane">✈</span></div>
+                  <strong>2س 55د</strong>
+                  <span>مباشر</span>
+                </div>
+                <div class="bp-time">
+                  <strong>15:00</strong>
+                  <em>الكويت KWI</em>
+                  <small>الثلاثاء 25 مارس</small>
+                </div>
+              </div>
+            </div>
+
+            <div class="bp-leg">
+              <div class="bp-check"></div>
+              <div class="bp-airline">
+                <div class="bp-logo"><img src="https://pics.avs.io/80/80/KU.png" alt="" /></div>
+                <div>
+                  <strong>الخطوط الكويتية</strong>
+                  <span>KU0678</span>
+                </div>
+              </div>
+              <div class="bp-route">
+                <div class="bp-time">
+                  <strong>18:45</strong>
+                  <em>الكويت KWI</em>
+                  <small>الثلاثاء 1 أبريل</small>
+                </div>
+                <div class="bp-path">
+                  <div class="bp-arc"><span class="bp-plane">✈</span></div>
+                  <strong>1س 55د</strong>
+                  <span>مباشر</span>
+                </div>
+                <div class="bp-time">
+                  <strong>21:40</strong>
+                  <em>دبي DXB</em>
+                  <small>الثلاثاء 1 أبريل</small>
+                </div>
+              </div>
+            </div>
+          </div>
+          <aside class="bp-stub">
+            <div class="bp-price">
+              <strong>52.61 USD</strong>
+              <small>السعر الإجمالي لشخص واحد شامل الضرائب</small>
+            </div>
+            <div class="bp-stub-bags" aria-label="الأمتعة">
+              <span>🧳 <b>حقيبة أمتعة واحدة</b></span>
+              <span>🎒 <b>حقيبة يد واحدة</b></span>
+              <span class="policy">ℹ حسب سياسة الناقلة</span>
+            </div>
+            <div class="bp-actions">
+              <button class="bp-cta" type="button">اختيار هذه الرحلة ›</button>
+              <button class="bp-link" type="button">التفاصيل والشروط</button>
+            </div>
+          </aside>
+        </article>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

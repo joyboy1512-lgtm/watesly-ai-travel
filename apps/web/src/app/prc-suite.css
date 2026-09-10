@@ -1,0 +1,323 @@
+
+/* ===== Pricing rules suite ===== */
+.prc-suite {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.prc-hero {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.85rem;
+  padding: 1rem 1.1rem;
+  border-radius: 14px;
+  border: 1px solid rgba(15, 51, 64, 0.08);
+  background: #fff;
+  box-shadow: 0 8px 20px rgba(7, 24, 34, 0.05);
+}
+
+.prc-kicker {
+  margin: 0 0 0.2rem;
+  color: #5f7470;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.prc-hero h3 {
+  margin: 0;
+  color: #0f3340;
+  font-size: 1.28rem;
+  font-weight: 800;
+}
+
+.prc-hero p {
+  margin: 0.35rem 0 0;
+  color: #5f7470;
+  line-height: 1.55;
+  max-width: 56ch;
+  font-size: 0.9rem;
+}
+
+.prc-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.65rem;
+}
+
+.prc-stat {
+  display: grid;
+  gap: 0.15rem;
+  padding: 0.75rem 0.9rem;
+  border-radius: 12px;
+  border: 1px solid rgba(216, 163, 94, 0.22);
+  background: linear-gradient(145deg, #184a52, #0f3340 55%, #071822);
+  color: #f3f7f4;
+  box-shadow: 0 8px 18px rgba(7, 24, 34, 0.12);
+}
+
+.prc-stat span {
+  color: #b7c9c4;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.prc-stat strong {
+  color: #f0c27a;
+  font-size: 1.25rem;
+  font-weight: 800;
+}
+
+.prc-card {
+  display: grid;
+  gap: 0.75rem;
+  padding: 1rem 1.05rem;
+  border-radius: 14px;
+  border: 1px solid rgba(15, 51, 64, 0.08);
+  background: #fff;
+  box-shadow: 0 8px 20px rgba(7, 24, 34, 0.05);
+}
+
+.prc-card-head h4 {
+  margin: 0;
+  color: #0f3340;
+  font-size: 1rem;
+}
+
+.prc-card-head p {
+  margin: 0.2rem 0 0;
+  color: #5f7470;
+  font-size: 0.84rem;
+}
+
+.prc-row {
+  display: grid;
+  gap: 0.65rem;
+  align-items: end;
+}
+
+.prc-row-name {
+  grid-template-columns: 1fr 110px;
+}
+
+.prc-row-core,
+.prc-row-money {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.prc-row-4 {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.prc-field {
+  display: grid;
+  gap: 0.3rem;
+  min-width: 0;
+}
+
+.prc-field.grow {
+  min-width: 0;
+}
+
+.prc-field.sm {
+  width: 100%;
+}
+
+.prc-field span {
+  color: #5f7470;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.prc-field input,
+.prc-field select {
+  width: 100%;
+  min-height: 2.35rem;
+  padding: 0.45rem 0.7rem;
+  border-radius: 9px;
+  border: 1px solid rgba(15, 51, 64, 0.14);
+  background: #f7fafb;
+  color: #142028;
+  outline: none;
+  font: inherit;
+  font-size: 0.9rem;
+}
+
+.prc-field input:focus,
+.prc-field select:focus {
+  border-color: rgba(216, 163, 94, 0.7);
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(216, 163, 94, 0.12);
+}
+
+.prc-actions-inline .prc-inline-btns {
+  display: flex;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.prc-actions-inline .btn {
+  min-height: 2.35rem;
+  padding: 0.4rem 0.9rem;
+  font-size: 0.88rem;
+}
+
+.prc-conditions {
+  display: grid;
+  gap: 0.65rem;
+  padding-top: 0.35rem;
+  border-top: 1px dashed rgba(15, 51, 64, 0.12);
+}
+
+.prc-list-wrap {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.prc-list-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.prc-list-head h4 {
+  margin: 0;
+  color: #0f3340;
+  font-size: 1rem;
+}
+
+.prc-list-head span {
+  color: #5f7470;
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
+.prc-list {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.prc-rule {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.7rem 0.85rem;
+  border-radius: 11px;
+  border: 1px solid rgba(15, 51, 64, 0.08);
+  background: #fff;
+  box-shadow: 0 4px 12px rgba(7, 24, 34, 0.04);
+}
+
+.prc-rule.off {
+  opacity: 0.72;
+  background: #f7fafb;
+}
+
+.prc-rule-main {
+  min-width: 0;
+  display: grid;
+  gap: 0.25rem;
+}
+
+.prc-rule-title {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+
+.prc-rule-title strong {
+  color: #0f3340;
+  font-size: 0.95rem;
+}
+
+.prc-rule-title span {
+  display: inline-flex;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.prc-rule-title span.on {
+  background: rgba(26, 107, 74, 0.12);
+  color: #1a6b4a;
+}
+
+.prc-rule-title span.off {
+  background: rgba(15, 51, 64, 0.08);
+  color: #5f7470;
+}
+
+.prc-rule-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.prc-rule-meta span {
+  display: inline-flex;
+  padding: 0.12rem 0.45rem;
+  border-radius: 999px;
+  background: rgba(15, 51, 64, 0.07);
+  color: #0f3340;
+  font-size: 0.74rem;
+  font-weight: 700;
+}
+
+.prc-rule-cond {
+  margin: 0;
+  color: #5f7470;
+  font-size: 0.8rem;
+  line-height: 1.4;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 70ch;
+}
+
+.prc-rule .btn {
+  flex-shrink: 0;
+  min-height: 2.1rem;
+  padding: 0.3rem 0.75rem;
+  font-size: 0.82rem;
+}
+
+@media (max-width: 980px) {
+  .prc-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .prc-row-core,
+  .prc-row-money,
+  .prc-row-4 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .prc-hero {
+    flex-direction: column;
+  }
+
+  .prc-stats,
+  .prc-row-name,
+  .prc-row-core,
+  .prc-row-money,
+  .prc-row-4 {
+    grid-template-columns: 1fr;
+  }
+
+  .prc-rule {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .prc-rule-cond {
+    white-space: normal;
+  }
+}
+/* ===== End pricing rules suite ===== */

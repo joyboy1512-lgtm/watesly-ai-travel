@@ -1,3 +1,4 @@
+import { createCipheriv, createDecipheriv, createHash, randomBytes } from "crypto";
 import { isProductionRuntime, requireStrongSecret } from "./security-env";
 
 /**

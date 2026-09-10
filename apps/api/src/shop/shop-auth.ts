@@ -1,4 +1,16 @@
 import {
+  createParamDecorator,
+  ExecutionContext,
+  Injectable,
+  SetMetadata,
+  UnauthorizedException,
+  type CanActivate,
+} from "@nestjs/common";
+import { Reflector } from "@nestjs/core";
+import { JwtService } from "@nestjs/jwt";
+import type { Request } from "express";
+import { PrismaService } from "../prisma/prisma.service";
+import {
   CSRF_COOKIE,
   CUSTOMER_COOKIE,
   getSessionEpoch,

@@ -115,8 +115,9 @@ async function withRedis<T>(
         p.resolve(value);
       } catch (e) {
         if ((e as Error).message === "incomplete") return;
-        pending.reject(e as Error);
+        const p = pending;
         pending = null;
+        p?.reject(e as Error);
         cleanup(e as Error);
       }
     };

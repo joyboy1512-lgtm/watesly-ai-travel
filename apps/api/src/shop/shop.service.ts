@@ -1,4 +1,19 @@
 import {
+  BadRequestException,
+  Injectable,
+  UnauthorizedException,
+} from "@nestjs/common";
+import { JwtService } from "@nestjs/jwt";
+import bcrypt from "bcryptjs";
+import { randomUUID } from "crypto";
+import { Prisma } from "@watesly-travel/database";
+import { defaultRatesToCurrency } from "@watesly-travel/shared";
+import { PrismaService } from "../prisma/prisma.service";
+import { BookingsService } from "../bookings/bookings.service";
+import { BotPipelineService } from "../pipeline/bot-pipeline.service";
+import { AssistantService } from "../assistant/assistant.service";
+import { VoiceAssistantService } from "../assistant/voice-assistant.service";
+import {
   isProductionRuntime,
   otpDeliveryConfigured,
 } from "../common/security-env";
@@ -14,6 +29,9 @@ import {
   revokeSessionJti,
   storeCsrfToken,
 } from "../common/session-cookies";
+import { PublicOrgService } from "./public-org";
+import { dispatchCustomerNotification } from "./platform-notify";
+import type { CustomerJwtPayload, ShopCustomer } from "./shop-auth";
 import {
   buildWebhookEventKey,
   claimWebhookReceipt,

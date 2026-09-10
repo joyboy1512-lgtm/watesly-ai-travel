@@ -733,30 +733,44 @@ export function ShopHeroBanner(props: Props) {
 /* Notebook spiral rings — decorative only */
 #search.wg-hero-search-panel .wg-hero-acc-spiral {
   position: absolute !important;
-  top: -0.7rem !important;
-  inset-inline: 0.35rem !important;
-  height: 1.4rem !important;
+  top: -1.05rem !important;
+  inset-inline: 0.85rem !important;
+  height: 2.15rem !important;
   display: flex !important;
   align-items: flex-start !important;
   justify-content: space-between !important;
-  gap: 0.045rem !important;
+  gap: 0 !important;
   pointer-events: none !important;
-  z-index: 8 !important;
+  z-index: 12 !important;
 }
-#search.wg-hero-search-panel .wg-hero-acc-spiral-ring {
+#search.wg-hero-search-panel .wg-hero-acc-spiral-pair {
   flex: 0 0 auto !important;
-  width: 0.48rem !important;
-  height: 1.22rem !important;
+  width: 1.55rem !important;
+  height: 2.15rem !important;
   display: block !important;
-  overflow: visible !important;
-  filter: drop-shadow(0 1px 1px rgba(0,0,0,0.35));
+  background-image: url("/media/travela/notebook-wireo-pair.png") !important;
+  background-repeat: no-repeat !important;
+  background-position: center top !important;
+  background-size: contain !important;
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.4)) !important;
 }
-#search.wg-hero-search-panel .wg-hero-acc-spiral-ring ellipse {
-  fill: none !important;
-  stroke: url(#wgSpiralMetal) !important;
-  stroke-width: 2.45 !important;
-  stroke-linecap: round !important;
-  vector-effect: non-scaling-stroke;
+/* Punch holes under the rings on the blue header */
+#search.wg-hero-search-panel .wg-hero-acc-modes {
+  position: relative !important;
+}
+#search.wg-hero-search-panel .wg-hero-acc-modes::before {
+  content: "" !important;
+  position: absolute !important;
+  top: 0.55rem !important;
+  inset-inline: 1.05rem !important;
+  height: 0.55rem !important;
+  pointer-events: none !important;
+  z-index: 3 !important;
+  background-image: radial-gradient(circle at center, #071428 0 42%, rgba(255,255,255,0.18) 46%, transparent 52%) !important;
+  background-size: calc((100% - 0px) / 6.2) 0.55rem !important;
+  background-repeat: repeat-x !important;
+  background-position: center !important;
+  opacity: 0.95 !important;
 }
 /* Top tabs: solid blue */
 #search.wg-hero-search-panel .wg-hero-acc-modes,
@@ -1130,23 +1144,8 @@ export function ShopHeroBanner(props: Props) {
           />
           <div className={`wg-hero-ticket-shell wg-hero-dock-shell wg-hero-acc-shell${dockOpen ? " is-open" : ""}`} data-mode={props.mode}>
             <div className="wg-hero-acc-spiral" aria-hidden="true">
-              <svg width="0" height="0" aria-hidden="true" style={{ position: "absolute" }}>
-                <defs>
-                  <linearGradient id="wgSpiralMetal" x1="0" y1="0" x2="1" y2="0">
-                    <stop offset="0%" stopColor="#3e454e" />
-                    <stop offset="18%" stopColor="#cfd5dc" />
-                    <stop offset="36%" stopColor="#ffffff" />
-                    <stop offset="52%" stopColor="#8a929c" />
-                    <stop offset="70%" stopColor="#f4f6f8" />
-                    <stop offset="88%" stopColor="#b7bec6" />
-                    <stop offset="100%" stopColor="#4a515a" />
-                  </linearGradient>
-                </defs>
-              </svg>
-              {Array.from({ length: 42 }, (_, i) => (
-                <svg key={i} className="wg-hero-acc-spiral-ring" viewBox="0 0 10 22" aria-hidden="true">
-                  <ellipse cx="5" cy="11" rx="3.35" ry="8.6" fill="none" stroke="url(#wgSpiralMetal)" strokeWidth="2.55" />
-                </svg>
+              {Array.from({ length: 7 }, (_, i) => (
+                <span key={i} className="wg-hero-acc-spiral-pair" />
               ))}
             </div>
             <div

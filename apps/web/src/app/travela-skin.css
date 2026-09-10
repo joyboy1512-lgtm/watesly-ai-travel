@@ -766,7 +766,7 @@
   bottom: clamp(3.25rem, 6.5vw, 5rem);
   transform: translateX(-50%);
   z-index: 25;
-  width: min(1120px, calc(100% - 6cm));
+  width: min(980px, calc(100% - 5.5cm));
   pointer-events: auto;
 }
 

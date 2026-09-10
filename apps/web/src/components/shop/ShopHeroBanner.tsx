@@ -714,7 +714,10 @@ export function ShopHeroBanner(props: Props) {
               __html: `
 #search.wg-hero-search-panel {
   --wg-search-blue: #1565c0;
-  --wg-search-gold: #d99a3e;
+  --wg-search-blue-soft: #42a5f5;
+  --wg-search-ink: #0d47a1;
+  width: min(980px, calc(100% - 5.5cm)) !important;
+  max-width: 980px !important;
 }
 #search.wg-hero-search-panel .wg-hero-acc-shell,
 #search.wg-hero-search-panel .wg-hero-ticket-shell,
@@ -723,7 +726,7 @@ export function ShopHeroBanner(props: Props) {
   background-color: transparent !important;
   box-shadow: none !important;
 }
-/* Top tabs: brighter blue (not navy) */
+/* Top tabs: solid blue */
 #search.wg-hero-search-panel .wg-hero-acc-modes,
 #search.wg-hero-search-panel .wg-hero-dock-modes {
   background: var(--wg-search-blue) !important;
@@ -735,6 +738,19 @@ export function ShopHeroBanner(props: Props) {
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
   box-shadow: none !important;
+  min-height: 5.15rem !important;
+  height: auto !important;
+  max-height: none !important;
+  align-items: stretch !important;
+  overflow: visible !important;
+}
+#search.wg-hero-search-panel .wg-hero-acc-mode,
+#search.wg-hero-search-panel .wg-hero-dock-mode.wg-hero-acc-mode {
+  min-height: 5.15rem !important;
+  height: auto !important;
+  max-height: none !important;
+  padding: 0.55rem 0.4rem 0.45rem !important;
+  overflow: visible !important;
 }
 #search.wg-hero-search-panel .wg-hero-acc-mode.on,
 #search.wg-hero-search-panel .wg-hero-acc-mode.is-expanded {
@@ -743,11 +759,88 @@ export function ShopHeroBanner(props: Props) {
 }
 #search.wg-hero-search-panel .wg-hero-acc-mode.on .wg-hero-acc-icon,
 #search.wg-hero-search-panel .wg-hero-acc-mode.is-expanded .wg-hero-acc-icon {
-  background: var(--wg-search-gold) !important;
-  color: #0a2a4a !important;
+  background: rgba(255, 255, 255, 0.95) !important;
+  color: var(--wg-search-blue) !important;
   border-radius: 999px !important;
+  box-shadow: none !important;
 }
-/* Trip choices row + fields: frosted glass (NOT solid navy) */
+#search.wg-hero-search-panel .wg-hero-acc-textcol {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.28rem !important;
+}
+#search.wg-hero-search-panel .wg-hero-acc-title {
+  margin: 0 !important;
+  line-height: 1.15 !important;
+}
+#search.wg-hero-search-panel .wg-hero-acc-hint {
+  display: block !important;
+  margin: 0.2rem 0 0 !important;
+  padding: 0 !important;
+  max-width: 10.5rem !important;
+  font-size: 0.7rem !important;
+  line-height: 1.25 !important;
+  color: rgba(255, 255, 255, 0.82) !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  text-align: center !important;
+}
+#search.wg-hero-search-panel .wg-hero-acc-chevron,
+#search.wg-hero-search-panel .wg-hero-acc-chevron.open {
+  display: block !important;
+  width: 14px !important;
+  height: 14px !important;
+  margin: 0.12rem auto 0 !important;
+  color: rgba(255, 255, 255, 0.9) !important;
+  fill: rgba(255, 255, 255, 0.9) !important;
+}
+/* رحلتي sticker */
+#search.wg-hero-search-panel .wg-hero-acc-mode-ruhelti {
+  position: relative !important;
+  overflow: visible !important;
+  z-index: 3 !important;
+}
+#search.wg-hero-search-panel .wg-hero-acc-ruhelti-sticker {
+  position: absolute !important;
+  inset: 50% auto auto 50% !important;
+  width: 4.35rem !important;
+  height: 4.35rem !important;
+  transform: translate(-50%, -50%) rotate(-8deg) !important;
+  border-radius: 999px !important;
+  border: 2px dashed rgba(255, 255, 255, 0.85) !important;
+  background:
+    radial-gradient(circle at 30% 30%, rgba(255,255,255,0.35), transparent 55%),
+    rgba(21, 101, 192, 0.35) !important;
+  box-shadow:
+    0 0 0 3px rgba(66, 165, 245, 0.35),
+    0 6px 14px rgba(0, 20, 50, 0.28) !important;
+  pointer-events: none !important;
+  z-index: 0 !important;
+}
+#search.wg-hero-search-panel .wg-hero-acc-ruhelti-stars {
+  position: absolute !important;
+  inset: 0 !important;
+  border-radius: inherit !important;
+  background-image:
+    radial-gradient(1.5px 1.5px at 18% 28%, #fff 99%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 72% 22%, #fff 99%, transparent 100%),
+    radial-gradient(1.2px 1.2px at 80% 68%, #fff 99%, transparent 100%),
+    radial-gradient(1.2px 1.2px at 28% 74%, #fff 99%, transparent 100%),
+    radial-gradient(1.4px 1.4px at 50% 12%, #ffe082 99%, transparent 100%),
+    radial-gradient(1.4px 1.4px at 58% 86%, #ffe082 99%, transparent 100%) !important;
+}
+#search.wg-hero-search-panel .wg-hero-acc-mode-ruhelti .wg-hero-acc-copy {
+  position: relative !important;
+  z-index: 1 !important;
+}
+#search.wg-hero-search-panel .wg-hero-acc-mode-ruhelti .wg-hero-acc-title {
+  font-size: 0.95rem !important;
+  text-shadow: 0 1px 2px rgba(0, 20, 50, 0.45) !important;
+}
+/* Trip choices row + fields: frosted glass */
 #search.wg-hero-search-panel .wg-hero-acc-tripstrip,
 #search.wg-hero-search-panel .wg-hero-acc-shell.is-open .wg-hero-acc-tripstrip,
 #search.wg-hero-search-panel .wg-hero-acc-shell .wg-hero-acc-tripstrip,
@@ -764,7 +857,6 @@ export function ShopHeroBanner(props: Props) {
   -webkit-backdrop-filter: blur(28px) saturate(1.35) !important;
   box-shadow: none !important;
 }
-/* Inner destinations/dates/travelers strip must also be glass, not navy */
 #search.wg-hero-search-panel .wg-hero-acc-panel .exp-dialog,
 #search.wg-hero-search-panel .wg-hero-acc-panel .exp-unified-card,
 #search.wg-hero-search-panel .wg-hero-acc-panel .wg-hero-ticket-card,
@@ -789,6 +881,13 @@ export function ShopHeroBanner(props: Props) {
   backdrop-filter: none !important;
 }
 #search.wg-hero-search-panel .wg-hero-acc-tripstrip {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.55rem !important;
+  min-height: 3.35rem !important;
+  padding: 0.7rem 0.85rem !important;
   border-radius: 0 !important;
   border-top: 0 !important;
   border-bottom: 0 !important;
@@ -799,26 +898,79 @@ export function ShopHeroBanner(props: Props) {
   border-top: 0 !important;
   border-radius: 0 0 18px 18px !important;
 }
-/* Gold trip pills on glass */
+/* Trip type pills: blue, larger type, centered */
 #search.wg-hero-search-panel .wg-hero-acc-trip {
   background: transparent !important;
-  border: 1.5px solid var(--wg-search-gold) !important;
-  color: var(--wg-search-gold) !important;
+  border: 1.5px solid var(--wg-search-blue-soft) !important;
+  color: #e3f2fd !important;
+  font-size: 0.92rem !important;
+  font-weight: 800 !important;
+  min-height: 2.35rem !important;
+  max-height: none !important;
+  padding: 0.4rem 1.05rem !important;
+  border-radius: 999px !important;
 }
 #search.wg-hero-search-panel .wg-hero-acc-trip.on {
-  background: var(--wg-search-gold) !important;
-  border-color: var(--wg-search-gold) !important;
-  color: #0a2a4a !important;
+  background: var(--wg-search-blue) !important;
+  border-color: var(--wg-search-blue) !important;
+  color: #fff !important;
+}
+#search.wg-hero-search-panel .wg-hero-acc-trip-extra,
+#search.wg-hero-search-panel .wg-hero-acc-cabin {
+  display: none !important;
+}
+/* Field icons + labels: blue, same baseline */
+#search.wg-hero-search-panel .wg-hero-acc-field,
+#search.wg-hero-search-panel .wg-hero-acc-field[data-field="travelers"],
+#search.wg-hero-search-panel .wg-hero-acc-field[data-field="guests"] {
+  display: grid !important;
+  grid-template-columns: auto minmax(0, 1fr) auto !important;
+  align-items: center !important;
+  align-content: center !important;
 }
 #search.wg-hero-search-panel .wg-hero-acc-field-ico,
-#search.wg-hero-search-panel .wg-hero-acc-panel .exp-cell-label {
-  color: var(--wg-search-gold) !important;
+#search.wg-hero-search-panel .wg-hero-acc-field[data-field="travelers"] .wg-hero-acc-field-ico,
+#search.wg-hero-search-panel .wg-hero-acc-field[data-field="guests"] .wg-hero-acc-field-ico,
+#search.wg-hero-search-panel .wg-hero-acc-field[data-field="dates"] .wg-hero-acc-field-ico,
+#search.wg-hero-search-panel .wg-hero-acc-field[data-field="from"] .wg-hero-acc-field-ico,
+#search.wg-hero-search-panel .wg-hero-acc-field[data-field="to"] .wg-hero-acc-field-ico {
+  color: var(--wg-search-blue-soft) !important;
+  background-color: currentColor !important;
+  align-self: center !important;
+  margin: 0 !important;
+  transform: none !important;
+  position: relative !important;
+  top: 0 !important;
 }
+#search.wg-hero-search-panel .wg-hero-acc-field-ico {
+  /* mask icons use background:currentColor */
+  background: currentColor !important;
+}
+#search.wg-hero-search-panel .wg-hero-acc-panel .exp-cell-label,
+#search.wg-hero-search-panel .wg-hero-acc-field .exp-cell-label,
+#search.wg-hero-search-panel .wg-hero-acc-field .shop-ac-inline > span:first-child,
+#search.wg-hero-search-panel .wg-hero-acc-field .exp-travelers-trigger .exp-cell-label {
+  color: var(--wg-search-blue-soft) !important;
+  -webkit-text-fill-color: var(--wg-search-blue-soft) !important;
+  font-weight: 700 !important;
+}
+/* Transparent search CTA */
 #search.wg-hero-search-panel .wg-hero-ticket-search.exp-search-link,
-#search.wg-hero-search-panel .wg-hero-acc-search-btn {
-  background: var(--wg-search-gold) !important;
-  border-color: var(--wg-search-gold) !important;
-  color: #0a2a4a !important;
+#search.wg-hero-search-panel .wg-hero-acc-search-btn,
+#search.wg-hero-search-panel .exp-search-link.wg-hero-acc-search-btn {
+  background: rgba(255, 255, 255, 0.14) !important;
+  background-color: rgba(255, 255, 255, 0.14) !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.55) !important;
+  color: #fff !important;
+  box-shadow: none !important;
+  backdrop-filter: blur(10px) !important;
+  -webkit-backdrop-filter: blur(10px) !important;
+}
+#search.wg-hero-search-panel .wg-hero-ticket-search.exp-search-link:hover:not(:disabled),
+#search.wg-hero-search-panel .wg-hero-acc-search-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.22) !important;
+  border-color: #fff !important;
+  color: #fff !important;
 }
 `,
             }}
@@ -853,10 +1005,8 @@ export function ShopHeroBanner(props: Props) {
                     <span className="wg-hero-acc-copy">
                       <span className="wg-hero-acc-textcol">
                         <span className="wg-hero-acc-title">{t(label)}</span>
-                        <span className="wg-hero-acc-meta">
-                          <span className="wg-hero-acc-hint">{t(hint)}</span>
-                          <AccordionChevron open={expanded} />
-                        </span>
+                        <span className="wg-hero-acc-hint">{t(hint)}</span>
+                        <AccordionChevron open={expanded} />
                       </span>
                       <span className="wg-hero-acc-icon" aria-hidden>
                         <ModeGlyph mode={key} />
@@ -873,6 +1023,9 @@ export function ShopHeroBanner(props: Props) {
                     onClick={() => props.onRuheltiClick?.()}
                     aria-haspopup="dialog"
                   >
+                    <span className="wg-hero-acc-ruhelti-sticker" aria-hidden>
+                      <span className="wg-hero-acc-ruhelti-stars" />
+                    </span>
                     <span className="wg-hero-acc-copy">
                       <span className="wg-hero-acc-textcol">
                         <span className="wg-hero-acc-title">{t("myTrip")}</span>
@@ -884,6 +1037,9 @@ export function ShopHeroBanner(props: Props) {
                     href={props.tripBuilderHref || "/trip-builder"}
                     className="wg-hero-dock-mode wg-hero-acc-mode wg-hero-acc-mode-ruhelti"
                   >
+                    <span className="wg-hero-acc-ruhelti-sticker" aria-hidden>
+                      <span className="wg-hero-acc-ruhelti-stars" />
+                    </span>
                     <span className="wg-hero-acc-copy">
                       <span className="wg-hero-acc-textcol">
                         <span className="wg-hero-acc-title">{t("myTrip")}</span>
@@ -898,17 +1054,17 @@ export function ShopHeroBanner(props: Props) {
               <div className="wg-hero-acc-tripstrip" role="group" aria-label={t("tripType")}>
                 <button
                   type="button"
-                  className={`wg-hero-acc-trip${props.tripType === "roundtrip" ? " on" : ""}`}
-                  onClick={() => props.onTripTypeChange("roundtrip")}
-                >
-                  {t("roundTrip")}
-                </button>
-                <button
-                  type="button"
                   className={`wg-hero-acc-trip${props.tripType === "oneway" ? " on" : ""}`}
                   onClick={() => props.onTripTypeChange("oneway")}
                 >
                   {t("oneWay")}
+                </button>
+                <button
+                  type="button"
+                  className={`wg-hero-acc-trip${props.tripType === "roundtrip" ? " on" : ""}`}
+                  onClick={() => props.onTripTypeChange("roundtrip")}
+                >
+                  {t("roundTrip")}
                 </button>
                 <button
                   type="button"
@@ -917,27 +1073,6 @@ export function ShopHeroBanner(props: Props) {
                 >
                   {t("multiCity")}
                 </button>
-                <label className={`wg-hero-acc-trip-extra${props.directOnly ? " on" : ""}`}>
-                  <input
-                    type="checkbox"
-                    checked={props.directOnly}
-                    onChange={(e) => props.onDirectOnlyChange(e.target.checked)}
-                  />
-                  <span>{t("directOnly")}</span>
-                </label>
-                <label className="wg-hero-acc-trip-extra wg-hero-acc-cabin">
-                  <span>{t("cabinClass")}</span>
-                  <select
-                    value={props.cabinClass}
-                    onChange={(e) => props.onCabinClassChange(e.target.value)}
-                    aria-label={t("cabinClass")}
-                  >
-                    <option value="economy">{t("cabinEconomy")}</option>
-                    <option value="premium_economy">{t("cabinPremium")}</option>
-                    <option value="business">{t("cabinBusiness")}</option>
-                    <option value="first">{t("cabinFirst")}</option>
-                  </select>
-                </label>
               </div>
             ) : null}
 

@@ -1032,8 +1032,14 @@ export function ShopHeroBanner(props: Props) {
   background-color: currentColor !important;
   -webkit-mask-size: contain !important;
   mask-size: contain !important;
+  align-self: flex-end !important;
+  margin: 0 0 0.12rem !important;
+  transform: none !important;
+  position: relative !important;
+  top: 0 !important;
   filter: none !important;
   opacity: 1 !important;
+  order: 0 !important;
 }
 #search.wg-hero-search-panel .wg-hero-acc-field-body,
 #search.wg-hero-search-panel .wg-hero-acc-field .exp-travelers-trigger,

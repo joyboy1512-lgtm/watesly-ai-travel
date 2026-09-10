@@ -9061,10 +9061,18 @@ html body .wg-hero-search-panel .wg-hero-acc-field {
 }
 html body .shop-root .wg-hero-acc-spiral,
 html body .wg-hero-acc-spiral {
-  background-image: url("/media/travela/notebook-wireo-strip.png?v=chrome4") !important;
+  background: none !important;
+  background-image: none !important;
+}
+html body .shop-root .wg-hero-acc-spiral-pair,
+html body .wg-hero-acc-spiral-pair {
+  display: block !important;
+  width: 1.85rem !important;
+  height: 3.05rem !important;
+  background-image: url("/media/travela/notebook-wireo-pair.png?v=chrome5") !important;
   background-repeat: no-repeat !important;
   background-position: center top !important;
-  background-size: 100% 2.85rem !important;
+  background-size: contain !important;
 }
 html body .shop-root .wg-hero-acc-trip-extra,
 html body .wg-hero-acc-trip-extra,

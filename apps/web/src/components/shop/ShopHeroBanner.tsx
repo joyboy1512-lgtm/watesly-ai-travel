@@ -731,30 +731,73 @@ export function ShopHeroBanner(props: Props) {
   overflow: visible !important;
   position: relative !important;
 }
-/* Photoreal Wire-O metallic twin-loop rings (decorative only; holes baked into strip) */
+/* Photoreal Wire-O metallic twin-loops — discrete pairs (no strip stretch) */
 #search.wg-hero-search-panel .wg-hero-acc-spiral {
   position: absolute !important;
-  top: -1.35rem !important;
-  inset-inline: 0.45rem !important;
-  height: 2.85rem !important;
-  display: block !important;
+  top: -1.45rem !important;
+  inset-inline: 0.55rem !important;
+  height: 3.05rem !important;
+  display: flex !important;
+  align-items: flex-start !important;
+  justify-content: space-between !important;
+  gap: 0 !important;
   pointer-events: none !important;
   z-index: 14 !important;
-  background-image: url("/media/travela/notebook-wireo-strip.png?v=chrome4") !important;
-  background-repeat: no-repeat !important;
-  background-position: center top !important;
-  background-size: 100% 2.85rem !important;
-  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.4)) !important;
+  background: none !important;
+  background-image: none !important;
+  filter: none !important;
 }
 #search.wg-hero-search-panel .wg-hero-acc-spiral-pair {
-  display: none !important;
+  display: block !important;
+  flex: 0 0 auto !important;
+  width: 1.85rem !important;
+  height: 3.05rem !important;
+  background-image: url("/media/travela/notebook-wireo-pair.png?v=chrome5") !important;
+  background-repeat: no-repeat !important;
+  background-position: center top !important;
+  background-size: contain !important;
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.45)) !important;
 }
+/* Punch holes under each twin-loop on the blue header */
 #search.wg-hero-search-panel .wg-hero-acc-modes {
   position: relative !important;
 }
 #search.wg-hero-search-panel .wg-hero-acc-modes::before {
-  content: none !important;
-  display: none !important;
+  content: "" !important;
+  display: block !important;
+  position: absolute !important;
+  top: 0.38rem !important;
+  inset-inline: 0.7rem !important;
+  height: 0.7rem !important;
+  pointer-events: none !important;
+  z-index: 5 !important;
+  background-image: url("/media/travela/notebook-wireo-pair.png?v=chrome5") !important;
+  background-size: 0 !important; /* placeholder reset */
+  /* two holes per pair slot across 11 pairs */
+  background:
+    radial-gradient(circle at 4.5% 50%, #060b14 0 36%, rgba(255,255,255,0.2) 40%, transparent 48%),
+    radial-gradient(circle at 7.5% 50%, #060b14 0 36%, rgba(255,255,255,0.2) 40%, transparent 48%),
+    radial-gradient(circle at 14.5% 50%, #060b14 0 36%, rgba(255,255,255,0.2) 40%, transparent 48%),
+    radial-gradient(circle at 17.5% 50%, #060b14 0 36%, rgba(255,255,255,0.2) 40%, transparent 48%),
+    radial-gradient(circle at 24.5% 50%, #060b14 0 36%, rgba(255,255,255,0.2) 40%, transparent 48%),
+    radial-gradient(circle at 27.5% 50%, #060b14 0 36%, rgba(255,255,255,0.2) 40%, transparent 48%),
+    radial-gradient(circle at 34.5% 50%, #060b14 0 36%, rgba(255,255,255,0.2) 40%, transparent 48%),
+    radial-gradient(circle at 37.5% 50%, #060b14 0 36%, rgba(255,255,255,0.2) 40%, transparent 48%),
+    radial-gradient(circle at 44.5% 50%, #060b14 0 36%, rgba(255,255,255,0.2) 40%, transparent 48%),
+    radial-gradient(circle at 47.5% 50%, #060b14 0 36%, rgba(255,255,255,0.2) 40%, transparent 48%),
+    radial-gradient(circle at 54.5% 50%, #060b14 0 36%, rgba(255,255,255,0.2) 40%, transparent 48%),
+    radial-gradient(circle at 57.5% 50%, #060b14 0 36%, rgba(255,255,255,0.2) 40%, transparent 48%),
+    radial-gradient(circle at 64.5% 50%, #060b14 0 36%, rgba(255,255,255,0.2) 40%, transparent 48%),
+    radial-gradient(circle at 67.5% 50%, #060b14 0 36%, rgba(255,255,255,0.2) 40%, transparent 48%),
+    radial-gradient(circle at 74.5% 50%, #060b14 0 36%, rgba(255,255,255,0.2) 40%, transparent 48%),
+    radial-gradient(circle at 77.5% 50%, #060b14 0 36%, rgba(255,255,255,0.2) 40%, transparent 48%),
+    radial-gradient(circle at 84.5% 50%, #060b14 0 36%, rgba(255,255,255,0.2) 40%, transparent 48%),
+    radial-gradient(circle at 87.5% 50%, #060b14 0 36%, rgba(255,255,255,0.2) 40%, transparent 48%),
+    radial-gradient(circle at 94.5% 50%, #060b14 0 36%, rgba(255,255,255,0.2) 40%, transparent 48%),
+    radial-gradient(circle at 97.5% 50%, #060b14 0 36%, rgba(255,255,255,0.2) 40%, transparent 48%) !important;
+  background-size: 100% 100% !important;
+  background-repeat: no-repeat !important;
+  opacity: 1 !important;
 }
 /* Top tabs: solid blue */
 #search.wg-hero-search-panel .wg-hero-acc-modes,
@@ -1130,7 +1173,7 @@ export function ShopHeroBanner(props: Props) {
           />
           <div className={`wg-hero-ticket-shell wg-hero-dock-shell wg-hero-acc-shell${dockOpen ? " is-open" : ""}`} data-mode={props.mode}>
             <div className="wg-hero-acc-spiral" aria-hidden="true">
-              {Array.from({ length: 7 }, (_, i) => (
+              {Array.from({ length: 11 }, (_, i) => (
                 <span key={i} className="wg-hero-acc-spiral-pair" />
               ))}
             </div>

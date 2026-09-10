@@ -732,16 +732,16 @@ export function ShopHeroBanner(props: Props) {
   overflow: visible !important;
   position: relative !important;
 }
-/* Small tight Wire-O rings — no punch holes */
+/* Tiny packed Wire-O rings — no gaps, no punch holes */
 #search.wg-hero-search-panel .wg-hero-acc-spiral {
   position: absolute !important;
-  top: -0.85rem !important;
-  inset-inline: 1.1rem !important;
-  height: 1.85rem !important;
+  top: -0.55rem !important;
+  inset-inline: 0.85rem !important;
+  height: 1.15rem !important;
   display: flex !important;
   align-items: flex-start !important;
-  justify-content: center !important;
-  gap: 0.18rem !important;
+  justify-content: space-between !important;
+  gap: 0 !important;
   pointer-events: none !important;
   z-index: 14 !important;
   background: none !important;
@@ -750,14 +750,16 @@ export function ShopHeroBanner(props: Props) {
 }
 #search.wg-hero-search-panel .wg-hero-acc-spiral-pair {
   display: block !important;
-  flex: 0 0 auto !important;
-  width: 0.95rem !important;
-  height: 1.85rem !important;
-  background-image: url("/media/travela/notebook-wireo-pair.png?v=chrome10") !important;
+  flex: 1 1 0 !important;
+  min-width: 0 !important;
+  width: auto !important;
+  max-width: 0.55rem !important;
+  height: 1.15rem !important;
+  background-image: url("/media/travela/notebook-wireo-pair.png?v=chrome11") !important;
   background-repeat: no-repeat !important;
   background-position: center top !important;
-  background-size: contain !important;
-  filter: drop-shadow(0 1px 1.5px rgba(0, 0, 0, 0.3)) !important;
+  background-size: 100% 100% !important;
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.28)) !important;
 }
 /* No punch holes under the rings */
 #search.wg-hero-search-panel .wg-hero-acc-modes {
@@ -1173,7 +1175,7 @@ export function ShopHeroBanner(props: Props) {
           />
           <div className={`wg-hero-ticket-shell wg-hero-dock-shell wg-hero-acc-shell${dockOpen ? " is-open" : ""}`} data-mode={props.mode}>
             <div className="wg-hero-acc-spiral" aria-hidden="true">
-              {Array.from({ length: 18 }, (_, i) => (
+              {Array.from({ length: 32 }, (_, i) => (
                 <span key={i} className="wg-hero-acc-spiral-pair" />
               ))}
             </div>

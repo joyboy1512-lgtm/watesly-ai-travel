@@ -157,7 +157,7 @@ function ModeGlyph({ mode }: { mode: Mode }) {
 function TabGlyph({ mode }: { mode: Mode | "trip" }) {
   if (mode === "stays") {
     return (
-      <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden>
+      <svg viewBox="0 0 24 24" width="26" height="26" aria-hidden>
         <path
           fill="currentColor"
           d="M7 13c1.66 0 3-1.34 3-3S8.66 7 7 7s-3 1.34-3 3 1.34 3 3 3zm12-6h-8v7H3V5H1v15h2v-3h18v3h2v-9c0-2.21-1.79-4-4-4z"
@@ -167,7 +167,7 @@ function TabGlyph({ mode }: { mode: Mode | "trip" }) {
   }
   if (mode === "flights") {
     return (
-      <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden>
+      <svg viewBox="0 0 24 24" width="26" height="26" aria-hidden>
         <path
           fill="currentColor"
           d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"
@@ -177,7 +177,7 @@ function TabGlyph({ mode }: { mode: Mode | "trip" }) {
   }
   if (mode === "cars") {
     return (
-      <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden>
+      <svg viewBox="0 0 24 24" width="26" height="26" aria-hidden>
         <path
           fill="currentColor"
           d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"
@@ -187,7 +187,7 @@ function TabGlyph({ mode }: { mode: Mode | "trip" }) {
   }
   if (mode === "trip") {
     return (
-      <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden>
+      <svg viewBox="0 0 24 24" width="26" height="26" aria-hidden>
         <path
           fill="currentColor"
           d="M12 2 4 5v6.09c0 5.05 3.41 9.76 8 10.91 4.59-1.15 8-5.86 8-10.91V5l-8-3z"
@@ -196,7 +196,7 @@ function TabGlyph({ mode }: { mode: Mode | "trip" }) {
     );
   }
   return (
-    <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden>
+    <svg viewBox="0 0 24 24" width="26" height="26" aria-hidden>
       <path
         fill="currentColor"
         d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 2c4.41 0 8 3.59 8 8s-3.59 8-8 8-8-3.59-8-8 3.59-8 8-8z"
@@ -275,7 +275,9 @@ function DatePick({
   return (
     <div className="exp-date-pick">
       <button type="button" className="exp-date-btn" onClick={openPicker} aria-label={label}>
-        {mounted ? (value ? formatDay(value, locale) : label) : value || label}
+        <span className="wg-num" dir="ltr">
+          {mounted ? (value ? formatDay(value, locale) : label) : value || label}
+        </span>
       </button>
       <input
         ref={inputRef}
@@ -671,7 +673,18 @@ export function ShopHeroBanner(props: Props) {
             setTravelersOpen((v) => !v);
           }}
         >
-          <strong>{travelerSummary}</strong>
+          <strong>
+            {props.mode === "flights" ? (
+              <>
+                <span className="wg-num" dir="ltr">
+                  {travelerCount}
+                </span>{" "}
+                {travelerWord} {cabinLabel}
+              </>
+            ) : (
+              travelerSummary
+            )}
+          </strong>
         </button>
         {renderTravelersPanel()}
       </div>
@@ -851,7 +864,7 @@ export function ShopHeroBanner(props: Props) {
 #search.wg-simple-search {
   width: min(calc(1120px + 2cm), calc(100% - 1.15rem)) !important;
   max-width: calc(1120px + 2cm) !important;
-  top: 4.85rem !important;
+          top: 4.2rem !important;
   bottom: auto !important;
   margin: 0 !important;
   padding: 0 !important;
@@ -866,7 +879,7 @@ export function ShopHeroBanner(props: Props) {
   top: 0 !important;
   left: 0 !important;
   right: 0 !important;
-  height: 158px !important;
+  height: 128px !important;
   background: #1565c0 !important;
   z-index: 3 !important;
   pointer-events: none !important;
@@ -895,9 +908,13 @@ html body .wg-travela-hero .wg-travela-caption {
 .wg-svc-tabs {
   display: flex !important;
   align-items: center !important;
-  gap: 0.45rem 0.75rem !important;
+  gap: 0.45rem 0.85rem !important;
   flex-wrap: nowrap !important;
+  overflow-x: auto !important;
+  scrollbar-width: none !important;
 }
+.wg-header-services::-webkit-scrollbar,
+.wg-svc-tabs::-webkit-scrollbar { display: none !important; }
 .wg-header-services .wg-svc-tab,
 .wg-svc-tabs .wg-svc-tab {
   appearance: none !important;
@@ -906,14 +923,14 @@ html body .wg-travela-hero .wg-travela-caption {
   color: #fff !important;
   -webkit-text-fill-color: #fff !important;
   font: inherit !important;
-  font-size: 1.08rem !important;
+  font-size: 1.24rem !important;
   letter-spacing: 0.01em !important;
   white-space: nowrap !important;
   font-weight: 900 !important;
   display: inline-flex !important;
   align-items: center !important;
-  gap: 0.48rem !important;
-  padding: 0.32rem 0.28rem 0.46rem !important;
+  gap: 0.52rem !important;
+  padding: 0.36rem 0.34rem 0.5rem !important;
   cursor: pointer !important;
   text-decoration: none !important;
   border-bottom: 2px solid transparent !important;
@@ -924,8 +941,8 @@ html body .wg-travela-hero .wg-travela-caption {
 }
 .wg-header-services .wg-svc-tab svg,
 .wg-svc-tabs .wg-svc-tab svg {
-  width: 22px !important;
-  height: 22px !important;
+  width: 26px !important;
+  height: 26px !important;
   flex: 0 0 auto !important;
 }
 .wg-header-services .wg-svc-tab.on,
@@ -1060,10 +1077,15 @@ html body .wg-travela-hero .wg-travela-caption {
   position: relative !important;
   z-index: 4 !important;
 }
-#search.wg-simple-search .wg-num {
+#search.wg-simple-search .wg-num,
+#search.wg-simple-search .exp-date-btn,
+#search.wg-simple-search .exp-travelers-trigger strong,
+#search.wg-simple-search .exp-time-select,
+#search.wg-simple-search .exp-stepper strong {
   direction: ltr !important;
   unicode-bidi: isolate !important;
   font-variant-numeric: lining-nums tabular-nums !important;
+  font-feature-settings: "locl" 0 !important;
 }
 #search.wg-simple-search .wg-search-btn:hover:not(:disabled) {
   background: #0d47a1 !important;

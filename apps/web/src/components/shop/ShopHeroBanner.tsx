@@ -864,7 +864,7 @@ export function ShopHeroBanner(props: Props) {
 #search.wg-simple-search {
   width: min(calc(1120px + 2cm), calc(100% - 1.15rem)) !important;
   max-width: calc(1120px + 2cm) !important;
-          top: calc(4.2rem - 1.5cm) !important;
+          top: 5.35rem !important;
   bottom: auto !important;
   margin: 0 !important;
   padding: 0 !important;

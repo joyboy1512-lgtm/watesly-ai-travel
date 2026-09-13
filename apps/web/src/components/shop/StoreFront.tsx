@@ -55,6 +55,22 @@ function IconPhone({ size = 22 }: { size?: number }) {
   );
 }
 
+function IconAiSpark({ size = 20 }: { size?: number }) {
+  return (
+    <svg viewBox="0 0 24 24" width={size} height={size} aria-hidden>
+      <path
+        fill="currentColor"
+        d="M12 2.2 13.4 8l5.6 1.4L13.4 10.8 12 16.6 10.6 10.8 5 9.4 10.6 8 12 2.2zm7.2 11.3 0.8 3.1 3.1.8-3.1.8-.8 3.1-.8-3.1-3.1-.8 3.1-.8.8-3.1zM4.8 13.4l.7 2.4 2.4.6-2.4.6-.7 2.4-.6-2.4-2.4-.6 2.4-.6.6-2.4z"
+      />
+    </svg>
+  );
+}
+
+function openShopAssistant() {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(new Event("wg-open-assistant"));
+}
+
 function IconUser({ size = 22 }: { size?: number }) {
   return (
     <svg viewBox="0 0 24 24" width={size} height={size} aria-hidden>
@@ -149,6 +165,16 @@ function StoreFrontInner({
                   dir={locale === "en" ? "ltr" : "rtl"}
                   aria-label={locale === "en" ? "Booking services" : "خدمات الحجز"}
                 />
+              ) : null}
+              {isHome ? (
+                <button
+                  type="button"
+                  className="wg-hero-ai-btn"
+                  onClick={openShopAssistant}
+                >
+                  <IconAiSpark />
+                  <span>{t("aiAssistant")}</span>
+                </button>
               ) : null}
             </div>
 
@@ -352,6 +378,16 @@ function StoreFrontInner({
                 dir={locale === "en" ? "ltr" : "rtl"}
                 aria-label={locale === "en" ? "Booking services" : "خدمات الحجز"}
               />
+            ) : null}
+            {isHome ? (
+              <button
+                type="button"
+                className="wg-hero-ai-btn"
+                onClick={openShopAssistant}
+              >
+                <IconAiSpark />
+                <span>{t("aiAssistant")}</span>
+              </button>
             ) : null}
 
             <div className="wg-header-end">

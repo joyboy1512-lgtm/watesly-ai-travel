@@ -864,7 +864,7 @@ export function ShopHeroBanner(props: Props) {
 #search.wg-simple-search {
   width: min(calc(1120px + 2cm), calc(100% - 1.15rem)) !important;
   max-width: calc(1120px + 2cm) !important;
-          top: 4.2rem !important;
+          top: calc(4.2rem - 1.5cm) !important;
   bottom: auto !important;
   margin: 0 !important;
   padding: 0 !important;
@@ -879,7 +879,7 @@ export function ShopHeroBanner(props: Props) {
   top: 0 !important;
   left: 0 !important;
   right: 0 !important;
-  height: 128px !important;
+  height: calc(128px - 1.5cm) !important;
   background: #1565c0 !important;
   z-index: 3 !important;
   pointer-events: none !important;
@@ -901,7 +901,7 @@ html body .shop-root.wg-new-ui .wg-header-blue .wg-topbar-start {
   min-width: 0 !important;
 }
 html body .wg-travela-hero .wg-travela-caption {
-  padding-top: 13.25rem !important;
+  padding-top: calc(13.25rem - 1.5cm) !important;
   align-items: flex-end !important;
 }
 .wg-header-services,

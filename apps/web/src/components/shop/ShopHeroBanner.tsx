@@ -879,7 +879,7 @@ export function ShopHeroBanner(props: Props) {
   top: 0 !important;
   left: 0 !important;
   right: 0 !important;
-  height: calc(128px - 1.5cm) !important;
+  height: calc(5.35rem + 4rem) !important;
   background: #1565c0 !important;
   z-index: 3 !important;
   pointer-events: none !important;

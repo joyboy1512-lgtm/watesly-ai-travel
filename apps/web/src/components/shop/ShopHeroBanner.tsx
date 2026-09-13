@@ -968,10 +968,10 @@ html body .wg-travela-hero .wg-travela-caption {
   display: inline-flex !important;
   align-items: center !important;
   gap: 0.4rem !important;
-  color: #5c6478 !important;
-  -webkit-text-fill-color: #5c6478 !important;
+  color: #111 !important;
+  -webkit-text-fill-color: #111 !important;
   font-size: 0.86rem !important;
-  font-weight: 500 !important;
+  font-weight: 600 !important;
   cursor: pointer !important;
   background: none !important;
   border: 0 !important;
@@ -1026,8 +1026,8 @@ html body .wg-travela-hero .wg-travela-caption {
   border: 0 !important;
   background: transparent !important;
   box-shadow: none !important;
-  color: #2b3346 !important;
-  -webkit-text-fill-color: #2b3346 !important;
+  color: #111 !important;
+  -webkit-text-fill-color: #111 !important;
   width: 100% !important;
   text-shadow: none !important;
 }
@@ -1036,9 +1036,14 @@ html body .wg-travela-hero .wg-travela-caption {
 #search.wg-simple-search .wg-simple-cell .exp-travelers-trigger strong,
 #search.wg-simple-search .wg-simple-cell .shop-date-range-trigger {
   font-size: 0.92rem !important;
-  font-weight: 600 !important;
-  color: #2b3346 !important;
-  -webkit-text-fill-color: #2b3346 !important;
+  font-weight: 700 !important;
+  color: #111 !important;
+  -webkit-text-fill-color: #111 !important;
+}
+#search.wg-simple-search .wg-simple-cell .shop-ac-inline input::placeholder {
+  color: #3a3a3a !important;
+  -webkit-text-fill-color: #3a3a3a !important;
+  opacity: 1 !important;
 }
 #search.wg-simple-search .wg-swap {
   flex: 0 0 auto !important;
@@ -1090,10 +1095,49 @@ html body .wg-travela-hero .wg-travela-caption {
 #search.wg-simple-search .wg-search-btn:hover:not(:disabled) {
   background: #0d47a1 !important;
 }
+html body .shop-root #search.wg-simple-search .prc-suggest,
+html body .shop-root #search.wg-simple-search .exp-ac-menu,
+html body .shop-root #search.wg-simple-search .shop-ac .prc-suggest,
+html body .shop-root #search.wg-simple-search .exp-travelers-panel,
+html body .shop-root #search.wg-simple-search .exp-occupancy-panel,
+html body .shop-root #search.wg-simple-search .shop-date-range-pop,
+html body #search.wg-simple-search .prc-suggest,
+html body #search.wg-simple-search .exp-ac-menu,
+html body #search.wg-simple-search .exp-travelers-panel,
+html body #search.wg-simple-search .exp-occupancy-panel,
+html body #search.wg-simple-search .shop-date-range-pop {
+  position: absolute !important;
+  top: calc(100% + 6px) !important;
+  bottom: auto !important;
+  inset-inline-start: 0 !important;
+  inset-inline-end: auto !important;
+  left: auto !important;
+  right: auto !important;
+  transform: none !important;
+  z-index: 80 !important;
+  max-height: min(280px, 45vh) !important;
+  overflow: auto !important;
+}
+html body .shop-root #search.wg-simple-search .shop-date-range-pop,
+html body #search.wg-simple-search .shop-date-range-pop {
+  max-height: min(420px, 70vh) !important;
+  width: min(640px, 92vw) !important;
+}
+html body .shop-root #search.wg-simple-search .prc-suggest button,
+html body .shop-root #search.wg-simple-search .exp-ac-menu button,
+html body #search.wg-simple-search .prc-suggest button {
+  color: #111 !important;
+  -webkit-text-fill-color: #111 !important;
+}
+html body .shop-root #search.wg-simple-search .prc-suggest button strong,
+html body #search.wg-simple-search .prc-suggest button strong {
+  color: #111 !important;
+  -webkit-text-fill-color: #111 !important;
+}
 #search.wg-simple-search .wg-add-leg {
   border: 0 !important;
   background: transparent !important;
-  color: #5c6478 !important;
+  color: #111 !important;
   font: inherit !important;
   font-weight: 600 !important;
   cursor: pointer !important;
@@ -1104,13 +1148,13 @@ html body .wg-travela-hero .wg-travela-caption {
   align-items: center !important;
   justify-content: space-between !important;
   gap: 0.75rem !important;
-  color: #2b3346 !important;
+  color: #111 !important;
 }
 #search.wg-simple-search .wg-cabin-row select {
   border: 1px solid #e6e8ee !important;
   border-radius: 8px !important;
   background: #fff !important;
-  color: #2b3346 !important;
+  color: #111 !important;
 }
 @media (max-width: 720px) {
   #search.wg-simple-search .wg-simple-fields { flex-wrap: wrap !important; }
@@ -1364,7 +1408,6 @@ html body .wg-travela-hero .wg-travela-caption {
                 <div className="wg-simple-cell wg-cell-dates">
                   {showReturnDate && props.mode !== "stays" ? (
                     <ShopDateRangePicker
-                      forcePortal
                       checkIn={props.departDate}
                       checkOut={props.returnDate}
                       onChange={(checkIn, checkOut) => {

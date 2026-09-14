@@ -1101,15 +1101,32 @@ html body .wg-travela-hero .wg-travela-caption {
   margin: 0 0.12rem !important;
   background: #fff !important;
 }
+#search.wg-simple-search .wg-cell-origin,
+#search.wg-simple-search .wg-cell-dest {
+  flex: 1.22 1 0 !important;
+  min-width: 8.75rem !important;
+}
 #search.wg-simple-search .wg-cell-travelers {
-  flex: 1.05 1 0 !important;
-  min-width: 9.5rem !important;
+  flex: 1.08 1 0 !important;
+  min-width: 8.5rem !important;
 }
 #search.wg-simple-search .wg-cell-dates {
-  flex: 1.7 1 14rem !important;
-  min-width: 14.5rem !important;
+  flex: 0.92 1 0 !important;
+  min-width: 8.4rem !important;
+  max-width: 11.25rem !important;
 }
-#search.wg-simple-search .shop-date-range-summary,
+#search.wg-simple-search .shop-date-range-summary {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  justify-content: center !important;
+  gap: 0.02rem !important;
+  white-space: nowrap !important;
+  line-height: 1.18 !important;
+}
+#search.wg-simple-search .shop-date-range-join {
+  display: none !important;
+}
 #search.wg-simple-search .shop-date-range-footer-dates {
   white-space: nowrap !important;
 }
@@ -1393,6 +1410,10 @@ html body #search.wg-simple-search .shop-date-range-pop {
   gap: 0.4rem !important;
   flex-wrap: nowrap !important;
   min-width: 0 !important;
+}
+#search.wg-simple-search .wg-cell-dates .shop-date-range-trigger,
+#search.wg-simple-search .wg-cell-dates .exp-date-btn {
+  font-size: 0.84rem !important;
 }
 #search.wg-simple-search .wg-cell-nights {
   flex: 0 0 auto !important;

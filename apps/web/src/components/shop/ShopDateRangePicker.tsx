@@ -225,15 +225,10 @@ export function ShopDateRangePicker({
     setOpen(false);
   }
 
-  const summary = open
-    ? draftIn && draftOut
-      ? `${formatShort(draftIn)} – ${formatShort(draftOut)}`
-      : draftIn
-        ? `${formatShort(draftIn)} – …`
-        : placeholder
-    : checkIn && checkOut
-      ? `${formatShort(checkIn)} – ${formatShort(checkOut)}`
-      : placeholder;
+  const summaryStart = open ? draftIn : checkIn;
+  const summaryEnd = open ? draftOut : checkOut;
+  const summaryFallback = placeholder;
+  const showSummaryRange = Boolean(summaryStart && (open ? summaryStart : checkIn && checkOut));
 
   const panel = (
     <div
@@ -329,7 +324,17 @@ export function ShopDateRangePicker({
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
       >
-        <span className="shop-date-range-summary">{summary}</span>
+        <span className="shop-date-range-summary">
+          {showSummaryRange ? (
+            <>
+              <span className="shop-date-range-line">{formatShort(summaryStart)}</span>
+              <span className="shop-date-range-join"> – </span>
+              <span className="shop-date-range-line">{summaryEnd ? formatShort(summaryEnd) : "…"}</span>
+            </>
+          ) : (
+            summaryFallback
+          )}
+        </span>
       </button>
       {open && !isMobile ? panel : null}
       {mobileOverlay}

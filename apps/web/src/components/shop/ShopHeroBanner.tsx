@@ -440,7 +440,7 @@ export function ShopHeroBanner(props: Props) {
     props.mode === "stays"
       ? t("guestsAdultsChildren", { adults: stayAdults, children: stayChildren })
       : props.mode === "flights"
-        ? `${travelerCount} ${travelerWord} ${cabinLabel}`
+        ? `${travelerCount} ${travelerWord}${locale === "en" ? "," : "،"} ${cabinLabel}`
         : shopTravelerCount(locale, travelerCount);
 
   function updateStayOccupancy(next: HotelOccupancyState) {
@@ -733,6 +733,7 @@ export function ShopHeroBanner(props: Props) {
                   </span>
                   <span>{travelerWord}</span>
                 </span>
+                <span className="wg-traveler-sep">{locale === "en" ? "," : "،"}</span>
                 <span className="wg-cabin-chip">{cabinLabel}</span>
               </>
             ) : (
@@ -1057,23 +1058,30 @@ html body .wg-travela-hero .wg-travela-caption {
   gap: 0.4rem !important;
   padding: 0.3rem 0.7rem !important;
   position: relative !important;
-  border: 0 !important;
-  border-inline-start: 1px solid #eef0f4 !important;
-  background: transparent !important;
+  border: 1.5px solid #1565c0 !important;
+  border-radius: 12px !important;
+  margin: 0 0.12rem !important;
+  background: #fff !important;
   box-shadow: none !important;
   height: auto !important;
   min-height: 52px !important;
 }
 #search.wg-simple-search .wg-simple-fields > .wg-simple-cell:first-child {
-  border-inline-start: 0 !important;
+  border-inline-start: 1.5px solid #1565c0 !important;
 }
 #search.wg-simple-search .wg-cell-origin,
 #search.wg-simple-search .wg-cell-dest,
-#search.wg-simple-search .wg-cell-dates {
+#search.wg-simple-search .wg-cell-dates,
+#search.wg-simple-search .wg-cell-travelers,
+#search.wg-simple-search .wg-cell-time {
   border: 1.5px solid #1565c0 !important;
   border-radius: 12px !important;
   margin: 0 0.12rem !important;
   background: #fff !important;
+}
+#search.wg-simple-search .wg-cell-travelers {
+  flex: 1.05 1 0 !important;
+  min-width: 9.5rem !important;
 }
 #search.wg-simple-search .wg-simple-cell:focus-within {
   box-shadow: none !important;
@@ -1108,26 +1116,26 @@ html body .wg-travela-hero .wg-travela-caption {
 }
 #search.wg-simple-search .wg-traveler-line {
   display: flex !important;
-  flex-direction: column !important;
-  align-items: flex-start !important;
-  justify-content: center !important;
-  gap: 0.14rem !important;
-  line-height: 1.15 !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 0.28rem !important;
+  line-height: 1.2 !important;
   font-weight: 800 !important;
+  white-space: nowrap !important;
 }
-#search.wg-simple-search .wg-traveler-count {
+#search.wg-simple-search .wg-traveler-count,
+#search.wg-simple-search .wg-traveler-sep,
+#search.wg-simple-search .wg-cabin-chip {
   display: inline-flex !important;
   align-items: center !important;
   gap: 0.28rem !important;
   white-space: nowrap !important;
-}
-#search.wg-simple-search .wg-cabin-chip {
-  display: block !important;
-  color: #1565c0 !important;
-  -webkit-text-fill-color: #1565c0 !important;
-  font-size: 0.78rem !important;
+  color: #111 !important;
+  -webkit-text-fill-color: #111 !important;
+  font-size: 0.92rem !important;
   font-weight: 800 !important;
-  white-space: nowrap !important;
 }
 html body .shop-root #search.wg-simple-search .shop-date-range-day:not(.muted),
 html body #search.wg-simple-search .shop-date-range-day:not(.muted) {
@@ -1342,7 +1350,7 @@ html body #search.wg-simple-search .prc-suggest button strong {
 }
 @media (max-width: 720px) {
   #search.wg-simple-search .wg-simple-fields { flex-wrap: wrap !important; }
-  #search.wg-simple-search .wg-simple-cell { flex: 1 1 100% !important; border-inline-start: 0 !important; border-top: 1px solid #eef0f4 !important; }
+  #search.wg-simple-search .wg-simple-cell { flex: 1 1 100% !important; border: 1.5px solid #1565c0 !important; }
   #search.wg-simple-search .wg-search-btn { width: auto !important; margin-inline-end: 0 !important; justify-content: center !important; }
 }
 `,

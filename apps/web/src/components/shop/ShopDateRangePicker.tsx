@@ -33,10 +33,13 @@ function addDays(iso: string, days: number) {
   return toIso(d);
 }
 
+const WEEKDAY_SHORT_AR = ["أحد", "اثنين", "ثلاثاء", "أربعاء", "خميس", "جمعة", "سبت"];
+
 function formatShort(iso: string) {
   const d = parseIso(iso);
   if (!d) return "—";
-  return d.toLocaleDateString("ar-KW", { weekday: "short", day: "numeric", month: "short" });
+  const rest = d.toLocaleDateString("ar-KW", { day: "numeric", month: "short" });
+  return `${WEEKDAY_SHORT_AR[d.getDay()]} ${rest}`;
 }
 
 function monthLabel(year: number, month: number) {

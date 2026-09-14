@@ -6,7 +6,6 @@ import Link from "next/link";
 import { heroSlidesFor } from "@/lib/shop-content";
 import { ShopAutocomplete, type SuggestItem } from "@/components/shop/ShopAutocomplete";
 import { ShopDateRangePicker } from "@/components/shop/ShopDateRangePicker";
-import { formatDay } from "@/lib/flight-search";
 import { useShopI18n } from "@/components/shop/ShopI18nProvider";
 import { readHeroServices } from "@/lib/hero-services";
 import {
@@ -278,6 +277,20 @@ function FieldIcon({
   );
 }
 
+const WEEKDAY_SHORT_AR = ["أحد", "اثنين", "ثلاثاء", "أربعاء", "خميس", "جمعة", "سبت"];
+const WEEKDAY_SHORT_EN = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+function formatFieldDate(iso: string, locale = "ar") {
+  const d = new Date(`${iso}T12:00:00`);
+  if (Number.isNaN(d.getTime())) return iso;
+  const weekday = (locale === "en" ? WEEKDAY_SHORT_EN : WEEKDAY_SHORT_AR)[d.getDay()];
+  const rest = d.toLocaleDateString(locale === "en" ? "en-GB" : "ar-KW", {
+    day: "numeric",
+    month: "short",
+  });
+  return `${weekday} ${rest}`;
+}
+
 function nightsBetweenIso(from: string, to: string) {
   const a = new Date(`${from}T12:00:00`);
   const b = new Date(`${to}T12:00:00`);
@@ -331,7 +344,7 @@ function DatePick({
     <div className="exp-date-pick">
       <button type="button" className="exp-date-btn" onClick={openPicker} aria-label={label}>
         <span className="wg-num" dir="ltr">
-          {mounted ? (value ? formatDay(value, locale) : label) : value || label}
+          {mounted ? (value ? formatFieldDate(value, locale) : label) : value || label}
         </span>
       </button>
       <input
@@ -1091,6 +1104,14 @@ html body .wg-travela-hero .wg-travela-caption {
 #search.wg-simple-search .wg-cell-travelers {
   flex: 1.05 1 0 !important;
   min-width: 9.5rem !important;
+}
+#search.wg-simple-search .wg-cell-dates {
+  flex: 1.7 1 14rem !important;
+  min-width: 14.5rem !important;
+}
+#search.wg-simple-search .shop-date-range-summary,
+#search.wg-simple-search .shop-date-range-footer-dates {
+  white-space: nowrap !important;
 }
 #search.wg-simple-search .wg-simple-cell:focus-within {
   box-shadow: none !important;

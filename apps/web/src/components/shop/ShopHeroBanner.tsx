@@ -235,23 +235,17 @@ function FieldIcon({
 }: {
   name: "takeoff" | "landing" | "location" | "dates" | "travelers";
 }) {
-  const common = { viewBox: "0 0 24 24", width: 18, height: 18, "aria-hidden": true } as const;
-  if (name === "takeoff") {
+  const common = { viewBox: "0 0 24 24", width: 22, height: 22, "aria-hidden": true } as const;
+  if (name === "takeoff" || name === "landing") {
     return (
-      <svg {...common}>
+      <svg
+        {...common}
+        className={name === "landing" ? "wg-plane-land" : "wg-plane-off"}
+      >
+        <circle cx="12" cy="12" r="11" fill="#111" />
         <path
-          fill="currentColor"
-          d="M2.5 19h19v2h-19zm19.57-9.36c-.21-.8-1.04-1.28-1.84-1.06L14.92 10 8 3.78 6.17 5.31 12.02 12.32 3.78 14.39l.18 1.94 8.93-1.83 1.81 1.81-2.47 1.03.93 1.75 4.37-1.82c.8-.33 1.17-1.23.84-2.03z"
-        />
-      </svg>
-    );
-  }
-  if (name === "landing") {
-    return (
-      <svg {...common}>
-        <path
-          fill="currentColor"
-          d="M2.5 19h19v2h-19zm16.84-6.01c.21.82-.26 1.66-1.08 1.87l-6.07 1.6-4.09 7.62-1.83-1.03 3.14-5.83-6.22-1.64-.18-1.94 8.16 2.16 3.16-1.68-1.81-1.81 2.47-1.03z"
+          fill="#fff"
+          d="M12 3.1 13.15 9.2 20 10.45v1.7l-6.85.55-.85 5.85 2.35.85V20.4L12 19.45 9.35 20.4v-1.05l2.35-.85-.85-5.85L4 12.15v-1.7L10.85 9.2 12 3.1z"
         />
       </svg>
     );
@@ -732,13 +726,16 @@ export function ShopHeroBanner(props: Props) {
             setTravelersOpen((v) => !v);
           }}
         >
-          <strong>
+          <strong className="wg-traveler-line">
             {props.mode === "flights" ? (
               <>
-                <span className="wg-num" dir="ltr">
-                  {travelerCount}
-                </span>{" "}
-                {travelerWord} {cabinLabel}
+                <span className="wg-traveler-count">
+                  <span className="wg-num" dir="ltr">
+                    {travelerCount}
+                  </span>
+                  <span>{travelerWord}</span>
+                </span>
+                <span className="wg-cabin-chip">{cabinLabel}</span>
               </>
             ) : (
               travelerSummary
@@ -921,8 +918,8 @@ export function ShopHeroBanner(props: Props) {
             dangerouslySetInnerHTML={{
               __html: `
 #search.wg-simple-search {
-  width: min(calc(1120px + 2cm), calc(100% - 1.15rem)) !important;
-  max-width: calc(1120px + 2cm) !important;
+  width: min(calc(1120px + 4cm), calc(100% - 1.15rem)) !important;
+  max-width: calc(1120px + 4cm) !important;
           top: 5.35rem !important;
   bottom: auto !important;
   margin: 0 !important;
@@ -1047,7 +1044,7 @@ html body .wg-travela-hero .wg-travela-caption {
   display: flex !important;
   align-items: stretch !important;
   min-height: 56px !important;
-  border: 1px solid #e6e8ee !important;
+  border: 1.5px solid #1565c0 !important;
   border-radius: 16px !important;
   background: #fff !important;
   overflow: visible !important;
@@ -1072,19 +1069,86 @@ html body .wg-travela-hero .wg-travela-caption {
 #search.wg-simple-search .wg-simple-fields > .wg-simple-cell:first-child {
   border-inline-start: 0 !important;
 }
+#search.wg-simple-search .wg-cell-origin,
+#search.wg-simple-search .wg-cell-dest,
+#search.wg-simple-search .wg-cell-dates {
+  border: 1.5px solid #1565c0 !important;
+  border-radius: 12px !important;
+  margin: 0 0.12rem !important;
+}
 #search.wg-simple-search .wg-field-ico {
   flex: 0 0 auto !important;
-  width: 18px !important;
-  height: 18px !important;
+  width: 22px !important;
+  height: 22px !important;
   color: #111 !important;
   display: grid !important;
   place-items: center !important;
   pointer-events: none !important;
 }
 #search.wg-simple-search .wg-field-ico svg {
-  width: 18px !important;
-  height: 18px !important;
+  width: 22px !important;
+  height: 22px !important;
   display: block !important;
+}
+#search.wg-simple-search .wg-plane-land {
+  transform: rotate(180deg) !important;
+}
+#search.wg-simple-search .wg-traveler-line {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  gap: 0.08rem !important;
+  line-height: 1.15 !important;
+  font-weight: 800 !important;
+}
+#search.wg-simple-search .wg-traveler-count {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0.28rem !important;
+}
+#search.wg-simple-search .wg-cabin-chip {
+  color: #1565c0 !important;
+  -webkit-text-fill-color: #1565c0 !important;
+  font-size: 0.78rem !important;
+  font-weight: 800 !important;
+}
+html body .shop-root #search.wg-simple-search .shop-date-range-day:not(.muted),
+html body #search.wg-simple-search .shop-date-range-day:not(.muted) {
+  color: #0b1b3a !important;
+  -webkit-text-fill-color: #0b1b3a !important;
+  font-weight: 800 !important;
+  background: #eaf3fb !important;
+  border-radius: 8px !important;
+}
+html body .shop-root #search.wg-simple-search .shop-date-range-day.muted,
+html body #search.wg-simple-search .shop-date-range-day.muted {
+  color: #b7bcc6 !important;
+  -webkit-text-fill-color: #b7bcc6 !important;
+  background: #f3f4f6 !important;
+  text-decoration: line-through !important;
+  opacity: 0.7 !important;
+  cursor: not-allowed !important;
+}
+html body .shop-root #search.wg-simple-search .shop-date-day-cell.range-start .shop-date-range-day,
+html body .shop-root #search.wg-simple-search .shop-date-day-cell.range-end .shop-date-range-day,
+html body .shop-root #search.wg-simple-search .shop-date-day-cell.range-single .shop-date-range-day {
+  background: #1565c0 !important;
+  color: #fff !important;
+  -webkit-text-fill-color: #fff !important;
+  text-decoration: none !important;
+}
+html body .shop-root #search.wg-simple-search .exp-pop-done,
+html body #search.wg-simple-search .exp-pop-done,
+html body .shop-root #search.wg-simple-search .shop-date-range-footer .exp-pop-done {
+  white-space: nowrap !important;
+  line-height: 1 !important;
+  min-height: 2.45rem !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 1rem !important;
+  font-weight: 800 !important;
+  letter-spacing: 0 !important;
 }
 #search.wg-simple-search .wg-simple-cell .exp-cell-label,
 #search.wg-simple-search .wg-simple-cell .shop-ac-inline > span:first-child {
@@ -1316,7 +1380,7 @@ html body #search.wg-simple-search .prc-suggest button strong {
                 {props.flightLegs.map((leg, index) => (
                   <div key={leg.id} className="wg-simple-fields">
                     <span className="wg-leg-badge">{t("flightLegN", { n: index + 1 })}</span>
-                    <div className="wg-simple-cell wg-cell-grow">
+                    <div className="wg-simple-cell wg-cell-grow wg-cell-origin">
                       <span className="wg-field-ico">
                         <FieldIcon name="takeoff" />
                       </span>
@@ -1341,7 +1405,7 @@ html body #search.wg-simple-search .prc-suggest button strong {
                     <button type="button" className="wg-swap" aria-label={t("swap")} onClick={() => swapLegAirports(leg.id)}>
                       <IconSwap />
                     </button>
-                    <div className="wg-simple-cell wg-cell-grow">
+                    <div className="wg-simple-cell wg-cell-grow wg-cell-dest">
                       <span className="wg-field-ico">
                         <FieldIcon name="landing" />
                       </span>
@@ -1402,7 +1466,7 @@ html body #search.wg-simple-search .prc-suggest button strong {
               <div className="wg-simple-fields">
                 {props.mode === "flights" ? (
                   <>
-                    <div className="wg-simple-cell wg-cell-grow">
+                    <div className="wg-simple-cell wg-cell-grow wg-cell-origin">
                       <span className="wg-field-ico">
                         <FieldIcon name="takeoff" />
                       </span>
@@ -1420,7 +1484,7 @@ html body #search.wg-simple-search .prc-suggest button strong {
                     <button type="button" className="wg-swap" aria-label={t("swap")} onClick={swapAirports}>
                       <IconSwap />
                     </button>
-                    <div className="wg-simple-cell wg-cell-grow">
+                    <div className="wg-simple-cell wg-cell-grow wg-cell-dest">
                       <span className="wg-field-ico">
                         <FieldIcon name="landing" />
                       </span>

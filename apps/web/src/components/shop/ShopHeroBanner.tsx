@@ -1042,12 +1042,12 @@ html body .wg-travela-hero .wg-travela-caption {
   display: flex !important;
   align-items: stretch !important;
   min-height: 56px !important;
-  border: 1.5px solid #1565c0 !important;
-  border-radius: 16px !important;
-  background: #fff !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
   overflow: visible !important;
   position: relative !important;
-  padding: 0.28rem !important;
+  padding: 0 !important;
 }
 #search.wg-simple-search .wg-simple-cell {
   flex: 1 1 0 !important;
@@ -1073,6 +1073,10 @@ html body .wg-travela-hero .wg-travela-caption {
   border: 1.5px solid #1565c0 !important;
   border-radius: 12px !important;
   margin: 0 0.12rem !important;
+  background: #fff !important;
+}
+#search.wg-simple-search .wg-simple-cell:focus-within {
+  box-shadow: none !important;
 }
 #search.wg-simple-search .wg-field-ico {
   flex: 0 0 auto !important;
@@ -1169,17 +1173,35 @@ html body .shop-root #search.wg-simple-search .shop-date-range-footer .exp-pop-d
 }
 #search.wg-simple-search .wg-simple-cell .shop-ac-inline,
 #search.wg-simple-search .wg-simple-cell .shop-ac-inline input,
+#search.wg-simple-search .wg-simple-cell .shop-ac-inline input:focus,
+#search.wg-simple-search .wg-simple-cell .shop-ac-inline input:focus-visible,
 #search.wg-simple-search .wg-simple-cell .exp-date-btn,
 #search.wg-simple-search .wg-simple-cell .exp-travelers-trigger,
 #search.wg-simple-search .wg-simple-cell .shop-date-range-trigger,
 #search.wg-simple-search .wg-simple-cell .exp-time-select {
   border: 0 !important;
+  outline: none !important;
+  appearance: none !important;
+  -webkit-appearance: none !important;
   background: transparent !important;
+  background-color: transparent !important;
   box-shadow: none !important;
   color: #111 !important;
   -webkit-text-fill-color: #111 !important;
+  caret-color: #1565c0 !important;
   width: 100% !important;
   text-shadow: none !important;
+  color-scheme: light !important;
+}
+#search.wg-simple-search .wg-simple-cell .shop-ac-inline input:-webkit-autofill,
+#search.wg-simple-search .wg-simple-cell .shop-ac-inline input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px #fff inset !important;
+  -webkit-text-fill-color: #111 !important;
+  caret-color: #1565c0 !important;
+}
+#search.wg-simple-search .wg-simple-cell .shop-ac-inline input::selection {
+  background: #d6e8fb !important;
+  color: #111 !important;
 }
 #search.wg-simple-search .wg-simple-cell .shop-ac-inline input,
 #search.wg-simple-search .wg-simple-cell .exp-date-btn,
@@ -1278,6 +1300,18 @@ html body .shop-root #search.wg-simple-search .exp-ac-menu button,
 html body #search.wg-simple-search .prc-suggest button {
   color: #111 !important;
   -webkit-text-fill-color: #111 !important;
+}
+html body .shop-root #search.wg-simple-search .prc-suggest,
+html body .shop-root #search.wg-simple-search .exp-ac-menu,
+html body #search.wg-simple-search .prc-suggest,
+html body #search.wg-simple-search .exp-ac-menu {
+  background: #fff !important;
+  background-color: #fff !important;
+  color: #111 !important;
+  border: 1.5px solid #1565c0 !important;
+  border-radius: 12px !important;
+  box-shadow: 0 10px 28px rgba(8, 18, 38, 0.12) !important;
+  color-scheme: light !important;
 }
 html body .shop-root #search.wg-simple-search .prc-suggest button strong,
 html body #search.wg-simple-search .prc-suggest button strong {

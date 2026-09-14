@@ -49,6 +49,14 @@ const emptyFamily = {
 };
 
 export default function AccountPage() {
+  return (
+    <StoreFront>
+      <AccountInner />
+    </StoreFront>
+  );
+}
+
+function AccountInner() {
   const { t } = useShopI18n();
   const [ready, setReady] = useState(false);
   const [name, setName] = useState("");
@@ -127,15 +135,11 @@ export default function AccountPage() {
   }
 
   if (!ready) {
-    return (
-      <StoreFront>
-        <p>{t("loading")}</p>
-      </StoreFront>
-    );
+    return <p>{t("loading")}</p>;
   }
 
   return (
-    <StoreFront>
+    <>
       <section className="shop-panel">
         <h1>{t("navAccount")}</h1>
         {error ? <p className="shop-error">{error}</p> : null}
@@ -323,6 +327,6 @@ export default function AccountPage() {
           </button>
         </p>
       </section>
-    </StoreFront>
+    </>
   );
 }

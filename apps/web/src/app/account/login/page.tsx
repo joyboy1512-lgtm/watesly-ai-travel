@@ -137,7 +137,6 @@ export default function ShopLoginPage() {
         setPassword={setPassword}
         setConfirm={setConfirm}
         setCode={setCode}
-        setNeedsCode={setNeedsCode}
         setMode={(next) => {
           setMode(next);
           setNeedsCode(false);

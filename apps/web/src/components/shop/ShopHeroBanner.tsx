@@ -1008,8 +1008,26 @@ html body .shop-root.wg-new-ui .wg-header-blue .wg-topbar-start {
   min-width: 0 !important;
 }
 html body .wg-travela-hero .wg-travela-caption {
-  padding-top: calc(13.25rem - 1.5cm) !important;
-  align-items: flex-end !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  justify-content: flex-start !important;
+  text-align: start !important;
+  padding: clamp(10.8rem, 18vh, 13.2rem) clamp(1.4rem, 5vw, 4.75rem) 8rem !important;
+  background: linear-gradient(to right, rgba(8, 18, 38, 0.42) 0%, rgba(8, 18, 38, 0.12) 40%, transparent 68%) !important;
+}
+html body .shop-root[dir="ltr"] .wg-travela-hero .wg-travela-caption {
+  background: linear-gradient(to left, rgba(8, 18, 38, 0.4) 0%, rgba(8, 18, 38, 0.12) 38%, transparent 66%) !important;
+}
+html body .wg-travela-hero .wg-travela-caption-inner {
+  max-width: min(34rem, 46vw) !important;
+  width: max-content !important;
+  margin: 0 !important;
+}
+html body .wg-travela-hero .wg-travela-caption h1 {
+  border-inline-start: 4px solid #fff !important;
+  padding-inline-start: 0.9rem !important;
+  text-align: start !important;
 }
 .wg-header-services,
 .wg-svc-tabs {

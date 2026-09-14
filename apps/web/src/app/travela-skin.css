@@ -661,46 +661,62 @@
   inset: 0;
   z-index: 2;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  padding: 6rem 3cm 13rem;
-  /* Soft blue wash — keeps light tourist photos bright for glass search */
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  text-align: start;
+  padding: clamp(10.8rem, 18vh, 13.2rem) clamp(1.4rem, 5vw, 4.75rem) 8rem;
   background: linear-gradient(
-    180deg,
-    rgba(12, 60, 120, 0.22) 0%,
-    rgba(8, 40, 90, 0.18) 45%,
-    rgba(6, 30, 70, 0.34) 100%
+    to left,
+    rgba(8, 18, 38, 0.4) 0%,
+    rgba(8, 18, 38, 0.12) 38%,
+    transparent 66%
   );
   color: #fff;
   pointer-events: none;
 }
 
+.shop-root[dir="rtl"] .wg-travela-caption {
+  background: linear-gradient(
+    to right,
+    rgba(8, 18, 38, 0.42) 0%,
+    rgba(8, 18, 38, 0.12) 40%,
+    transparent 68%
+  );
+}
+
 .wg-travela-caption-inner {
-  max-width: 900px;
-  padding-inline: 0.5rem;
+  max-width: min(34rem, 46vw);
+  width: max-content;
+  padding-inline: 0;
 }
 
 .wg-travela-caption h4 {
-  margin: 0 0 0.75rem;
-  font-size: clamp(0.85rem, 2vw, 1.1rem);
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
+  margin: 0 0 0.55rem;
+  font-size: clamp(0.78rem, 1.4vw, 0.95rem);
+  letter-spacing: 0.08em;
+  text-transform: none;
   font-weight: 700;
+  opacity: 0.92;
 }
 
 .wg-travela-caption h1 {
-  margin: 0 0 1rem;
-  font-size: clamp(2rem, 6vw, 3.75rem);
-  font-weight: 700;
-  line-height: 1.15;
+  margin: 0 0 0.85rem;
+  font-size: clamp(2.15rem, 5.2vw, 4.15rem);
+  font-weight: 800;
+  line-height: 1.08;
+  border-inline-start: 4px solid #fff;
+  padding-inline-start: 0.9rem;
+  text-shadow: 0 8px 28px rgba(8, 18, 38, 0.35);
 }
 
 .wg-travela-caption p {
   margin: 0;
-  font-size: clamp(1rem, 2.2vw, 1.2rem);
-  opacity: 0.92;
-  line-height: 1.6;
+  max-width: 28rem;
+  font-size: clamp(0.95rem, 1.6vw, 1.12rem);
+  opacity: 0.94;
+  line-height: 1.55;
+  padding-inline-start: calc(0.9rem + 4px);
 }
 
 .wg-travela-carousel-btn {

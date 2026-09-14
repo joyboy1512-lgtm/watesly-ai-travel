@@ -5382,3 +5382,47 @@
   color: #1565c0;
   font-weight: 700;
 }
+
+/* WG_HERO_CAPTION_SIDE */
+html body .wg-travela-hero .wg-travela-caption {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  justify-content: flex-start !important;
+  text-align: start !important;
+  padding: clamp(10.8rem, 18vh, 13.2rem) clamp(1.4rem, 5vw, 4.75rem) 8rem !important;
+  background: linear-gradient(
+    to right,
+    rgba(8, 18, 38, 0.42) 0%,
+    rgba(8, 18, 38, 0.12) 40%,
+    transparent 68%
+  ) !important;
+}
+html body .shop-root[dir="ltr"] .wg-travela-hero .wg-travela-caption {
+  background: linear-gradient(
+    to left,
+    rgba(8, 18, 38, 0.4) 0%,
+    rgba(8, 18, 38, 0.12) 38%,
+    transparent 66%
+  ) !important;
+}
+html body .wg-travela-hero .wg-travela-caption-inner {
+  max-width: min(34rem, 46vw) !important;
+  width: max-content !important;
+  margin: 0 !important;
+}
+html body .wg-travela-hero .wg-travela-caption h4,
+html body .wg-travela-hero .wg-travela-caption h1,
+html body .wg-travela-hero .wg-travela-caption p {
+  text-align: start !important;
+}
+html body .wg-travela-hero .wg-travela-caption h1 {
+  border-inline-start: 4px solid #fff !important;
+  padding-inline-start: 0.9rem !important;
+  line-height: 1.08 !important;
+  font-weight: 800 !important;
+}
+html body .wg-travela-hero .wg-travela-caption p {
+  max-width: 28rem !important;
+  padding-inline-start: calc(0.9rem + 4px) !important;
+}

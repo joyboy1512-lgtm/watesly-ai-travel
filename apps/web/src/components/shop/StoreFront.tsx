@@ -280,21 +280,13 @@ function StoreFrontInner({
                     ) : null}
                   </div>
                 ) : (
-                  <>
-                    <Link
-                      href="/account/login"
-                      className="wg-topbar-text wg-topbar-signin wg-topbar-account"
-                    >
-                      <IconUser />
-                      <span>{t("navSignIn")}</span>
-                    </Link>
-                    <Link
-                      href="/account/register"
-                      className="wg-topbar-text wg-topbar-register"
-                    >
-                      <span>{t("navRegister")}</span>
-                    </Link>
-                  </>
+                  <Link
+                    href="/account/login"
+                    className="wg-topbar-text wg-topbar-signin wg-topbar-account"
+                  >
+                    <IconUser />
+                    <span>{t("navSignIn")}</span>
+                  </Link>
                 )}
               </div>
             </div>
@@ -359,10 +351,7 @@ function StoreFrontInner({
                   </button>
                 </>
               ) : (
-                <>
-                  <Link href="/account/login">{t("navSignIn")}</Link>
-                  <Link href="/account/register">{t("navRegister")}</Link>
-                </>
+                <Link href="/account/login">{t("navSignIn")}</Link>
               )}
               {platformEnabled() ? (
                 <>
@@ -468,9 +457,6 @@ function StoreFrontInner({
                 ) : (
                   <Link href="/account/login" className="wg-header-signin">
                     {t("navLogin")}
-                  </Link>
-                  <Link href="/account/register" className="wg-header-signin">
-                    {t("navRegister")}
                   </Link>
                 )}
 

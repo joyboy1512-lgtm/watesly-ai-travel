@@ -66,7 +66,8 @@ async function bootstrap() {
       path.startsWith("/auth/") ||
       path.startsWith("/shop/unlock") ||
       path.startsWith("/shop/login") ||
-      path.startsWith("/shop/register")
+      path.startsWith("/shop/register") ||
+      path.startsWith("/shop/password-reset")
     ) {
       maxHits = maxHitsAuth;
     } else if (

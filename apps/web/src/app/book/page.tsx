@@ -18,6 +18,9 @@ import {
   saveShopSession,
   shopFetch,
 } from "@/lib/shop-session";
+import { FamilyTravelerPicker } from "@/components/shop/FamilyTravelerPicker";
+import { PassportScanField } from "@/components/shop/PassportScanField";
+import { loadFamilySelection, type FamilyMember } from "@/lib/family-travelers";
 
 type Traveler = {
   title: string;
@@ -143,6 +146,19 @@ function FlightCheckout({
     setTravelers((rows) =>
       rows.map((row, i) => (i === editIndex ? { ...row, ...patch } : row)),
     );
+  }
+
+  function applyFamilyMember(member: FamilyMember) {
+    updateEditing({
+      title: member.title || "mr",
+      firstName: member.firstName,
+      lastName: member.lastName,
+      birthDate: member.birthDate?.slice(0, 10) || "",
+      nationality: member.nationality || "KW",
+      passportNumber: member.passportNumber || "",
+      gender:
+        member.title === "ms" || member.title === "mrs" ? "female" : "male",
+    });
   }
 
   return (
@@ -309,6 +325,29 @@ function FlightCheckout({
                 ×
               </button>
             </div>
+            <FamilyTravelerPicker
+              mode="single"
+              onPick={(member) => applyFamilyMember(member)}
+            />
+            <PassportScanField
+              onFields={(fields) =>
+                updateEditing({
+                  firstName: fields.firstName || editing.firstName,
+                  lastName: fields.lastName || editing.lastName,
+                  birthDate: fields.birthDate || editing.birthDate,
+                  nationality: fields.nationality || editing.nationality,
+                  passportNumber: fields.passportNumber || editing.passportNumber,
+                  gender:
+                    fields.gender ||
+                    (fields.title === "mrs" || fields.title === "ms"
+                      ? "female"
+                      : fields.title === "mr"
+                        ? "male"
+                        : editing.gender),
+                  title: fields.title || editing.title,
+                })
+              }
+            />
             <label>
               الاسم الأول
               <input
@@ -383,6 +422,29 @@ function FlightCheckout({
                   }
                 />
               </div>
+            </label>
+            <label>
+              الجنسية
+              <input
+                value={editing.nationality}
+                onChange={(e) =>
+                  updateEditing({
+                    nationality: e.target.value.toUpperCase().slice(0, 3),
+                  })
+                }
+                maxLength={3}
+              />
+            </label>
+            <label>
+              رقم الجواز
+              <input
+                value={editing.passportNumber}
+                onChange={(e) =>
+                  updateEditing({
+                    passportNumber: e.target.value.replace(/\s+/g, "").toUpperCase(),
+                  })
+                }
+              />
             </label>
             <div className="shop-traveler-modal-foot">
               <button type="button" onClick={() => setEditIndex(null)}>
@@ -462,6 +524,7 @@ export default function PublicBookPage() {
     }
     shopFetch<{
       travelers: Array<{
+        id: string;
         title: string;
         firstName: string;
         lastName: string;
@@ -472,9 +535,17 @@ export default function PublicBookPage() {
     }>("/shop/me")
       .then((me) => {
         if (!me.travelers?.length) return;
+        const selectedIds = loadFamilySelection();
+        const ordered = (
+          selectedIds.length
+            ? selectedIds
+                .map((id) => me.travelers.find((row) => row.id === id))
+                .filter((row): row is (typeof me.travelers)[number] => Boolean(row))
+            : me.travelers
+        );
         setTravelers((prev) =>
           prev.map((row, idx) => {
-            const saved = me.travelers[idx];
+            const saved = ordered[idx];
             if (!saved) return row;
             return {
               title: saved.title || "mr",

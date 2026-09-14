@@ -17,6 +17,8 @@ import {
   type HotelOccupancyState,
   validateOccupancyMessage,
 } from "@/lib/hotel-occupancy";
+import { FamilyTravelerPicker } from "@/components/shop/FamilyTravelerPicker";
+import { countsFromMembers } from "@/lib/family-travelers";
 
 type Mode = "flights" | "stays" | "cars" | "activities";
 export type FlightTripType = "roundtrip" | "oneway" | "multicity";
@@ -559,6 +561,16 @@ export function ShopHeroBanner(props: Props) {
             <option value="first">{t("cabinFirst")}</option>
           </select>
         </label>
+        <FamilyTravelerPicker
+          mode="multi"
+          onSelectionChange={(members) => {
+            if (!members.length) return;
+            const counts = countsFromMembers(members);
+            props.onAdultsChange(counts.adults);
+            props.onChildrenChange(counts.children);
+            props.onInfantsChange?.(counts.infants);
+          }}
+        />
         <button
           type="button"
           className="exp-pop-done"
@@ -700,6 +712,21 @@ export function ShopHeroBanner(props: Props) {
           </div>
         ))}
         {occError ? <p className="shop-error exp-occ-error">{occError}</p> : null}
+        <FamilyTravelerPicker
+          mode="multi"
+          onSelectionChange={(members) => {
+            if (!members.length) return;
+            const counts = countsFromMembers(members);
+            updateStayOccupancy({
+              rooms: [
+                {
+                  adults: counts.adults,
+                  childAges: Array.from({ length: counts.children }, () => 8),
+                },
+              ],
+            });
+          }}
+        />
         <button
           type="button"
           className="exp-pop-done"

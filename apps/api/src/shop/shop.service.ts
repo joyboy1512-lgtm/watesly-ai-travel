@@ -5,13 +5,45 @@ import {
 } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import bcrypt from "bcryptjs";
+import { randomUUID } from "crypto";
 import { Prisma } from "@watesly-travel/database";
+import { defaultRatesToCurrency } from "@watesly-travel/shared";
 import { PrismaService } from "../prisma/prisma.service";
 import { BookingsService } from "../bookings/bookings.service";
 import { BotPipelineService } from "../pipeline/bot-pipeline.service";
 import { AssistantService } from "../assistant/assistant.service";
+import { VoiceAssistantService } from "../assistant/voice-assistant.service";
+import {
+  isProductionRuntime,
+  otpDeliveryConfigured,
+} from "../common/security-env";
+import {
+  bumpSessionEpoch,
+  buildClearCookie,
+  buildSetCookie,
+  CUSTOMER_COOKIE,
+  CSRF_COOKIE,
+  getSessionEpoch,
+  newCsrfToken,
+  newSessionJti,
+  revokeSessionJti,
+  storeCsrfToken,
+} from "../common/session-cookies";
 import { PublicOrgService } from "./public-org";
+import { dispatchCustomerNotification } from "./platform-notify";
 import type { CustomerJwtPayload, ShopCustomer } from "./shop-auth";
+import {
+  buildWebhookEventKey,
+  claimWebhookReceipt,
+  clearUnlockOtp,
+  generateOtpCode,
+  hashOtp,
+  loadUnlockOtp,
+  newGuestPhone,
+  otpMatches,
+  saveUnlockOtp,
+  unlockRequiresOtp,
+} from "./shop-unlock-security";
 
 function asJson(value: unknown): Prisma.InputJsonValue {
   return value as Prisma.InputJsonValue;
@@ -48,19 +80,60 @@ export class ShopService {
     private readonly bookings: BookingsService,
     private readonly pipeline: BotPipelineService,
     private readonly assistant: AssistantService,
+    private readonly voice: VoiceAssistantService,
   ) {}
 
   bootstrap() {
     return this.orgs.resolve().then((org) => ({
+      /** Operating entity from dashboard → الإعدادات */
       brand: org.name || "WeekendGate",
+      /** Customer product mark (logo / site title) */
+      productBrand: "WeekendGate",
       currency: org.defaultCurrency || "KWD",
       timezone: org.timezone || "Asia/Kuwait",
     }));
   }
 
+  /** Public FX rates for shop display-currency conversion. */
+  async fx() {
+    const org = await this.orgs.resolve();
+    const currency = (org.defaultCurrency || "KWD").toUpperCase();
+    const count = await this.prisma.organizationFxRate.count({
+      where: { organizationId: org.id },
+    });
+    if (count === 0) {
+      const defaults = defaultRatesToCurrency(currency);
+      const now = new Date();
+      await this.prisma.organizationFxRate.createMany({
+        data: defaults.map((r) => ({
+          id: randomUUID(),
+          organizationId: org.id,
+          fromCurrency: r.fromCurrency,
+          toCurrency: r.toCurrency,
+          rate: r.rate,
+          source: "manual",
+          updatedAt: now,
+        })),
+        skipDuplicates: true,
+      });
+    }
+    const rates = await this.prisma.organizationFxRate.findMany({
+      where: { organizationId: org.id },
+      orderBy: [{ fromCurrency: "asc" }],
+    });
+    return {
+      displayCurrency: currency,
+      rates: rates.map((r) => ({
+        fromCurrency: r.fromCurrency,
+        toCurrency: r.toCurrency,
+        rate: r.rate,
+      })),
+    };
+  }
+
   async airports(q?: string, limit = 20) {
     const query = String(q || "").trim();
-    const take = Math.min(50, Math.max(5, limit));
+    const take = Math.min(40, Math.max(5, limit || 20));
     if (!query) {
       return this.prisma.airport.findMany({
         where: { iataCode: { in: ["KWI", "DXB", "DOH", "RUH", "BAH", "MCT"] } },
@@ -68,7 +141,12 @@ export class ShopService {
         orderBy: { city: "asc" },
       });
     }
-    return this.prisma.airport.findMany({
+    // Allow 2+ chars; IATA codes are often 3 letters (KWI) — prioritize code matches.
+    if (query.length < 2) {
+      return [];
+    }
+    const needle = query.toUpperCase();
+    const rows = await this.prisma.airport.findMany({
       where: {
         OR: [
           { iataCode: { contains: query, mode: "insensitive" } },
@@ -77,43 +155,344 @@ export class ShopService {
           { country: { contains: query, mode: "insensitive" } },
         ],
       },
-      take,
+      take: Math.min(80, take * 3),
       orderBy: { city: "asc" },
     });
+    const score = (row: {
+      iataCode: string | null;
+      name: string;
+      city: string | null;
+      country: string | null;
+    }) => {
+      const iata = (row.iataCode || "").toUpperCase();
+      const name = (row.name || "").toUpperCase();
+      const city = (row.city || "").toUpperCase();
+      const country = (row.country || "").toUpperCase();
+      if (iata === needle) return 0;
+      if (iata.startsWith(needle)) return 1;
+      if (iata.includes(needle)) return 2;
+      if (city === needle || city.startsWith(needle)) return 3;
+      if (name.startsWith(needle) || name.includes(needle)) return 4;
+      if (country.startsWith(needle) || country.includes(needle)) return 5;
+      // Arabic / mixed: keep contains hits after codes
+      return 6;
+    };
+    return rows
+      .map((row) => ({ row, s: score(row) }))
+      .sort((a, b) => a.s - b.s || (a.row.city || "").localeCompare(b.row.city || ""))
+      .slice(0, take)
+      .map((x) => x.row);
   }
 
   async cities(q?: string) {
     const query = String(q || "").trim();
+    const isArabic = /[\u0600-\u06FF]/.test(query);
+    const needle = query.toLowerCase();
+    const needleUpper = query.toUpperCase();
+
+    /** Bilingual city aliases so AR query → AR label and EN query → EN label. */
+    const CITY_ALIASES: Array<{
+      ar: string;
+      en: string;
+      countryAr: string;
+      countryEn: string;
+      iata: string;
+      hotels?: Array<{ ar: string; en: string }>;
+    }> = [
+      {
+        ar: "الكويت",
+        en: "Kuwait City",
+        countryAr: "الكويت",
+        countryEn: "Kuwait",
+        iata: "KWI",
+        hotels: [
+          { ar: "فندق جي دبليو ماريوت الكويت", en: "JW Marriott Kuwait" },
+          { ar: "فندق فورسيزونز الكويت", en: "Four Seasons Kuwait" },
+          { ar: "فندق شيراتون الكويت", en: "Sheraton Kuwait" },
+        ],
+      },
+      {
+        ar: "دبي",
+        en: "Dubai",
+        countryAr: "الإمارات",
+        countryEn: "United Arab Emirates",
+        iata: "DXB",
+        hotels: [
+          { ar: "برج العرب", en: "Burj Al Arab" },
+          { ar: "أتلانتس النخلة", en: "Atlantis The Palm" },
+          { ar: "فندق العنوان داونتاون", en: "Address Downtown" },
+        ],
+      },
+      {
+        ar: "أبوظبي",
+        en: "Abu Dhabi",
+        countryAr: "الإمارات",
+        countryEn: "United Arab Emirates",
+        iata: "AUH",
+        hotels: [
+          { ar: "قصر الإمارات", en: "Emirates Palace" },
+          { ar: "فندق ستيهان ياس", en: "St. Regis Saadiyat" },
+        ],
+      },
+      {
+        ar: "الدوحة",
+        en: "Doha",
+        countryAr: "قطر",
+        countryEn: "Qatar",
+        iata: "DOH",
+        hotels: [
+          { ar: "فندق شيراتون الدوحة", en: "Sheraton Grand Doha" },
+          { ar: "منتجع باندرا", en: "Banana Island Resort" },
+        ],
+      },
+      {
+        ar: "الرياض",
+        en: "Riyadh",
+        countryAr: "السعودية",
+        countryEn: "Saudi Arabia",
+        iata: "RUH",
+        hotels: [
+          { ar: "فندق الريتز كارلتون الرياض", en: "The Ritz-Carlton Riyadh" },
+          { ar: "فندق فورسيزونز الرياض", en: "Four Seasons Riyadh" },
+        ],
+      },
+      {
+        ar: "جدة",
+        en: "Jeddah",
+        countryAr: "السعودية",
+        countryEn: "Saudi Arabia",
+        iata: "JED",
+      },
+      {
+        ar: "المنامة",
+        en: "Manama",
+        countryAr: "البحرين",
+        countryEn: "Bahrain",
+        iata: "BAH",
+      },
+      {
+        ar: "مسقط",
+        en: "Muscat",
+        countryAr: "عُمان",
+        countryEn: "Oman",
+        iata: "MCT",
+      },
+      {
+        ar: "القاهرة",
+        en: "Cairo",
+        countryAr: "مصر",
+        countryEn: "Egypt",
+        iata: "CAI",
+      },
+      {
+        ar: "إسطنبول",
+        en: "Istanbul",
+        countryAr: "تركيا",
+        countryEn: "Turkey",
+        iata: "IST",
+        hotels: [
+          { ar: "فندق جاير فيرا إسطنبول", en: "Ciragan Palace Kempinski" },
+        ],
+      },
+      {
+        ar: "لندن",
+        en: "London",
+        countryAr: "بريطانيا",
+        countryEn: "United Kingdom",
+        iata: "LHR",
+      },
+      {
+        ar: "باريس",
+        en: "Paris",
+        countryAr: "فرنسا",
+        countryEn: "France",
+        iata: "CDG",
+      },
+    ];
+
+    type CityHit = {
+      city: string | null;
+      country: string | null;
+      iataCode?: string | null;
+      kind?: string;
+      label?: string;
+      subtitle?: string;
+    };
+
+    const out: CityHit[] = [];
+    const seen = new Set<string>();
+    const push = (item: CityHit, key: string) => {
+      if (seen.has(key) || out.length >= 12) return;
+      seen.add(key);
+      out.push(item);
+    };
+
     if (query.length < 2) {
-      return [
-        { city: "الكويت", country: "الكويت", iataCode: "KWI" },
-        { city: "دبي", country: "الإمارات", iataCode: "DXB" },
-        { city: "الدوحة", country: "قطر", iataCode: "DOH" },
-      ];
+      return CITY_ALIASES.slice(0, 8).map((c) => ({
+        city: isArabic ? c.ar : c.en,
+        country: isArabic ? c.countryAr : c.countryEn,
+        iataCode: c.iata,
+        kind: "city",
+        label: isArabic ? c.ar : c.en,
+        subtitle: isArabic ? c.countryAr : c.countryEn,
+      }));
     }
+
+    // Exact / prefix IATA → city of that airport (AR or EN label).
+    if (/^[A-Za-z]{3}$/.test(query)) {
+      const alias = CITY_ALIASES.find((c) => c.iata === needleUpper);
+      if (alias) {
+        push(
+          {
+            city: isArabic ? alias.ar : alias.en,
+            country: isArabic ? alias.countryAr : alias.countryEn,
+            iataCode: alias.iata,
+            kind: "city",
+            label: isArabic ? alias.ar : alias.en,
+            subtitle: isArabic
+              ? `مطار ${alias.iata}`
+              : `${alias.iata} Airport`,
+          },
+          `iata:${alias.iata}`,
+        );
+      }
+    }
+
+    // Alias dictionary (AR ↔ EN) — prefer cities, then hotels matching the query language.
+    for (const c of CITY_ALIASES) {
+      const cityHit =
+        c.ar.includes(query) ||
+        c.en.toLowerCase().includes(needle) ||
+        c.iata.toLowerCase() === needle ||
+        c.countryAr.includes(query) ||
+        c.countryEn.toLowerCase().includes(needle);
+      if (cityHit) {
+        push(
+          {
+            city: isArabic ? c.ar : c.en,
+            country: isArabic ? c.countryAr : c.countryEn,
+            iataCode: c.iata,
+            kind: "city",
+            label: isArabic ? c.ar : c.en,
+            subtitle: isArabic ? c.countryAr : c.countryEn,
+          },
+          `alias-city:${c.iata}`,
+        );
+      }
+      for (const h of c.hotels || []) {
+        const hotelHit =
+          h.ar.includes(query) || h.en.toLowerCase().includes(needle);
+        if (hotelHit) {
+          push(
+            {
+              city: isArabic ? h.ar : h.en,
+              country: isArabic ? c.ar : c.en,
+              iataCode: c.iata,
+              kind: "hotel",
+              label: isArabic ? h.ar : h.en,
+              subtitle: isArabic
+                ? `فندق · ${c.ar}`
+                : `Hotel · ${c.en}`,
+            },
+            `hotel:${h.en}`,
+          );
+        }
+      }
+    }
+
     const rows = await this.prisma.airport.findMany({
       where: {
         OR: [
           { city: { contains: query, mode: "insensitive" } },
           { country: { contains: query, mode: "insensitive" } },
+          { name: { contains: query, mode: "insensitive" } },
           { iataCode: { contains: query, mode: "insensitive" } },
         ],
       },
-      take: 40,
+      take: 80,
       orderBy: { city: "asc" },
     });
-    const seen = new Set<string>();
-    const out: Array<{ city: string | null; country: string | null; iataCode?: string | null }> =
-      [];
-    for (const row of rows) {
-      const key = `${row.city || ""}|${row.country || ""}`;
-      if (seen.has(key)) continue;
-      seen.add(key);
-      out.push({
-        city: row.city,
-        country: row.country,
-        iataCode: row.iataCode,
-      });
+
+    // Prefer city, then airport/place, then country — never bury cities under countries.
+    const ranked = [...rows].sort((a, b) => {
+      const rank = (r: (typeof rows)[number]) => {
+        const iata = (r.iataCode || "").toUpperCase();
+        const city = (r.city || "").toLowerCase();
+        const country = (r.country || "").toLowerCase();
+        const name = (r.name || "").toLowerCase();
+        if (iata === needleUpper) return 0;
+        if (city === needle || city.startsWith(needle)) return 1;
+        if (city.includes(needle)) return 2;
+        if (name.includes(needle) || iata.includes(needleUpper)) return 3;
+        if (country === needle || country.startsWith(needle)) return 4;
+        return 5;
+      };
+      return rank(a) - rank(b);
+    });
+
+    for (const row of ranked) {
+      const cityKey = `${row.city || ""}|${row.country || ""}`;
+      if (row.city && !seen.has(`city:${cityKey}`)) {
+        const iataHit =
+          (row.iataCode || "").toUpperCase() === needleUpper ||
+          (row.iataCode || "").toUpperCase().startsWith(needleUpper);
+        push(
+          {
+            city: row.city,
+            country: row.country,
+            iataCode: row.iataCode,
+            kind: "city",
+            label: row.city,
+            subtitle: iataHit
+              ? isArabic
+                ? `مطار ${row.iataCode} · ${row.country || ""}`
+                : `${row.iataCode} Airport · ${row.country || ""}`
+              : row.country || undefined,
+          },
+          `city:${cityKey}`,
+        );
+      }
+      const name = row.name;
+      if (
+        name &&
+        name.toLowerCase().includes(needle) &&
+        !seen.has(`place:${name}`)
+      ) {
+        push(
+          {
+            city: row.city || name,
+            country: row.country,
+            iataCode: row.iataCode,
+            kind: "place",
+            label: name,
+            subtitle: row.city
+              ? isArabic
+                ? `منطقة · ${row.city}`
+                : `Area · ${row.city}`
+              : row.country || undefined,
+          },
+          `place:${name}`,
+        );
+      }
+      const country = row.country;
+      if (
+        country &&
+        country.toLowerCase().includes(needle) &&
+        !seen.has(`country:${country}`)
+      ) {
+        push(
+          {
+            city: country,
+            country,
+            iataCode: row.iataCode,
+            kind: "country",
+            label: country,
+            subtitle: isArabic ? "دولة" : "Country",
+          },
+          `country:${country}`,
+        );
+      }
+      if (out.length >= 12) break;
     }
     return out;
   }
@@ -182,6 +561,7 @@ export class ShopService {
     serviceType: "flight" | "hotel";
     description: string;
     sellAmountMinor: number;
+    costAmountMinor?: number;
     currency: string;
     expiresAt: string;
     details: Record<string, unknown>;
@@ -191,6 +571,8 @@ export class ShopService {
       serviceType: row.serviceType,
       description: row.description,
       sellAmountMinor: row.sellAmountMinor,
+      // Keep cost for markup/fee math on the shop UI (not a secret — net already in details.rates)
+      costAmountMinor: row.costAmountMinor,
       currency: row.currency,
       expiresAt: row.expiresAt,
       details: row.details,
@@ -267,6 +649,7 @@ export class ShopService {
       adults?: number;
       children?: number;
       infants?: number;
+      childrenAges?: string;
       preferences?: string;
     },
     customer?: ShopCustomer,
@@ -274,7 +657,26 @@ export class ShopService {
     if (!body.destination || !body.checkIn || !body.checkOut) {
       throw new BadRequestException("أدخل الوجهة وتاريخ الوصول والمغادرة");
     }
+    const childCount = Math.max(0, body.children || 0);
+    if (childCount > 0) {
+      const ages = String(body.childrenAges || "")
+        .split(",")
+        .map((p) => p.trim())
+        .filter(Boolean);
+      if (ages.length < childCount) {
+        throw new BadRequestException(
+          "يجب تحديد عمر كل طفل قبل البحث عن الفنادق",
+        );
+      }
+    }
     const org = await this.orgs.resolve();
+    const preferences =
+      body.preferences ||
+      JSON.stringify({
+        query: body.destination,
+        rooms: body.rooms || 1,
+        childrenAges: body.childrenAges || undefined,
+      });
     const inquiry = await this.createShopInquiry({
       organizationId: org.id,
       customerId: customer?.id,
@@ -286,12 +688,7 @@ export class ShopService {
       adults: body.adults,
       children: body.children,
       infants: body.infants,
-      preferences:
-        body.preferences ||
-        JSON.stringify({
-          query: body.destination,
-          rooms: body.rooms || 1,
-        }),
+      preferences,
       budgetCurrency: org.defaultCurrency,
     });
     try {
@@ -316,9 +713,11 @@ export class ShopService {
         hotelError: result.hotelError,
       };
     } catch (err) {
-      throw new BadRequestException(
-        err instanceof Error ? err.message : "تعذر البحث عن الفنادق",
-      );
+      const raw = err instanceof Error ? err.message : "تعذر البحث عن الفنادق";
+      const message = /quota has been exceeded/i.test(raw)
+        ? "تم تجاوز حد طلبات مزود الفنادق التجريبي مؤقتًا. أعد المحاولة بعد قليل."
+        : raw;
+      throw new BadRequestException(message);
     }
   }
 
@@ -407,19 +806,75 @@ export class ShopService {
     });
   }
 
+  private customerTokenTtl(): `${number}${"s" | "m" | "h" | "d"}` {
+    return (process.env.CUSTOMER_JWT_TTL ||
+      (isProductionRuntime() ? "12h" : "30d")) as `${number}${"s" | "m" | "h" | "d"}`;
+  }
+
+  private customerTokenMaxAgeSec(): number {
+    const ttl = this.customerTokenTtl();
+    const n = Number(ttl.slice(0, -1));
+    const unit = ttl.slice(-1);
+    if (!Number.isFinite(n)) return 12 * 3600;
+    if (unit === "d") return n * 86400;
+    if (unit === "h") return n * 3600;
+    if (unit === "m") return n * 60;
+    return n;
+  }
+
   private async issueCustomerToken(customer: {
     id: string;
     organizationId: string;
     phone: string;
   }) {
+    const sv = await getSessionEpoch(customer.id);
+    const jti = newSessionJti();
     const payload: CustomerJwtPayload = {
       sub: customer.id,
       typ: "customer",
       organizationId: customer.organizationId,
       phone: customer.phone,
+      sv,
+      jti,
     };
-    const accessToken = await this.jwt.signAsync(payload, { expiresIn: "30d" });
+    const accessToken = await this.jwt.signAsync(payload, {
+      expiresIn: this.customerTokenTtl(),
+    });
     return accessToken;
+  }
+
+  /** HttpOnly session cookie + readable CSRF cookie for cookie-based auth. */
+  sessionSetCookieHeaders(accessToken: string): string[] {
+    const maxAge = this.customerTokenMaxAgeSec();
+    const csrf = newCsrfToken();
+    void storeCsrfToken(csrf, maxAge * 1000);
+    return [
+      buildSetCookie(CUSTOMER_COOKIE, accessToken, {
+        maxAgeSec: maxAge,
+        httpOnly: true,
+        sameSite: "Lax",
+      }),
+      buildSetCookie(CSRF_COOKIE, csrf, {
+        maxAgeSec: maxAge,
+        httpOnly: false,
+        sameSite: "Lax",
+      }),
+    ];
+  }
+
+  sessionClearCookieHeaders(): string[] {
+    return [
+      buildClearCookie(CUSTOMER_COOKIE, true),
+      buildClearCookie(CSRF_COOKIE, false),
+    ];
+  }
+
+  async logoutCustomer(customer: ShopCustomer, jti?: string) {
+    await bumpSessionEpoch(customer.id);
+    if (jti) {
+      await revokeSessionJti(jti, this.customerTokenMaxAgeSec() * 1000);
+    }
+    return { ok: true as const };
   }
 
   private serializeCustomer(row: {
@@ -440,14 +895,192 @@ export class ShopService {
     };
   }
 
-  async unlock(body: { phone?: string; name?: string; email?: string }) {
+  async requestUnlockOtp(body: { phone?: string }) {
     const phone = normalizeShopPhone(body.phone || "");
     if (!phone || phone.length < 8) {
       throw new BadRequestException("أدخل رقم الجوال");
     }
-    const org = await this.orgs.resolve();
+    if (phone.startsWith("guest_")) {
+      throw new BadRequestException("مسار الضيف لا يستخدم رمز تحقق");
+    }
+    if (!otpDeliveryConfigured()) {
+      throw new BadRequestException(
+        "رمز التحقق غير متاح حالياً — استخدم تسجيل الدخول بكلمة المرور",
+      );
+    }
+
+    const code = generateOtpCode();
+    await saveUnlockOtp(phone, {
+      codeHash: hashOtp(phone, code),
+      expiresAt: Date.now() + 5 * 60_000,
+      attempts: 0,
+    });
+
+    const mode = (process.env.SHOP_OTP_DELIVERY || "").toLowerCase();
+    if (mode === "http") {
+      const url =
+        process.env.SHOP_OTP_WEBHOOK_URL?.trim() ||
+        process.env.SHOP_OTP_HTTP_URL?.trim();
+      if (!url) {
+        await clearUnlockOtp(phone);
+        throw new BadRequestException("تعذر إرسال رمز التحقق");
+      }
+      try {
+        await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ phone, purpose: "unlock", code }),
+        });
+      } catch {
+        await clearUnlockOtp(phone);
+        throw new BadRequestException("تعذر إرسال رمز التحقق");
+      }
+    } else if (mode === "whatsapp") {
+      await clearUnlockOtp(phone);
+      throw new BadRequestException(
+        "إرسال واتساب للرموز غير مفعّل بعد — استخدم كلمة المرور",
+      );
+    } else if (
+      !isProductionRuntime() &&
+      (mode === "log" || mode === "console") &&
+      process.env.SHOP_OTP_ALLOW_LOG === "1"
+    ) {
+      // eslint-disable-next-line no-console
+      console.info(`[shop.otp] unlock code issued for ${phone.slice(0, 6)}…`);
+    }
+
+    return {
+      ok: true as const,
+      expiresInSec: 300,
+      requiresCode: true,
+    };
+  }
+
+  async unlock(body: {
+    phone?: string;
+    name?: string;
+    email?: string;
+    code?: string;
+    password?: string;
+    guest?: boolean;
+  }) {
     const name = body.name?.trim() || undefined;
     const email = body.email?.trim().toLowerCase() || undefined;
+    let phone = normalizeShopPhone(body.phone || "");
+    const asGuest =
+      Boolean(body.guest) ||
+      ((!phone || phone.length < 8) && Boolean(name || email));
+
+    if (asGuest) {
+      phone = newGuestPhone();
+      const org = await this.orgs.resolve();
+      const contact = await this.prisma.contact.create({
+        data: {
+          organizationId: org.id,
+          waId: phone,
+          name: name || email || "ضيف",
+          email,
+          source: "web_shop_guest",
+          lastContactedAt: new Date(),
+        },
+      });
+      const customer = await this.prisma.customer.create({
+        data: {
+          organizationId: org.id,
+          phone,
+          name: name || email || "ضيف",
+          email,
+          contactId: contact.id,
+          status: "active",
+          lastLoginAt: new Date(),
+        },
+      });
+      const accessToken = await this.issueCustomerToken(customer);
+      return {
+        accessToken,
+        tokenType: "Bearer",
+        customer: this.serializeCustomer({
+          ...customer,
+          hasPassword: false,
+        }),
+      };
+    }
+
+    if (!phone || phone.length < 8) {
+      throw new BadRequestException("أدخل رقم الجوال");
+    }
+
+    const org = await this.orgs.resolve();
+    const existing = await this.prisma.customer.findUnique({
+      where: {
+        organizationId_phone: { organizationId: org.id, phone },
+      },
+    });
+
+    if (existing && existing.status !== "active") {
+      throw new UnauthorizedException("الحساب موقوف — تواصل مع الدعم");
+    }
+
+    const password = body.password || "";
+    const code = String(body.code || "").trim();
+    let verifiedViaPassword = false;
+    let verifiedViaOtp = false;
+
+    if (existing?.passwordHash && password) {
+      const valid = await bcrypt.compare(password, existing.passwordHash);
+      if (!valid) {
+        throw new UnauthorizedException("بيانات الدخول غير صحيحة");
+      }
+      verifiedViaPassword = true;
+    }
+
+    const needsProof =
+      Boolean(existing) || unlockRequiresOtp() || isProductionRuntime();
+    if (needsProof && !verifiedViaPassword) {
+      if (!otpDeliveryConfigured() && existing) {
+        throw new UnauthorizedException(
+          "يجب إدخال كلمة المرور — مسار الرمز غير مفعّل",
+        );
+      }
+      if (!otpDeliveryConfigured() && !existing) {
+        throw new BadRequestException(
+          "لا يمكن إنشاء حساب دون كلمة مرور أو رمز تحقق مُرسل",
+        );
+      }
+      if (!/^\d{6}$/.test(code)) {
+        throw new BadRequestException("أدخل رمز التحقق المكوّن من 6 أرقام");
+      }
+      const entry = await loadUnlockOtp(phone);
+      if (!entry || entry.expiresAt < Date.now()) {
+        await clearUnlockOtp(phone);
+        throw new UnauthorizedException("انتهت صلاحية الرمز — اطلب رمزاً جديداً");
+      }
+      entry.attempts += 1;
+      if (entry.attempts > 5) {
+        await clearUnlockOtp(phone);
+        throw new UnauthorizedException("محاولات كثيرة — اطلب رمزاً جديداً");
+      }
+      if (!otpMatches(phone, code, entry)) {
+        await saveUnlockOtp(phone, entry);
+        throw new UnauthorizedException("رمز التحقق غير صحيح");
+      }
+      await clearUnlockOtp(phone);
+      verifiedViaOtp = true;
+    }
+
+    if (existing && !verifiedViaPassword && !verifiedViaOtp) {
+      throw new UnauthorizedException(
+        "يلزم إثبات الهوية بكلمة مرور أو رمز تحقق",
+      );
+    }
+    if (
+      !existing &&
+      isProductionRuntime() &&
+      !verifiedViaPassword &&
+      !verifiedViaOtp
+    ) {
+      throw new UnauthorizedException("يلزم إثبات الهوية قبل إنشاء الجلسة");
+    }
 
     const contact = await this.prisma.contact.upsert({
       where: {
@@ -461,18 +1094,13 @@ export class ShopService {
       create: {
         organizationId: org.id,
         waId: phone,
-        name: name || phone,
+        name: name || email || phone,
         email,
         source: "web_shop",
         lastContactedAt: new Date(),
       },
     });
 
-    const existing = await this.prisma.customer.findUnique({
-      where: {
-        organizationId_phone: { organizationId: org.id, phone },
-      },
-    });
     const customer = existing
       ? await this.prisma.customer.update({
           where: { id: existing.id },
@@ -481,14 +1109,13 @@ export class ShopService {
             email: email || existing.email,
             contactId: contact.id,
             lastLoginAt: new Date(),
-            status: "active",
           },
         })
       : await this.prisma.customer.create({
           data: {
             organizationId: org.id,
             phone,
-            name: name || phone,
+            name: name || email || phone,
             email,
             contactId: contact.id,
             status: "active",
@@ -530,6 +1157,91 @@ export class ShopService {
       where: { id: customer.id },
       data: { lastLoginAt: new Date() },
     });
+    const accessToken = await this.issueCustomerToken(customer);
+    return {
+      accessToken,
+      tokenType: "Bearer",
+      customer: this.serializeCustomer({
+        ...customer,
+        hasPassword: true,
+      }),
+    };
+  }
+
+  async register(body: {
+    phone?: string;
+    name?: string;
+    email?: string;
+    password?: string;
+  }) {
+    const phone = normalizeShopPhone(body.phone || "");
+    const name = body.name?.trim() || "";
+    const email = body.email?.trim().toLowerCase() || undefined;
+    const password = body.password || "";
+    if (!name) {
+      throw new BadRequestException("أدخل الاسم");
+    }
+    if (!phone || phone.length < 8) {
+      throw new BadRequestException("أدخل رقم الجوال");
+    }
+    if (password.length < 8) {
+      throw new BadRequestException("كلمة المرور يجب أن تكون 8 أحرف على الأقل");
+    }
+    const org = await this.orgs.resolve();
+    const existing = await this.prisma.customer.findUnique({
+      where: {
+        organizationId_phone: { organizationId: org.id, phone },
+      },
+    });
+    if (existing?.passwordHash) {
+      throw new BadRequestException("هذا الرقم مسجّل مسبقاً — سجّل الدخول");
+    }
+    if (existing && existing.status !== "active") {
+      throw new UnauthorizedException("الحساب موقوف — تواصل مع الدعم");
+    }
+    const passwordHash = await bcrypt.hash(password, 12);
+    const contact = await this.prisma.contact.upsert({
+      where: {
+        organizationId_waId: { organizationId: org.id, waId: phone },
+      },
+      update: {
+        name,
+        email: email || undefined,
+        lastContactedAt: new Date(),
+      },
+      create: {
+        organizationId: org.id,
+        waId: phone,
+        name,
+        email,
+        source: "web_shop_register",
+        lastContactedAt: new Date(),
+      },
+    });
+    const customer = existing
+      ? await this.prisma.customer.update({
+          where: { id: existing.id },
+          data: {
+            name,
+            email: email || existing.email,
+            passwordHash,
+            contactId: contact.id,
+            status: "active",
+            lastLoginAt: new Date(),
+          },
+        })
+      : await this.prisma.customer.create({
+          data: {
+            organizationId: org.id,
+            phone,
+            name,
+            email,
+            passwordHash,
+            contactId: contact.id,
+            status: "active",
+            lastLoginAt: new Date(),
+          },
+        });
     const accessToken = await this.issueCustomerToken(customer);
     return {
       accessToken,
@@ -595,6 +1307,9 @@ export class ShopService {
         ...(passwordHash ? { passwordHash } : {}),
       },
     });
+    if (passwordHash) {
+      await bumpSessionEpoch(updated.id);
+    }
     if (updated.contactId) {
       await this.prisma.contact.update({
         where: { id: updated.contactId },
@@ -794,6 +1509,28 @@ export class ShopService {
     if (!body?.offer?.description || body.offer.sellAmountMinor == null) {
       throw new BadRequestException("بيانات العرض غير مكتملة");
     }
+
+    // P6: hotel bookings require a recent reprice/checkrate before confirm
+    if (body.serviceType === "hotel") {
+      const details = (body.offer.details || {}) as Record<string, unknown>;
+      const extras = (body.extras || {}) as Record<string, unknown>;
+      const validatedAt = String(
+        details.validatedAt ||
+          details.revalidatedAt ||
+          details.checkRateAt ||
+          extras.validatedAt ||
+          "",
+      );
+      const validatedMs = validatedAt ? Date.parse(validatedAt) : NaN;
+      const fresh =
+        Number.isFinite(validatedMs) && Date.now() - validatedMs < 20 * 60 * 1000;
+      if (!fresh && !body.quoteItemId) {
+        throw new BadRequestException(
+          "يجب التحقق من السعر (إعادة التسعير) قبل تأكيد حجز الفندق. ارجع للتفاصيل وأعد التحقق.",
+        );
+      }
+    }
+
     const result = await this.bookings.createFromDraft({
       organizationId: customer.organizationId,
       customerId: customer.id,
@@ -821,6 +1558,38 @@ export class ShopService {
       seatPref: body.seatPref,
       payment: { method: "manual", status: "unpaid" },
     });
+
+    const ref = result.booking.id.slice(0, 8).toUpperCase();
+    await dispatchCustomerNotification(
+      { prisma: this.prisma },
+      {
+        organizationId: customer.organizationId,
+        customerId: customer.id,
+        type: "booking_confirmed",
+        title: "تم استلام طلب الحجز",
+        body: `رقم الطلب ${ref} — سيتواصل معك فريق WeekendGate لتأكيد السعر والتفاصيل.`,
+        href: `/bookings/manage?ref=${encodeURIComponent(result.booking.id)}`,
+        channels: ["in_app"],
+      },
+    ).catch(() => undefined);
+
+    await this.prisma.auditLog
+      .create({
+        data: {
+          organizationId: customer.organizationId,
+          action: "shop.booking_received",
+          entityType: "Booking",
+          entityId: result.booking.id,
+          after: {
+            serviceType: body.serviceType,
+            channel: "web_shop",
+            customerId: customer.id,
+            totalSellAmount: result.booking.totalSellAmount,
+          },
+        },
+      })
+      .catch(() => undefined);
+
     return {
       booking: {
         id: result.booking.id,
@@ -834,6 +1603,259 @@ export class ShopService {
             method: result.payment.method,
           }
         : { status: "unpaid", method: "manual" },
+    };
+  }
+
+  async lookupBooking(body: { bookingRef?: string; contact?: string }) {
+    const ref = String(body.bookingRef || "").trim();
+    const contact = String(body.contact || "").trim().toLowerCase();
+    if (ref.length < 4 || contact.length < 4) {
+      throw new BadRequestException("أدخل رقم الحجز وبيانات التواصل");
+    }
+    const org = await this.orgs.resolve();
+    const phoneNorm = normalizeShopPhone(contact);
+    const row = await this.prisma.booking.findFirst({
+      where: {
+        organizationId: org.id,
+        OR: [{ id: ref }, { id: { startsWith: ref } }],
+      },
+      include: {
+        quote: { include: { items: true } },
+        payments: true,
+      },
+    });
+    if (!row) throw new BadRequestException("لم يتم العثور على الحجز");
+    const pd = (row.passengerDetails || {}) as Record<string, unknown>;
+    const contactInfo = (pd.contact || {}) as { email?: string; phone?: string };
+    const email = String(contactInfo.email || pd.email || "").toLowerCase();
+    const phone = normalizeShopPhone(String(contactInfo.phone || pd.phone || ""));
+    const contactOk =
+      (email && email === contact) ||
+      (phone && (phone === phoneNorm || phone.endsWith(contact.replace(/\D/g, ""))));
+    if (!contactOk) {
+      throw new BadRequestException("بيانات التواصل لا تطابق الحجز");
+    }
+    return {
+      id: row.id,
+      weekendgateRef: String(pd.weekendgateRef || row.id),
+      providerRef: String(pd.providerBookingRef || pd.pnr || "") || undefined,
+      status: row.status,
+      paymentStatus: row.payments[0]?.status || "unpaid",
+      paymentMethod: row.payments[0]?.method,
+      description: row.quote?.items[0]?.description || "حجز",
+      totalSellAmount: row.totalSellAmount,
+      currency: row.quote?.currency || "KWD",
+      createdAt: row.createdAt,
+      timeline: [
+        { at: row.createdAt.toISOString(), label: "تم إنشاء الطلب" },
+        ...(row.status === "confirmed"
+          ? [{ at: (row.updatedAt || row.createdAt).toISOString(), label: "تم التأكيد" }]
+          : []),
+      ],
+    };
+  }
+
+  async createPaymentIntent(
+    customer: ShopCustomer,
+    body: {
+      bookingId?: string;
+      amountMinor?: number;
+      currency?: string;
+      method?: "hosted_card" | "knet" | "apple_pay" | "manual";
+      idempotencyKey?: string;
+      returnUrl?: string;
+      cancelUrl?: string;
+    },
+  ) {
+    const bookingId = String(body.bookingId || "").trim();
+    if (!bookingId) throw new BadRequestException("bookingId مطلوب");
+    const booking = await this.prisma.booking.findFirst({
+      where: {
+        id: bookingId,
+        organizationId: customer.organizationId,
+        customerId: customer.id,
+      },
+      include: { quote: true, payments: true },
+    });
+    if (!booking) throw new BadRequestException("الحجز غير موجود");
+
+    const amountMinor = Number(booking.totalSellAmount);
+    if (!Number.isFinite(amountMinor) || amountMinor <= 0) {
+      throw new BadRequestException("مبلغ الدفع غير صالح");
+    }
+    if (
+      body.amountMinor != null &&
+      Math.round(Number(body.amountMinor)) !== Math.round(amountMinor)
+    ) {
+      throw new BadRequestException("مبلغ الدفع لا يطابق آخر تسعير للحجز");
+    }
+
+    const { getPaymentGateway } = await import("@watesly-travel/provider-sdk");
+    const gateway = getPaymentGateway();
+    const intent = await gateway.createIntent({
+      amountMinor: Math.round(amountMinor),
+      currency: String(booking.quote?.currency || "KWD").toUpperCase(),
+      bookingId: booking.id,
+      weekendgateRef: booking.id,
+      customerEmail: customer.email || undefined,
+      customerPhone: customer.phone,
+      method: body.method || "hosted_card",
+      idempotencyKey: String(body.idempotencyKey || `book:${booking.id}:${amountMinor}`),
+      returnUrl: body.returnUrl || "https://www.weekendgate.com/bookings/manage",
+      cancelUrl: body.cancelUrl || "https://www.weekendgate.com/bookings/manage",
+    });
+    return {
+      intent,
+      note:
+        gateway.environment === "sandbox"
+          ? "وضع Sandbox — لا يتم خصم حقيقي. التأكيد يعتمد على Webhook موقّع وليس على Redirect فقط."
+          : undefined,
+    };
+  }
+
+  async handlePaymentWebhook(
+    body: Record<string, unknown>,
+    headers: Record<string, string | string[] | undefined> = {},
+    rawBody?: string,
+  ) {
+    const { getPaymentGateway } = await import("@watesly-travel/provider-sdk");
+    const { normalizeShopPaymentStatus, isCapturedPaymentStatus } = await import(
+      "@watesly-travel/shared"
+    );
+    const gateway = getPaymentGateway();
+    const payload = rawBody && rawBody.length ? rawBody : JSON.stringify(body || {});
+    const event = await gateway.verifyAndParseWebhook(headers, payload);
+
+    const intent = await gateway.getIntent(event.intentId);
+    if (!intent?.bookingId) {
+      throw new BadRequestException("نية الدفع غير معروفة — رُفض الإشعار");
+    }
+    const bookingId = intent.bookingId;
+
+    const eventKey = buildWebhookEventKey({
+      provider: gateway.providerKey,
+      intentId: event.intentId,
+      status: event.status,
+      providerRef: event.providerRef,
+      eventKey: (event as { eventKey?: string }).eventKey,
+    });
+    if (!(await claimWebhookReceipt(eventKey))) {
+      return {
+        ok: true,
+        duplicate: true,
+        status: normalizeShopPaymentStatus(event.status),
+        intentId: event.intentId,
+        bookingId,
+      };
+    }
+
+    // Authorized ≠ captured — do not mark paid until capture.
+    if (event.status === "authorized") {
+      return {
+        ok: true,
+        status: "pending" as const,
+        intentId: event.intentId,
+        bookingId,
+        note: "authorized_pending_capture",
+      };
+    }
+
+    const shopStatus = normalizeShopPaymentStatus(event.status);
+    const captured = isCapturedPaymentStatus(event.status);
+
+    if (captured || shopStatus === "paid") {
+      const booking = await this.prisma.booking.findFirst({
+        where: { id: bookingId },
+        include: { payments: true, quote: true },
+      });
+      if (!booking) {
+        throw new BadRequestException("الحجز غير موجود لهذا الإشعار");
+      }
+
+      const expectedAmount = Math.round(Number(booking.totalSellAmount));
+      const expectedCurrency = String(
+        booking.quote?.currency || intent.currency || "KWD",
+      ).toUpperCase();
+      const eventAmount = Math.round(
+        Number(event.amountMinor ?? intent.amountMinor),
+      );
+      const eventCurrency = String(
+        event.currency || intent.currency || "",
+      ).toUpperCase();
+
+      if (eventAmount !== expectedAmount) {
+        throw new BadRequestException("مبلغ الإشعار لا يطابق الحجز");
+      }
+      if (eventCurrency !== expectedCurrency) {
+        throw new BadRequestException("عملة الإشعار لا تطابق الحجز");
+      }
+
+      const reference = event.providerRef || event.intentId;
+      const existingPayment = booking.payments.find(
+        (p) => p.reference === reference || p.reference === event.intentId,
+      );
+
+      if (existingPayment) {
+        await this.prisma.payment.update({
+          where: { id: existingPayment.id },
+          data: {
+            status: "paid",
+            reference,
+            method: intent.method || existingPayment.method || "hosted_card",
+            amount: expectedAmount,
+            currency: expectedCurrency,
+          },
+        });
+      } else {
+        await this.prisma.payment.create({
+          data: {
+            organizationId: booking.organizationId,
+            bookingId: booking.id,
+            status: "paid",
+            method: intent.method || "hosted_card",
+            amount: expectedAmount,
+            currency: expectedCurrency,
+            reference,
+          },
+        });
+      }
+
+      return {
+        ok: true,
+        status: "paid" as const,
+        intentId: event.intentId,
+        bookingId,
+      };
+    }
+
+    if (
+      shopStatus === "failed" ||
+      shopStatus === "refunded" ||
+      shopStatus === "partially_refunded"
+    ) {
+      const reference = event.providerRef || event.intentId;
+      const booking = await this.prisma.booking.findFirst({
+        where: { id: bookingId },
+        include: { payments: true },
+      });
+      if (booking) {
+        const target = booking.payments.find(
+          (p) => p.reference === reference || p.reference === event.intentId,
+        );
+        if (target) {
+          await this.prisma.payment.update({
+            where: { id: target.id },
+            data: { status: shopStatus, reference },
+          });
+        }
+      }
+    }
+
+    return {
+      ok: true,
+      status: shopStatus,
+      intentId: event.intentId,
+      bookingId,
     };
   }
 
@@ -856,5 +1878,50 @@ export class ShopService {
       externalRef: `customer:${customer.id}`,
       createIfMissing: false,
     });
+  }
+
+  async assistantVoiceTranscribe(
+    customer: ShopCustomer,
+    file: { buffer: Buffer; originalname?: string; mimetype?: string },
+    durationSec?: number,
+  ) {
+    return this.voice.transcribeUpload({
+      organizationId: customer.organizationId,
+      customerKey: customer.id,
+      buffer: file.buffer,
+      filename: file.originalname,
+      mimeType: file.mimetype,
+      durationSec,
+    });
+  }
+
+  async assistantVoiceConfirm(
+    customer: ShopCustomer,
+    body: { transcript?: string },
+  ) {
+    const text = String(body.transcript || "").trim();
+    if (!text) throw new BadRequestException("راجع النص الصوتي قبل الإرسال");
+    return this.voice.chatFromTranscript({
+      organizationId: customer.organizationId,
+      channel: "web_chat",
+      text,
+      contactId: customer.contactId || undefined,
+      externalRef: `customer:${customer.id}`,
+    });
+  }
+
+  async assistantTts(customer: ShopCustomer, body: { text?: string }) {
+    void customer;
+    return this.voice.synthesizeReply(String(body.text || ""));
+  }
+
+  async passportScan(body: { imageBase64?: string; mimeType?: string }) {
+    const { extractPassportFromImage } = await import("@watesly-travel/ai-core");
+    const imageBase64 = String(body.imageBase64 || "").trim();
+    const mimeType = String(body.mimeType || "image/jpeg").trim();
+    if (!imageBase64) {
+      throw new BadRequestException("صورة الجواز مطلوبة");
+    }
+    return extractPassportFromImage({ imageBase64, mimeType });
   }
 }

@@ -7,8 +7,16 @@ import { json, type Request, type Response, type NextFunction } from "express";
 import { existsSync, mkdirSync } from "fs";
 import { join } from "path";
 import { AppModule } from "./app.module";
+import {
+  assertProductionSecrets,
+  clientIpFromRequest,
+  isProductionRuntime,
+} from "./common/security-env";
+import { sharedIncr } from "./common/shared-kv";
 
 async function bootstrap() {
+  assertProductionSecrets();
+
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     bodyParser: false,
   });
@@ -30,7 +38,10 @@ async function bootstrap() {
         _res: Response,
         buf: Buffer,
       ) => {
-        if (req.originalUrl?.includes("/whatsapp/webhook")) {
+        if (
+          req.originalUrl?.includes("/whatsapp/webhook") ||
+          req.originalUrl?.includes("/shop/payments/webhook")
+        ) {
           req.rawBody = Buffer.from(buf);
         }
       },
@@ -38,32 +49,61 @@ async function bootstrap() {
   );
 
   // Lightweight in-memory rate limit for public auth/webhook endpoints.
-  const hits = new Map<string, { count: number; resetAt: number }>();
+
   const windowMs = Number(process.env.RATE_LIMIT_WINDOW_MS || 60_000);
-  const maxHits = Number(process.env.RATE_LIMIT_MAX || 100);
-  app.use((req: Request, res: Response, next: NextFunction) => {
+  const maxHitsDefault = Number(process.env.RATE_LIMIT_MAX || 100);
+  const maxHitsAuth = Number(process.env.RATE_LIMIT_AUTH_MAX || 20);
+  const maxHitsSearch = Number(process.env.RATE_LIMIT_SEARCH_MAX || 60);
+  const maxHitsAssistant = Number(process.env.RATE_LIMIT_ASSISTANT_MAX || 30);
+
+  // Trust a single reverse-proxy hop (Caddy) only when explicitly enabled.
+  app.set("trust proxy", process.env.TRUST_PROXY === "1" ? 1 : false);
+
+  app.use(async (req: Request, res: Response, next: NextFunction) => {
     const path = req.path || "";
+    let maxHits = 0;
     if (
-      !path.startsWith("/auth/") &&
-      !path.startsWith("/whatsapp/webhook") &&
-      !path.startsWith("/shop/unlock") &&
-      !path.startsWith("/shop/login")
+      path.startsWith("/auth/") ||
+      path.startsWith("/shop/unlock") ||
+      path.startsWith("/shop/login") ||
+      path.startsWith("/shop/register")
     ) {
+      maxHits = maxHitsAuth;
+    } else if (
+      path.startsWith("/shop/flights") ||
+      path.startsWith("/shop/hotels") ||
+      path.startsWith("/shop/airports") ||
+      path.startsWith("/shop/cities") ||
+      path.startsWith("/shop/search")
+    ) {
+      maxHits = maxHitsSearch;
+    } else if (
+      path.startsWith("/shop/assistant") ||
+      path.startsWith("/assistant")
+    ) {
+      maxHits = maxHitsAssistant;
+    } else if (
+      path.startsWith("/whatsapp/webhook") ||
+      path.startsWith("/shop/payments/webhook")
+    ) {
+      maxHits = maxHitsDefault;
+    } else {
       return next();
     }
-    const key = `${req.ip}:${path}`;
-    const now = Date.now();
-    const current = hits.get(key);
-    if (!current || current.resetAt < now) {
-      hits.set(key, { count: 1, resetAt: now + windowMs });
-      return next();
-    }
-    current.count += 1;
-    if (current.count > maxHits) {
-      return res.status(429).json({ message: "طلبات كثيرة، حاول لاحقًا" });
+
+    const ip = clientIpFromRequest(req);
+    const bucket = `rl:${ip}:${path.split("/").slice(0, 3).join("/")}`;
+    try {
+      const count = await sharedIncr(bucket, windowMs);
+      if (count > maxHits) {
+        return res.status(429).json({ message: "طلبات كثيرة، حاول لاحقًا" });
+      }
+    } catch {
+      // fail-open on shared store errors
     }
     return next();
   });
+
 
   app.useGlobalPipes(
     new ValidationPipe({
@@ -93,6 +133,11 @@ async function bootstrap() {
     origin: corsOrigins,
     credentials: true,
   });
+
+  if (isProductionRuntime()) {
+    // eslint-disable-next-line no-console
+    console.log("[api] production security checks passed");
+  }
 
   await app.listen(port);
   // eslint-disable-next-line no-console

@@ -960,6 +960,10 @@ export function ShopHeroBanner(props: Props) {
   z-index: 3 !important;
   pointer-events: none !important;
 }
+.wg-travela-carousel-btn {
+  background: #1565c0 !important;
+  color: #fff !important;
+}
 html body .shop-root .shop-header.wg-header-blue,
 html body .shop-root.wg-new-ui .exp-header-hero-overlay.wg-header-blue {
   background: #1565c0 !important;

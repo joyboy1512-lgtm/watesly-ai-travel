@@ -3,12 +3,21 @@ import {
   Controller,
   Delete,
   Get,
+  Headers,
   Param,
   Patch,
   Post,
+  Res,
   Query,
+  Req,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
+  BadRequestException,
 } from "@nestjs/common";
+import type { Request, Response } from "express";
+import { FileInterceptor } from "@nestjs/platform-express";
+import { memoryStorage } from "multer";
 import { Public } from "../auth/decorators";
 import {
   CustomerAuthGuard,
@@ -18,6 +27,7 @@ import {
   type ShopCustomer,
 } from "./shop-auth";
 import { ShopService } from "./shop.service";
+import { VOICE_MAX_BYTES } from "@watesly-travel/ai-core";
 
 @Controller("shop")
 @Public()
@@ -27,6 +37,11 @@ export class ShopController {
   @Get("bootstrap")
   bootstrap() {
     return this.shop.bootstrap();
+  }
+
+  @Get("fx")
+  fx() {
+    return this.shop.fx();
   }
 
   @Get("airports")
@@ -80,6 +95,7 @@ export class ShopController {
       adults?: number;
       children?: number;
       infants?: number;
+      childrenAges?: string;
       preferences?: string;
     },
     @ShopCustomerMaybe() customer?: ShopCustomer,
@@ -142,16 +158,75 @@ export class ShopController {
     return this.shop.checkHotelRate(body);
   }
 
+  @Post("unlock/request")
+  requestUnlock(@Body() body: { phone?: string }) {
+    return this.shop.requestUnlockOtp(body);
+  }
+
   @Post("unlock")
-  unlock(@Body() body: { phone?: string; name?: string; email?: string }) {
-    return this.shop.unlock(body);
+  async unlock(
+    @Body()
+    body: {
+      phone?: string;
+      name?: string;
+      email?: string;
+      code?: string;
+      password?: string;
+      guest?: boolean;
+    },
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const result = await this.shop.unlock(body);
+    for (const cookie of this.shop.sessionSetCookieHeaders(result.accessToken)) {
+      res.append("Set-Cookie", cookie);
+    }
+    return result;
   }
 
   @Post("login")
-  login(@Body() body: { phone?: string; password?: string }) {
-    return this.shop.login(body);
+  async login(
+    @Body() body: { phone?: string; password?: string },
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const result = await this.shop.login(body);
+    for (const cookie of this.shop.sessionSetCookieHeaders(result.accessToken)) {
+      res.append("Set-Cookie", cookie);
+    }
+    return result;
   }
 
+  @Post("register")
+  async register(
+    @Body()
+    body: {
+      phone?: string;
+      name?: string;
+      email?: string;
+      password?: string;
+    },
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const result = await this.shop.register(body);
+    for (const cookie of this.shop.sessionSetCookieHeaders(result.accessToken)) {
+      res.append("Set-Cookie", cookie);
+    }
+    return result;
+  }
+
+
+  @Post("logout")
+  @UseGuards(CustomerAuthGuard)
+  async logout(
+    @CurrentCustomer() customer: ShopCustomer,
+    @Req() req: Request & { customerJti?: string },
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    await this.shop.logoutCustomer(customer, req.customerJti);
+    for (const cookie of this.shop.sessionClearCookieHeaders()) {
+      res.append("Set-Cookie", cookie);
+    }
+    return { ok: true };
+  }
   @Get("me")
   @UseGuards(CustomerAuthGuard)
   me(@CurrentCustomer() customer: ShopCustomer) {
@@ -221,6 +296,44 @@ export class ShopController {
     return this.shop.deleteTraveler(customer, id);
   }
 
+  @Post("bookings/lookup")
+  lookupBooking(
+    @Body() body: { bookingRef?: string; contact?: string },
+  ) {
+    return this.shop.lookupBooking(body);
+  }
+
+  @Post("payments/intent")
+  @UseGuards(CustomerAuthGuard)
+  createPaymentIntent(
+    @CurrentCustomer() customer: ShopCustomer,
+    @Body()
+    body: {
+      bookingId?: string;
+      amountMinor?: number;
+      currency?: string;
+      method?: "hosted_card" | "knet" | "apple_pay" | "manual";
+      idempotencyKey?: string;
+      returnUrl?: string;
+      cancelUrl?: string;
+    },
+  ) {
+    return this.shop.createPaymentIntent(customer, body);
+  }
+
+  @Post("payments/webhook")
+  paymentWebhook(
+    @Body() body: Record<string, unknown>,
+    @Headers() headers: Record<string, string | string[] | undefined>,
+    @Req() req: Request & { rawBody?: Buffer },
+  ) {
+    const raw =
+      req.rawBody && Buffer.isBuffer(req.rawBody)
+        ? req.rawBody.toString("utf8")
+        : undefined;
+    return this.shop.handlePaymentWebhook(body, headers, raw);
+  }
+
   @Get("bookings")
   @UseGuards(CustomerAuthGuard)
   bookings(@CurrentCustomer() customer: ShopCustomer) {
@@ -276,6 +389,53 @@ export class ShopController {
     @Body() body: { message?: string },
   ) {
     return this.shop.assistantChat(customer, body);
+  }
+
+  @Post("assistant/voice")
+  @UseGuards(CustomerAuthGuard)
+  @UseInterceptors(
+    FileInterceptor("audio", {
+      storage: memoryStorage(),
+      limits: { fileSize: VOICE_MAX_BYTES },
+    }),
+  )
+  async assistantVoice(
+    @CurrentCustomer() customer: ShopCustomer,
+    @UploadedFile() file: Express.Multer.File,
+    @Body() body: { durationSec?: string },
+  ) {
+    if (!file?.buffer?.length) {
+      throw new BadRequestException("أرفق تسجيلاً صوتياً");
+    }
+    const durationSec = body?.durationSec ? Number(body.durationSec) : undefined;
+    return this.shop.assistantVoiceTranscribe(customer, file, durationSec);
+  }
+
+  @Post("assistant/voice/confirm")
+  @UseGuards(CustomerAuthGuard)
+  assistantVoiceConfirm(
+    @CurrentCustomer() customer: ShopCustomer,
+    @Body() body: { transcript?: string },
+  ) {
+    return this.shop.assistantVoiceConfirm(customer, body);
+  }
+
+  @Post("assistant/tts")
+  @UseGuards(CustomerAuthGuard)
+  assistantTts(
+    @CurrentCustomer() customer: ShopCustomer,
+    @Body() body: { text?: string },
+  ) {
+    return this.shop.assistantTts(customer, body);
+  }
+
+  @Post("passport-scan")
+  @UseGuards(CustomerAuthGuard)
+  @OptionalCustomer()
+  passportScan(
+    @Body() body: { imageBase64?: string; mimeType?: string },
+  ) {
+    return this.shop.passportScan(body);
   }
 
   @Get("assistant/thread")

@@ -278,6 +278,13 @@ function FieldIcon({
   );
 }
 
+function nightsBetweenIso(from: string, to: string) {
+  const a = new Date(`${from}T12:00:00`);
+  const b = new Date(`${to}T12:00:00`);
+  if (Number.isNaN(a.getTime()) || Number.isNaN(b.getTime())) return 0;
+  return Math.max(0, Math.round((b.getTime() - a.getTime()) / 86400000));
+}
+
 function formatTimeShort(t: string, en = false) {
   if (!t) return "";
   const [h, m] = t.split(":");
@@ -853,6 +860,7 @@ export function ShopHeroBanner(props: Props) {
     props.mode === "stays" ||
     props.mode === "activities" ||
     (props.mode === "cars" && props.transferRoundtrip);
+  const hotelNights = nightsBetweenIso(props.departDate, props.returnDate);
 
   return (
     <>
@@ -1072,6 +1080,7 @@ html body .wg-travela-hero .wg-travela-caption {
 #search.wg-simple-search .wg-cell-origin,
 #search.wg-simple-search .wg-cell-dest,
 #search.wg-simple-search .wg-cell-dates,
+#search.wg-simple-search .wg-cell-nights,
 #search.wg-simple-search .wg-cell-travelers,
 #search.wg-simple-search .wg-cell-time {
   border: 1.5px solid #1565c0 !important;
@@ -1162,18 +1171,57 @@ html body .shop-root #search.wg-simple-search .shop-date-day-cell.range-single .
   -webkit-text-fill-color: #fff !important;
   text-decoration: none !important;
 }
+html body .shop-root #search.wg-simple-search .shop-date-range-pop-head,
+html body #search.wg-simple-search .shop-date-range-pop-head,
+html body .shop-root #search.wg-simple-search .shop-date-range-phase,
+html body #search.wg-simple-search .shop-date-range-phase {
+  display: none !important;
+}
+html body .shop-root #search.wg-simple-search .shop-date-range-footer,
+html body #search.wg-simple-search .shop-date-range-footer {
+  display: flex !important;
+  flex-direction: row !important;
+  direction: ltr !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 0.6rem !important;
+  margin-top: 0.45rem !important;
+  padding-top: 0.4rem !important;
+}
+html body .shop-root #search.wg-simple-search .shop-date-range-footer-dates,
+html body #search.wg-simple-search .shop-date-range-footer-dates {
+  white-space: nowrap !important;
+  direction: rtl !important;
+  color: #111 !important;
+  -webkit-text-fill-color: #111 !important;
+  font-size: 0.82rem !important;
+  font-weight: 700 !important;
+  flex: 1 1 auto !important;
+  text-align: end !important;
+}
 html body .shop-root #search.wg-simple-search .exp-pop-done,
 html body #search.wg-simple-search .exp-pop-done,
 html body .shop-root #search.wg-simple-search .shop-date-range-footer .exp-pop-done {
   white-space: nowrap !important;
   line-height: 1 !important;
-  min-height: 2.45rem !important;
+  width: auto !important;
+  min-width: 2.6rem !important;
+  max-width: 4.2rem !important;
+  min-height: 1.65rem !important;
+  height: 1.65rem !important;
+  padding: 0 0.7rem !important;
+  margin: 0 !important;
+  flex: 0 0 auto !important;
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
-  font-size: 1rem !important;
+  font-size: 0.82rem !important;
   font-weight: 800 !important;
   letter-spacing: 0 !important;
+  border-radius: 8px !important;
+  background: #1565c0 !important;
+  color: #fff !important;
+  -webkit-text-fill-color: #fff !important;
 }
 #search.wg-simple-search .wg-simple-cell .exp-cell-label,
 #search.wg-simple-search .wg-simple-cell .shop-ac-inline > span:first-child {
@@ -1280,12 +1328,10 @@ html body .shop-root #search.wg-simple-search .exp-ac-menu,
 html body .shop-root #search.wg-simple-search .shop-ac .prc-suggest,
 html body .shop-root #search.wg-simple-search .exp-travelers-panel,
 html body .shop-root #search.wg-simple-search .exp-occupancy-panel,
-html body .shop-root #search.wg-simple-search .shop-date-range-pop,
 html body #search.wg-simple-search .prc-suggest,
 html body #search.wg-simple-search .exp-ac-menu,
 html body #search.wg-simple-search .exp-travelers-panel,
-html body #search.wg-simple-search .exp-occupancy-panel,
-html body #search.wg-simple-search .shop-date-range-pop {
+html body #search.wg-simple-search .exp-occupancy-panel {
   position: absolute !important;
   top: calc(100% + 6px) !important;
   bottom: auto !important;
@@ -1300,8 +1346,20 @@ html body #search.wg-simple-search .shop-date-range-pop {
 }
 html body .shop-root #search.wg-simple-search .shop-date-range-pop,
 html body #search.wg-simple-search .shop-date-range-pop {
-  max-height: min(420px, 70vh) !important;
-  width: min(640px, 92vw) !important;
+  position: absolute !important;
+  top: calc(100% + 6px) !important;
+  bottom: auto !important;
+  inset-inline-start: 0 !important;
+  inset-inline-end: auto !important;
+  left: auto !important;
+  right: auto !important;
+  transform: none !important;
+  z-index: 80 !important;
+  max-height: none !important;
+  height: auto !important;
+  overflow: hidden !important;
+  width: min(620px, 92vw) !important;
+  padding: 0.65rem 0.75rem 0.55rem !important;
 }
 #search.wg-simple-search .shop-date-range {
   flex: 1 !important;
@@ -1315,15 +1373,35 @@ html body #search.wg-simple-search .shop-date-range-pop {
   flex-wrap: nowrap !important;
   min-width: 0 !important;
 }
-#search.wg-simple-search .shop-date-nights {
-  display: inline-flex !important;
-  align-items: center !important;
+#search.wg-simple-search .wg-cell-nights {
+  flex: 0 0 auto !important;
+  min-width: 4.4rem !important;
+  max-width: 5.6rem !important;
+  padding: 0.25rem 0.5rem !important;
+  justify-content: center !important;
   gap: 0.22rem !important;
-  color: #1565c0 !important;
-  -webkit-text-fill-color: #1565c0 !important;
   font-size: 0.8rem !important;
   font-weight: 800 !important;
+  color: #1565c0 !important;
+  -webkit-text-fill-color: #1565c0 !important;
   white-space: nowrap !important;
+}
+#search.wg-simple-search .shop-date-range-months {
+  gap: 0.7rem !important;
+}
+#search.wg-simple-search .shop-date-month-title {
+  margin-bottom: 0.25rem !important;
+  font-size: 0.82rem !important;
+}
+#search.wg-simple-search .shop-date-day-cell {
+  min-height: 1.85rem !important;
+}
+#search.wg-simple-search .shop-date-range-day {
+  width: 1.75rem !important;
+  height: 1.75rem !important;
+}
+#search.wg-simple-search .shop-date-range-nav {
+  margin-bottom: 0.15rem !important;
 }
 html body .shop-root #search.wg-simple-search .prc-suggest button,
 html body .shop-root #search.wg-simple-search .exp-ac-menu button,
@@ -1673,12 +1751,27 @@ html body #search.wg-simple-search .prc-suggest button strong {
                             : t("returnDate")
                       }
                       placeholder={t("selectTravelDates")}
-                      showNights={props.mode === "stays"}
                     />
                   ) : (
                     <DatePick value={props.departDate} onChange={props.onDepartDateChange} label={t("departDate")} />
                   )}
                 </div>
+                {props.mode === "stays" ? (
+                  <div className="wg-simple-cell wg-cell-nights" aria-label={locale === "en" ? "nights" : "ليال"}>
+                    <span className="wg-num" dir="ltr">
+                      {hotelNights || 1}
+                    </span>
+                    <span>
+                      {locale === "en"
+                        ? hotelNights === 1
+                          ? "night"
+                          : "nights"
+                        : hotelNights === 1
+                          ? "ليلة"
+                          : "ليالٍ"}
+                    </span>
+                  </div>
+                ) : null}
                 {props.mode === "cars" ? (
                   <>
                     <div className="wg-simple-cell wg-cell-time">

@@ -33,18 +33,6 @@ function addDays(iso: string, days: number) {
   return toIso(d);
 }
 
-function nightsBetween(from: string, to: string) {
-  const a = parseIso(from);
-  const b = parseIso(to);
-  if (!a || !b) return 0;
-  return Math.max(0, Math.round((b.getTime() - a.getTime()) / 86400000));
-}
-
-function nightsWord(n: number, locale = "ar") {
-  if (locale === "en") return n === 1 ? "night" : "nights";
-  return n === 1 ? "ليلة" : "ليالٍ";
-}
-
 function formatShort(iso: string) {
   const d = parseIso(iso);
   if (!d) return "—";
@@ -154,7 +142,6 @@ export function ShopDateRangePicker({
   startLabel = "تاريخ الوصول",
   endLabel = "تاريخ المغادرة",
   placeholder = "اختر التواريخ",
-  showNights = false,
 }: Props) {
   const [open, setOpen] = useState(false);
   const [phase, setPhase] = useState<"checkin" | "checkout">("checkin");
@@ -245,9 +232,6 @@ export function ShopDateRangePicker({
       ? `${formatShort(checkIn)} – ${formatShort(checkOut)}`
       : placeholder;
 
-  const nights = nightsBetween(open ? draftIn : checkIn, open ? draftOut : checkOut);
-  const nightsText = showNights && nights > 0 ? `${nights} ${nightsWord(nights)}` : "";
-
   const panel = (
     <div
       className={`shop-date-range-pop shop-date-range-pop-dual${
@@ -257,9 +241,8 @@ export function ShopDateRangePicker({
       aria-modal={isMobile ? true : undefined}
       aria-label="اختيار التواريخ"
     >
-      <div className="shop-date-range-pop-head">
-        <p className="shop-date-range-phase">{phase === "checkin" ? startLabel : endLabel}</p>
-        {isMobile ? (
+      {isMobile ? (
+        <div className="shop-date-range-pop-head">
           <button
             type="button"
             className="shop-date-range-close"
@@ -268,8 +251,8 @@ export function ShopDateRangePicker({
           >
             ×
           </button>
-        ) : null}
-      </div>
+        </div>
+      ) : null}
       <div className="shop-date-range-nav">
         <button type="button" onClick={() => shiftMonth(-1)} aria-label="الشهر السابق">
           ‹
@@ -297,10 +280,6 @@ export function ShopDateRangePicker({
         />
       </div>
       <div className="shop-date-range-footer">
-        <span>
-          {formatShort(draftIn)} → {formatShort(draftOut)}
-          {nightsText ? ` · ${nightsText}` : ""}
-        </span>
         <button
           type="button"
           className="exp-pop-done"
@@ -313,6 +292,9 @@ export function ShopDateRangePicker({
         >
           تم
         </button>
+        <span className="shop-date-range-footer-dates">
+          {formatShort(draftIn)} → {formatShort(draftOut)}
+        </span>
       </div>
     </div>
   );
@@ -345,7 +327,6 @@ export function ShopDateRangePicker({
         aria-expanded={open}
       >
         <span className="shop-date-range-summary">{summary}</span>
-        {nightsText ? <span className="shop-date-nights">{nightsText}</span> : null}
       </button>
       {open && !isMobile ? panel : null}
       {mobileOverlay}

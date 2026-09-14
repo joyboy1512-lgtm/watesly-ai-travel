@@ -11,6 +11,7 @@ type Props = {
   startLabel?: string;
   endLabel?: string;
   placeholder?: string;
+  showNights?: boolean;
 };
 
 function toIso(d: Date) {
@@ -30,6 +31,18 @@ function addDays(iso: string, days: number) {
   if (!d) return iso;
   d.setDate(d.getDate() + days);
   return toIso(d);
+}
+
+function nightsBetween(from: string, to: string) {
+  const a = parseIso(from);
+  const b = parseIso(to);
+  if (!a || !b) return 0;
+  return Math.max(0, Math.round((b.getTime() - a.getTime()) / 86400000));
+}
+
+function nightsWord(n: number, locale = "ar") {
+  if (locale === "en") return n === 1 ? "night" : "nights";
+  return n === 1 ? "ليلة" : "ليالٍ";
 }
 
 function formatShort(iso: string) {
@@ -141,6 +154,7 @@ export function ShopDateRangePicker({
   startLabel = "تاريخ الوصول",
   endLabel = "تاريخ المغادرة",
   placeholder = "اختر التواريخ",
+  showNights = false,
 }: Props) {
   const [open, setOpen] = useState(false);
   const [phase, setPhase] = useState<"checkin" | "checkout">("checkin");
@@ -231,6 +245,9 @@ export function ShopDateRangePicker({
       ? `${formatShort(checkIn)} – ${formatShort(checkOut)}`
       : placeholder;
 
+  const nights = nightsBetween(open ? draftIn : checkIn, open ? draftOut : checkOut);
+  const nightsText = showNights && nights > 0 ? `${nights} ${nightsWord(nights)}` : "";
+
   const panel = (
     <div
       className={`shop-date-range-pop shop-date-range-pop-dual${
@@ -282,6 +299,7 @@ export function ShopDateRangePicker({
       <div className="shop-date-range-footer">
         <span>
           {formatShort(draftIn)} → {formatShort(draftOut)}
+          {nightsText ? ` · ${nightsText}` : ""}
         </span>
         <button
           type="button"
@@ -326,7 +344,8 @@ export function ShopDateRangePicker({
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
       >
-        {summary}
+        <span className="shop-date-range-summary">{summary}</span>
+        {nightsText ? <span className="shop-date-nights">{nightsText}</span> : null}
       </button>
       {open && !isMobile ? panel : null}
       {mobileOverlay}

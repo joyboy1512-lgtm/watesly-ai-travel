@@ -1303,6 +1303,28 @@ html body #search.wg-simple-search .shop-date-range-pop {
   max-height: min(420px, 70vh) !important;
   width: min(640px, 92vw) !important;
 }
+#search.wg-simple-search .shop-date-range {
+  flex: 1 !important;
+  min-width: 0 !important;
+  position: relative !important;
+}
+#search.wg-simple-search .shop-date-range-trigger {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.4rem !important;
+  flex-wrap: nowrap !important;
+  min-width: 0 !important;
+}
+#search.wg-simple-search .shop-date-nights {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0.22rem !important;
+  color: #1565c0 !important;
+  -webkit-text-fill-color: #1565c0 !important;
+  font-size: 0.8rem !important;
+  font-weight: 800 !important;
+  white-space: nowrap !important;
+}
 html body .shop-root #search.wg-simple-search .prc-suggest button,
 html body .shop-root #search.wg-simple-search .exp-ac-menu button,
 html body #search.wg-simple-search .prc-suggest button {
@@ -1628,7 +1650,7 @@ html body #search.wg-simple-search .prc-suggest button strong {
                   <span className="wg-field-ico">
                     <FieldIcon name="dates" />
                   </span>
-                  {showReturnDate && props.mode !== "stays" ? (
+                  {showReturnDate ? (
                     <ShopDateRangePicker
                       checkIn={props.departDate}
                       checkOut={props.returnDate}
@@ -1636,15 +1658,23 @@ html body #search.wg-simple-search .prc-suggest button strong {
                         props.onDepartDateChange(checkIn);
                         props.onReturnDateChange(checkOut);
                       }}
-                      startLabel={props.mode === "activities" ? t("startDate") : t("departDate")}
-                      endLabel={props.mode === "activities" ? t("endDate") : t("returnDate")}
+                      startLabel={
+                        props.mode === "stays"
+                          ? t("arrivalDate")
+                          : props.mode === "activities"
+                            ? t("startDate")
+                            : t("departDate")
+                      }
+                      endLabel={
+                        props.mode === "stays"
+                          ? t("departDate")
+                          : props.mode === "activities"
+                            ? t("endDate")
+                            : t("returnDate")
+                      }
                       placeholder={t("selectTravelDates")}
+                      showNights={props.mode === "stays"}
                     />
-                  ) : props.mode === "stays" ? (
-                    <>
-                      <DatePick value={props.departDate} onChange={props.onDepartDateChange} label={t("arrivalDate")} />
-                      <DatePick value={props.returnDate} onChange={props.onReturnDateChange} label={t("departDate")} />
-                    </>
                   ) : (
                     <DatePick value={props.departDate} onChange={props.onDepartDateChange} label={t("departDate")} />
                   )}

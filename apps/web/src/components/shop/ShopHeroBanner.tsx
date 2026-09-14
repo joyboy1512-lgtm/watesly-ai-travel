@@ -230,6 +230,62 @@ function IconSwap() {
   );
 }
 
+function FieldIcon({
+  name,
+}: {
+  name: "takeoff" | "landing" | "location" | "dates" | "travelers";
+}) {
+  const common = { viewBox: "0 0 24 24", width: 18, height: 18, "aria-hidden": true } as const;
+  if (name === "takeoff") {
+    return (
+      <svg {...common}>
+        <path
+          fill="currentColor"
+          d="M2.5 19h19v2h-19zm19.57-9.36c-.21-.8-1.04-1.28-1.84-1.06L14.92 10 8 3.78 6.17 5.31 12.02 12.32 3.78 14.39l.18 1.94 8.93-1.83 1.81 1.81-2.47 1.03.93 1.75 4.37-1.82c.8-.33 1.17-1.23.84-2.03z"
+        />
+      </svg>
+    );
+  }
+  if (name === "landing") {
+    return (
+      <svg {...common}>
+        <path
+          fill="currentColor"
+          d="M2.5 19h19v2h-19zm16.84-6.01c.21.82-.26 1.66-1.08 1.87l-6.07 1.6-4.09 7.62-1.83-1.03 3.14-5.83-6.22-1.64-.18-1.94 8.16 2.16 3.16-1.68-1.81-1.81 2.47-1.03z"
+        />
+      </svg>
+    );
+  }
+  if (name === "location") {
+    return (
+      <svg {...common}>
+        <path
+          fill="currentColor"
+          d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5A2.5 2.5 0 1 1 12 6a2.5 2.5 0 0 1 0 5.5z"
+        />
+      </svg>
+    );
+  }
+  if (name === "dates") {
+    return (
+      <svg {...common}>
+        <path
+          fill="currentColor"
+          d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 18H5V8h14v13zM7 10h5v5H7v-5z"
+        />
+      </svg>
+    );
+  }
+  return (
+    <svg {...common}>
+      <path
+        fill="currentColor"
+        d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3zM8 11c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5C15 14.17 10.33 13 8 13zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"
+      />
+    </svg>
+  );
+}
+
 function formatTimeShort(t: string, en = false) {
   if (!t) return "";
   const [h, m] = t.split(":");
@@ -664,6 +720,9 @@ export function ShopHeroBanner(props: Props) {
         data-field={props.mode === "stays" ? "guests" : "travelers"}
         ref={travelersWrapRef}
       >
+        <span className="wg-field-ico">
+          <FieldIcon name="travelers" />
+        </span>
         <button
           type="button"
           className={`exp-travelers-trigger${travelersOpen ? " open" : ""}`}
@@ -1013,6 +1072,20 @@ html body .wg-travela-hero .wg-travela-caption {
 #search.wg-simple-search .wg-simple-fields > .wg-simple-cell:first-child {
   border-inline-start: 0 !important;
 }
+#search.wg-simple-search .wg-field-ico {
+  flex: 0 0 auto !important;
+  width: 18px !important;
+  height: 18px !important;
+  color: #111 !important;
+  display: grid !important;
+  place-items: center !important;
+  pointer-events: none !important;
+}
+#search.wg-simple-search .wg-field-ico svg {
+  width: 18px !important;
+  height: 18px !important;
+  display: block !important;
+}
 #search.wg-simple-search .wg-simple-cell .exp-cell-label,
 #search.wg-simple-search .wg-simple-cell .shop-ac-inline > span:first-child {
   display: none !important;
@@ -1244,6 +1317,9 @@ html body #search.wg-simple-search .prc-suggest button strong {
                   <div key={leg.id} className="wg-simple-fields">
                     <span className="wg-leg-badge">{t("flightLegN", { n: index + 1 })}</span>
                     <div className="wg-simple-cell wg-cell-grow">
+                      <span className="wg-field-ico">
+                        <FieldIcon name="takeoff" />
+                      </span>
                       <ShopAutocomplete
                         inline
                         label={fromLabel}
@@ -1266,6 +1342,9 @@ html body #search.wg-simple-search .prc-suggest button strong {
                       <IconSwap />
                     </button>
                     <div className="wg-simple-cell wg-cell-grow">
+                      <span className="wg-field-ico">
+                        <FieldIcon name="landing" />
+                      </span>
                       <ShopAutocomplete
                         inline
                         label={toLabel}
@@ -1288,6 +1367,9 @@ html body #search.wg-simple-search .prc-suggest button strong {
                       />
                     </div>
                     <div className="wg-simple-cell wg-cell-dates">
+                      <span className="wg-field-ico">
+                        <FieldIcon name="dates" />
+                      </span>
                       <DatePick
                         value={leg.departDate}
                         onChange={(v) => props.onFlightLegChange(leg.id, { departDate: v })}
@@ -1321,6 +1403,9 @@ html body #search.wg-simple-search .prc-suggest button strong {
                 {props.mode === "flights" ? (
                   <>
                     <div className="wg-simple-cell wg-cell-grow">
+                      <span className="wg-field-ico">
+                        <FieldIcon name="takeoff" />
+                      </span>
                       <ShopAutocomplete
                         inline
                         label={fromLabel}
@@ -1336,6 +1421,9 @@ html body #search.wg-simple-search .prc-suggest button strong {
                       <IconSwap />
                     </button>
                     <div className="wg-simple-cell wg-cell-grow">
+                      <span className="wg-field-ico">
+                        <FieldIcon name="landing" />
+                      </span>
                       <ShopAutocomplete
                         inline
                         label={toLabel}
@@ -1351,6 +1439,9 @@ html body #search.wg-simple-search .prc-suggest button strong {
                 ) : null}
                 {props.mode === "stays" ? (
                   <div className="wg-simple-cell wg-cell-grow">
+                    <span className="wg-field-ico">
+                      <FieldIcon name="location" />
+                    </span>
                     <ShopAutocomplete
                       inline
                       label={t("whereTo")}
@@ -1366,6 +1457,9 @@ html body #search.wg-simple-search .prc-suggest button strong {
                 {props.mode === "cars" ? (
                   <>
                     <div className="wg-simple-cell">
+                      <span className="wg-field-ico">
+                        <FieldIcon name="takeoff" />
+                      </span>
                       <ShopAutocomplete
                         inline
                         label={t("airport")}
@@ -1378,6 +1472,9 @@ html body #search.wg-simple-search .prc-suggest button strong {
                       />
                     </div>
                     <div className="wg-simple-cell wg-cell-grow">
+                      <span className="wg-field-ico">
+                        <FieldIcon name="location" />
+                      </span>
                       <ShopAutocomplete
                         inline
                         label={t("hotelOrAddress")}
@@ -1393,6 +1490,9 @@ html body #search.wg-simple-search .prc-suggest button strong {
                 ) : null}
                 {props.mode === "activities" ? (
                   <div className="wg-simple-cell wg-cell-grow">
+                    <span className="wg-field-ico">
+                      <FieldIcon name="location" />
+                    </span>
                     <ShopAutocomplete
                       inline
                       label={toLabel}
@@ -1406,6 +1506,9 @@ html body #search.wg-simple-search .prc-suggest button strong {
                   </div>
                 ) : null}
                 <div className="wg-simple-cell wg-cell-dates">
+                  <span className="wg-field-ico">
+                    <FieldIcon name="dates" />
+                  </span>
                   {showReturnDate && props.mode !== "stays" ? (
                     <ShopDateRangePicker
                       checkIn={props.departDate}

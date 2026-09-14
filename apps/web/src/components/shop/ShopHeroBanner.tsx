@@ -1024,10 +1024,24 @@ html body .wg-travela-hero .wg-travela-caption-inner {
   width: max-content !important;
   margin: 0 !important;
 }
+html body .wg-travela-hero .wg-travela-caption h4 {
+  color: #d4af6a !important;
+  font-family: Amiri, "Playfair Display", Georgia, serif !important;
+  font-weight: 400 !important;
+  letter-spacing: 0.16em !important;
+}
 html body .wg-travela-hero .wg-travela-caption h1 {
-  border-inline-start: 4px solid #fff !important;
-  padding-inline-start: 0.9rem !important;
+  color: #f8f1e6 !important;
+  font-family: Amiri, "Playfair Display", Georgia, serif !important;
+  font-weight: 700 !important;
+  font-size: clamp(2.5rem, 5.8vw, 4.7rem) !important;
+  line-height: 1.22 !important;
+  border-inline-start: 2px solid #d4af6a !important;
+  padding-inline-start: 1.05rem !important;
   text-align: start !important;
+}
+html body .wg-travela-hero .wg-travela-caption p {
+  color: rgba(248, 241, 230, 0.88) !important;
 }
 .wg-header-services,
 .wg-svc-tabs {

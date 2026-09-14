@@ -1,5 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400;1,700&family=Cairo:wght@400;600;700&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500;1,600&display=swap");
 @import "./travela-skin.css";
 
 .sr-only {
@@ -5416,13 +5415,38 @@ html body .wg-travela-hero .wg-travela-caption h1,
 html body .wg-travela-hero .wg-travela-caption p {
   text-align: start !important;
 }
+html body .wg-travela-hero .wg-travela-caption h4 {
+  color: #d4af6a !important;
+  font-family: Amiri, "Playfair Display", Georgia, serif !important;
+  font-weight: 400 !important;
+  letter-spacing: 0.16em !important;
+  margin-bottom: 0.7rem !important;
+}
+html body .shop-root[dir="ltr"] .wg-travela-hero .wg-travela-caption h4 {
+  font-family: "Playfair Display", Georgia, serif !important;
+  letter-spacing: 0.28em !important;
+  text-transform: uppercase !important;
+}
 html body .wg-travela-hero .wg-travela-caption h1 {
-  border-inline-start: 4px solid #fff !important;
-  padding-inline-start: 0.9rem !important;
-  line-height: 1.08 !important;
-  font-weight: 800 !important;
+  color: #f8f1e6 !important;
+  font-family: Amiri, "Playfair Display", Georgia, serif !important;
+  font-weight: 700 !important;
+  font-size: clamp(2.5rem, 5.8vw, 4.7rem) !important;
+  line-height: 1.22 !important;
+  border-inline-start: 2px solid #d4af6a !important;
+  padding-inline-start: 1.05rem !important;
+  text-shadow: 0 12px 36px rgba(10, 18, 32, 0.28) !important;
+}
+html body .shop-root[dir="ltr"] .wg-travela-hero .wg-travela-caption h1 {
+  font-family: "Playfair Display", Georgia, serif !important;
+  font-weight: 600 !important;
+  letter-spacing: -0.02em !important;
 }
 html body .wg-travela-hero .wg-travela-caption p {
   max-width: 28rem !important;
-  padding-inline-start: calc(0.9rem + 4px) !important;
+  color: rgba(248, 241, 230, 0.88) !important;
+  font-weight: 400 !important;
+  line-height: 1.8 !important;
+  letter-spacing: 0.02em !important;
+  padding-inline-start: calc(1.05rem + 2px) !important;
 }

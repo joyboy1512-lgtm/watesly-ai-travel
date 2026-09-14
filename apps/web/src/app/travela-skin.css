@@ -692,31 +692,49 @@
 }
 
 .wg-travela-caption h4 {
-  margin: 0 0 0.55rem;
-  font-size: clamp(0.78rem, 1.4vw, 0.95rem);
-  letter-spacing: 0.08em;
+  margin: 0 0 0.7rem;
+  color: #d4af6a;
+  font-family: Amiri, "Playfair Display", serif;
+  font-size: clamp(0.82rem, 1.3vw, 0.98rem);
+  letter-spacing: 0.16em;
   text-transform: none;
-  font-weight: 700;
-  opacity: 0.92;
+  font-weight: 400;
 }
 
 .wg-travela-caption h1 {
-  margin: 0 0 0.85rem;
-  font-size: clamp(2.15rem, 5.2vw, 4.15rem);
-  font-weight: 800;
-  line-height: 1.08;
-  border-inline-start: 4px solid #fff;
-  padding-inline-start: 0.9rem;
-  text-shadow: 0 8px 28px rgba(8, 18, 38, 0.35);
+  margin: 0 0 0.95rem;
+  color: #f8f1e6;
+  font-family: Amiri, "Playfair Display", Georgia, serif;
+  font-size: clamp(2.5rem, 5.8vw, 4.7rem);
+  font-weight: 700;
+  line-height: 1.22;
+  border-inline-start: 2px solid #d4af6a;
+  padding-inline-start: 1.05rem;
+  text-shadow: 0 12px 36px rgba(10, 18, 32, 0.28);
+}
+
+.shop-root[dir="ltr"] .wg-travela-caption h4 {
+  font-family: "Playfair Display", Georgia, serif;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+}
+
+.shop-root[dir="ltr"] .wg-travela-caption h1 {
+  font-family: "Playfair Display", Georgia, serif;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.12;
 }
 
 .wg-travela-caption p {
   margin: 0;
   max-width: 28rem;
-  font-size: clamp(0.95rem, 1.6vw, 1.12rem);
-  opacity: 0.94;
-  line-height: 1.55;
-  padding-inline-start: calc(0.9rem + 4px);
+  color: rgba(248, 241, 230, 0.88);
+  font-weight: 400;
+  font-size: clamp(0.98rem, 1.5vw, 1.14rem);
+  line-height: 1.8;
+  letter-spacing: 0.02em;
+  padding-inline-start: calc(1.05rem + 2px);
 }
 
 .wg-travela-carousel-btn {

@@ -238,16 +238,14 @@ function FieldIcon({
   const common = { viewBox: "0 0 24 24", width: 22, height: 22, "aria-hidden": true } as const;
   if (name === "takeoff" || name === "landing") {
     return (
-      <svg
-        {...common}
+      <img
+        src="/shop/plane-badge.png"
+        alt=""
+        width={26}
+        height={26}
         className={name === "landing" ? "wg-plane-land" : "wg-plane-off"}
-      >
-        <circle cx="12" cy="12" r="11" fill="#111" />
-        <path
-          fill="#fff"
-          d="M12 3.1 13.15 9.2 20 10.45v1.7l-6.85.55-.85 5.85 2.35.85V20.4L12 19.45 9.35 20.4v-1.05l2.35-.85-.85-5.85L4 12.15v-1.7L10.85 9.2 12 3.1z"
-        />
-      </svg>
+        draggable={false}
+      />
     );
   }
   if (name === "location") {
@@ -1078,26 +1076,38 @@ html body .wg-travela-hero .wg-travela-caption {
 }
 #search.wg-simple-search .wg-field-ico {
   flex: 0 0 auto !important;
-  width: 22px !important;
-  height: 22px !important;
+  width: 26px !important;
+  height: 26px !important;
   color: #111 !important;
   display: grid !important;
   place-items: center !important;
   pointer-events: none !important;
 }
-#search.wg-simple-search .wg-field-ico svg {
-  width: 22px !important;
-  height: 22px !important;
+#search.wg-simple-search .wg-field-ico svg,
+#search.wg-simple-search .wg-field-ico img {
+  width: 26px !important;
+  height: 26px !important;
   display: block !important;
+  object-fit: contain !important;
+}
+#search.wg-simple-search .wg-plane-off,
+#search.wg-simple-search .wg-plane-land {
+  border-radius: 50% !important;
 }
 #search.wg-simple-search .wg-plane-land {
   transform: rotate(180deg) !important;
+}
+#search.wg-simple-search .exp-travelers-trigger {
+  display: flex !important;
+  align-items: center !important;
+  min-width: 0 !important;
 }
 #search.wg-simple-search .wg-traveler-line {
   display: flex !important;
   flex-direction: column !important;
   align-items: flex-start !important;
-  gap: 0.08rem !important;
+  justify-content: center !important;
+  gap: 0.14rem !important;
   line-height: 1.15 !important;
   font-weight: 800 !important;
 }
@@ -1105,12 +1115,15 @@ html body .wg-travela-hero .wg-travela-caption {
   display: inline-flex !important;
   align-items: center !important;
   gap: 0.28rem !important;
+  white-space: nowrap !important;
 }
 #search.wg-simple-search .wg-cabin-chip {
+  display: block !important;
   color: #1565c0 !important;
   -webkit-text-fill-color: #1565c0 !important;
   font-size: 0.78rem !important;
   font-weight: 800 !important;
+  white-space: nowrap !important;
 }
 html body .shop-root #search.wg-simple-search .shop-date-range-day:not(.muted),
 html body #search.wg-simple-search .shop-date-range-day:not(.muted) {

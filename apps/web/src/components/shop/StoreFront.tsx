@@ -148,13 +148,13 @@ function StoreFrontInner({
       dir={locale === "ar" ? "rtl" : "ltr"}
     >
       <header
-        className={`shop-header exp-header${isHome ? " exp-header-hero-overlay wg-header-blue" : " exp-header-white"}`}
+        className={`shop-header exp-header wg-header-blue${isHome ? " exp-header-hero-overlay" : " shop-header-inner-blue"}`}
       >
         {newUi ? (
           <div className="shop-header-inner exp-header-inner wg-topbar">
             <div className="wg-topbar-start">
               <Link href="/" className="wg-topbar-logo" aria-label="WeekendGate">
-                <WeekendGateLogo light={isHome} />
+                <WeekendGateLogo light />
               </Link>
               {isHome ? (
                 <div
@@ -280,13 +280,21 @@ function StoreFrontInner({
                     ) : null}
                   </div>
                 ) : (
-                  <Link
-                    href="/account/login"
-                    className="wg-topbar-text wg-topbar-signin wg-topbar-account"
-                  >
-                    <IconUser />
-                    <span>{t("navSignIn")}</span>
-                  </Link>
+                  <>
+                    <Link
+                      href="/account/login"
+                      className="wg-topbar-text wg-topbar-signin wg-topbar-account"
+                    >
+                      <IconUser />
+                      <span>{t("navSignIn")}</span>
+                    </Link>
+                    <Link
+                      href="/account/register"
+                      className="wg-topbar-text wg-topbar-register"
+                    >
+                      <span>{t("navRegister")}</span>
+                    </Link>
+                  </>
                 )}
               </div>
             </div>
@@ -351,7 +359,10 @@ function StoreFrontInner({
                   </button>
                 </>
               ) : (
-                <Link href="/account/login">{t("navSignIn")}</Link>
+                <>
+                  <Link href="/account/login">{t("navSignIn")}</Link>
+                  <Link href="/account/register">{t("navRegister")}</Link>
+                </>
               )}
               {platformEnabled() ? (
                 <>
@@ -367,7 +378,7 @@ function StoreFrontInner({
         ) : (
           <div className="shop-header-inner exp-header-inner wg-header-row">
             <Link href="/" className="shop-brand exp-brand wg-header-brand" aria-label="WeekendGate">
-              <WeekendGateLogo light={isHome} />
+              <WeekendGateLogo light />
             </Link>
             {isHome ? (
               <div
@@ -393,7 +404,7 @@ function StoreFrontInner({
             <div className="wg-header-end">
               <button
                 type="button"
-                className={`shop-menu-toggle exp-menu-toggle${isHome ? "" : " exp-menu-toggle-dark"}`}
+                className="shop-menu-toggle exp-menu-toggle"
                 aria-expanded={menuOpen}
                 onClick={() => setMenuOpen((v) => !v)}
               >
@@ -457,6 +468,9 @@ function StoreFrontInner({
                 ) : (
                   <Link href="/account/login" className="wg-header-signin">
                     {t("navLogin")}
+                  </Link>
+                  <Link href="/account/register" className="wg-header-signin">
+                    {t("navRegister")}
                   </Link>
                 )}
 

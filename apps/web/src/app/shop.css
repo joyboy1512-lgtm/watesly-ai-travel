@@ -1,5 +1,6 @@
 @import url("https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap");
 @import url("https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&display=swap");
+@import "./travela-skin.css";
 
 .sr-only {
   position: absolute;
@@ -5203,4 +5204,70 @@
   .shop-flight-results-topbar {
     top: 0;
   }
+}
+
+
+/* WG_BRAND_BLUE_UNIFY */
+.shop-root.exp-theme,
+.shop-root.wg-new-ui {
+  --exp-navy: #1565c0;
+  --exp-blue: #1565c0;
+  --tv-primary: #1565c0;
+  --sea-800: #1565c0;
+  --sea-900: #1565c0;
+  --sea-700: #0d47a1;
+  overflow-x: clip;
+}
+.shop-root .shop-header.shop-header-inner-blue,
+.shop-root .shop-header.wg-header-blue:not(.exp-header-hero-overlay) {
+  position: sticky;
+  top: 0;
+  z-index: 80;
+  background: #1565c0 !important;
+  background-color: #1565c0 !important;
+  border-bottom: 0 !important;
+  box-shadow: none !important;
+}
+.shop-root .shop-header.shop-header-inner-blue .wg-topbar-text,
+.shop-root .shop-header.shop-header-inner-blue .wg-topbar-menu-btn {
+  color: #fff !important;
+  text-shadow: none;
+}
+.shop-root.exp-theme .shop-cta-banner,
+.shop-root .shop-cta-banner {
+  background: #1565c0 !important;
+  box-shadow: none !important;
+}
+.shop-root.exp-theme .exp-footer,
+.shop-root .shop-footer.exp-footer,
+.shop-root .shop-footer {
+  background: #1565c0 !important;
+}
+.shop-inner-hero {
+  background: #1565c0 !important;
+  color: #fff !important;
+  padding: 1.6rem 1rem 1.85rem;
+  box-sizing: border-box;
+  width: 100vw;
+  max-width: 100vw;
+  margin-inline: calc(50% - 50vw);
+}
+.shop-inner-hero-inner {
+  width: min(1100px, calc(100% - 2rem));
+  margin: 0 auto;
+}
+.shop-inner-hero h1 {
+  margin: 0 0 0.35rem;
+  color: #fff !important;
+  font-size: clamp(1.45rem, 3vw, 2rem);
+}
+.shop-inner-hero p {
+  margin: 0;
+  max-width: 42rem;
+  color: rgba(255, 255, 255, 0.88) !important;
+  line-height: 1.6;
+}
+.wg-travela-carousel-btn {
+  background: #1565c0 !important;
+  color: #fff !important;
 }

@@ -661,46 +661,80 @@
   inset: 0;
   z-index: 2;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  padding: 6rem 3cm 13rem;
-  /* Soft blue wash — keeps light tourist photos bright for glass search */
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  text-align: start;
+  padding: clamp(10.8rem, 18vh, 13.2rem) clamp(1.4rem, 5vw, 4.75rem) 8rem;
   background: linear-gradient(
-    180deg,
-    rgba(12, 60, 120, 0.22) 0%,
-    rgba(8, 40, 90, 0.18) 45%,
-    rgba(6, 30, 70, 0.34) 100%
+    to left,
+    rgba(8, 18, 38, 0.4) 0%,
+    rgba(8, 18, 38, 0.12) 38%,
+    transparent 66%
   );
   color: #fff;
   pointer-events: none;
 }
 
+.shop-root[dir="rtl"] .wg-travela-caption {
+  background: linear-gradient(
+    to right,
+    rgba(8, 18, 38, 0.42) 0%,
+    rgba(8, 18, 38, 0.12) 40%,
+    transparent 68%
+  );
+}
+
 .wg-travela-caption-inner {
-  max-width: 900px;
-  padding-inline: 0.5rem;
+  max-width: min(34rem, 46vw);
+  width: max-content;
+  padding-inline: 0;
 }
 
 .wg-travela-caption h4 {
-  margin: 0 0 0.75rem;
-  font-size: clamp(0.85rem, 2vw, 1.1rem);
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  font-weight: 700;
+  margin: 0 0 0.7rem;
+  color: #d4af6a;
+  font-family: Amiri, "Playfair Display", serif;
+  font-size: clamp(0.82rem, 1.3vw, 0.98rem);
+  letter-spacing: 0.16em;
+  text-transform: none;
+  font-weight: 400;
 }
 
 .wg-travela-caption h1 {
-  margin: 0 0 1rem;
-  font-size: clamp(2rem, 6vw, 3.75rem);
+  margin: 0 0 0.95rem;
+  color: #f8f1e6;
+  font-family: Amiri, "Playfair Display", Georgia, serif;
+  font-size: clamp(2.5rem, 5.8vw, 4.7rem);
   font-weight: 700;
-  line-height: 1.15;
+  line-height: 1.22;
+  border-inline-start: 2px solid #d4af6a;
+  padding-inline-start: 1.05rem;
+  text-shadow: 0 12px 36px rgba(10, 18, 32, 0.28);
+}
+
+.shop-root[dir="ltr"] .wg-travela-caption h4 {
+  font-family: "Playfair Display", Georgia, serif;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+}
+
+.shop-root[dir="ltr"] .wg-travela-caption h1 {
+  font-family: "Playfair Display", Georgia, serif;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.12;
 }
 
 .wg-travela-caption p {
   margin: 0;
-  font-size: clamp(1rem, 2.2vw, 1.2rem);
-  opacity: 0.92;
-  line-height: 1.6;
+  max-width: 28rem;
+  color: rgba(248, 241, 230, 0.88);
+  font-weight: 400;
+  font-size: clamp(0.98rem, 1.5vw, 1.14rem);
+  line-height: 1.8;
+  letter-spacing: 0.02em;
+  padding-inline-start: calc(1.05rem + 2px);
 }
 
 .wg-travela-carousel-btn {

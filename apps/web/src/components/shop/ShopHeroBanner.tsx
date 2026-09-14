@@ -1103,7 +1103,7 @@ html body .wg-travela-hero .wg-travela-caption {
 }
 #search.wg-simple-search .wg-cell-origin,
 #search.wg-simple-search .wg-cell-dest {
-  flex: 1.18 1 0 !important;
+  flex: 1.2 1 0 !important;
   min-width: 8.5rem !important;
 }
 #search.wg-simple-search .wg-cell-travelers {
@@ -1111,8 +1111,17 @@ html body .wg-travela-hero .wg-travela-caption {
   min-width: 8.4rem !important;
 }
 #search.wg-simple-search .wg-cell-dates {
-  flex: 1.28 1 12.75rem !important;
-  min-width: 13rem !important;
+  flex: 0 0 auto !important;
+  width: max-content !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  padding-inline: 0.45rem 0.55rem !important;
+}
+#search.wg-simple-search .wg-cell-dates .shop-date-range,
+#search.wg-simple-search .wg-cell-dates .exp-date-pick {
+  flex: 0 0 auto !important;
+  width: max-content !important;
+  min-width: 0 !important;
 }
 #search.wg-simple-search .shop-date-range-summary,
 #search.wg-simple-search .shop-date-range-footer-dates {
@@ -1388,7 +1397,8 @@ html body #search.wg-simple-search .shop-date-range-pop {
   padding: 0.65rem 0.75rem 0.55rem !important;
 }
 #search.wg-simple-search .shop-date-range {
-  flex: 1 !important;
+  flex: 0 0 auto !important;
+  width: max-content !important;
   min-width: 0 !important;
   position: relative !important;
 }
@@ -1397,11 +1407,14 @@ html body #search.wg-simple-search .shop-date-range-pop {
   align-items: center !important;
   gap: 0.4rem !important;
   flex-wrap: nowrap !important;
+  width: max-content !important;
   min-width: 0 !important;
 }
 #search.wg-simple-search .wg-cell-dates .shop-date-range-trigger,
 #search.wg-simple-search .wg-cell-dates .exp-date-btn {
+  width: max-content !important;
   font-size: 0.86rem !important;
+  padding-inline: 0 !important;
 }
 #search.wg-simple-search .wg-cell-nights {
   flex: 0 0 auto !important;
@@ -1481,6 +1494,7 @@ html body #search.wg-simple-search .prc-suggest button strong {
 @media (max-width: 720px) {
   #search.wg-simple-search .wg-simple-fields { flex-wrap: wrap !important; }
   #search.wg-simple-search .wg-simple-cell { flex: 1 1 100% !important; border: 1.5px solid #1565c0 !important; }
+  #search.wg-simple-search .wg-cell-dates { flex: 1 1 100% !important; width: auto !important; }
   #search.wg-simple-search .wg-search-btn { width: auto !important; margin-inline-end: 0 !important; justify-content: center !important; }
 }
 `,

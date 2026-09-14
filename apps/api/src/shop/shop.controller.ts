@@ -213,6 +213,22 @@ export class ShopController {
     return result;
   }
 
+  @Post("password-reset/request")
+  requestPasswordReset(@Body() body: { phone?: string }) {
+    return this.shop.requestPasswordReset(body);
+  }
+
+  @Post("password-reset/confirm")
+  async confirmPasswordReset(
+    @Body() body: { phone?: string; code?: string; password?: string },
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const result = await this.shop.confirmPasswordReset(body);
+    for (const cookie of this.shop.sessionSetCookieHeaders(result.accessToken)) {
+      res.append("Set-Cookie", cookie);
+    }
+    return result;
+  }
 
   @Post("logout")
   @UseGuards(CustomerAuthGuard)

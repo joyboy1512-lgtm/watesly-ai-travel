@@ -1924,4 +1924,94 @@ export class ShopService {
     }
     return extractPassportFromImage({ imageBase64, mimeType });
   }
+
+  async requestPasswordReset(body: { phone?: string }) {
+    const phone = normalizeShopPhone(body.phone || "");
+    if (!phone || phone.length < 8) {
+      throw new BadRequestException("أدخل رقم الجوال");
+    }
+    const org = await this.orgs.resolve();
+    const customer = await this.prisma.customer.findUnique({
+      where: {
+        organizationId_phone: { organizationId: org.id, phone },
+      },
+    });
+    const generic = {
+      ok: true as const,
+      expiresInSec: 300,
+      requiresCode: true,
+      message: "إذا كان الرقم مسجّلاً سنرسل رمز التحقق.",
+    };
+    if (!customer?.passwordHash || customer.status !== "active") {
+      return generic;
+    }
+    if (otpDeliveryConfigured()) {
+      await this.requestUnlockOtp({ phone });
+      return generic;
+    }
+    return {
+      ...generic,
+      delivery: "whatsapp",
+      message:
+        "رمز التحقق غير مفعّل حالياً. راسلنا على واتساب لإعادة تعيين كلمة المرور.",
+    };
+  }
+
+  async confirmPasswordReset(body: {
+    phone?: string;
+    code?: string;
+    password?: string;
+  }) {
+    const phone = normalizeShopPhone(body.phone || "");
+    const password = body.password || "";
+    const code = String(body.code || "").trim();
+    if (!phone || phone.length < 8) {
+      throw new BadRequestException("أدخل رقم الجوال");
+    }
+    if (password.length < 8) {
+      throw new BadRequestException("كلمة المرور يجب أن تكون 8 أحرف على الأقل");
+    }
+    if (!/^\d{6}$/.test(code)) {
+      throw new BadRequestException("أدخل رمز التحقق المكوّن من 6 أرقام");
+    }
+    const org = await this.orgs.resolve();
+    const customer = await this.prisma.customer.findUnique({
+      where: {
+        organizationId_phone: { organizationId: org.id, phone },
+      },
+    });
+    if (!customer || customer.status !== "active") {
+      throw new UnauthorizedException("رمز التحقق غير صحيح");
+    }
+    const entry = await loadUnlockOtp(phone);
+    if (!entry || entry.expiresAt < Date.now()) {
+      await clearUnlockOtp(phone);
+      throw new UnauthorizedException("انتهت صلاحية الرمز — اطلب رمزاً جديداً");
+    }
+    entry.attempts += 1;
+    if (entry.attempts > 5) {
+      await clearUnlockOtp(phone);
+      throw new UnauthorizedException("محاولات كثيرة — اطلب رمزاً جديداً");
+    }
+    if (!otpMatches(phone, code, entry)) {
+      await saveUnlockOtp(phone, entry);
+      throw new UnauthorizedException("رمز التحقق غير صحيح");
+    }
+    await clearUnlockOtp(phone);
+    const passwordHash = await bcrypt.hash(password, 12);
+    const updated = await this.prisma.customer.update({
+      where: { id: customer.id },
+      data: { passwordHash, lastLoginAt: new Date() },
+    });
+    await bumpSessionEpoch(updated.id);
+    const accessToken = await this.issueCustomerToken(updated);
+    return {
+      accessToken,
+      tokenType: "Bearer",
+      customer: this.serializeCustomer({
+        ...updated,
+        hasPassword: true,
+      }),
+    };
+  }
 }

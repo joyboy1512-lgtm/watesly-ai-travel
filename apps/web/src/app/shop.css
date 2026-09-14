@@ -5271,3 +5271,114 @@
   background: #1565c0 !important;
   color: #fff !important;
 }
+
+.shop-auth-switch {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.25rem;
+  justify-content: center;
+  align-items: center;
+  margin-top: 1rem;
+}
+.shop-auth-switch a,
+.shop-auth-switch .shop-linkbtn {
+  color: #1565c0;
+  font-weight: 700;
+  text-decoration: none;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  font: inherit;
+}
+.shop-passport-scan-banner {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.85rem 1rem;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.85rem 1rem;
+  border: 1px dashed #1565c0;
+  border-radius: 14px;
+  background: #f4f8fd;
+  margin: 0 0 1rem;
+}
+.shop-passport-scan-banner p {
+  margin: 0.25rem 0 0;
+  color: #4b5563;
+  font-size: 0.88rem;
+}
+.shop-passport-scan-btn {
+  background: #1565c0;
+  color: #fff;
+  border: 0;
+  border-radius: 999px;
+  padding: 0.55rem 1rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+.shop-passport-scan-btn:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
+.shop-passport-file-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+}
+.shop-passport-scan-hint {
+  flex: 1 1 100%;
+  margin: 0;
+  color: #0d47a1;
+  font-size: 0.88rem;
+}
+.shop-family-form {
+  margin-top: 1rem;
+}
+.wg-family-picker {
+  margin: 0.75rem 0 0.35rem;
+  padding-top: 0.65rem;
+  border-top: 1px solid #e5e7eb;
+}
+.wg-family-picker-title {
+  margin: 0 0 0.45rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+.wg-family-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+.wg-family-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.1rem;
+  border: 1.5px solid #1565c0;
+  background: #fff;
+  color: #0f172a;
+  border-radius: 12px;
+  padding: 0.45rem 0.7rem;
+  cursor: pointer;
+  text-align: start;
+}
+.wg-family-chip.on,
+.wg-family-chip:hover {
+  background: #1565c0;
+  color: #fff;
+}
+.wg-family-chip span {
+  font-size: 0.75rem;
+  opacity: 0.85;
+}
+.wg-family-signin,
+.wg-family-empty {
+  margin: 0;
+  font-size: 0.88rem;
+}
+.wg-family-signin {
+  color: #1565c0;
+  font-weight: 700;
+}

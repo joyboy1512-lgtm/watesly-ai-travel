@@ -1067,11 +1067,23 @@ html body .wg-travela-hero .wg-travela-caption p {
 @media (max-width: 767px) {
   html body .wg-travela-hero .wg-travela-caption {
     align-items: center !important;
-    padding: 5.1rem 1rem 0 !important;
+    padding: 1.35rem 1rem 0 !important;
   }
   html body .wg-travela-hero .wg-travela-caption-inner {
     width: min(22rem, 92vw) !important;
     max-width: 92vw !important;
+  }
+  html body .wg-travela-hero .wg-travela-caption h4 {
+    font-size: 0.78rem !important;
+    margin-bottom: 0.28rem !important;
+  }
+  html body .wg-travela-hero .wg-travela-caption h1 {
+    font-size: clamp(1.65rem, 7vw, 2.15rem) !important;
+    margin-bottom: 0.45rem !important;
+  }
+  html body .wg-travela-hero .wg-travela-caption p {
+    font-size: 0.86rem !important;
+    line-height: 1.55 !important;
   }
 }
 .wg-header-services,

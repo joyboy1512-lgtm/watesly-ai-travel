@@ -1012,17 +1012,27 @@ html body .wg-travela-hero .wg-travela-caption {
   flex-direction: column !important;
   align-items: flex-start !important;
   justify-content: flex-start !important;
-  text-align: start !important;
-  padding: clamp(10.8rem, 18vh, 13.2rem) clamp(1.4rem, 5vw, 4.75rem) 8rem !important;
+  text-align: center !important;
+  padding: clamp(13.8rem, 25vh, 17.6rem) clamp(1.4rem, 5vw, 4.75rem) 5rem !important;
   background: linear-gradient(to right, rgba(8, 18, 38, 0.42) 0%, rgba(8, 18, 38, 0.12) 40%, transparent 68%) !important;
 }
 html body .shop-root[dir="ltr"] .wg-travela-hero .wg-travela-caption {
   background: linear-gradient(to left, rgba(8, 18, 38, 0.4) 0%, rgba(8, 18, 38, 0.12) 38%, transparent 66%) !important;
 }
 html body .wg-travela-hero .wg-travela-caption-inner {
-  max-width: min(34rem, 46vw) !important;
-  width: max-content !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  width: min(36rem, 52vw) !important;
+  max-width: min(36rem, 52vw) !important;
   margin: 0 !important;
+  text-align: center !important;
+}
+html body .wg-travela-hero .wg-travela-caption h4,
+html body .wg-travela-hero .wg-travela-caption h1,
+html body .wg-travela-hero .wg-travela-caption p {
+  width: 100% !important;
+  text-align: center !important;
 }
 html body .wg-travela-hero .wg-travela-caption h4 {
   color: #d4af6a !important;
@@ -1035,13 +1045,34 @@ html body .wg-travela-hero .wg-travela-caption h1 {
   font-family: Amiri, "Playfair Display", Georgia, serif !important;
   font-weight: 700 !important;
   font-size: clamp(2.5rem, 5.8vw, 4.7rem) !important;
-  line-height: 1.22 !important;
-  border-inline-start: 2px solid #d4af6a !important;
-  padding-inline-start: 1.05rem !important;
-  text-align: start !important;
+  line-height: 1.28 !important;
+  border-inline-start: 0 !important;
+  padding-inline-start: 0 !important;
+  text-align: center !important;
+  text-wrap: balance !important;
+}
+html body .wg-travela-hero .wg-travela-caption h1::after {
+  content: "" !important;
+  display: block !important;
+  width: 2.55rem !important;
+  height: 2px !important;
+  margin: 0.78rem auto 0 !important;
+  background: #d4af6a !important;
 }
 html body .wg-travela-hero .wg-travela-caption p {
   color: rgba(248, 241, 230, 0.88) !important;
+  padding-inline-start: 0 !important;
+  text-wrap: balance !important;
+}
+@media (max-width: 767px) {
+  html body .wg-travela-hero .wg-travela-caption {
+    align-items: center !important;
+    padding: 5.1rem 1rem 0 !important;
+  }
+  html body .wg-travela-hero .wg-travela-caption-inner {
+    width: min(22rem, 92vw) !important;
+    max-width: 92vw !important;
+  }
 }
 .wg-header-services,
 .wg-svc-tabs {

@@ -664,8 +664,8 @@
   flex-direction: column;
   align-items: flex-start;
   justify-content: flex-start;
-  text-align: start;
-  padding: clamp(10.8rem, 18vh, 13.2rem) clamp(1.4rem, 5vw, 4.75rem) 8rem;
+  text-align: center;
+  padding: clamp(13.8rem, 25vh, 17.6rem) clamp(1.4rem, 5vw, 4.75rem) 5rem;
   background: linear-gradient(
     to left,
     rgba(8, 18, 38, 0.4) 0%,
@@ -686,31 +686,47 @@
 }
 
 .wg-travela-caption-inner {
-  max-width: min(34rem, 46vw);
-  width: max-content;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: min(36rem, 52vw);
+  max-width: min(36rem, 52vw);
   padding-inline: 0;
+  text-align: center;
 }
 
 .wg-travela-caption h4 {
-  margin: 0 0 0.7rem;
+  margin: 0 0 0.55rem;
+  width: 100%;
   color: #d4af6a;
   font-family: Amiri, "Playfair Display", serif;
   font-size: clamp(0.82rem, 1.3vw, 0.98rem);
   letter-spacing: 0.16em;
   text-transform: none;
   font-weight: 400;
+  text-align: center;
 }
 
 .wg-travela-caption h1 {
   margin: 0 0 0.95rem;
+  width: 100%;
   color: #f8f1e6;
   font-family: Amiri, "Playfair Display", Georgia, serif;
   font-size: clamp(2.5rem, 5.8vw, 4.7rem);
   font-weight: 700;
-  line-height: 1.22;
-  border-inline-start: 2px solid #d4af6a;
-  padding-inline-start: 1.05rem;
+  line-height: 1.28;
+  text-align: center;
+  text-wrap: balance;
   text-shadow: 0 12px 36px rgba(10, 18, 32, 0.28);
+}
+
+.wg-travela-caption h1::after {
+  content: "";
+  display: block;
+  width: 2.55rem;
+  height: 2px;
+  margin: 0.78rem auto 0;
+  background: #d4af6a;
 }
 
 .shop-root[dir="ltr"] .wg-travela-caption h4 {
@@ -723,18 +739,20 @@
   font-family: "Playfair Display", Georgia, serif;
   font-weight: 600;
   letter-spacing: -0.02em;
-  line-height: 1.12;
+  line-height: 1.18;
 }
 
 .wg-travela-caption p {
   margin: 0;
-  max-width: 28rem;
+  width: 100%;
+  max-width: 26rem;
   color: rgba(248, 241, 230, 0.88);
   font-weight: 400;
   font-size: clamp(0.98rem, 1.5vw, 1.14rem);
   line-height: 1.8;
   letter-spacing: 0.02em;
-  padding-inline-start: calc(1.05rem + 2px);
+  text-align: center;
+  text-wrap: balance;
 }
 
 .wg-travela-carousel-btn {

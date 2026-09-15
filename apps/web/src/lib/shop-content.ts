@@ -195,14 +195,32 @@ export const SHOP_REVIEWS: ShopReview[] = [
 
 export const HERO_SLIDES = [
   {
-    image: "/media/hero-travel-poster.jpg?v=7",
-    kicker: "WEEKENDGATE TRAVEL",
-    title: "الطبيعة العظيمة",
+    image: "/media/hero/brand-sky-wing.jpg?v=1",
+    kicker: "اكتشف العالم",
+    title: "لنسافر معاً",
     subtitle: "سافر بمتعة",
     description:
-      "اكتشف وجهات بحرية وثقافية مع بحث حي للطيران والفنادق والنقل — تجربة سفر كاملة بلمسة ماء البحر.",
+      "اكتشف وجهات بحرية وثقافية — بحث موحّد للطيران والفنادق والنقل في تجربة واحدة.",
+  },
+  {
+    image: "/media/hero/brand-city-flight.jpg?v=1",
+    kicker: "WeekendGate",
+    title: "اعثر على رحلتك المثالية",
+    subtitle: "طيران وفنادق",
+    description: "من الكويت إلى العالم — خطط رحلتك بخطوات بسيطة وواضحة.",
+  },
+  {
+    image: "/media/hero/brand-blue-hour.jpg?v=1",
+    kicker: "إلى أين تريد الذهاب؟",
+    title: "كل رحلتك من مكان واحد",
+    subtitle: "حجز ذكي",
+    description: "طيران، فنادق، نقل، وأنشطة — مع مساعد سفر يتحدث معك بالعربية.",
   },
 ] as const;
+
+export function heroSlidesFor(_locale?: string) {
+  return HERO_SLIDES.map((slide) => ({ ...slide }));
+}
 
 export const SHOP_FEATURES = [
   {

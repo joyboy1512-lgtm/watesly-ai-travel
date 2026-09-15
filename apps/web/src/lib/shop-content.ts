@@ -195,7 +195,7 @@ export const SHOP_REVIEWS: ShopReview[] = [
 
 export const HERO_SLIDES = [
   {
-    image: "/media/hero/aviation-wing.jpg?v=1",
+    image: "/media/hero/aviation-jet.jpg?v=2",
     kicker: "اكتشف العالم",
     title: "لنسافر معاً",
     subtitle: "سافر بمتعة",
@@ -203,14 +203,13 @@ export const HERO_SLIDES = [
       "اكتشف وجهات بحرية وثقافية — بحث موحّد للطيران والفنادق والنقل في تجربة واحدة.",
   },
   {
-    image: "/media/hero/aviation-jet.jpg?v=1",
+    image: "/media/hero/aviation-wing.jpg?v=2",
     kicker: "WeekendGate",
     title: "اعثر على رحلتك المثالية",
     subtitle: "طيران وفنادق",
     description: "من الكويت إلى العالم — خطط رحلتك بخطوات بسيطة وواضحة.",
-  },
   {
-    image: "/media/hero/aviation-tarmac.jpg?v=1",
+    image: "/media/hero/aviation-tarmac.jpg?v=2",
     kicker: "إلى أين تريد الذهاب؟",
     title: "كل رحلتك من مكان واحد",
     subtitle: "حجز ذكي",

@@ -1574,7 +1574,9 @@
   }
 
   .wg-travela-caption {
-    display: none;
+    display: flex;
+    align-items: center;
+    padding: 1.35rem 1rem 0;
   }
 
   .wg-hero-search-panel {

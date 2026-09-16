@@ -1,3 +1,5 @@
+export * from "./aggregation";
+export * from "./hotel-mapping";
 export * from "./constants";
 export * from "./currency";
 export * from "./fx";

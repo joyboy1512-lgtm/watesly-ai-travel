@@ -240,6 +240,13 @@ export function HotelSearchCard({
             typeof hotel.details.fetchedAt === "string" ? hotel.details.fetchedAt : undefined
           }
         />
+        {Number(hotel.details.supplierCount) > 1 ? (
+          <p className="hotel-search-card-agg">
+            {locale === "en"
+              ? `Best of ${hotel.details.supplierCount} suppliers`
+              : `أفضل سعر من ${hotel.details.supplierCount} موردين`}
+          </p>
+        ) : null}
 
         <p className="hotel-search-card-location">
           {location}

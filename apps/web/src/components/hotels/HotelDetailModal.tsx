@@ -165,13 +165,15 @@ export function HotelDetailModal({
         body: JSON.stringify({
           rateKey: rate.rateKey,
           offer: {
-            providerKey: String(hotel.details.provider || "hotelbeds"),
+            providerKey: String(
+              rate.sourceProvider || hotel.details.provider || "hotelbeds",
+            ),
             providerOfferRef: hotel.id,
             description: hotel.description,
             costAmountMinor: hotel.costAmountMinor || hotel.sellAmountMinor,
             currency: hotel.currency,
             revalidationToken: JSON.stringify({
-              hotelCode: hotel.details.hotelCode,
+              hotelCode: rate.sourceHotelCode || hotel.details.hotelCode,
               rateKey: rate.rateKey,
               rateType: rate.rateType,
               checkIn: hotel.details.checkInDate || meta.departDate,

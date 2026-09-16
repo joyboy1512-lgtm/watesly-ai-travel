@@ -42,8 +42,8 @@ export function ShopAirlineLogoTicker() {
               <img
                 src={src}
                 alt={name}
-                width={80}
-                height={40}
+                width={128}
+                height={64}
                 loading={index < HERO_TICKER_AIRLINES.length ? "eager" : "lazy"}
                 onError={() =>
                   setHidden((prev) => (prev[airline.code] ? prev : { ...prev, [airline.code]: true }))

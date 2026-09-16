@@ -40,6 +40,7 @@ export async function getFlightProviderForOrg(
     username: creds?.username,
     password: creds?.password,
     targetBranch: creds?.targetBranch,
+    accessGroup: creds?.accessGroup,
     endpoint: creds?.endpoint,
     loginId: creds?.loginId,
   });

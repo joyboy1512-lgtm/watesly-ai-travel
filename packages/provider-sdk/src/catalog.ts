@@ -79,26 +79,51 @@ export const PROVIDER_CATALOG: ProviderCatalogEntry[] = [
     providerKey: "travelport",
     displayName: "Travelport",
     displayNameAr: "Travelport",
-    description: "ربط GDS (Galileo/Worldspan/Apollo) — هيكل جاهز للتفعيل",
+    description:
+      "بحث TripServices Catalog Search — فئات التذكرة (Flex / Saver / Comfort) من GDS",
     capabilities: ["flight"],
-    status: "scaffold",
+    status: "ready",
     envKeys: [
       "TRAVELPORT_USER",
       "TRAVELPORT_PASSWORD",
+      "TRAVELPORT_CLIENT_ID",
+      "TRAVELPORT_CLIENT_SECRET",
       "TRAVELPORT_TARGET_BRANCH",
-      "TRAVELPORT_ENDPOINT",
     ],
     credentialFields: [
       { key: "username", label: "Username", required: true },
       { key: "password", label: "Password", secret: true, required: true },
-      { key: "targetBranch", label: "Target Branch", required: true },
+      {
+        key: "clientId",
+        label: "Client ID",
+        required: true,
+        placeholder: "OAuth client_id من خطاب Travelport",
+      },
+      {
+        key: "clientSecret",
+        label: "Client Secret",
+        secret: true,
+        required: true,
+      },
+      {
+        key: "targetBranch",
+        label: "Target Branch / PCC",
+        required: true,
+        placeholder: "DU7_1G",
+      },
+      {
+        key: "accessGroup",
+        label: "Access Group",
+        placeholder: "UUID من خطاب التفعيل (اختياري إن وُجد PCC)",
+      },
       {
         key: "endpoint",
         label: "API Endpoint",
-        placeholder: "https://…",
+        placeholder: "https://api.pp.travelport.net/11",
       },
     ],
-    notes: "يحتاج بيانات اعتماد Travelport Enterprise لإكمال البحث الحي",
+    notes:
+      "JSON Catalog Search وليس Universal API XML. أرسل maxNumberOfUpsellsToReturn=4 لإرجاع فئات التذكرة. الحجز/AirPrice ما زالا لاحقين.",
   },
   {
     providerKey: "travelfusion",

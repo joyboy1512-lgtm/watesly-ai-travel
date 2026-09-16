@@ -39,6 +39,10 @@ export {
 export type { HotelbedsCredentials } from "./hotels/hotelbeds-auth";
 export { AmadeusFlightProvider } from "./flights/amadeus-flight-provider";
 export { TravelportFlightProvider } from "./flights/travelport-flight-provider";
+export {
+  mapTravelportCatalogSearch,
+  buildTravelportSearchBody,
+} from "./flights/travelport-catalog";
 export { TravelfusionFlightProvider } from "./flights/travelfusion-flight-provider";
 export { DuffelTravelProvider } from "./duffel";
 export * from "./ops";

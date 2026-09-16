@@ -1031,7 +1031,7 @@ export class TravelAiService {
           disabled: true,
           reason:
             kind === "travelport"
-              ? "Travelport بانتظار TRAVELPORT_USER و TRAVELPORT_PASSWORD و TRAVELPORT_TARGET_BRANCH"
+              ? "Travelport بانتظار TRAVELPORT_USER و TRAVELPORT_PASSWORD و TRAVELPORT_CLIENT_ID و TRAVELPORT_CLIENT_SECRET و TRAVELPORT_TARGET_BRANCH"
               : "Travelfusion بانتظار TRAVELFUSION_USERNAME و TRAVELFUSION_PASSWORD",
         }),
       );

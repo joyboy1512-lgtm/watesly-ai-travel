@@ -20,7 +20,7 @@ Dashboard: `/dashboard/providers` — catalog, encrypted credentials, enable/dis
 | Mock | live | `FLIGHT_PROVIDER=mock` |
 | Duffel | live | `FLIGHT_PROVIDER=duffel` + `DUFFEL_ACCESS_TOKEN` |
 | Amadeus | ready (live search) | `FLIGHT_PROVIDER=amadeus` + `AMADEUS_CLIENT_ID` / `AMADEUS_CLIENT_SECRET` |
-| Travelport | scaffold | `FLIGHT_PROVIDER=travelport` + `TRAVELPORT_*` |
+| Travelport | ready (Catalog Search) | `FLIGHT_PROVIDER=travelport` + `TRAVELPORT_USER` / `PASSWORD` / `CLIENT_ID` / `CLIENT_SECRET` + `TARGET_BRANCH` أو `ACCESS_GROUP` |
 | Travelfusion (LCC/domestic) | scaffold | `FLIGHT_PROVIDER=travelfusion` + `TRAVELFUSION_*` |
 
 API: `GET /providers/catalog`, `GET|POST /providers`, `PATCH /providers/:id`.

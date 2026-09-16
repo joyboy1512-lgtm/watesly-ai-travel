@@ -136,6 +136,7 @@ export type FlightProviderCreds = {
   username?: string;
   password?: string;
   targetBranch?: string;
+  accessGroup?: string;
   endpoint?: string;
   loginId?: string;
 };
@@ -194,12 +195,15 @@ export function getFlightProvider(
       const provider = new TravelportFlightProvider({
         username: creds?.username,
         password: creds?.password,
+        clientId: creds?.clientId,
+        clientSecret: creds?.clientSecret,
         targetBranch: creds?.targetBranch,
+        accessGroup: creds?.accessGroup,
         endpoint: creds?.endpoint,
       });
       if (!provider.liveMode) {
         throw new Error(
-          "FLIGHT_PROVIDER=travelport يتطلب TRAVELPORT_USER و TRAVELPORT_PASSWORD و TRAVELPORT_TARGET_BRANCH",
+          "FLIGHT_PROVIDER=travelport يتطلب TRAVELPORT_USER و TRAVELPORT_PASSWORD و TRAVELPORT_CLIENT_ID و TRAVELPORT_CLIENT_SECRET و TRAVELPORT_TARGET_BRANCH أو TRAVELPORT_ACCESS_GROUP",
         );
       }
       return provider;

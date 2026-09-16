@@ -289,6 +289,9 @@ export function ShopFlightExpandedPanel({
               <div className="shop-flight-fare-family-grid">
                 {fareOptions.map((fare) => {
                   const selected = fare.id === selectedFare?.id;
+                  const arHint = fare.brandNameAr.includes("·")
+                    ? fare.brandNameAr.split("·").pop()!.trim()
+                    : fare.cabinLabelAr;
                   return (
                     <button
                       key={fare.id}
@@ -297,8 +300,11 @@ export function ShopFlightExpandedPanel({
                       onClick={() => setSelectedFareId(fare.id)}
                     >
                       <header>
-                        <strong>{fare.brandNameAr}</strong>
-                        <span>{fare.cabinLabelAr}</span>
+                        <strong>{fare.brandName}</strong>
+                        <span>
+                          {arHint}
+                          {arHint !== fare.cabinLabelAr ? ` · ${fare.cabinLabelAr}` : ""}
+                        </span>
                       </header>
                       <em data-display-currency={displayCurrency}>
                         {formatMoney(fare.sellAmountMinor, fare.currency || trip.currency)}

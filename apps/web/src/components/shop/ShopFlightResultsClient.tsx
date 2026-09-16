@@ -418,10 +418,11 @@ export function ShopFlightResultsClient() {
     void openTripPanel(trip, flight.id);
   }
 
-  /** Secondary CTA — details only, do not select */
+  /** Details CTA — same fare-family panel as select */
   function handleViewDetails(flight: FlightOfferRow) {
-    setExpandedTrip(null);
-    setDetailsFlight(flight);
+    const trip = composeFromPackage(flight);
+    if (!trip) return;
+    void openTripPanel(trip, flight.id);
   }
 
   function handleBarSelect() {

@@ -13,7 +13,6 @@ import {
   tripReadyForSelection,
   type ComposedTrip,
 } from "@/lib/flight-compose";
-import { computePriceBreakdown } from "@/lib/flight-fare-mock";
 import {
   extractLeg,
   findFlightForLeg,
@@ -473,7 +472,8 @@ export function ShopFlightResultsClient() {
     if (!expandedTrip) return;
     persistSession();
     const flight = buildDraftFlight(expandedTrip);
-    const breakdown = computePriceBreakdown(payload.provider.totalPriceMinor, expandedTrip.currency);
+    const sellAmountMinor = payload.provider.totalPriceMinor || flight.sellAmountMinor;
+    flight.sellAmountMinor = sellAmountMinor;
     const offerRef = String(flight.details.originalOfferId || flight.id);
     const quoteItemId = quoteItems.find(
       (item) => item.providerOfferRef === offerRef && item.serviceType === "flight",
@@ -500,7 +500,6 @@ export function ShopFlightResultsClient() {
       selectedReturn: expandedTrip.return,
       selectedFare: payload.fare,
       selectedProvider: payload.provider,
-      priceBreakdown: breakdown,
       validatedAt: new Date().toISOString(),
       resultsReturnHref: resultsHref,
     });

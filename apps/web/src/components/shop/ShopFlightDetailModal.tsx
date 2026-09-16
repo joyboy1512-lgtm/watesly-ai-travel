@@ -183,7 +183,6 @@ export function ShopFlightDetailModal({
   );
   const baggage = (flight.details.baggage || {}) as Record<string, string>;
   const policies = (flight.details.policies || {}) as Record<string, unknown>;
-  const fare = (flight.details.fare || {}) as Record<string, unknown>;
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -339,14 +338,6 @@ export function ShopFlightDetailModal({
             {policies.noteAr ? (
               <li>
                 <span>{String(policies.noteAr)}</span>
-              </li>
-            ) : null}
-            {fare.baseAmountMinor != null ? (
-              <li>
-                <span>
-                  الأجرة الأساسية{" "}
-                  {formatMoney(Number(fare.baseAmountMinor), String(fare.currency || flight.currency))}
-                </span>
               </li>
             ) : null}
           </ul>

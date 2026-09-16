@@ -115,52 +115,85 @@ const TIER_DEFS: Array<{
   },
 ];
 
-const MOCK_PROVIDERS = [
-  { key: "weekendgate", name: "WeekendGate Direct (تجريبي)" },
-  { key: "skyhub", name: "SkyHub Travel (تجريبي)" },
-  { key: "gulfconnect", name: "Gulf Connect (تجريبي)" },
-];
+/** Shop shows one WeekendGate sell price. Aggregation already picked cheapest/preferred. */
+const SHOP_PROVIDER = { key: "weekendgate", name: "WeekendGate" };
 
 function tierPrice(baseMinor: number, multiplier: number) {
   return Math.round(baseMinor * multiplier);
 }
 
-export function buildFareOptions(trip: ComposedTrip, passengers: number): MockFareOption[] {
-  const base = trip.totalPriceMinor;
+function fareFromTier(
+  trip: ComposedTrip,
+  passengers: number,
+  def: (typeof TIER_DEFS)[number],
+): MockFareOption {
+  const total = tierPrice(trip.totalPriceMinor, def.multiplier);
   const pax = Math.max(1, passengers);
-  return TIER_DEFS.map((def) => {
-    const total = tierPrice(base, def.multiplier);
-    return {
-      id: `${trip.id}-${def.tierKey}`,
-      tierKey: def.tierKey,
-      label: def.label,
-      labelAr: def.labelAr,
-      totalPriceMinor: total,
-      perPassengerMinor: Math.round(total / pax),
-      cabinBag: def.cabinBag,
-      checkedBag: def.checkedBag,
-      refundable: def.refundable,
-      refundableLabel: def.refundableLabel,
-      changeFee: def.changeFee,
-      cancelFee: def.cancelFee,
-      seatSelection: def.seatSelection,
-      meals: def.meals,
-    };
-  });
+  return {
+    id: `${trip.id}-${def.tierKey}`,
+    tierKey: def.tierKey,
+    label: def.label,
+    labelAr: def.labelAr,
+    totalPriceMinor: total,
+    perPassengerMinor: Math.round(total / pax),
+    cabinBag: def.cabinBag,
+    checkedBag: def.checkedBag,
+    refundable: def.refundable,
+    refundableLabel: def.refundableLabel,
+    changeFee: def.changeFee,
+    cancelFee: def.cancelFee,
+    seatSelection: def.seatSelection,
+    meals: def.meals,
+  };
 }
 
+/** @deprecated Fare families are not shown in shop; kept for draft typing. */
+export function buildFareOptions(trip: ComposedTrip, passengers: number): MockFareOption[] {
+  return TIER_DEFS.map((def) => fareFromTier(trip, passengers, def));
+}
+
+/** Single shop fare: the aggregated WeekendGate sell price (no Saver/Flex markup). */
+export function unifiedShopFare(trip: ComposedTrip, passengers: number): MockFareOption {
+  const bag = trip.outbound.baggage;
+  const pax = Math.max(1, passengers);
+  return {
+    id: `${trip.id}-shop`,
+    tierKey: "economy_saver",
+    label: "WeekendGate",
+    labelAr: "سعر WeekendGate",
+    totalPriceMinor: trip.totalPriceMinor,
+    perPassengerMinor: Math.round(trip.totalPriceMinor / pax),
+    cabinBag: bag.cabin || bag.personal || "حقيبة مقصورة حسب الفئة",
+    checkedBag: bag.checked || "الأمتعة المسجّلة حسب الفئة",
+    refundable: false,
+    refundableLabel: "حسب سياسة التذكرة",
+    changeFee: "حسب سياسة التذكرة",
+    cancelFee: "حسب سياسة التذكرة",
+    seatSelection: "حسب سياسة التذكرة",
+    meals: "حسب سياسة التذكرة",
+  };
+}
+
+export function unifiedShopProvider(
+  trip: ComposedTrip,
+  fare: MockFareOption,
+): MockProviderOffer {
+  return {
+    id: `${fare.id}-${SHOP_PROVIDER.key}`,
+    providerKey: SHOP_PROVIDER.key,
+    providerName: SHOP_PROVIDER.name,
+    totalPriceMinor: trip.totalPriceMinor,
+    currency: trip.currency,
+    fareOptionId: fare.id,
+  };
+}
+
+/** Shop never lists competing supplier prices — aggregation already chose one. */
 export function buildProviderOffers(
   trip: ComposedTrip,
   fare: MockFareOption,
 ): MockProviderOffer[] {
-  return MOCK_PROVIDERS.map((p, i) => ({
-    id: `${fare.id}-${p.key}`,
-    providerKey: p.key,
-    providerName: p.name,
-    totalPriceMinor: Math.round(fare.totalPriceMinor * (1 + i * 0.015)),
-    currency: trip.currency,
-    fareOptionId: fare.id,
-  })).sort((a, b) => a.totalPriceMinor - b.totalPriceMinor);
+  return [unifiedShopProvider(trip, fare)];
 }
 
 export function computePriceBreakdown(
@@ -180,7 +213,16 @@ export function computePriceBreakdown(
   };
 }
 
-/** Simulated price revalidation — swap with real provider SDK call. */
+/** Simulated revalidation of the single aggregated shop price. */
+export async function revalidateShopOffer(
+  trip: ComposedTrip,
+  passengers: number,
+): Promise<RevalidateResult> {
+  const fare = unifiedShopFare(trip, passengers);
+  const provider = unifiedShopProvider(trip, fare);
+  return revalidateMockOffer(trip, fare.id, provider.id, passengers);
+}
+
 export async function revalidateMockOffer(
   trip: ComposedTrip,
   fareId: string,
@@ -205,9 +247,8 @@ export async function revalidateMockOffer(
     };
   }
 
-  const fares = buildFareOptions(trip, passengers);
-  const fare = fares.find((f) => f.id === fareId);
-  if (!fare) {
+  const fare = unifiedShopFare(trip, passengers);
+  if (fareId && fareId !== fare.id && !fareId.startsWith(`${trip.id}-`)) {
     return {
       ok: false,
       reason: "unavailable",
@@ -215,9 +256,8 @@ export async function revalidateMockOffer(
     };
   }
 
-  const providers = buildProviderOffers(trip, fare);
-  let provider = providers.find((p) => p.id === providerId);
-  if (!provider) {
+  let provider = unifiedShopProvider(trip, fare);
+  if (providerId && providerId !== provider.id && !providerId.startsWith(`${trip.id}-`)) {
     return {
       ok: false,
       reason: "unavailable",

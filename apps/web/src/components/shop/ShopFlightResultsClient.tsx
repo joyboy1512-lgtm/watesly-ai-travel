@@ -418,10 +418,11 @@ export function ShopFlightResultsClient() {
     void openTripPanel(trip, flight.id);
   }
 
-  /** Secondary CTA — details only, do not select */
+  /** Details CTA — same fare-family panel as select */
   function handleViewDetails(flight: FlightOfferRow) {
-    setExpandedTrip(null);
-    setDetailsFlight(flight);
+    const trip = composeFromPackage(flight);
+    if (!trip) return;
+    void openTripPanel(trip, flight.id);
   }
 
   function handleBarSelect() {
@@ -465,11 +466,31 @@ export function ShopFlightResultsClient() {
     };
   }
 
-  function handleContinueReview(payload: { totalPriceMinor: number }) {
+  function handleContinueReview(payload: {
+    totalPriceMinor: number;
+    fareOfferId?: string;
+    fare?: import("@watesly-travel/shared").FlightFareOption;
+  }) {
     if (!expandedTrip) return;
     persistSession();
     const flight = buildDraftFlight(expandedTrip);
     flight.sellAmountMinor = payload.totalPriceMinor || flight.sellAmountMinor;
+    if (payload.fareOfferId) {
+      flight.id = payload.fareOfferId;
+    }
+    if (payload.fare) {
+      flight.details = {
+        ...flight.details,
+        cabin: payload.fare.cabin,
+        selectedFareBrand: payload.fare.brandName,
+        selectedFareOfferId: payload.fare.id,
+        baggage: {
+          ...((flight.details.baggage as Record<string, string> | undefined) || {}),
+          cabin: payload.fare.cabinBag || "",
+          checked: payload.fare.checkedBag || "",
+        },
+      };
+    }
     const offerRef = String(flight.details.originalOfferId || flight.id);
     const quoteItemId = quoteItems.find(
       (item) => item.providerOfferRef === offerRef && item.serviceType === "flight",

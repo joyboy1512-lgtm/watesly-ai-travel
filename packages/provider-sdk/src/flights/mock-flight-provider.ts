@@ -21,6 +21,245 @@ import {
   type MockFlightTemplate,
 } from "./mock-flight-catalog";
 
+const bagFlex = {
+  personal: "حقيبة شخصية تحت المقعد",
+  cabin: "حقيبة يد 7 كجم",
+  checked: "أمتعة مسجّلة 23 كجم",
+};
+
+const bagEconFamily = {
+  personal: "حقيبة شخصية تحت المقعد",
+  cabin: "حقيبة يد 7 كجم",
+  checked: "أمتعة مسجّلة 23 كجم",
+};
+
+const bagComfort = {
+  personal: "حقيبة شخصية تحت المقعد",
+  cabin: "حقيبة يد 10 كجم",
+  checked: "أمتعة مسجّلة 32 كجم",
+};
+
+const bagBizFamily = {
+  personal: "حقيبة شخصية تحت المقعد",
+  cabin: "حقيبتا يد حتى 14 كجم",
+  checked: "أمتعة مسجّلة 40 كجم × 2",
+};
+
+type FareFamilySpec = {
+  key: string;
+  brand: string;
+  cabin: "economy" | "business";
+  mult: number;
+  baggage?: MockFlightTemplate["baggage"];
+  policies?: MockFlightTemplate["policies"];
+};
+
+const JAZEERA_FAMILIES: FareFamilySpec[] = [
+  {
+    key: "economy",
+    brand: "Economy",
+    cabin: "economy",
+    mult: 1,
+    baggage: {
+      personal: "حقيبة شخصية",
+      cabin: "حقيبة يد 7 كجم",
+      checked: "أمتعة مسجّلة غير مشمولة",
+    },
+    policies: {
+      changeable: false,
+      refundable: false,
+      changeFeeKwd: null,
+      cancelFeeKwd: null,
+      noteAr: "Economy · بدون أمتعة مسجّلة",
+    },
+  },
+  {
+    key: "flex",
+    brand: "Flex",
+    cabin: "economy",
+    mult: 1.12,
+    baggage: bagFlex,
+    policies: {
+      changeable: true,
+      refundable: false,
+      changeFeeKwd: 10,
+      cancelFeeKwd: null,
+      noteAr: "Flex · تعديل بمقابل",
+    },
+  },
+  {
+    key: "flex_plus",
+    brand: "Flex Plus",
+    cabin: "economy",
+    mult: 1.24,
+    baggage: bagComfort,
+    policies: {
+      changeable: true,
+      refundable: true,
+      changeFeeKwd: 0,
+      cancelFeeKwd: 15,
+      noteAr: "Flex Plus · مقعد واختيار أمتعة أفضل",
+    },
+  },
+  {
+    key: "comfort",
+    brand: "Comfort",
+    cabin: "economy",
+    mult: 1.38,
+    baggage: bagComfort,
+    policies: {
+      changeable: true,
+      refundable: true,
+      changeFeeKwd: 0,
+      cancelFeeKwd: 10,
+      noteAr: "Comfort · مساحة أكبر",
+    },
+  },
+  {
+    key: "business",
+    brand: "Business",
+    cabin: "business",
+    mult: 1.9,
+    baggage: bagBizFamily,
+    policies: {
+      changeable: true,
+      refundable: true,
+      changeFeeKwd: 0,
+      cancelFeeKwd: 0,
+      noteAr: "Business · درجة رجال الأعمال",
+    },
+  },
+];
+
+const KUWAIT_FAMILIES: FareFamilySpec[] = [
+  {
+    key: "saver",
+    brand: "Economy Saver",
+    cabin: "economy",
+    mult: 1,
+    baggage: {
+      personal: "حقيبة شخصية تحت المقعد",
+      cabin: "حقيبة يد 7 كجم",
+      checked: "أمتعة مسجّلة غير مشمولة",
+    },
+    policies: {
+      changeable: false,
+      refundable: false,
+      changeFeeKwd: null,
+      cancelFeeKwd: null,
+      noteAr: "Economy Saver · أقل مرونة",
+    },
+  },
+  {
+    key: "economy",
+    brand: "Economy",
+    cabin: "economy",
+    mult: 1.08,
+    baggage: {
+      personal: "حقيبة شخصية تحت المقعد",
+      cabin: "حقيبة يد 7 كجم",
+      checked: "أمتعة مسجّلة 23 كجم",
+    },
+    policies: {
+      changeable: false,
+      refundable: false,
+      changeFeeKwd: 18,
+      cancelFeeKwd: 30,
+      noteAr: "Economy · أمتعة مسجّلة",
+    },
+  },
+  {
+    key: "economy_class",
+    brand: "Economy Class",
+    cabin: "economy",
+    mult: 1.16,
+    baggage: bagEconFamily,
+    policies: {
+      changeable: true,
+      refundable: false,
+      changeFeeKwd: 15,
+      cancelFeeKwd: 25,
+      noteAr: "Economy Class · أمتعة مسجّلة",
+    },
+  },
+  {
+    key: "flex",
+    brand: "Economy Flexi",
+    cabin: "economy",
+    mult: 1.28,
+    baggage: bagEconFamily,
+    policies: {
+      changeable: true,
+      refundable: true,
+      changeFeeKwd: 0,
+      cancelFeeKwd: 20,
+      noteAr: "Economy Flexi · تعديل أسهل",
+    },
+  },
+  {
+    key: "business_saver",
+    brand: "Business Saver",
+    cabin: "business",
+    mult: 1.85,
+    baggage: bagBizFamily,
+    policies: {
+      changeable: true,
+      refundable: false,
+      changeFeeKwd: 25,
+      cancelFeeKwd: 40,
+      noteAr: "Business Saver · درجة أعمال",
+    },
+  },
+];
+
+function expandAirlineFareFamilies(offer: FlightOffer): FlightOffer[] {
+  const raw = (offer.raw || {}) as Record<string, unknown>;
+  const scenario = String(raw.scenario || "normal");
+  if (scenario !== "normal") return [offer];
+  const code = String(raw.airlineCode || "").toUpperCase();
+  const families =
+    code === "J9" ? JAZEERA_FAMILIES : code === "KU" ? KUWAIT_FAMILIES : null;
+  if (!families) {
+    return [
+      {
+        ...offer,
+        raw: {
+          ...raw,
+          fareBrand: String(raw.cabin || "Economy"),
+        },
+      },
+    ];
+  }
+  if (String(raw.cabin || "") === "business") {
+    const biz = families.find((f) => f.cabin === "business") || families[families.length - 1]!;
+    return [
+      {
+        ...offer,
+        providerOfferRef: `${offer.providerOfferRef}-${biz.key}`,
+        raw: {
+          ...raw,
+          cabin: biz.cabin,
+          fareBrand: biz.brand,
+          baggage: biz.baggage || raw.baggage,
+          policies: biz.policies || raw.policies,
+        },
+      },
+    ];
+  }
+  return families.map((fam) => ({
+    ...offer,
+    providerOfferRef: `${offer.providerOfferRef}-${fam.key}`,
+    costAmountMinor: Math.round(offer.costAmountMinor * fam.mult),
+    raw: {
+      ...raw,
+      cabin: fam.cabin,
+      fareBrand: fam.brand,
+      baggage: fam.baggage || raw.baggage,
+      policies: fam.policies || raw.policies,
+    },
+  }));
+}
+
 function hashSeed(input: string): number {
   let h = 0;
   for (let i = 0; i < input.length; i += 1) {
@@ -270,7 +509,7 @@ export class MockFlightProvider implements FlightProviderAdapter {
       } satisfies FlightOffer;
     });
 
-    return offers;
+    return offers.flatMap(expandAirlineFareFamilies);
   }
 
   async revalidateOffer(offer: FlightOffer): Promise<FlightRevalidateResult> {

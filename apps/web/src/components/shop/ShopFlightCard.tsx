@@ -434,6 +434,9 @@ export function ShopFlightCard({
         <div className="shop-ticket-stub-totals">
           <span>{totalPriceLine}</span>
           <span>شامل الضرائب</span>
+          {Number(flight.details.fareOptionCount) > 1 ? (
+            <span>{Number(flight.details.fareOptionCount)} فئات تذكرة</span>
+          ) : null}
         </div>
 
         <div className="shop-ticket-cta-group">

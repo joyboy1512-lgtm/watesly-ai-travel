@@ -32,6 +32,7 @@ import {
 } from "@watesly-travel/shared";
 import {
   aggregateByFingerprint,
+  aggregateFlightsKeepFareFamilies,
   aggregateHotelOffers,
 } from "./offer-aggregation";
 
@@ -205,12 +206,14 @@ export function dedupeFlightsByCheapest(
   rows: PricedOffer<FlightOffer>[],
   spec: CapabilityAggregation = { mode: "cheapest" },
   priorityByProvider: Record<string, number> = {},
+  requestedCabin?: string,
 ): PricedOffer<FlightOffer>[] {
-  return aggregateByFingerprint(
+  return aggregateFlightsKeepFareFamilies(
     rows,
     (row) => flightItineraryFingerprint(row.offer),
     spec,
     priorityByProvider,
+    requestedCabin,
   );
 }
 
@@ -349,7 +352,12 @@ export async function searchAndPriceTravel(input: {
         flightErrors.push(`${provider.displayName}: ${msg}`);
       }
     }
-    flights = dedupeFlightsByCheapest(merged, flightAgg, priority);
+    flights = dedupeFlightsByCheapest(
+      merged,
+      flightAgg,
+      priority,
+      input.flightParams.cabinClass ?? undefined,
+    );
   }
 
   let hotels: PricedOffer<HotelOffer>[] = [];
@@ -502,7 +510,7 @@ export {
   resolveHotelProviderKey,
   resolveProviderKey,
 };
-export { aggregateHotelOffers, aggregateByFingerprint } from "./offer-aggregation";
+export { aggregateHotelOffers, aggregateByFingerprint, aggregateFlightsKeepFareFamilies } from "./offer-aggregation";
 export type {
   FlightSearchParams,
   HotelSearchParams,

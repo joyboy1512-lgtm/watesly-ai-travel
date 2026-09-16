@@ -88,14 +88,6 @@ export class AmadeusFlightProvider implements FlightProviderAdapter {
     return json.access_token;
   }
 
-  private cabinToAmadeus(cabin?: string | null) {
-    const c = (cabin || "economy").toLowerCase();
-    if (c.includes("first")) return "FIRST";
-    if (c.includes("business")) return "BUSINESS";
-    if (c.includes("premium")) return "PREMIUM_ECONOMY";
-    return "ECONOMY";
-  }
-
   async searchFlights(params: FlightSearchParams): Promise<FlightOffer[]> {
     const token = await this.getAccessToken();
     const currency = (params.currency || "KWD").toUpperCase();
@@ -105,8 +97,7 @@ export class AmadeusFlightProvider implements FlightProviderAdapter {
       departureDate: params.departDate.slice(0, 10),
       adults: String(Math.max(1, params.adults || 1)),
       currencyCode: currency,
-      max: "30",
-      travelClass: this.cabinToAmadeus(params.cabinClass),
+      max: "50",
     });
     if (params.returnDate) {
       qs.set("returnDate", params.returnDate.slice(0, 10));
@@ -147,6 +138,18 @@ export class AmadeusFlightProvider implements FlightProviderAdapter {
         String(row.id || "") ||
         `amadeus_${params.origin}_${params.destination}_${index}`;
       const itineraries = Array.isArray(row.itineraries) ? row.itineraries : [];
+      const travelerPricings = Array.isArray(row.travelerPricings)
+        ? row.travelerPricings
+        : [];
+      const fareDetails = (
+        (travelerPricings[0] as { fareDetailsBySegment?: Array<Record<string, unknown>> } | undefined)
+          ?.fareDetailsBySegment || []
+      )[0] || {};
+      const brandedFare = String(
+        (fareDetails as { brandedFare?: string }).brandedFare ||
+          (fareDetails as { cabin?: string }).cabin ||
+          "",
+      );
       const firstSeg =
         (
           (itineraries[0] as { segments?: Array<Record<string, unknown>> })
@@ -170,6 +173,8 @@ export class AmadeusFlightProvider implements FlightProviderAdapter {
           provider: "amadeus",
           offer: row,
           hostname: this.hostname,
+          cabin: String((fareDetails as { cabin?: string }).cabin || params.cabinClass || "economy"),
+          fareBrand: brandedFare || undefined,
         },
       };
     });

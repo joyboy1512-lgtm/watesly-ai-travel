@@ -124,6 +124,9 @@ function FlightBookReview({ booking }: { booking: FlightBookingDraft }) {
           </dl>
           <p className="shop-hint" style={{ margin: 0 }}>
             يشمل الضرائب والرسوم
+            {typeof booking.flight.details.selectedFareBrand === "string"
+              ? ` · ${booking.flight.details.selectedFareBrand}`
+              : ""}
           </p>
 
           <p className="shop-flight-review-pax">

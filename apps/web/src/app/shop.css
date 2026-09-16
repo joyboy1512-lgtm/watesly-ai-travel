@@ -6046,6 +6046,74 @@ html body .shop-root .shop-flight-edit-bar .exp-ac-field .exp-ac-menu {
   color: var(--exp-muted);
 }
 
+.shop-flight-fare-families {
+  margin-top: 1rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid var(--exp-border);
+}
+
+.shop-flight-fare-families h3 {
+  margin: 0 0 0.35rem;
+  font-size: 0.95rem;
+  color: var(--exp-navy);
+}
+
+.shop-flight-fare-families-hint {
+  margin: 0 0 0.75rem;
+  font-size: 0.8rem;
+  color: var(--exp-muted);
+}
+
+.shop-flight-fare-family-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 0.65rem;
+}
+
+.shop-flight-fare-family-card {
+  text-align: start;
+  border: 1px solid var(--exp-border);
+  border-radius: 12px;
+  padding: 0.75rem;
+  background: #fff;
+  font: inherit;
+  cursor: pointer;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.shop-flight-fare-family-card.selected {
+  border-color: var(--exp-blue);
+  box-shadow: 0 0 0 1px var(--exp-blue);
+  background: #f5f9ff;
+}
+
+.shop-flight-fare-family-card header strong {
+  display: block;
+  color: var(--exp-navy);
+  font-size: 0.88rem;
+}
+
+.shop-flight-fare-family-card header span,
+.shop-flight-fare-family-card ul {
+  font-size: 0.72rem;
+  color: var(--exp-muted);
+}
+
+.shop-flight-fare-family-card em {
+  font-style: normal;
+  font-weight: 800;
+  color: var(--exp-navy);
+}
+
+.shop-flight-fare-family-card ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.15rem;
+}
+
 .shop-flight-expanded-close-btn {
   margin-inline-start: auto;
   border: 1px solid var(--exp-border);

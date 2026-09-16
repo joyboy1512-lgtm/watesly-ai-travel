@@ -465,11 +465,31 @@ export function ShopFlightResultsClient() {
     };
   }
 
-  function handleContinueReview(payload: { totalPriceMinor: number }) {
+  function handleContinueReview(payload: {
+    totalPriceMinor: number;
+    fareOfferId?: string;
+    fare?: import("@watesly-travel/shared").FlightFareOption;
+  }) {
     if (!expandedTrip) return;
     persistSession();
     const flight = buildDraftFlight(expandedTrip);
     flight.sellAmountMinor = payload.totalPriceMinor || flight.sellAmountMinor;
+    if (payload.fareOfferId) {
+      flight.id = payload.fareOfferId;
+    }
+    if (payload.fare) {
+      flight.details = {
+        ...flight.details,
+        cabin: payload.fare.cabin,
+        selectedFareBrand: payload.fare.brandName,
+        selectedFareOfferId: payload.fare.id,
+        baggage: {
+          ...((flight.details.baggage as Record<string, string> | undefined) || {}),
+          cabin: payload.fare.cabinBag || "",
+          checked: payload.fare.checkedBag || "",
+        },
+      };
+    }
     const offerRef = String(flight.details.originalOfferId || flight.id);
     const quoteItemId = quoteItems.find(
       (item) => item.providerOfferRef === offerRef && item.serviceType === "flight",

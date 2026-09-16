@@ -1,8 +1,13 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useShopCopy } from "@/components/shop/ShopI18nProvider";
 import type { ComposedTrip } from "@/lib/flight-compose";
+import {
+  listFareOptionsFromDetails,
+  pickDefaultFareOption,
+  type FlightFareOption,
+} from "@watesly-travel/shared";
 import { airlineNameAr } from "@/lib/flight-airlines";
 import {
   airlineLogo,
@@ -26,7 +31,11 @@ type Props = {
   originLabel?: string;
   destinationLabel?: string;
   onClose: () => void;
-  onContinueReview: (payload: { totalPriceMinor: number }) => void;
+  onContinueReview: (payload: {
+    totalPriceMinor: number;
+    fareOfferId?: string;
+    fare?: FlightFareOption;
+  }) => void;
 };
 
 function SegmentTimeline({
@@ -191,7 +200,28 @@ export function ShopFlightExpandedPanel({
 }: Props) {
   const { currency: displayCurrency, formatMoney } = useShopCopy();
   const packageCode = trip.outbound.airlineCode;
-  const sellPriceMinor = trip.totalPriceMinor;
+  const fareOptions = useMemo(
+    () => listFareOptionsFromDetails(trip.sourcePackage?.details),
+    [trip.sourcePackage?.details],
+  );
+  const defaultFare = pickDefaultFareOption(
+    fareOptions,
+    trip.sourcePackage?.id,
+    cabinClass,
+  );
+  const [selectedFareId, setSelectedFareId] = useState(
+    defaultFare?.id || trip.sourcePackage?.id || trip.id,
+  );
+  const selectedFare =
+    fareOptions.find((fare) => fare.id === selectedFareId) || defaultFare || null;
+  const sellPriceMinor = selectedFare?.sellAmountMinor ?? trip.totalPriceMinor;
+
+  useEffect(() => {
+    const next = pickDefaultFareOption(fareOptions, trip.sourcePackage?.id, cabinClass);
+    if (next && next.id !== selectedFareId && !fareOptions.some((fare) => fare.id === selectedFareId)) {
+      setSelectedFareId(next.id);
+    }
+  }, [fareOptions, selectedFareId, trip.sourcePackage?.id, cabinClass]);
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -248,12 +278,56 @@ export function ShopFlightExpandedPanel({
               packageCode={trip.return.airlineCode || packageCode}
             />
           ) : null}
+
+          {fareOptions.length > 1 ? (
+            <section className="shop-flight-fare-families">
+              <h3>فئات التذكرة</h3>
+              <p className="shop-flight-fare-families-hint">
+                فئات شركة الطيران لهذه الرحلة — مثل Economy / Flex / Comfort أو Saver / Flexi /
+                Business Saver حسب ما يتوفر
+              </p>
+              <div className="shop-flight-fare-family-grid">
+                {fareOptions.map((fare) => {
+                  const selected = fare.id === selectedFare?.id;
+                  return (
+                    <button
+                      key={fare.id}
+                      type="button"
+                      className={`shop-flight-fare-family-card${selected ? " selected" : ""}`}
+                      onClick={() => setSelectedFareId(fare.id)}
+                    >
+                      <header>
+                        <strong>{fare.brandNameAr}</strong>
+                        <span>{fare.cabinLabelAr}</span>
+                      </header>
+                      <em data-display-currency={displayCurrency}>
+                        {formatMoney(fare.sellAmountMinor, fare.currency || trip.currency)}
+                      </em>
+                      <ul>
+                        {fare.cabinBag ? <li>🎒 {fare.cabinBag}</li> : null}
+                        {fare.checkedBag ? <li>🧳 {fare.checkedBag}</li> : null}
+                        {fare.changeNoteAr ? <li>{fare.changeNoteAr}</li> : null}
+                        {fare.refundNoteAr ? <li>{fare.refundNoteAr}</li> : null}
+                        {fare.noteAr ? <li>{fare.noteAr}</li> : null}
+                        {fare.refundable == null && fare.changeable == null && !fare.changeNoteAr ? (
+                          <li>شروط التذكرة حسب شركة الطيران</li>
+                        ) : null}
+                      </ul>
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
+          ) : null}
         </div>
 
         <footer className="shop-flight-expanded-foot sticky">
           <div className="shop-flight-expanded-foot-breakdown">
             <div className="total">
-              <span>الإجمالي</span>
+              <span>
+                الإجمالي
+                {selectedFare ? ` · ${selectedFare.brandNameAr}` : ""}
+              </span>
               <strong data-display-currency={displayCurrency}>
                 {formatMoney(sellPriceMinor, trip.currency)}
               </strong>
@@ -262,7 +336,13 @@ export function ShopFlightExpandedPanel({
           <button
             type="button"
             className="shop-flight-expanded-continue-btn"
-            onClick={() => onContinueReview({ totalPriceMinor: sellPriceMinor })}
+            onClick={() =>
+              onContinueReview({
+                totalPriceMinor: sellPriceMinor,
+                fareOfferId: selectedFare?.id,
+                fare: selectedFare || undefined,
+              })
+            }
           >
             {`متابعة — ${formatMoney(sellPriceMinor, trip.currency)}`}
           </button>

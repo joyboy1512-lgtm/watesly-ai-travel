@@ -13,6 +13,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "node --import ../shared/node_modules/tsx/dist/loader.mjs --test src/offer-aggregation.test.ts",
     "lint": "echo \"No lint config yet for travel-core\"",
     "clean": "rimraf dist"
   },

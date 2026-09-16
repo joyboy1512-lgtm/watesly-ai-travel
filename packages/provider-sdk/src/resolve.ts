@@ -8,6 +8,7 @@ import { TravelfusionFlightProvider } from "./flights/travelfusion-flight-provid
 import { TravelportFlightProvider } from "./flights/travelport-flight-provider";
 import { DuffelHotelProvider } from "./hotels/duffel-hotel-provider";
 import { HotelbedsHotelProvider } from "./hotels/hotelbeds-hotel-provider";
+import { MockHotelProvider } from "./hotels/mock-hotel-provider";
 import { ScaffoldHotelProvider, isHotelAggregatorKey } from "./hotels/scaffold-hotel-provider";
 import { HotelbedsTransferProvider } from "./transfers/hotelbeds-transfer-provider";
 import { MockTransferProvider } from "./transfers/mock-transfer-provider";

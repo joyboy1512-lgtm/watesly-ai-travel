@@ -29,7 +29,17 @@ type DuffelSegment = {
   marketing_carrier_flight_number?: string;
   operating_carrier_flight_number?: string;
   aircraft?: { name?: string; iata_code?: string };
-  passengers?: Array<{ cabin_class_marketing_name?: string }>;
+  passengers?: Array<{
+    cabin_class?: string;
+    cabin_class_marketing_name?: string;
+    baggages?: Array<{ type?: string; quantity?: number }>;
+  }>;
+};
+
+type DuffelCondition = {
+  allowed?: boolean;
+  penalty_amount?: string;
+  penalty_currency?: string;
 };
 
 type DuffelOffer = {
@@ -38,8 +48,13 @@ type DuffelOffer = {
   total_currency?: string;
   expires_at?: string;
   owner?: { name?: string; iata_code?: string };
+  conditions?: {
+    refund_before_departure?: DuffelCondition;
+    change_before_departure?: DuffelCondition;
+  };
   slices?: Array<{
     duration?: string;
+    fare_brand_name?: string;
     segments?: DuffelSegment[];
   }>;
 };
@@ -147,14 +162,6 @@ export class DuffelFlightProvider implements FlightProviderAdapter {
     return h;
   }
 
-  private cabinClass(cabin?: string | null) {
-    const c = (cabin || "economy").toLowerCase();
-    if (c.includes("first")) return "first";
-    if (c.includes("business")) return "business";
-    if (c.includes("premium")) return "premium_economy";
-    return "economy";
-  }
-
   private buildPassengers(params: FlightSearchParams) {
     const passengers: Array<{ type: DuffelPassengerType }> = [];
     const adults = Math.max(1, params.adults || 1);
@@ -247,7 +254,12 @@ export class DuffelFlightProvider implements FlightProviderAdapter {
         airlineCode,
         cabin:
           offer.slices?.[0]?.segments?.[0]?.passengers?.[0]
-            ?.cabin_class_marketing_name || undefined,
+            ?.cabin_class ||
+          offer.slices?.[0]?.segments?.[0]?.passengers?.[0]
+            ?.cabin_class_marketing_name ||
+          undefined,
+        fareBrand: offer.slices?.[0]?.fare_brand_name || undefined,
+        fareConditions: offer.conditions || undefined,
         duration: durationLabel(outDuration),
         durationMinutes: outDuration,
         stops: Math.max(0, outSegs.length - 1),
@@ -296,7 +308,6 @@ export class DuffelFlightProvider implements FlightProviderAdapter {
       data: {
         slices,
         passengers: this.buildPassengers(params),
-        cabin_class: this.cabinClass(params.cabinClass),
       },
     };
 
@@ -319,7 +330,7 @@ export class DuffelFlightProvider implements FlightProviderAdapter {
     }
 
     const offers = Array.isArray(json.data?.offers) ? json.data!.offers! : [];
-    return offers.slice(0, 40).map((offer, index) => this.mapOffer(offer, params, index));
+    return offers.slice(0, 80).map((offer, index) => this.mapOffer(offer, params, index));
   }
 
   async revalidateOffer(offer: FlightOffer): Promise<FlightRevalidateResult> {

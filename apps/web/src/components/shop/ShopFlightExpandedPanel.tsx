@@ -1,16 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect } from "react";
 import { useShopCopy } from "@/components/shop/ShopI18nProvider";
 import type { ComposedTrip } from "@/lib/flight-compose";
-import {
-  buildFareOptions,
-  buildProviderOffers,
-  computePriceBreakdown,
-  revalidateMockOffer,
-  type MockFareOption,
-  type MockProviderOffer,
-} from "@/lib/flight-fare-mock";
 import { airlineNameAr } from "@/lib/flight-airlines";
 import {
   airlineLogo,
@@ -25,16 +17,6 @@ import {
 } from "@/lib/flight-search";
 import type { SelectedLeg } from "@/lib/flight-leg-selection";
 
-export type ExpandedPanelPhase =
-  | "idle"
-  | "revalidating"
-  | "success"
-  | "verified"
-  | "price_changed"
-  | "unavailable"
-  | "expired"
-  | "error";
-
 type Props = {
   trip: ComposedTrip;
   passengers: number;
@@ -44,11 +26,7 @@ type Props = {
   originLabel?: string;
   destinationLabel?: string;
   onClose: () => void;
-  onContinueReview: (payload: {
-    fare: MockFareOption;
-    provider: MockProviderOffer;
-  }) => void;
-  onRefreshResults: () => void;
+  onContinueReview: (payload: { totalPriceMinor: number }) => void;
 };
 
 function SegmentTimeline({
@@ -208,54 +186,12 @@ export function ShopFlightExpandedPanel({
   cabinClass,
   departDate,
   returnDate,
-  originLabel,
-  destinationLabel,
   onClose,
   onContinueReview,
-  onRefreshResults,
 }: Props) {
   const { currency: displayCurrency, formatMoney } = useShopCopy();
-  const [phase, setPhase] = useState<ExpandedPanelPhase>("idle");
-  const [selectedFareId, setSelectedFareId] = useState<string | null>(null);
-  const [selectedProviderId, setSelectedProviderId] = useState<string | null>(null);
-  const [statusMessage, setStatusMessage] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [confirmedPriceMinor, setConfirmedPriceMinor] = useState<number | null>(null);
-  const [validatedOffer, setValidatedOffer] = useState<{
-    fare: MockFareOption;
-    provider: MockProviderOffer;
-  } | null>(null);
-
   const packageCode = trip.outbound.airlineCode;
-  const fares = useMemo(() => buildFareOptions(trip, passengers), [trip, passengers]);
-  const selectedFare = fares.find((f) => f.id === selectedFareId) || fares[0];
-  const providers = useMemo(
-    () => (selectedFare ? buildProviderOffers(trip, selectedFare) : []),
-    [trip, selectedFare],
-  );
-  const selectedProvider =
-    providers.find((p) => p.id === selectedProviderId) || providers[0] || null;
-
-  const footerBreakdown = useMemo(() => {
-    if (!selectedProvider) return null;
-    return computePriceBreakdown(selectedProvider.totalPriceMinor, trip.currency);
-  }, [selectedProvider, trip.currency]);
-
-  useEffect(() => {
-    if (fares.length && !selectedFareId) {
-      // Default to Saver so the panel price matches the card "from" price
-      const saver = fares.find((f) => f.tierKey === "economy_saver") || fares[0];
-      setSelectedFareId(saver!.id);
-    }
-  }, [fares, selectedFareId]);
-
-  useEffect(() => {
-    if (providers.length) {
-      setSelectedProviderId((prev) =>
-        prev && providers.some((p) => p.id === prev) ? prev : providers[0]!.id,
-      );
-    }
-  }, [providers]);
+  const sellPriceMinor = trip.totalPriceMinor;
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -269,54 +205,6 @@ export function ShopFlightExpandedPanel({
       document.body.style.overflow = prev;
     };
   }, [onClose]);
-
-  async function handleContinue() {
-    if (!selectedFare || !selectedProvider || busy) return;
-    setBusy(true);
-    setPhase("revalidating");
-    setStatusMessage("");
-
-    try {
-      const result = await revalidateMockOffer(
-        trip,
-        selectedFare.id,
-        selectedProvider.id,
-        passengers,
-      );
-      if (!result.ok) {
-        setPhase(result.reason);
-        setStatusMessage(result.message);
-        return;
-      }
-      if (result.priceChanged) {
-        setPhase("price_changed");
-        setConfirmedPriceMinor(result.provider.totalPriceMinor);
-        setValidatedOffer({ fare: result.fare, provider: result.provider });
-        setStatusMessage(
-          `تغيّر السعر من ${formatMoney(result.previousTotalMinor, trip.currency)} إلى ${formatMoney(result.provider.totalPriceMinor, trip.currency)}`,
-        );
-        return;
-      }
-      setPhase("verified");
-      setStatusMessage("تم التحقق من السعر الآن");
-      await new Promise((r) => setTimeout(r, 450));
-      onContinueReview({ fare: result.fare, provider: result.provider });
-    } catch {
-      setPhase("error");
-      setStatusMessage("تعذر الاتصال بالمزوّد. حاول مرة أخرى.");
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function acceptPriceChange() {
-    if (!validatedOffer) return;
-    setBusy(true);
-    setPhase("revalidating");
-    await new Promise((r) => setTimeout(r, 400));
-    onContinueReview(validatedOffer);
-    setBusy(false);
-  }
 
   const titleRoute = `${trip.outbound.from} ↔ ${trip.outbound.to}`;
 
@@ -360,175 +248,25 @@ export function ShopFlightExpandedPanel({
               packageCode={trip.return.airlineCode || packageCode}
             />
           ) : null}
-
-          <section className="shop-flight-expanded-fares">
-            <h3>اختر فئة السعر</h3>
-            <p className="shop-flight-fares-hint">
-              Saver · Standard · Flex — حقيبة المقصورة، الأمتعة، المقعد، الوجبات، التعديل والإلغاء
-            </p>
-            <div className="shop-flight-fare-grid">
-              {fares.map((fare) => (
-                <article
-                  key={fare.id}
-                  className={`shop-flight-fare-card${
-                    selectedFare?.id === fare.id ? " selected" : ""
-                  }`}
-                >
-                  <header>
-                    <strong>{fare.labelAr}</strong>
-                    <span>{fare.label}</span>
-                  </header>
-                  <p className="shop-flight-fare-price" data-display-currency={displayCurrency}>
-                    {formatMoney(fare.totalPriceMinor, trip.currency)}
-                  </p>
-                  {passengers > 1 ? (
-                    <small className="shop-flight-fare-per-pax">
-                      {formatMoney(fare.perPassengerMinor, trip.currency)} / مسافر
-                    </small>
-                  ) : (
-                    <small className="shop-flight-fare-per-pax">السعر الإجمالي لمسافر واحد</small>
-                  )}
-                  <ul className="shop-flight-fare-features">
-                    <li>🎒 {fare.cabinBag}</li>
-                    <li>🧳 {fare.checkedBag}</li>
-                    <li>{fare.refundableLabel}</li>
-                    <li>
-                      <strong>تعديل:</strong> {fare.changeFee}
-                    </li>
-                    <li>
-                      <strong>إلغاء:</strong> {fare.cancelFee}
-                    </li>
-                    <li>مقعد: {fare.seatSelection}</li>
-                    <li>وجبات: {fare.meals}</li>
-                  </ul>
-                  <button
-                    type="button"
-                    className="shop-flight-fare-select-btn"
-                    onClick={() => setSelectedFareId(fare.id)}
-                  >
-                    {selectedFare?.id === fare.id ? "✓ محدّد" : "اختيار هذه الفئة"}
-                  </button>
-                </article>
-              ))}
-            </div>
-          </section>
-
-          {selectedFare && providers.length ? (
-            <section className="shop-flight-expanded-providers">
-              <h3>المزوّد (تجريبي · من الأرخص)</h3>
-              <p className="shop-flight-fares-hint">
-                أسماء المزوّدين أدناه للاختبار فقط وليست حجوزات حقيقية
-              </p>
-              <div className="shop-flight-provider-list">
-                {providers.map((prov) => (
-                  <label key={prov.id} className="shop-flight-provider-row selectable">
-                    <input
-                      type="radio"
-                      name="provider"
-                      checked={selectedProvider?.id === prov.id}
-                      onChange={() => setSelectedProviderId(prov.id)}
-                    />
-                    <div>
-                      <strong>{prov.providerName}</strong>
-                      <span>{selectedFare.labelAr}</span>
-                    </div>
-                    <strong>{formatMoney(prov.totalPriceMinor, prov.currency)}</strong>
-                  </label>
-                ))}
-              </div>
-            </section>
-          ) : null}
-
-          {phase === "verified" || phase === "success" ? (
-            <div className="shop-flight-expanded-status success" role="status">
-              {statusMessage || "تم التحقق الآن"}
-            </div>
-          ) : null}
-          {phase === "price_changed" ? (
-            <div className="shop-flight-expanded-status warn" role="alert">
-              <p>{statusMessage}</p>
-              <button type="button" onClick={() => void acceptPriceChange()}>
-                قبول السعر الجديد والمتابعة
-              </button>
-              <button type="button" className="ghost" onClick={onRefreshResults}>
-                العودة للنتائج
-              </button>
-            </div>
-          ) : null}
-          {phase === "unavailable" || phase === "expired" ? (
-            <div className="shop-flight-expanded-status warn" role="alert">
-              <p>
-                {statusMessage ||
-                  (phase === "expired" ? "انتهى العرض" : "لم يعد متاحًا")}
-              </p>
-              <button type="button" onClick={onRefreshResults}>
-                العودة للنتائج
-              </button>
-            </div>
-          ) : null}
-          {phase === "error" ? (
-            <div className="shop-flight-expanded-status error" role="alert">
-              <p>{statusMessage || "تعذر الاتصال بالمزوّد"}</p>
-              <button
-                type="button"
-                onClick={() => {
-                  setPhase("idle");
-                  setStatusMessage("");
-                }}
-              >
-                إعادة المحاولة
-              </button>
-              <button type="button" className="ghost" onClick={onClose}>
-                العودة للنتائج
-              </button>
-            </div>
-          ) : null}
         </div>
 
-        {selectedFare && selectedProvider && footerBreakdown ? (
-          <footer className="shop-flight-expanded-foot sticky">
-            <div className="shop-flight-expanded-foot-breakdown">
-              <div>
-                <span>الأساسي</span>
-                <em>{formatMoney(footerBreakdown.baseMinor, trip.currency)}</em>
-              </div>
-              <div>
-                <span>الضرائب</span>
-                <em>{formatMoney(footerBreakdown.taxesMinor, trip.currency)}</em>
-              </div>
-              <div>
-                <span>رسوم الخدمة</span>
-                <em>{formatMoney(footerBreakdown.serviceFeeMinor, trip.currency)}</em>
-              </div>
-              <div className="total">
-                <span>الإجمالي</span>
-                <strong>
-                  {formatMoney(
-                    confirmedPriceMinor ?? footerBreakdown.totalMinor,
-                    trip.currency,
-                  )}
-                </strong>
-              </div>
+        <footer className="shop-flight-expanded-foot sticky">
+          <div className="shop-flight-expanded-foot-breakdown">
+            <div className="total">
+              <span>الإجمالي</span>
+              <strong data-display-currency={displayCurrency}>
+                {formatMoney(sellPriceMinor, trip.currency)}
+              </strong>
             </div>
-            <button
-              type="button"
-              className="shop-flight-expanded-continue-btn"
-              disabled={busy || phase === "unavailable" || phase === "expired"}
-              onClick={() => void handleContinue()}
-            >
-              {busy || phase === "revalidating" ? (
-                <span className="shop-flight-btn-loading">
-                  <span className="shop-flight-spinner small" aria-hidden /> جاري التحقق من السعر…
-                </span>
-              ) : (
-                `متابعة — ${formatMoney(
-                  confirmedPriceMinor ?? footerBreakdown.totalMinor,
-                  trip.currency,
-                )}`
-              )}
-            </button>
-          </footer>
-        ) : null}
+          </div>
+          <button
+            type="button"
+            className="shop-flight-expanded-continue-btn"
+            onClick={() => onContinueReview({ totalPriceMinor: sellPriceMinor })}
+          >
+            {`متابعة — ${formatMoney(sellPriceMinor, trip.currency)}`}
+          </button>
+        </footer>
       </div>
     </div>
   );

@@ -1,5 +1,4 @@
 import type { ComposedTrip } from "./flight-compose";
-import type { FlightPriceBreakdown, MockFareOption, MockProviderOffer } from "./flight-fare-mock";
 import type { SelectedLeg } from "./flight-leg-selection";
 
 export type BookingDraftFlight = {
@@ -64,9 +63,6 @@ export type FlightBookingDraft = {
   composedTrip?: ComposedTrip;
   selectedOutbound?: SelectedLeg;
   selectedReturn?: SelectedLeg | null;
-  selectedFare?: MockFareOption;
-  selectedProvider?: MockProviderOffer;
-  priceBreakdown?: FlightPriceBreakdown;
   validatedAt?: string;
   resultsReturnHref?: string;
 };

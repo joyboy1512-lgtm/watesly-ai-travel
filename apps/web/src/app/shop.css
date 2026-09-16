@@ -5993,117 +5993,6 @@ html body .shop-root .shop-flight-edit-bar .exp-ac-field .exp-ac-menu {
   color: var(--exp-muted);
 }
 
-.shop-flight-expanded-fares h3,
-.shop-flight-expanded-providers h3 {
-  margin: 0 0 0.65rem;
-  font-size: 0.95rem;
-  color: var(--exp-navy);
-}
-
-.shop-flight-fare-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 0.65rem;
-}
-
-.shop-flight-fare-card {
-  border: 1px solid var(--exp-border);
-  border-radius: 12px;
-  padding: 0.75rem;
-  display: grid;
-  gap: 0.35rem;
-  transition: border-color 0.15s, box-shadow 0.15s;
-}
-
-.shop-flight-fare-card.selected {
-  border-color: var(--exp-blue);
-  box-shadow: 0 0 0 1px var(--exp-blue);
-}
-
-.shop-flight-fare-card header strong {
-  display: block;
-  color: var(--exp-navy);
-  font-size: 0.88rem;
-}
-
-.shop-flight-fare-card header span {
-  font-size: 0.72rem;
-  color: var(--exp-muted);
-}
-
-.shop-flight-fare-price {
-  margin: 0;
-  font-size: 1.05rem;
-  font-weight: 800;
-  color: var(--exp-navy);
-}
-
-.shop-flight-fare-features {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  font-size: 0.72rem;
-  color: var(--exp-muted);
-  display: grid;
-  gap: 0.2rem;
-}
-
-.shop-flight-fare-select-btn,
-.shop-flight-fare-continue-btn,
-.shop-flight-provider-btn {
-  border: 0;
-  border-radius: 999px;
-  padding: 0.45rem 0.75rem;
-  font: inherit;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.shop-flight-fare-select-btn {
-  background: #eef2f8;
-  color: var(--exp-navy);
-}
-
-.shop-flight-fare-continue-btn {
-  background: var(--exp-navy);
-  color: #fff;
-}
-
-.shop-flight-fare-continue-btn:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
-}
-
-.shop-flight-provider-list {
-  display: grid;
-  gap: 0.45rem;
-}
-
-.shop-flight-provider-row {
-  display: grid;
-  grid-template-columns: 1fr auto auto;
-  gap: 0.65rem;
-  align-items: center;
-  border: 1px solid var(--exp-border);
-  border-radius: 10px;
-  padding: 0.65rem 0.75rem;
-}
-
-.shop-flight-provider-row strong {
-  color: var(--exp-navy);
-}
-
-.shop-flight-provider-row span {
-  display: block;
-  font-size: 0.75rem;
-  color: var(--exp-muted);
-}
-
-.shop-flight-provider-btn {
-  background: var(--exp-blue);
-  color: #fff;
-}
-
 .shop-flight-expanded-status {
   margin-top: 0.85rem;
   padding: 0.75rem;
@@ -6369,15 +6258,7 @@ html body .shop-root .shop-flight-edit-bar .exp-ac-field .exp-ac-menu {
 }
 
 @media (max-width: 900px) {
-  .shop-flight-fare-grid {
-    grid-template-columns: 1fr;
-  }
-
   .shop-flight-review-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .shop-flight-provider-row {
     grid-template-columns: 1fr;
   }
 }
@@ -7485,16 +7366,6 @@ html[dir="rtl"] .shop-ticket-stub {
   color: var(--exp-muted);
   display: grid;
   gap: 0.25rem;
-}
-
-.shop-flight-fares-hint {
-  margin: -0.35rem 0 0.65rem;
-  font-size: 0.82rem;
-  color: var(--exp-muted);
-}
-
-.shop-flight-provider-row.selectable {
-  cursor: pointer;
 }
 
 .shop-flight-expanded-status.warn button.ghost {

@@ -28,16 +28,9 @@ function FlightBookReview({ booking }: { booking: FlightBookingDraft }) {
   const trip = booking.composedTrip;
   const outbound = booking.selectedOutbound || trip?.outbound;
   const returnLeg = booking.selectedReturn ?? trip?.return ?? null;
-  const fare = booking.selectedFare;
-  const provider = booking.selectedProvider;
-  const breakdown = booking.priceBreakdown;
   const pax = booking.adults + booking.children;
 
-  const totalMinor =
-    breakdown?.totalMinor ??
-    provider?.totalPriceMinor ??
-    fare?.totalPriceMinor ??
-    booking.flight.sellAmountMinor;
+  const totalMinor = booking.flight.sellAmountMinor;
 
   function continueToTravelers() {
     const { serviceType: _serviceType, ...payload } = booking;
@@ -122,48 +115,16 @@ function FlightBookReview({ booking }: { booking: FlightBookingDraft }) {
         </section>
 
         <section className="shop-flight-review-card">
-          <h2>السعر المختار</h2>
-          {fare ? (
-            <>
-              <p className="shop-flight-review-fare-name">
-                {fare.labelAr} <span>({fare.label})</span>
-              </p>
-              <ul className="shop-flight-review-fare-meta">
-                <li>🎒 {fare.cabinBag}</li>
-                <li>🧳 {fare.checkedBag}</li>
-                <li>{fare.refundableLabel}</li>
-              </ul>
-            </>
-          ) : null}
-          {provider ? (
-            <p className="shop-flight-review-provider">
-              المزوّد: <strong>{provider.providerName}</strong>
-            </p>
-          ) : null}
-
+          <h2>السعر</h2>
           <dl className="shop-flight-review-breakdown">
-            <div>
-              <dt>السعر الأساسي</dt>
-              <dd>
-                {formatMoneyMinor(
-                  breakdown?.baseMinor ?? booking.flight.sellAmountMinor,
-                  booking.flight.currency,
-                )}
-              </dd>
-            </div>
-            <div>
-              <dt>الضرائب والرسوم</dt>
-              <dd>{formatMoneyMinor(breakdown?.taxesMinor ?? 0, booking.flight.currency)}</dd>
-            </div>
-            <div>
-              <dt>رسوم الخدمة</dt>
-              <dd>{formatMoneyMinor(breakdown?.serviceFeeMinor ?? 0, booking.flight.currency)}</dd>
-            </div>
             <div className="total">
               <dt>الإجمالي</dt>
               <dd>{formatMoneyMinor(totalMinor, booking.flight.currency)}</dd>
             </div>
           </dl>
+          <p className="shop-hint" style={{ margin: 0 }}>
+            يشمل الضرائب والرسوم
+          </p>
 
           <p className="shop-flight-review-pax">
             {booking.adults} بالغ

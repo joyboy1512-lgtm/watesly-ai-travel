@@ -13,7 +13,6 @@ import {
   tripReadyForSelection,
   type ComposedTrip,
 } from "@/lib/flight-compose";
-import { computePriceBreakdown } from "@/lib/flight-fare-mock";
 import {
   extractLeg,
   findFlightForLeg,
@@ -466,14 +465,11 @@ export function ShopFlightResultsClient() {
     };
   }
 
-  function handleContinueReview(payload: {
-    fare: import("@/lib/flight-fare-mock").MockFareOption;
-    provider: import("@/lib/flight-fare-mock").MockProviderOffer;
-  }) {
+  function handleContinueReview(payload: { totalPriceMinor: number }) {
     if (!expandedTrip) return;
     persistSession();
     const flight = buildDraftFlight(expandedTrip);
-    const breakdown = computePriceBreakdown(payload.provider.totalPriceMinor, expandedTrip.currency);
+    flight.sellAmountMinor = payload.totalPriceMinor || flight.sellAmountMinor;
     const offerRef = String(flight.details.originalOfferId || flight.id);
     const quoteItemId = quoteItems.find(
       (item) => item.providerOfferRef === offerRef && item.serviceType === "flight",
@@ -498,9 +494,6 @@ export function ShopFlightResultsClient() {
       composedTrip: expandedTrip,
       selectedOutbound: expandedTrip.outbound,
       selectedReturn: expandedTrip.return,
-      selectedFare: payload.fare,
-      selectedProvider: payload.provider,
-      priceBreakdown: breakdown,
       validatedAt: new Date().toISOString(),
       resultsReturnHref: resultsHref,
     });
@@ -920,10 +913,6 @@ export function ShopFlightResultsClient() {
           destinationLabel={params.destinationLabel}
           onClose={() => setExpandedTrip(null)}
           onContinueReview={handleContinueReview}
-          onRefreshResults={() => {
-            setExpandedTrip(null);
-            void runSearch(params);
-          }}
         />
       ) : null}
     </div>

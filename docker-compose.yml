@@ -1,0 +1,35 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: watesly-travel-postgres
+    restart: unless-stopped
+    ports:
+      # Host 5433 avoids colliding with other local Postgres instances
+      - "5433:5432"
+    environment:
+      POSTGRES_DB: watesly_travel
+      POSTGRES_USER: watesly
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-me}
+    volumes:
+      - ./docker-data/postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U watesly -d watesly_travel"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: watesly-travel-redis
+    restart: unless-stopped
+    ports:
+      # Host 6380 avoids colliding with other local Redis instances
+      - "6380:6379"
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - ./docker-data/redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10

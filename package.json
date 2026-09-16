@@ -1,0 +1,29 @@
+{
+  "name": "watesly-travel-ai",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Watesly Travel AI — Multi-tenant SaaS for travel agencies",
+  "packageManager": "pnpm@9.15.4",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "turbo run dev --concurrency=20 --filter=@watesly-travel/web --filter=@watesly-travel/api --filter=@watesly-travel/worker --filter=@watesly-travel/shared --filter=@watesly-travel/database --filter=@watesly-travel/ai-core --filter=@watesly-travel/whatsapp-core --filter=@watesly-travel/provider-sdk --filter=@watesly-travel/pricing-engine --filter=@watesly-travel/travel-core",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "clean": "turbo run clean && rimraf node_modules",
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down",
+    "docker:ps": "docker compose ps",
+    "db:generate": "pnpm --filter @watesly-travel/database prisma:generate",
+    "db:migrate": "pnpm --filter @watesly-travel/database prisma:migrate",
+    "db:seed": "pnpm --filter @watesly-travel/database prisma:seed",
+    "db:setup": "pnpm --filter @watesly-travel/database db:setup"
+  },
+  "devDependencies": {
+    "rimraf": "^6.0.1",
+    "turbo": "^2.5.4",
+    "typescript": "^5.8.3"
+  }
+}

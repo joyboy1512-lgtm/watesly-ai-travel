@@ -1,0 +1,13 @@
+# أضِف هذه الكتل إلى /etc/caddy/Caddyfile دون حذف إعدادات watesly.com
+
+weekendgate.com {
+	redir https://www.weekendgate.com{uri} permanent
+}
+
+www.weekendgate.com {
+	reverse_proxy 127.0.0.1:3012
+}
+
+api.weekendgate.com {
+	reverse_proxy 127.0.0.1:3011
+}

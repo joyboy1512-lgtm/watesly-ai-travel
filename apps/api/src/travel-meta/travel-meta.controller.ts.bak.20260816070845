@@ -1,0 +1,205 @@
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Get,
+  Post,
+  Query,
+} from "@nestjs/common";
+import { extractPassportFromImage } from "@watesly-travel/ai-core";
+import { buildMockAncillaryOffers } from "@watesly-travel/shared";
+import { RequirePermissions } from "../auth/decorators";
+import { PrismaService } from "../prisma/prisma.service";
+
+@Controller("travel-meta")
+export class TravelMetaController {
+  constructor(private readonly prisma: PrismaService) {}
+
+  @Get("airports")
+  @RequirePermissions("conversations.read")
+  async airports(
+    @Query("q") q?: string,
+    @Query("limit") limitRaw?: string,
+  ) {
+    const limit = Math.min(40, Math.max(5, Number(limitRaw) || 20));
+    const query = q?.trim();
+    if (!query) {
+      return this.prisma.airport.findMany({
+        where: { iataCode: { in: ["RUH", "JED", "DMM", "DXB", "AUH", "DOH", "KWI", "CAI", "IST", "LHR", "JFK", "CDG"] } },
+        orderBy: { city: "asc" },
+        take: limit,
+      });
+    }
+
+    return this.prisma.airport.findMany({
+      where: {
+        OR: [
+          { iataCode: { equals: query.toUpperCase(), mode: "insensitive" } },
+          { iataCode: { startsWith: query.toUpperCase(), mode: "insensitive" } },
+          { city: { contains: query, mode: "insensitive" } },
+          { name: { contains: query, mode: "insensitive" } },
+          { country: { contains: query, mode: "insensitive" } },
+        ],
+      },
+      orderBy: [{ city: "asc" }, { name: "asc" }],
+      take: limit,
+    });
+  }
+
+  @Get("airlines")
+  @RequirePermissions("conversations.read")
+  async airlines(
+    @Query("q") q?: string,
+    @Query("limit") limitRaw?: string,
+  ) {
+    const limit = Math.min(60, Math.max(5, Number(limitRaw) || 30));
+    const query = q?.trim();
+    if (!query) {
+      return this.prisma.airline.findMany({
+        where: {
+          active: true,
+          iataCode: {
+            in: ["SV", "XY", "F3", "EK", "EY", "QR", "MS", "TK", "BA", "AF", "LH", "UA", "AA"],
+          },
+        },
+        orderBy: { name: "asc" },
+        take: limit,
+      });
+    }
+
+    return this.prisma.airline.findMany({
+      where: {
+        active: true,
+        OR: [
+          { iataCode: { equals: query.toUpperCase(), mode: "insensitive" } },
+          { iataCode: { startsWith: query.toUpperCase(), mode: "insensitive" } },
+          { name: { contains: query, mode: "insensitive" } },
+          { country: { contains: query, mode: "insensitive" } },
+        ],
+      },
+      orderBy: { name: "asc" },
+      take: limit,
+    });
+  }
+
+  @Get("countries")
+  @RequirePermissions("conversations.read")
+  async countries(@Query("q") q?: string) {
+    const rows = await this.prisma.airport.findMany({
+      where: q?.trim()
+        ? { country: { contains: q.trim(), mode: "insensitive" } }
+        : undefined,
+      distinct: ["country"],
+      select: { country: true },
+      orderBy: { country: "asc" },
+      take: 80,
+    });
+    return rows.map((r) => r.country).filter(Boolean);
+  }
+
+  @Get("cities")
+  @RequirePermissions("conversations.read")
+  async cities(
+    @Query("q") q?: string,
+    @Query("country") country?: string,
+  ) {
+    const rows = await this.prisma.airport.findMany({
+      where: {
+        AND: [
+          country?.trim()
+            ? { country: { contains: country.trim(), mode: "insensitive" } }
+            : {},
+          q?.trim()
+            ? {
+                OR: [
+                  { city: { contains: q.trim(), mode: "insensitive" } },
+                  { name: { contains: q.trim(), mode: "insensitive" } },
+                  { country: { contains: q.trim(), mode: "insensitive" } },
+                ],
+              }
+            : {},
+        ],
+      },
+      distinct: ["city", "country"],
+      select: { city: true, country: true, iataCode: true },
+      orderBy: [{ country: "asc" }, { city: "asc" }],
+      take: 40,
+    });
+    return rows.filter((r) => r.city);
+  }
+
+  /**
+   * Ancillary catalog (cars / transfers / tours / packages) via API —
+   * UI must not import mock builders directly.
+   */
+  @Get("ancillaries")
+  @RequirePermissions("conversations.read")
+  async ancillaries(
+    @Query("destination") destination?: string,
+    @Query("adults") adultsRaw?: string,
+    @Query("nights") nightsRaw?: string,
+  ) {
+    const adults = Math.max(1, Number(adultsRaw) || 1);
+    const nights = Math.max(1, Number(nightsRaw) || 1);
+    const destinationLabel = destination?.trim() || "الوجهة";
+    const rows = buildMockAncillaryOffers({
+      destinationLabel,
+      adults,
+      nights,
+    });
+    return {
+      providerKey: "mock",
+      currency: "KWD",
+      items: rows.map((row) => ({
+        id: row.id,
+        serviceType: row.serviceType,
+        name: row.nameAr,
+        description: row.descriptionAr,
+        // minor units (fils) for KWD
+        sellAmountMinor: Math.round(row.priceKwd * 1000),
+        meta: row.meta,
+      })),
+    };
+  }
+
+  @Post("passport-scan")
+  @RequirePermissions("quotes.create")
+  async passportScan(
+    @Body()
+    body: {
+      imageBase64?: string;
+      mimeType?: string;
+    },
+  ) {
+    if (!body?.imageBase64?.trim()) {
+      throw new BadRequestException("أرفق صورة جواز السفر");
+    }
+
+    try {
+      const result = await extractPassportFromImage({
+        imageBase64: body.imageBase64,
+        mimeType: body.mimeType || "image/jpeg",
+      });
+
+      if (result.provider === "none") {
+        throw new BadRequestException(
+          result.notes ||
+            "مسح الجواز غير مفعّل. أضف OPENAI_API_KEY أو AI_API_KEY",
+        );
+      }
+
+      if (!result.fields.passportNumber && !result.fields.firstName) {
+        throw new BadRequestException(
+          result.notes || "تعذر قراءة بيانات الجواز من الصورة",
+        );
+      }
+
+      return result;
+    } catch (error) {
+      if (error instanceof BadRequestException) throw error;
+      const message =
+        error instanceof Error ? error.message : "فشل مسح الجواز";
+      throw new BadRequestException(message);
+    }
+  }
+}

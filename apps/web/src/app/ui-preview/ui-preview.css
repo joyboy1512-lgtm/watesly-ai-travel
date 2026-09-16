@@ -1,0 +1,484 @@
+/* Isolated prototype — does NOT affect production shop styles */
+.ui-preview-root {
+  min-height: 100vh;
+  background: linear-gradient(165deg, #dceefb 0%, #eef4ff 45%, #f5f0ff 100%);
+  padding: 2rem 1rem 3rem;
+  font-family: "Segoe UI", Tahoma, sans-serif;
+}
+
+.ui-preview-intro {
+  max-width: 1100px;
+  margin: 0 auto 2rem;
+  text-align: center;
+}
+
+.ui-preview-intro h1 {
+  margin: 0 0 0.5rem;
+  font-size: 1.5rem;
+  color: #0f3340;
+}
+
+.ui-preview-intro p {
+  margin: 0;
+  color: #475569;
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.ui-preview-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 2rem;
+  max-width: 1100px;
+  margin: 0 auto;
+  align-items: start;
+}
+
+.ui-preview-phone-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.ui-preview-label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #0f3340;
+  letter-spacing: 0.02em;
+}
+
+.ui-preview-phone {
+  width: 300px;
+  height: 620px;
+  border-radius: 36px;
+  background: #0a1628;
+  padding: 10px;
+  box-shadow:
+    0 24px 60px rgba(15, 51, 64, 0.22),
+    inset 0 0 0 2px rgba(255, 255, 255, 0.08);
+}
+
+.ui-preview-screen {
+  width: 100%;
+  height: 100%;
+  border-radius: 28px;
+  overflow: hidden;
+  position: relative;
+  background: linear-gradient(180deg, #e8f4fc 0%, #f0f6ff 100%);
+}
+
+/* —— Screen 1: Welcome —— */
+.ui-welcome-bg {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.1) 40%, rgba(255, 255, 255, 0.95) 78%),
+    url("/media/destinations/dubai.jpg?v=1") center / cover no-repeat;
+}
+
+.ui-welcome-content {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 1.25rem 1.1rem 5.5rem;
+}
+
+.ui-welcome-content h2 {
+  margin: 0 0 0.5rem;
+  font-size: 1.35rem;
+  line-height: 1.25;
+  color: #0f172a;
+  font-weight: 800;
+}
+
+.ui-welcome-content p {
+  margin: 0 0 1rem;
+  font-size: 0.78rem;
+  color: #64748b;
+  line-height: 1.5;
+}
+
+.ui-btn-gradient {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.85rem 1rem;
+  border: none;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #0ea5e9, #0284c7);
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.88rem;
+  box-shadow: 0 8px 24px rgba(14, 165, 233, 0.35);
+}
+
+.ui-btn-gradient span.icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.25);
+  display: grid;
+  place-items: center;
+  font-size: 0.75rem;
+}
+
+/* —— Screen 2: Home —— */
+.ui-home-screen {
+  padding: 1rem 0.85rem 4.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.ui-home-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.ui-home-top h2 {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.ui-icon-row {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.ui-icon-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(15, 51, 64, 0.08);
+  display: grid;
+  place-items: center;
+  font-size: 0.85rem;
+}
+
+.ui-pills {
+  display: flex;
+  gap: 0.45rem;
+  overflow-x: auto;
+  padding-bottom: 0.15rem;
+}
+
+.ui-pill {
+  flex-shrink: 0;
+  padding: 0.45rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.7);
+  color: #64748b;
+  border: 1px solid rgba(15, 51, 64, 0.06);
+}
+
+.ui-pill.active {
+  background: #0f3340;
+  color: #fff;
+}
+
+.ui-glass-card {
+  border-radius: 20px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  box-shadow: 0 8px 28px rgba(15, 51, 64, 0.08);
+}
+
+.ui-flight-card-img {
+  height: 110px;
+  background:
+    linear-gradient(135deg, rgba(14, 165, 233, 0.15), rgba(15, 51, 64, 0.2)),
+    url("/media/destinations/dubai.jpg?v=1") center / cover;
+  position: relative;
+}
+
+.ui-flight-card-img .badge-go {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #0ea5e9;
+  color: #fff;
+  display: grid;
+  place-items: center;
+  font-size: 0.85rem;
+}
+
+.ui-flight-card-body {
+  padding: 0.75rem;
+}
+
+.ui-route-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.35rem;
+}
+
+.ui-route-row strong {
+  font-size: 0.95rem;
+  color: #0f172a;
+}
+
+.ui-route-row small {
+  display: block;
+  font-size: 0.65rem;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.ui-route-mid {
+  flex: 1;
+  text-align: center;
+  font-size: 0.62rem;
+  color: #64748b;
+}
+
+.ui-deal-mini {
+  display: flex;
+  gap: 0.65rem;
+  padding: 0.65rem;
+}
+
+.ui-deal-mini img {
+  width: 72px;
+  height: 72px;
+  border-radius: 14px;
+  object-fit: cover;
+}
+
+.ui-deal-mini h3 {
+  margin: 0 0 0.2rem;
+  font-size: 0.78rem;
+  color: #0f172a;
+}
+
+.ui-deal-tag {
+  display: inline-block;
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: #0284c7;
+  background: #e0f2fe;
+  padding: 0.15rem 0.4rem;
+  border-radius: 6px;
+  margin-bottom: 0.25rem;
+}
+
+/* —— Screen 3: Search —— */
+.ui-search-screen {
+  padding: 1rem 0.85rem 4.5rem;
+}
+
+.ui-search-screen h2 {
+  margin: 0 0 0.2rem;
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.ui-search-screen .sub {
+  margin: 0 0 0.85rem;
+  font-size: 0.72rem;
+  color: #64748b;
+}
+
+.ui-search-form {
+  padding: 0.85rem;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.78);
+  backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.95);
+  box-shadow: 0 10px 32px rgba(15, 51, 64, 0.07);
+  margin-bottom: 0.85rem;
+}
+
+.ui-field {
+  margin-bottom: 0.65rem;
+}
+
+.ui-field label {
+  display: block;
+  font-size: 0.62rem;
+  color: #94a3b8;
+  margin-bottom: 0.2rem;
+  font-weight: 600;
+}
+
+.ui-field-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.55rem 0.65rem;
+  border-radius: 12px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  font-size: 0.78rem;
+  color: #0f172a;
+  font-weight: 600;
+}
+
+.ui-field-box small {
+  display: block;
+  font-size: 0.62rem;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.ui-swap {
+  width: 28px;
+  height: 28px;
+  margin: -0.25rem auto 0.35rem;
+  border-radius: 50%;
+  background: #0ea5e9;
+  color: #fff;
+  display: grid;
+  place-items: center;
+  font-size: 0.7rem;
+  box-shadow: 0 4px 12px rgba(14, 165, 233, 0.35);
+}
+
+.ui-dates-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+}
+
+.ui-result-card {
+  padding: 0.75rem;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.95);
+  box-shadow: 0 6px 20px rgba(15, 51, 64, 0.06);
+}
+
+.ui-result-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.65rem;
+}
+
+.ui-result-head strong {
+  font-size: 0.82rem;
+  color: #0f172a;
+}
+
+.ui-result-price {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #0284c7;
+}
+
+.ui-result-price small {
+  display: block;
+  font-size: 0.58rem;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.ui-timeline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.35rem;
+}
+
+.ui-timeline-line {
+  flex: 1;
+  height: 2px;
+  background: linear-gradient(90deg, #cbd5e1, #0ea5e9, #cbd5e1);
+  position: relative;
+}
+
+.ui-timeline-line::after {
+  content: "✈";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -55%);
+  font-size: 0.65rem;
+  background: #fff;
+  padding: 0 0.15rem;
+}
+
+/* Bottom nav (shared) */
+.ui-bottom-nav {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  right: 12px;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  padding: 0.5rem 0.35rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.95);
+  box-shadow: 0 8px 24px rgba(15, 51, 64, 0.1);
+}
+
+.ui-nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.1rem;
+  font-size: 0.55rem;
+  color: #94a3b8;
+  font-weight: 600;
+}
+
+.ui-nav-item.active {
+  color: #0284c7;
+}
+
+.ui-nav-item .ico {
+  font-size: 1rem;
+}
+
+.ui-nav-item.active .ico {
+  background: #e0f2fe;
+  width: 36px;
+  height: 28px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+}
+
+/* RTL variant phone */
+.ui-preview-phone.rtl .ui-welcome-content,
+.ui-preview-phone.rtl .ui-home-screen,
+.ui-preview-phone.rtl .ui-search-screen {
+  direction: rtl;
+  text-align: right;
+}
+
+.ui-preview-note {
+  max-width: 1100px;
+  margin: 2rem auto 0;
+  padding: 1rem 1.25rem;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.65);
+  border: 1px solid rgba(15, 51, 64, 0.08);
+  font-size: 0.88rem;
+  color: #475569;
+  line-height: 1.65;
+}
+
+.ui-preview-note strong {
+  color: #0f3340;
+}

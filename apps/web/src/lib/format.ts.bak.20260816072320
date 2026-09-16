@@ -1,0 +1,18 @@
+import {
+  DEFAULT_CURRENCY,
+  formatMoneyMinorShared,
+} from "@watesly-travel/shared";
+
+export function formatMoneyMinor(
+  amountMinor?: number | null,
+  currency: string = DEFAULT_CURRENCY,
+) {
+  return formatMoneyMinorShared(amountMinor, currency);
+}
+
+export function formatDate(value?: string | Date | null) {
+  if (!value) return "—";
+  const d = typeof value === "string" ? new Date(value) : value;
+  if (Number.isNaN(d.getTime())) return "—";
+  return d.toLocaleString("ar-KW");
+}

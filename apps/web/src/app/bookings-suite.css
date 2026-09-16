@@ -1,0 +1,85 @@
+.bk-filters {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.bk-filter-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.bk-range {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 0.55rem;
+  align-items: end;
+}
+
+.bk-range-sep {
+  color: #5f7470;
+  font-size: 0.82rem;
+  font-weight: 700;
+  padding-bottom: 0.7rem;
+}
+
+.bk-hint {
+  margin: 0;
+  color: #5f7470;
+  font-size: 0.8rem;
+}
+
+.bk-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.bk-pay {
+  display: grid;
+  gap: 0.1rem;
+  font-size: 0.82rem;
+}
+
+.bk-pay small {
+  color: #5f7470;
+}
+
+.bk-totals {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-top: 0.85rem;
+}
+
+.bk-total {
+  padding: 0.75rem 0.9rem;
+  border-radius: 12px;
+  background: #f4f7f6;
+  border: 1px solid rgba(15, 51, 64, 0.08);
+}
+
+.bk-total span {
+  display: block;
+  color: #5f7470;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.bk-total strong {
+  color: #0f3340;
+  font-size: 1.05rem;
+}
+
+@media (max-width: 900px) {
+  .bk-filter-grid,
+  .bk-range,
+  .bk-totals {
+    grid-template-columns: 1fr;
+  }
+
+  .bk-range-sep {
+    display: none;
+  }
+}

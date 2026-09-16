@@ -9584,32 +9584,43 @@ html body .wg-travela-hero .wg-airline-ticker::after {
 html body .wg-travela-hero .wg-airline-ticker-track {
   display: flex;
   align-items: center;
-  gap: 2.75rem;
   width: max-content;
   height: 100%;
-  padding-inline: 4.25rem 2rem;
-  animation: wg-airline-ticker-scroll 42s linear infinite;
+  direction: ltr;
+  animation: wg-airline-ticker-scroll 38s linear infinite;
+  will-change: transform;
 }
 
 html body .wg-travela-hero .wg-airline-ticker:hover .wg-airline-ticker-track {
   animation-play-state: paused;
 }
 
-html body .wg-travela-hero .wg-airline-ticker-item {
-  display: grid;
-  place-items: center;
+html body .wg-travela-hero .wg-airline-ticker-group {
+  display: flex;
+  align-items: center;
   flex: 0 0 auto;
-  min-width: 6.25rem;
-  height: 2.85rem;
+  height: 100%;
+  gap: 2.65rem;
+  padding-inline: 2.65rem;
+}
+
+html body .wg-travela-hero .wg-airline-ticker-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  height: 100%;
 }
 
 html body .wg-travela-hero .wg-airline-ticker-item img {
   display: block;
-  height: 2.55rem;
+  height: 3.7rem;
   width: auto;
-  max-width: 7.25rem;
+  max-width: 13.5rem;
   object-fit: contain;
+  object-position: center;
   filter: none;
+  image-rendering: auto;
 }
 
 html body .wg-travela-hero .wg-travela-dots {
@@ -9636,19 +9647,17 @@ html body .wg-travela-hero .wg-travela-dots {
   }
 
   html body .wg-travela-hero .wg-airline-ticker-track {
-    gap: 1.85rem;
-    padding-inline: 1.1rem;
-    animation-duration: 32s;
+    animation-duration: 28s;
   }
 
-  html body .wg-travela-hero .wg-airline-ticker-item {
-    min-width: 4.4rem;
-    height: 2rem;
+  html body .wg-travela-hero .wg-airline-ticker-group {
+    gap: 1.7rem;
+    padding-inline: 1.7rem;
   }
 
   html body .wg-travela-hero .wg-airline-ticker-item img {
-    height: 1.7rem;
-    max-width: 5.25rem;
+    height: 2.95rem;
+    max-width: 9.75rem;
   }
 
   html body .wg-travela-hero .wg-travela-dots {

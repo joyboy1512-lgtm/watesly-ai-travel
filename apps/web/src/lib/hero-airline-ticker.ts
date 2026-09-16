@@ -4,6 +4,14 @@ export type HeroTickerAirline = {
   en: string;
 };
 
+/** Official vector lockup (logo + wordmark) for the hero ticker. */
+export function heroTickerLogoSrc(
+  code: string,
+  variant: "lockup" | "logo" = "lockup",
+): string {
+  return `https://assets.duffel.com/img/airlines/for-light-background/full-color-${variant}/${code.trim().toUpperCase()}.svg`;
+}
+
 /** Partner marks shown in the homepage hero ticker (official IATA logos). */
 export const HERO_TICKER_AIRLINES: HeroTickerAirline[] = [
   { code: "KU", ar: "الخطوط الكويتية", en: "Kuwait Airways" },

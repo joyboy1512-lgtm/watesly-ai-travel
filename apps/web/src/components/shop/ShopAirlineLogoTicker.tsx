@@ -1,15 +1,50 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { HERO_TICKER_AIRLINES } from "@/lib/hero-airline-ticker";
+import { HERO_TICKER_AIRLINES, heroTickerLogoSrc } from "@/lib/hero-airline-ticker";
 import { airlineLogo } from "@/lib/flight-search";
 import { useShopI18n } from "@/components/shop/ShopI18nProvider";
 
+function TickerLogo({
+  code,
+  name,
+}: {
+  code: string;
+  name: string;
+}) {
+  const [step, setStep] = useState<"lockup" | "logo" | "raster">("lockup");
+  const [hidden, setHidden] = useState(false);
+  const src =
+    step === "lockup"
+      ? heroTickerLogoSrc(code, "lockup")
+      : step === "logo"
+        ? heroTickerLogoSrc(code, "logo")
+        : airlineLogo(code, 256);
+
+  if (hidden || !src) return null;
+
+  return (
+    <span className="wg-airline-ticker-item">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={src}
+        alt={name}
+        width={220}
+        height={80}
+        decoding="async"
+        onError={() => {
+          if (step === "lockup") setStep("logo");
+          else if (step === "logo") setStep("raster");
+          else setHidden(true);
+        }}
+      />
+    </span>
+  );
+}
+
 export function ShopAirlineLogoTicker() {
   const { locale } = useShopI18n();
-  const [hidden, setHidden] = useState<Record<string, boolean>>({});
   const [pinned, setPinned] = useState(true);
-  const loop = [...HERO_TICKER_AIRLINES, ...HERO_TICKER_AIRLINES];
   const label = locale === "en" ? "Airline partners" : "شركات الطيران";
 
   useEffect(() => {
@@ -23,6 +58,12 @@ export function ShopAirlineLogoTicker() {
     return () => io.disconnect();
   }, []);
 
+  const group = (copy: number) =>
+    HERO_TICKER_AIRLINES.map((airline) => {
+      const name = locale === "en" ? airline.en : airline.ar;
+      return <TickerLogo key={`${airline.code}-${copy}`} code={airline.code} name={name} />;
+    });
+
   return (
     <div
       className={`wg-airline-ticker${pinned ? " is-pinned" : ""}`}
@@ -31,27 +72,10 @@ export function ShopAirlineLogoTicker() {
       hidden={!pinned}
     >
       <div className="wg-airline-ticker-track">
-        {loop.map((airline, index) => {
-          const src = airlineLogo(airline.code, 128);
-          const name = locale === "en" ? airline.en : airline.ar;
-          const key = `${airline.code}-${index}`;
-          if (!src || hidden[airline.code]) return null;
-          return (
-            <span className="wg-airline-ticker-item" key={key}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={src}
-                alt={name}
-                width={128}
-                height={64}
-                loading={index < HERO_TICKER_AIRLINES.length ? "eager" : "lazy"}
-                onError={() =>
-                  setHidden((prev) => (prev[airline.code] ? prev : { ...prev, [airline.code]: true }))
-                }
-              />
-            </span>
-          );
-        })}
+        <div className="wg-airline-ticker-group">{group(0)}</div>
+        <div className="wg-airline-ticker-group" aria-hidden="true">
+          {group(1)}
+        </div>
       </div>
     </div>
   );

@@ -145,6 +145,13 @@
   font-size: 0.9rem;
 }
 
+.hotel-search-card-agg {
+  margin: 0.2rem 0 0;
+  color: #0f4c81;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
 .hotel-search-card-meta {
   margin: 0.25rem 0 0;
   color: #64748b;

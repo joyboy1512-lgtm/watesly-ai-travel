@@ -11,6 +11,7 @@ import { searchAndPriceTravel } from "@watesly-travel/travel-core";
 import { PrismaService } from "../prisma/prisma.service";
 import { AuditService } from "../common/audit.service";
 import { TravelAiService } from "../ai/travel-ai.service";
+import { parseTravelAggregationSettings } from "@watesly-travel/shared";
 import {
   getFlightProviderForOrg,
   getHotelProviderForOrg,
@@ -22,6 +23,16 @@ const FLIGHT_PROVIDER_KEYS = [
   "amadeus",
   "travelport",
   "travelfusion",
+] as const;
+
+const HOTEL_PROVIDER_KEYS = [
+  "hotelbeds",
+  "webbeds",
+  "ratehawk",
+  "tbo",
+  "didatravel",
+  "arabiabeds",
+  "duffel",
 ] as const;
 
 function asJson(value: unknown): Prisma.InputJsonValue {
@@ -347,7 +358,7 @@ export class BotPipelineService {
 
     const organization = await this.prisma.organization.findUnique({
       where: { id: input.organizationId },
-      select: { defaultCurrency: true },
+      select: { defaultCurrency: true, settings: true },
     });
     const searchCurrency =
       inquiry.budgetCurrency ||
@@ -364,6 +375,14 @@ export class BotPipelineService {
       toCurrency: r.toCurrency,
       rate: r.rate,
     }));
+
+    const aggregation = parseTravelAggregationSettings(organization?.settings);
+    const priorityRows = await this.prisma.travelProviderConfig.findMany({
+      where: { organizationId: input.organizationId, archivedAt: null },
+      select: { providerKey: true, priority: true },
+    });
+    const providerPriority: Record<string, number> = {};
+    for (const row of priorityRows) providerPriority[row.providerKey] = row.priority;
 
     const provider = await this.prisma.travelProviderConfig.findFirst({
       where: {
@@ -497,18 +516,47 @@ export class BotPipelineService {
       }
     }
 
+    const hotelRows = await this.prisma.travelProviderConfig.findMany({
+      where: {
+        organizationId: input.organizationId,
+        enabled: true,
+        archivedAt: null,
+        providerKey: { in: [...HOTEL_PROVIDER_KEYS] },
+      },
+      orderBy: { priority: "asc" },
+      select: { providerKey: true },
+    });
+    const hotelKeys = new Set<string>();
+    for (const row of hotelRows) {
+      if (row.providerKey === "mock") continue;
+      hotelKeys.add(row.providerKey);
+    }
+    const envHotel = (process.env.HOTEL_PROVIDER || "").trim().toLowerCase();
+    if (
+      envHotel &&
+      envHotel !== "mock" &&
+      HOTEL_PROVIDER_KEYS.includes(envHotel as (typeof HOTEL_PROVIDER_KEYS)[number])
+    ) {
+      hotelKeys.add(envHotel);
+    }
+    if (!hotelKeys.size && process.env.HOTELBEDS_API_KEY?.trim()) {
+      hotelKeys.add("hotelbeds");
+    }
+    const hotelProviderKeys = [...hotelKeys];
     const hotelProviderKey =
+      hotelProviderKeys[0] ||
       process.env.HOTEL_PROVIDER ||
       (provider?.providerKey === "hotelbeds" ? "hotelbeds" : undefined) ||
       process.env.TRAVEL_DEFAULT_PROVIDER ||
       "hotelbeds";
-    const hotelProvider = wantHotels
-      ? await getHotelProviderForOrg(
-          this.prisma,
-          input.organizationId,
-          hotelProviderKey,
+    const hotelProviders = wantHotels
+      ? await Promise.all(
+          (hotelProviderKeys.length ? hotelProviderKeys : [hotelProviderKey]).map(
+            (key) =>
+              getHotelProviderForOrg(this.prisma, input.organizationId, key),
+          ),
         )
-      : undefined;
+      : [];
 
     // Flight/hotel providers resolve independently.
     // Search ALL enabled flight engines in parallel; merge by cheapest itinerary.
@@ -524,8 +572,11 @@ export class BotPipelineService {
     const search = await searchAndPriceTravel({
       flightProviderKey: flightProviders[0]?.providerKey || flightProviderKey,
       flightProviders: flightProviders.length ? flightProviders : undefined,
-      hotelProviderKey,
-      hotelProvider,
+      hotelProviderKey: hotelProviders[0]?.providerKey || hotelProviderKey,
+      hotelProviders: hotelProviders.length ? hotelProviders : undefined,
+      hotelAggregation: aggregation.hotel,
+      flightAggregation: aggregation.flight,
+      providerPriority,
       rules,
       displayCurrency: searchCurrency,
       fxRates,

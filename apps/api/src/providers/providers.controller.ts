@@ -11,6 +11,11 @@ import {
   Query,
 } from "@nestjs/common";
 import { PROVIDER_CATALOG, getCatalogEntry } from "@watesly-travel/provider-sdk";
+import {
+  parseTravelAggregationSettings,
+  type CapabilityAggregation,
+  type TravelAggregationSettings,
+} from "@watesly-travel/shared";
 import { CurrentUser, RequirePermissions } from "../auth/decorators";
 import type { AuthUser } from "../auth/auth.types";
 import { PrismaService } from "../prisma/prisma.service";
@@ -32,6 +37,11 @@ const DEFAULT_PRIORITY: Record<string, number> = {
   hotelbeds: 10,
   "hotelbeds-transfers": 11,
   "hotelbeds-activities": 12,
+  webbeds: 14,
+  ratehawk: 15,
+  tbo: 16,
+  didatravel: 17,
+  arabiabeds: 18,
   amadeus: 20,
   travelfusion: 30,
   travelport: 40,
@@ -143,6 +153,69 @@ export class ProvidersController {
       ...p,
       envConfigured: envReady(p.envKeys),
     }));
+  }
+
+  @Get("aggregation")
+  @RequirePermissions("providers.manage")
+  async getAggregation(@CurrentUser() user: AuthUser) {
+    const org = await this.prisma.organization.findUnique({
+      where: { id: user.organizationId },
+      select: { settings: true },
+    });
+    return parseTravelAggregationSettings(org?.settings);
+  }
+
+  @Patch("aggregation")
+  @RequirePermissions("providers.manage")
+  async setAggregation(
+    @CurrentUser() user: AuthUser,
+    @Body() body: Partial<TravelAggregationSettings>,
+  ) {
+    const org = await this.prisma.organization.findUnique({
+      where: { id: user.organizationId },
+      select: { settings: true },
+    });
+    const current = parseTravelAggregationSettings(org?.settings);
+    const next: TravelAggregationSettings = {
+      hotel: { ...current.hotel, ...(body.hotel as CapabilityAggregation | undefined) },
+      flight: { ...current.flight, ...(body.flight as CapabilityAggregation | undefined) },
+      transfer: {
+        ...current.transfer,
+        ...(body.transfer as CapabilityAggregation | undefined),
+      },
+      activity: {
+        ...current.activity,
+        ...(body.activity as CapabilityAggregation | undefined),
+      },
+    };
+    const prev =
+      org?.settings && typeof org.settings === "object"
+        ? (org.settings as Record<string, unknown>)
+        : {};
+    const prevTravel =
+      prev.travel && typeof prev.travel === "object"
+        ? (prev.travel as Record<string, unknown>)
+        : {};
+    const settings = {
+      ...prev,
+      travel: {
+        ...prevTravel,
+        aggregation: next,
+      },
+    };
+    await this.prisma.organization.update({
+      where: { id: user.organizationId },
+      data: { settings: settings as object },
+    });
+    await this.audit.log({
+      organizationId: user.organizationId,
+      actorUserId: user.userId,
+      action: "providers.aggregation.update",
+      entityType: "Organization",
+      entityId: user.organizationId,
+      after: next,
+    });
+    return next;
   }
 
   @Get()

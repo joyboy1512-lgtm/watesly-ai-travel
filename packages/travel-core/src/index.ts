@@ -19,6 +19,7 @@ import {
   type TravelProviderAdapter,
 } from "@watesly-travel/provider-sdk";
 import type {
+  CapabilityAggregation,
   FlightOffer,
   HotelOffer,
   InternalPriceBreakdown,
@@ -29,6 +30,10 @@ import {
   type FxRateLookup,
   type FxRatePair,
 } from "@watesly-travel/shared";
+import {
+  aggregateByFingerprint,
+  aggregateHotelOffers,
+} from "./offer-aggregation";
 
 export interface PricedOffer<T extends FlightOffer | HotelOffer = FlightOffer | HotelOffer> {
   offer: T;
@@ -195,20 +200,17 @@ function priceOffers<T extends FlightOffer | HotelOffer>(
   });
 }
 
-/** Keep the cheapest priced offer per itinerary fingerprint. */
+/** Keep one priced offer per itinerary fingerprint (cheapest or preferred supplier). */
 export function dedupeFlightsByCheapest(
   rows: PricedOffer<FlightOffer>[],
+  spec: CapabilityAggregation = { mode: "cheapest" },
+  priorityByProvider: Record<string, number> = {},
 ): PricedOffer<FlightOffer>[] {
-  const best = new Map<string, PricedOffer<FlightOffer>>();
-  for (const row of rows) {
-    const key = flightItineraryFingerprint(row.offer);
-    const prev = best.get(key);
-    if (!prev || row.pricing.sellAmountMinor < prev.pricing.sellAmountMinor) {
-      best.set(key, row);
-    }
-  }
-  return [...best.values()].sort(
-    (a, b) => a.pricing.sellAmountMinor - b.pricing.sellAmountMinor,
+  return aggregateByFingerprint(
+    rows,
+    (row) => flightItineraryFingerprint(row.offer),
+    spec,
+    priorityByProvider,
   );
 }
 
@@ -281,6 +283,11 @@ export async function searchAndPriceTravel(input: {
   /** Fan-out: search every enabled flight engine and keep cheapest per itinerary */
   flightProviders?: FlightProviderAdapter[];
   hotelProvider?: HotelProviderAdapter;
+  /** Fan-out: search every enabled hotel supplier then map/dedupe */
+  hotelProviders?: HotelProviderAdapter[];
+  hotelAggregation?: CapabilityAggregation;
+  flightAggregation?: CapabilityAggregation;
+  providerPriority?: Record<string, number>;
   rules: PricingRuleInput[];
   searchFlights?: boolean;
   searchHotels?: boolean;
@@ -300,7 +307,14 @@ export async function searchAndPriceTravel(input: {
     input.flightProviders?.length
       ? input.flightProviders
       : [input.flightProvider ?? getFlightProvider(flightKey)];
-  const hotelProvider = input.hotelProvider ?? getHotelProvider(hotelKey);
+  const hotelProviders =
+    input.hotelProviders?.length
+      ? input.hotelProviders
+      : [input.hotelProvider ?? getHotelProvider(hotelKey)];
+  const hotelProvider = hotelProviders[0]!;
+  const hotelAgg = input.hotelAggregation ?? { mode: "cheapest" as const };
+  const flightAgg = input.flightAggregation ?? { mode: "cheapest" as const };
+  const priority = input.providerPriority ?? {};
 
   const wantFlights = input.searchFlights !== false && Boolean(input.flightParams);
   const wantHotels = Boolean(input.searchHotels && input.hotelParams);
@@ -335,21 +349,44 @@ export async function searchAndPriceTravel(input: {
         flightErrors.push(`${provider.displayName}: ${msg}`);
       }
     }
-    flights = dedupeFlightsByCheapest(merged);
+    flights = dedupeFlightsByCheapest(merged, flightAgg, priority);
   }
 
   let hotels: PricedOffer<HotelOffer>[] = [];
   if (wantHotels && input.hotelParams) {
-    try {
-      hotels = await searchAndPriceHotels({
-        provider: hotelProvider,
-        params: input.hotelParams,
-        rules: input.rules,
-        displayCurrency: input.displayCurrency,
-        fxRates: input.fxRates,
-      });
-    } catch (err) {
-      hotelError = err instanceof Error ? err.message : "فشل بحث الفنادق";
+    const settledHotels = await Promise.allSettled(
+      hotelProviders.map((provider) =>
+        searchAndPriceHotels({
+          provider,
+          params: input.hotelParams!,
+          rules: input.rules,
+          displayCurrency: input.displayCurrency,
+          fxRates: input.fxRates,
+        }),
+      ),
+    );
+    const mergedHotels: PricedOffer<HotelOffer>[] = [];
+    const hotelErrors: string[] = [];
+    for (let i = 0; i < settledHotels.length; i += 1) {
+      const result = settledHotels[i]!;
+      const provider = hotelProviders[i]!;
+      if (result.status === "fulfilled") {
+        mergedHotels.push(...result.value);
+      } else {
+        const msg =
+          result.reason instanceof Error
+            ? result.reason.message
+            : "فشل بحث الفنادق";
+        hotelErrors.push(`${provider.displayName}: ${msg}`);
+      }
+    }
+    hotels = aggregateHotelOffers(
+      mergedHotels,
+      hotelAgg,
+      priority,
+    ) as PricedOffer<HotelOffer>[];
+    if (!hotels.length && hotelErrors.length) {
+      hotelError = hotelErrors.join(" · ");
     }
   }
 
@@ -358,27 +395,42 @@ export async function searchAndPriceTravel(input: {
   const flightProviderKey = multiFlight
     ? flightProviders.map((p) => p.providerKey).join("+")
     : primaryFlight.providerKey;
+  const flightAggLabel =
+    flightAgg.mode === "preferred" ? "مجمّع حسب أولوية المزود" : "مجمّع الأرخص";
   const flightProviderName = multiFlight
-    ? `مجمّع الأرخص (${flightProviders.map((p) => p.displayName).join(" · ")})`
+    ? `${flightAggLabel} (${flightProviders.map((p) => p.displayName).join(" · ")})`
     : primaryFlight.displayName;
   const flightLiveMode = flightProviders.some((p) => p.liveMode);
 
+  const multiHotel = hotelProviders.length > 1;
+  const hotelAggLabel =
+    hotelAgg.mode === "preferred" ? "مجمّع حسب أولوية المزود" : "مجمّع الأرخص";
+  const hotelProviderKeyOut = multiHotel
+    ? hotelProviders.map((p) => p.providerKey).join("+")
+    : hotelProvider.providerKey;
+  const hotelProviderName = multiHotel
+    ? `${hotelAggLabel} (${hotelProviders.map((p) => p.displayName).join(" · ")})`
+    : hotelProvider.displayName;
+  const hotelLiveMode = hotelProviders.some((p) => p.liveMode);
+
   const sameKey =
-    !multiFlight && primaryFlight.providerKey === hotelProvider.providerKey;
+    !multiFlight &&
+    !multiHotel &&
+    primaryFlight.providerKey === hotelProvider.providerKey;
   return {
     flightProviderKey,
     flightProviderName,
     flightLiveMode,
-    hotelProviderKey: hotelProvider.providerKey,
-    hotelProviderName: hotelProvider.displayName,
-    hotelLiveMode: hotelProvider.liveMode,
+    hotelProviderKey: hotelProviderKeyOut,
+    hotelProviderName,
+    hotelLiveMode,
     providerKey: sameKey
       ? primaryFlight.providerKey
-      : `${flightProviderKey}+${hotelProvider.providerKey}`,
+      : `${flightProviderKey}+${hotelProviderKeyOut}`,
     providerName: sameKey
       ? primaryFlight.displayName
-      : `طيران: ${flightProviderName} · فنادق: ${hotelProvider.displayName}`,
-    liveMode: flightLiveMode || hotelProvider.liveMode,
+      : `طيران: ${flightProviderName} · فنادق: ${hotelProviderName}`,
+    liveMode: flightLiveMode || hotelLiveMode,
     flights,
     hotels,
     hotelError,
@@ -450,6 +502,7 @@ export {
   resolveHotelProviderKey,
   resolveProviderKey,
 };
+export { aggregateHotelOffers, aggregateByFingerprint } from "./offer-aggregation";
 export type {
   FlightSearchParams,
   HotelSearchParams,

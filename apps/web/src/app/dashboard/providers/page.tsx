@@ -54,6 +54,25 @@ const STATUS_LABEL: Record<string, string> = {
   scaffold: "هيكل",
 };
 
+type AggregationMode = "cheapest" | "preferred";
+type CapabilityAggregation = {
+  mode: AggregationMode;
+  preferredProviderKey?: string;
+};
+type TravelAggregation = {
+  hotel: CapabilityAggregation;
+  flight: CapabilityAggregation;
+  transfer: CapabilityAggregation;
+  activity: CapabilityAggregation;
+};
+
+const AGG_CAPS: Array<{ key: keyof TravelAggregation; label: string }> = [
+  { key: "hotel", label: "فنادق" },
+  { key: "flight", label: "طيران" },
+  { key: "transfer", label: "مواصلات" },
+  { key: "activity", label: "أنشطة" },
+];
+
 type DrawerMode = "create" | "edit" | null;
 
 export default function ProvidersPage() {
@@ -73,6 +92,13 @@ export default function ProvidersPage() {
   const [priority, setPriority] = useState(50);
   const [enabled, setEnabled] = useState(true);
   const [credentials, setCredentials] = useState<Record<string, string>>({});
+  const [aggregation, setAggregation] = useState<TravelAggregation>({
+    hotel: { mode: "cheapest" },
+    flight: { mode: "cheapest" },
+    transfer: { mode: "cheapest" },
+    activity: { mode: "cheapest" },
+  });
+  const [aggSaving, setAggSaving] = useState(false);
 
   const selected = useMemo(
     () => catalog.find((c) => c.providerKey === selectedKey) || null,
@@ -100,12 +126,21 @@ export default function ProvidersPage() {
       ...(status === "disabled" ? { status: "disabled" } : {}),
       ...(q.trim() ? { q: q.trim() } : {}),
     });
-    const [c, r] = await Promise.all([
+    const [c, r, agg] = await Promise.all([
       apiFetch<CatalogEntry[]>("/providers/catalog"),
       apiFetch<ProviderRow[]>(`/providers?${params.toString()}`),
+      apiFetch<TravelAggregation>("/providers/aggregation").catch(
+        (): TravelAggregation => ({
+          hotel: { mode: "cheapest" },
+          flight: { mode: "cheapest" },
+          transfer: { mode: "cheapest" },
+          activity: { mode: "cheapest" },
+        }),
+      ),
     ]);
     setCatalog(c);
     setRows(r);
+    setAggregation(agg);
     if (!c.find((x) => x.providerKey === selectedKey) && c[0]) {
       setSelectedKey(c[0].providerKey);
     }
@@ -206,6 +241,34 @@ export default function ProvidersPage() {
     }
   }
 
+  async function saveAggregation(next: TravelAggregation) {
+    setAggregation(next);
+    setAggSaving(true);
+    setError("");
+    try {
+      const saved = await apiFetch<TravelAggregation>("/providers/aggregation", {
+        method: "PATCH",
+        body: JSON.stringify(next),
+      });
+      setAggregation(saved);
+      setOk("تم حفظ سياسة التجميع والعرض");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "فشل حفظ سياسة التجميع");
+    } finally {
+      setAggSaving(false);
+    }
+  }
+
+  function providersForCap(cap: string) {
+    return rows.filter(
+      (r) =>
+        !r.archivedAt &&
+        r.enabled &&
+        Array.isArray(r.capabilities) &&
+        r.capabilities.includes(cap),
+    );
+  }
+
   async function toggle(row: ProviderRow) {
     setError("");
     try {
@@ -265,9 +328,8 @@ export default function ProvidersPage() {
             <p className="prov-kicker">Provider Operations</p>
             <h3>غرفة تشغيل المزودين</h3>
             <p>
-              إدارة Duffel وAmadeus وTravelfusion وHotelbeds من جدول واحد.
-              البحث يجمع المحركات المفعّلة ويعرض الأرخص لنفس الرحلة — بلا أولوية
-              لمزود بعينه.
+              محرك WeekendGate يجمع الموردين المفعّلين ثم يوحّد نفس الفندق أو الرحلة
+              في نتيجة واحدة. من هنا تختار العرض حسب السعر الأرخص أو حسب أولوية المزود.
             </p>
           </div>
           <div className="prov-hero-actions">
@@ -303,6 +365,69 @@ export default function ProvidersPage() {
           <div className="prov-stat">
             <span>مؤرشفون</span>
             <strong>{stats.archived}</strong>
+          </div>
+        </section>
+
+        <section className="prov-panel prov-agg">
+          <div className="prov-panel-head">
+            <div>
+              <h4>سياسة التجميع والعرض</h4>
+              <p>
+                البحث → مطابقة → إزالة التكرار → مقارنة السعر → الهامش → إعادة التحقق → الحجز.
+                العميل يرى فندقاً واحداً لا ست نسخ من ستة موردين.
+              </p>
+            </div>
+            {aggSaving ? <span className="prov-chip">جاري الحفظ…</span> : null}
+          </div>
+          <div className="prov-agg-grid">
+            {AGG_CAPS.map((cap) => {
+              const spec = aggregation[cap.key];
+              const options = providersForCap(cap.key);
+              return (
+                <div key={cap.key} className="prov-agg-card">
+                  <strong>{cap.label}</strong>
+                  <label className="prov-field">
+                    <span>أسلوب العرض</span>
+                    <select
+                      value={spec.mode}
+                      onChange={(e) => {
+                        const mode = e.target.value as AggregationMode;
+                        void saveAggregation({
+                          ...aggregation,
+                          [cap.key]: { ...spec, mode },
+                        });
+                      }}
+                    >
+                      <option value="cheapest">الأرخص من كل الموردين</option>
+                      <option value="preferred">حسب أولوية المزود</option>
+                    </select>
+                  </label>
+                  <label className="prov-field">
+                    <span>المزود المفضّل</span>
+                    <select
+                      value={spec.preferredProviderKey || ""}
+                      disabled={spec.mode !== "preferred"}
+                      onChange={(e) => {
+                        void saveAggregation({
+                          ...aggregation,
+                          [cap.key]: {
+                            ...spec,
+                            preferredProviderKey: e.target.value || undefined,
+                          },
+                        });
+                      }}
+                    >
+                      <option value="">أول رقم أولوية في الجدول</option>
+                      {options.map((row) => (
+                        <option key={row.id} value={row.providerKey}>
+                          {row.displayName} ({row.priority})
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
+              );
+            })}
           </div>
         </section>
 
@@ -514,7 +639,7 @@ export default function ProvidersPage() {
                     />
                   </label>
                   <label className="prov-field">
-                    <span>الأولوية (ترتيب العرض)</span>
+                    <span>الأولوية (الأقل رقماً يظهر أولاً في وضع المزود المفضّل)</span>
                     <input
                       type="number"
                       value={priority}

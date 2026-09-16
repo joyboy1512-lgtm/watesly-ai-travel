@@ -60,6 +60,10 @@ export type HotelRateOption = {
   rateCommentsId?: string;
   rateComments?: string;
   dailyRates?: HotelDailyRate[];
+  /** Set after WeekendGate aggregation when several suppliers cover the same hotel. */
+  sourceProvider?: string;
+  sourceProviderLabel?: string;
+  sourceHotelCode?: string;
 };
 
 export type HotelRoomOccupancy = {

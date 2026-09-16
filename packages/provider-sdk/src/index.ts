@@ -24,7 +24,7 @@ export { MockFlightProvider } from "./flights/mock-flight-provider";
 export { MockHotelProvider } from "./hotels/mock-hotel-provider";
 export { DuffelFlightProvider } from "./flights/duffel-flight-provider";
 export { DuffelHotelProvider } from "./hotels/duffel-hotel-provider";
-export { HotelbedsHotelProvider } from "./hotels/hotelbeds-hotel-provider";
+export { ScaffoldHotelProvider, isHotelAggregatorKey, HOTEL_AGGREGATOR_KEYS } from "./hotels/scaffold-hotel-provider";
 export { HotelbedsTransferProvider } from "./transfers/hotelbeds-transfer-provider";
 export { MockTransferProvider } from "./transfers/mock-transfer-provider";
 export { HotelbedsActivityProvider } from "./activities/hotelbeds-activity-provider";

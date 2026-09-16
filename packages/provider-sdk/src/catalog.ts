@@ -155,7 +155,7 @@ export const PROVIDER_CATALOG: ProviderCatalogEntry[] = [
       },
     ],
     notes:
-      "فعّل HOTEL_PROVIDER=hotelbeds مع HOTELBEDS_API_KEY / HOTELBEDS_API_SECRET. مواصلات Hotelbeds مزود منفصل.",
+      "يجري البحث بالتوازي مع WebBeds وRateHawk وTBO وDidaTravel وArabiaBeds عند تفعيلهم. نفس الفندق يُعرض مرة واحدة بالسعر الأفضل أو حسب أولوية المزود من لوحة التحكم.",
   },
   {
     providerKey: "hotelbeds-transfers",
@@ -228,6 +228,77 @@ export const PROVIDER_CATALOG: ProviderCatalogEntry[] = [
     ],
     notes:
       "فعّل ACTIVITY_PROVIDER=hotelbeds-activities مع HOTELBEDS_ACTIVITY_API_KEY / SECRET.",
+  },
+  {
+    providerKey: "webbeds",
+    displayName: "WebBeds",
+    displayNameAr: "WebBeds",
+    description:
+      "مورد فنادق B2B — يدخل محرك تجميع WeekendGate بعد ربط المفاتيح",
+    capabilities: ["hotel"],
+    status: "scaffold",
+    envKeys: ["WEBBEDS_API_KEY", "WEBBEDS_API_SECRET", "WEBBEDS_BASE_URL"],
+    credentialFields: [
+      { key: "apiKey", label: "API Key", secret: true, required: true },
+      { key: "apiSecret", label: "API Secret", secret: true, required: true },
+      { key: "baseUrl", label: "Base URL", placeholder: "https://…" },
+    ],
+    notes:
+      "هيكل جاهز. البحث الحي يُفعَّل بعد تسليم بيانات اعتماد WebBeds. النتائج تُدمج مع Hotelbeds وباقي الموردين.",
+  },
+  {
+    providerKey: "ratehawk",
+    displayName: "RateHawk",
+    displayNameAr: "RateHawk",
+    description: "مورد فنادق (Emerging Travel Group) ضمن طبقة التجميع",
+    capabilities: ["hotel"],
+    status: "scaffold",
+    envKeys: ["RATEHAWK_KEY_ID", "RATEHAWK_API_KEY"],
+    credentialFields: [
+      { key: "apiKey", label: "Key ID", required: true },
+      { key: "apiSecret", label: "API Key", secret: true, required: true },
+    ],
+    notes: "هيكل جاهز للربط. لن يظهر فندق مكرر بجانب Hotelbeds بعد التفعيل.",
+  },
+  {
+    providerKey: "tbo",
+    displayName: "TBO",
+    displayNameAr: "TBO Holidays",
+    description: "مورد فنادق TBO ضمن محرك التجميع",
+    capabilities: ["hotel"],
+    status: "scaffold",
+    envKeys: ["TBO_ACCOUNT", "TBO_USERNAME", "TBO_PASSWORD"],
+    credentialFields: [
+      { key: "username", label: "Username", required: true },
+      { key: "password", label: "Password", secret: true, required: true },
+      { key: "account", label: "Account / Agency", placeholder: "اختياري" },
+    ],
+  },
+  {
+    providerKey: "didatravel",
+    displayName: "DidaTravel",
+    displayNameAr: "DidaTravel",
+    description: "مورد فنادق DidaTravel ضمن محرك التجميع",
+    capabilities: ["hotel"],
+    status: "scaffold",
+    envKeys: ["DIDA_CLIENT_ID", "DIDA_LICENSE_KEY"],
+    credentialFields: [
+      { key: "apiKey", label: "Client ID", required: true },
+      { key: "apiSecret", label: "License Key", secret: true, required: true },
+    ],
+  },
+  {
+    providerKey: "arabiabeds",
+    displayName: "ArabiaBeds",
+    displayNameAr: "ArabiaBeds",
+    description: "مورد فنادق للمنطقة العربية ضمن محرك التجميع",
+    capabilities: ["hotel"],
+    status: "scaffold",
+    envKeys: ["ARABIABEDS_API_KEY", "ARABIABEDS_API_SECRET"],
+    credentialFields: [
+      { key: "apiKey", label: "API Key", secret: true, required: true },
+      { key: "apiSecret", label: "API Secret", secret: true, required: true },
+    ],
   },
 ];
 

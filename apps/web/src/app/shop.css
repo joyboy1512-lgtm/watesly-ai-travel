@@ -9626,6 +9626,11 @@ html body .wg-travela-hero .wg-travela-dots {
 }
 
 @media (max-width: 767px) {
+  html body .wg-travela-hero .wg-airline-ticker,
+  html body .wg-travela-hero .wg-airline-ticker.is-pinned {
+    position: absolute;
+  }
+
   html body .wg-travela-hero .wg-airline-ticker {
     height: 3.65rem;
   }

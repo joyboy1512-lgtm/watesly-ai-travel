@@ -1,0 +1,61 @@
+/* ===== Brand page header bar (topbar only) ===== */
+.topbar {
+  background: linear-gradient(145deg, #0f3340 0%, #184a52 100%);
+  color: #f3f7f4;
+  border-bottom: 1px solid rgba(216, 163, 94, 0.28);
+  margin: -1.5rem calc(-1 * clamp(1rem, 3vw, 2rem)) 1.15rem;
+  padding: 0.8rem clamp(1rem, 3vw, 2rem);
+  box-shadow: 0 6px 18px rgba(7, 24, 34, 0.14);
+}
+
+.topbar h2,
+.main.main-light .topbar h2 {
+  color: #f3f7f4;
+  font-weight: 700;
+}
+
+.topbar .meta-line,
+.main.main-light .topbar .meta-line {
+  color: rgba(243, 247, 244, 0.72);
+}
+
+.topbar .nav-toggle,
+.main.main-light .topbar .nav-toggle {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(240, 194, 122, 0.35);
+}
+
+.topbar .nav-toggle span,
+.main.main-light .topbar .nav-toggle span {
+  background: #f0c27a;
+}
+
+.topbar .tb-notif-btn {
+  background: rgba(255, 255, 255, 0.1);
+  color: #f3f7f4;
+}
+
+.topbar .tb-notif-btn:hover {
+  background: rgba(216, 163, 94, 0.22);
+  color: #fff;
+}
+
+.topbar .tb-user-name,
+.main.main-light .topbar .tb-user-name {
+  color: #f3f7f4;
+}
+
+.topbar .tb-user-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.topbar .tb-avatar {
+  box-shadow: 0 0 0 1.5px rgba(240, 194, 122, 0.45);
+}
+
+.app-shell.dense .topbar-dense {
+  margin-bottom: 0.7rem;
+  padding-top: 0.7rem;
+  padding-bottom: 0.7rem;
+}
+

@@ -1,0 +1,16 @@
+node_modules
+dist
+.next
+*.tsbuildinfo
+.turbo
+docker-data
+backups
+uploads
+*.tgz
+.env
+.env.*
+!.env.example
+!.env.local.example
+!.env.production.example
+watesly_do.pub
+*.pem

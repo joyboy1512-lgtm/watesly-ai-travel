@@ -1,0 +1,396 @@
+"use client";
+
+import Link from "next/link";
+import { useEffect, useState } from "react";
+import { AppShell } from "@/components/AppShell";
+import { apiFetch } from "@/lib/api";
+import { formatDate } from "@/lib/format";
+
+type Template = { id: string; name: string; body: string; status?: string };
+type Contact = { id: string; waId: string; name?: string | null };
+type Campaign = {
+  id: string;
+  name: string;
+  status: string;
+  scheduledAt?: string | null;
+  stats?: { sent?: number; failed?: number; pending?: number } | null;
+  recipients: Array<{ id: string }>;
+  template?: { name?: string } | null;
+  createdAt?: string;
+};
+
+type WaAccount = {
+  id: string;
+  status: string;
+  displayPhone?: string | null;
+  channelName?: string | null;
+  isDefault?: boolean;
+};
+
+const STATUS_LABEL: Record<string, string> = {
+  draft: "مسودة",
+  scheduled: "مجدولة",
+  running: "قيد الإرسال",
+  completed: "مكتملة",
+  failed: "فشلت",
+};
+
+export default function CampaignsPage() {
+  const [templates, setTemplates] = useState<Template[]>([]);
+  const [contacts, setContacts] = useState<Contact[]>([]);
+  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [waAccounts, setWaAccounts] = useState<WaAccount[]>([]);
+  const [name, setName] = useState("حملة ترحيب");
+  const [templateId, setTemplateId] = useState("");
+  const [scheduledAt, setScheduledAt] = useState("");
+  const [selected, setSelected] = useState<string[]>([]);
+  const [error, setError] = useState("");
+  const [ok, setOk] = useState("");
+  const [loading, setLoading] = useState<"draft" | "send" | null>(null);
+
+  async function load() {
+    const [t, c, camps, wa] = await Promise.all([
+      apiFetch<Template[]>("/campaigns/templates"),
+      apiFetch<Contact[]>("/contacts"),
+      apiFetch<Campaign[]>("/campaigns"),
+      apiFetch<WaAccount[]>("/whatsapp/accounts").catch(() => []),
+    ]);
+    setTemplates(t);
+    setContacts(c);
+    setCampaigns(camps);
+    setWaAccounts(wa);
+    if (!templateId && t[0]) setTemplateId(t[0].id);
+  }
+
+  useEffect(() => {
+    load().catch((err: Error) => setError(err.message));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const defaultChannel = waAccounts.find((a) => a.isDefault);
+
+  const hasDefaultChannel = Boolean(
+    defaultChannel &&
+      (defaultChannel.status === "connected" ||
+        defaultChannel.status === "pending"),
+  );
+
+  const waReady = waAccounts.some(
+    (a) => a.status === "connected" || a.status === "pending",
+  );
+
+  function formatCampaignStats(stats?: Campaign["stats"], total?: number) {
+    const sent = stats?.sent ?? 0;
+    const failed = stats?.failed ?? 0;
+    const pending = stats?.pending ?? 0;
+    const denom = total ?? sent + failed + pending;
+    const rate = denom > 0 ? Math.round((sent / denom) * 100) : 0;
+    return { sent, failed, pending, rate, total: denom };
+  }
+
+  async function submitCampaign(mode: "draft" | "send") {
+    setError("");
+    setOk("");
+    if (!name.trim()) {
+      setError("اسم الحملة مطلوب");
+      return;
+    }
+    if (!templateId) {
+      setError("اختر قالبًا أولًا");
+      return;
+    }
+    if (!selected.length) {
+      setError("حدد مستلمًا واحدًا على الأقل");
+      return;
+    }
+    if (mode === "send" && !hasDefaultChannel) {
+      setError("عيّن قناة واتساب افتراضية متصلة قبل الإرسال");
+      return;
+    }
+
+    setLoading(mode);
+    try {
+      const campaign = await apiFetch<Campaign>("/campaigns", {
+        method: "POST",
+        body: JSON.stringify({
+          name: name.trim(),
+          templateId,
+          contactIds: selected,
+          scheduledAt: mode === "draft" ? scheduledAt || undefined : undefined,
+        }),
+      });
+
+      if (mode === "draft") {
+        setOk(
+          scheduledAt
+            ? "تم حفظ الحملة كمسودة مجدولة. أرسلها لاحقًا من القائمة أدناه."
+            : "تم حفظ الحملة كمسودة. أرسلها لاحقًا من القائمة أدناه.",
+        );
+      } else {
+        const result = await apiFetch<Campaign>(
+          `/campaigns/${campaign.id}/send`,
+          { method: "POST" },
+        );
+        setOk(
+          `تم إرسال الحملة · نجح ${result.stats?.sent ?? 0} من ${selected.length} · فشل ${result.stats?.failed ?? 0}${(result.stats?.pending ?? 0) > 0 ? ` · معلّق ${result.stats?.pending}` : ""}`,
+        );
+      }
+      setSelected([]);
+      setScheduledAt("");
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "فشل الحملة");
+    } finally {
+      setLoading(null);
+    }
+  }
+
+  async function sendExisting(id: string) {
+    if (!hasDefaultChannel) {
+      setError("عيّن قناة واتساب افتراضية متصلة قبل الإرسال");
+      return;
+    }
+    setError("");
+    setOk("");
+    setLoading("send");
+    try {
+      const result = await apiFetch<Campaign>(`/campaigns/${id}/send`, {
+        method: "POST",
+      });
+      const s = formatCampaignStats(result.stats, result.recipients?.length);
+      setOk(
+        `تم إرسال الحملة · نجح ${s.sent} من ${s.total} (${s.rate}%) · فشل ${s.failed}${s.pending > 0 ? ` · معلّق ${s.pending}` : ""}`,
+      );
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "فشل إرسال الحملة");
+    } finally {
+      setLoading(null);
+    }
+  }
+
+  function toggleContact(id: string) {
+    setSelected((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+    );
+  }
+
+  function selectAll() {
+    setSelected(contacts.map((c) => c.id));
+  }
+
+  function clearSelection() {
+    setSelected([]);
+  }
+
+  return (
+    <AppShell title="الحملات">
+      <div className="panel">
+        <p className="hint" style={{ marginTop: 0 }}>
+          أنشئ حملة من قالب معتمد وأرسلها لمستلمين محددين عبر قناة واتساب
+          الافتراضية، أو احفظها كمسودة لإرسالها لاحقًا.
+        </p>
+        {!hasDefaultChannel ? (
+          <p className="error">
+            {!waReady
+              ? "لا توجد قناة واتساب متصلة. "
+              : "لا توجد قناة واتساب افتراضية. "}
+            <Link href="/dashboard/whatsapp">إعداد قنوات واتساب</Link> وتعيين
+            قناة افتراضية قبل الإرسال.
+          </p>
+        ) : (
+          <p className="hint">
+            القناة الافتراضية للإرسال:{" "}
+            <span className="wi-pill wa">
+              {defaultChannel?.channelName ||
+                defaultChannel?.displayPhone ||
+                "بدون اسم"}
+            </span>
+          </p>
+        )}
+
+        <div className="form-grid">
+          <label className="field">
+            <span>اسم الحملة</span>
+            <input value={name} onChange={(e) => setName(e.target.value)} />
+          </label>
+          <label className="field">
+            <span>القالب</span>
+            <select
+              value={templateId}
+              onChange={(e) => setTemplateId(e.target.value)}
+            >
+              {templates.length === 0 ? (
+                <option value="">لا توجد قوالب</option>
+              ) : null}
+              {templates.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="field">
+            <span>جدولة الإرسال (اختياري)</span>
+            <input
+              type="datetime-local"
+              value={scheduledAt}
+              onChange={(e) => setScheduledAt(e.target.value)}
+            />
+          </label>
+        </div>
+
+        <div
+          className="actions"
+          style={{ marginTop: "0.85rem", marginBottom: "0.5rem" }}
+        >
+          <strong>المستلمون ({selected.length}/{contacts.length})</strong>
+          <button
+            type="button"
+            className="btn secondary"
+            onClick={selectAll}
+            disabled={!contacts.length}
+          >
+            تحديد الكل
+          </button>
+          <button
+            type="button"
+            className="btn secondary"
+            onClick={clearSelection}
+            disabled={!selected.length}
+          >
+            إلغاء التحديد
+          </button>
+        </div>
+
+        {contacts.length === 0 ? (
+          <p className="hint">
+            لا يوجد عملاء بعد. أضف عملاء من{" "}
+            <Link href="/dashboard/contacts">صفحة العملاء</Link> أو عبر محادثة
+            واتساب.
+          </p>
+        ) : (
+          <div className="chip-list">
+            {contacts.map((c) => (
+              <button
+                key={c.id}
+                type="button"
+                className={`chip ${selected.includes(c.id) ? "active" : ""}`}
+                onClick={() => toggleContact(c.id)}
+              >
+                {c.name || c.waId}
+              </button>
+            ))}
+          </div>
+        )}
+
+        <div className="actions">
+          <button
+            type="button"
+            className="btn secondary"
+            disabled={loading !== null}
+            onClick={() => void submitCampaign("draft")}
+          >
+            {loading === "draft" ? "جارٍ الحفظ..." : "حفظ كمسودة"}
+          </button>
+          <button
+            type="button"
+            className="btn"
+            disabled={
+              loading !== null ||
+              !hasDefaultChannel ||
+              !templateId ||
+              !selected.length
+            }
+            onClick={() => void submitCampaign("send")}
+          >
+            {loading === "send" ? "جارٍ الإرسال..." : "إنشاء وإرسال الآن"}
+          </button>
+          <Link className="btn secondary" href="/dashboard/templates">
+            إنشاء قالب
+          </Link>
+          <Link className="btn secondary" href="/dashboard/whatsapp">
+            قنوات واتساب
+          </Link>
+        </div>
+        {templates.length === 0 ? (
+          <p className="hint">
+            لا توجد قوالب بعد. أنشئ قالبًا أولًا من صفحة القوالب.
+          </p>
+        ) : null}
+        {ok ? <p className="hint">{ok}</p> : null}
+        {error ? <p className="error">{error}</p> : null}
+      </div>
+
+      <div className="panel">
+        <h3>آخر الحملات</h3>
+        {campaigns.length === 0 ? (
+          <p className="hint">لا توجد حملات بعد.</p>
+        ) : (
+          <table className="table">
+            <thead>
+              <tr>
+                <th>الاسم</th>
+                <th>القالب</th>
+                <th>الحالة</th>
+                <th>الجدولة</th>
+                <th>المستلمون</th>
+                <th>النتائج</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {campaigns.map((row) => {
+                const stats = formatCampaignStats(
+                  row.stats,
+                  row.recipients.length,
+                );
+                return (
+                <tr key={row.id}>
+                  <td>{row.name}</td>
+                  <td>{row.template?.name || "—"}</td>
+                  <td>{STATUS_LABEL[row.status] || row.status}</td>
+                  <td>{row.scheduledAt ? formatDate(row.scheduledAt) : "—"}</td>
+                  <td>{row.recipients.length}</td>
+                  <td>
+                    <div className="camp-stats">
+                      <span className="camp-stat sent">
+                        نجح {stats.sent}/{stats.total}
+                      </span>
+                      {stats.failed > 0 ? (
+                        <span className="camp-stat failed">
+                          فشل {stats.failed}
+                        </span>
+                      ) : null}
+                      {stats.pending > 0 ? (
+                        <span className="camp-stat pending">
+                          معلّق {stats.pending}
+                        </span>
+                      ) : null}
+                      {stats.total > 0 && row.status === "completed" ? (
+                        <span className="camp-stat rate">{stats.rate}%</span>
+                      ) : null}
+                    </div>
+                  </td>
+                  <td>
+                    {row.status === "draft" || row.status === "scheduled" ? (
+                      <button
+                        type="button"
+                        className="btn secondary"
+                        disabled={loading !== null || !hasDefaultChannel}
+                        onClick={() => void sendExisting(row.id)}
+                      >
+                        إرسال الآن
+                      </button>
+                    ) : null}
+                  </td>
+                </tr>
+              );
+              })}
+            </tbody>
+          </table>
+        )}
+      </div>
+    </AppShell>
+  );
+}

@@ -1,0 +1,400 @@
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+import { AppShell } from "@/components/AppShell";
+import { apiFetch } from "@/lib/api";
+import { formatDate } from "@/lib/format";
+
+type Customer = {
+  key: string;
+  contactId?: string;
+  name: string | null;
+  email: string | null;
+  phone: string | null;
+  tags: string[];
+  source: string;
+  bookingCount: number;
+  inquiryCount: number;
+  lastContactedAt: string | null;
+};
+
+export default function ContactsPage() {
+  const [rows, setRows] = useState<Customer[]>([]);
+  const [filters, setFilters] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    tag: "",
+  });
+  const [waId, setWaId] = useState("");
+  const [name, setName] = useState("");
+  const [error, setError] = useState("");
+  const [editingKey, setEditingKey] = useState<string | null>(null);
+  const [tagInput, setTagInput] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  async function load() {
+    setLoading(true);
+    setError("");
+    try {
+      const params = new URLSearchParams();
+      if (filters.name) params.set("name", filters.name);
+      if (filters.email) params.set("email", filters.email);
+      if (filters.phone) params.set("phone", filters.phone);
+      if (filters.tag) params.set("tag", filters.tag);
+      const qs = params.toString();
+      const data = await apiFetch<{ customers: Customer[] }>(
+        `/contacts/customers${qs ? `?${qs}` : ""}`,
+      );
+      setRows(data.customers || []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "فشل التحميل");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    void load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const stats = useMemo(() => {
+    const total = rows.length;
+    const withBookings = rows.filter((r) => r.bookingCount > 0).length;
+    const withTags = rows.filter((r) => r.tags.length > 0).length;
+    const inquiries = rows.reduce((sum, r) => sum + (r.inquiryCount || 0), 0);
+    return { total, withBookings, withTags, inquiries };
+  }, [rows]);
+
+  async function create() {
+    try {
+      await apiFetch("/contacts", {
+        method: "POST",
+        body: JSON.stringify({ waId, name }),
+      });
+      setWaId("");
+      setName("");
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "فشل الإنشاء");
+    }
+  }
+
+  async function saveTags(customer: Customer) {
+    const tags = tagInput
+      .split(/[,،]/)
+      .map((t) => t.trim())
+      .filter(Boolean);
+    try {
+      await apiFetch("/contacts/customers", {
+        method: "POST",
+        body: JSON.stringify({
+          email: customer.email,
+          phone: customer.phone,
+          name: customer.name,
+          tags,
+        }),
+      });
+      setEditingKey(null);
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "فشل حفظ الوسوم");
+    }
+  }
+
+  function exportCsv() {
+    const header = ["name", "email", "phone", "tags", "bookings", "inquiries"];
+    const lines = [
+      header.join(","),
+      ...rows.map((r) =>
+        [
+          JSON.stringify(r.name || ""),
+          JSON.stringify(r.email || ""),
+          JSON.stringify(r.phone || ""),
+          JSON.stringify(r.tags.join("|")),
+          r.bookingCount,
+          r.inquiryCount,
+        ].join(","),
+      ),
+    ];
+    const blob = new Blob(["\uFEFF" + lines.join("\n")], {
+      type: "text/csv;charset=utf-8",
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `weekendgate-customers-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function initials(value: string | null) {
+    const t = (value || "").trim();
+    if (!t) return "ع";
+    return t.slice(0, 1);
+  }
+
+  return (
+    <AppShell title="العملاء">
+      <div className="customers-page">
+        <section className="cust-hero">
+          <div>
+            <p className="cust-kicker">إدارة العلاقات</p>
+            <h3>العملاء</h3>
+            <p>
+              عرض موحّد لجهات الاتصال والحجوزات والاستعلامات، مع بحث وتصدير
+              سريع.
+            </p>
+          </div>
+          <div className="cust-hero-actions">
+            <button
+              type="button"
+              className="btn secondary"
+              onClick={exportCsv}
+            >
+              تصدير CSV
+            </button>
+            <button
+              type="button"
+              className="btn"
+              onClick={() => void load()}
+              disabled={loading}
+            >
+              {loading ? "جاري التحديث…" : "تحديث القائمة"}
+            </button>
+          </div>
+        </section>
+
+        <section className="cust-stats">
+          <article className="cust-stat-card">
+            <span>إجمالي العملاء</span>
+            <strong>{stats.total}</strong>
+            <small>في نتائج البحث الحالية</small>
+          </article>
+          <article className="cust-stat-card">
+            <span>لديهم حجوزات</span>
+            <strong>{stats.withBookings}</strong>
+            <small>عملاء نشطون</small>
+          </article>
+          <article className="cust-stat-card">
+            <span>الاستعلامات</span>
+            <strong>{stats.inquiries}</strong>
+            <small>مجموع الاستعلامات</small>
+          </article>
+          <article className="cust-stat-card">
+            <span>موسومون</span>
+            <strong>{stats.withTags}</strong>
+            <small>عملاء بوسوم</small>
+          </article>
+        </section>
+
+        <section className="cust-toolbar">
+          <div className="cust-toolbar-card">
+            <div className="cust-toolbar-head">
+              <h4>بحث وتصفية</h4>
+              <p>ابحث بالاسم أو البريد أو الهاتف أو الوسم</p>
+            </div>
+            <div className="cust-form-grid">
+              <label className="cust-field">
+                <span>الاسم</span>
+                <input
+                  value={filters.name}
+                  onChange={(e) =>
+                    setFilters({ ...filters, name: e.target.value })
+                  }
+                  placeholder="اسم العميل"
+                />
+              </label>
+              <label className="cust-field">
+                <span>البريد</span>
+                <input
+                  value={filters.email}
+                  onChange={(e) =>
+                    setFilters({ ...filters, email: e.target.value })
+                  }
+                  placeholder="email@example.com"
+                />
+              </label>
+              <label className="cust-field">
+                <span>الهاتف / واتساب</span>
+                <input
+                  value={filters.phone}
+                  onChange={(e) =>
+                    setFilters({ ...filters, phone: e.target.value })
+                  }
+                  placeholder="965..."
+                />
+              </label>
+              <label className="cust-field">
+                <span>وسم</span>
+                <input
+                  value={filters.tag}
+                  onChange={(e) =>
+                    setFilters({ ...filters, tag: e.target.value })
+                  }
+                  placeholder="VIP"
+                />
+              </label>
+            </div>
+            <div className="cust-actions">
+              <button
+                type="button"
+                className="btn"
+                onClick={() => void load()}
+              >
+                بحث
+              </button>
+              <button
+                type="button"
+                className="btn secondary"
+                onClick={() => {
+                  setFilters({ name: "", email: "", phone: "", tag: "" });
+                }}
+              >
+                مسح الفلاتر
+              </button>
+            </div>
+          </div>
+
+          <div className="cust-toolbar-card">
+            <div className="cust-toolbar-head">
+              <h4>إضافة عميل واتساب</h4>
+              <p>أنشئ جهة اتصال سريعة برقم واتساب</p>
+            </div>
+            <div className="cust-form-grid cust-form-grid-2">
+              <label className="cust-field">
+                <span>رقم واتساب</span>
+                <input
+                  value={waId}
+                  onChange={(e) => setWaId(e.target.value)}
+                  placeholder="965xxxxxxxx"
+                />
+              </label>
+              <label className="cust-field">
+                <span>الاسم</span>
+                <input
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="اسم العميل"
+                />
+              </label>
+            </div>
+            <div className="cust-actions">
+              <button
+                type="button"
+                className="btn"
+                onClick={() => void create()}
+              >
+                إضافة عميل
+              </button>
+            </div>
+            {error ? <p className="cust-error">{error}</p> : null}
+          </div>
+        </section>
+
+        <section className="cust-list-head">
+          <h4>قائمة العملاء</h4>
+          <span>{rows.length} نتيجة</span>
+        </section>
+
+        {rows.length === 0 ? (
+          <div className="cust-empty">
+            <strong>لا عملاء مطابقون</strong>
+            <p>جرّب تغيير الفلاتر أو أضف عميلاً جديداً من النموذج أعلاه.</p>
+          </div>
+        ) : (
+          <section className="cust-grid">
+            {rows.map((row) => (
+              <article key={row.key} className="cust-card">
+                <div className="cust-card-top">
+                  <div className="cust-avatar">{initials(row.name)}</div>
+                  <div className="cust-card-title">
+                    <strong>{row.name || "بدون اسم"}</strong>
+                    <span>{row.source || "جهة اتصال"}</span>
+                  </div>
+                </div>
+
+                <div className="cust-card-meta">
+                  <div>
+                    <span>البريد</span>
+                    <strong>{row.email || "—"}</strong>
+                  </div>
+                  <div>
+                    <span>الهاتف</span>
+                    <strong>{row.phone || "—"}</strong>
+                  </div>
+                  <div>
+                    <span>آخر تواصل</span>
+                    <strong>{formatDate(row.lastContactedAt)}</strong>
+                  </div>
+                </div>
+
+                <div className="cust-card-kpis">
+                  <div>
+                    <span>حجوزات</span>
+                    <strong>{row.bookingCount}</strong>
+                  </div>
+                  <div>
+                    <span>استعلامات</span>
+                    <strong>{row.inquiryCount}</strong>
+                  </div>
+                </div>
+
+                <div className="cust-tags">
+                  {editingKey === row.key ? (
+                    <div className="cust-tag-edit">
+                      <input
+                        value={tagInput}
+                        onChange={(e) => setTagInput(e.target.value)}
+                        placeholder="VIP, عائلة…"
+                      />
+                      <button
+                        type="button"
+                        className="btn"
+                        onClick={() => void saveTags(row)}
+                      >
+                        حفظ
+                      </button>
+                      <button
+                        type="button"
+                        className="btn secondary"
+                        onClick={() => setEditingKey(null)}
+                      >
+                        إلغاء
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="cust-tag-list">
+                        {row.tags.length ? (
+                          row.tags.map((tag) => (
+                            <span key={tag} className="cust-tag">
+                              {tag}
+                            </span>
+                          ))
+                        ) : (
+                          <span className="cust-tag muted">بدون وسوم</span>
+                        )}
+                      </div>
+                      <button
+                        type="button"
+                        className="cust-tag-btn"
+                        onClick={() => {
+                          setEditingKey(row.key);
+                          setTagInput(row.tags.join(", "));
+                        }}
+                      >
+                        تعديل الوسوم
+                      </button>
+                    </>
+                  )}
+                </div>
+              </article>
+            ))}
+          </section>
+        )}
+      </div>
+    </AppShell>
+  );
+}

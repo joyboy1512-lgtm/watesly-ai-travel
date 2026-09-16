@@ -1,0 +1,263 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { AppShell } from "@/components/AppShell";
+import { apiFetch } from "@/lib/api";
+import { formatDate } from "@/lib/format";
+
+type Customer = {
+  key: string;
+  contactId?: string;
+  name: string | null;
+  email: string | null;
+  phone: string | null;
+  tags: string[];
+  source: string;
+  bookingCount: number;
+  inquiryCount: number;
+  lastContactedAt: string | null;
+};
+
+export default function ContactsPage() {
+  const [rows, setRows] = useState<Customer[]>([]);
+  const [filters, setFilters] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    tag: "",
+  });
+  const [waId, setWaId] = useState("");
+  const [name, setName] = useState("");
+  const [error, setError] = useState("");
+  const [editingKey, setEditingKey] = useState<string | null>(null);
+  const [tagInput, setTagInput] = useState("");
+
+  async function load() {
+    const params = new URLSearchParams();
+    if (filters.name) params.set("name", filters.name);
+    if (filters.email) params.set("email", filters.email);
+    if (filters.phone) params.set("phone", filters.phone);
+    if (filters.tag) params.set("tag", filters.tag);
+    const qs = params.toString();
+    const data = await apiFetch<{ customers: Customer[] }>(
+      `/contacts/customers${qs ? `?${qs}` : ""}`,
+    );
+    setRows(data.customers || []);
+  }
+
+  useEffect(() => {
+    load().catch((err: Error) => setError(err.message));
+  }, []);
+
+  async function create() {
+    try {
+      await apiFetch("/contacts", {
+        method: "POST",
+        body: JSON.stringify({ waId, name }),
+      });
+      setWaId("");
+      setName("");
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "فشل الإنشاء");
+    }
+  }
+
+  async function saveTags(customer: Customer) {
+    const tags = tagInput
+      .split(/[,،]/)
+      .map((t) => t.trim())
+      .filter(Boolean);
+    try {
+      await apiFetch("/contacts/customers", {
+        method: "POST",
+        body: JSON.stringify({
+          email: customer.email,
+          phone: customer.phone,
+          name: customer.name,
+          tags,
+        }),
+      });
+      setEditingKey(null);
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "فشل حفظ الوسوم");
+    }
+  }
+
+  function exportCsv() {
+    const header = ["name", "email", "phone", "tags", "bookings", "inquiries"];
+    const lines = [
+      header.join(","),
+      ...rows.map((r) =>
+        [
+          JSON.stringify(r.name || ""),
+          JSON.stringify(r.email || ""),
+          JSON.stringify(r.phone || ""),
+          JSON.stringify(r.tags.join("|")),
+          r.bookingCount,
+          r.inquiryCount,
+        ].join(","),
+      ),
+    ];
+    const blob = new Blob(["\uFEFF" + lines.join("\n")], {
+      type: "text/csv;charset=utf-8",
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `weekendgate-customers-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  return (
+    <AppShell title="العملاء">
+      <div className="panel">
+        <p className="hint" style={{ marginTop: 0 }}>
+          عرض موحّد للعملاء من جهات الاتصال + الحجوزات (أسلوب صافات)، مع وسوم
+          وتصدير — بألوان WeekendGate.
+        </p>
+        <div className="form-grid">
+          <label className="field">
+            <span>الاسم</span>
+            <input
+              value={filters.name}
+              onChange={(e) =>
+                setFilters({ ...filters, name: e.target.value })
+              }
+            />
+          </label>
+          <label className="field">
+            <span>البريد</span>
+            <input
+              value={filters.email}
+              onChange={(e) =>
+                setFilters({ ...filters, email: e.target.value })
+              }
+            />
+          </label>
+          <label className="field">
+            <span>الهاتف / واتساب</span>
+            <input
+              value={filters.phone}
+              onChange={(e) =>
+                setFilters({ ...filters, phone: e.target.value })
+              }
+            />
+          </label>
+          <label className="field">
+            <span>وسم</span>
+            <input
+              value={filters.tag}
+              onChange={(e) => setFilters({ ...filters, tag: e.target.value })}
+            />
+          </label>
+        </div>
+        <div className="actions">
+          <button type="button" className="btn" onClick={() => void load()}>
+            بحث
+          </button>
+          <button
+            type="button"
+            className="btn secondary"
+            onClick={exportCsv}
+          >
+            تصدير CSV
+          </button>
+        </div>
+      </div>
+
+      <div className="panel">
+        <h3>إضافة عميل واتساب</h3>
+        <div className="form-grid">
+          <label className="field">
+            <span>رقم واتساب</span>
+            <input value={waId} onChange={(e) => setWaId(e.target.value)} />
+          </label>
+          <label className="field">
+            <span>الاسم</span>
+            <input value={name} onChange={(e) => setName(e.target.value)} />
+          </label>
+        </div>
+        <div className="actions">
+          <button type="button" className="btn" onClick={() => void create()}>
+            إضافة
+          </button>
+        </div>
+        {error ? <p className="error">{error}</p> : null}
+      </div>
+
+      <div className="panel">
+        <table className="table">
+          <thead>
+            <tr>
+              <th>الاسم</th>
+              <th>البريد</th>
+              <th>الهاتف</th>
+              <th>الوسوم</th>
+              <th>حجوزات</th>
+              <th>استعلامات</th>
+              <th>آخر تواصل</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row) => (
+              <tr key={row.key}>
+                <td>{row.name || "—"}</td>
+                <td>{row.email || "—"}</td>
+                <td>{row.phone || "—"}</td>
+                <td>
+                  {editingKey === row.key ? (
+                    <input
+                      value={tagInput}
+                      onChange={(e) => setTagInput(e.target.value)}
+                      placeholder="VIP, عائلة…"
+                    />
+                  ) : row.tags.length ? (
+                    row.tags.join("، ")
+                  ) : (
+                    "—"
+                  )}
+                </td>
+                <td>
+                  <strong style={{ color: "var(--accent-strong, #9a6a2e)" }}>
+                    {row.bookingCount}
+                  </strong>
+                </td>
+                <td>{row.inquiryCount}</td>
+                <td>{formatDate(row.lastContactedAt)}</td>
+                <td>
+                  {editingKey === row.key ? (
+                    <button
+                      type="button"
+                      className="btn secondary"
+                      onClick={() => void saveTags(row)}
+                    >
+                      حفظ
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      className="btn secondary"
+                      onClick={() => {
+                        setEditingKey(row.key);
+                        setTagInput(row.tags.join(", "));
+                      }}
+                    >
+                      وسوم
+                    </button>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        {rows.length === 0 ? (
+          <p className="hint">لا عملاء مطابقون.</p>
+        ) : null}
+      </div>
+    </AppShell>
+  );
+}

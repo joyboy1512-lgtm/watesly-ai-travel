@@ -1,0 +1,392 @@
+"use client";
+
+import Link from "next/link";
+import { useEffect, useState } from "react";
+import { AppShell } from "@/components/AppShell";
+import { apiFetch } from "@/lib/api";
+import { formatDate } from "@/lib/format";
+import {
+  appendTemplateVariable,
+  countTemplateVariables,
+} from "@/lib/template-vars";
+
+type Template = {
+  id: string;
+  name: string;
+  body: string;
+  header?: string | null;
+  footer?: string | null;
+  language: string;
+  category: string;
+  status: string;
+  createdAt: string;
+};
+
+const CATEGORIES = [
+  { value: "marketing", label: "تسويقي" },
+  { value: "utility", label: "خدمي" },
+  { value: "authentication", label: "تحقق" },
+];
+
+const CATEGORY_LABEL = Object.fromEntries(
+  CATEGORIES.map((c) => [c.value, c.label]),
+);
+
+const STATUS_LABEL: Record<string, string> = {
+  approved: "معتمد",
+  draft: "مسودة",
+  rejected: "مرفوض",
+  pending: "قيد المراجعة",
+};
+
+const emptyForm = {
+  name: "",
+  header: "",
+  body: "",
+  footer: "",
+  language: "ar",
+  category: "marketing",
+};
+
+export default function TemplatesPage() {
+  const [templates, setTemplates] = useState<Template[]>([]);
+  const [form, setForm] = useState(emptyForm);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [error, setError] = useState("");
+  const [ok, setOk] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  async function load() {
+    const rows = await apiFetch<Template[]>("/campaigns/templates");
+    setTemplates(rows);
+  }
+
+  useEffect(() => {
+    load().catch((err: Error) => setError(err.message));
+  }, []);
+
+  async function saveTemplate() {
+    setError("");
+    setOk("");
+    if (!form.name.trim() || !form.body.trim()) {
+      setError("اسم القالب ونص الرسالة مطلوبان");
+      return;
+    }
+    setLoading(true);
+    try {
+      if (editingId) {
+        await apiFetch(`/campaigns/templates/${editingId}`, {
+          method: "PATCH",
+          body: JSON.stringify({
+            body: form.body.trim(),
+            header: form.header.trim(),
+            footer: form.footer.trim(),
+            language: form.language || "ar",
+            category: form.category || "marketing",
+          }),
+        });
+        setOk("تم تحديث القالب");
+      } else {
+        await apiFetch("/campaigns/templates", {
+          method: "POST",
+          body: JSON.stringify({
+            name: form.name.trim().toLowerCase().replace(/\s+/g, "_"),
+            body: form.body.trim(),
+            header: form.header.trim() || undefined,
+            footer: form.footer.trim() || undefined,
+            language: form.language || "ar",
+            category: form.category || "marketing",
+          }),
+        });
+        setOk("تم إنشاء القالب");
+      }
+      setForm(emptyForm);
+      setEditingId(null);
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "فشل حفظ القالب");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function startEdit(t: Template) {
+    setEditingId(t.id);
+    setForm({
+      name: t.name,
+      header: t.header || "",
+      body: t.body,
+      footer: t.footer || "",
+      language: t.language,
+      category: t.category,
+    });
+    setOk("وضع التعديل: يمكنك تغيير النص والتصنيف ثم الحفظ");
+    setError("");
+  }
+
+  async function removeTemplate(id: string) {
+    if (!window.confirm("هل تريد حذف هذا القالب؟ لا يمكن التراجع.")) return;
+    setError("");
+    setOk("");
+    try {
+      await apiFetch(`/campaigns/templates/${id}`, { method: "DELETE" });
+      if (editingId === id) {
+        setEditingId(null);
+        setForm(emptyForm);
+      }
+      setOk("تم حذف القالب");
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "فشل حذف القالب");
+    }
+  }
+
+  const bodyVarCount = countTemplateVariables(form.body);
+  const previewBody = (form.body || "مرحباً {{1}}، هل ترغب بعرض رحلة إلى ...؟").replace(
+    /\{\{\s*1\s*\}\}/g,
+    "أحمد",
+  );
+
+  return (
+    <AppShell title="قوالب واتساب">
+      <div className="panel">
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            gap: "1rem",
+            alignItems: "center",
+            flexWrap: "wrap",
+          }}
+        >
+          <p className="hint" style={{ margin: 0 }}>
+            أنشئ قوالب الرسائل للحملات والرد خارج نافذة الـ 24 ساعة. استخدم{" "}
+            <code>{"{{1}}"}</code> لاسم العميل.
+          </p>
+          <div className="actions" style={{ margin: 0 }}>
+            <Link className="btn secondary" href="/dashboard/whatsapp">
+              قنوات واتساب
+            </Link>
+            <Link className="btn secondary" href="/dashboard/campaigns">
+              الحملات
+            </Link>
+          </div>
+        </div>
+      </div>
+
+      <div className="panel">
+        <h3>{editingId ? "تعديل القالب" : "إنشاء قالب جديد"}</h3>
+        <div className="form-grid">
+          <label className="field">
+            <span>اسم القالب</span>
+            <input
+              value={form.name}
+              disabled={Boolean(editingId)}
+              onChange={(e) => setForm({ ...form, name: e.target.value })}
+              placeholder="welcome_travel"
+            />
+          </label>
+          <label className="field">
+            <span>اللغة</span>
+            <select
+              value={form.language}
+              onChange={(e) => setForm({ ...form, language: e.target.value })}
+            >
+              <option value="ar">العربية (ar)</option>
+              <option value="en">English (en)</option>
+            </select>
+          </label>
+          <label className="field">
+            <span>التصنيف</span>
+            <select
+              value={form.category}
+              onChange={(e) => setForm({ ...form, category: e.target.value })}
+            >
+              {CATEGORIES.map((c) => (
+                <option key={c.value} value={c.value}>
+                  {c.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+
+        <div className="form-grid" style={{ marginTop: "0.9rem" }}>
+          <div style={{ display: "grid", gap: "0.9rem" }}>
+            <label className="field">
+              <span>العنوان (اختياري)</span>
+              <input
+                value={form.header}
+                onChange={(e) => setForm({ ...form, header: e.target.value })}
+                placeholder="عرض سفر خاص لك 🎉"
+              />
+            </label>
+            <label className="field">
+              <span>
+                نص القالب
+                {bodyVarCount > 0 ? (
+                  <span className="tpl-var-count">
+                    {" "}
+                    · {bodyVarCount} متغير
+                  </span>
+                ) : null}
+              </span>
+              <textarea
+                rows={5}
+                value={form.body}
+                onChange={(e) => setForm({ ...form, body: e.target.value })}
+                placeholder="مرحباً {{1}}، هل ترغب بعرض رحلة إلى ...؟"
+                style={{ width: "100%", resize: "vertical" }}
+              />
+              <div className="tpl-var-insert">
+                <span className="hint">إدراج متغير:</span>
+                {[1, 2, 3].map((n) => (
+                  <button
+                    key={n}
+                    type="button"
+                    className="tpl-var-btn"
+                    onClick={() =>
+                      setForm({
+                        ...form,
+                        body: appendTemplateVariable(form.body, n),
+                      })
+                    }
+                  >
+                    {`{{${n}}}`}
+                  </button>
+                ))}
+              </div>
+            </label>
+            <label className="field">
+              <span>التذييل (اختياري)</span>
+              <input
+                value={form.footer}
+                onChange={(e) => setForm({ ...form, footer: e.target.value })}
+                placeholder="وكالة واتسلي للسفر"
+              />
+            </label>
+          </div>
+
+          <div>
+            <span
+              className="hint"
+              style={{ display: "block", marginBottom: "0.5rem" }}
+            >
+              معاينة الرسالة
+            </span>
+            <div className="tpl-preview">
+              <div className="wi-bubble in">
+                {form.header ? <strong style={{ display: "block", marginBottom: "0.35rem" }}>{form.header}</strong> : null}
+                <span>{previewBody}</span>
+                {form.footer ? (
+                  <div className="wi-bubble-meta" style={{ marginTop: "0.5rem" }}>
+                    {form.footer}
+                  </div>
+                ) : null}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="actions">
+          <button
+            type="button"
+            className="btn"
+            disabled={
+              loading ||
+              !form.name.trim() ||
+              !form.body.trim()
+            }
+            onClick={() => void saveTemplate()}
+          >
+            {loading
+              ? "جارٍ الحفظ..."
+              : editingId
+                ? "حفظ التعديلات"
+                : "إنشاء القالب"}
+          </button>
+          {editingId ? (
+            <button
+              type="button"
+              className="btn secondary"
+              onClick={() => {
+                setEditingId(null);
+                setForm(emptyForm);
+                setOk("");
+              }}
+            >
+              إلغاء التعديل
+            </button>
+          ) : null}
+        </div>
+        {ok ? <p className="hint">{ok}</p> : null}
+        {error ? <p className="error">{error}</p> : null}
+      </div>
+
+      <div className="panel">
+        <h3>القوالب الحالية ({templates.length})</h3>
+        {templates.length === 0 ? (
+          <p className="hint">لا توجد قوالب بعد. أنشئ أول قالب أعلاه.</p>
+        ) : (
+          <table className="table">
+            <thead>
+              <tr>
+                <th>الاسم</th>
+                <th>اللغة</th>
+                <th>التصنيف</th>
+                <th>الحالة</th>
+                <th>المتغيرات</th>
+                <th>النص</th>
+                <th>التاريخ</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {templates.map((t) => {
+                const varCount = countTemplateVariables(t.body);
+                return (
+                <tr key={t.id}>
+                  <td>{t.name}</td>
+                  <td>{t.language}</td>
+                  <td>{CATEGORY_LABEL[t.category] || t.category}</td>
+                  <td>{STATUS_LABEL[t.status] || t.status}</td>
+                  <td>
+                    {varCount > 0 ? (
+                      <span className="wi-pill wa">{varCount}</span>
+                    ) : (
+                      "—"
+                    )}
+                  </td>
+                  <td style={{ maxWidth: 280 }}>
+                    {t.header ? <strong>{t.header}</strong> : null}
+                    <div>{t.body}</div>
+                  </td>
+                  <td>{formatDate(t.createdAt)}</td>
+                  <td>
+                    <div className="actions" style={{ margin: 0 }}>
+                      <button
+                        type="button"
+                        className="btn secondary"
+                        onClick={() => startEdit(t)}
+                      >
+                        تعديل
+                      </button>
+                      <button
+                        type="button"
+                        className="btn secondary"
+                        onClick={() => void removeTemplate(t.id)}
+                      >
+                        حذف
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              );
+              })}
+            </tbody>
+          </table>
+        )}
+      </div>
+    </AppShell>
+  );
+}

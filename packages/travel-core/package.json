@@ -1,0 +1,28 @@
+{
+  "name": "@watesly-travel/travel-core",
+  "version": "0.0.0",
+  "private": true,
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "echo \"No lint config yet for travel-core\"",
+    "clean": "rimraf dist"
+  },
+  "dependencies": {
+    "@watesly-travel/pricing-engine": "workspace:*",
+    "@watesly-travel/provider-sdk": "workspace:*",
+    "@watesly-travel/shared": "workspace:*"
+  },
+  "devDependencies": {
+    "rimraf": "^6.0.1",
+    "typescript": "^5.8.3"
+  }
+}

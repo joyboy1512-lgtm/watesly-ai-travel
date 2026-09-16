@@ -19,6 +19,7 @@ import {
 } from "@/lib/hotel-occupancy";
 import { FamilyTravelerPicker } from "@/components/shop/FamilyTravelerPicker";
 import { countsFromMembers } from "@/lib/family-travelers";
+import { ShopAirlineLogoTicker } from "@/components/shop/ShopAirlineLogoTicker";
 
 type Mode = "flights" | "stays" | "cars" | "activities";
 export type FlightTripType = "roundtrip" | "oneway" | "multicity";
@@ -1966,6 +1967,7 @@ html body #search.wg-simple-search .prc-suggest button strong {
           {props.error ? <p className="shop-error exp-dialog-msg">{props.error}</p> : null}
           {props.message ? <p className="shop-status exp-dialog-msg">{props.message}</p> : null}
         </div>
+        <ShopAirlineLogoTicker />
       </section>
     </>
   );

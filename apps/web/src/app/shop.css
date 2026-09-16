@@ -9541,3 +9541,132 @@ html body .wg-travela-hero .wg-travela-caption p {
     line-height: 1.55 !important;
   }
 }
+
+/* Hero airline logo ticker — white strip at the bottom of the hero */
+html body .wg-travela-hero .wg-airline-ticker {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 20;
+  height: 4.5rem;
+  overflow: hidden;
+  background: #fff;
+  box-shadow: 0 -1px 0 rgba(15, 23, 42, 0.06);
+  pointer-events: auto;
+}
+
+html body .wg-travela-hero .wg-airline-ticker.is-pinned {
+  position: fixed;
+}
+
+html body .wg-travela-hero .wg-airline-ticker::before,
+html body .wg-travela-hero .wg-airline-ticker::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 3.25rem;
+  z-index: 2;
+  pointer-events: none;
+}
+
+html body .wg-travela-hero .wg-airline-ticker::before {
+  left: 0;
+  background: linear-gradient(to right, #fff 0%, rgba(255, 255, 255, 0) 100%);
+}
+
+html body .wg-travela-hero .wg-airline-ticker::after {
+  right: 0;
+  background: linear-gradient(to left, #fff 0%, rgba(255, 255, 255, 0) 100%);
+}
+
+html body .wg-travela-hero .wg-airline-ticker-track {
+  display: flex;
+  align-items: center;
+  width: max-content;
+  height: 100%;
+  direction: ltr;
+  animation: wg-airline-ticker-scroll 38s linear infinite;
+  will-change: transform;
+}
+
+html body .wg-travela-hero .wg-airline-ticker:hover .wg-airline-ticker-track {
+  animation-play-state: paused;
+}
+
+html body .wg-travela-hero .wg-airline-ticker-group {
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+  height: 100%;
+  gap: 2.65rem;
+  padding-inline: 2.65rem;
+}
+
+html body .wg-travela-hero .wg-airline-ticker-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  height: 100%;
+}
+
+html body .wg-travela-hero .wg-airline-ticker-item img {
+  display: block;
+  height: 3.7rem;
+  width: auto;
+  max-width: 13.5rem;
+  object-fit: contain;
+  object-position: center;
+  filter: none;
+  image-rendering: auto;
+}
+
+html body .wg-travela-hero .wg-travela-dots {
+  bottom: 6.1rem;
+}
+
+@keyframes wg-airline-ticker-scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@media (max-width: 767px) {
+  html body .wg-travela-hero .wg-airline-ticker,
+  html body .wg-travela-hero .wg-airline-ticker.is-pinned {
+    position: absolute;
+  }
+
+  html body .wg-travela-hero .wg-airline-ticker {
+    height: 3.65rem;
+  }
+
+  html body .wg-travela-hero .wg-airline-ticker-track {
+    animation-duration: 28s;
+  }
+
+  html body .wg-travela-hero .wg-airline-ticker-group {
+    gap: 1.7rem;
+    padding-inline: 1.7rem;
+  }
+
+  html body .wg-travela-hero .wg-airline-ticker-item img {
+    height: 2.95rem;
+    max-width: 9.75rem;
+  }
+
+  html body .wg-travela-hero .wg-travela-dots {
+    bottom: 4.35rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html body .wg-travela-hero .wg-airline-ticker-track {
+    animation: none;
+  }
+}

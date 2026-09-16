@@ -1,13 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useShopCopy } from "@/components/shop/ShopI18nProvider";
 import type { ComposedTrip } from "@/lib/flight-compose";
-import {
-  revalidateShopOffer,
-  type MockFareOption,
-  type MockProviderOffer,
-} from "@/lib/flight-fare-mock";
 import { airlineNameAr } from "@/lib/flight-airlines";
 import {
   airlineLogo,
@@ -22,16 +17,6 @@ import {
 } from "@/lib/flight-search";
 import type { SelectedLeg } from "@/lib/flight-leg-selection";
 
-export type ExpandedPanelPhase =
-  | "idle"
-  | "revalidating"
-  | "success"
-  | "verified"
-  | "price_changed"
-  | "unavailable"
-  | "expired"
-  | "error";
-
 type Props = {
   trip: ComposedTrip;
   passengers: number;
@@ -41,11 +26,7 @@ type Props = {
   originLabel?: string;
   destinationLabel?: string;
   onClose: () => void;
-  onContinueReview: (payload: {
-    fare: MockFareOption;
-    provider: MockProviderOffer;
-  }) => void;
-  onRefreshResults: () => void;
+  onContinueReview: (payload: { totalPriceMinor: number }) => void;
 };
 
 function SegmentTimeline({
@@ -207,20 +188,10 @@ export function ShopFlightExpandedPanel({
   returnDate,
   onClose,
   onContinueReview,
-  onRefreshResults,
 }: Props) {
   const { currency: displayCurrency, formatMoney } = useShopCopy();
-  const [phase, setPhase] = useState<ExpandedPanelPhase>("idle");
-  const [statusMessage, setStatusMessage] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [confirmedPriceMinor, setConfirmedPriceMinor] = useState<number | null>(null);
-  const [validatedOffer, setValidatedOffer] = useState<{
-    fare: MockFareOption;
-    provider: MockProviderOffer;
-  } | null>(null);
-
   const packageCode = trip.outbound.airlineCode;
-  const sellPriceMinor = confirmedPriceMinor ?? trip.totalPriceMinor;
+  const sellPriceMinor = trip.totalPriceMinor;
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -234,49 +205,6 @@ export function ShopFlightExpandedPanel({
       document.body.style.overflow = prev;
     };
   }, [onClose]);
-
-  async function handleContinue() {
-    if (busy) return;
-    setBusy(true);
-    setPhase("revalidating");
-    setStatusMessage("");
-
-    try {
-      const result = await revalidateShopOffer(trip, passengers);
-      if (!result.ok) {
-        setPhase(result.reason);
-        setStatusMessage(result.message);
-        return;
-      }
-      if (result.priceChanged) {
-        setPhase("price_changed");
-        setConfirmedPriceMinor(result.provider.totalPriceMinor);
-        setValidatedOffer({ fare: result.fare, provider: result.provider });
-        setStatusMessage(
-          `تغيّر السعر من ${formatMoney(result.previousTotalMinor, trip.currency)} إلى ${formatMoney(result.provider.totalPriceMinor, trip.currency)}`,
-        );
-        return;
-      }
-      setPhase("verified");
-      setStatusMessage("تم التحقق من السعر الآن");
-      await new Promise((r) => setTimeout(r, 450));
-      onContinueReview({ fare: result.fare, provider: result.provider });
-    } catch {
-      setPhase("error");
-      setStatusMessage("تعذر الاتصال بالمزوّد. حاول مرة أخرى.");
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function acceptPriceChange() {
-    if (!validatedOffer) return;
-    setBusy(true);
-    setPhase("revalidating");
-    await new Promise((r) => setTimeout(r, 400));
-    onContinueReview(validatedOffer);
-    setBusy(false);
-  }
 
   const titleRoute = `${trip.outbound.from} ↔ ${trip.outbound.to}`;
 
@@ -320,51 +248,6 @@ export function ShopFlightExpandedPanel({
               packageCode={trip.return.airlineCode || packageCode}
             />
           ) : null}
-
-          {phase === "verified" || phase === "success" ? (
-            <div className="shop-flight-expanded-status success" role="status">
-              {statusMessage || "تم التحقق الآن"}
-            </div>
-          ) : null}
-          {phase === "price_changed" ? (
-            <div className="shop-flight-expanded-status warn" role="alert">
-              <p>{statusMessage}</p>
-              <button type="button" onClick={() => void acceptPriceChange()}>
-                قبول السعر الجديد والمتابعة
-              </button>
-              <button type="button" className="ghost" onClick={onRefreshResults}>
-                العودة للنتائج
-              </button>
-            </div>
-          ) : null}
-          {phase === "unavailable" || phase === "expired" ? (
-            <div className="shop-flight-expanded-status warn" role="alert">
-              <p>
-                {statusMessage ||
-                  (phase === "expired" ? "انتهى العرض" : "لم يعد متاحًا")}
-              </p>
-              <button type="button" onClick={onRefreshResults}>
-                العودة للنتائج
-              </button>
-            </div>
-          ) : null}
-          {phase === "error" ? (
-            <div className="shop-flight-expanded-status error" role="alert">
-              <p>{statusMessage || "تعذر الاتصال بالمزوّد"}</p>
-              <button
-                type="button"
-                onClick={() => {
-                  setPhase("idle");
-                  setStatusMessage("");
-                }}
-              >
-                إعادة المحاولة
-              </button>
-              <button type="button" className="ghost" onClick={onClose}>
-                العودة للنتائج
-              </button>
-            </div>
-          ) : null}
         </div>
 
         <footer className="shop-flight-expanded-foot sticky">
@@ -379,16 +262,9 @@ export function ShopFlightExpandedPanel({
           <button
             type="button"
             className="shop-flight-expanded-continue-btn"
-            disabled={busy || phase === "unavailable" || phase === "expired"}
-            onClick={() => void handleContinue()}
+            onClick={() => onContinueReview({ totalPriceMinor: sellPriceMinor })}
           >
-            {busy || phase === "revalidating" ? (
-              <span className="shop-flight-btn-loading">
-                <span className="shop-flight-spinner small" aria-hidden /> جاري التحقق من السعر…
-              </span>
-            ) : (
-              `متابعة — ${formatMoney(sellPriceMinor, trip.currency)}`
-            )}
+            {`متابعة — ${formatMoney(sellPriceMinor, trip.currency)}`}
           </button>
         </footer>
       </div>

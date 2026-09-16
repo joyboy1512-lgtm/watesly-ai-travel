@@ -7,7 +7,7 @@ import { heroSlidesFor } from "@/lib/shop-content";
 import { ShopAutocomplete, type SuggestItem } from "@/components/shop/ShopAutocomplete";
 import { ShopDateRangePicker } from "@/components/shop/ShopDateRangePicker";
 import { useShopI18n } from "@/components/shop/ShopI18nProvider";
-import { readHeroServices } from "@/lib/hero-services";
+import { readHeroServices, writeHeroServices } from "@/lib/hero-services";
 import {
   emptyRoom,
   occupancyTotals,
@@ -376,22 +376,26 @@ export function ShopHeroBanner(props: Props) {
     setHeaderSlot(document.getElementById("wg-header-services"));
   }, []);
   useEffect(() => {
-    const services = readHeroServices();
-    const modes = services
-      .filter((s) => s.enabled && s.kind === "mode")
-      .map((s) => s.key)
-      .filter((k): k is Mode => ["stays", "flights", "cars", "activities"].includes(k));
-    if (modes.length) setEnabledModes(modes);
-    setShowMyTrip(services.some((s) => s.key === "myTrip" && s.enabled));
-    const onChange = () => {
-      const next = readHeroServices();
-      const m = next
+    const apply = (services: ReturnType<typeof readHeroServices>) => {
+      const modes = services
         .filter((s) => s.enabled && s.kind === "mode")
         .map((s) => s.key)
         .filter((k): k is Mode => ["stays", "flights", "cars", "activities"].includes(k));
-      if (m.length) setEnabledModes(m);
-      setShowMyTrip(next.some((s) => s.key === "myTrip" && s.enabled));
+      if (modes.length) setEnabledModes(modes);
+      setShowMyTrip(services.some((s) => s.key === "myTrip" && s.enabled));
     };
+    apply(readHeroServices());
+    const apiBase = (process.env.NEXT_PUBLIC_API_URL || "/api").replace(/\/$/, "");
+    fetch(`${apiBase}/shop/platform/cms`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((cms: { heroServices?: ReturnType<typeof readHeroServices> } | null) => {
+        if (cms?.heroServices?.length) {
+          writeHeroServices(cms.heroServices);
+          apply(cms.heroServices);
+        }
+      })
+      .catch(() => undefined);
+    const onChange = () => apply(readHeroServices());
     window.addEventListener("wg-hero-services-changed", onChange);
     return () => window.removeEventListener("wg-hero-services-changed", onChange);
   }, []);

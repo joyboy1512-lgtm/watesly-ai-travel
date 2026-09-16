@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Patch,
@@ -77,10 +78,22 @@ export class PlatformController {
     return this.platform.updateCms(body);
   }
 
+  @Get("admin/deals")
+  @RequirePermissions("providers.manage")
+  adminDeals() {
+    return this.platform.listAllDeals();
+  }
+
   @Post("cms/deals")
   @RequirePermissions("providers.manage")
   upsertDeal(@Body() body: WeekendDeal) {
     return this.platform.upsertDeal(body);
+  }
+
+  @Delete("cms/deals/:slug")
+  @RequirePermissions("providers.manage")
+  deleteDeal(@Param("slug") slug: string) {
+    return this.platform.deleteDeal(slug);
   }
 
   @Public()

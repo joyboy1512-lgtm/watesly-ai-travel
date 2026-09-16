@@ -8,7 +8,9 @@ import {
   WEEKEND_DEALS,
   DESTINATION_GUIDES,
   DEFAULT_CMS,
+  DEFAULT_CMS_HERO_SERVICES,
   DEFAULT_POINTS_RULES,
+  normalizeCmsState,
   DEFAULT_REFERRAL,
   buildReferralCode,
   buildTripPriceBreakdown,
@@ -286,17 +288,75 @@ export class PlatformService {
     return getDestination(slug) || null;
   }
 
-  getCms() {
-    return this.cms;
+  private async readOrgSettings(): Promise<Record<string, unknown>> {
+    const organizationId = await this.orgId();
+    const org = await this.prisma.organization.findUnique({
+      where: { id: organizationId },
+      select: { settings: true },
+    });
+    const settings = org?.settings;
+    if (settings && typeof settings === "object" && !Array.isArray(settings)) {
+      return { ...(settings as Record<string, unknown>) };
+    }
+    return {};
   }
 
-  updateCms(patch: Partial<CmsState>) {
-    this.cms = {
-      ...this.cms,
+  async getCms() {
+    try {
+      const settings = await this.readOrgSettings();
+      if (settings.cms) {
+        this.cms = normalizeCmsState(settings.cms);
+        return this.cms;
+      }
+    } catch {
+      /* memory fallback */
+    }
+    return normalizeCmsState(this.cms);
+  }
+
+  async updateCms(patch: Partial<CmsState>) {
+    const current = await this.getCms();
+    const next = normalizeCmsState({
+      ...current,
       ...patch,
+      banners: patch.banners ?? current.banners,
+      faqs: patch.faqs ?? current.faqs,
+      articles: patch.articles ?? current.articles,
+      heroServices: patch.heroServices ?? current.heroServices ?? DEFAULT_CMS_HERO_SERVICES,
       updatedAt: new Date().toISOString(),
-    };
-    return this.cms;
+    });
+    this.cms = next;
+    try {
+      const organizationId = await this.orgId();
+      const settings = await this.readOrgSettings();
+      settings.cms = next;
+      await this.prisma.organization.update({
+        where: { id: organizationId },
+        data: { settings: settings as Prisma.InputJsonValue },
+      });
+    } catch {
+      /* memory fallback */
+    }
+    return next;
+  }
+
+  async listAllDeals() {
+    const organizationId = await this.orgId();
+    return this.ensureDealsSeeded(organizationId);
+  }
+
+  async deleteDeal(slug: string) {
+    const organizationId = await this.orgId();
+    const key = slug.trim();
+    if (!key) throw new BadRequestException("معرّف العرض مطلوب");
+    try {
+      await this.prisma.cmsDeal.delete({
+        where: { organizationId_slug: { organizationId, slug: key } },
+      });
+      return { ok: true, slug: key };
+    } catch {
+      throw new BadRequestException("تعذر حذف العرض");
+    }
   }
 
   async upsertDeal(deal: WeekendDeal) {

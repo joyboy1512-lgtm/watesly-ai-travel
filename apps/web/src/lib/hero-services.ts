@@ -1,74 +1,16 @@
-/** First-row hero search services — toggleable from dashboard. */
+/** First-row hero search services — toggleable from dashboard CMS. */
 
-export type HeroServiceKey =
-  | "stays"
-  | "flights"
-  | "cars"
-  | "activities"
-  | "myTrip"
-  | string;
+import {
+  DEFAULT_CMS_HERO_SERVICES,
+  type CmsHeroService,
+} from "@watesly-travel/shared";
 
-export type HeroServiceItem = {
-  key: HeroServiceKey;
-  labelAr: string;
-  labelEn: string;
-  hintAr?: string;
-  hintEn?: string;
-  enabled: boolean;
-  /** Built-in modes map to search accordion; custom keys open href or myTrip */
-  href?: string;
-  kind: "mode" | "myTrip" | "link";
-};
+export type HeroServiceKey = CmsHeroService["key"];
+export type HeroServiceItem = CmsHeroService;
 
 const STORAGE_KEY = "wg_hero_services_v1";
 
-export const DEFAULT_HERO_SERVICES: HeroServiceItem[] = [
-  {
-    key: "stays",
-    labelAr: "فنادق",
-    labelEn: "Hotels",
-    hintAr: "إقامة مميزة",
-    hintEn: "Find a stay",
-    enabled: true,
-    kind: "mode",
-  },
-  {
-    key: "flights",
-    labelAr: "رحلات",
-    labelEn: "Flights",
-    hintAr: "طيران",
-    hintEn: "Book flights",
-    enabled: true,
-    kind: "mode",
-  },
-  {
-    key: "cars",
-    labelAr: "سيارات",
-    labelEn: "Cars",
-    hintAr: "نقل",
-    hintEn: "Transfers",
-    enabled: true,
-    kind: "mode",
-  },
-  {
-    key: "activities",
-    labelAr: "أنشطة",
-    labelEn: "Activities",
-    hintAr: "تجارب",
-    hintEn: "Experiences",
-    enabled: true,
-    kind: "mode",
-  },
-  {
-    key: "myTrip",
-    labelAr: "رحلتي",
-    labelEn: "My trip",
-    hintAr: "منشئ الرحلة",
-    hintEn: "Trip builder",
-    enabled: true,
-    kind: "myTrip",
-  },
-];
+export const DEFAULT_HERO_SERVICES: HeroServiceItem[] = DEFAULT_CMS_HERO_SERVICES;
 
 export function loadHeroServices(): HeroServiceItem[] {
   if (typeof window === "undefined") return DEFAULT_HERO_SERVICES;

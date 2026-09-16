@@ -8,14 +8,15 @@ import { apiFetch } from "@/lib/api";
 import {
   writeHeroServices,
 } from "@/lib/hero-services";
-import type {
-  CmsArticle,
-  CmsBanner,
-  CmsFaq,
-  CmsHeroService,
-  CmsState,
-  DestinationGuide,
-  WeekendDeal,
+import {
+  DESTINATION_GUIDES,
+  type CmsArticle,
+  type CmsBanner,
+  type CmsFaq,
+  type CmsHeroService,
+  type CmsState,
+  type DestinationGuide,
+  type WeekendDeal,
 } from "@watesly-travel/shared";
 
 type Tab = "overview" | "deals" | "banners" | "faqs" | "articles" | "search";
@@ -93,11 +94,13 @@ export default function DashboardCmsPage() {
         apiFetch<WeekendDeal[]>("/shop/platform/deals"),
       ),
       apiFetch<CmsState>("/shop/platform/cms"),
-      apiFetch<DestinationGuide[]>("/shop/platform/destinations").catch(() => []),
+      apiFetch<DestinationGuide[]>("/shop/platform/destinations").catch(
+        () => DESTINATION_GUIDES,
+      ),
     ]);
     setDeals(dealRows);
     setCms(cmsState);
-    setDestinations(destRows);
+    setDestinations(destRows.length ? destRows : DESTINATION_GUIDES);
     apiFetch<AdminStats>("/shop/platform/admin/stats")
       .then(setStats)
       .catch(() => undefined);

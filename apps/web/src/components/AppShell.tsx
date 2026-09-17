@@ -2,6 +2,7 @@
 
 import "../app/topbar-user-menu.css";
 import "../app/brand-topbar.css";
+import "../app/dashboard-dir.css";
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -24,6 +25,15 @@ import {
   getPreferredCurrency,
   setPreferredCurrency,
 } from "@/lib/currency";
+import {
+  applyDashLang,
+  DashI18nProvider,
+  dashDir,
+  dashNavLabel,
+  dashTitle,
+  readDashLang,
+  type DashLang,
+} from "@/lib/dashboard-i18n";
 
 function normalizePath(path: string) {
   if (path.length > 1 && path.endsWith("/")) return path.slice(0, -1);
@@ -36,21 +46,7 @@ function isNavActive(href: string, pathname: string) {
   return path === href || path.startsWith(`${href}/`);
 }
 
-const LANG_KEY = "watesly_travel_lang";
-
-type UiLang = "ar" | "en";
-
-function getPreferredLang(): UiLang {
-  if (typeof window === "undefined") return "ar";
-  return localStorage.getItem(LANG_KEY) === "en" ? "en" : "ar";
-}
-
-function applyLang(lang: UiLang) {
-  if (typeof document === "undefined") return;
-  document.documentElement.lang = lang;
-  document.documentElement.dir = lang === "ar" ? "rtl" : "ltr";
-  localStorage.setItem(LANG_KEY, lang);
-}
+type UiLang = DashLang;
 
 function userInitials(name?: string | null) {
   const parts = (name || "").trim().split(/\s+/).filter(Boolean);
@@ -150,7 +146,7 @@ export function AppShell({
   const [showUser, setShowUser] = useState(false);
   const [navOpen, setNavOpen] = useState(false);
   const [currency, setCurrency] = useState(getPreferredCurrency);
-  const [lang, setLang] = useState<UiLang>(getPreferredLang);
+  const [lang, setLang] = useState<UiLang>(readDashLang);
   const [editName, setEditName] = useState(false);
   const [editPass, setEditPass] = useState(false);
   const [nameDraft, setNameDraft] = useState("");
@@ -174,8 +170,8 @@ export function AppShell({
   }, [session]);
 
   useEffect(() => {
-    applyLang(getPreferredLang());
-    setLang(getPreferredLang());
+    applyDashLang(readDashLang());
+    setLang(readDashLang());
   }, []);
 
   useEffect(() => {
@@ -289,7 +285,7 @@ export function AppShell({
 
   function onLangChange(next: UiLang) {
     setLang(next);
-    applyLang(next);
+    applyDashLang(next);
   }
 
   async function saveName() {
@@ -348,26 +344,31 @@ export function AppShell({
   const unread = notifications.filter((n) => !n.readAt).length;
 
   return (
+    <DashI18nProvider lang={lang} setLang={onLangChange}>
     <div
       className={`app-shell${dense ? " dense" : ""}${navOpen ? " nav-open" : ""}`}
+      lang={lang}
+      dir={dashDir(lang)}
     >
       <button
         type="button"
         className="nav-backdrop"
-        aria-label="إغلاق القائمة"
+        aria-label={lang === "en" ? "Close menu" : "إغلاق القائمة"}
         onClick={() => setNavOpen(false)}
       />
 
       <aside className="sidebar" id="app-sidebar">
         <div className="sidebar-head">
-          <Link href="/" className="brand brand-site-link" title="الموقع العام" aria-label={APP_NAME}>
+          <Link href="/" className="brand brand-site-link" title={lang === "en" ? "Public site" : "الموقع العام"} aria-label={APP_NAME}>
             <WeekendGateLogo light />
           </Link>
-          <p className="brand-legal">{COMPANY_LEGAL.legalNameAr}</p>
+          <p className="brand-legal">
+            {lang === "en" ? COMPANY_LEGAL.legalNameEn || COMPANY_LEGAL.legalNameAr : COMPANY_LEGAL.legalNameAr}
+          </p>
           <button
             type="button"
             className="nav-close"
-            aria-label="إغلاق القائمة"
+            aria-label={lang === "en" ? "Close menu" : "إغلاق القائمة"}
             onClick={() => setNavOpen(false)}
           >
             ✕
@@ -381,7 +382,7 @@ export function AppShell({
               className={isNavActive(item.href, pathname) ? "active" : undefined}
               onClick={() => setNavOpen(false)}
             >
-              {item.label}
+              {dashNavLabel(item.href, lang)}
             </Link>
           ))}
         </nav>
@@ -395,7 +396,7 @@ export function AppShell({
             <button
               type="button"
               className="nav-toggle"
-              aria-label="فتح القائمة"
+              aria-label={lang === "en" ? "Open menu" : "فتح القائمة"}
               aria-expanded={navOpen}
               aria-controls="app-sidebar"
               onClick={() => setNavOpen(true)}
@@ -405,7 +406,7 @@ export function AppShell({
               <span />
             </button>
             <div>
-              <h2>{title}</h2>
+              <h2>{dashTitle(title, lang)}</h2>
               <div className="meta-line">{session.organization.name}</div>
             </div>
           </div>
@@ -482,7 +483,7 @@ export function AppShell({
                     </span>
                     <div>
                       <strong>{session.user.name}</strong>
-                      <span>{session.user.email}</span>
+                      <span className="dash-ltr" dir="ltr">{session.user.email}</span>
                     </div>
                   </div>
 
@@ -591,5 +592,6 @@ export function AppShell({
         {children}
       </section>
     </div>
+    </DashI18nProvider>
   );
 }

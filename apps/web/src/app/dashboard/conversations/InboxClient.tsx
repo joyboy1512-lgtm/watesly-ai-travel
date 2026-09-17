@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
+import { useDashI18n } from "@/lib/dashboard-i18n";
 import { apiFetch, apiUpload, getSession } from "@/lib/api";
 import { formatDate } from "@/lib/format";
 import "../../conversations-inbox.css";
@@ -420,6 +421,8 @@ function InboxIdleDetails() {
 
 export default function InboxClient() {
   const router = useRouter();
+  const i18n = useDashI18n();
+  const en = i18n.lang === "en";
   const searchParams = useSearchParams();
   const selectedId = searchParams.get("id");
   const session = getSession();
@@ -769,7 +772,7 @@ export default function InboxClient() {
         <aside className="wi-list">
           <div className="wi-list-head">
             <div className="wi-list-title-row">
-              <h3>المحادثات</h3>
+              <h3>{en ? "Conversations" : "المحادثات"}</h3>
               <button
                 type="button"
                 className="wi-btn ghost"
@@ -781,17 +784,17 @@ export default function InboxClient() {
             </div>
             <input
               className="wi-search"
-              placeholder="بحث في المحادثات..."
+              placeholder={en ? "Search conversations..." : "بحث في المحادثات..."}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
             />
             <div className="wi-filters">
               {(
                 [
-                  ["all", "الكل"],
-                  ["waiting", "بانتظار الرد"],
-                  ["unread", "غير مقروءة"],
-                  ["mine", "معي"],
+                  ["all", en ? "All" : "الكل"],
+                  ["waiting", en ? "Waiting" : "بانتظار الرد"],
+                  ["unread", en ? "Unread" : "غير مقروءة"],
+                  ["mine", en ? "Mine" : "معي"],
                 ] as const
               ).map(([key, label]) => (
                 <button

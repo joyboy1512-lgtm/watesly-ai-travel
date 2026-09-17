@@ -7,11 +7,11 @@ import {
   formatIsoDateDisplay,
   openNativeDatePicker,
 } from "@/components/dashboard/DashDateCell";
+import { DashLtr, useDashI18n } from "@/lib/dashboard-i18n";
 import { apiFetch, getSession } from "@/lib/api";
 import { formatMoneyMinor } from "@/lib/format";
 import "../../bookings-suite.css";
 import {
-  BOOKING_STATUS_LABEL,
   bookingTravelDate,
   customerName,
   formatDay,
@@ -36,6 +36,7 @@ function FilterDate({
   onChange: (v: string) => void;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const i18n = useDashI18n();
   return (
     <label
       className="field bk-date-field"
@@ -47,7 +48,7 @@ function FilterDate({
     >
       <span>{label}</span>
       <em className={`bk-date-value${value ? "" : " placeholder"}`}>
-        {value ? formatIsoDateDisplay(value) : "اختر التاريخ"}
+        {value ? formatIsoDateDisplay(value) : i18n.c("pickDate")}
       </em>
       <input
         ref={inputRef}
@@ -64,6 +65,8 @@ function FilterDate({
 }
 
 export default function BookingsPage() {
+  const i18n = useDashI18n();
+  const en = i18n.lang === "en";
   const [rows, setRows] = useState<Booking[]>([]);
   const [error, setError] = useState("");
   const [q, setQ] = useState("");
@@ -165,10 +168,10 @@ export default function BookingsPage() {
         <div className="bk-filters">
           <div className="bk-filter-grid">
             <label className="field span-2">
-              <span>بحث</span>
+              <span>{i18n.c("search")}</span>
               <input
                 value={q}
-                placeholder="اسم، هاتف، بريد، مرجع…"
+                placeholder={en ? "Name, phone, email, reference…" : "اسم، هاتف، بريد، مرجع…"}
                 onChange={(e) => setQ(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") void load();
@@ -176,49 +179,49 @@ export default function BookingsPage() {
               />
             </label>
             <label className="field">
-              <span>الحالة</span>
+              <span>{i18n.c("status")}</span>
               <select
                 value={status}
                 onChange={(e) => setStatus(e.target.value)}
               >
-                <option value="">الكل</option>
-                <option value="on_hold">معلّق</option>
-                <option value="issued">مُصدَر</option>
-                <option value="completed">مكتمل</option>
-                <option value="cancelled">ملغى</option>
-                <option value="draft">مسودة</option>
+                <option value="">{i18n.service("all")}</option>
+                <option value="on_hold">{i18n.status("on_hold")}</option>
+                <option value="issued">{i18n.status("issued")}</option>
+                <option value="completed">{i18n.status("completed")}</option>
+                <option value="cancelled">{i18n.status("cancelled")}</option>
+                <option value="draft">{i18n.status("draft")}</option>
               </select>
             </label>
             <label className="field">
-              <span>الخدمة</span>
+              <span>{en ? "Service" : "الخدمة"}</span>
               <select
                 value={serviceType}
                 onChange={(e) => setServiceType(e.target.value)}
               >
-                <option value="">الكل</option>
-                <option value="flight">طيران</option>
-                <option value="hotel">فنادق</option>
-                <option value="transfer">نقل</option>
-                <option value="activity">أنشطة</option>
+                <option value="">{i18n.service("all")}</option>
+                <option value="flight">{i18n.service("flight")}</option>
+                <option value="hotel">{i18n.service("hotel")}</option>
+                <option value="transfer">{i18n.service("transfer")}</option>
+                <option value="activity">{i18n.service("activity")}</option>
               </select>
             </label>
             <FilterDate
-              label="تاريخ الحجز من"
+              label={en ? "Booked from" : "تاريخ الحجز من"}
               value={bookedFrom}
               onChange={setBookedFrom}
             />
             <FilterDate
-              label="تاريخ الحجز إلى"
+              label={en ? "Booked to" : "تاريخ الحجز إلى"}
               value={bookedTo}
               onChange={setBookedTo}
             />
             <FilterDate
-              label="تاريخ السفر من"
+              label={en ? "Travel from" : "تاريخ السفر من"}
               value={travelFrom}
               onChange={setTravelFrom}
             />
             <FilterDate
-              label="تاريخ السفر إلى"
+              label={en ? "Travel to" : "تاريخ السفر إلى"}
               value={travelTo}
               onChange={setTravelTo}
             />
@@ -273,13 +276,13 @@ export default function BookingsPage() {
         <table className="table bk-table">
           <thead>
             <tr>
-              <th>المرجع</th>
-              <th>العميل</th>
-              <th>المسار</th>
-              <th>تاريخ السفر</th>
-              <th>الحالة</th>
-              <th>البيع / الدفع</th>
-              <th>تاريخ الحجز</th>
+              <th>{en ? "Reference" : "المرجع"}</th>
+              <th>{i18n.c("customer")}</th>
+              <th>{i18n.c("route")}</th>
+              <th>{en ? "Travel date" : "تاريخ السفر"}</th>
+              <th>{i18n.c("status")}</th>
+              <th>{en ? "Sell / payment" : "البيع / الدفع"}</th>
+              <th>{en ? "Booked" : "تاريخ الحجز"}</th>
               <th></th>
             </tr>
           </thead>
@@ -291,21 +294,25 @@ export default function BookingsPage() {
               return (
                 <tr key={row.id}>
                   <td>
-                    <Link href={`/dashboard/bookings/${row.id}`}>
+                    <Link className="dash-ltr" dir="ltr" href={`/dashboard/bookings/${row.id}`}>
                       {(row.providerBookingRef || row.id).slice(0, 12)}
                     </Link>
                   </td>
                   <td>
                     <div>{customerName(row)}</div>
-                    <small className="hint">
+                    <small className="hint dash-ltr" dir="ltr">
                       {row.passengerDetails?.contact?.phone ||
                         row.quote?.contact?.waId ||
                         "—"}
                     </small>
                   </td>
-                  <td>{routeLabel(row)}</td>
-                  <td>{formatDay(bookingTravelDate(row))}</td>
-                  <td>{BOOKING_STATUS_LABEL[row.status] || row.status}</td>
+                  <td>
+                    <DashLtr>{routeLabel(row)}</DashLtr>
+                  </td>
+                  <td>
+                    <DashLtr>{formatDay(bookingTravelDate(row))}</DashLtr>
+                  </td>
+                  <td>{i18n.status(row.status)}</td>
                   <td>
                     <div className="bk-pay">
                       <strong>

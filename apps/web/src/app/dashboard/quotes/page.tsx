@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import "./quotes-page.css";
 import { AppShell } from "@/components/AppShell";
+import { DashLtr, useDashI18n } from "@/lib/dashboard-i18n";
 import { apiFetch } from "@/lib/api";
 import { formatDate, formatMoneyMinor } from "@/lib/format";
 import type { CmsState } from "@watesly-travel/shared";
@@ -38,21 +39,6 @@ type Quote = {
   items?: QuoteItem[];
 };
 
-const STATUS_LABEL: Record<string, string> = {
-  draft: "مسودة",
-  sent: "مُرسل",
-  accepted: "مقبول",
-  expired: "منتهي",
-  booked: "محجوز",
-};
-
-const SERVICE_LABEL: Record<string, string> = {
-  flight: "طيران",
-  hotel: "فندق",
-  transfer: "مواصلات",
-  activity: "أنشطة",
-};
-
 const CMS_TO_SERVICE: Record<string, string> = {
   flights: "flight",
   stays: "hotel",
@@ -83,6 +69,7 @@ function customerDetail(quote: Quote) {
 }
 
 export default function QuotesPage() {
+  const i18n = useDashI18n();
   const [rows, setRows] = useState<Quote[]>([]);
   const [error, setError] = useState("");
   const [ok, setOk] = useState("");
@@ -187,10 +174,10 @@ export default function QuotesPage() {
   }
 
   const serviceTabs = [
-    { key: "all", label: "الكل" },
+    { key: "all", label: i18n.service("all") },
     ...enabledServices.map((key) => ({
       key,
-      label: SERVICE_LABEL[key] || key,
+      label: i18n.service(key),
     })),
   ];
 
@@ -202,7 +189,9 @@ export default function QuotesPage() {
 
         <div className="quotes-toolbar">
           <strong>
-            {visible.length} من {rows.length} عرض
+            {i18n.lang === "en"
+              ? `${visible.length} of ${rows.length} quotes`
+              : `${visible.length} من ${rows.length} عرض`}
           </strong>
           <p className="quotes-hint">
             العروض تُحذف تلقائياً بعد 3 أيام ما لم تتحول إلى حجز، حتى لا تُثقل الموقع.
@@ -233,15 +222,15 @@ export default function QuotesPage() {
               <table className="quotes-table">
                 <thead>
                   <tr>
-                    <th>العميل</th>
-                    <th>الخدمة</th>
-                    <th>المسار</th>
-                    <th>الوصف</th>
-                    <th>البيع</th>
-                    <th>التكلفة</th>
-                    <th>الربح</th>
-                    <th>الحالة</th>
-                    <th>أُنشئ</th>
+                    <th>{i18n.c("customer")}</th>
+                    <th>{i18n.lang === "en" ? "Service" : "الخدمة"}</th>
+                    <th>{i18n.c("route")}</th>
+                    <th>{i18n.lang === "en" ? "Description" : "الوصف"}</th>
+                    <th>{i18n.lang === "en" ? "Sell" : "البيع"}</th>
+                    <th>{i18n.lang === "en" ? "Cost" : "التكلفة"}</th>
+                    <th>{i18n.lang === "en" ? "Profit" : "الربح"}</th>
+                    <th>{i18n.c("status")}</th>
+                    <th>{i18n.c("created")}</th>
                     <th />
                   </tr>
                 </thead>
@@ -252,17 +241,19 @@ export default function QuotesPage() {
                       <tr key={row.id}>
                         <td className="customer">
                           <strong>{customerLabel(row)}</strong>
-                          <small>{customerDetail(row)}</small>
+                          <small className="dash-ltr" dir="ltr">{customerDetail(row)}</small>
                         </td>
                         <td>
                           <div className="quotes-services">
                             {services.map((s) => (
-                              <span key={s}>{SERVICE_LABEL[s] || s}</span>
+                              <span key={s}>{i18n.service(s)}</span>
                             ))}
                           </div>
                         </td>
                         <td className="route">
-                          {row.inquiry?.origin || "؟"} → {row.inquiry?.destination || "؟"}
+                          <DashLtr>
+                            {row.inquiry?.origin || "؟"} → {row.inquiry?.destination || "؟"}
+                          </DashLtr>
                         </td>
                         <td className="desc">{row.items?.[0]?.description || "—"}</td>
                         <td>{formatMoneyMinor(row.totalSellAmount, row.currency)}</td>
@@ -279,8 +270,8 @@ export default function QuotesPage() {
                         <td>
                           <span className={`quotes-status${isExpired(row) ? " expired" : ""}`}>
                             {isExpired(row)
-                              ? "منتهي"
-                              : STATUS_LABEL[row.status] || row.status}
+                              ? i18n.status("expired")
+                              : i18n.status(row.status)}
                           </span>
                         </td>
                         <td>{formatDate(row.createdAt)}</td>
@@ -291,25 +282,25 @@ export default function QuotesPage() {
                               className="btn secondary"
                               onClick={() => void saveContact(row)}
                             >
-                              حفظ العميل
+                              {i18n.c("saveCustomer")}
                             </button>
                             <button
                               type="button"
                               className="btn secondary"
                               onClick={() => send(row.id)}
                             >
-                              إرسال
+                              {i18n.c("send")}
                             </button>
                             <button type="button" className="btn" onClick={() => book(row.id)}>
-                              حجز
+                              {i18n.c("book")}
                             </button>
                             <button
                               type="button"
                               className="btn danger"
                               onClick={() => remove(row.id)}
-                              title="حذف عرض السعر"
+                              title={i18n.c("delete")}
                             >
-                              حذف
+                              {i18n.c("delete")}
                             </button>
                           </div>
                         </td>

@@ -12,6 +12,7 @@ import {
 } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
+import { dashLocaleTag, useDashI18n } from "@/lib/dashboard-i18n";
 import { ChatOfferBody } from "@/components/ChatOfferBody";
 import { apiFetch, apiUpload } from "@/lib/api";
 import { encodeChatAttachment } from "@watesly-travel/shared";
@@ -99,10 +100,10 @@ function dayKey(value: string) {
   });
 }
 
-function timeLabel(value: string) {
+function timeLabel(value: string, lang: "ar" | "en" = "ar") {
   const d = new Date(value);
   if (Number.isNaN(d.getTime())) return "";
-  return d.toLocaleTimeString("ar-KW", { hour: "2-digit", minute: "2-digit" });
+  return d.toLocaleTimeString(dashLocaleTag(lang), { hour: "2-digit", minute: "2-digit" });
 }
 
 function limitInputValue(value: number | null | undefined) {
@@ -120,6 +121,8 @@ function parseLimit(raw: string): number | null {
 
 function AssistantPageInner() {
   const router = useRouter();
+  const i18n = useDashI18n();
+  const en = i18n.lang === "en";
   const search = useSearchParams();
   const wantedId = search.get("threadId") || "";
 
@@ -473,18 +476,18 @@ function AssistantPageInner() {
             </div>
             <input
               className="ta-search"
-              placeholder="ابحث بالاسم أو الهاتف أو المحادثة..."
+              placeholder={en ? "Search by name, phone, or chat..." : "ابحث بالاسم أو الهاتف أو المحادثة..."}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
             />
             <div className="ta-filters">
               {(
                 [
-                  ["all", `الكل (${statusCounts.all})`],
-                  ["waiting", `بانتظار الرد (${statusCounts.waiting})`],
-                  ["open", `نشطة (${statusCounts.open})`],
-                  ["handed_off", `محوّلة (${statusCounts.handed_off})`],
-                  ["exhausted", `نفد الرصيد (${statusCounts.exhausted})`],
+                  ["all", `${en ? "All" : "الكل"} (${statusCounts.all})`],
+                  ["waiting", `${en ? "Waiting" : "بانتظار الرد"} (${statusCounts.waiting})`],
+                  ["open", `${en ? "Active" : "نشطة"} (${statusCounts.open})`],
+                  ["handed_off", `${en ? "Handed off" : "محوّلة"} (${statusCounts.handed_off})`],
+                  ["exhausted", `${en ? "Out of credit" : "نفد الرصيد"} (${statusCounts.exhausted})`],
                 ] as const
               ).map(([key, label]) => (
                 <button
@@ -500,11 +503,11 @@ function AssistantPageInner() {
             <div className="ta-filters">
               {(
                 [
-                  ["", "كل القنوات"],
-                  ["dashboard", "لوحة التحكم"],
-                  ["whatsapp", "واتساب"],
-                  ["web_chat", "ويب"],
-                  ["telegram", "تلجرام"],
+                  ["", en ? "All channels" : "كل القنوات"],
+                  ["dashboard", en ? "Dashboard" : "لوحة التحكم"],
+                  ["whatsapp", en ? "WhatsApp" : "واتساب"],
+                  ["web_chat", en ? "Web" : "ويب"],
+                  ["telegram", en ? "Telegram" : "تلجرام"],
                 ] as const
               ).map(([key, label]) => (
                 <button
@@ -531,7 +534,7 @@ function AssistantPageInner() {
                 >
                   <span className="ta-thread-top">
                     <strong>{row.customerLabel || row.contactName || row.contactPhone || row.title || "محادثة جديدة"}</strong>
-                    <em>{timeLabel(row.updatedAt)}</em>
+                    <em>{timeLabel(row.updatedAt, i18n.lang)}</em>
                   </span>
                   {row.contactName && row.contactPhone ? (
                     <span className="ta-thread-who">{row.contactPhone}</span>
@@ -633,7 +636,7 @@ function AssistantPageInner() {
                       <div className="ta-bubble">
                         <ChatOfferBody content={row.content} role={row.role} />
                         <em>
-                          {timeLabel(row.createdAt)}
+                          {timeLabel(row.createdAt, i18n.lang)}
                           {row.role !== "user" && row.model ? ` · ${row.model}` : ""}
                         </em>
                       </div>

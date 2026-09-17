@@ -1094,81 +1094,81 @@ export default function InboxClient() {
                     الكتالوج
                   </Link>
                 </div>
-                {isOpen ? (
-                  <>
-                    {pendingFile ? (
-                      <div className="wi-pending-file">
-                        {pendingPreview ? (
-                          <img src={pendingPreview} alt="" />
-                        ) : (
-                          <span>📎 {pendingFile.name}</span>
-                        )}
-                        <button type="button" onClick={clearPendingFile} title="إزالة">
-                          ×
-                        </button>
-                      </div>
-                    ) : null}
-                    <div className="wi-composer-row">
-                      <input
-                        ref={fileRef}
-                        type="file"
-                        hidden
-                        accept="image/jpeg,image/png,image/webp,video/mp4,video/3gpp,application/pdf,.pdf"
-                        onChange={(e) => onPickFile(e.target.files?.[0] || null)}
-                      />
-                      <button
-                        type="button"
-                        className="wa-composer-tool"
-                        title="إرفاق صورة أو PDF أو فيديو"
-                        disabled={busy}
-                        onClick={() => fileRef.current?.click()}
-                      >
-                        📎
-                      </button>
-                      <button
-                        type="button"
-                        className="wa-composer-tool"
-                        title="محاكاة كعميل"
-                        disabled={busy || !reply.trim()}
-                        onClick={sendAsCustomer}
-                      >
-                        ◐
-                      </button>
-                      <div className="wa-composer-input-wrap">
-                        <textarea
-                          rows={4}
-                          value={reply}
-                          onChange={(e) => setReply(e.target.value)}
-                          placeholder={
-                            pendingFile
-                              ? "تعليق على الملف (اختياري)"
-                              : `اكتب رسالة عبر ${CHANNEL_KIND[activeKind] || "القناة"}`
-                          }
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter" && !e.shiftKey) {
-                              e.preventDefault();
-                              void sendAgentReply();
-                            }
-                          }}
-                        />
-                      </div>
-                      <button
-                        type="button"
-                        className="wa-send-btn"
-                        disabled={busy || (!reply.trim() && !pendingFile)}
-                        onClick={sendAgentReply}
-                        title="إرسال"
-                      >
-                        ➤
-                      </button>
-                    </div>
-                  </>
-                ) : (
+                {pendingFile && isOpen ? (
+                  <div className="wi-pending-file">
+                    {pendingPreview ? (
+                      <img src={pendingPreview} alt="" />
+                    ) : (
+                      <span>📎 {pendingFile.name}</span>
+                    )}
+                    <button type="button" onClick={clearPendingFile} title="إزالة">
+                      ×
+                    </button>
+                  </div>
+                ) : null}
+                <div className="wi-composer-row">
+                  <input
+                    ref={fileRef}
+                    type="file"
+                    hidden
+                    accept="image/jpeg,image/png,image/webp,video/mp4,video/3gpp,application/pdf,.pdf"
+                    onChange={(e) => onPickFile(e.target.files?.[0] || null)}
+                  />
+                  <button
+                    type="button"
+                    className="wa-composer-tool"
+                    title="إرفاق صورة أو PDF أو فيديو"
+                    disabled={busy || !isOpen}
+                    onClick={() => fileRef.current?.click()}
+                  >
+                    📎
+                  </button>
+                  <button
+                    type="button"
+                    className="wa-composer-tool"
+                    title="محاكاة كعميل"
+                    disabled={busy || !isOpen || !reply.trim()}
+                    onClick={sendAsCustomer}
+                  >
+                    ◐
+                  </button>
+                  <div className="wa-composer-input-wrap">
+                    <textarea
+                      rows={4}
+                      value={reply}
+                      onChange={(e) => setReply(e.target.value)}
+                      disabled={!isOpen}
+                      placeholder={
+                        !isOpen
+                          ? "انتهت نافذة 24 ساعة — استخدم قالباً معتمداً أعلاه"
+                          : pendingFile
+                            ? "تعليق على الملف (اختياري)"
+                            : `اكتب رسالة عبر ${CHANNEL_KIND[activeKind] || "القناة"}`
+                      }
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && !e.shiftKey) {
+                          e.preventDefault();
+                          void sendAgentReply();
+                        }
+                      }}
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    className="wa-send-btn"
+                    disabled={busy || !isOpen || (!reply.trim() && !pendingFile)}
+                    onClick={sendAgentReply}
+                    title="إرسال"
+                  >
+                    ➤
+                  </button>
+                </div>
+                {!isOpen ? (
                   <p className="wi-composer-hint">
                     انتهت نافذة 24 ساعة — استخدم قالب واتساب معتمد أعلاه، أو انتظر
                     رسالة واردة من العميل.
                   </p>
-                )}
+                ) : null}
               </footer>
             </>
           )}

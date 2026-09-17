@@ -1,6 +1,7 @@
 .quotes-suite {
   display: grid;
   gap: 0.75rem;
+  min-width: 0;
 }
 
 .quotes-toolbar {
@@ -68,6 +69,7 @@
 .quotes-table-scroll {
   overflow-x: auto;
   max-width: 100%;
+  min-width: 0;
 }
 
 .quotes-table {
@@ -107,22 +109,10 @@
 
 .quotes-table th:last-child,
 .quotes-table td:last-child {
-  position: sticky;
-  left: 0;
-  z-index: 1;
-  background: #fff;
-  box-shadow: 8px 0 10px rgba(15, 51, 64, 0.06);
-}
-
-.quotes-table th:last-child {
-  background: #0f3340;
+  min-width: 16rem;
 }
 
 .quotes-table tbody tr:nth-child(even) td {
-  background: #f7faf9;
-}
-
-.quotes-table tbody tr:nth-child(even) td:last-child {
   background: #f7faf9;
 }
 
@@ -169,7 +159,7 @@
 
 .quotes-actions {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 0.25rem;
 }
 

@@ -1051,4 +1051,124 @@
   }
 }
 
+.watesly-inbox .wi-composer.wa-composer,
+.wi-composer.wa-composer {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+  align-items: stretch;
+  width: 100%;
+  padding: 0.75rem 0.9rem 0.95rem;
+}
+
+.watesly-inbox .wi-template-bar,
+.watesly-inbox .wi-composer-row,
+.watesly-inbox .wi-pending-file,
+.watesly-inbox .wi-composer-hint {
+  grid-column: 1 / -1;
+  width: 100%;
+}
+
+.wi-composer-row {
+  width: 100%;
+  align-items: stretch;
+}
+
+.watesly-inbox .wi-composer .wa-composer-tool,
+.wa-composer-tool {
+  width: 3.1rem;
+  min-height: 3.1rem;
+  height: auto;
+  align-self: stretch;
+  border-radius: 12px;
+  background: #fff;
+  color: #0f3340;
+  border: 1px solid rgba(15, 51, 64, 0.14);
+  box-shadow: 0 1px 2px rgba(11, 20, 26, 0.06);
+}
+
+.watesly-inbox .wi-composer .wa-composer-tool:hover:not(:disabled),
+.wa-composer-tool:hover:not(:disabled) {
+  background: #fff;
+  color: #0f3340;
+  border-color: rgba(216, 163, 94, 0.55);
+}
+
+.watesly-inbox .wa-composer-input-wrap,
+.wa-composer-input-wrap {
+  border-radius: 14px;
+  min-height: 6.4rem;
+  padding: 0.4rem 0.9rem;
+  background: #fff;
+}
+
+.watesly-inbox .wa-composer-input-wrap textarea,
+.watesly-inbox .wi-composer textarea,
+.wa-composer-input-wrap textarea,
+.wi-composer textarea {
+  min-height: 6rem;
+  max-height: 14rem;
+  font-size: 16px;
+}
+
+.wi-icon-btn.danger {
+  color: #b91c1c;
+}
+
+.wi-traveler-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.55rem;
+  padding: 0 0.85rem 0.65rem;
+}
+
+.wi-info-card {
+  display: grid;
+  gap: 0.18rem;
+  padding: 0.7rem 0.75rem;
+  background: #fff;
+  border: 1px solid rgba(15, 51, 64, 0.1);
+  border-radius: 12px;
+  box-shadow: 0 1px 2px rgba(7, 24, 34, 0.04);
+}
+
+.wi-info-card span {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #6b7f7c;
+}
+
+.wi-info-card strong {
+  font-size: 0.86rem;
+  color: #0f3340;
+  word-break: break-word;
+}
+
+.wi-info-card .ltr {
+  direction: ltr;
+  unicode-bidi: isolate;
+  text-align: right;
+}
+
+.wi-details-danger {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.4rem;
+  margin-top: 0.55rem;
+}
+
+.wi-btn.danger {
+  background: #fff;
+  border: 1px solid #fecaca;
+  color: #b91c1c;
+}
+
+.wi-details-section label {
+  display: grid;
+  gap: 0.28rem;
+  padding: 0.55rem 0.65rem;
+  background: #fff;
+  border: 1px solid rgba(15, 51, 64, 0.08);
+  border-radius: 10px;
+}
+
 /* ===== WhatsApp channels (reuses existing theme tokens only) ===== */

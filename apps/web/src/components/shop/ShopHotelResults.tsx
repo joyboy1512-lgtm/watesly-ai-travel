@@ -56,6 +56,8 @@ type Props = {
   searchDestinationCode?: string;
   initialVisibleCount?: number;
   onVisibleCountChange?: (n: number) => void;
+  /** Keep the parent search engine; only render shop filters + cards. */
+  hideSearchBar?: boolean;
 };
 
 export function ShopHotelResults(props: Props) {
@@ -117,24 +119,26 @@ export function ShopHotelResults(props: Props) {
 
   return (
     <section className="shop-hotel-results">
-      <ShopHotelResultsBar
-        stayQuery={props.stayQuery}
-        departDate={props.departDate}
-        returnDate={props.returnDate}
-        adults={props.adults}
-        children={props.children}
-        rooms={props.rooms}
-        loading={props.loading}
-        onStayQueryChange={props.onStayQueryChange}
-        onStayPick={props.onStayPick}
-        onDepartDateChange={props.onDepartDateChange}
-        onReturnDateChange={props.onReturnDateChange}
-        onAdultsChange={props.onAdultsChange}
-        onChildrenChange={props.onChildrenChange}
-        onRoomsChange={props.onRoomsChange}
-        onSearch={props.onSearch}
-        searchCities={props.searchCities}
-      />
+      {props.hideSearchBar ? null : (
+        <ShopHotelResultsBar
+          stayQuery={props.stayQuery}
+          departDate={props.departDate}
+          returnDate={props.returnDate}
+          adults={props.adults}
+          children={props.children}
+          rooms={props.rooms}
+          loading={props.loading}
+          onStayQueryChange={props.onStayQueryChange}
+          onStayPick={props.onStayPick}
+          onDepartDateChange={props.onDepartDateChange}
+          onReturnDateChange={props.onReturnDateChange}
+          onAdultsChange={props.onAdultsChange}
+          onChildrenChange={props.onChildrenChange}
+          onRoomsChange={props.onRoomsChange}
+          onSearch={props.onSearch}
+          searchCities={props.searchCities}
+        />
+      )}
 
       <div className="shop-hotel-results-head">
         <h2>

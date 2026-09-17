@@ -335,7 +335,7 @@ function InboxIdleChat() {
             📎
           </button>
           <div className="wa-composer-input-wrap">
-            <textarea rows={1} disabled placeholder="اكتب رسالة عبر واتساب" />
+            <textarea rows={4} disabled placeholder="اكتب رسالة عبر واتساب" />
           </div>
           <button type="button" className="wa-send-btn" disabled title="إرسال">
             ➤
@@ -353,16 +353,31 @@ function InboxIdleDetails() {
         <div className="wi-avatar xl">WG</div>
         <h3>WeekendGate</h3>
         <p className="wi-phone">+965 · قناة واتساب</p>
-        <div className="wi-details-actions">
-          <span className="wi-btn ghost">حساب القناة</span>
-          <span className="wi-btn ghost">القنوات</span>
-          <span className="wi-btn ghost">القوالب</span>
-          <span className="wi-btn ghost">الحملات</span>
-        </div>
-        <div className="wi-details-channel">
-          <strong>قناة الإرسال</strong>
-          <p>واتساب · جاهزة للرد بعد اختيار محادثة من القائمة</p>
-        </div>
+      </div>
+      <div className="wi-traveler-grid">
+        <article className="wi-info-card">
+          <span>حساب القناة</span>
+          <strong>واتساب · جاهز للرد</strong>
+        </article>
+        <article className="wi-info-card">
+          <span>القنوات</span>
+          <strong>واتساب · تلجرام</strong>
+        </article>
+        <article className="wi-info-card">
+          <span>القوالب</span>
+          <strong>قوالب معتمدة للإرسال</strong>
+        </article>
+        <article className="wi-info-card">
+          <span>الحملات</span>
+          <strong>حملات واتساب النشطة</strong>
+        </article>
+      </div>
+      <div className="wi-details-section">
+        <h4>اختر محادثة</h4>
+        <p className="wi-summary">
+          اختر عميلاً من القائمة لعرض بطاقات المسافر، وإلغاء أو حذف المحادثة،
+          وإرسال رسالة أو مرفق.
+        </p>
       </div>
       <div className="wi-details-section">
         <h4>إدارة المحادثة</h4>
@@ -705,6 +720,23 @@ export default function InboxClient() {
     }
   }
 
+  async function removeConversation() {
+    if (!detail) return;
+    const ok = window.confirm("حذف هذه المحادثة نهائياً؟ لا يمكن التراجع.");
+    if (!ok) return;
+    setBusy(true);
+    setError("");
+    try {
+      await apiFetch(`/conversations/${detail.id}`, { method: "DELETE" });
+      router.replace("/dashboard/conversations");
+      await loadList();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "فشل حذف المحادثة");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function handoff() {
     if (!detail) return;
     await apiFetch(`/conversations/${detail.id}/handoff`, {
@@ -905,6 +937,24 @@ export default function InboxClient() {
                   >
                     ↺
                   </button>
+                  <button
+                    type="button"
+                    className="wi-icon-btn"
+                    title="إلغاء المحادثة"
+                    disabled={busy || detail.status === "closed"}
+                    onClick={() => void updateStatus("closed")}
+                  >
+                    ✕
+                  </button>
+                  <button
+                    type="button"
+                    className="wi-icon-btn danger"
+                    title="حذف المحادثة"
+                    disabled={busy}
+                    onClick={() => void removeConversation()}
+                  >
+                    ⌫
+                  </button>
                 </div>
               </header>
 
@@ -1044,81 +1094,81 @@ export default function InboxClient() {
                     الكتالوج
                   </Link>
                 </div>
-                {isOpen ? (
-                  <>
-                    {pendingFile ? (
-                      <div className="wi-pending-file">
-                        {pendingPreview ? (
-                          <img src={pendingPreview} alt="" />
-                        ) : (
-                          <span>📎 {pendingFile.name}</span>
-                        )}
-                        <button type="button" onClick={clearPendingFile} title="إزالة">
-                          ×
-                        </button>
-                      </div>
-                    ) : null}
-                    <div className="wi-composer-row">
-                      <input
-                        ref={fileRef}
-                        type="file"
-                        hidden
-                        accept="image/jpeg,image/png,image/webp,video/mp4,video/3gpp,application/pdf,.pdf"
-                        onChange={(e) => onPickFile(e.target.files?.[0] || null)}
-                      />
-                      <button
-                        type="button"
-                        className="wa-composer-tool"
-                        title="إرفاق صورة أو PDF أو فيديو"
-                        disabled={busy}
-                        onClick={() => fileRef.current?.click()}
-                      >
-                        📎
-                      </button>
-                      <button
-                        type="button"
-                        className="wa-composer-tool"
-                        title="محاكاة كعميل"
-                        disabled={busy || !reply.trim()}
-                        onClick={sendAsCustomer}
-                      >
-                        ◐
-                      </button>
-                      <div className="wa-composer-input-wrap">
-                        <textarea
-                          rows={1}
-                          value={reply}
-                          onChange={(e) => setReply(e.target.value)}
-                          placeholder={
-                            pendingFile
-                              ? "تعليق على الملف (اختياري)"
-                              : `اكتب رسالة عبر ${CHANNEL_KIND[activeKind] || "القناة"}`
-                          }
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter" && !e.shiftKey) {
-                              e.preventDefault();
-                              void sendAgentReply();
-                            }
-                          }}
-                        />
-                      </div>
-                      <button
-                        type="button"
-                        className="wa-send-btn"
-                        disabled={busy || (!reply.trim() && !pendingFile)}
-                        onClick={sendAgentReply}
-                        title="إرسال"
-                      >
-                        ➤
-                      </button>
-                    </div>
-                  </>
-                ) : (
+                {pendingFile && isOpen ? (
+                  <div className="wi-pending-file">
+                    {pendingPreview ? (
+                      <img src={pendingPreview} alt="" />
+                    ) : (
+                      <span>📎 {pendingFile.name}</span>
+                    )}
+                    <button type="button" onClick={clearPendingFile} title="إزالة">
+                      ×
+                    </button>
+                  </div>
+                ) : null}
+                <div className="wi-composer-row">
+                  <input
+                    ref={fileRef}
+                    type="file"
+                    hidden
+                    accept="image/jpeg,image/png,image/webp,video/mp4,video/3gpp,application/pdf,.pdf"
+                    onChange={(e) => onPickFile(e.target.files?.[0] || null)}
+                  />
+                  <button
+                    type="button"
+                    className="wa-composer-tool"
+                    title="إرفاق صورة أو PDF أو فيديو"
+                    disabled={busy || !isOpen}
+                    onClick={() => fileRef.current?.click()}
+                  >
+                    📎
+                  </button>
+                  <button
+                    type="button"
+                    className="wa-composer-tool"
+                    title="محاكاة كعميل"
+                    disabled={busy || !isOpen || !reply.trim()}
+                    onClick={sendAsCustomer}
+                  >
+                    ◐
+                  </button>
+                  <div className="wa-composer-input-wrap">
+                    <textarea
+                      rows={4}
+                      value={reply}
+                      onChange={(e) => setReply(e.target.value)}
+                      disabled={!isOpen}
+                      placeholder={
+                        !isOpen
+                          ? "انتهت نافذة 24 ساعة — استخدم قالباً معتمداً أعلاه"
+                          : pendingFile
+                            ? "تعليق على الملف (اختياري)"
+                            : `اكتب رسالة عبر ${CHANNEL_KIND[activeKind] || "القناة"}`
+                      }
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && !e.shiftKey) {
+                          e.preventDefault();
+                          void sendAgentReply();
+                        }
+                      }}
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    className="wa-send-btn"
+                    disabled={busy || !isOpen || (!reply.trim() && !pendingFile)}
+                    onClick={sendAgentReply}
+                    title="إرسال"
+                  >
+                    ➤
+                  </button>
+                </div>
+                {!isOpen ? (
                   <p className="wi-composer-hint">
                     انتهت نافذة 24 ساعة — استخدم قالب واتساب معتمد أعلاه، أو انتظر
                     رسالة واردة من العميل.
                   </p>
-                )}
+                ) : null}
               </footer>
             </>
           )}
@@ -1134,59 +1184,37 @@ export default function InboxClient() {
                 </div>
                 <h3>{detail.contact.name || detail.contact.waId}</h3>
                 <p className="wi-phone">{detail.contact.waId}</p>
-                <div className="wi-details-actions">
-                  <button
-                    type="button"
-                    className="wi-btn ghost"
-                    onClick={() => router.push("/dashboard/whatsapp")}
-                  >
-                    حساب القناة
-                  </button>
-                  <button
-                    type="button"
-                    className="wi-btn ghost"
-                    onClick={() => router.push("/dashboard/channels")}
-                  >
-                    القنوات
-                  </button>
-                  <button
-                    type="button"
-                    className="wi-btn ghost"
-                    onClick={() => router.push("/dashboard/templates")}
-                  >
-                    القوالب
-                  </button>
-                  <button
-                    type="button"
-                    className="wi-btn ghost"
-                    onClick={() => router.push("/dashboard/campaigns")}
-                  >
-                    الحملات
-                  </button>
-                  <button
-                    type="button"
-                    className="wi-btn ghost"
-                    onClick={() => router.push("/dashboard/contacts")}
-                  >
-                    ملف العميل
-                  </button>
-                  <button
-                    type="button"
-                    className="wi-btn ghost"
-                    onClick={() => router.push("/dashboard/inquiries")}
-                  >
-                    استعلام السفر
-                  </button>
-                </div>
-                <div className="wi-details-channel">
-                  <strong>قناة الإرسال</strong>
-                  <p>
-                    {channelLabel(detail)}
-                    {detail.whatsappAccount?.phoneNumberId
-                      ? ` · ${detail.whatsappAccount.phoneNumberId}`
-                      : " · غير مربوطة (ستُستخدم القناة الافتراضية عند الرد)"}
-                  </p>
-                </div>
+              </div>
+
+              <div className="wi-traveler-grid">
+                <article className="wi-info-card">
+                  <span>الاسم</span>
+                  <strong>{detail.contact.name || "بدون اسم"}</strong>
+                </article>
+                <article className="wi-info-card">
+                  <span>الهاتف</span>
+                  <strong className="ltr">{detail.contact.waId}</strong>
+                </article>
+                <article className="wi-info-card">
+                  <span>البريد</span>
+                  <strong>{detail.contact.email || "—"}</strong>
+                </article>
+                <article className="wi-info-card">
+                  <span>حالة المحادثة</span>
+                  <strong>{statusLabel}</strong>
+                </article>
+                <article className="wi-info-card">
+                  <span>القناة</span>
+                  <strong>{channelLabel(detail)}</strong>
+                </article>
+                <article className="wi-info-card">
+                  <span>المسؤول</span>
+                  <strong>
+                    {detail.assigneeType === "human"
+                      ? session?.user.name || "موظف"
+                      : "روبوت"}
+                  </strong>
+                </article>
               </div>
 
               <div className="wi-details-section">
@@ -1229,6 +1257,24 @@ export default function InboxClient() {
                     <option value="عاجلة">عاجلة</option>
                   </select>
                 </label>
+                <div className="wi-details-danger">
+                  <button
+                    type="button"
+                    className="wi-btn ghost"
+                    disabled={busy || detail.status === "closed"}
+                    onClick={() => void updateStatus("closed")}
+                  >
+                    إلغاء المحادثة
+                  </button>
+                  <button
+                    type="button"
+                    className="wi-btn danger"
+                    disabled={busy}
+                    onClick={() => void removeConversation()}
+                  >
+                    حذف المحادثة
+                  </button>
+                </div>
               </div>
 
               <div className="wi-details-section">

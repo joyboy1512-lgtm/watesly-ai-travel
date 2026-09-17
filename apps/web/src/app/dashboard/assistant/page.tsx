@@ -41,6 +41,12 @@ type ThreadRow = {
   createdAt: string;
   preview?: string;
   conversationId?: string | null;
+  contactName?: string | null;
+  contactPhone?: string | null;
+  contactEmail?: string | null;
+  customerLabel?: string | null;
+  waitingReply?: boolean;
+  bucket?: "open" | "waiting" | "handed_off" | "exhausted";
 };
 
 type UsageReport = {
@@ -128,6 +134,7 @@ function AssistantPageInner() {
   const [customFrom, setCustomFrom] = useState("");
   const [customTo, setCustomTo] = useState("");
   const [channelFilter, setChannelFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"all" | "waiting" | "open" | "handed_off" | "exhausted">("all");
   const [query, setQuery] = useState("");
   const [text, setText] = useState("");
   const [error, setError] = useState("");
@@ -213,14 +220,41 @@ function AssistantPageInner() {
   }, [messages, busy]);
 
   const filteredThreads = useMemo(() => {
-    const q = query.trim();
-    if (!q) return threads;
-    return threads.filter((row) =>
-      `${row.title || ""} ${row.preview || ""} ${CHANNEL_LABEL[row.channel] || row.channel}`
+    const q = query.trim().toLowerCase();
+    return threads.filter((row) => {
+      const bucket =
+        row.bucket ||
+        (row.status === "handed_off"
+          ? "handed_off"
+          : row.exhausted
+            ? "exhausted"
+            : row.waitingReply
+              ? "waiting"
+              : "open");
+      if (statusFilter !== "all" && bucket !== statusFilter) return false;
+      if (!q) return true;
+      return `${row.customerLabel || ""} ${row.title || ""} ${row.contactName || ""} ${row.contactPhone || ""} ${row.preview || ""} ${CHANNEL_LABEL[row.channel] || row.channel}`
         .toLowerCase()
-        .includes(q.toLowerCase()),
-    );
-  }, [threads, query]);
+        .includes(q);
+    });
+  }, [threads, query, statusFilter]);
+
+  const statusCounts = useMemo(() => {
+    const counts = { all: threads.length, waiting: 0, open: 0, handed_off: 0, exhausted: 0 };
+    for (const row of threads) {
+      const bucket =
+        row.bucket ||
+        (row.status === "handed_off"
+          ? "handed_off"
+          : row.exhausted
+            ? "exhausted"
+            : row.waitingReply
+              ? "waiting"
+              : "open");
+      if (bucket in counts) counts[bucket as keyof typeof counts] += 1;
+    }
+    return counts;
+  }, [threads]);
 
   const enabledCount = useMemo(
     () => status?.tools.filter((row) => row.enabled).length || 0,
@@ -439,14 +473,34 @@ function AssistantPageInner() {
             </div>
             <input
               className="ta-search"
-              placeholder="بحث في المحادثات..."
+              placeholder="ابحث بالاسم أو الهاتف أو المحادثة..."
               value={query}
               onChange={(e) => setQuery(e.target.value)}
             />
             <div className="ta-filters">
               {(
                 [
-                  ["", "الكل"],
+                  ["all", `الكل (${statusCounts.all})`],
+                  ["waiting", `بانتظار الرد (${statusCounts.waiting})`],
+                  ["open", `نشطة (${statusCounts.open})`],
+                  ["handed_off", `محوّلة (${statusCounts.handed_off})`],
+                  ["exhausted", `نفد الرصيد (${statusCounts.exhausted})`],
+                ] as const
+              ).map(([key, label]) => (
+                <button
+                  key={key}
+                  type="button"
+                  className={`ta-filter${statusFilter === key ? " active" : ""}`}
+                  onClick={() => setStatusFilter(key)}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            <div className="ta-filters">
+              {(
+                [
+                  ["", "كل القنوات"],
                   ["dashboard", "لوحة التحكم"],
                   ["whatsapp", "واتساب"],
                   ["web_chat", "ويب"],
@@ -454,7 +508,7 @@ function AssistantPageInner() {
                 ] as const
               ).map(([key, label]) => (
                 <button
-                  key={key || "all"}
+                  key={key || "all-ch"}
                   type="button"
                   className={`ta-filter${channelFilter === key ? " active" : ""}`}
                   onClick={() => setChannelFilter(key)}
@@ -472,18 +526,28 @@ function AssistantPageInner() {
                 <button
                   key={row.id}
                   type="button"
-                  className={`ta-thread${row.id === threadId ? " active" : ""}`}
+                  className={`ta-thread${row.id === threadId ? " active" : ""}${row.waitingReply ? " waiting" : ""}${row.status === "handed_off" ? " handed" : ""}${row.exhausted ? " exhausted" : ""}`}
                   onClick={() => void selectThread(row.id)}
                 >
                   <span className="ta-thread-top">
-                    <strong>{row.title || "محادثة جديدة"}</strong>
+                    <strong>{row.customerLabel || row.contactName || row.contactPhone || row.title || "محادثة جديدة"}</strong>
                     <em>{timeLabel(row.updatedAt)}</em>
                   </span>
+                  {row.contactName && row.contactPhone ? (
+                    <span className="ta-thread-who">{row.contactPhone}</span>
+                  ) : null}
                   <span className="ta-thread-preview">{row.preview || "بدون رسائل بعد"}</span>
                   <span className="ta-thread-meta">
                     <i>{CHANNEL_LABEL[row.channel] || row.channel}</i>
-                    <i className={row.status === "handed_off" ? "warn" : ""}>
-                      {row.status === "handed_off" ? "محوّلة لموظف" : formatUsd(row.spentUsd)}
+                    {row.contactPhone ? <i className="ta-phone">{row.contactPhone}</i> : null}
+                    <i className={row.status === "handed_off" || row.waitingReply ? "warn" : ""}>
+                      {row.status === "handed_off"
+                        ? "محوّلة لموظف"
+                        : row.exhausted
+                          ? "نفد الرصيد"
+                          : row.waitingReply
+                            ? "بانتظار الرد"
+                            : "نشطة"}
                     </i>
                   </span>
                 </button>
@@ -495,10 +559,13 @@ function AssistantPageInner() {
         <section className="ta-pane">
           <header className="ta-pane-head">
             <div>
-              <h3>{active?.title || "محادثة المساعد"}</h3>
+              <h3>{active?.customerLabel || active?.title || "محادثة المساعد"}</h3>
               <p>
-                {status?.provider || "…"} · {status?.model || "…"} ·{" "}
-                {CHANNEL_LABEL[active?.channel || "dashboard"]}
+                {active?.contactName || active?.contactPhone || active?.contactEmail
+                  ? [active.contactName, active.contactPhone, active.contactEmail].filter(Boolean).join(" · ")
+                  : "بدون بيانات عميل"}
+                {" · "}
+                {status?.provider || "…"} · {CHANNEL_LABEL[active?.channel || "dashboard"]}
               </p>
             </div>
             <div className={`ta-meter${handedOff ? " off" : ""}`}>
@@ -621,7 +688,7 @@ function AssistantPageInner() {
                       : "اكتب رسالة... Enter للإرسال، Shift+Enter لسطر جديد"
                 }
                 disabled={busy || handedOff}
-                rows={1}
+                rows={4}
               />
               <button
                 className="ta-send"

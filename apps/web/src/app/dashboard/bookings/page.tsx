@@ -1,8 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AppShell } from "@/components/AppShell";
+import {
+  formatIsoDateDisplay,
+  openNativeDatePicker,
+} from "@/components/dashboard/DashDateCell";
 import { apiFetch, getSession } from "@/lib/api";
 import { formatMoneyMinor } from "@/lib/format";
 import "../../bookings-suite.css";
@@ -21,6 +25,43 @@ type Booking = BookingInvoiceData & {
   totalCostAmount?: number;
   totalProfitAmount?: number;
 };
+
+function FilterDate({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  return (
+    <label
+      className="field bk-date-field"
+      onClick={(e) => {
+        if ((e.target as HTMLElement).tagName !== "INPUT") {
+          openNativeDatePicker(inputRef.current);
+        }
+      }}
+    >
+      <span>{label}</span>
+      <em className={`bk-date-value${value ? "" : " placeholder"}`}>
+        {value ? formatIsoDateDisplay(value) : "اختر التاريخ"}
+      </em>
+      <input
+        ref={inputRef}
+        type="date"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        onClick={(e) => {
+          e.stopPropagation();
+          openNativeDatePicker(inputRef.current);
+        }}
+      />
+    </label>
+  );
+}
 
 export default function BookingsPage() {
   const [rows, setRows] = useState<Booking[]>([]);
@@ -123,7 +164,7 @@ export default function BookingsPage() {
         </p>
         <div className="bk-filters">
           <div className="bk-filter-grid">
-            <label className="field">
+            <label className="field span-2">
               <span>بحث</span>
               <input
                 value={q}
@@ -158,51 +199,29 @@ export default function BookingsPage() {
                 <option value="flight">طيران</option>
                 <option value="hotel">فنادق</option>
                 <option value="transfer">نقل</option>
+                <option value="activity">أنشطة</option>
               </select>
             </label>
-          </div>
-
-          <div className="bk-range">
-            <label className="field">
-              <span>تاريخ الحجز من</span>
-              <input
-                type="date"
-                value={bookedFrom}
-                onChange={(e) => setBookedFrom(e.target.value)}
-              />
-            </label>
-            <span className="bk-range-sep">إلى</span>
-            <label className="field">
-              <span>تاريخ الحجز إلى</span>
-              <input
-                type="date"
-                value={bookedTo}
-                onChange={(e) => setBookedTo(e.target.value)}
-              />
-            </label>
-          </div>
-
-          <div className="bk-range">
-            <label className="field">
-              <span>تاريخ السفر من</span>
-              <input
-                type="date"
-                value={travelFrom}
-                onChange={(e) => setTravelFrom(e.target.value)}
-              />
-            </label>
-            <span className="bk-range-sep">إلى</span>
-            <label className="field">
-              <span>تاريخ السفر إلى</span>
-              <input
-                type="date"
-                value={travelTo}
-                onChange={(e) => setTravelTo(e.target.value)}
-              />
-            </label>
-          </div>
-
-          <div className="bk-range">
+            <FilterDate
+              label="تاريخ الحجز من"
+              value={bookedFrom}
+              onChange={setBookedFrom}
+            />
+            <FilterDate
+              label="تاريخ الحجز إلى"
+              value={bookedTo}
+              onChange={setBookedTo}
+            />
+            <FilterDate
+              label="تاريخ السفر من"
+              value={travelFrom}
+              onChange={setTravelFrom}
+            />
+            <FilterDate
+              label="تاريخ السفر إلى"
+              value={travelTo}
+              onChange={setTravelTo}
+            />
             <label className="field">
               <span>المسار من</span>
               <input
@@ -214,7 +233,6 @@ export default function BookingsPage() {
                 }}
               />
             </label>
-            <span className="bk-range-sep">إلى</span>
             <label className="field">
               <span>المسار إلى (اختياري)</span>
               <input
@@ -251,8 +269,8 @@ export default function BookingsPage() {
         {error ? <p className="error">{error}</p> : null}
       </div>
 
-      <div className="panel">
-        <table className="table">
+      <div className="panel bk-table-wrap">
+        <table className="table bk-table">
           <thead>
             <tr>
               <th>المرجع</th>

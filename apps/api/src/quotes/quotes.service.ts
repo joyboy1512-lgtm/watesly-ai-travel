@@ -35,10 +35,11 @@ export class QuotesService implements OnModuleInit, OnModuleDestroy {
   /** Remove quotes whose expiry datetime has passed (all organizations). */
   async purgeExpiredQuotes(organizationId?: string) {
     const now = new Date();
+    const threeDaysAgo = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000);
     const expired = await this.prisma.quote.findMany({
       where: {
         ...(organizationId ? { organizationId } : {}),
-        expiresAt: { lt: now },
+        OR: [{ expiresAt: { lt: now } }, { createdAt: { lt: threeDaysAgo } }],
       },
       select: {
         id: true,

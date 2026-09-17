@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Patch,
@@ -341,6 +342,28 @@ export class ConversationsController {
     });
 
     return row;
+  }
+
+  @Delete(":id")
+  @RequirePermissions("conversations.reply")
+  async remove(@CurrentUser() user: AuthUser, @Param("id") id: string) {
+    const existing = await this.prisma.conversation.findFirst({
+      where: { id, organizationId: user.organizationId },
+      select: { id: true },
+    });
+    if (!existing) throw new BadRequestException("المحادثة غير موجودة");
+
+    await this.prisma.conversation.delete({ where: { id } });
+
+    await this.audit.log({
+      organizationId: user.organizationId,
+      actorUserId: user.userId,
+      action: "conversations.delete",
+      entityType: "Conversation",
+      entityId: id,
+    });
+
+    return { ok: true };
   }
 
   @Post(":id/handoff")

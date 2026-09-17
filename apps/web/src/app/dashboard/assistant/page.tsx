@@ -165,29 +165,12 @@ const CITY_HINTS = [
   "Maldives",
 ];
 
-const CITY_STOP = /^(الفندق|المطار|الرحلة|التذكرة|فندق|مطار|رحلة|hello|مرحبا|السلام)$/i;
-
 function extractTripCity(text: string): string | null {
   const blob = text.replace(/\s+/g, " ").trim();
   if (!blob) return null;
+  const lower = blob.toLowerCase();
   for (const city of CITY_HINTS) {
-    if (blob.toLowerCase().includes(city.toLowerCase())) return city;
-  }
-  const directed = blob.match(
-    /(?:إلى|الى|إلي|to)\s+([A-Za-z\u0600-\u06FF][A-Za-z\u0600-\u06FF'’\- ]{1,28})/i,
-  );
-  if (directed?.[1]) {
-    const city = directed[1].trim().split(/[.,!؟?\n]/)[0]?.trim() || "";
-    const short = city.split(/\s+/).slice(0, 2).join(" ");
-    if (short.length >= 2 && short.length <= 24 && !CITY_STOP.test(short)) return short;
-  }
-  const staying = blob.match(
-    /(?:في|in)\s+([A-Za-z\u0600-\u06FF][A-Za-z\u0600-\u06FF'’\- ]{1,28})/i,
-  );
-  if (staying?.[1]) {
-    const city = staying[1].trim().split(/[.,!؟?\n]/)[0]?.trim() || "";
-    const short = city.split(/\s+/).slice(0, 2).join(" ");
-    if (short.length >= 2 && short.length <= 24 && !CITY_STOP.test(short)) return short;
+    if (lower.includes(city.toLowerCase())) return city;
   }
   return null;
 }
@@ -203,8 +186,6 @@ function threadTripLabel(row: ThreadRow, en: boolean): string {
 function threadDisplayName(row: ThreadRow, en: boolean): string {
   if (row.contactName) return row.contactName;
   if (row.contactPhone) return row.contactPhone;
-  const title = (row.title || "").trim();
-  if (title && title.length <= 28) return title;
   return en ? "New chat" : "محادثة جديدة";
 }
 

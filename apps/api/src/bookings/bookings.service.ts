@@ -1,8 +1,10 @@
 import { BadRequestException, Injectable } from "@nestjs/common";
 import {
   applyPricingRule,
+  priceCostWithRules,
   selectPricingRule,
   toCustomerVisible,
+  type PricingRuleInput,
 } from "@watesly-travel/pricing-engine";
 import {
   getFlightProvider,
@@ -75,6 +77,13 @@ export class BookingsService {
     private readonly audit: AuditService,
     private readonly pipeline: BotPipelineService,
   ) {}
+
+  private async loadActiveRules(organizationId: string): Promise<PricingRuleInput[]> {
+    return this.prisma.pricingRule.findMany({
+      where: { organizationId, isActive: true },
+      orderBy: { priority: "asc" },
+    });
+  }
 
   async createFromQuote(input: {
     organizationId: string;
@@ -589,10 +598,14 @@ export class BookingsService {
     const currency = input.offer.currency || "KWD";
     const details = (input.offer.details || {}) as Record<string, unknown>;
     const serviceType =
-      input.serviceType === "hotel" ? ("hotel" as const) : ("flight" as const);
-    const rules = await this.prisma.pricingRule.findMany({
-      where: { organizationId: input.organizationId, isActive: true },
-    });
+      input.serviceType === "hotel"
+        ? "hotel"
+        : input.serviceType === "transfer"
+          ? "transfer"
+          : input.serviceType === "activity"
+            ? "activity"
+            : "flight";
+    const rules = await this.loadActiveRules(input.organizationId);
     const costFromDetails = Number(details.costAmountMinor) || 0;
     const sellFromClient = Math.round(input.offer.sellAmountMinor);
     const rawStars = details.stars;
@@ -918,21 +931,31 @@ export class BookingsService {
       const message = err instanceof Error ? err.message : "تعذر البحث عن النقل";
       throw new BadRequestException(message);
     }
+    const rules = await this.loadActiveRules(input.organizationId);
     return {
       providerKey: provider.providerKey,
       providerName: provider.displayName,
       liveMode: provider.liveMode,
-      items: offers.map((offer) => ({
-        id: offer.providerOfferRef,
-        serviceType: "transfer" as const,
-        name: offer.description,
-        description: String(offer.raw.description || offer.description),
-        sellAmountMinor: offer.costAmountMinor,
-        costAmountMinor: offer.costAmountMinor,
-        currency: offer.currency,
-        expiresAt: offer.expiresAt,
-        details: offer.raw,
-      })),
+      items: offers.map((offer) => {
+        const pricing = priceCostWithRules({
+          costAmountMinor: offer.costAmountMinor,
+          currency: offer.currency,
+          serviceType: "transfer",
+          rules,
+          context: { city: input.city, provider: offer.providerKey },
+        });
+        return {
+          id: offer.providerOfferRef,
+          serviceType: "transfer" as const,
+          name: offer.description,
+          description: String(offer.raw.description || offer.description),
+          sellAmountMinor: pricing.sellAmountMinor,
+          costAmountMinor: pricing.costAmountMinor,
+          currency: offer.currency,
+          expiresAt: offer.expiresAt,
+          details: offer.raw,
+        };
+      }),
     };
   }
 
@@ -1023,21 +1046,31 @@ export class BookingsService {
       const message = err instanceof Error ? err.message : "تعذر البحث عن الأنشطة";
       throw new BadRequestException(message);
     }
+    const rules = await this.loadActiveRules(input.organizationId);
     return {
       providerKey: provider.providerKey,
       providerName: provider.displayName,
       liveMode: provider.liveMode,
-      items: offers.map((offer) => ({
-        id: offer.providerOfferRef,
-        serviceType: "activity" as const,
-        name: offer.description,
-        description: String(offer.raw.description || offer.description),
-        sellAmountMinor: offer.costAmountMinor,
-        costAmountMinor: offer.costAmountMinor,
-        currency: offer.currency,
-        expiresAt: offer.expiresAt,
-        details: offer.raw,
-      })),
+      items: offers.map((offer) => {
+        const pricing = priceCostWithRules({
+          costAmountMinor: offer.costAmountMinor,
+          currency: offer.currency,
+          serviceType: "activity",
+          rules,
+          context: { city: input.destination, destination: input.destination, provider: offer.providerKey },
+        });
+        return {
+          id: offer.providerOfferRef,
+          serviceType: "activity" as const,
+          name: offer.description,
+          description: String(offer.raw.description || offer.description),
+          sellAmountMinor: pricing.sellAmountMinor,
+          costAmountMinor: pricing.costAmountMinor,
+          currency: offer.currency,
+          expiresAt: offer.expiresAt,
+          details: offer.raw,
+        };
+      }),
     };
   }
 }

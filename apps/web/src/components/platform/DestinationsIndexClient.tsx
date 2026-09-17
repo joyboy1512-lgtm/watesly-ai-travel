@@ -3,20 +3,27 @@
 import Link from "next/link";
 import { DESTINATION_GUIDES, pickLocalized } from "@watesly-travel/shared";
 import { useShopI18n } from "@/components/shop/ShopI18nProvider";
+import { useShopCms } from "@/components/shop/ShopCmsProvider";
 
 export function DestinationsIndexClient() {
   const { t, locale } = useShopI18n();
+  const cms = useShopCms();
+  const guides = cms.destinationGuides.length ? cms.destinationGuides : DESTINATION_GUIDES;
+  const lead =
+    pickLocalized(locale, cms.sitePages.destinationsLeadAr, cms.sitePages.destinationsLeadEn) ||
+    t("destinationsLead");
+
   return (
     <>
       <header className="shop-inner-hero">
         <div className="shop-inner-hero-inner">
           <h1>{t("navDestinations")}</h1>
-          <p>{t("destinationsLead")}</p>
+          <p>{lead}</p>
         </div>
       </header>
       <div className="wg-platform">
         <div className="wg-platform-grid">
-        {DESTINATION_GUIDES.map((d) => {
+        {guides.map((d) => {
           const name = pickLocalized(locale, d.nameAr, d.nameEn);
           const why = pickLocalized(locale, d.whyAr, d.whyEn);
           return (

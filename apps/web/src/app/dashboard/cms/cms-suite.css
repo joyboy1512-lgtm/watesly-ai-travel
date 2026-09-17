@@ -354,6 +354,17 @@
   border-bottom: 1px solid #eef3f1;
 }
 
+.cms-subtabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  padding: 0.85rem 1.1rem 0;
+}
+
+.cms-form textarea {
+  min-height: 96px;
+}
+
 @media (max-width: 900px) {
   .cms-stats {
     grid-template-columns: repeat(2, minmax(0, 1fr));

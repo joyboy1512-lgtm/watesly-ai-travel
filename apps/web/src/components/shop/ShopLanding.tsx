@@ -11,12 +11,21 @@ import {
   type ShopOffer,
 } from "@/lib/shop-content";
 import {
+  cmsCopy,
+  cmsFeaturesFor,
+  cmsHomeDestinationsFor,
+  cmsHomeOffersFor,
+  cmsReviewsFor,
+  cmsStatsFor,
+} from "@/lib/shop-cms";
+import {
   DESTINATION_GUIDES,
   WEEKEND_DEALS,
   pickLocalized,
 } from "@watesly-travel/shared";
 import { platformEnabled } from "@/lib/platform-flags";
 import { useShopI18n } from "@/components/shop/ShopI18nProvider";
+import { useShopCms } from "@/components/shop/ShopCmsProvider";
 
 type Props = {
   onPickDestination: (dest: ShopDestination) => void;
@@ -37,18 +46,46 @@ function Stars({ value, ofFive }: { value: number; ofFive: string }) {
 
 export function ShopLanding({ onPickDestination, onPickOffer }: Props) {
   const { t, locale } = useShopI18n();
-  const destinations = shopDestinationsFor(locale);
-  const offers = shopOffersFor(locale);
-  const reviews = shopReviewsFor(locale);
-  const features = shopFeaturesFor(locale);
-  const stats = shopStatsFor(locale);
-  const footerStats = stats.filter(
-    (row) => row.label !== t("statHappy") && row.label !== t("statRating"),
-  );
+  const cms = useShopCms();
+  const cmsDestinations = cmsHomeDestinationsFor(cms, locale);
+  const destinations = cmsDestinations.length ? cmsDestinations : shopDestinationsFor(locale);
+  const cmsOffers = cmsHomeOffersFor(cms, locale);
+  const offers = cmsOffers.length ? cmsOffers : shopOffersFor(locale);
+  const cmsReviews = cmsReviewsFor(cms, locale);
+  const reviews = cmsReviews.length ? cmsReviews : shopReviewsFor(locale);
+  const cmsFeatures = cmsFeaturesFor(cms, locale);
+  const features = cmsFeatures.length ? cmsFeatures : shopFeaturesFor(locale);
+  const cmsStats = cmsStatsFor(cms, locale);
+  const stats = cmsStats.length ? cmsStats : shopStatsFor(locale);
+  const footerStats = stats.filter((row) => {
+    const id = "id" in row ? row.id : "";
+    if (id) return id !== "stat-happy" && id !== "stat-rating";
+    return row.label !== t("statHappy") && row.label !== t("statRating");
+  });
   const platformOn = platformEnabled();
+  const guides = cms.destinationGuides.length ? cms.destinationGuides : DESTINATION_GUIDES;
+  const banners = cms.banners.filter((row) => row.active);
+  const destKicker = cmsCopy(cms, locale, "destKickerAr", "destKickerEn") || t("destKicker");
+  const destTitle = cmsCopy(cms, locale, "destTitleAr", "destTitleEn") || t("destTitle");
+  const destLead =
+    cmsCopy(cms, locale, "destLeadAr", "destLeadEn") ||
+    (platformOn ? t("destLeadPlatform") : t("destLead"));
+  const offersKicker = cmsCopy(cms, locale, "offersKickerAr", "offersKickerEn") || t("offersKicker");
+  const offersTitle = cmsCopy(cms, locale, "offersTitleAr", "offersTitleEn") || t("offersTitle");
+  const whyKicker = cmsCopy(cms, locale, "whyKickerAr", "whyKickerEn") || t("whyKicker");
+  const whyTitle = cmsCopy(cms, locale, "whyTitleAr", "whyTitleEn") || t("whyTitle");
+  const reviewsKicker = cmsCopy(cms, locale, "reviewsKickerAr", "reviewsKickerEn") || t("reviewsKicker");
+  const reviewsHeading = cmsCopy(cms, locale, "reviewsHeadingAr", "reviewsHeadingEn") || t("reviewsHeading");
+  const reviewsDisclaimer =
+    cmsCopy(cms, locale, "reviewsDisclaimerAr", "reviewsDisclaimerEn") || t("reviewsDisclaimer");
+  const ctaKicker = cmsCopy(cms, locale, "ctaKickerAr", "ctaKickerEn") || t("ctaKicker");
+  const ctaTitle =
+    cmsCopy(cms, locale, "ctaTitleAr", "ctaTitleEn") || (platformOn ? t("ctaTitlePlatform") : t("ctaTitle"));
+  const ctaLead =
+    cmsCopy(cms, locale, "ctaLeadAr", "ctaLeadEn") || (platformOn ? t("ctaLeadPlatform") : t("ctaLead"));
 
   function guideToShopDest(slug: string): ShopDestination | null {
-    const g = DESTINATION_GUIDES.find((d) => d.slug === slug);
+    const g = guides.find((d) => d.slug === slug);
     if (!g) return null;
     const cost = pickLocalized(locale, g.costHintAr, g.costHintEn);
     const priceMatch = cost.match(/~\s*(\d+)/);
@@ -68,7 +105,7 @@ export function ShopLanding({ onPickDestination, onPickOffer }: Props) {
   }
 
   const destCards = platformOn
-    ? DESTINATION_GUIDES.map((g) => {
+    ? guides.map((g) => {
         const cost = pickLocalized(locale, g.costHintAr, g.costHintEn);
         const priceMatch = cost.match(/~\s*(\d+)/);
         return {
@@ -88,12 +125,33 @@ export function ShopLanding({ onPickDestination, onPickOffer }: Props) {
 
   return (
     <div className="shop-landing">
+      {banners.length ? (
+        <section className="shop-section shop-cms-banners" aria-label={locale === "en" ? "Promotions" : "عروض"}>
+          <div className="shop-offer-grid">
+            {banners.map((banner) => (
+              <Link
+                key={banner.id}
+                href={banner.href || "/deals"}
+                className="shop-offer-card"
+                style={{ textDecoration: "none", color: "inherit" }}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={banner.image} alt={pickLocalized(locale, banner.titleAr, banner.titleEn)} />
+                <span className="shop-offer-badge">{locale === "en" ? "Promo" : "عرض"}</span>
+                <div className="shop-offer-body">
+                  <h3>{pickLocalized(locale, banner.titleAr, banner.titleEn)}</h3>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+      ) : null}
       <section className="shop-section" id="destinations">
         <div className="shop-section-head">
           <div>
-            <p className="shop-kicker">{t("destKicker")}</p>
-            <h2>{t("destTitle")}</h2>
-            <p className="shop-lead">{platformOn ? t("destLeadPlatform") : t("destLead")}</p>
+            <p className="shop-kicker">{destKicker}</p>
+            <h2>{destTitle}</h2>
+            <p className="shop-lead">{destLead}</p>
           </div>
           {platformOn ? (
             <Link href="/destinations" className="shop-btn-ghost">
@@ -173,8 +231,8 @@ export function ShopLanding({ onPickDestination, onPickOffer }: Props) {
       <section className="shop-section shop-section-soft" id="offers">
         <div className="shop-section-head">
           <div>
-            <p className="shop-kicker">{platformOn ? "Weekend Deals" : t("offersKicker")}</p>
-            <h2>{platformOn ? t("weekendDealsFromKw") : t("offersTitle")}</h2>
+            <p className="shop-kicker">{platformOn ? "Weekend Deals" : offersKicker}</p>
+            <h2>{platformOn ? t("weekendDealsFromKw") : offersTitle}</h2>
           </div>
           {platformOn ? (
             <Link href="/deals" className="shop-btn-ghost">
@@ -233,8 +291,8 @@ export function ShopLanding({ onPickDestination, onPickOffer }: Props) {
 
       <section className="shop-section">
         <div className="shop-section-head center">
-          <p className="shop-kicker">{t("whyKicker")}</p>
-          <h2>{t("whyTitle")}</h2>
+          <p className="shop-kicker">{whyKicker}</p>
+          <h2>{whyTitle}</h2>
         </div>
         <div className="shop-feature-grid">
           {features.map((f) => (
@@ -252,8 +310,8 @@ export function ShopLanding({ onPickDestination, onPickOffer }: Props) {
       <section className="shop-section shop-section-soft" id="reviews">
         <div className="shop-section-head">
           <div>
-            <p className="shop-kicker">{t("reviewsKicker")}</p>
-            <h2>{t("reviewsHeading")}</h2>
+            <p className="shop-kicker">{reviewsKicker}</p>
+            <h2>{reviewsHeading}</h2>
           </div>
           <div className="shop-rating-summary">
             <strong>4.9</strong>
@@ -262,7 +320,7 @@ export function ShopLanding({ onPickDestination, onPickOffer }: Props) {
           </div>
         </div>
         <p className="shop-muted" style={{ margin: "0 0 1rem", maxWidth: "40rem" }}>
-          {t("reviewsDisclaimer")}
+          {reviewsDisclaimer}
         </p>
         <div className="shop-review-grid">
           {reviews.map((review) => (
@@ -285,9 +343,9 @@ export function ShopLanding({ onPickDestination, onPickOffer }: Props) {
 
       <section className="shop-cta-banner">
         <div>
-          <p className="shop-kicker light">{t("ctaKicker")}</p>
-          <h2>{platformOn ? t("ctaTitlePlatform") : t("ctaTitle")}</h2>
-          <p>{platformOn ? t("ctaLeadPlatform") : t("ctaLead")}</p>
+          <p className="shop-kicker light">{ctaKicker}</p>
+          <h2>{ctaTitle}</h2>
+          <p>{ctaLead}</p>
         </div>
         <div className="shop-cta-actions">
           {platformOn ? (

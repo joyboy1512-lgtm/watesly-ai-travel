@@ -18,8 +18,20 @@ import {
   type DestinationGuide,
   type WeekendDeal,
 } from "@watesly-travel/shared";
+import { HeroSlidesPanel, HomepagePanel } from "./cms-home-panels";
+import { DestinationGuidesPanel, SitePagesPanel } from "./cms-pages-panels";
 
-type Tab = "overview" | "deals" | "banners" | "faqs" | "articles" | "search";
+type Tab =
+  | "overview"
+  | "hero"
+  | "homepage"
+  | "pages"
+  | "guides"
+  | "deals"
+  | "banners"
+  | "faqs"
+  | "articles"
+  | "search";
 
 type AdminStats = {
   today: Record<string, number>;
@@ -119,6 +131,8 @@ export default function DashboardCmsPage() {
       banners: cms?.banners.length ?? 0,
       faqs: cms?.faqs.length ?? 0,
       articles: cms?.articles.filter((a) => a.published).length ?? 0,
+      slides: cms?.heroSlides.filter((s) => s.active).length ?? 0,
+      guides: cms?.destinationGuides.length ?? 0,
     }),
     [deals, cms],
   );
@@ -282,6 +296,10 @@ export default function DashboardCmsPage() {
 
   const tabs: Array<{ id: Tab; label: string }> = [
     { id: "overview", label: "نظرة عامة" },
+    { id: "hero", label: "الهيرو" },
+    { id: "homepage", label: "الصفحة الرئيسية" },
+    { id: "pages", label: "الصفحات" },
+    { id: "guides", label: "الوجهات" },
     { id: "deals", label: "العروض" },
     { id: "banners", label: "البانرات" },
     { id: "faqs", label: "الأسئلة" },
@@ -296,12 +314,8 @@ export default function DashboardCmsPage() {
           <div>
             <h3>محتوى WeekendGate</h3>
             <p>
-              إدارة العروض والبانرات والأسئلة والمقالات وتبويبات البحث من مكان واحد.
-              العروض المنشورة تظهر على{" "}
-              <a href="/deals" target="_blank" rel="noreferrer">
-                /deals
-              </a>
-              .
+              اكتب وعدّل كل ما يظهر للزائر: الهيرو، الصفحة الرئيسية، الصفحات، الوجهات،
+              العروض، الأسئلة، والمقالات. التغييرات تظهر على الموقع بعد الحفظ.
             </p>
           </div>
           <div className="cms-actions">
@@ -327,8 +341,10 @@ export default function DashboardCmsPage() {
             </strong>
           </div>
           <div className="cms-stat">
-            <span>مقالات منشورة</span>
-            <strong>{counts.articles}</strong>
+            <span>مقالات / شرائح</span>
+            <strong>
+              {counts.articles} / {counts.slides}
+            </strong>
           </div>
         </section>
 
@@ -352,6 +368,46 @@ export default function DashboardCmsPage() {
 
         {tab === "overview" && !loading ? (
           <OverviewPanel stats={stats} />
+        ) : null}
+
+        {tab === "hero" && cms ? (
+          <HeroSlidesPanel
+            slides={cms.heroSlides}
+            onSave={(heroSlides) => saveCms({ heroSlides }, "تم حفظ شرائح الهيرو")}
+          />
+        ) : null}
+
+        {tab === "homepage" && cms ? (
+          <HomepagePanel
+            homeCopy={cms.homeCopy}
+            destinations={cms.homeDestinations}
+            offers={cms.homeOffers}
+            reviews={cms.reviews}
+            features={cms.features}
+            stats={cms.stats}
+            onSaveCopy={(homeCopy) => saveCms({ homeCopy }, "تم حفظ عناوين الصفحة")}
+            onSaveDestinations={(homeDestinations) =>
+              saveCms({ homeDestinations }, "تم حفظ وجهات الصفحة الرئيسية")
+            }
+            onSaveOffers={(homeOffers) => saveCms({ homeOffers }, "تم حفظ عروض الصفحة")}
+            onSaveReviews={(reviews) => saveCms({ reviews }, "تم حفظ التقييمات")}
+            onSaveFeatures={(features) => saveCms({ features }, "تم حفظ المميزات")}
+            onSaveStats={(rows) => saveCms({ stats: rows }, "تم حفظ الأرقام")}
+          />
+        ) : null}
+
+        {tab === "pages" && cms ? (
+          <SitePagesPanel
+            value={cms.sitePages}
+            onSave={(sitePages) => saveCms({ sitePages }, "تم حفظ صفحات الموقع")}
+          />
+        ) : null}
+
+        {tab === "guides" && cms ? (
+          <DestinationGuidesPanel
+            guides={cms.destinationGuides}
+            onSave={(destinationGuides) => saveCms({ destinationGuides }, "تم حفظ أدلة الوجهات")}
+          />
         ) : null}
 
         {tab === "deals" && !loading ? (
@@ -709,28 +765,29 @@ function BannersPanel({
   destinations: DestinationGuide[];
   onSave: (rows: CmsBanner[]) => void;
 }) {
-  const [form, setForm] = useState({
+  const emptyBanner = {
     titleAr: "",
     titleEn: "",
     image: destinations[0]?.image || "/media/destinations/dubai.jpg?v=1",
     href: "/deals",
     active: true,
-  });
+  };
+  const [form, setForm] = useState(emptyBanner);
+  const [editing, setEditing] = useState<string | null>(null);
 
   function add(e: FormEvent) {
     e.preventDefault();
-    onSave([
-      {
-        id: newId("bn"),
-        titleAr: form.titleAr.trim(),
-        titleEn: form.titleEn.trim() || form.titleAr.trim(),
-        image: form.image.trim(),
-        href: form.href.trim() || "/deals",
-        active: form.active,
-      },
-      ...banners,
-    ]);
-    setForm((p) => ({ ...p, titleAr: "", titleEn: "" }));
+    const next = {
+      id: editing || newId("bn"),
+      titleAr: form.titleAr.trim(),
+      titleEn: form.titleEn.trim() || form.titleAr.trim(),
+      image: form.image.trim(),
+      href: form.href.trim() || "/deals",
+      active: form.active,
+    };
+    onSave(editing ? banners.map((row) => (row.id === editing ? next : row)) : [next, ...banners]);
+    setEditing(null);
+    setForm(emptyBanner);
   }
 
   return (
@@ -776,7 +833,7 @@ function BannersPanel({
         </label>
         <div className="cms-span2">
           <button type="submit" className="cms-btn primary">
-            إضافة بانر
+            {editing ? "تحديث البانر" : "إضافة بانر"}
           </button>
         </div>
       </form>
@@ -808,6 +865,22 @@ function BannersPanel({
                   </td>
                   <td>
                     <div className="cms-actions">
+                      <button
+                        type="button"
+                        className="cms-btn"
+                        onClick={() => {
+                          setEditing(row.id);
+                          setForm({
+                            titleAr: row.titleAr,
+                            titleEn: row.titleEn,
+                            image: row.image,
+                            href: row.href,
+                            active: row.active,
+                          });
+                        }}
+                      >
+                        تعديل
+                      </button>
                       <button
                         type="button"
                         className="cms-btn"
@@ -845,26 +918,31 @@ function FaqsPanel({
   faqs: CmsFaq[];
   onSave: (rows: CmsFaq[]) => void;
 }) {
-  const [form, setForm] = useState({
+  const emptyFaq = {
     questionAr: "",
     questionEn: "",
     answerAr: "",
     answerEn: "",
-  });
+    categoryAr: "",
+    categoryEn: "",
+  };
+  const [form, setForm] = useState(emptyFaq);
+  const [editing, setEditing] = useState<string | null>(null);
 
   function add(e: FormEvent) {
     e.preventDefault();
-    onSave([
-      {
-        id: newId("faq"),
-        questionAr: form.questionAr.trim(),
-        questionEn: form.questionEn.trim() || form.questionAr.trim(),
-        answerAr: form.answerAr.trim(),
-        answerEn: form.answerEn.trim() || form.answerAr.trim(),
-      },
-      ...faqs,
-    ]);
-    setForm({ questionAr: "", questionEn: "", answerAr: "", answerEn: "" });
+    const next = {
+      id: editing || newId("faq"),
+      questionAr: form.questionAr.trim(),
+      questionEn: form.questionEn.trim() || form.questionAr.trim(),
+      answerAr: form.answerAr.trim(),
+      answerEn: form.answerEn.trim() || form.answerAr.trim(),
+      categoryAr: form.categoryAr.trim(),
+      categoryEn: form.categoryEn.trim() || form.categoryAr.trim(),
+    };
+    onSave(editing ? faqs.map((row) => (row.id === editing ? next : row)) : [next, ...faqs]);
+    setEditing(null);
+    setForm(emptyFaq);
   }
 
   return (
@@ -876,6 +954,22 @@ function FaqsPanel({
         </div>
       </div>
       <form className="cms-form" onSubmit={add}>
+        <label>
+          التصنيف عربي
+          <input
+            value={form.categoryAr}
+            onChange={(e) => setForm((p) => ({ ...p, categoryAr: e.target.value }))}
+            placeholder="طيران"
+          />
+        </label>
+        <label>
+          التصنيف إنجليزي
+          <input
+            value={form.categoryEn}
+            onChange={(e) => setForm((p) => ({ ...p, categoryEn: e.target.value }))}
+            placeholder="Flights"
+          />
+        </label>
         <label>
           السؤال بالعربي
           <input
@@ -908,7 +1002,7 @@ function FaqsPanel({
         </label>
         <div className="cms-span2">
           <button type="submit" className="cms-btn primary">
-            إضافة سؤال
+            {editing ? "تحديث السؤال" : "إضافة سؤال"}
           </button>
         </div>
       </form>
@@ -925,16 +1019,37 @@ function FaqsPanel({
             <tbody>
               {faqs.map((row) => (
                 <tr key={row.id}>
-                  <td>{row.questionAr}</td>
+                  <td>
+                    {row.categoryAr ? <span className="cms-pill">{row.categoryAr}</span> : null} {row.questionAr}
+                  </td>
                   <td>{row.answerAr}</td>
                   <td>
-                    <button
-                      type="button"
-                      className="cms-btn danger"
-                      onClick={() => onSave(faqs.filter((f) => f.id !== row.id))}
-                    >
-                      حذف
-                    </button>
+                    <div className="cms-actions">
+                      <button
+                        type="button"
+                        className="cms-btn"
+                        onClick={() => {
+                          setEditing(row.id);
+                          setForm({
+                            questionAr: row.questionAr,
+                            questionEn: row.questionEn,
+                            answerAr: row.answerAr,
+                            answerEn: row.answerEn,
+                            categoryAr: row.categoryAr || "",
+                            categoryEn: row.categoryEn || "",
+                          });
+                        }}
+                      >
+                        تعديل
+                      </button>
+                      <button
+                        type="button"
+                        className="cms-btn danger"
+                        onClick={() => onSave(faqs.filter((f) => f.id !== row.id))}
+                      >
+                        حذف
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -955,32 +1070,33 @@ function ArticlesPanel({
   articles: CmsArticle[];
   onSave: (rows: CmsArticle[]) => void;
 }) {
-  const [form, setForm] = useState({
+  const emptyArticle = {
     slug: "",
     titleAr: "",
     titleEn: "",
     bodyAr: "",
     bodyEn: "",
     published: true,
-  });
+  };
+  const [form, setForm] = useState(emptyArticle);
+  const [editing, setEditing] = useState<string | null>(null);
 
   function add(e: FormEvent) {
     e.preventDefault();
     const slug = form.slug.trim().toLowerCase().replace(/[^a-z0-9-]/g, "-");
     if (!slug) return;
-    onSave([
-      {
-        id: newId("art"),
-        slug,
-        titleAr: form.titleAr.trim(),
-        titleEn: form.titleEn.trim() || form.titleAr.trim(),
-        bodyAr: form.bodyAr.trim(),
-        bodyEn: form.bodyEn.trim() || form.bodyAr.trim(),
-        published: form.published,
-      },
-      ...articles,
-    ]);
-    setForm({ slug: "", titleAr: "", titleEn: "", bodyAr: "", bodyEn: "", published: true });
+    const next = {
+      id: editing || newId("art"),
+      slug,
+      titleAr: form.titleAr.trim(),
+      titleEn: form.titleEn.trim() || form.titleAr.trim(),
+      bodyAr: form.bodyAr.trim(),
+      bodyEn: form.bodyEn.trim() || form.bodyAr.trim(),
+      published: form.published,
+    };
+    onSave(editing ? articles.map((row) => (row.id === editing ? next : row)) : [next, ...articles]);
+    setEditing(null);
+    setForm(emptyArticle);
   }
 
   return (
@@ -988,7 +1104,7 @@ function ArticlesPanel({
       <div className="cms-panel-head">
         <div>
           <h4>المقالات</h4>
-          <p>محتوى يمكن نشره أو إبقاؤه كمسودة.</p>
+          <p>المقالات المنشورة تظهر على /articles للزائر.</p>
         </div>
       </div>
       <form className="cms-form" onSubmit={add}>
@@ -1039,7 +1155,7 @@ function ArticlesPanel({
         </label>
         <div className="cms-span2">
           <button type="submit" className="cms-btn primary">
-            حفظ المقال
+            {editing ? "تحديث المقال" : "حفظ المقال"}
           </button>
         </div>
       </form>
@@ -1067,6 +1183,26 @@ function ArticlesPanel({
                   </td>
                   <td>
                     <div className="cms-actions">
+                      <a className="cms-btn ghost" href={`/articles/${row.slug}`} target="_blank" rel="noreferrer">
+                        معاينة
+                      </a>
+                      <button
+                        type="button"
+                        className="cms-btn"
+                        onClick={() => {
+                          setEditing(row.id);
+                          setForm({
+                            slug: row.slug,
+                            titleAr: row.titleAr,
+                            titleEn: row.titleEn,
+                            bodyAr: row.bodyAr,
+                            bodyEn: row.bodyEn,
+                            published: row.published,
+                          });
+                        }}
+                      >
+                        تعديل
+                      </button>
                       <button
                         type="button"
                         className="cms-btn"
@@ -1142,7 +1278,29 @@ function HeroServicesPanel({
                   )
                 }
               />
-              <strong>{row.labelAr}</strong>
+              <input
+                value={row.labelAr}
+                onChange={(e) =>
+                  setRows((prev) =>
+                    prev.map((item) =>
+                      item.key === row.key ? { ...item, labelAr: e.target.value } : item,
+                    ),
+                  )
+                }
+                style={{ minWidth: 120 }}
+              />
+              <input
+                value={row.labelEn}
+                onChange={(e) =>
+                  setRows((prev) =>
+                    prev.map((item) =>
+                      item.key === row.key ? { ...item, labelEn: e.target.value } : item,
+                    ),
+                  )
+                }
+                style={{ minWidth: 120 }}
+                dir="ltr"
+              />
               <span>{row.kind}</span>
             </label>
           </li>

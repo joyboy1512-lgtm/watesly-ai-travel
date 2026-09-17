@@ -8,7 +8,6 @@ import {
   WEEKEND_DEALS,
   DESTINATION_GUIDES,
   DEFAULT_CMS,
-  DEFAULT_CMS_HERO_SERVICES,
   DEFAULT_POINTS_RULES,
   normalizeCmsState,
   DEFAULT_REFERRAL,
@@ -22,7 +21,7 @@ import {
   shouldFirePriceAlert,
   listActiveDeals,
   getDealBySlug,
-  getDestination,
+  getDestination as findStaticDestination,
   normalizeShopPaymentStatus,
   type WeekendDeal,
   type CmsState,
@@ -255,7 +254,7 @@ export class PlatformService {
     const deals = await this.ensureDealsSeeded(organizationId);
     return {
       deals: listActiveDeals(deals),
-      destinations: DESTINATION_GUIDES,
+      destinations: await this.listDestinations(),
       pointsRules: this.pointsRules,
       referral: DEFAULT_REFERRAL,
       paymentStatuses: [
@@ -280,12 +279,14 @@ export class PlatformService {
     return getDealBySlug(slug, deals) || null;
   }
 
-  listDestinations() {
-    return DESTINATION_GUIDES;
+  async listDestinations() {
+    const cms = await this.getCms();
+    return cms.destinationGuides?.length ? cms.destinationGuides : DESTINATION_GUIDES;
   }
 
-  getDestination(slug: string) {
-    return getDestination(slug) || null;
+  async getDestination(slug: string) {
+    const list = await this.listDestinations();
+    return list.find((row) => row.slug === slug) || findStaticDestination(slug) || null;
   }
 
   private async readOrgSettings(): Promise<Record<string, unknown>> {
@@ -319,10 +320,6 @@ export class PlatformService {
     const next = normalizeCmsState({
       ...current,
       ...patch,
-      banners: patch.banners ?? current.banners,
-      faqs: patch.faqs ?? current.faqs,
-      articles: patch.articles ?? current.articles,
-      heroServices: patch.heroServices ?? current.heroServices ?? DEFAULT_CMS_HERO_SERVICES,
       updatedAt: new Date().toISOString(),
     });
     this.cms = next;

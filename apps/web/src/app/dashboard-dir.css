@@ -74,3 +74,101 @@ html[dir="rtl"] .notif-panel {
   left: auto;
   right: 0;
 }
+
+/* Inquiries: dashboard navy/gold, not shop Booking-blue */
+.app-shell .results-layout,
+.app-shell .results-layout-solo {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.app-shell .flight-search .flight-explore {
+  background: #0f3340 !important;
+  background-image: none !important;
+  color: #fff !important;
+  border: 0;
+  border-start-end-radius: 7px;
+  border-end-end-radius: 7px;
+  min-width: 148px;
+  min-height: 92px;
+  align-self: stretch;
+  font-weight: 800;
+  font-size: 1.05rem;
+  box-shadow: none;
+  letter-spacing: 0.01em;
+}
+
+.app-shell .flight-search .flight-explore:hover:not(:disabled) {
+  background: #184a52 !important;
+  color: #fff !important;
+}
+
+.app-shell .flight-search .flight-explore:disabled {
+  color: rgba(255, 255, 255, 0.78) !important;
+}
+
+.app-shell .dash-shop-results {
+  --exp-navy: #0f3340;
+  --exp-blue: #0f3340;
+  --exp-yellow: #d8a35e;
+  --sea-500: #0f3340;
+  --sea-600: #0f3340;
+  --sea-700: #184a52;
+  --sea-800: #0f3340;
+  min-width: 0;
+}
+
+.app-shell .dash-shop-results button,
+.app-shell .dash-shop-results .shop-hotel-filters-clear,
+.app-shell .dash-shop-results .shop-flight-filters-reset,
+.app-shell .dash-shop-results a {
+  accent-color: #0f3340;
+}
+
+.app-shell .dash-shop-results .hotel-search-card-shop:hover,
+.app-shell .dash-shop-results .hotel-room-panel.is-open-shop,
+.app-shell .dash-shop-results .hotel-payment-method.on {
+  border-color: #0f3340;
+  box-shadow: 0 2px 12px rgba(15, 51, 64, 0.12);
+}
+
+.app-shell .dash-shop-results .hotel-search-card-cta,
+.app-shell .dash-shop-results .hotel-rate-book-btn-shop,
+.app-shell .dash-shop-results .hotel-checkout-btn,
+.app-shell .dash-shop-results .shop-flight-selection-proceed {
+  background: #0f3340 !important;
+  border-color: #0f3340 !important;
+  color: #fff !important;
+}
+
+.app-shell .dash-shop-results .hotel-search-card-cta:hover,
+.app-shell .dash-shop-results .hotel-rate-book-btn-shop:hover,
+.app-shell .dash-shop-results .hotel-checkout-btn:hover {
+  background: #184a52 !important;
+  border-color: #d8a35e !important;
+}
+
+.app-shell .dash-shop-results .hotel-search-card-score strong,
+.app-shell .dash-shop-results .hotel-search-card-score-inline strong {
+  background: #0f3340;
+}
+
+.app-shell .dash-shop-results .hotel-map-link,
+.app-shell .dash-shop-results .hotel-map-link.inline {
+  color: #0f3340;
+}
+
+.app-shell .dash-shop-results .hotel-detail-from-shop,
+.app-shell .dash-shop-results .hotel-selected-price-card,
+.app-shell .dash-shop-results .hotel-guest-card {
+  background: linear-gradient(135deg, #0f3340 0%, #184a52 100%);
+  border-color: #0f3340;
+}
+
+.app-shell .dash-shop-results .hotel-guest-card {
+  background: linear-gradient(180deg, rgba(15, 51, 64, 0.08) 0%, #fff 40%);
+  color: #0f3340;
+}
+
+.app-shell .dash-shop-results .hotel-guest-card h3 {
+  color: #0f3340;
+}

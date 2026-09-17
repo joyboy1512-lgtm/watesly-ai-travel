@@ -1115,38 +1115,47 @@
 }
 
 .wi-traveler-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.55rem;
-  padding: 0 0.85rem 0.65rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.18rem;
+  padding: 0 0.7rem 0.45rem;
 }
 
 .wi-info-card {
-  display: grid;
-  gap: 0.18rem;
-  padding: 0.7rem 0.75rem;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.55rem;
+  padding: 0.32rem 0.55rem;
   background: #fff;
-  border: 1px solid rgba(15, 51, 64, 0.1);
-  border-radius: 12px;
-  box-shadow: 0 1px 2px rgba(7, 24, 34, 0.04);
+  border: 1px solid rgba(15, 51, 64, 0.08);
+  border-radius: 8px;
+  box-shadow: none;
+  min-height: 0;
 }
 
 .wi-info-card span {
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   font-weight: 700;
   color: #6b7f7c;
+  flex: 0 0 auto;
+  white-space: nowrap;
 }
 
 .wi-info-card strong {
-  font-size: 0.86rem;
+  font-size: 0.78rem;
   color: #0f3340;
   word-break: break-word;
+  text-align: end;
+  font-weight: 700;
+  line-height: 1.25;
 }
 
 .wi-info-card .ltr {
   direction: ltr;
   unicode-bidi: isolate;
-  text-align: right;
+  text-align: end;
 }
 
 .wi-details-danger {

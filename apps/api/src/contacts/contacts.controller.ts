@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Patch,
@@ -567,6 +568,45 @@ export class ContactsController {
     return { ok: true, created, updated, total: rows.length };
   }
 
+  @Post("bulk")
+  @RequirePermissions("conversations.reply")
+  async bulk(
+    @CurrentUser() user: AuthUser,
+    @Body() body: { ids?: string[]; action?: "archive" | "delete" },
+  ) {
+    const ids = Array.from(new Set((body.ids || []).filter(Boolean)));
+    if (!ids.length) return { ok: true, count: 0 };
+    const rows = await this.prisma.contact.findMany({
+      where: { organizationId: user.organizationId, id: { in: ids } },
+    });
+    if (body.action === "delete") {
+      await this.prisma.contact.deleteMany({
+        where: { organizationId: user.organizationId, id: { in: rows.map((r) => r.id) } },
+      });
+      return { ok: true, count: rows.length };
+    }
+    const org = await this.prisma.organization.findUnique({
+      where: { id: user.organizationId },
+      select: { name: true },
+    });
+    for (const row of rows) {
+      const current = readProfile(row.tags, org?.name || "الفرع الرئيسي");
+      await this.prisma.contact.update({
+        where: { id: row.id },
+        data: {
+          tags: writeProfile({
+            labels: current.labels,
+            stage: "inactive",
+            gender: current.gender,
+            branch: current.branch,
+            marketing: current.marketing,
+          }),
+        },
+      });
+    }
+    return { ok: true, count: rows.length };
+  }
+
   @Patch(":id")
   @RequirePermissions("conversations.reply")
   async patch(
@@ -576,6 +616,7 @@ export class ContactsController {
     body: {
       name?: string;
       email?: string;
+      phone?: string;
       tags?: string[];
       stage?: string;
       gender?: string;
@@ -604,9 +645,24 @@ export class ContactsController {
       data: {
         name: body.name ?? existing.name,
         email: body.email ?? existing.email,
+        waId: body.phone
+          ? body.phone.replace(/\s+/g, "").trim()
+          : existing.waId,
         tags: profile,
       },
     });
+  }
+
+  @Delete(":id")
+  @RequirePermissions("conversations.reply")
+  async remove(@CurrentUser() user: AuthUser, @Param("id") id: string) {
+    const existing = await this.prisma.contact.findFirst({
+      where: { id, organizationId: user.organizationId },
+      select: { id: true },
+    });
+    if (!existing) return { ok: false };
+    await this.prisma.contact.delete({ where: { id } });
+    return { ok: true };
   }
 
   @Get(":id")

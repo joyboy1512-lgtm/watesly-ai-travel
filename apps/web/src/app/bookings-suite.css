@@ -9,6 +9,35 @@
   gap: 0.75rem;
 }
 
+.bk-filter-grid .field {
+  display: grid;
+  gap: 0.28rem;
+  padding: 0.55rem 0.7rem;
+  background: #fff;
+  border: 1px solid rgba(15, 51, 64, 0.12);
+  border-radius: 12px;
+}
+
+.bk-filter-grid .field span {
+  color: #5f7470;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.bk-filters .field input,
+.bk-filters .field select,
+.bk-filters .field textarea {
+  color: #111111 !important;
+  background: #fff !important;
+  border: 1px solid rgba(15, 51, 64, 0.16);
+  caret-color: #111111;
+}
+
+.bk-filters .field input::placeholder,
+.bk-filters .field textarea::placeholder {
+  color: #6b7c79;
+}
+
 .bk-range {
   display: grid;
   grid-template-columns: 1fr auto 1fr;
@@ -70,6 +99,40 @@
 .bk-total strong {
   color: #0f3340;
   font-size: 1.05rem;
+}
+
+.bk-table {
+  border-collapse: collapse;
+  width: 100%;
+  border: 1px solid rgba(15, 51, 64, 0.12);
+}
+
+.bk-table th,
+.bk-table td {
+  border: 1px solid rgba(15, 51, 64, 0.1);
+  white-space: nowrap;
+  vertical-align: middle;
+  padding: 0.55rem 0.6rem;
+}
+
+.bk-table th {
+  background: #0f3340;
+  color: #f3f7f4;
+  font-weight: 700;
+}
+
+.bk-table tbody tr:nth-child(even) td {
+  background: #f7faf9;
+}
+
+.bk-table .actions {
+  white-space: nowrap;
+}
+
+@media (max-width: 1100px) {
+  .bk-filter-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 900px) {

@@ -158,11 +158,9 @@ export default function BookingsPage() {
                 <option value="flight">طيران</option>
                 <option value="hotel">فنادق</option>
                 <option value="transfer">نقل</option>
+                <option value="activity">أنشطة</option>
               </select>
             </label>
-          </div>
-
-          <div className="bk-range">
             <label className="field">
               <span>تاريخ الحجز من</span>
               <input
@@ -171,7 +169,6 @@ export default function BookingsPage() {
                 onChange={(e) => setBookedFrom(e.target.value)}
               />
             </label>
-            <span className="bk-range-sep">إلى</span>
             <label className="field">
               <span>تاريخ الحجز إلى</span>
               <input
@@ -180,9 +177,6 @@ export default function BookingsPage() {
                 onChange={(e) => setBookedTo(e.target.value)}
               />
             </label>
-          </div>
-
-          <div className="bk-range">
             <label className="field">
               <span>تاريخ السفر من</span>
               <input
@@ -191,7 +185,6 @@ export default function BookingsPage() {
                 onChange={(e) => setTravelFrom(e.target.value)}
               />
             </label>
-            <span className="bk-range-sep">إلى</span>
             <label className="field">
               <span>تاريخ السفر إلى</span>
               <input
@@ -200,9 +193,6 @@ export default function BookingsPage() {
                 onChange={(e) => setTravelTo(e.target.value)}
               />
             </label>
-          </div>
-
-          <div className="bk-range">
             <label className="field">
               <span>المسار من</span>
               <input
@@ -214,7 +204,6 @@ export default function BookingsPage() {
                 }}
               />
             </label>
-            <span className="bk-range-sep">إلى</span>
             <label className="field">
               <span>المسار إلى (اختياري)</span>
               <input
@@ -252,7 +241,7 @@ export default function BookingsPage() {
       </div>
 
       <div className="panel">
-        <table className="table">
+        <table className="table bk-table">
           <thead>
             <tr>
               <th>المرجع</th>

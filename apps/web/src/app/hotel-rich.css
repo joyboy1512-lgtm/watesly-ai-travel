@@ -1697,6 +1697,42 @@
   filter: drop-shadow(0 2px 1px rgba(11, 20, 26, 0.08));
 }
 
+.guests-menu.guests-menu-portal {
+  position: fixed !important;
+  bottom: auto !important;
+  right: auto !important;
+  left: auto;
+  top: auto;
+}
+
+.fs-date-cell {
+  cursor: pointer;
+}
+
+.fs-date-cell input[type="date"] {
+  cursor: pointer;
+  width: 100%;
+}
+
+.fs-suggest.fs-suggest-portal {
+  position: fixed;
+  max-height: 320px;
+  overflow: auto;
+  border-radius: 12px;
+  box-shadow: 0 18px 40px rgba(7, 24, 34, 0.22);
+}
+
+.dash-shop-results {
+  width: 100%;
+  min-width: 0;
+}
+
+.dash-shop-results .shop-flight-results,
+.dash-shop-results .shop-hotel-results {
+  background: transparent;
+}
+
+
 .guests-inline-row {
   display: flex;
   flex-direction: row;

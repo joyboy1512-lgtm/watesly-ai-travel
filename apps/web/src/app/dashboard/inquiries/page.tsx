@@ -1,25 +1,39 @@
 "use client";
 
 import "../../hotel-rich.css";
+import "../../shop.css";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AppShell } from "@/components/AppShell";
-import { HotelSearchCard } from "@/components/hotels/HotelSearchCard";
+import { DashDateCell, DashPortalMenu, todayIsoDate } from "@/components/dashboard/DashDateCell";
 import { HotelDetailModal } from "@/components/hotels/HotelDetailModal";
 import { HotelLiveBadge } from "@/components/hotels/HotelLiveBadge";
 import { TransferSearchCard } from "@/components/hotels/TransferSearchCard";
 import { ActivitySearchCard } from "@/components/hotels/ActivitySearchCard";
+import { ShopFlightResults } from "@/components/shop/ShopFlightResults";
+import { ShopHotelResults } from "@/components/shop/ShopHotelResults";
+import { ShopI18nProvider } from "@/components/shop/ShopI18nProvider";
 import { apiFetch } from "@/lib/api";
 import { saveFlightDraft, saveHotelDraft, saveTransferDraft, saveActivityDraft } from "@/lib/booking-draft";
 import { getPreferredCurrency } from "@/lib/currency";
-import { formatDate, formatMoneyMinor, formatMoneyMinorCompact } from "@/lib/format";
+import { formatDate, formatMoneyMinor } from "@/lib/format";
+import {
+  collectFlightFacets,
+  defaultFlightFilters as shopDefaultFlightFilters,
+  filterAndSortFlights,
+  type FlightOfferRow,
+  type FlightSearchFilters,
+  type FlightSortKey,
+} from "@/lib/flight-search";
 import {
   BOARD_LABELS_AR,
   collectFilterFacets,
+  defaultHotelFilters,
   filterHotelOffers,
   rateDisplayMinor,
   type HotelRateOption,
+  type HotelSearchFilters,
 } from "@/lib/hotel-search";
 import { saveHotelSearchSession } from "@/lib/hotel-search-session";
 
@@ -364,14 +378,6 @@ function AutocompleteField({
     setText(display || value || "");
   }, [display, value]);
 
-  useEffect(() => {
-    function onDoc(e: MouseEvent) {
-      if (!boxRef.current?.contains(e.target as Node)) setOpen(false);
-    }
-    document.addEventListener("mousedown", onDoc);
-    return () => document.removeEventListener("mousedown", onDoc);
-  }, []);
-
   async function runQuery(q: string) {
     const reqId = ++reqRef.current;
     setLoading(true);
@@ -411,38 +417,41 @@ function AutocompleteField({
           ? hint || `رمز المطار: ${value}`
           : emptyHint || "اختر من القائمة"}
       </small>
-      {open ? (
-        <div className="fs-suggest">
-          {loading ? (
-            <div className="fs-suggest-loading">
-              {loadingHint || "جاري البحث عن المطارات…"}
-            </div>
-          ) : null}
-          {!loading && items.length === 0 ? (
-            <div className="fs-suggest-empty">
-              {emptyListHint ||
-                "لا توجد مطارات مطابقة — جرّب اسم المدينة أو رمز IATA"}
-            </div>
-          ) : null}
-          {!loading
-            ? items.map((item) => (
-                <button
-                  key={item.id}
-                  type="button"
-                  onMouseDown={(e) => e.preventDefault()}
-                  onClick={() => {
-                    onPick(item);
-                    setText(item.title);
-                    setOpen(false);
-                  }}
-                >
-                  <strong>{item.title}</strong>
-                  {item.subtitle ? <span>{item.subtitle}</span> : null}
-                </button>
-              ))
-            : null}
-        </div>
-      ) : null}
+      <DashPortalMenu
+        open={open}
+        anchorRef={boxRef}
+        onClose={() => setOpen(false)}
+        className="fs-suggest fs-suggest-portal"
+      >
+        {loading ? (
+          <div className="fs-suggest-loading">
+            {loadingHint || "جاري البحث عن المطارات…"}
+          </div>
+        ) : null}
+        {!loading && items.length === 0 ? (
+          <div className="fs-suggest-empty">
+            {emptyListHint ||
+              "لا توجد مطارات مطابقة — جرّب اسم المدينة أو رمز IATA"}
+          </div>
+        ) : null}
+        {!loading
+          ? items.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => {
+                  onPick(item);
+                  setText(item.title);
+                  setOpen(false);
+                }}
+              >
+                <strong>{item.title}</strong>
+                {item.subtitle ? <span>{item.subtitle}</span> : null}
+              </button>
+            ))
+          : null}
+      </DashPortalMenu>
     </label>
   );
 }
@@ -586,6 +595,10 @@ export default function InquiriesPage() {
     facilities: [] as string[],
     hotelQuery: "",
   });
+  const [shopFlightFilters, setShopFlightFilters] = useState<FlightSearchFilters>(
+    shopDefaultFlightFilters(),
+  );
+  const [shopFlightSort, setShopFlightSort] = useState<FlightSortKey>("best");
 
   const defaultFlightFilters = {
     maxPrice: "",
@@ -686,14 +699,6 @@ export default function InquiriesPage() {
     apiFetch<Airline[]>("/travel-meta/airlines?limit=40")
       .then(setAirlines)
       .catch(() => undefined);
-  }, []);
-
-  useEffect(() => {
-    function onDoc(e: MouseEvent) {
-      if (!guestsRef.current?.contains(e.target as Node)) setGuestsOpen(false);
-    }
-    document.addEventListener("mousedown", onDoc);
-    return () => document.removeEventListener("mousedown", onDoc);
   }, []);
 
   useEffect(() => {
@@ -1070,6 +1075,45 @@ export default function InquiriesPage() {
   const hotelFacets = useMemo(
     () => collectFilterFacets(search?.hotels || []),
     [search?.hotels],
+  );
+
+  const shopFlightsRaw = (search?.flights || []) as FlightOfferRow[];
+  const shopFlightFacets = useMemo(
+    () => collectFlightFacets(shopFlightsRaw),
+    [search?.flights],
+  );
+  const shopFilteredFlights = useMemo(
+    () =>
+      filterAndSortFlights(
+        shopFlightsRaw,
+        shopFlightFilters,
+        shopFlightSort,
+        form.directOnly,
+      ),
+    [shopFlightsRaw, shopFlightFilters, shopFlightSort, form.directOnly],
+  );
+
+  const hotelShopFilters: HotelSearchFilters = useMemo(
+    () => ({
+      ...defaultHotelFilters(),
+      hotelQuery: filters.hotelQuery,
+      minStars: filters.minStars,
+      minReviewScore: filters.minReviewScore,
+      board: filters.board,
+      boardCode: filters.boardCode,
+      zone: filters.zone,
+      paymentType: filters.paymentType,
+      rateType: filters.rateType,
+      freeCancellation: filters.freeCancellation,
+      breakfast: filters.breakfast,
+      noPrepayment: filters.noPrepayment,
+      propertyTypes: filters.propertyTypes,
+      facilities: filters.facilities,
+      maxPrice: filters.maxPrice,
+      refundableOnly: filters.refundableOnly,
+      bookableOnly: filters.bookableOnly,
+    }),
+    [filters],
   );
 
   const hotelSortKey = useMemo(
@@ -1495,6 +1539,7 @@ export default function InquiriesPage() {
   }
 
   return (
+    <ShopI18nProvider>
     <AppShell title="الاستعلامات المباشرة">
       <section className="flight-hero">
         <div className="flight-hero-tabs">
@@ -1706,29 +1751,32 @@ export default function InquiriesPage() {
                   }))
                 }
               />
-              <label className="fs-cell">
-                <span>تاريخ الذهاب</span>
-                <input
-                  type="date"
-                  value={form.departDate}
-                  onChange={(e) =>
-                    setForm({ ...form, departDate: e.target.value })
+              <DashDateCell
+                label="تاريخ الذهاب"
+                value={form.departDate}
+                hint="المغادرة"
+                min={todayIsoDate()}
+                onChange={(departDate) =>
+                  setForm((f) => ({
+                    ...f,
+                    departDate,
+                    returnDate:
+                      f.returnDate && f.returnDate < departDate
+                        ? departDate
+                        : f.returnDate,
+                  }))
+                }
+              />
+              {tripType === "roundtrip" ? (
+                <DashDateCell
+                  label="تاريخ العودة"
+                  value={form.returnDate}
+                  hint={nights ? `${nights} ليلة` : "العودة"}
+                  min={form.departDate || todayIsoDate()}
+                  onChange={(returnDate) =>
+                    setForm((f) => ({ ...f, returnDate }))
                   }
                 />
-                <small>المغادرة</small>
-              </label>
-              {tripType === "roundtrip" ? (
-                <label className="fs-cell">
-                  <span>تاريخ العودة</span>
-                  <input
-                    type="date"
-                    value={form.returnDate}
-                    onChange={(e) =>
-                      setForm({ ...form, returnDate: e.target.value })
-                    }
-                  />
-                  <small>{nights ? `${nights} ليلة` : "العودة"}</small>
-                </label>
               ) : (
                 <div className="fs-cell fs-cell-empty">
                   <span>تاريخ العودة</span>
@@ -1748,8 +1796,13 @@ export default function InquiriesPage() {
                   {form.infants > 0 ? ` · ${form.infants} رضيع` : ""}
                 </button>
                 <small>بالغ · طفل · رضيع</small>
-                {guestsOpen ? (
-                  <div className="guests-menu guests-menu-pop">
+                <DashPortalMenu
+                  open={guestsOpen}
+                  anchorRef={guestsRef}
+                  onClose={() => setGuestsOpen(false)}
+                  className="guests-menu guests-menu-pop guests-menu-portal"
+                  matchWidth={false}
+                >
                     <PassengerCountRow
                       adults={form.adults}
                       childrenCount={form.children}
@@ -1767,8 +1820,7 @@ export default function InquiriesPage() {
                       onInfants={(infants) => setForm({ ...form, infants })}
                     />
                     <p className="guests-hint">طفل 2–11 سنة · رضيع أقل من سنتين</p>
-                  </div>
-                ) : null}
+                </DashPortalMenu>
               </div>
               <button
                 type="button"
@@ -1811,30 +1863,31 @@ export default function InquiriesPage() {
                   }))
                 }
               />
-              <label className="fs-cell">
-                <span>تاريخ الدخول</span>
-                <input
-                  type="date"
-                  value={form.departDate}
-                  onChange={(e) =>
-                    setForm({ ...form, departDate: e.target.value })
-                  }
-                />
-                <small>تسجيل الوصول</small>
-              </label>
-              <label className="fs-cell">
-                <span>تاريخ الخروج</span>
-                <input
-                  type="date"
-                  value={form.returnDate}
-                  onChange={(e) =>
-                    setForm({ ...form, returnDate: e.target.value })
-                  }
-                />
-                <small className="nights-pill">
-                  {nights ? `${nights} ليلة` : "تسجيل المغادرة"}
-                </small>
-              </label>
+              <DashDateCell
+                label="تاريخ الدخول"
+                value={form.departDate}
+                hint="تسجيل الوصول"
+                min={todayIsoDate()}
+                onChange={(departDate) =>
+                  setForm((f) => ({
+                    ...f,
+                    departDate,
+                    returnDate:
+                      f.returnDate && f.returnDate < departDate
+                        ? departDate
+                        : f.returnDate,
+                  }))
+                }
+              />
+              <DashDateCell
+                label="تاريخ الخروج"
+                value={form.returnDate}
+                hint={nights ? `${nights} ليلة` : "تسجيل المغادرة"}
+                min={form.departDate || todayIsoDate()}
+                onChange={(returnDate) =>
+                  setForm((f) => ({ ...f, returnDate }))
+                }
+              />
               <div className="fs-cell fs-cell-center guests-cell" ref={guestsRef}>
                 <span>المسافرون والغرف</span>
                 <button
@@ -1848,8 +1901,13 @@ export default function InquiriesPage() {
                   {` · ${form.rooms} غرفة`}
                 </button>
                 <small>اختر العدد</small>
-                {guestsOpen ? (
-                  <div className="guests-menu guests-menu-pop">
+                <DashPortalMenu
+                  open={guestsOpen}
+                  anchorRef={guestsRef}
+                  onClose={() => setGuestsOpen(false)}
+                  className="guests-menu guests-menu-pop guests-menu-portal"
+                  matchWidth={false}
+                >
                     <div className="guests-inline-row">
                       <label className="guests-inline">
                         <span>غرف</span>
@@ -1913,8 +1971,7 @@ export default function InquiriesPage() {
                           </label>
                         ))
                       : null}
-                  </div>
-                ) : null}
+                </DashPortalMenu>
               </div>
               <button
                 type="button"
@@ -1985,16 +2042,21 @@ export default function InquiriesPage() {
                 />
                 {form.transferRoundtrip ? (
                   <>
-                    <label className="fs-cell">
-                      <span>من تاريخ</span>
-                      <input
-                        type="date"
-                        value={form.departDate}
-                        onChange={(e) =>
-                          setForm({ ...form, departDate: e.target.value })
-                        }
-                      />
-                    </label>
+                    <DashDateCell
+                      label="من تاريخ"
+                      value={form.departDate}
+                      min={todayIsoDate()}
+                      onChange={(departDate) =>
+                        setForm((f) => ({
+                          ...f,
+                          departDate,
+                          returnDate:
+                            f.returnDate && f.returnDate < departDate
+                              ? departDate
+                              : f.returnDate,
+                        }))
+                      }
+                    />
                     <label className="fs-cell">
                       <span>من وقت</span>
                       <input
@@ -2005,16 +2067,14 @@ export default function InquiriesPage() {
                         }
                       />
                     </label>
-                    <label className="fs-cell">
-                      <span>إلى تاريخ</span>
-                      <input
-                        type="date"
-                        value={form.returnDate}
-                        onChange={(e) =>
-                          setForm({ ...form, returnDate: e.target.value })
-                        }
-                      />
-                    </label>
+                    <DashDateCell
+                      label="إلى تاريخ"
+                      value={form.returnDate}
+                      min={form.departDate || todayIsoDate()}
+                      onChange={(returnDate) =>
+                        setForm((f) => ({ ...f, returnDate }))
+                      }
+                    />
                     <label className="fs-cell">
                       <span>إلى وقت</span>
                       <input
@@ -2028,16 +2088,14 @@ export default function InquiriesPage() {
                   </>
                 ) : (
                   <>
-                    <label className="fs-cell">
-                      <span>تاريخ الاستلام</span>
-                      <input
-                        type="date"
-                        value={form.departDate}
-                        onChange={(e) =>
-                          setForm({ ...form, departDate: e.target.value })
-                        }
-                      />
-                    </label>
+                    <DashDateCell
+                      label="تاريخ الاستلام"
+                      value={form.departDate}
+                      min={todayIsoDate()}
+                      onChange={(departDate) =>
+                        setForm((f) => ({ ...f, departDate }))
+                      }
+                    />
                     <label className="fs-cell">
                       <span>الساعة</span>
                       <input
@@ -2095,28 +2153,31 @@ export default function InquiriesPage() {
                   }))
                 }
               />
-              <label className="fs-cell">
-                <span>من تاريخ</span>
-                <input
-                  type="date"
-                  value={form.departDate}
-                  onChange={(e) =>
-                    setForm({ ...form, departDate: e.target.value })
-                  }
-                />
-                <small>بداية النشاط</small>
-              </label>
-              <label className="fs-cell">
-                <span>إلى تاريخ</span>
-                <input
-                  type="date"
-                  value={form.returnDate}
-                  onChange={(e) =>
-                    setForm({ ...form, returnDate: e.target.value })
-                  }
-                />
-                <small>نهاية الفترة</small>
-              </label>
+              <DashDateCell
+                label="من تاريخ"
+                value={form.departDate}
+                hint="بداية النشاط"
+                min={todayIsoDate()}
+                onChange={(departDate) =>
+                  setForm((f) => ({
+                    ...f,
+                    departDate,
+                    returnDate:
+                      f.returnDate && f.returnDate < departDate
+                        ? departDate
+                        : f.returnDate,
+                  }))
+                }
+              />
+              <DashDateCell
+                label="إلى تاريخ"
+                value={form.returnDate}
+                hint="نهاية الفترة"
+                min={form.departDate || todayIsoDate()}
+                onChange={(returnDate) =>
+                  setForm((f) => ({ ...f, returnDate }))
+                }
+              />
               <div className="fs-cell fs-cell-center guests-cell" ref={guestsRef}>
                 <span>المشاركون</span>
                 <button
@@ -2128,8 +2189,13 @@ export default function InquiriesPage() {
                   {form.children > 0 ? ` · ${form.children} طفل` : ""}
                 </button>
                 <small>بالغ · طفل</small>
-                {guestsOpen ? (
-                  <div className="guests-menu guests-menu-pop">
+                <DashPortalMenu
+                  open={guestsOpen}
+                  anchorRef={guestsRef}
+                  onClose={() => setGuestsOpen(false)}
+                  className="guests-menu guests-menu-pop guests-menu-portal"
+                  matchWidth={false}
+                >
                     <PassengerCountRow
                       adults={form.adults}
                       childrenCount={form.children}
@@ -2138,8 +2204,7 @@ export default function InquiriesPage() {
                       onChildren={(children) => setForm({ ...form, children })}
                       onInfants={() => undefined}
                     />
-                  </div>
-                ) : null}
+                </DashPortalMenu>
               </div>
               <button
                 type="button"
@@ -2182,286 +2247,30 @@ export default function InquiriesPage() {
         <div className="results-layout">
           <div className="results-main">
             {mode === "flights" ? (
-              <>
-                <div className="ticket-head">
-                  <h3>وجدنا {filteredFlights.length} خيار رحلة</h3>
-                  <div className="results-sort ticket-sort">
-                    <button
-                      type="button"
-                      className={sortKey === "best" ? "on" : undefined}
-                      onClick={() => setSortKey("best")}
-                    >
-                      الأفضل
-                    </button>
-                    <button
-                      type="button"
-                      className={sortKey === "price_asc" ? "on" : undefined}
-                      onClick={() => setSortKey("price_asc")}
-                    >
-                      الأرخص
-                    </button>
-                    <button
-                      type="button"
-                      className={
-                        sortKey === "cheapest_direct" ? "on" : undefined
-                      }
-                      onClick={() => setSortKey("cheapest_direct")}
-                    >
-                      أرخص مباشر
-                    </button>
-                    <button
-                      type="button"
-                      className={sortKey === "duration_asc" ? "on" : undefined}
-                      onClick={() => setSortKey("duration_asc")}
-                    >
-                      الأسرع
-                    </button>
-                  </div>
-                </div>
-
-                <div className="ticket-list">
-                  {filteredFlights.map((f) => {
-                    const segs = (Array.isArray(f.details.segments)
-                      ? f.details.segments
-                      : []) as FlightSeg[];
-                    const returnSegs = (Array.isArray(f.details.returnSegments)
-                      ? f.details.returnSegments
-                      : []) as FlightSeg[];
-                    const first = segs[0];
-                    const last = segs[segs.length - 1];
-                    const retFirst = returnSegs[0];
-                    const retLast = returnSegs[returnSegs.length - 1];
-                    const stops = Number(f.details.stops || 0);
-                    const returnStops = Math.max(0, returnSegs.length - 1);
-                    const code = String(f.details.airlineCode || "");
-                    const logo = airlineLogo(code);
-                    const duration = String(f.details.duration || "—");
-                    const returnDurationMins = layoverMinutes(
-                      retFirst?.departAt || retFirst?.departTime,
-                      retLast?.arriveAt || retLast?.arriveTime,
-                    );
-                    const returnDuration =
-                      String(f.details.returnDuration || "") ||
-                      (returnDurationMins != null
-                        ? formatMinutesLabel(returnDurationMins)
-                        : returnSegs.length
-                          ? "—"
-                          : "");
-                    const isFlexible = Boolean(f.details.flexible);
-                    const hasReturn = returnSegs.length > 0;
-                    const dep =
-                      formatClock(
-                        first?.departAt ||
-                          first?.departTime ||
-                          String(f.details.departAt || ""),
-                      );
-                    const arr =
-                      formatClock(
-                        last?.arriveAt ||
-                          last?.arriveTime ||
-                          String(f.details.arriveAt || ""),
-                      );
-                    const depDay = formatDay(
-                      first?.departAt ||
-                        first?.date ||
-                        form.departDate ||
-                        String(f.details.departAt || ""),
-                    );
-                    const arrDay = formatDay(
-                      last?.arriveAt ||
-                        last?.date ||
-                        form.departDate ||
-                        String(f.details.arriveAt || ""),
-                    );
-                    const from = String(
-                      first?.from || f.details.from || form.origin,
-                    );
-                    const to = String(
-                      last?.to || f.details.to || form.destination,
-                    );
-                    const retDep = formatClock(
-                      retFirst?.departAt || retFirst?.departTime || "",
-                    );
-                    const retArr = formatClock(
-                      retLast?.arriveAt || retLast?.arriveTime || "",
-                    );
-                    const retDepDay = formatDay(
-                      retFirst?.departAt ||
-                        retFirst?.date ||
-                        form.returnDate ||
-                        "",
-                    );
-                    const retArrDay = formatDay(
-                      retLast?.arriveAt ||
-                        retLast?.date ||
-                        form.returnDate ||
-                        "",
-                    );
-                    const retFrom = String(
-                      retFirst?.from || to || form.destination,
-                    );
-                    const retTo = String(retLast?.to || from || form.origin);
-                    return (
-                      <article key={f.id} className="ticket-card">
-                        <div className="ticket-body">
-                          <div className="ticket-legs">
-                            <div className="ticket-leg">
-                              <div className="ticket-carrier">
-                                {logo ? (
-                                  // eslint-disable-next-line @next/next/no-img-element
-                                  <img src={logo} alt={code} />
-                                ) : (
-                                  <div className="ticket-logo-fallback">
-                                    {code || "✈"}
-                                  </div>
-                                )}
-                                {hasReturn ? (
-                                  <span className="ticket-leg-label">الذهاب</span>
-                                ) : null}
-                              </div>
-
-                              <div className="ticket-time">
-                                <strong>{dep}</strong>
-                                <span>
-                                  {from}
-                                  {depDay ? ` · ${depDay}` : ""}
-                                </span>
-                              </div>
-
-                              <div className="ticket-path">
-                                <div className="ticket-path-line">
-                                  <i className="ticket-path-bar" />
-                                </div>
-                                <div className="ticket-meta">
-                                  <span
-                                    className={`ticket-meta-stops${stops === 0 ? " direct" : ""}`}
-                                  >
-                                    {stopsLabel(stops)}
-                                  </span>
-                                  <span className="ticket-meta-duration">{duration}</span>
-                                </div>
-                              </div>
-
-                              <div className="ticket-time end">
-                                <strong>{arr}</strong>
-                                <span>
-                                  {to}
-                                  {arrDay ? ` · ${arrDay}` : ""}
-                                </span>
-                              </div>
-                            </div>
-
-                            {hasReturn ? (
-                              <div className="ticket-leg ticket-leg-return">
-                                <div className="ticket-carrier">
-                                  {logo ? (
-                                    // eslint-disable-next-line @next/next/no-img-element
-                                    <img src={logo} alt={code} />
-                                  ) : (
-                                    <div className="ticket-logo-fallback">
-                                      {code || "✈"}
-                                    </div>
-                                  )}
-                                  <span className="ticket-leg-label return">العودة</span>
-                                </div>
-
-                                <div className="ticket-time">
-                                  <strong>{retDep}</strong>
-                                  <span>
-                                    {retFrom}
-                                    {retDepDay ? ` · ${retDepDay}` : ""}
-                                  </span>
-                                </div>
-
-                                <div className="ticket-path">
-                                  <div className="ticket-path-line">
-                                    <i className="ticket-path-bar" />
-                                  </div>
-                                  <div className="ticket-meta">
-                                    <span
-                                      className={`ticket-meta-stops${returnStops === 0 ? " direct" : ""}`}
-                                    >
-                                      {stopsLabel(returnStops)}
-                                    </span>
-                                    <span className="ticket-meta-duration">
-                                      {returnDuration || "—"}
-                                    </span>
-                                  </div>
-                                </div>
-
-                                <div className="ticket-time end">
-                                  <strong>{retArr}</strong>
-                                  <span>
-                                    {retTo}
-                                    {retArrDay ? ` · ${retArrDay}` : ""}
-                                  </span>
-                                </div>
-                              </div>
-                            ) : null}
-                          </div>
-
-                          <div className="ticket-footer-row">
-                            <div className="ticket-airline-name">
-                              {String(f.details.airline || "شركة طيران")}
-                              {code ? ` (${code})` : ""}
-                              {hasReturn ? " · ذهاب وعودة" : ""}
-                            </div>
-                            {isFlexible ? (
-                              <span className="ticket-badge flexible">تذكرة مرنة</span>
-                            ) : null}
-                          </div>
-                        </div>
-
-                        <div className="ticket-side">
-                          <div className="ticket-bags">
-                            <span>✓ حقيبة يد</span>
-                            <span>✓ وزن مسجّل*</span>
-                          </div>
-                          <strong className="ticket-price">
-                            {formatMoneyMinorCompact(f.sellAmountMinor, f.currency)}
-                          </strong>
-                          <small className="ticket-price-note">
-                            يشمل الضرائب والرسوم
-                            {f.pricingRuleName
-                              ? ` · ${f.pricingRuleName}`
-                              : ""}
-                          </small>
-                          <button
-                            type="button"
-                            className="ticket-details-btn"
-                            onClick={() => setDetailFlightId(f.id)}
-                          >
-                            عرض التفاصيل
-                          </button>
-                        </div>
-                      </article>
-                    );
-                  })}
-                  {filteredFlights.length === 0 ? (
-                    <div className="ticket-empty-state">
-                      <strong>لا توجد رحلات مطابقة للفلاتر الحالية</strong>
-                      <p>
-                        {flightFiltersActive
-                          ? "جرّب إزالة بعض الفلاتر أو توسيع نطاق السعر والمدة."
-                          : "لا توجد نتائج متاحة لهذا البحث. غيّر التواريخ أو المسار وحاول مرة أخرى."}
-                      </p>
-                      {flightFiltersActive ? (
-                        <button
-                          type="button"
-                          className="ticket-empty-reset"
-                          onClick={() => {
-                            setFilters(defaultFlightFilters);
-                            setForm((f) => ({ ...f, directOnly: false }));
-                          }}
-                        >
-                          إعادة ضبط الفلاتر
-                        </button>
-                      ) : null}
-                    </div>
-                  ) : null}
-                </div>
-              </>
+              <div className="dash-shop-results">
+                <ShopFlightResults
+                  flights={shopFilteredFlights}
+                  totalCount={shopFlightsRaw.length}
+                  filters={shopFlightFilters}
+                  facets={shopFlightFacets}
+                  sortKey={shopFlightSort}
+                  origin={form.origin}
+                  destination={form.destination}
+                  originLabel={form.originLabel}
+                  destinationLabel={form.destinationLabel}
+                  passengers={form.adults + form.children + form.infants}
+                  onFiltersChange={setShopFlightFilters}
+                  onSortChange={setShopFlightSort}
+                  onResetFilters={() => {
+                    setShopFlightFilters(shopDefaultFlightFilters());
+                    setForm((f) => ({ ...f, directOnly: false }));
+                  }}
+                  onSelectFlight={(flight) => setDetailFlightId(flight.id)}
+                  onViewDetails={(flight) => setDetailFlightId(flight.id)}
+                />
+              </div>
             ) : mode === "cars" || mode === "activities" ? (
+
               <div className="results-sort">
                 <button
                   type="button"
@@ -2481,69 +2290,81 @@ export default function InquiriesPage() {
             ) : null}
 
             {mode === "stays" ? (
-              <div className="panel hotel-results-panel">
-                <div className="hotel-results-head">
-                  <h3>
-                    {form.stayQuery || "الإقامات"}:{" "}
-                    {filteredHotels.length} عقارًا موجودًا
-                  </h3>
-                  {search?.hotels?.[0] ? (
-                    <HotelLiveBadge
-                      liveMode={Boolean(
-                        search.liveMode || search.hotels[0].details.liveMode,
-                      )}
-                      sourceLabel={
-                        typeof search.hotels[0].details.sourceLabel === "string"
-                          ? search.hotels[0].details.sourceLabel
-                          : search.hotelProviderName || search.providerName
-                      }
-                      fetchedAt={
-                        typeof search.hotels[0].details.fetchedAt === "string"
-                          ? search.hotels[0].details.fetchedAt
-                          : undefined
-                      }
-                      expiresAt={search.hotels[0].expiresAt}
-                    />
-                  ) : null}
-                  <div className="results-sort">
-                    <button
-                      type="button"
-                      className={sortKey === "price_asc" ? "on" : undefined}
-                      onClick={() => setSortKey("price_asc")}
-                    >
-                      الأقل سعرًا
-                    </button>
-                    <button
-                      type="button"
-                      className={sortKey === "rating_desc" ? "on" : undefined}
-                      onClick={() => setSortKey("rating_desc")}
-                    >
-                      الأعلى تقييمًا
-                    </button>
-                    <button
-                      type="button"
-                      className={sortKey === "price_desc" ? "on" : undefined}
-                      onClick={() => setSortKey("price_desc")}
-                    >
-                      الأعلى سعرًا
-                    </button>
-                  </div>
-                </div>
-                <div className="hotel-search-list">
-                  {filteredHotels.map((h) => (
-                    <HotelSearchCard
-                      key={h.id}
-                      hotel={h}
-                      nights={Number(h.details.nights || 0) || nights}
-                      onOpen={() => openHotelDetail(h.id)}
-                    />
-                  ))}
-                  {filteredHotels.length === 0 ? (
-                    <p className="hint">
-                      لا توجد فنادق مطابقة للفلاتر الحالية.
-                    </p>
-                  ) : null}
-                </div>
+              <div className="dash-shop-results">
+                <ShopHotelResults
+                  hideSearchBar
+                  destination={form.destination || form.stayQuery}
+                  stayQuery={form.stayQuery}
+                  departDate={form.departDate}
+                  returnDate={form.returnDate}
+                  adults={form.adults}
+                  children={form.children}
+                  rooms={form.rooms}
+                  nights={nights}
+                  loading={loading}
+                  hotels={filteredHotels}
+                  filters={hotelShopFilters}
+                  facets={hotelFacets}
+                  sortKey={
+                    sortKey === "price_desc"
+                      ? "price_desc"
+                      : sortKey === "rating_desc"
+                        ? "rating_desc"
+                        : sortKey === "best"
+                          ? "best"
+                          : "price_asc"
+                  }
+                  onFiltersChange={(next) =>
+                    setFilters((prev) => ({
+                      ...prev,
+                      hotelQuery: next.hotelQuery,
+                      minStars: next.minStars,
+                      minReviewScore:
+                        next.minReviewScore === "6" ? "any" : next.minReviewScore,
+                      board: next.board,
+                      boardCode: next.boardCode,
+                      zone: next.zone,
+                      paymentType: next.paymentType,
+                      rateType: next.rateType,
+                      freeCancellation: next.freeCancellation,
+                      breakfast: next.breakfast,
+                      noPrepayment: next.noPrepayment,
+                      propertyTypes: next.propertyTypes,
+                      facilities: next.facilities,
+                      maxPrice: next.maxPrice,
+                      refundableOnly: next.refundableOnly,
+                      bookableOnly: next.bookableOnly,
+                    }))
+                  }
+                  onSortChange={(key) =>
+                    setSortKey(key === "distance" ? "best" : key)
+                  }
+                  onStayQueryChange={(text) =>
+                    setForm((f) => ({ ...f, stayQuery: text }))
+                  }
+                  onStayPick={(item) =>
+                    setForm((f) => ({
+                      ...f,
+                      stayQuery: item.title,
+                      destination: item.code || item.title,
+                    }))
+                  }
+                  onDepartDateChange={(departDate) =>
+                    setForm((f) => ({ ...f, departDate }))
+                  }
+                  onReturnDateChange={(returnDate) =>
+                    setForm((f) => ({ ...f, returnDate }))
+                  }
+                  onAdultsChange={(adults) => setForm((f) => ({ ...f, adults }))}
+                  onChildrenChange={(children) =>
+                    setForm((f) => ({ ...f, children }))
+                  }
+                  onRoomsChange={(rooms) => setForm((f) => ({ ...f, rooms }))}
+                  onSearch={() => void createAndSearch()}
+                  onOpenHotel={(hotel) => openHotelDetail(hotel.id)}
+                  searchCities={searchCities}
+                  searchDestinationCode={form.destination || undefined}
+                />
               </div>
             ) : null}
 
@@ -2637,7 +2458,10 @@ export default function InquiriesPage() {
             ) : null}
           </div>
 
-          <aside className="results-filters ticket-filters">
+          <aside
+            className="results-filters ticket-filters"
+            hidden={mode === "flights" || mode === "stays"}
+          >
             <h3>تصفية النتائج</h3>
             {mode === "flights" ? (
               <>
@@ -3673,5 +3497,6 @@ export default function InquiriesPage() {
       ) : null}
 
     </AppShell>
+    </ShopI18nProvider>
   );
 }

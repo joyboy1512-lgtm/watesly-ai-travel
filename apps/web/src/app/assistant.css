@@ -251,9 +251,11 @@
   text-overflow: ellipsis;
 }
 
-.ta-thread-meta i.warn {
-  color: #a15b12;
-  font-weight: 800;
+.ta-thread-meta i.ta-phone {
+  direction: ltr;
+  unicode-bidi: isolate;
+  color: #0f3340;
+  font-weight: 700;
 }
 
 .ta-empty,

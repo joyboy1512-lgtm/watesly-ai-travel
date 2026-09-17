@@ -191,6 +191,7 @@ export default function ContactsPage() {
   const [ok, setOk] = useState("");
   const [loading, setLoading] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
+  const [editing, setEditing] = useState<Customer | null>(null);
   const [showSegments, setShowSegments] = useState(false);
   const [form, setForm] = useState(emptyForm);
 
@@ -285,6 +286,70 @@ export default function ContactsPage() {
       );
     } catch (err) {
       setError(err instanceof Error ? err.message : "فشل التحديث");
+    }
+  }
+
+  function openEdit(row: Customer) {
+    setEditing(row);
+    setForm({
+      name: row.name || "",
+      phone: row.phone || "",
+      email: row.email || "",
+      gender: row.gender || "",
+      stage: row.stage || "lead",
+      marketing: row.marketing,
+    });
+    setShowCreate(false);
+  }
+
+  async function saveCustomer() {
+    if (editing?.contactId) {
+      try {
+        await apiFetch(`/contacts/${editing.contactId}`, {
+          method: "PATCH",
+          body: JSON.stringify({
+            name: form.name.trim() || undefined,
+            email: form.email.trim() || undefined,
+            phone: form.phone.trim() || undefined,
+            gender: form.gender,
+            stage: form.stage,
+            marketing: form.marketing,
+          }),
+        });
+        setEditing(null);
+        setForm(emptyForm);
+        setOk("تم تحديث بيانات العميل");
+        await load();
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "فشل التحديث");
+      }
+      return;
+    }
+    await createCustomer();
+  }
+
+  async function bulkAction(action: "archive" | "delete") {
+    const ids = rows
+      .filter((r) => selected.includes(r.key) && r.contactId)
+      .map((r) => r.contactId!) ;
+    if (!ids.length) {
+      setError("اختر عملاء لديهم ملف محفوظ أولاً");
+      return;
+    }
+    if (action === "delete") {
+      const ok = window.confirm(`حذف ${ids.length} عميل نهائياً؟`);
+      if (!ok) return;
+    }
+    try {
+      await apiFetch("/contacts/bulk", {
+        method: "POST",
+        body: JSON.stringify({ ids, action }),
+      });
+      setSelected([]);
+      setOk(action === "delete" ? "تم حذف العملاء" : "تم أرشفة العملاء");
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "فشل العملية");
     }
   }
 
@@ -549,6 +614,38 @@ export default function ContactsPage() {
             {error ? <p className="crm-error">{error}</p> : null}
             {ok ? <p className="crm-ok">{ok}</p> : null}
 
+            {selected.length ? (
+              <div className="crm-bulk">
+                <strong>{selected.length} محدد</strong>
+                {selected.length === 1 ? (
+                  <button
+                    type="button"
+                    className="crm-btn ghost"
+                    onClick={() => {
+                      const row = rows.find((r) => r.key === selected[0]);
+                      if (row) openEdit(row);
+                    }}
+                  >
+                    تعديل
+                  </button>
+                ) : null}
+                <button
+                  type="button"
+                  className="crm-btn ghost"
+                  onClick={() => void bulkAction("archive")}
+                >
+                  أرشفة
+                </button>
+                <button
+                  type="button"
+                  className="crm-btn"
+                  onClick={() => void bulkAction("delete")}
+                >
+                  حذف
+                </button>
+              </div>
+            ) : null}
+
             {rows.length === 0 ? (
               <div className="crm-empty">
                 <strong>لا عملاء مطابقون</strong>
@@ -629,6 +726,14 @@ export default function ContactsPage() {
                           <button
                             type="button"
                             className="crm-msg"
+                            title="تعديل العميل"
+                            onClick={() => openEdit(row)}
+                          >
+                            ✎
+                          </button>
+                          <button
+                            type="button"
+                            className="crm-msg"
                             title="فتح المحادثة"
                             onClick={() => openChat(row)}
                           >
@@ -674,10 +779,16 @@ export default function ContactsPage() {
           </section>
       </div>
 
-      {showCreate ? (
-        <div className="crm-modal-backdrop" onClick={() => setShowCreate(false)}>
+      {showCreate || editing ? (
+        <div
+          className="crm-modal-backdrop"
+          onClick={() => {
+            setShowCreate(false);
+            setEditing(null);
+          }}
+        >
           <div className="crm-modal" onClick={(e) => e.stopPropagation()}>
-            <h3>إنشاء عميل جديد</h3>
+            <h3>{editing ? "تعديل بيانات العميل" : "إنشاء عميل جديد"}</h3>
             <div className="crm-modal-grid">
               <label>
                 الاسم
@@ -742,16 +853,19 @@ export default function ContactsPage() {
               <button
                 type="button"
                 className="crm-btn ghost"
-                onClick={() => setShowCreate(false)}
+                onClick={() => {
+                  setShowCreate(false);
+                  setEditing(null);
+                }}
               >
                 إلغاء
               </button>
               <button
                 type="button"
                 className="crm-btn primary"
-                onClick={() => void createCustomer()}
+                onClick={() => void saveCustomer()}
               >
-                حفظ العميل
+                {editing ? "حفظ التعديلات" : "حفظ العميل"}
               </button>
             </div>
           </div>

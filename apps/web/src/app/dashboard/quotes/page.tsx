@@ -5,12 +5,19 @@ import "./quotes-page.css";
 import { AppShell } from "@/components/AppShell";
 import { apiFetch } from "@/lib/api";
 import { formatDate, formatMoneyMinor } from "@/lib/format";
+import type { CmsState } from "@watesly-travel/shared";
 
 type QuoteItem = {
   description: string;
   providerKey: string;
   serviceType: string;
-  rawOfferSnapshot?: Record<string, unknown> | null;
+};
+
+type QuoteContact = {
+  id?: string;
+  waId?: string | null;
+  name?: string | null;
+  email?: string | null;
 };
 
 type Quote = {
@@ -21,94 +28,15 @@ type Quote = {
   totalCostAmount?: number;
   totalProfitAmount?: number;
   expiresAt?: string;
-  inquiry?: { origin?: string | null; destination?: string | null };
+  createdAt?: string;
+  inquiry?: {
+    origin?: string | null;
+    destination?: string | null;
+    adults?: number;
+  };
+  contact?: QuoteContact | null;
   items?: QuoteItem[];
 };
-
-type CancelFilter = "all" | "free" | "non_refundable";
-
-type CancelInfo = {
-  kind: "free" | "non_refundable" | "unknown";
-  text: string;
-};
-
-function itemCancellation(item: QuoteItem): CancelInfo {
-  const raw = item.rawOfferSnapshot;
-  if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
-    return { kind: "unknown", text: "—" };
-  }
-
-  if (item.serviceType === "hotel") {
-    const policies = raw.policies as { freeCancellation?: boolean } | undefined;
-    if (policies?.freeCancellation === true) {
-      return { kind: "free", text: "إلغاء مجاني" };
-    }
-    if (policies?.freeCancellation === false) {
-      return { kind: "non_refundable", text: "غير قابل للاسترداد" };
-    }
-
-    const rooms = raw.rooms;
-    if (Array.isArray(rooms)) {
-      if (
-        rooms.some(
-          (room) =>
-            room &&
-            typeof room === "object" &&
-            (room as { rates?: Array<{ freeCancellation?: boolean }> }).rates?.some(
-              (rate) => rate.freeCancellation,
-            ),
-        )
-      ) {
-        return { kind: "free", text: "إلغاء مجاني" };
-      }
-      if (rooms.length) {
-        return { kind: "non_refundable", text: "غير قابل للاسترداد" };
-      }
-    }
-
-    const matchingRates = raw.matchingRates;
-    if (Array.isArray(matchingRates)) {
-      if (
-        matchingRates.some(
-          (rate) =>
-            rate && typeof rate === "object" && (rate as { freeCancellation?: boolean }).freeCancellation,
-        )
-      ) {
-        return { kind: "free", text: "إلغاء مجاني" };
-      }
-      if (matchingRates.length) {
-        return { kind: "non_refundable", text: "غير قابل للاسترداد" };
-      }
-    }
-
-    return { kind: "unknown", text: "—" };
-  }
-
-  if (item.serviceType === "flight") {
-    const policies = raw.policies as { refundable?: boolean; changeable?: boolean } | undefined;
-    if (policies?.refundable) return { kind: "free", text: "قابل للاسترداد" };
-    if (policies?.refundable === false) {
-      return { kind: "non_refundable", text: "غير قابل للاسترداد" };
-    }
-    return { kind: "unknown", text: "—" };
-  }
-
-  const freeCancel = raw.freeCancellation;
-  if (freeCancel === true) return { kind: "free", text: "إلغاء مجاني" };
-  if (freeCancel === false) return { kind: "non_refundable", text: "غير قابل للاسترداد" };
-
-  return { kind: "unknown", text: "—" };
-}
-
-function quoteCancellation(quote: Quote): CancelInfo {
-  const items = quote.items || [];
-  if (!items.length) return { kind: "unknown", text: "—" };
-  const free = items.find((item) => itemCancellation(item).kind === "free");
-  if (free) return itemCancellation(free);
-  const non = items.find((item) => itemCancellation(item).kind === "non_refundable");
-  if (non) return itemCancellation(non);
-  return itemCancellation(items[0]!);
-}
 
 const STATUS_LABEL: Record<string, string> = {
   draft: "مسودة",
@@ -118,10 +46,53 @@ const STATUS_LABEL: Record<string, string> = {
   booked: "محجوز",
 };
 
+const SERVICE_LABEL: Record<string, string> = {
+  flight: "طيران",
+  hotel: "فندق",
+  transfer: "مواصلات",
+  activity: "أنشطة",
+};
+
+const CMS_TO_SERVICE: Record<string, string> = {
+  flights: "flight",
+  stays: "hotel",
+  cars: "transfer",
+  activities: "activity",
+};
+
+function quoteServices(quote: Quote) {
+  const types = Array.from(
+    new Set((quote.items || []).map((item) => item.serviceType).filter(Boolean)),
+  );
+  return types.length ? types : ["flight"];
+}
+
+function customerLabel(quote: Quote) {
+  const c = quote.contact;
+  return (
+    c?.name ||
+    c?.waId ||
+    c?.email ||
+    "بدون بيانات"
+  );
+}
+
+function customerDetail(quote: Quote) {
+  const c = quote.contact;
+  return [c?.name, c?.waId, c?.email].filter(Boolean).join(" · ") || "—";
+}
+
 export default function QuotesPage() {
   const [rows, setRows] = useState<Quote[]>([]);
   const [error, setError] = useState("");
-  const [cancelFilter, setCancelFilter] = useState<CancelFilter>("all");
+  const [ok, setOk] = useState("");
+  const [serviceFilter, setServiceFilter] = useState("all");
+  const [enabledServices, setEnabledServices] = useState<string[]>([
+    "flight",
+    "hotel",
+    "transfer",
+    "activity",
+  ]);
 
   async function load() {
     setError("");
@@ -131,16 +102,24 @@ export default function QuotesPage() {
 
   useEffect(() => {
     load().catch((err: Error) => setError(err.message));
+    apiFetch<CmsState>("/shop/platform/cms")
+      .then((cms) => {
+        const enabled = (cms.heroServices || [])
+          .filter((s) => s.enabled && CMS_TO_SERVICE[s.key])
+          .map((s) => CMS_TO_SERVICE[s.key]!);
+        if (enabled.length) setEnabledServices(Array.from(new Set(enabled)));
+      })
+      .catch(() => undefined);
   }, []);
 
-  const filtered = useMemo(() => {
-    if (cancelFilter === "all") return rows;
+  const visible = useMemo(() => {
     return rows.filter((row) => {
-      const info = quoteCancellation(row);
-      if (cancelFilter === "free") return info.kind === "free";
-      return info.kind === "non_refundable";
+      const services = quoteServices(row);
+      if (!services.some((s) => enabledServices.includes(s))) return false;
+      if (serviceFilter !== "all" && !services.includes(serviceFilter)) return false;
+      return true;
     });
-  }, [rows, cancelFilter]);
+  }, [rows, enabledServices, serviceFilter]);
 
   async function send(id: string) {
     try {
@@ -165,8 +144,8 @@ export default function QuotesPage() {
   }
 
   async function remove(id: string) {
-    const ok = window.confirm("حذف عرض السعر هذا نهائياً؟ لا يمكن التراجع.");
-    if (!ok) return;
+    const okConfirm = window.confirm("حذف عرض السعر هذا نهائياً؟ لا يمكن التراجع.");
+    if (!okConfirm) return;
     try {
       setError("");
       await apiFetch(`/quotes/${id}`, { method: "DELETE" });
@@ -176,50 +155,77 @@ export default function QuotesPage() {
     }
   }
 
+  async function saveContact(row: Quote) {
+    const phone = row.contact?.waId?.trim();
+    const email = row.contact?.email?.trim();
+    const name = row.contact?.name?.trim();
+    if (!phone && !email) {
+      setError("لا توجد بيانات عميل كافية للحفظ");
+      return;
+    }
+    try {
+      setError("");
+      await apiFetch("/contacts", {
+        method: "POST",
+        body: JSON.stringify({
+          waId: phone || email,
+          name: name || undefined,
+          email: email || undefined,
+          source: "quote",
+          stage: "lead",
+        }),
+      });
+      setOk("تم حفظ العميل في قائمة العملاء");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "فشل حفظ العميل");
+    }
+  }
+
   function isExpired(row: Quote) {
     if (!row.expiresAt) return false;
     return new Date(row.expiresAt).getTime() < Date.now();
   }
 
+  const serviceTabs = [
+    { key: "all", label: "الكل" },
+    ...enabledServices.map((key) => ({
+      key,
+      label: SERVICE_LABEL[key] || key,
+    })),
+  ];
+
   return (
     <AppShell title="عروض الأسعار">
       <div className="quotes-suite">
         {error ? <p className="error">{error}</p> : null}
+        {ok ? <p className="quotes-ok">{ok}</p> : null}
 
         <div className="quotes-toolbar">
-          <strong>{filtered.length} من {rows.length} عرض</strong>
-          <p className="quotes-hint">العروض المنتهية تُحذف تلقائياً عند فتح الصفحة.</p>
-          <div className="quotes-filter-group" role="group" aria-label="فلتر الإلغاء">
-            <span>الإلغاء:</span>
-            <button
-              type="button"
-              className={cancelFilter === "all" ? "on" : undefined}
-              onClick={() => setCancelFilter("all")}
-            >
-              الكل
-            </button>
-            <button
-              type="button"
-              className={cancelFilter === "free" ? "on" : undefined}
-              onClick={() => setCancelFilter("free")}
-            >
-              إلغاء مجاني
-            </button>
-            <button
-              type="button"
-              className={cancelFilter === "non_refundable" ? "on" : undefined}
-              onClick={() => setCancelFilter("non_refundable")}
-            >
-              غير قابل للاسترداد
-            </button>
+          <strong>
+            {visible.length} من {rows.length} عرض
+          </strong>
+          <p className="quotes-hint">
+            العروض تُحذف تلقائياً بعد 3 أيام ما لم تتحول إلى حجز، حتى لا تُثقل الموقع.
+          </p>
+          <div className="quotes-filter-group" role="group" aria-label="نوع الخدمة">
+            {serviceTabs.map((tab) => (
+              <button
+                key={tab.key}
+                type="button"
+                className={serviceFilter === tab.key ? "on" : undefined}
+                onClick={() => setServiceFilter(tab.key)}
+              >
+                {tab.label}
+              </button>
+            ))}
           </div>
         </div>
 
         <div className="quotes-panel">
-          {filtered.length === 0 ? (
+          {visible.length === 0 ? (
             <p className="quotes-empty">
               {rows.length
-                ? "لا توجد عروض مطابقة لفلتر الإلغاء الحالي."
+                ? "لا توجد عروض مطابقة للخدمة المحددة."
                 : "لا توجد عروض أسعار بعد."}
             </p>
           ) : (
@@ -227,22 +233,34 @@ export default function QuotesPage() {
               <table className="quotes-table">
                 <thead>
                   <tr>
+                    <th>العميل</th>
+                    <th>الخدمة</th>
                     <th>المسار</th>
                     <th>الوصف</th>
                     <th>البيع</th>
                     <th>التكلفة</th>
                     <th>الربح</th>
-                    <th>الإلغاء</th>
                     <th>الحالة</th>
-                    <th>ينتهي</th>
+                    <th>أُنشئ</th>
                     <th />
                   </tr>
                 </thead>
                 <tbody>
-                  {filtered.map((row) => {
-                    const cancel = quoteCancellation(row);
+                  {visible.map((row) => {
+                    const services = quoteServices(row);
                     return (
                       <tr key={row.id}>
+                        <td className="customer">
+                          <strong>{customerLabel(row)}</strong>
+                          <small>{customerDetail(row)}</small>
+                        </td>
+                        <td>
+                          <div className="quotes-services">
+                            {services.map((s) => (
+                              <span key={s}>{SERVICE_LABEL[s] || s}</span>
+                            ))}
+                          </div>
+                        </td>
                         <td className="route">
                           {row.inquiry?.origin || "؟"} → {row.inquiry?.destination || "؟"}
                         </td>
@@ -259,18 +277,22 @@ export default function QuotesPage() {
                             : "—"}
                         </td>
                         <td>
-                          <span className={`quotes-cancel ${cancel.kind}`}>{cancel.text}</span>
-                        </td>
-                        <td>
                           <span className={`quotes-status${isExpired(row) ? " expired" : ""}`}>
                             {isExpired(row)
                               ? "منتهي"
                               : STATUS_LABEL[row.status] || row.status}
                           </span>
                         </td>
-                        <td>{formatDate(row.expiresAt)}</td>
+                        <td>{formatDate(row.createdAt)}</td>
                         <td>
                           <div className="quotes-actions">
+                            <button
+                              type="button"
+                              className="btn secondary"
+                              onClick={() => void saveContact(row)}
+                            >
+                              حفظ العميل
+                            </button>
                             <button
                               type="button"
                               className="btn secondary"

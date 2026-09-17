@@ -705,6 +705,23 @@ export default function InboxClient() {
     }
   }
 
+  async function removeConversation() {
+    if (!detail) return;
+    const ok = window.confirm("حذف هذه المحادثة نهائياً؟ لا يمكن التراجع.");
+    if (!ok) return;
+    setBusy(true);
+    setError("");
+    try {
+      await apiFetch(`/conversations/${detail.id}`, { method: "DELETE" });
+      router.replace("/dashboard/conversations");
+      await loadList();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "فشل حذف المحادثة");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function handoff() {
     if (!detail) return;
     await apiFetch(`/conversations/${detail.id}/handoff`, {
@@ -904,6 +921,24 @@ export default function InboxClient() {
                     onClick={returnToBot}
                   >
                     ↺
+                  </button>
+                  <button
+                    type="button"
+                    className="wi-icon-btn"
+                    title="إلغاء المحادثة"
+                    disabled={busy || detail.status === "closed"}
+                    onClick={() => void updateStatus("closed")}
+                  >
+                    ✕
+                  </button>
+                  <button
+                    type="button"
+                    className="wi-icon-btn danger"
+                    title="حذف المحادثة"
+                    disabled={busy}
+                    onClick={() => void removeConversation()}
+                  >
+                    ⌫
                   </button>
                 </div>
               </header>
@@ -1134,59 +1169,37 @@ export default function InboxClient() {
                 </div>
                 <h3>{detail.contact.name || detail.contact.waId}</h3>
                 <p className="wi-phone">{detail.contact.waId}</p>
-                <div className="wi-details-actions">
-                  <button
-                    type="button"
-                    className="wi-btn ghost"
-                    onClick={() => router.push("/dashboard/whatsapp")}
-                  >
-                    حساب القناة
-                  </button>
-                  <button
-                    type="button"
-                    className="wi-btn ghost"
-                    onClick={() => router.push("/dashboard/channels")}
-                  >
-                    القنوات
-                  </button>
-                  <button
-                    type="button"
-                    className="wi-btn ghost"
-                    onClick={() => router.push("/dashboard/templates")}
-                  >
-                    القوالب
-                  </button>
-                  <button
-                    type="button"
-                    className="wi-btn ghost"
-                    onClick={() => router.push("/dashboard/campaigns")}
-                  >
-                    الحملات
-                  </button>
-                  <button
-                    type="button"
-                    className="wi-btn ghost"
-                    onClick={() => router.push("/dashboard/contacts")}
-                  >
-                    ملف العميل
-                  </button>
-                  <button
-                    type="button"
-                    className="wi-btn ghost"
-                    onClick={() => router.push("/dashboard/inquiries")}
-                  >
-                    استعلام السفر
-                  </button>
-                </div>
-                <div className="wi-details-channel">
-                  <strong>قناة الإرسال</strong>
-                  <p>
-                    {channelLabel(detail)}
-                    {detail.whatsappAccount?.phoneNumberId
-                      ? ` · ${detail.whatsappAccount.phoneNumberId}`
-                      : " · غير مربوطة (ستُستخدم القناة الافتراضية عند الرد)"}
-                  </p>
-                </div>
+              </div>
+
+              <div className="wi-traveler-grid">
+                <article className="wi-info-card">
+                  <span>الاسم</span>
+                  <strong>{detail.contact.name || "بدون اسم"}</strong>
+                </article>
+                <article className="wi-info-card">
+                  <span>الهاتف</span>
+                  <strong className="ltr">{detail.contact.waId}</strong>
+                </article>
+                <article className="wi-info-card">
+                  <span>البريد</span>
+                  <strong>{detail.contact.email || "—"}</strong>
+                </article>
+                <article className="wi-info-card">
+                  <span>حالة المحادثة</span>
+                  <strong>{statusLabel}</strong>
+                </article>
+                <article className="wi-info-card">
+                  <span>القناة</span>
+                  <strong>{channelLabel(detail)}</strong>
+                </article>
+                <article className="wi-info-card">
+                  <span>المسؤول</span>
+                  <strong>
+                    {detail.assigneeType === "human"
+                      ? session?.user.name || "موظف"
+                      : "روبوت"}
+                  </strong>
+                </article>
               </div>
 
               <div className="wi-details-section">
@@ -1229,6 +1242,24 @@ export default function InboxClient() {
                     <option value="عاجلة">عاجلة</option>
                   </select>
                 </label>
+                <div className="wi-details-danger">
+                  <button
+                    type="button"
+                    className="wi-btn ghost"
+                    disabled={busy || detail.status === "closed"}
+                    onClick={() => void updateStatus("closed")}
+                  >
+                    إلغاء المحادثة
+                  </button>
+                  <button
+                    type="button"
+                    className="wi-btn danger"
+                    disabled={busy}
+                    onClick={() => void removeConversation()}
+                  >
+                    حذف المحادثة
+                  </button>
+                </div>
               </div>
 
               <div className="wi-details-section">

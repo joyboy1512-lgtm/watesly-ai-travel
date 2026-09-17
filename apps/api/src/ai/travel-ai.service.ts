@@ -480,6 +480,9 @@ export class TravelAiService {
           take: 1,
           select: { content: true, role: true, createdAt: true },
         },
+        contact: {
+          select: { id: true, name: true, waId: true, email: true },
+        },
       },
     });
     return threads.map((row) => {
@@ -818,9 +821,29 @@ export class TravelAiService {
       externalRef?: string | null;
       createdAt: Date;
       updatedAt: Date;
+      contact?: {
+        name?: string | null;
+        waId?: string | null;
+        email?: string | null;
+      } | null;
+      messages?: Array<{ role?: string | null }>;
     },
     budget = computeBudget(thread),
   ) {
+    const contactName = thread.contact?.name || null;
+    const contactPhone = thread.contact?.waId || null;
+    const contactEmail = thread.contact?.email || null;
+    const lastRole = thread.messages?.[0]?.role || null;
+    const waitingReply =
+      thread.status === "open" && (lastRole === "user" || lastRole === "human");
+    const bucket =
+      thread.status === "handed_off"
+        ? "handed_off"
+        : budget.exhausted
+          ? "exhausted"
+          : waitingReply
+            ? "waiting"
+            : "open";
     return {
       id: thread.id,
       organizationId: thread.organizationId,
@@ -837,6 +860,13 @@ export class TravelAiService {
       creditLimitUsd: budget.limit,
       remainingUsd: budget.remaining,
       exhausted: budget.exhausted,
+      contactName,
+      contactPhone,
+      contactEmail,
+      customerLabel:
+        thread.title || contactName || contactPhone || contactEmail || "محادثة جديدة",
+      waitingReply,
+      bucket,
     };
   }
 

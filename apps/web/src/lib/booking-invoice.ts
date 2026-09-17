@@ -79,6 +79,7 @@ export const BOOKING_STATUS_LABEL: Record<string, string> = {
   issued: "مُصدَر",
   completed: "مكتمل",
   cancelled: "ملغى",
+  confirmed: "مؤكد",
 };
 
 export const BOOKING_STATUS_LABEL_EN: Record<string, string> = {
@@ -87,6 +88,7 @@ export const BOOKING_STATUS_LABEL_EN: Record<string, string> = {
   issued: "Issued",
   completed: "Completed",
   cancelled: "Cancelled",
+  confirmed: "Confirmed",
 };
 
 export const PAYMENT_STATUS_LABEL: Record<string, string> = {
@@ -422,10 +424,10 @@ function itineraryHtml(row: BookingInvoiceData, orgName: string) {
     ? `<section class="box">
         ${sectionTitle("خط سير الرحلة", "FLIGHT ITINERARY")}
         <div class="grid-2">
-          ${kv("شركة الطيران", "Airline", esc(extra(row, "airline") || flights[0]?.description || "—"))}
+          ${kv("شركة الطيران", "Airline", esc(extra(row, "airline") || extra(row, "airlineName") || "—"))}
           ${kv("رقم الرحلة", "Flight", esc(extra(row, "flightNumber") || extra(row, "flight") || "—"))}
-          ${kv("المغادرة", "Departure", `${esc(origin)}<small>${esc(formatPrintDate(bookingTravelDate(row)))}</small>`)}
-          ${kv("الوصول", "Arrival", `${esc(dest)}${bookingReturnDate(row) ? `<small>${esc(formatPrintDate(bookingReturnDate(row)))}</small>` : ""}`)}
+          ${kv("المغادرة", "Departure", `${esc(origin)}<small class="ltr">${esc(formatPrintDate(bookingTravelDate(row)))}</small>`)}
+          ${kv("الوصول", "Arrival", `${esc(dest)}${bookingReturnDate(row) ? `<small class="ltr">${esc(formatPrintDate(bookingReturnDate(row)))}</small>` : ""}`)}
           ${kv("الدرجة", "Class", `${esc(cabin.ar)} <i>| ${esc(cabin.en)}</i>`)}
           ${kv("الأمتعة", "Baggage", esc(extra(row, "baggage") || extra(row, "bags") || "—"))}
           ${kv("الحالة", "Status", `${esc(BOOKING_STATUS_LABEL[row.status] || row.status)} <i>| ${esc(BOOKING_STATUS_LABEL_EN[row.status] || row.status)}</i>`)}
@@ -440,8 +442,8 @@ function itineraryHtml(row: BookingInvoiceData, orgName: string) {
         <div class="grid-2">
           ${kv("الفندق", "Hotel", esc(hotelName))}
           ${kv("رقم التأكيد", "Confirmation No.", esc(confirmNo))}
-          ${kv("تسجيل الدخول", "Check-in", esc(formatPrintDate(row.passengerDetails?.stay?.checkIn || bookingTravelDate(row))))}
-          ${kv("تسجيل المغادرة", "Check-out", esc(formatPrintDate(row.passengerDetails?.stay?.checkOut || bookingReturnDate(row))))}
+          ${kv("تسجيل الدخول", "Check-in", `<span class="ltr">${esc(formatPrintDate(row.passengerDetails?.stay?.checkIn || bookingTravelDate(row)))}</span>`)}
+          ${kv("تسجيل المغادرة", "Check-out", `<span class="ltr">${esc(formatPrintDate(row.passengerDetails?.stay?.checkOut || bookingReturnDate(row)))}</span>`)}
           ${kv("عدد الليالي", "Nights", nights ? `${nights} ${nights === 1 ? "ليلة" : "ليالٍ"} <i>| ${nights} Night${nights === 1 ? "" : "s"}</i>` : "—")}
           ${kv("الغرفة", "Room", esc(roomName))}
           ${kv("الوجبات", "Meal Plan", esc(boardName))}
@@ -484,7 +486,7 @@ function itineraryHtml(row: BookingInvoiceData, orgName: string) {
         ${kv("رقم التذكرة", "Ticket Number", `<span class="ltr">${esc(ticketNo)}</span>`)}
         ${kv("الهاتف", "Phone", `<span class="ltr">${esc(phone)}</span>`)}
         ${kv("البريد", "Email", `<span class="ltr">${esc(email)}</span>`)}
-        ${kv("تاريخ الحجز", "Booking Date", esc(formatPrintDate(row.createdAt)))}
+        ${kv("تاريخ الحجز", "Booking Date", `<span class="ltr">${esc(formatPrintDate(row.createdAt))}</span>`)}
       </div>
     </section>
 
@@ -539,7 +541,7 @@ function itineraryHtml(row: BookingInvoiceData, orgName: string) {
       <div class="grid-2">
         ${kv("حالة الدفع", "Payment Status", `${esc(PAYMENT_STATUS_LABEL[payStatus] || payStatus)} <i>| ${esc(PAYMENT_STATUS_LABEL_EN[payStatus] || payStatus)}</i>`)}
         ${kv("طريقة الدفع", "Payment Method", `${esc(PAYMENT_METHOD_LABEL[payMethod] || payMethod)} <i>| ${esc(PAYMENT_METHOD_LABEL_EN[payMethod] || payMethod)}</i>`)}
-        ${kv("تاريخ الدفع", "Payment Date", esc(formatPrintDate(payDate)))}
+        ${kv("تاريخ الدفع", "Payment Date", `<span class="ltr">${esc(formatPrintDate(payDate))}</span>`)}
         ${kv("الوكالة", "Agency", `${esc(orgName || COMPANY_LEGAL.brandName)}`)}
       </div>
       <p class="contact">

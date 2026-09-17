@@ -71,6 +71,24 @@
   align-items: center;
 }
 
+.bk-cost-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.45rem 0.75rem;
+  border-radius: 10px;
+  border: 1px solid rgba(216, 163, 94, 0.45);
+  background: #fffaf2;
+  color: #0f3340;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.bk-cost-toggle input {
+  accent-color: #0f3340;
+}
+
 .bk-pay {
   display: grid;
   gap: 0.1rem;

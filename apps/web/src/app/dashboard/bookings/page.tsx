@@ -26,6 +26,31 @@ type Booking = BookingInvoiceData & {
   totalProfitAmount?: number;
 };
 
+function PrintCostToggle({
+  en,
+  checked,
+  onChange,
+}: {
+  en: boolean;
+  checked: boolean;
+  onChange: (v: boolean) => void;
+}) {
+  return (
+    <label className="bk-cost-toggle">
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={(e) => onChange(e.target.checked)}
+      />
+      <span>
+        {en
+          ? "Include cost on print (hidden unless checked)"
+          : "إظهار التكلفة في الطباعة (تختفي ما لم تُطلب)"}
+      </span>
+    </label>
+  );
+}
+
 function FilterDate({
   label,
   value,
@@ -78,6 +103,9 @@ export default function BookingsPage() {
   const [travelTo, setTravelTo] = useState("");
   const [origin, setOrigin] = useState("");
   const [destination, setDestination] = useState("");
+  const [printCost, setPrintCost] = useState(false);
+  const canViewCost =
+    getSession()?.permissions?.includes("pricing.view_cost") ?? false;
 
   async function load() {
     const params = new URLSearchParams();
@@ -140,9 +168,10 @@ export default function BookingsPage() {
       printBookingInvoices(
         [row],
         getSession()?.organization.name || "WeekendGate",
+        { includeCost: canViewCost && printCost },
       );
     } catch (err) {
-      setError(err instanceof Error ? err.message : "فشل طباعة الفاتورة");
+      setError(err instanceof Error ? err.message : en ? "Print failed" : "فشل طباعة التقرير");
     }
   }
 
@@ -152,9 +181,10 @@ export default function BookingsPage() {
       printBookingInvoices(
         rows,
         getSession()?.organization.name || "WeekendGate",
+        { includeCost: canViewCost && printCost },
       );
     } catch (err) {
-      setError(err instanceof Error ? err.message : "فشل طباعة الفواتير");
+      setError(err instanceof Error ? err.message : en ? "Print failed" : "فشل طباعة التقارير");
     }
   }
 
@@ -162,8 +192,9 @@ export default function BookingsPage() {
     <AppShell title="الحجوزات">
       <div className="panel">
         <p className="hint" style={{ marginTop: 0 }}>
-          فلترة الحجوزات بتاريخ الحجز وتاريخ السفر والمسار (يمكن تحديد جهة
-          المغادرة فقط). اطبع فاتورة PDF من النتائج أو من صف كل حجز.
+          {en
+            ? "Filter by booking date, travel date, and route (origin only is enough). Print a bilingual itinerary and invoice from the results or each row. Cost stays hidden unless you ask to show it."
+            : "فلترة الحجوزات بتاريخ الحجز وتاريخ السفر والمسار (يمكن تحديد جهة المغادرة فقط). اطبع تقرير خط السير والفاتورة من النتائج أو من صف كل حجز. التكلفة تختفي ما لم يُطلب إظهارها."}
         </p>
         <div className="bk-filters">
           <div className="bk-filter-grid">
@@ -171,7 +202,9 @@ export default function BookingsPage() {
               <span>{i18n.c("search")}</span>
               <input
                 value={q}
-                placeholder={en ? "Name, phone, email, reference…" : "اسم، هاتف، بريد، مرجع…"}
+                placeholder={
+                  en ? "Name, phone, email, reference…" : "اسم، هاتف، بريد، مرجع…"
+                }
                 onChange={(e) => setQ(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") void load();
@@ -226,10 +259,10 @@ export default function BookingsPage() {
               onChange={setTravelTo}
             />
             <label className="field">
-              <span>المسار من</span>
+              <span>{en ? "Route from" : "المسار من"}</span>
               <input
                 value={origin}
-                placeholder="مدينة / مطار المغادرة"
+                placeholder={en ? "City / departure airport" : "مدينة / مطار المغادرة"}
                 onChange={(e) => setOrigin(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") void load();
@@ -237,10 +270,14 @@ export default function BookingsPage() {
               />
             </label>
             <label className="field">
-              <span>المسار إلى (اختياري)</span>
+              <span>{en ? "Route to (optional)" : "المسار إلى (اختياري)"}</span>
               <input
                 value={destination}
-                placeholder="يمكن تركه فارغًا والبحث بالمغادرة فقط"
+                placeholder={
+                  en
+                    ? "Leave empty to search by origin only"
+                    : "يمكن تركه فارغًا والبحث بالمغادرة فقط"
+                }
                 onChange={(e) => setDestination(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") void load();
@@ -251,22 +288,27 @@ export default function BookingsPage() {
         </div>
         <div className="actions bk-actions">
           <button type="button" className="btn" onClick={() => void load()}>
-            تطبيق الفلاتر
+            {i18n.c("apply")}
           </button>
           <button
             type="button"
             className="btn secondary"
             onClick={resetFilters}
           >
-            مسح الفلاتر
+            {i18n.c("reset")}
           </button>
+          {canViewCost ? (
+            <PrintCostToggle en={en} checked={printCost} onChange={setPrintCost} />
+          ) : null}
           <button
             type="button"
             className="btn"
             disabled={!rows.length}
             onClick={printFiltered}
           >
-            طباعة فواتير النتائج PDF ({rows.length})
+            {en
+              ? `Print itinerary & invoice (${rows.length})`
+              : `طباعة التقرير والفاتورة (${rows.length})`}
           </button>
         </div>
         {error ? <p className="error">{error}</p> : null}
@@ -319,10 +361,12 @@ export default function BookingsPage() {
                         {formatMoneyMinor(row.totalSellAmount, currency)}
                       </strong>
                       <small>
-                        مدفوع {formatMoneyMinor(paid, currency)}
+                        {en ? "Paid" : "مدفوع"} {formatMoneyMinor(paid, currency)}
                         {remaining > 0
-                          ? ` · متبقي ${formatMoneyMinor(remaining, currency)}`
-                          : " · مكتمل"}
+                          ? ` · ${en ? "Balance" : "متبقي"} ${formatMoneyMinor(remaining, currency)}`
+                          : en
+                            ? " · Complete"
+                            : " · مكتمل"}
                       </small>
                     </div>
                   </td>
@@ -333,14 +377,14 @@ export default function BookingsPage() {
                         className="btn secondary"
                         href={`/dashboard/bookings/${row.id}`}
                       >
-                        تفاصيل
+                        {en ? "Details" : "تفاصيل"}
                       </Link>
                       <button
                         type="button"
                         className="btn"
                         onClick={() => printOne(row)}
                       >
-                        فاتورة PDF
+                        {en ? "Print" : "طباعة"}
                       </button>
                       {row.status === "on_hold" || row.status === "draft" ? (
                         <button
@@ -348,7 +392,7 @@ export default function BookingsPage() {
                           className="btn"
                           onClick={() => void issue(row.id)}
                         >
-                          إصدار
+                          {en ? "Issue" : "إصدار"}
                         </button>
                       ) : null}
                       <button
@@ -356,7 +400,7 @@ export default function BookingsPage() {
                         className="btn secondary"
                         onClick={() => void pay(row.id, remaining || row.totalSellAmount)}
                       >
-                        تسجيل دفع
+                        {en ? "Record payment" : "تسجيل دفع"}
                       </button>
                     </div>
                   </td>
@@ -366,7 +410,9 @@ export default function BookingsPage() {
           </tbody>
         </table>
         {rows.length === 0 ? (
-          <p className="hint">لا توجد حجوزات مطابقة.</p>
+          <p className="hint">
+            {en ? "No matching bookings." : "لا توجد حجوزات مطابقة."}
+          </p>
         ) : null}
       </div>
     </AppShell>

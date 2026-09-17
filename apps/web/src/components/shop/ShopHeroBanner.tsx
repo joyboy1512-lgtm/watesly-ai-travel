@@ -4,10 +4,12 @@ import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { heroSlidesFor } from "@/lib/shop-content";
+import { cmsSlidesFor } from "@/lib/shop-cms";
+import { useShopCms } from "@/components/shop/ShopCmsProvider";
 import { ShopAutocomplete, type SuggestItem } from "@/components/shop/ShopAutocomplete";
 import { ShopDateRangePicker } from "@/components/shop/ShopDateRangePicker";
 import { useShopI18n } from "@/components/shop/ShopI18nProvider";
-import { readHeroServices } from "@/lib/hero-services";
+import { readHeroServices, writeHeroServices } from "@/lib/hero-services";
 import {
   emptyRoom,
   occupancyTotals,
@@ -376,29 +378,36 @@ export function ShopHeroBanner(props: Props) {
     setHeaderSlot(document.getElementById("wg-header-services"));
   }, []);
   useEffect(() => {
-    const services = readHeroServices();
-    const modes = services
-      .filter((s) => s.enabled && s.kind === "mode")
-      .map((s) => s.key)
-      .filter((k): k is Mode => ["stays", "flights", "cars", "activities"].includes(k));
-    if (modes.length) setEnabledModes(modes);
-    setShowMyTrip(services.some((s) => s.key === "myTrip" && s.enabled));
-    const onChange = () => {
-      const next = readHeroServices();
-      const m = next
+    const apply = (services: ReturnType<typeof readHeroServices>) => {
+      const modes = services
         .filter((s) => s.enabled && s.kind === "mode")
         .map((s) => s.key)
         .filter((k): k is Mode => ["stays", "flights", "cars", "activities"].includes(k));
-      if (m.length) setEnabledModes(m);
-      setShowMyTrip(next.some((s) => s.key === "myTrip" && s.enabled));
+      if (modes.length) setEnabledModes(modes);
+      setShowMyTrip(services.some((s) => s.key === "myTrip" && s.enabled));
     };
+    apply(readHeroServices());
+    const onChange = () => apply(readHeroServices());
     window.addEventListener("wg-hero-services-changed", onChange);
     return () => window.removeEventListener("wg-hero-services-changed", onChange);
   }, []);
   const travelersWrapRef = useRef<HTMLDivElement | null>(null);
   const infants = props.infants ?? 0;
   const { locale, t } = useShopI18n();
-  const slides = heroSlidesFor(locale);
+  const cms = useShopCms();
+  const cmsSlides = cmsSlidesFor(cms, locale);
+  const slides = cmsSlides.length ? cmsSlides : heroSlidesFor(locale);
+
+  useEffect(() => {
+    if (!cms.heroServices?.length) return;
+    writeHeroServices(cms.heroServices);
+    const modes = cms.heroServices
+      .filter((s) => s.enabled && s.kind === "mode")
+      .map((s) => s.key)
+      .filter((k): k is Mode => ["stays", "flights", "cars", "activities"].includes(k));
+    if (modes.length) setEnabledModes(modes);
+    setShowMyTrip(cms.heroServices.some((s) => s.key === "myTrip" && s.enabled));
+  }, [cms.heroServices]);
   /* Flight hero labels match approved v2 reference (من / إلى); other modes keep existing copy */
   const fromLabel = props.mode === "flights" ? t("fromShort") : t("from");
   const fromPlaceholder = t("fromPlaceholder");
@@ -913,7 +922,7 @@ export function ShopHeroBanner(props: Props) {
         <div className="wg-travela-carousel">
           {slides.map((slide, index) => (
             <div
-              key={slide.image}
+              key={"id" in slide ? slide.id : slide.image}
               className={`wg-travela-slide${index === slideIdx ? " active" : ""}`}
               aria-hidden={index !== slideIdx}
             >

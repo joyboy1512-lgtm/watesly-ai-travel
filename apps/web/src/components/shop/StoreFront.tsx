@@ -12,12 +12,15 @@ import {
 import { WeekendGateLogo } from "@/components/shop/WeekendGateLogo";
 import {
   COMPANY_LEGAL,
+  applyCmsVars,
+  cmsContactOf,
   pickLocalized,
   type ShopCurrency,
 } from "@watesly-travel/shared";
 import { platformEnabled } from "@/lib/platform-flags";
 import { newUiEnabled } from "@/lib/new-ui-flags";
 import { ShopI18nProvider, useShopI18n } from "@/components/shop/ShopI18nProvider";
+import { ShopCmsProvider, useShopCms } from "@/components/shop/ShopCmsProvider";
 import { ShopAssistant } from "@/components/shop/ShopAssistant";
 
 const BRAND = "WeekendGate";
@@ -98,6 +101,9 @@ function StoreFrontInner({
 }) {
   const pathname = usePathname();
   const { t, locale, currency, setLocale, setCurrency, currencies } = useShopI18n();
+  const cms = useShopCms();
+  const contact = cmsContactOf(cms);
+  const cmsLegal = pickLocalized(locale, contact.legalNameAr, contact.legalNameEn);
   const [customer, setCustomer] = useState<ShopCustomer | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
@@ -494,14 +500,16 @@ function StoreFrontInner({
               <WeekendGateLogo light />
             </Link>
             <p>
-              {t("footerTagline", {
-                legal: pickLocalized(locale, COMPANY_LEGAL.legalNameAr, COMPANY_LEGAL.legalNameEn),
-              })}
+              {applyCmsVars(
+                pickLocalized(locale, cms.sitePages.footerTaglineAr, cms.sitePages.footerTaglineEn) ||
+                  t("footerTagline", { legal: cmsLegal }),
+                { legal: cmsLegal },
+              )}
             </p>
             <p className="shop-footer-legal-meta">
-              {t("address")}
+              {pickLocalized(locale, contact.addressAr, contact.addressEn)}
               <br />
-              {t("tourismLicenseNo", { n: COMPANY_LEGAL.tourismLicense })}
+              {t("tourismLicenseNo", { n: contact.tourismLicense })}
             </p>
           </div>
           <div>
@@ -522,6 +530,9 @@ function StoreFrontInner({
             <Link href="/chat">{t("aiAssistant")}</Link>
             <Link href="/bookings/manage">{t("manageBooking")}</Link>
             <Link href="/faq">{t("navFaq")}</Link>
+            {cms.articles.some((article) => article.published) ? (
+              <Link href="/articles">{locale === "en" ? "Journal" : "المقالات"}</Link>
+            ) : null}
           </div>
           <div>
             <strong>{t("legal")}</strong>
@@ -533,12 +544,12 @@ function StoreFrontInner({
           </div>
           <div>
             <strong>{t("navContact")}</strong>
-            <a href={`tel:${COMPANY_LEGAL.phoneE164}`}>{COMPANY_LEGAL.phoneDisplay}</a>
-            <a href={COMPANY_LEGAL.whatsappUrl} target="_blank" rel="noreferrer">
-              {t("whatsapp")} {COMPANY_LEGAL.phoneDisplay}
+            <a href={`tel:${contact.phoneE164}`}>{contact.phoneDisplay}</a>
+            <a href={contact.whatsappUrl} target="_blank" rel="noreferrer">
+              {t("whatsapp")} {contact.phoneDisplay}
             </a>
-            <a href={`mailto:${COMPANY_LEGAL.supportEmail}`}>{COMPANY_LEGAL.supportEmail}</a>
-            <span>{t("hours")}</span>
+            <a href={`mailto:${contact.supportEmail}`}>{contact.supportEmail}</a>
+            <span>{pickLocalized(locale, contact.hoursAr, contact.hoursEn)}</span>
           </div>
         </div>
         <p className="shop-footer-copy" suppressHydrationWarning>
@@ -597,7 +608,9 @@ function StoreFrontInner({
 export function StoreFront(props: { children: ReactNode; wide?: boolean }) {
   return (
     <ShopI18nProvider>
-      <StoreFrontInner {...props} />
+      <ShopCmsProvider>
+        <StoreFrontInner {...props} />
+      </ShopCmsProvider>
     </ShopI18nProvider>
   );
 }

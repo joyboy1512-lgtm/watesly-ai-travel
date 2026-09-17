@@ -9,6 +9,7 @@ import {
   DESTINATION_GUIDES,
   DEFAULT_CMS,
   DEFAULT_POINTS_RULES,
+  normalizeCmsState,
   DEFAULT_REFERRAL,
   buildReferralCode,
   buildTripPriceBreakdown,
@@ -20,7 +21,7 @@ import {
   shouldFirePriceAlert,
   listActiveDeals,
   getDealBySlug,
-  getDestination,
+  getDestination as findStaticDestination,
   normalizeShopPaymentStatus,
   type WeekendDeal,
   type CmsState,
@@ -253,7 +254,7 @@ export class PlatformService {
     const deals = await this.ensureDealsSeeded(organizationId);
     return {
       deals: listActiveDeals(deals),
-      destinations: DESTINATION_GUIDES,
+      destinations: await this.listDestinations(),
       pointsRules: this.pointsRules,
       referral: DEFAULT_REFERRAL,
       paymentStatuses: [
@@ -278,25 +279,81 @@ export class PlatformService {
     return getDealBySlug(slug, deals) || null;
   }
 
-  listDestinations() {
-    return DESTINATION_GUIDES;
+  async listDestinations() {
+    const cms = await this.getCms();
+    return cms.destinationGuides?.length ? cms.destinationGuides : DESTINATION_GUIDES;
   }
 
-  getDestination(slug: string) {
-    return getDestination(slug) || null;
+  async getDestination(slug: string) {
+    const list = await this.listDestinations();
+    return list.find((row) => row.slug === slug) || findStaticDestination(slug) || null;
   }
 
-  getCms() {
-    return this.cms;
+  private async readOrgSettings(): Promise<Record<string, unknown>> {
+    const organizationId = await this.orgId();
+    const org = await this.prisma.organization.findUnique({
+      where: { id: organizationId },
+      select: { settings: true },
+    });
+    const settings = org?.settings;
+    if (settings && typeof settings === "object" && !Array.isArray(settings)) {
+      return { ...(settings as Record<string, unknown>) };
+    }
+    return {};
   }
 
-  updateCms(patch: Partial<CmsState>) {
-    this.cms = {
-      ...this.cms,
+  async getCms() {
+    try {
+      const settings = await this.readOrgSettings();
+      if (settings.cms) {
+        this.cms = normalizeCmsState(settings.cms);
+        return this.cms;
+      }
+    } catch {
+      /* memory fallback */
+    }
+    return normalizeCmsState(this.cms);
+  }
+
+  async updateCms(patch: Partial<CmsState>) {
+    const current = await this.getCms();
+    const next = normalizeCmsState({
+      ...current,
       ...patch,
       updatedAt: new Date().toISOString(),
-    };
-    return this.cms;
+    });
+    this.cms = next;
+    try {
+      const organizationId = await this.orgId();
+      const settings = await this.readOrgSettings();
+      settings.cms = next;
+      await this.prisma.organization.update({
+        where: { id: organizationId },
+        data: { settings: settings as Prisma.InputJsonValue },
+      });
+    } catch {
+      /* memory fallback */
+    }
+    return next;
+  }
+
+  async listAllDeals() {
+    const organizationId = await this.orgId();
+    return this.ensureDealsSeeded(organizationId);
+  }
+
+  async deleteDeal(slug: string) {
+    const organizationId = await this.orgId();
+    const key = slug.trim();
+    if (!key) throw new BadRequestException("معرّف العرض مطلوب");
+    try {
+      await this.prisma.cmsDeal.delete({
+        where: { organizationId_slug: { organizationId, slug: key } },
+      });
+      return { ok: true, slug: key };
+    } catch {
+      throw new BadRequestException("تعذر حذف العرض");
+    }
   }
 
   async upsertDeal(deal: WeekendDeal) {

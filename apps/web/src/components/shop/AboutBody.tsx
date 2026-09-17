@@ -1,44 +1,48 @@
 "use client";
 
-import { COMPANY_LEGAL, pickLocalized } from "@watesly-travel/shared";
+import { applyCmsVars, cmsContactOf, pickLocalized } from "@watesly-travel/shared";
 import { useShopI18n } from "@/components/shop/ShopI18nProvider";
+import { useShopCms } from "@/components/shop/ShopCmsProvider";
 
 export function AboutBody() {
   const { t, locale } = useShopI18n();
-  const legal = pickLocalized(locale, COMPANY_LEGAL.legalNameAr, COMPANY_LEGAL.legalNameEn);
+  const cms = useShopCms();
+  const contact = cmsContactOf(cms);
+  const legal = pickLocalized(locale, contact.legalNameAr, contact.legalNameEn);
+  const lead = applyCmsVars(
+    pickLocalized(locale, cms.sitePages.aboutLeadAr, cms.sitePages.aboutLeadEn),
+    { brand: "WeekendGate", legal },
+  );
+  const body = pickLocalized(locale, cms.sitePages.aboutBodyAr, cms.sitePages.aboutBodyEn);
+
   return (
     <>
-      <p>
-        {t("aboutLead", {
-          brand: COMPANY_LEGAL.brandName,
-          legal,
-        })}
-      </p>
-      <p>
-        {pickLocalized(locale, COMPANY_LEGAL.roleClarificationAr, COMPANY_LEGAL.roleClarificationEn)}
-      </p>
+      <p>{lead}</p>
+      {body ? <p>{body}</p> : null}
       <h2>{t("legalData")}</h2>
       <ul>
         <li>
           <strong>{t("legalCompany")}:</strong> {legal}
         </li>
         <li>
-          <strong>{t("legalAddress")}:</strong> {t("address")}
+          <strong>{t("legalAddress")}:</strong>{" "}
+          {pickLocalized(locale, contact.addressAr, contact.addressEn)}
         </li>
         <li>
-          <strong>{t("legalPhone")}:</strong> {COMPANY_LEGAL.phoneDisplay}
+          <strong>{t("legalPhone")}:</strong> {contact.phoneDisplay}
         </li>
         <li>
-          <strong>{t("whatsapp")}:</strong> {COMPANY_LEGAL.phoneDisplay}
+          <strong>{t("whatsapp")}:</strong> {contact.phoneDisplay}
         </li>
         <li>
-          <strong>{t("legalEmail")}:</strong> {COMPANY_LEGAL.supportEmail}
+          <strong>{t("legalEmail")}:</strong> {contact.supportEmail}
         </li>
         <li>
-          <strong>{t("legalHours")}:</strong> {t("hours")}
+          <strong>{t("legalHours")}:</strong>{" "}
+          {pickLocalized(locale, contact.hoursAr, contact.hoursEn)}
         </li>
         <li>
-          <strong>{t("legalLicense")}:</strong> {COMPANY_LEGAL.tourismLicense}
+          <strong>{t("legalLicense")}:</strong> {contact.tourismLicense}
         </li>
       </ul>
     </>

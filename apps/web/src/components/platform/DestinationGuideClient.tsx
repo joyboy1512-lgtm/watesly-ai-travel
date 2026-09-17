@@ -7,14 +7,30 @@ import {
   type DestinationGuide,
 } from "@watesly-travel/shared";
 import { useShopI18n } from "@/components/shop/ShopI18nProvider";
+import { useShopCms } from "@/components/shop/ShopCmsProvider";
+import { cmsGuideBySlug } from "@/lib/shop-cms";
 
-export function DestinationGuideClient({ d }: { d: DestinationGuide }) {
+export function DestinationGuideClient({
+  slug,
+  fallback,
+  d,
+}: {
+  slug?: string;
+  fallback?: DestinationGuide | null;
+  d?: DestinationGuide;
+}) {
   const { t, locale } = useShopI18n();
-  const name = pickLocalized(locale, d.nameAr, d.nameEn);
-  const country = pickLocalized(locale, d.countryAr, d.countryEn);
-  const deals = WEEKEND_DEALS.filter((x) => x.destinationSlug === d.slug && x.active);
-  const hotels = locale === "en" ? d.hotelsEn : d.hotelsAr;
-  const activities = locale === "en" ? d.activitiesEn : d.activitiesAr;
+  const cms = useShopCms();
+  const resolved = d || cmsGuideBySlug(cms, slug || fallback?.slug || "", fallback);
+  if (!resolved) {
+    return <p className="shop-legal-body">{locale === "en" ? "Destination not found." : "الوجهة غير موجودة."}</p>;
+  }
+  const dest = resolved;
+  const name = pickLocalized(locale, dest.nameAr, dest.nameEn);
+  const country = pickLocalized(locale, dest.countryAr, dest.countryEn);
+  const deals = WEEKEND_DEALS.filter((x) => x.destinationSlug === dest.slug && x.active);
+  const hotels = locale === "en" ? dest.hotelsEn : dest.hotelsAr;
+  const activities = locale === "en" ? dest.activitiesEn : dest.activitiesAr;
 
   return (
     <div className="wg-platform">
@@ -24,13 +40,13 @@ export function DestinationGuideClient({ d }: { d: DestinationGuide }) {
       </nav>
       <div className="wg-dest-hero">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={d.image} alt={name} />
+        <img src={dest.image} alt={name} />
         <div className="caption">
           <h1 style={{ color: "#fff", margin: 0 }}>
-            {d.flag} {name}
+            {dest.flag} {name}
           </h1>
           <p style={{ margin: "0.25rem 0 0" }}>
-            {country} · {d.airportCode}
+            {country} · {dest.airportCode}
           </p>
         </div>
       </div>
@@ -38,15 +54,15 @@ export function DestinationGuideClient({ d }: { d: DestinationGuide }) {
       <div className="wg-dest-sections">
         <section>
           <h2>{t("whyVisit", { name })}</h2>
-          <p style={{ margin: 0 }}>{pickLocalized(locale, d.whyAr, d.whyEn)}</p>
+          <p style={{ margin: 0 }}>{pickLocalized(locale, dest.whyAr, dest.whyEn)}</p>
         </section>
         <section>
           <h2>{t("bestTimeVisit")}</h2>
-          <p style={{ margin: 0 }}>{pickLocalized(locale, d.bestTimeAr, d.bestTimeEn)}</p>
+          <p style={{ margin: 0 }}>{pickLocalized(locale, dest.bestTimeAr, dest.bestTimeEn)}</p>
         </section>
         <section>
           <h2>{t("tripCost")}</h2>
-          <p style={{ margin: 0 }}>{pickLocalized(locale, d.costHintAr, d.costHintEn)}</p>
+          <p style={{ margin: 0 }}>{pickLocalized(locale, dest.costHintAr, dest.costHintEn)}</p>
         </section>
         <section>
           <h2>{t("bestHotels")}</h2>
@@ -66,11 +82,11 @@ export function DestinationGuideClient({ d }: { d: DestinationGuide }) {
         </section>
         <section>
           <h2>{t("flightsSection")}</h2>
-          <p style={{ margin: 0 }}>{pickLocalized(locale, d.flightHintAr, d.flightHintEn)}</p>
+          <p style={{ margin: 0 }}>{pickLocalized(locale, dest.flightHintAr, dest.flightHintEn)}</p>
           <p>
             <Link
               className="wg-btn secondary"
-              href={`/flights/results?origin=KWI&destination=${d.airportCode}&tripType=roundtrip&adults=1`}
+              href={`/flights/results?origin=KWI&destination=${dest.airportCode}&tripType=roundtrip&adults=1`}
             >
               {t("searchFlightsTo", { name })}
             </Link>
@@ -94,7 +110,7 @@ export function DestinationGuideClient({ d }: { d: DestinationGuide }) {
           <h2>{t("suggestedPrograms")}</h2>
           <p style={{ margin: 0 }}>{t("suggestedProgramsLead")}</p>
           <div style={{ display: "flex", gap: "0.6rem", flexWrap: "wrap", marginTop: "0.75rem" }}>
-            <Link className="wg-btn" href={`/trip-builder?destination=${d.slug}`}>
+            <Link className="wg-btn" href={`/trip-builder?destination=${dest.slug}`}>
               ✨ {t("planTripTo", { name })}
             </Link>
             <Link className="wg-btn secondary" href="/deals">

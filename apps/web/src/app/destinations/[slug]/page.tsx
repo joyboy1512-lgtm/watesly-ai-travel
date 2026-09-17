@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
 import "../../shop.css";
 import "../../platform.css";
 import { StoreFront } from "@/components/shop/StoreFront";
@@ -31,11 +30,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function DestinationPage({ params }: Props) {
   const { slug } = await params;
   const d = getDestination(slug);
-  if (!d) notFound();
 
   return (
     <StoreFront wide>
-      <DestinationGuideClient d={d} />
+      <DestinationGuideClient slug={slug} fallback={d || null} />
     </StoreFront>
   );
 }

@@ -176,16 +176,16 @@ function extractTripCity(text: string): string | null {
   const directed = blob.match(
     /(?:إلى|الى|إلي|to)\s+([A-Za-z\u0600-\u06FF][A-Za-z\u0600-\u06FF'’\- ]{1,28})/i,
   );
-  if (directed) {
-    const city = directed[1].trim().split(/[.,!؟?\n]/)[0].trim();
+  if (directed?.[1]) {
+    const city = directed[1].trim().split(/[.,!؟?\n]/)[0]?.trim() || "";
     const short = city.split(/\s+/).slice(0, 2).join(" ");
     if (short.length >= 2 && short.length <= 24 && !CITY_STOP.test(short)) return short;
   }
   const staying = blob.match(
     /(?:في|in)\s+([A-Za-z\u0600-\u06FF][A-Za-z\u0600-\u06FF'’\- ]{1,28})/i,
   );
-  if (staying) {
-    const city = staying[1].trim().split(/[.,!؟?\n]/)[0].trim();
+  if (staying?.[1]) {
+    const city = staying[1].trim().split(/[.,!؟?\n]/)[0]?.trim() || "";
     const short = city.split(/\s+/).slice(0, 2).join(" ");
     if (short.length >= 2 && short.length <= 24 && !CITY_STOP.test(short)) return short;
   }

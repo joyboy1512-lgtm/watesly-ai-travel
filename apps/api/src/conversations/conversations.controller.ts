@@ -157,6 +157,55 @@ export class ConversationsController {
       entityId: message.id,
       after: { conversationId: id, templateId: body.templateId },
     });
+    return message;
+  }
+
+  @Post(":id/reply-product")
+  @RequirePermissions("conversations.reply")
+  async replyProduct(
+    @CurrentUser() user: AuthUser,
+    @Param("id") id: string,
+    @Body() body: { productId: string },
+  ) {
+    if (!body.productId?.trim()) {
+      throw new BadRequestException("معرّف المنتج مطلوب");
+    }
+    const message = await this.pipeline.replyWithProduct({
+      organizationId: user.organizationId,
+      conversationId: id,
+      productId: body.productId.trim(),
+      sentByUserId: user.userId,
+    });
+    await this.audit.log({
+      organizationId: user.organizationId,
+      actorUserId: user.userId,
+      action: "conversations.reply_product",
+      entityType: "Message",
+      entityId: message.id,
+      after: { conversationId: id, productId: body.productId },
+    });
+    return message;
+  }
+
+  @Post(":id/reply-catalog")
+  @RequirePermissions("conversations.reply")
+  async replyCatalog(
+    @CurrentUser() user: AuthUser,
+    @Param("id") id: string,
+  ) {
+    const message = await this.pipeline.replyWithCatalog({
+      organizationId: user.organizationId,
+      conversationId: id,
+      sentByUserId: user.userId,
+    });
+    await this.audit.log({
+      organizationId: user.organizationId,
+      actorUserId: user.userId,
+      action: "conversations.reply_catalog",
+      entityType: "Message",
+      entityId: message.id,
+      after: { conversationId: id },
+    });
 
     return message;
   }

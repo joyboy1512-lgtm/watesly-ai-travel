@@ -49,6 +49,7 @@ export const NAV_PERMISSIONS: Record<string, string | null> = {
   "/dashboard/pricing": "pricing.manage",
   "/dashboard/campaigns": "campaigns.manage",
   "/dashboard/templates": "campaigns.manage",
+  "/dashboard/catalog": "whatsapp.manage",
   "/dashboard/whatsapp": "whatsapp.manage",
   "/dashboard/channels": "whatsapp.manage",
   "/dashboard/users": "users.manage",

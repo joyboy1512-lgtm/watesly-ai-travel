@@ -114,6 +114,7 @@ const NAV = [
   { href: "/dashboard/channels", label: "القنوات" },
   { href: "/dashboard/templates", label: "القوالب" },
   { href: "/dashboard/campaigns", label: "الحملات" },
+  { href: "/dashboard/catalog", label: "كتالوج ميتا" },
   { href: "/dashboard/users", label: "الموظفون والصلاحيات" },
   { href: "/dashboard/audit", label: "سجل التدقيق" },
   { href: "/dashboard/cms", label: "CMS · المحتوى" },

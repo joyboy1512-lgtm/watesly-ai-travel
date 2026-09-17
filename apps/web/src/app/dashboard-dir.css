@@ -1,0 +1,76 @@
+/* Dashboard language + direction */
+
+.app-shell {
+  text-align: start;
+}
+
+.app-shell .sidebar {
+  border-inline-end: 1px solid var(--line);
+  border-left: 0;
+}
+
+.app-shell .table th,
+.app-shell .table td,
+.app-shell .quotes-table th,
+.app-shell .quotes-table td,
+.app-shell .bk-table th,
+.app-shell .bk-table td,
+.app-shell .crm-table th,
+.app-shell .crm-table td {
+  text-align: start;
+}
+
+.app-shell input,
+.app-shell textarea,
+.app-shell select {
+  text-align: start;
+}
+
+.dash-ltr,
+.app-shell .ltr {
+  direction: ltr;
+  unicode-bidi: isolate;
+  display: inline-block;
+  text-align: start;
+}
+
+.app-shell a.dash-ltr,
+.app-shell td .dash-ltr {
+  display: inline-block;
+}
+
+.app-shell input[type="email"],
+.app-shell input[type="tel"],
+.app-shell input[type="url"],
+.app-shell .crm-phone,
+.app-shell .wi-phone {
+  direction: ltr;
+  unicode-bidi: isolate;
+  text-align: start;
+}
+
+html[dir="ltr"] .app-shell .fs-cell,
+html[dir="ltr"] .app-shell .fs-suggest,
+html[dir="ltr"] .app-shell .fs-suggest button,
+html[dir="ltr"] .app-shell .guests-menu,
+html[dir="ltr"] .app-shell .notif-item {
+  text-align: left;
+}
+
+html[dir="rtl"] .app-shell .fs-cell,
+html[dir="rtl"] .app-shell .fs-suggest button,
+html[dir="rtl"] .app-shell .notif-item {
+  text-align: right;
+}
+
+html[dir="ltr"] .user-panel,
+html[dir="ltr"] .notif-panel {
+  left: 0;
+  right: auto;
+}
+
+html[dir="rtl"] .user-panel,
+html[dir="rtl"] .notif-panel {
+  left: auto;
+  right: 0;
+}

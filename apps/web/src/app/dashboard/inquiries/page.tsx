@@ -15,6 +15,7 @@ import { ShopFlightResults } from "@/components/shop/ShopFlightResults";
 import { ShopHotelResults } from "@/components/shop/ShopHotelResults";
 import { ShopI18nProvider } from "@/components/shop/ShopI18nProvider";
 import { apiFetch } from "@/lib/api";
+import { DashLtr, useDashI18n } from "@/lib/dashboard-i18n";
 import { saveFlightDraft, saveHotelDraft, saveTransferDraft, saveActivityDraft } from "@/lib/booking-draft";
 import { getPreferredCurrency } from "@/lib/currency";
 import { formatDate, formatMoneyMinor } from "@/lib/format";
@@ -365,6 +366,8 @@ function AutocompleteField({
   onPick: (item: { id: string; title: string; subtitle?: string; code?: string }) => void;
   onClearText: (text: string) => void;
 }) {
+  const i18n = useDashI18n();
+  const en = i18n.lang === "en";
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [text, setText] = useState(display || value || "");
@@ -414,8 +417,8 @@ function AutocompleteField({
       />
       <small>
         {value
-          ? hint || `رمز المطار: ${value}`
-          : emptyHint || "اختر من القائمة"}
+          ? hint || (en ? `Airport code: ${value}` : `رمز المطار: ${value}`)
+          : emptyHint || (en ? "Pick from the list" : "اختر من القائمة")}
       </small>
       <DashPortalMenu
         open={open}
@@ -425,13 +428,15 @@ function AutocompleteField({
       >
         {loading ? (
           <div className="fs-suggest-loading">
-            {loadingHint || "جاري البحث عن المطارات…"}
+            {loadingHint || (en ? "Searching airports…" : "جاري البحث عن المطارات…")}
           </div>
         ) : null}
         {!loading && items.length === 0 ? (
           <div className="fs-suggest-empty">
             {emptyListHint ||
-              "لا توجد مطارات مطابقة — جرّب اسم المدينة أو رمز IATA"}
+              (en
+                ? "No matching airports — try a city name or IATA code"
+                : "لا توجد مطارات مطابقة — جرّب اسم المدينة أو رمز IATA")}
           </div>
         ) : null}
         {!loading
@@ -511,6 +516,8 @@ function PassengerCountRow({
 
 export default function InquiriesPage() {
   const router = useRouter();
+  const i18n = useDashI18n();
+  const en = i18n.lang === "en";
   const [rows, setRows] = useState<Inquiry[]>([]);
   const [mode, setMode] = useState<"flights" | "stays" | "cars" | "activities">(
     "flights",
@@ -1539,7 +1546,7 @@ export default function InquiriesPage() {
   }
 
   return (
-    <ShopI18nProvider>
+    <ShopI18nProvider manageDocument={false}>
     <AppShell title="الاستعلامات المباشرة">
       <section className="flight-hero">
         <div className="flight-hero-tabs">
@@ -1551,7 +1558,7 @@ export default function InquiriesPage() {
               setGuestsOpen(false);
             }}
           >
-            الطيران
+            {en ? "Flights" : "الطيران"}
           </button>
           <button
             type="button"
@@ -1561,7 +1568,7 @@ export default function InquiriesPage() {
               setGuestsOpen(false);
             }}
           >
-            الفنادق
+            {en ? "Hotels" : "الفنادق"}
           </button>
           <button
             type="button"
@@ -1571,7 +1578,7 @@ export default function InquiriesPage() {
               setGuestsOpen(false);
             }}
           >
-            نقل
+            {en ? "Transfers" : "نقل"}
           </button>
           <button
             type="button"
@@ -1581,25 +1588,39 @@ export default function InquiriesPage() {
               setGuestsOpen(false);
             }}
           >
-            أنشطة
+            {en ? "Activities" : "أنشطة"}
           </button>
         </div>
 
         <h2>
           {mode === "flights"
-            ? "قارن واحجز أرخص الرحلات بسهولة"
+            ? en
+              ? "Compare and book cheaper flights easily"
+              : "قارن واحجز أرخص الرحلات بسهولة"
             : mode === "stays"
-              ? "اكتشف أفضل الإقامات حول العالم"
+              ? en
+                ? "Discover the best stays around the world"
+                : "اكتشف أفضل الإقامات حول العالم"
               : mode === "cars"
-                ? "نقل من المطار إلى الفندق"
-                : "اكتشف أفضل الأنشطة والمعالم"}
+                ? en
+                  ? "Airport to hotel transfers"
+                  : "نقل من المطار إلى الفندق"
+                : en
+                  ? "Discover the best activities and attractions"
+                  : "اكتشف أفضل الأنشطة والمعالم"}
         </h2>
         <p>
           {mode === "cars"
-            ? "وصول فقط بتاريخ ووقت الاستلام، أو وصول وعودة بتاريخ ووقت من وإلى"
+            ? en
+              ? "Arrival only, or arrival and return with pickup and drop-off times"
+              : "وصول فقط بتاريخ ووقت الاستلام، أو وصول وعودة بتاريخ ووقت من وإلى"
             : mode === "activities"
-              ? "ابحث عن جولات وتذاكر حسب الوجهة والتاريخ"
-              : "محرك بحث سفر متكامل مع كتالوج المطارات وشركات الطيران"}
+              ? en
+                ? "Search tours and tickets by destination and date"
+                : "ابحث عن جولات وتذاكر حسب الوجهة والتاريخ"
+              : en
+                ? "A complete travel search with airport and airline catalogs"
+                : "محرك بحث سفر متكامل مع كتالوج المطارات وشركات الطيران"}
         </p>
 
         {mode === "flights" ? (
@@ -1695,10 +1716,10 @@ export default function InquiriesPage() {
           {mode === "flights" ? (
             <div className="fs-grid">
               <AutocompleteField
-                label="المغادرة من"
+                label={en ? "From" : "المغادرة من"}
                 value={form.origin}
                 display={form.originLabel}
-                placeholder="مدينة أو رمز مطار"
+                placeholder={en ? "City or airport code" : "مدينة أو رمز مطار"}
                 onClearText={(text) =>
                   setForm((f) => ({
                     ...f,
@@ -1731,10 +1752,10 @@ export default function InquiriesPage() {
                 ⇄
               </button>
               <AutocompleteField
-                label="الوجهة"
+                label={en ? "To" : "الوجهة"}
                 value={form.destination}
                 display={form.destinationLabel}
-                placeholder="مدينة أو رمز مطار"
+                placeholder={en ? "City or airport code" : "مدينة أو رمز مطار"}
                 onClearText={(text) =>
                   setForm((f) => ({
                     ...f,
@@ -1752,7 +1773,7 @@ export default function InquiriesPage() {
                 }
               />
               <DashDateCell
-                label="تاريخ الذهاب"
+                label={en ? "Depart" : "تاريخ الذهاب"}
                 value={form.departDate}
                 hint="المغادرة"
                 min={todayIsoDate()}
@@ -1769,7 +1790,7 @@ export default function InquiriesPage() {
               />
               {tripType === "roundtrip" ? (
                 <DashDateCell
-                  label="تاريخ العودة"
+                  label={en ? "Return" : "تاريخ العودة"}
                   value={form.returnDate}
                   hint={nights ? `${nights} ليلة` : "العودة"}
                   min={form.departDate || todayIsoDate()}
@@ -2924,32 +2945,36 @@ export default function InquiriesPage() {
       ) : null}
 
       <div className="panel">
-        <h3>آخر 3 استعلامات</h3>
+        <h3>{en ? "Latest 3 inquiries" : "آخر 3 استعلامات"}</h3>
         <table className="table">
           <thead>
             <tr>
-              <th>المسار</th>
-              <th>التاريخ</th>
-              <th>الحالة</th>
-              <th>المصدر</th>
-              <th>أُنشئ</th>
+              <th>{i18n.c("route")}</th>
+              <th>{i18n.c("date")}</th>
+              <th>{i18n.c("status")}</th>
+              <th>{i18n.c("source")}</th>
+              <th>{i18n.c("created")}</th>
             </tr>
           </thead>
           <tbody>
             {rows.slice(0, 3).map((row) => (
               <tr key={row.id}>
                 <td>
-                  {row.origin || "؟"} → {row.destination || "؟"}
+                  <DashLtr>
+                    {row.origin || "؟"} → {row.destination || "؟"}
+                  </DashLtr>
                 </td>
-                <td>{row.departDate?.slice(0, 10) || "—"}</td>
-                <td>{row.status}</td>
-                <td>{row.source}</td>
+                <td>
+                  <DashLtr>{row.departDate?.slice(0, 10) || "—"}</DashLtr>
+                </td>
+                <td>{i18n.status(row.status)}</td>
+                <td>{i18n.source(row.source)}</td>
                 <td>{formatDate(row.createdAt)}</td>
               </tr>
             ))}
             {rows.length === 0 ? (
               <tr>
-                <td colSpan={5}>لا توجد استعلامات بعد</td>
+                <td colSpan={5}>{en ? "No inquiries yet" : "لا توجد استعلامات بعد"}</td>
               </tr>
             ) : null}
           </tbody>

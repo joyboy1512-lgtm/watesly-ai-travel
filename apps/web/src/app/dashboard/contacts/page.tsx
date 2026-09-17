@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
+import { dashLocaleTag, useDashI18n } from "@/lib/dashboard-i18n";
 import { apiFetch } from "@/lib/api";
 import "../../customers-crm.css";
 
@@ -76,11 +77,11 @@ function avatarColor(seed: string) {
   return AVATAR_COLORS[hash % AVATAR_COLORS.length];
 }
 
-function formatAdded(value?: string | null) {
+function formatAdded(value?: string | null, lang: "ar" | "en" = "ar") {
   if (!value) return "—";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "—";
-  return date.toLocaleDateString("ar-KW", {
+  return date.toLocaleDateString(dashLocaleTag(lang), {
     day: "numeric",
     month: "long",
     year: "numeric",
@@ -170,6 +171,8 @@ const emptyForm = {
 
 export default function ContactsPage() {
   const router = useRouter();
+  const i18n = useDashI18n();
+  const en = i18n.lang === "en";
   const fileRef = useRef<HTMLInputElement>(null);
   const [rows, setRows] = useState<Customer[]>([]);
   const [branches, setBranches] = useState<string[]>([]);
@@ -616,7 +619,9 @@ export default function ContactsPage() {
 
             {selected.length ? (
               <div className="crm-bulk">
-                <strong>{selected.length} محدد</strong>
+                <strong>
+                  {en ? `${selected.length} selected` : `${selected.length} محدد`}
+                </strong>
                 {selected.length === 1 ? (
                   <button
                     type="button"
@@ -626,7 +631,7 @@ export default function ContactsPage() {
                       if (row) openEdit(row);
                     }}
                   >
-                    تعديل
+                    {i18n.c("edit")}
                   </button>
                 ) : null}
                 <button
@@ -634,14 +639,14 @@ export default function ContactsPage() {
                   className="crm-btn ghost"
                   onClick={() => void bulkAction("archive")}
                 >
-                  أرشفة
+                  {i18n.c("archive")}
                 </button>
                 <button
                   type="button"
                   className="crm-btn"
                   onClick={() => void bulkAction("delete")}
                 >
-                  حذف
+                  {i18n.c("delete")}
                 </button>
               </div>
             ) : null}
@@ -666,15 +671,15 @@ export default function ContactsPage() {
                           onChange={toggleAll}
                         />
                       </th>
-                      <th>الاسم</th>
-                      <th>المرحلة</th>
-                      <th>الجنس</th>
-                      <th>الهاتف</th>
-                      <th>الفرع</th>
-                      <th>القناة</th>
-                      <th>التسويق</th>
-                      <th>تاريخ الإضافة</th>
-                      <th>إجراء</th>
+                      <th>{en ? "Name" : "الاسم"}</th>
+                      <th>{en ? "Stage" : "المرحلة"}</th>
+                      <th>{en ? "Gender" : "الجنس"}</th>
+                      <th>{en ? "Phone" : "الهاتف"}</th>
+                      <th>{en ? "Branch" : "الفرع"}</th>
+                      <th>{en ? "Channel" : "القناة"}</th>
+                      <th>{en ? "Marketing" : "التسويق"}</th>
+                      <th>{en ? "Added" : "تاريخ الإضافة"}</th>
+                      <th>{i18n.c("actions")}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -721,7 +726,7 @@ export default function ContactsPage() {
                             {row.marketing ? "✓" : "○"}
                           </button>
                         </td>
-                        <td>{formatAdded(row.createdAt)}</td>
+                        <td>{formatAdded(row.createdAt, i18n.lang)}</td>
                         <td>
                           <div className="crm-row-actions">
                           <button
@@ -730,7 +735,7 @@ export default function ContactsPage() {
                             title="تعديل بيانات العميل"
                             onClick={() => openEdit(row)}
                           >
-                            تعديل
+                            {i18n.c("edit")}
                           </button>
                           <button
                             type="button"

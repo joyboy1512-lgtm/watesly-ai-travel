@@ -249,7 +249,7 @@ h1 {
 }
 
 .sidebar {
-  border-left: 1px solid var(--line);
+  border-inline-end: 1px solid var(--line);
   padding: 1.5rem 1rem;
   background: rgba(7, 24, 34, 0.35);
 }
@@ -393,7 +393,7 @@ h1 {
 .notif-item {
   display: grid;
   gap: 0.2rem;
-  text-align: right;
+  text-align: start;
   padding: 0.75rem;
   border: 0;
   border-bottom: 1px solid var(--line);
@@ -2776,7 +2776,7 @@ h1 {
 
 .table th,
 .table td {
-  text-align: right;
+  text-align: start;
   padding: 0.75rem 0.35rem;
   border-bottom: 1px solid var(--line);
 }

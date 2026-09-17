@@ -24,7 +24,7 @@
   border-radius: 16px;
   padding: 1.15rem 1.2rem 1rem;
   color: #f3f7f4;
-  text-align: right;
+  text-align: start;
   min-height: 118px;
   box-shadow: 0 10px 22px rgba(7, 24, 34, 0.1);
 }
@@ -150,7 +150,7 @@
 .crm-table th,
 .crm-table td {
   padding: 0.72rem 0.75rem;
-  text-align: right;
+  text-align: start;
   border-bottom: 1px solid #eef3f1;
   font-size: 0.86rem;
   vertical-align: middle;

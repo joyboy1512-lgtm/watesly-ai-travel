@@ -9,6 +9,7 @@ import {
   type RefObject,
 } from "react";
 import { createPortal } from "react-dom";
+import { useDashI18n } from "@/lib/dashboard-i18n";
 
 export function todayIsoDate() {
   const d = new Date();
@@ -43,7 +44,7 @@ export function DashDateCell({
   hint,
   min,
   className,
-  placeholder = "اختر التاريخ",
+  placeholder,
 }: {
   label: string;
   value: string;
@@ -55,6 +56,8 @@ export function DashDateCell({
   placeholder?: string;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const i18n = useDashI18n();
+  const emptyLabel = placeholder || i18n.c("pickDate");
   const floor = min === undefined ? todayIsoDate() : min;
 
   function openPicker() {
@@ -70,7 +73,7 @@ export function DashDateCell({
     >
       <span>{label}</span>
       <em className={`fs-date-value${value ? "" : " placeholder"}`}>
-        {value ? formatIsoDateDisplay(value) : placeholder}
+        {value ? formatIsoDateDisplay(value) : emptyLabel}
       </em>
       <input
         ref={inputRef}

@@ -22,6 +22,10 @@ import {
 } from "@watesly-travel/shared";
 import { shopFetch } from "@/lib/shop-session";
 import {
+  DASH_LANG_EVENT,
+  DASH_LANG_KEY,
+} from "@/lib/dashboard-i18n";
+import {
   buildShopFxLookup,
   configureShopMoney,
   formatAmountInCurrency,
@@ -58,7 +62,9 @@ const ShopI18nContext = createContext<ShopI18nValue | null>(null);
 function readLocale(): ShopLocale {
   if (typeof window === "undefined") return "ar";
   try {
-    const v = localStorage.getItem(LOCALE_KEY);
+    const v =
+      localStorage.getItem(DASH_LANG_KEY) ||
+      localStorage.getItem(LOCALE_KEY);
     if (v === "en" || v === "ar") return v;
   } catch {
     /* ignore */
@@ -77,7 +83,13 @@ function readCurrency(): ShopCurrency {
   return "KWD";
 }
 
-export function ShopI18nProvider({ children }: { children: ReactNode }) {
+export function ShopI18nProvider({
+  children,
+  manageDocument = true,
+}: {
+  children: ReactNode;
+  manageDocument?: boolean;
+}) {
   const [locale, setLocaleState] = useState<ShopLocale>("ar");
   const [currency, setCurrencyState] = useState<ShopCurrency>("KWD");
   const [baseCurrency, setBaseCurrency] = useState("KWD");
@@ -88,9 +100,17 @@ export function ShopI18nProvider({ children }: { children: ReactNode }) {
     const nextCurrency = readCurrency();
     setLocaleState(nextLocale);
     setCurrencyState(nextCurrency);
-    document.documentElement.lang = nextLocale;
-    document.documentElement.dir = localeDir(nextLocale);
-  }, []);
+    if (manageDocument) {
+      document.documentElement.lang = nextLocale;
+      document.documentElement.dir = localeDir(nextLocale);
+    }
+    function onLang(ev: Event) {
+      const next = (ev as CustomEvent<string>).detail;
+      if (next === "en" || next === "ar") setLocaleState(next);
+    }
+    window.addEventListener(DASH_LANG_EVENT, onLang);
+    return () => window.removeEventListener(DASH_LANG_EVENT, onLang);
+  }, [manageDocument]);
 
   useEffect(() => {
     let cancelled = false;
@@ -141,12 +161,15 @@ export function ShopI18nProvider({ children }: { children: ReactNode }) {
     setLocaleState(next);
     try {
       localStorage.setItem(LOCALE_KEY, next);
+      localStorage.setItem(DASH_LANG_KEY, next);
     } catch {
       /* ignore */
     }
-    document.documentElement.lang = next;
-    document.documentElement.dir = localeDir(next);
-  }, []);
+    if (manageDocument) {
+      document.documentElement.lang = next;
+      document.documentElement.dir = localeDir(next);
+    }
+  }, [manageDocument]);
 
   const setCurrency = useCallback((next: ShopCurrency) => {
     setCurrencyState(next);

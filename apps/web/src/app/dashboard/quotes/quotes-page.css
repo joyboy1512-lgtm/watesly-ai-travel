@@ -67,10 +67,12 @@
 
 .quotes-table-scroll {
   overflow-x: auto;
+  max-width: 100%;
 }
 
 .quotes-table {
   width: 100%;
+  min-width: 1180px;
   border-collapse: collapse;
   font-size: 0.78rem;
   border: 1px solid rgba(15, 51, 64, 0.1);
@@ -97,10 +99,31 @@
 }
 
 .quotes-table .desc {
-  white-space: normal;
+  white-space: nowrap;
   max-width: 220px;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.quotes-table th:last-child,
+.quotes-table td:last-child {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background: #fff;
+  box-shadow: 8px 0 10px rgba(15, 51, 64, 0.06);
+}
+
+.quotes-table th:last-child {
+  background: #0f3340;
+}
+
+.quotes-table tbody tr:nth-child(even) td {
+  background: #f7faf9;
+}
+
+.quotes-table tbody tr:nth-child(even) td:last-child {
+  background: #f7faf9;
 }
 
 .quotes-table .route {

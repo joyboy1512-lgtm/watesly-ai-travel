@@ -225,6 +225,28 @@
   box-shadow: inset -3px 0 0 var(--ta-gold);
 }
 
+.ta-thread.waiting {
+  background: rgba(216, 163, 94, 0.12);
+  box-shadow: inset -3px 0 0 #d8a35e;
+}
+
+.ta-thread.handed {
+  background: rgba(15, 51, 64, 0.05);
+}
+
+.ta-thread.exhausted {
+  opacity: 0.72;
+}
+
+.ta-thread-who {
+  direction: ltr;
+  unicode-bidi: isolate;
+  text-align: start;
+  color: #0f3340;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
 .ta-thread-top,
 .ta-thread-meta {
   display: flex;
@@ -551,8 +573,8 @@
 
 .ta-composer textarea {
   flex: 1;
-  min-height: 48px;
-  max-height: 140px;
+  min-height: 88px;
+  max-height: 180px;
   resize: none;
   border: 1px solid var(--ta-line);
   border-radius: 16px;
@@ -569,12 +591,13 @@
 }
 
 .ta-attach {
-  width: 48px;
-  height: 48px;
+  width: 56px;
+  height: auto;
+  min-height: 88px;
   border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  background: rgba(255, 255, 255, 0.08);
-  color: #fff;
+  border: 1px solid rgba(15, 51, 64, 0.12);
+  background: #fff;
+  color: #0f3340;
   font-size: 1.15rem;
   cursor: pointer;
   flex-shrink: 0;

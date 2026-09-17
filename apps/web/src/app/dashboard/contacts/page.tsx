@@ -674,7 +674,7 @@ export default function ContactsPage() {
                       <th>القناة</th>
                       <th>التسويق</th>
                       <th>تاريخ الإضافة</th>
-                      <th>رسالة</th>
+                      <th>إجراء</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -723,13 +723,14 @@ export default function ContactsPage() {
                         </td>
                         <td>{formatAdded(row.createdAt)}</td>
                         <td>
+                          <div className="crm-row-actions">
                           <button
                             type="button"
-                            className="crm-msg"
-                            title="تعديل العميل"
+                            className="crm-edit"
+                            title="تعديل بيانات العميل"
                             onClick={() => openEdit(row)}
                           >
-                            ✎
+                            تعديل
                           </button>
                           <button
                             type="button"
@@ -745,6 +746,7 @@ export default function ContactsPage() {
                               />
                             </svg>
                           </button>
+                          </div>
                         </td>
                       </tr>
                     ))}

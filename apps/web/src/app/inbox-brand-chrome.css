@@ -63,13 +63,14 @@
 }
 
 .watesly-inbox .wi-composer .wa-composer-tool {
-  color: #f0c27a;
-  background: rgba(255, 255, 255, 0.08);
+  color: #0f3340;
+  background: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.7);
 }
 
 .watesly-inbox .wi-composer .wa-composer-tool:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.16);
-  color: #f0c27a;
+  background: #ffffff;
+  color: #0f3340;
 }
 
 .watesly-inbox .wi-composer .wa-send-btn {

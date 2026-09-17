@@ -1051,8 +1051,21 @@
   }
 }
 
+.watesly-inbox .wi-composer.wa-composer,
 .wi-composer.wa-composer {
-  padding: 0.7rem 0.85rem 0.85rem;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+  align-items: stretch;
+  width: 100%;
+  padding: 0.75rem 0.9rem 0.95rem;
+}
+
+.watesly-inbox .wi-template-bar,
+.watesly-inbox .wi-composer-row,
+.watesly-inbox .wi-pending-file,
+.watesly-inbox .wi-composer-hint {
+  grid-column: 1 / -1;
+  width: 100%;
 }
 
 .wi-composer-row {
@@ -1060,32 +1073,40 @@
   align-items: stretch;
 }
 
+.watesly-inbox .wi-composer .wa-composer-tool,
 .wa-composer-tool {
-  width: 3rem;
-  height: 3rem;
+  width: 3.1rem;
+  min-height: 3.1rem;
+  height: auto;
+  align-self: stretch;
   border-radius: 12px;
   background: #fff;
   color: #0f3340;
-  border: 1px solid rgba(15, 51, 64, 0.12);
+  border: 1px solid rgba(15, 51, 64, 0.14);
   box-shadow: 0 1px 2px rgba(11, 20, 26, 0.06);
 }
 
+.watesly-inbox .wi-composer .wa-composer-tool:hover:not(:disabled),
 .wa-composer-tool:hover:not(:disabled) {
   background: #fff;
   color: #0f3340;
   border-color: rgba(216, 163, 94, 0.55);
 }
 
+.watesly-inbox .wa-composer-input-wrap,
 .wa-composer-input-wrap {
   border-radius: 14px;
-  min-height: 5.6rem;
-  padding: 0.35rem 0.85rem;
+  min-height: 6.4rem;
+  padding: 0.4rem 0.9rem;
+  background: #fff;
 }
 
+.watesly-inbox .wa-composer-input-wrap textarea,
+.watesly-inbox .wi-composer textarea,
 .wa-composer-input-wrap textarea,
 .wi-composer textarea {
-  min-height: 5.2rem;
-  max-height: 12rem;
+  min-height: 6rem;
+  max-height: 14rem;
   font-size: 16px;
 }
 

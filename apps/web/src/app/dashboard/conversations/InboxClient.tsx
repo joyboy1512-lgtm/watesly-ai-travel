@@ -335,7 +335,7 @@ function InboxIdleChat() {
             📎
           </button>
           <div className="wa-composer-input-wrap">
-            <textarea rows={1} disabled placeholder="اكتب رسالة عبر واتساب" />
+            <textarea rows={4} disabled placeholder="اكتب رسالة عبر واتساب" />
           </div>
           <button type="button" className="wa-send-btn" disabled title="إرسال">
             ➤
@@ -353,16 +353,31 @@ function InboxIdleDetails() {
         <div className="wi-avatar xl">WG</div>
         <h3>WeekendGate</h3>
         <p className="wi-phone">+965 · قناة واتساب</p>
-        <div className="wi-details-actions">
-          <span className="wi-btn ghost">حساب القناة</span>
-          <span className="wi-btn ghost">القنوات</span>
-          <span className="wi-btn ghost">القوالب</span>
-          <span className="wi-btn ghost">الحملات</span>
-        </div>
-        <div className="wi-details-channel">
-          <strong>قناة الإرسال</strong>
-          <p>واتساب · جاهزة للرد بعد اختيار محادثة من القائمة</p>
-        </div>
+      </div>
+      <div className="wi-traveler-grid">
+        <article className="wi-info-card">
+          <span>حساب القناة</span>
+          <strong>واتساب · جاهز للرد</strong>
+        </article>
+        <article className="wi-info-card">
+          <span>القنوات</span>
+          <strong>واتساب · تلجرام</strong>
+        </article>
+        <article className="wi-info-card">
+          <span>القوالب</span>
+          <strong>قوالب معتمدة للإرسال</strong>
+        </article>
+        <article className="wi-info-card">
+          <span>الحملات</span>
+          <strong>حملات واتساب النشطة</strong>
+        </article>
+      </div>
+      <div className="wi-details-section">
+        <h4>اختر محادثة</h4>
+        <p className="wi-summary">
+          اختر عميلاً من القائمة لعرض بطاقات المسافر، وإلغاء أو حذف المحادثة،
+          وإرسال رسالة أو مرفق.
+        </p>
       </div>
       <div className="wi-details-section">
         <h4>إدارة المحادثة</h4>
@@ -1121,7 +1136,7 @@ export default function InboxClient() {
                       </button>
                       <div className="wa-composer-input-wrap">
                         <textarea
-                          rows={1}
+                          rows={4}
                           value={reply}
                           onChange={(e) => setReply(e.target.value)}
                           placeholder={

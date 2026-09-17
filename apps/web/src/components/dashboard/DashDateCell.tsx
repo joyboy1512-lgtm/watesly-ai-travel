@@ -18,6 +18,24 @@ export function todayIsoDate() {
   return `${y}-${m}-${day}`;
 }
 
+export function formatIsoDateDisplay(iso: string) {
+  if (!iso) return "";
+  const [y, m, d] = iso.split("-");
+  if (!y || !m || !d) return iso;
+  return `${d}/${m}/${y}`;
+}
+
+export function openNativeDatePicker(el: HTMLInputElement | null) {
+  if (!el) return;
+  try {
+    const picker = (el as HTMLInputElement & { showPicker?: () => void }).showPicker;
+    if (typeof picker === "function") picker.call(el);
+    else el.focus();
+  } catch {
+    el.focus();
+  }
+}
+
 export function DashDateCell({
   label,
   value,
@@ -25,29 +43,22 @@ export function DashDateCell({
   hint,
   min,
   className,
+  placeholder = "اختر التاريخ",
 }: {
   label: string;
   value: string;
   onChange: (v: string) => void;
   hint?: string;
+  /** Omit to block past dates. Pass "" to allow any date (filters). */
   min?: string;
   className?: string;
+  placeholder?: string;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const floor = min || todayIsoDate();
+  const floor = min === undefined ? todayIsoDate() : min;
 
   function openPicker() {
-    const el = inputRef.current;
-    if (!el) return;
-    try {
-      const picker = (
-        el as HTMLInputElement & { showPicker?: () => void }
-      ).showPicker;
-      if (typeof picker === "function") picker.call(el);
-      else el.focus();
-    } catch {
-      el.focus();
-    }
+    openNativeDatePicker(inputRef.current);
   }
 
   return (
@@ -58,14 +69,18 @@ export function DashDateCell({
       }}
     >
       <span>{label}</span>
+      <em className={`fs-date-value${value ? "" : " placeholder"}`}>
+        {value ? formatIsoDateDisplay(value) : placeholder}
+      </em>
       <input
         ref={inputRef}
+        className="fs-date-native"
         type="date"
-        min={floor}
+        min={floor || undefined}
         value={value}
         onChange={(e) => {
           const next = e.target.value;
-          if (next && next < floor) return;
+          if (floor && next && next < floor) return;
           onChange(next);
         }}
         onClick={(e) => {
@@ -107,6 +122,7 @@ export function DashPortalMenu({
     if (left + width > window.innerWidth - 8) {
       left = Math.max(8, window.innerWidth - width - 8);
     }
+    if (left < 8) left = 8;
     let top = r.bottom + offset;
     const estimated = 320;
     if (top + estimated > window.innerHeight - 8 && r.top > estimated) {
@@ -152,6 +168,9 @@ export function DashPortalMenu({
         top: pos.top,
         left: pos.left,
         width: pos.width,
+        right: "auto",
+        bottom: "auto",
+        insetInlineEnd: "auto",
         zIndex: 5000,
       }}
     >

@@ -526,13 +526,16 @@ function AssistantPageInner() {
                 <button
                   key={row.id}
                   type="button"
-                  className={`ta-thread${row.id === threadId ? " active" : ""}`}
+                  className={`ta-thread${row.id === threadId ? " active" : ""}${row.waitingReply ? " waiting" : ""}${row.status === "handed_off" ? " handed" : ""}${row.exhausted ? " exhausted" : ""}`}
                   onClick={() => void selectThread(row.id)}
                 >
                   <span className="ta-thread-top">
                     <strong>{row.customerLabel || row.contactName || row.contactPhone || row.title || "محادثة جديدة"}</strong>
                     <em>{timeLabel(row.updatedAt)}</em>
                   </span>
+                  {row.contactName && row.contactPhone ? (
+                    <span className="ta-thread-who">{row.contactPhone}</span>
+                  ) : null}
                   <span className="ta-thread-preview">{row.preview || "بدون رسائل بعد"}</span>
                   <span className="ta-thread-meta">
                     <i>{CHANNEL_LABEL[row.channel] || row.channel}</i>
@@ -685,7 +688,7 @@ function AssistantPageInner() {
                       : "اكتب رسالة... Enter للإرسال، Shift+Enter لسطر جديد"
                 }
                 disabled={busy || handedOff}
-                rows={1}
+                rows={4}
               />
               <button
                 className="ta-send"

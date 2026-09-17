@@ -63,6 +63,8 @@ type Option = { value: string; label: string };
 const SERVICE_LABEL: Record<string, string> = {
   flight: "طيران",
   hotel: "فنادق",
+  transfer: "نقل",
+  activity: "أنشطة",
   all: "الكل",
   car: "سيارات",
 };
@@ -129,6 +131,7 @@ const emptyForm = {
   ruleType: "percent_with_min",
   percentValue: 12,
   minProfitMajor: 1.5,
+  fixedMajor: 0,
   currency: "KWD",
   priority: 50,
   origins: [] as string[],
@@ -504,6 +507,14 @@ export default function PricingPage() {
       setError("اسم القاعدة مطلوب");
       return;
     }
+    if (form.ruleType === "fixed" && Number(form.fixedMajor) <= 0) {
+      setError("أدخل مبلغ الربح الثابت");
+      return;
+    }
+    if (form.ruleType !== "fixed" && Number(form.percentValue) <= 0) {
+      setError("أدخل نسبة الهامش");
+      return;
+    }
     setLoading(true);
     try {
       await apiFetch("/pricing-rules", {
@@ -512,7 +523,11 @@ export default function PricingPage() {
           name: form.name.trim(),
           serviceType: form.serviceType,
           ruleType: form.ruleType,
-          percentValue: form.percentValue,
+          percentValue: form.ruleType === "fixed" ? 0 : form.percentValue,
+          fixedAmount:
+            form.ruleType === "fixed"
+              ? minorFromMajor(form.fixedMajor, form.currency)
+              : undefined,
           minProfitAmount: minorFromMajor(form.minProfitMajor, form.currency),
           currency: form.currency,
           priority: form.priority,
@@ -647,8 +662,9 @@ export default function PricingPage() {
             <p className="prc-kicker">Pricing Rules</p>
             <h3>قواعد التسعير والأرباح</h3>
             <p>
-              أول قاعدة مطابقة حسب الأولوية تُطبَّق على نتيجة الاستعلام: المسار،
-              الدرجة أو النجوم، والمزود.
+              القاعدة النشطة تُطبَّق على أسعار محركات البحث (طيران، فنادق، نقل،
+              أنشطة) قبل ظهور النتيجة. لا تُستخدم قاعدة مبلغ ثابت بلا قيمة —
+              يُتجاوزها النظام إلى القاعدة التالية.
             </p>
           </div>
           <button
@@ -718,6 +734,8 @@ export default function PricingPage() {
               >
                 <option value="flight">طيران</option>
                 <option value="hotel">فنادق</option>
+                <option value="transfer">نقل</option>
+                <option value="activity">أنشطة</option>
                 <option value="all">الكل</option>
               </select>
             </label>
@@ -738,11 +756,27 @@ export default function PricingPage() {
               <span>نسبة الهامش %</span>
               <input
                 type="number"
+                disabled={form.ruleType === "fixed"}
                 value={form.percentValue}
                 onChange={(e) =>
                   setForm({
                     ...form,
                     percentValue: Number(e.target.value) || 0,
+                  })
+                }
+              />
+            </label>
+            <label className="prc-field">
+              <span>مبلغ الربح الثابت</span>
+              <input
+                type="number"
+                step="0.001"
+                disabled={form.ruleType !== "fixed"}
+                value={form.fixedMajor}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    fixedMajor: Number(e.target.value) || 0,
                   })
                 }
               />
@@ -1003,9 +1037,14 @@ export default function PricingPage() {
                       </td>
                       <td>{RULE_LABEL[row.ruleType] || row.ruleType}</td>
                       <td>
-                        {row.percentValue != null
-                          ? `${row.percentValue}%`
-                          : "—"}
+                        {row.ruleType === "fixed" && row.fixedAmount
+                          ? formatMoneyMinor(
+                              row.fixedAmount,
+                              row.currency || "KWD",
+                            )
+                          : row.percentValue != null
+                            ? `${row.percentValue}%`
+                            : "—"}
                       </td>
                       <td>
                         {row.minProfitAmount != null

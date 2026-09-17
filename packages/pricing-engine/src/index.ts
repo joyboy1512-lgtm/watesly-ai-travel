@@ -84,6 +84,30 @@ function listIncludes(list: string[] | undefined, value?: string): boolean {
   return list.some((item) => item.trim().toUpperCase() === needle);
 }
 
+function asFiniteNumber(value: unknown): number {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string" && value.trim()) {
+    const n = Number(value);
+    return Number.isFinite(n) ? n : 0;
+  }
+  if (value && typeof value === "object" && "toNumber" in value) {
+    const n = Number((value as { toNumber: () => number }).toNumber());
+    return Number.isFinite(n) ? n : 0;
+  }
+  return 0;
+}
+
+/** A fixed rule with no amount cannot price an offer — skip it so the next rule applies. */
+export function isCompletePricingRule(rule: PricingRuleInput): boolean {
+  if (!rule.isActive) return false;
+  if (rule.ruleType === "fixed") return asFiniteNumber(rule.fixedAmount) > 0;
+  return (
+    asFiniteNumber(rule.percentValue) > 0 ||
+    asFiniteNumber(rule.minProfitAmount) > 0 ||
+    asFiniteNumber(rule.fixedAmount) > 0
+  );
+}
+
 export function matchesPricingConditions(
   conditions: PricingConditions | null | undefined,
   costAmountMinor: MoneyMinor,
@@ -129,9 +153,14 @@ export function selectPricingRule(
   context?: PricingContext & { costAmountMinor?: MoneyMinor },
 ): PricingRuleInput | null {
   const active = rules
-    .filter((r) => r.isActive)
+    .filter((r) => isCompletePricingRule(r))
     .filter((r) => r.serviceType === serviceType || r.serviceType === "all")
-    .sort((a, b) => a.priority - b.priority);
+    .sort((a, b) => {
+      if (a.priority !== b.priority) return a.priority - b.priority;
+      const aAll = a.serviceType === "all" ? 1 : 0;
+      const bAll = b.serviceType === "all" ? 1 : 0;
+      return aAll - bAll;
+    });
 
   if (!context) return active[0] ?? null;
 
@@ -158,23 +187,24 @@ export function applyPricingRule(input: {
   serviceType: string;
   rule: PricingRuleInput | null;
 }): InternalPriceBreakdown {
-  const cost = Math.max(0, Math.round(input.costAmountMinor));
+  const cost = Math.max(0, Math.round(asFiniteNumber(input.costAmountMinor)));
   let profit = 0;
+  const percent = asFiniteNumber(input.rule?.percentValue);
+  const fixed = asFiniteNumber(input.rule?.fixedAmount);
+  const minProfit = asFiniteNumber(input.rule?.minProfitAmount);
 
   if (!input.rule) {
     profit = Math.round(cost * 0.1);
   } else if (input.rule.ruleType === "fixed") {
-    profit = Math.round(input.rule.fixedAmount ?? 0);
+    profit = Math.round(fixed);
   } else if (input.rule.ruleType === "percent_with_min") {
-    profit = Math.round(cost * ((input.rule.percentValue ?? 0) / 100));
-    const min = Math.round(input.rule.minProfitAmount ?? 0);
+    profit = Math.round(cost * (percent / 100));
+    const min = Math.round(minProfit);
     if (profit < min) profit = min;
   } else {
     // percent (default) — supports percent + fixed add-on like Saffat PERCENT_PLUS_FIXED
-    profit = Math.round(cost * ((input.rule.percentValue ?? 10) / 100));
-    if (input.rule.fixedAmount) {
-      profit += Math.round(input.rule.fixedAmount);
-    }
+    profit = Math.round(cost * ((percent || 10) / 100));
+    if (fixed) profit += Math.round(fixed);
   }
 
   const sell = cost + profit;
@@ -201,6 +231,25 @@ export function toCustomerVisible(input: {
     summary: input.summary,
     expiresAt: input.expiresAt,
   };
+}
+
+export function priceCostWithRules(input: {
+  costAmountMinor: MoneyMinor;
+  currency: string;
+  serviceType: string;
+  rules: PricingRuleInput[];
+  context?: PricingContext;
+}): InternalPriceBreakdown {
+  const rule = selectPricingRule(input.rules, input.serviceType, {
+    ...input.context,
+    costAmountMinor: input.costAmountMinor,
+  });
+  return applyPricingRule({
+    costAmountMinor: input.costAmountMinor,
+    currency: input.currency,
+    serviceType: input.serviceType,
+    rule,
+  });
 }
 
 export { parseConditions };

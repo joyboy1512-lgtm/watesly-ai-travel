@@ -1,5 +1,4 @@
-import { COMPANY_LEGAL } from "@watesly-travel/shared";
-import { formatMoneyMinor } from "@/lib/format";
+import { COMPANY_LEGAL, formatMoneyMinorShared } from "@watesly-travel/shared";
 import {
   bookedQuoteItems,
   bookingHasCost,
@@ -243,7 +242,7 @@ function servicePair(raw?: string | null) {
 }
 
 function money(amount: number, currency: string) {
-  return `<span class="ltr num">${esc(formatMoneyMinor(amount, currency))}</span>`;
+  return `<span class="ltr num">${esc(formatMoneyMinorShared(amount, currency))}</span>`;
 }
 
 function kv(ar: string, en: string, value: string) {

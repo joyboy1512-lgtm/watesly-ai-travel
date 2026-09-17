@@ -247,13 +247,20 @@ function money(amount: number, currency: string) {
 
 function kv(ar: string, en: string, value: string) {
   return `<div class="kv">
-    <span class="lab"><b>${esc(ar)}</b><em>${esc(en)}</em></span>
+    <span class="lab"><b>${esc(ar)}</b><em class="ltr">${esc(en)}</em></span>
     <strong>${value}</strong>
   </div>`;
 }
 
 function sectionTitle(ar: string, en: string) {
-  return `<h3><span>${esc(ar)}</span><i>${esc(en)}</i></h3>`;
+  return `<h3><span>${esc(ar)}</span><i class="ltr">${esc(en)}</i></h3>`;
+}
+
+function refCell(ar: string, en: string, value: string, isolateLtr = true) {
+  return `<div>
+    <span><b>${esc(ar)}</b><i class="ltr">${esc(en)}</i></span>
+    <strong class="${isolateLtr ? "ltr" : ""}">${value}</strong>
+  </div>`;
 }
 
 function logoUrl() {
@@ -319,7 +326,9 @@ function itineraryHtml(row: BookingInvoiceData, orgName: string) {
         .join(" · ")
     : customerName(row);
 
-  const ticketDisplay = tickets.length ? tickets.join(" · ") : "—";
+  const ticketDisplay = tickets.length
+    ? tickets.map((no) => esc(no)).join("<br />")
+    : "—";
   const confirmDisplay = dash(confirm === "—" && hasHotel ? locator : confirm);
 
   const customerRows = lines
@@ -384,9 +393,8 @@ function itineraryHtml(row: BookingInvoiceData, orgName: string) {
       <div class="brand-wrap">
         <img src="${esc(logoUrl())}" alt="WeekendGate" class="logo" />
         <div>
-          <div class="brand">${esc(COMPANY_LEGAL.brandName)}</div>
           <div class="legal">${esc(COMPANY_LEGAL.legalNameAr)}</div>
-          <div class="legal en">${esc(COMPANY_LEGAL.legalNameEn)}</div>
+          <div class="legal en ltr">${esc(COMPANY_LEGAL.legalNameEn)}</div>
         </div>
       </div>
       <div class="doc-title">
@@ -397,30 +405,23 @@ function itineraryHtml(row: BookingInvoiceData, orgName: string) {
     </header>
 
     <div class="refs">
-      <div>
-        <span>رقم الحجز <i>Booking No.</i></span>
-        <strong class="ltr">${esc(locator)}</strong>
-      </div>
+      ${refCell("رقم الحجز", "Booking No.", esc(locator))}
       ${
         hasFlight
-          ? `<div>
-        <span>رقم التذكرة <i>Ticket No.</i></span>
-        <strong class="ltr">${esc(ticketDisplay)}</strong>
-      </div>`
+          ? refCell("رقم التذكرة", "Ticket No.", ticketDisplay)
           : ""
       }
       ${
         hasHotel
-          ? `<div>
-        <span>رقم التأكيد <i>Confirmation</i></span>
-        <strong class="ltr">${esc(confirmDisplay)}</strong>
-      </div>`
+          ? refCell("رقم التأكيد", "Confirmation", esc(confirmDisplay))
           : ""
       }
-      <div>
-        <span>الحالة <i>Status</i></span>
-        <strong>${esc(BOOKING_STATUS_LABEL[row.status] || row.status)} <i>| ${esc(BOOKING_STATUS_LABEL_EN[row.status] || row.status)}</i></strong>
-      </div>
+      ${refCell(
+        "الحالة",
+        "Status",
+        `${esc(BOOKING_STATUS_LABEL[row.status] || row.status)} | ${esc(BOOKING_STATUS_LABEL_EN[row.status] || row.status)}`,
+        false,
+      )}
     </div>
 
     <section class="box">
@@ -538,8 +539,7 @@ body {
   border-bottom: 4px solid #d8a35e; padding-bottom: 12px; margin-bottom: 12px;
 }
 .brand-wrap { display: flex; gap: 10px; align-items: center; }
-.logo { height: 44px; width: auto; }
-.brand { font-size: 22px; font-weight: 800; color: #0f3340; line-height: 1.1; }
+.logo { height: 46px; width: auto; }
 .legal { font-size: 12px; color: #5f7470; margin-top: 2px; }
 .legal.en { font-size: 11px; }
 .doc-title { text-align: left; }
@@ -547,21 +547,22 @@ body {
 .doc-title strong { display: block; font-size: 11px; letter-spacing: .06em; color: #7a8b86; }
 .doc-title em { display: block; margin-top: 4px; font-style: normal; font-weight: 800; color: #d8a35e; }
 .refs {
-  display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
   gap: 1px; background: #d8a35e; border-radius: 10px; overflow: hidden; margin-bottom: 12px;
 }
 .refs > div { background: #0f3340; color: #fff; padding: 10px 12px; }
-.refs span { display: block; font-size: 11px; color: #d8a35e; font-weight: 700; margin-bottom: 4px; }
-.refs span i { font-style: normal; color: #f3e2c4; font-weight: 600; }
-.refs strong { font-size: 15px; word-break: break-word; }
+.refs span { display: grid; gap: 1px; margin-bottom: 6px; }
+.refs span b { font-size: 12px; color: #d8a35e; font-weight: 800; }
+.refs span i { font-style: normal; font-size: 10px; color: #f3e2c4; font-weight: 600; }
+.refs strong { font-size: 14px; word-break: break-word; display: block; line-height: 1.45; }
 .box { border: 1px solid #d7e2de; border-radius: 10px; padding: 12px 14px; margin-bottom: 12px; }
 h3 { margin: 0 0 10px; display: flex; justify-content: space-between; gap: 8px; align-items: baseline;
   font-size: 15px; color: #0f3340; border-bottom: 1px solid #edf2f0; padding-bottom: 6px; }
 h3 i { font-style: normal; font-size: 11px; letter-spacing: .04em; color: #7a8b86; font-weight: 800; }
 .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 20px; }
 .kv { display: grid; gap: 3px; min-width: 0; }
-.lab { color: #5f7470; font-size: 11px; font-weight: 700; display: flex; gap: 6px; flex-wrap: wrap; }
-.lab em { font-style: normal; color: #8a9b97; font-weight: 600; }
+.lab { color: #5f7470; font-size: 11px; font-weight: 700; display: grid; gap: 1px; }
+.lab em { font-style: normal; color: #8a9b97; font-weight: 600; font-size: 10px; }
 .kv strong { font-size: 14px; color: #0f3340; font-weight: 800; }
 .kv small { color: #5f7470; font-weight: 600; font-size: 12px; }
 table.sheet { width: 100%; border-collapse: collapse; font-size: 12.5px; }
@@ -569,6 +570,7 @@ table.sheet { width: 100%; border-collapse: collapse; font-size: 12.5px; }
 .sheet th { background: #0f3340; color: #f3f7f4; font-weight: 700; }
 .sheet th i, .sheet td i, .sheet tfoot i { font-style: normal; opacity: .78; font-weight: 600; font-size: 10px; display: block; }
 .sheet td.idx { width: 28px; color: #7a8b86; font-weight: 800; }
+.sheet td.ltr { white-space: nowrap; direction: ltr; unicode-bidi: isolate; }
 .sheet td.num, .sheet th:last-child { white-space: nowrap; }
 .num { font-variant-numeric: tabular-nums; font-weight: 800; }
 .totals { margin-top: 10px; display: grid; gap: 6px; max-width: 360px; margin-inline-start: auto; }

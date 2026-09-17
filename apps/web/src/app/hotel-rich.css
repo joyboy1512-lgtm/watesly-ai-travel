@@ -1842,6 +1842,17 @@
 .flight-search .flight-explore {
   min-width: 148px;
   align-self: stretch;
+  background: #0f3340;
+  background-image: none;
+  color: #fff;
+  font-weight: 800;
+  border: 0;
+  box-shadow: none;
+}
+
+.flight-search .flight-explore:hover:not(:disabled) {
+  background: #184a52;
+  color: #fff;
 }
 
 /* —— Shop hotel results card (Booking RTL) —— */

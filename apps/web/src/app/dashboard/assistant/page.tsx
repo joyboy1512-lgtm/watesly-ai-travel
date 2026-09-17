@@ -119,6 +119,95 @@ function parseLimit(raw: string): number | null {
   return n;
 }
 
+const CITY_HINTS = [
+  "دبي",
+  "أبوظبي",
+  "الشارقة",
+  "الكويت",
+  "الدوحة",
+  "الرياض",
+  "جدة",
+  "الدمام",
+  "مسقط",
+  "المنامة",
+  "إسطنبول",
+  "اسطنبول",
+  "طرابزون",
+  "أنطاليا",
+  "بودروم",
+  "لندن",
+  "باريس",
+  "القاهرة",
+  "شرم الشيخ",
+  "الغردقة",
+  "عمّان",
+  "بيروت",
+  "برشلونة",
+  "مدريد",
+  "روما",
+  "مالديف",
+  "بالي",
+  "بانكوك",
+  "كوالالمبور",
+  "سنغافورة",
+  "طوكيو",
+  "Dubai",
+  "Abu Dhabi",
+  "Kuwait",
+  "Doha",
+  "Riyadh",
+  "Jeddah",
+  "Istanbul",
+  "London",
+  "Paris",
+  "Cairo",
+  "Barcelona",
+  "Maldives",
+];
+
+const CITY_STOP = /^(الفندق|المطار|الرحلة|التذكرة|فندق|مطار|رحلة|hello|مرحبا|السلام)$/i;
+
+function extractTripCity(text: string): string | null {
+  const blob = text.replace(/\s+/g, " ").trim();
+  if (!blob) return null;
+  for (const city of CITY_HINTS) {
+    if (blob.toLowerCase().includes(city.toLowerCase())) return city;
+  }
+  const directed = blob.match(
+    /(?:إلى|الى|إلي|to)\s+([A-Za-z\u0600-\u06FF][A-Za-z\u0600-\u06FF'’\- ]{1,28})/i,
+  );
+  if (directed) {
+    const city = directed[1].trim().split(/[.,!؟?\n]/)[0].trim();
+    const short = city.split(/\s+/).slice(0, 2).join(" ");
+    if (short.length >= 2 && short.length <= 24 && !CITY_STOP.test(short)) return short;
+  }
+  const staying = blob.match(
+    /(?:في|in)\s+([A-Za-z\u0600-\u06FF][A-Za-z\u0600-\u06FF'’\- ]{1,28})/i,
+  );
+  if (staying) {
+    const city = staying[1].trim().split(/[.,!؟?\n]/)[0].trim();
+    const short = city.split(/\s+/).slice(0, 2).join(" ");
+    if (short.length >= 2 && short.length <= 24 && !CITY_STOP.test(short)) return short;
+  }
+  return null;
+}
+
+function threadTripLabel(row: ThreadRow, en: boolean): string {
+  const city = extractTripCity(`${row.title || ""} ${row.preview || ""}`);
+  if (!city) return "";
+  const stay = /فندق|hotel|إقامة|stay/i.test(`${row.title || ""} ${row.preview || ""}`);
+  if (stay) return en ? `Stay in ${city}` : `إقامة ${city}`;
+  return en ? `Trip to ${city}` : `رحلة ${city}`;
+}
+
+function threadDisplayName(row: ThreadRow, en: boolean): string {
+  if (row.contactName) return row.contactName;
+  if (row.contactPhone) return row.contactPhone;
+  const title = (row.title || "").trim();
+  if (title && title.length <= 28) return title;
+  return en ? "New chat" : "محادثة جديدة";
+}
+
 function AssistantPageInner() {
   const router = useRouter();
   const i18n = useDashI18n();
@@ -480,81 +569,75 @@ function AssistantPageInner() {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
             />
-            <div className="ta-filters">
-              {(
-                [
-                  ["all", `${en ? "All" : "الكل"} (${statusCounts.all})`],
-                  ["waiting", `${en ? "Waiting" : "بانتظار الرد"} (${statusCounts.waiting})`],
-                  ["open", `${en ? "Active" : "نشطة"} (${statusCounts.open})`],
-                  ["handed_off", `${en ? "Handed off" : "محوّلة"} (${statusCounts.handed_off})`],
-                  ["exhausted", `${en ? "Out of credit" : "نفد الرصيد"} (${statusCounts.exhausted})`],
-                ] as const
-              ).map(([key, label]) => (
-                <button
-                  key={key}
-                  type="button"
-                  className={`ta-filter${statusFilter === key ? " active" : ""}`}
-                  onClick={() => setStatusFilter(key)}
+            <div className="ta-filter-bar">
+              <label>
+                <span>{en ? "Status" : "الحالة"}</span>
+                <select
+                  value={statusFilter}
+                  onChange={(e) =>
+                    setStatusFilter(
+                      e.target.value as "all" | "waiting" | "open" | "handed_off" | "exhausted",
+                    )
+                  }
                 >
-                  {label}
-                </button>
-              ))}
-            </div>
-            <div className="ta-filters">
-              {(
-                [
-                  ["", en ? "All channels" : "كل القنوات"],
-                  ["dashboard", en ? "Dashboard" : "لوحة التحكم"],
-                  ["whatsapp", en ? "WhatsApp" : "واتساب"],
-                  ["web_chat", en ? "Web" : "ويب"],
-                  ["telegram", en ? "Telegram" : "تلجرام"],
-                ] as const
-              ).map(([key, label]) => (
-                <button
-                  key={key || "all-ch"}
-                  type="button"
-                  className={`ta-filter${channelFilter === key ? " active" : ""}`}
-                  onClick={() => setChannelFilter(key)}
+                  <option value="all">{en ? "All" : "الكل"} ({statusCounts.all})</option>
+                  <option value="waiting">
+                    {en ? "Waiting" : "بانتظار الرد"} ({statusCounts.waiting})
+                  </option>
+                  <option value="open">
+                    {en ? "Active" : "نشطة"} ({statusCounts.open})
+                  </option>
+                  <option value="handed_off">
+                    {en ? "Handed off" : "محوّلة"} ({statusCounts.handed_off})
+                  </option>
+                  <option value="exhausted">
+                    {en ? "Out of credit" : "نفد الرصيد"} ({statusCounts.exhausted})
+                  </option>
+                </select>
+              </label>
+              <label>
+                <span>{en ? "Channel" : "القناة"}</span>
+                <select
+                  value={channelFilter}
+                  onChange={(e) => setChannelFilter(e.target.value)}
                 >
-                  {label}
-                </button>
-              ))}
+                  <option value="">{en ? "All channels" : "كل القنوات"}</option>
+                  <option value="dashboard">{en ? "Dashboard" : "لوحة التحكم"}</option>
+                  <option value="whatsapp">{en ? "WhatsApp" : "واتساب"}</option>
+                  <option value="web_chat">{en ? "Web" : "ويب"}</option>
+                  <option value="telegram">{en ? "Telegram" : "تلجرام"}</option>
+                </select>
+              </label>
             </div>
           </div>
           <div className="ta-thread-list">
             {filteredThreads.length === 0 ? (
               <p className="ta-empty">لا محادثات في هذا التصفية.</p>
             ) : (
-              filteredThreads.map((row) => (
-                <button
-                  key={row.id}
-                  type="button"
-                  className={`ta-thread${row.id === threadId ? " active" : ""}${row.waitingReply ? " waiting" : ""}${row.status === "handed_off" ? " handed" : ""}${row.exhausted ? " exhausted" : ""}`}
-                  onClick={() => void selectThread(row.id)}
-                >
-                  <span className="ta-thread-top">
-                    <strong>{row.customerLabel || row.contactName || row.contactPhone || row.title || "محادثة جديدة"}</strong>
-                    <em>{timeLabel(row.updatedAt, i18n.lang)}</em>
-                  </span>
-                  {row.contactName && row.contactPhone ? (
-                    <span className="ta-thread-who">{row.contactPhone}</span>
-                  ) : null}
-                  <span className="ta-thread-preview">{row.preview || "بدون رسائل بعد"}</span>
-                  <span className="ta-thread-meta">
-                    <i>{CHANNEL_LABEL[row.channel] || row.channel}</i>
-                    {row.contactPhone ? <i className="ta-phone">{row.contactPhone}</i> : null}
-                    <i className={row.status === "handed_off" || row.waitingReply ? "warn" : ""}>
-                      {row.status === "handed_off"
-                        ? "محوّلة لموظف"
-                        : row.exhausted
-                          ? "نفد الرصيد"
-                          : row.waitingReply
-                            ? "بانتظار الرد"
-                            : "نشطة"}
-                    </i>
-                  </span>
-                </button>
-              ))
+              filteredThreads.map((row) => {
+                const name = threadDisplayName(row, en);
+                const trip = threadTripLabel(row, en);
+                const phone =
+                  row.contactPhone && row.contactPhone !== name ? row.contactPhone : "";
+                return (
+                  <button
+                    key={row.id}
+                    type="button"
+                    className={`ta-thread ta-thread-cell${row.id === threadId ? " active" : ""}${row.waitingReply ? " waiting" : ""}${row.status === "handed_off" ? " handed" : ""}${row.exhausted ? " exhausted" : ""}`}
+                    onClick={() => void selectThread(row.id)}
+                  >
+                    <span className="ta-thread-cell-main">
+                      <strong>{name}</strong>
+                      {phone ? <em className="ta-thread-phone">{phone}</em> : null}
+                      {trip ? <span className="ta-thread-trip">{trip}</span> : null}
+                    </span>
+                    <span className="ta-thread-cell-side">
+                      <time>{timeLabel(row.updatedAt, i18n.lang)}</time>
+                      <i>{CHANNEL_LABEL[row.channel] || row.channel}</i>
+                    </span>
+                  </button>
+                );
+              })
             )}
           </div>
         </aside>

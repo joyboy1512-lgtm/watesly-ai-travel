@@ -367,6 +367,7 @@ function StoreFrontInner({
                 <>
                   <Link href="/deals">{t("navDeals")}</Link>
                   <Link href="/destinations">{t("navDestinations")}</Link>
+                  <Link href="/catalog">{locale === "en" ? "Catalog" : "الكتالوج"}</Link>
                   <Link href="/trip-builder">{t("navTripBuilder")}</Link>
                 </>
               ) : null}
@@ -518,6 +519,7 @@ function StoreFrontInner({
               <>
                 <Link href="/destinations">{t("navDestinations")}</Link>
                 <Link href="/deals">{t("navDeals")}</Link>
+                <Link href="/catalog">{locale === "en" ? "Catalog" : "الكتالوج"}</Link>
                 <Link href="/trip-builder">{t("navTripBuilder")}</Link>
               </>
             ) : (

@@ -16,11 +16,13 @@
     "dev": "tsc -p tsconfig.json --watch",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "echo No lint config yet for whatsapp-core",
+    "test": "node --import tsx --test src/commerce.test.ts",
     "clean": "rimraf dist"
   },
   "devDependencies": {
     "@types/node": "^22.15.21",
     "rimraf": "^6.0.1",
+    "tsx": "^4.23.13",
     "typescript": "^5.8.3"
   }
 }

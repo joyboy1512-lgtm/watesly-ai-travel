@@ -8,8 +8,10 @@ import {
   WEEKEND_DEALS,
   DESTINATION_GUIDES,
   DEFAULT_CMS,
+  DEFAULT_META_COMMERCE,
   DEFAULT_POINTS_RULES,
   normalizeCmsState,
+  normalizeMetaCommerce,
   DEFAULT_REFERRAL,
   buildReferralCode,
   buildTripPriceBreakdown,
@@ -25,6 +27,8 @@ import {
   normalizeShopPaymentStatus,
   type WeekendDeal,
   type CmsState,
+  type MetaCommerceProduct,
+  type MetaCommerceState,
   type PackageComponent,
   type PackageDraft,
   type PriceAlert,
@@ -180,6 +184,10 @@ export class PlatformService {
     ...DEFAULT_CMS,
     updatedAt: new Date().toISOString(),
   };
+  private commerce: MetaCommerceState = {
+    ...DEFAULT_META_COMMERCE,
+    updatedAt: new Date().toISOString(),
+  };
   private pointsRules: PointsRules = { ...DEFAULT_POINTS_RULES };
   /** Memory fallback when DB unavailable / pre-migration */
   private points = new Map<string, CustomerPointsAccount>();
@@ -255,6 +263,7 @@ export class PlatformService {
     return {
       deals: listActiveDeals(deals),
       destinations: await this.listDestinations(),
+      commerce: await this.getPublicCommerce(),
       pointsRules: this.pointsRules,
       referral: DEFAULT_REFERRAL,
       paymentStatuses: [
@@ -335,6 +344,166 @@ export class PlatformService {
       /* memory fallback */
     }
     return next;
+  }
+
+  async getCommerce() {
+    try {
+      const settings = await this.readOrgSettings();
+      if (settings.metaCommerce) {
+        this.commerce = normalizeMetaCommerce(settings.metaCommerce);
+        return this.commerce;
+      }
+    } catch {
+      /* memory fallback */
+    }
+    return normalizeMetaCommerce(this.commerce);
+  }
+
+  async getPublicCommerce() {
+    const state = await this.getCommerce();
+    return {
+      ...state,
+      products: state.products.filter((row) => row.active),
+    };
+  }
+
+  async updateCommerce(patch: Partial<MetaCommerceState>) {
+    const current = await this.getCommerce();
+    const next = normalizeMetaCommerce({
+      ...current,
+      ...patch,
+      products: patch.products ?? current.products,
+      updatedAt: new Date().toISOString(),
+    });
+    this.commerce = next;
+    await this.writeCommerce(next);
+    return next;
+  }
+
+  private async writeCommerce(next: MetaCommerceState) {
+    try {
+      const organizationId = await this.orgId();
+      const settings = await this.readOrgSettings();
+      settings.metaCommerce = next;
+      await this.prisma.organization.update({
+        where: { id: organizationId },
+        data: { settings: settings as Prisma.InputJsonValue },
+      });
+    } catch {
+      /* memory fallback */
+    }
+  }
+
+  async upsertCommerceProduct(product: Partial<MetaCommerceProduct>) {
+    const current = await this.getCommerce();
+    const id = product.id || `prod-${Date.now().toString(36)}`;
+    const retailerId = (product.retailerId || id)
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9-]/g, "-");
+    const nextProduct: MetaCommerceProduct = {
+      id,
+      retailerId,
+      nameAr: (product.nameAr || "").trim() || "منتج",
+      nameEn: (product.nameEn || product.nameAr || "").trim() || "Product",
+      descriptionAr: product.descriptionAr || "",
+      descriptionEn: product.descriptionEn || product.descriptionAr || "",
+      priceMinor: Number(product.priceMinor) || 0,
+      currency: product.currency || "KWD",
+      image: product.image || "/media/destinations/dubai.jpg?v=1",
+      url: product.url || "/catalog",
+      category: product.category || "other",
+      availability: product.availability || "in stock",
+      active: product.active !== false,
+      sourceType: product.sourceType || "manual",
+      sourceId: product.sourceId,
+      metaProductId: product.metaProductId,
+    };
+    const products = [nextProduct, ...current.products.filter((row) => row.id !== id && row.retailerId !== retailerId)];
+    return this.updateCommerce({ products });
+  }
+
+  async deleteCommerceProduct(id: string) {
+    const current = await this.getCommerce();
+    return this.updateCommerce({
+      products: current.products.filter((row) => row.id !== id && row.retailerId !== id),
+    });
+  }
+
+  async importDealsIntoCommerce() {
+    const deals = await this.listAllDeals();
+    const current = await this.getCommerce();
+    const imported: MetaCommerceProduct[] = deals
+      .filter((deal) => deal.active)
+      .map((deal) => ({
+        id: `deal-${deal.slug}`,
+        retailerId: deal.slug,
+        nameAr: deal.titleAr,
+        nameEn: deal.titleEn,
+        descriptionAr: deal.descriptionAr,
+        descriptionEn: deal.descriptionEn,
+        priceMinor: deal.salePriceMinor,
+        currency: deal.currency || "KWD",
+        image: deal.image,
+        url: `/deals/${deal.slug}`,
+        category: "deal" as const,
+        availability: "in stock" as const,
+        active: true,
+        sourceType: "cms_deal" as const,
+        sourceId: deal.id,
+      }));
+    const keep = current.products.filter(
+      (row) => row.sourceType !== "cms_deal" && !imported.some((item) => item.retailerId === row.retailerId),
+    );
+    return this.updateCommerce({ products: [...imported, ...keep] });
+  }
+
+  async syncCommerceToMeta() {
+    const state = await this.getCommerce();
+    if (!state.metaCatalogId) {
+      throw new BadRequestException("أدخل معرّف كتالوج ميتا أولاً");
+    }
+    const organizationId = await this.orgId();
+    const account = await this.prisma.whatsAppAccount.findFirst({
+      where: { organizationId, channelType: "whatsapp" },
+      orderBy: [{ isDefault: "desc" }, { createdAt: "desc" }],
+    });
+    const token = account?.accessTokenEnc || "mock";
+    const { upsertMetaCatalogProduct } = await import("@watesly-travel/whatsapp-core");
+    const publicBase = (process.env.PUBLIC_WEB_URL || "https://www.weekendgate.com").replace(/\/$/, "");
+    const errors: string[] = [];
+    let synced = 0;
+    for (const product of state.products.filter((row) => row.active)) {
+      const result = await upsertMetaCatalogProduct({
+        accessToken: token,
+        catalogId: state.metaCatalogId,
+        product: {
+          retailer_id: product.retailerId,
+          name: product.nameAr,
+          description: product.descriptionAr || product.nameEn,
+          availability: product.availability,
+          price: `${(product.priceMinor / 1000).toFixed(product.currency === "KWD" ? 3 : 2)} ${product.currency}`,
+          currency: product.currency,
+          image_url: product.image.startsWith("http")
+            ? product.image
+            : `${publicBase}${product.image}`,
+          url: product.url.startsWith("http") ? product.url : `${publicBase}${product.url}`,
+          brand: "WeekendGate",
+        },
+      });
+      if (result.ok) {
+        synced += 1;
+        if (result.id) product.metaProductId = result.id;
+      } else if (result.error) {
+        errors.push(`${product.retailerId}: ${result.error}`);
+      }
+    }
+    const next = await this.updateCommerce({
+      products: state.products,
+      lastSyncedAt: new Date().toISOString(),
+      lastSyncError: errors.length ? errors.slice(0, 5).join(" · ") : "",
+    });
+    return { ...next, synced, errors };
   }
 
   async listAllDeals() {

@@ -412,6 +412,8 @@ export default function InboxClient() {
   const [rows, setRows] = useState<ConversationRow[]>([]);
   const [detail, setDetail] = useState<ConversationDetail | null>(null);
   const [templates, setTemplates] = useState<Template[]>([]);
+  const [catalogProducts, setCatalogProducts] = useState<Array<{ id: string; nameAr: string; retailerId: string }>>([]);
+  const [productId, setProductId] = useState("");
   const [filter, setFilter] = useState<FilterTab>("all");
   const [query, setQuery] = useState("");
   const [reply, setReply] = useState("");
@@ -485,6 +487,15 @@ export default function InboxClient() {
       .then((list) => {
         setTemplates(list);
         if (list[0]) setTemplateId(list[0].id);
+      })
+      .catch(() => undefined);
+    apiFetch<{ products?: Array<{ id: string; nameAr: string; retailerId: string; active?: boolean }> }>(
+      "/shop/platform/admin/commerce",
+    )
+      .then((state) => {
+        const rows = (state.products || []).filter((row) => row.active !== false);
+        setCatalogProducts(rows);
+        if (rows[0]) setProductId(rows[0].id);
       })
       .catch(() => undefined);
 
@@ -624,6 +635,37 @@ export default function InboxClient() {
       await Promise.all([loadList(), loadDetail(detail.id)]);
     } catch (err) {
       setError(err instanceof Error ? err.message : "فشل الرد");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function sendProduct() {
+    if (!detail || !productId) return;
+    setBusy(true);
+    setError("");
+    try {
+      await apiFetch(`/conversations/${detail.id}/reply-product`, {
+        method: "POST",
+        body: JSON.stringify({ productId }),
+      });
+      await Promise.all([loadList(), loadDetail(detail.id)]);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "فشل إرسال المنتج");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function sendCatalog() {
+    if (!detail) return;
+    setBusy(true);
+    setError("");
+    try {
+      await apiFetch(`/conversations/${detail.id}/reply-catalog`, { method: "POST" });
+      await Promise.all([loadList(), loadDetail(detail.id)]);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "فشل إرسال الكتالوج");
     } finally {
       setBusy(false);
     }
@@ -973,6 +1015,33 @@ export default function InboxClient() {
                   </button>
                   <Link href="/dashboard/templates" className="wi-btn ghost">
                     القوالب
+                  </Link>
+                </div>
+                <div className="wi-template-bar">
+                  <select value={productId} onChange={(e) => setProductId(e.target.value)}>
+                    {catalogProducts.length === 0 ? (
+                      <option value="">لا توجد منتجات — أضف من الكتالوج</option>
+                    ) : (
+                      catalogProducts.map((row) => (
+                        <option key={row.id} value={row.id}>
+                          {row.nameAr}
+                        </option>
+                      ))
+                    )}
+                  </select>
+                  <button
+                    type="button"
+                    className="wi-btn primary"
+                    disabled={busy || !productId || !isOpen}
+                    onClick={sendProduct}
+                  >
+                    إرسال منتج
+                  </button>
+                  <button type="button" className="wi-btn" disabled={busy || !isOpen} onClick={sendCatalog}>
+                    إرسال الكتالوج
+                  </button>
+                  <Link href="/dashboard/catalog" className="wi-btn ghost">
+                    الكتالوج
                   </Link>
                 </div>
                 {isOpen ? (

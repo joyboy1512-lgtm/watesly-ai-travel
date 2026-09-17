@@ -8,6 +8,7 @@ export * from "./price-alerts";
 export * from "./notifications";
 export * from "./payments";
 export * from "./cms";
+export * from "./meta-commerce";
 export * from "./my-trips";
 export * from "./inventory-mode";
 export * from "./i18n";

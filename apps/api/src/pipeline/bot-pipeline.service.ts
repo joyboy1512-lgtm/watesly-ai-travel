@@ -4,6 +4,9 @@ import { createAiProvider } from "@watesly-travel/ai-core";
 import {
   sendChannelMedia,
   sendChannelText,
+  sendWhatsAppCatalogCta,
+  sendWhatsAppProductList,
+  sendWhatsAppProductMessage,
   sendWhatsAppTemplate,
   usesCustomerServiceWindow,
 } from "@watesly-travel/whatsapp-core";
@@ -11,7 +14,11 @@ import { searchAndPriceTravel } from "@watesly-travel/travel-core";
 import { PrismaService } from "../prisma/prisma.service";
 import { AuditService } from "../common/audit.service";
 import { TravelAiService } from "../ai/travel-ai.service";
-import { parseTravelAggregationSettings } from "@watesly-travel/shared";
+import {
+  formatCommercePrice,
+  normalizeMetaCommerce,
+  parseTravelAggregationSettings,
+} from "@watesly-travel/shared";
 import {
   getFlightProviderForOrg,
   getHotelProviderForOrg,
@@ -1235,6 +1242,192 @@ export class BotPipelineService {
       },
     });
 
+    return message;
+  }
+
+  private async readCommerce(organizationId: string) {
+    const org = await this.prisma.organization.findUnique({
+      where: { id: organizationId },
+      select: { settings: true },
+    });
+    const settings = org?.settings;
+    const raw =
+      settings && typeof settings === "object" && !Array.isArray(settings)
+        ? (settings as Record<string, unknown>).metaCommerce
+        : undefined;
+    return normalizeMetaCommerce(raw);
+  }
+
+  async replyWithProduct(input: {
+    organizationId: string;
+    conversationId: string;
+    sentByUserId?: string;
+    productId: string;
+  }) {
+    const { conversation, account } = await this.resolveWhatsAppAccount(
+      input.conversationId,
+      input.organizationId,
+    );
+    if (!account) {
+      throw new BadRequestException("اربط قناة واتساب قبل إرسال منتج");
+    }
+    const commerce = await this.readCommerce(input.organizationId);
+    const product = commerce.products.find(
+      (row) => row.id === input.productId || row.retailerId === input.productId,
+    );
+    if (!product) throw new BadRequestException("المنتج غير موجود في الكتالوج");
+
+    const channel = account.channelType || "whatsapp";
+    if (usesCustomerServiceWindow(channel)) {
+      const open = await this.isWithinCustomerServiceWindow(input.conversationId);
+      if (!open) {
+        throw new BadRequestException(
+          "انتهت نافذة 24 ساعة. أرسل قالبًا أو اطلب من العميل مراسلتكم أولاً.",
+        );
+      }
+    }
+
+    const caption = `${product.nameAr}\n${formatCommercePrice(product.priceMinor, product.currency)}\n${product.descriptionAr}`.trim();
+    const token = account.accessTokenEnc || "mock";
+    let send = commerce.metaCatalogId
+      ? await sendWhatsAppProductMessage({
+          phoneNumberId: account.phoneNumberId,
+          accessToken: token,
+          to: conversation.contact.waId,
+          catalogId: commerce.metaCatalogId,
+          productRetailerId: product.retailerId,
+          body: caption,
+        })
+      : { status: "failed" as const, providerMessageId: "", mock: true, raw: {} };
+
+    if (send.status === "failed") {
+      send = await sendChannelMedia({
+        channelType: channel,
+        phoneNumberId: account.phoneNumberId,
+        accessToken: token,
+        to: conversation.contact.waId,
+        type: "image",
+        link: product.image.startsWith("http")
+          ? product.image
+          : `${(process.env.PUBLIC_WEB_URL || "https://www.weekendgate.com").replace(/\/$/, "")}${product.image}`,
+        caption,
+      });
+    }
+
+    if (send.status === "failed") {
+      send = await sendChannelText({
+        channelType: channel,
+        phoneNumberId: account.phoneNumberId,
+        accessToken: token,
+        to: conversation.contact.waId,
+        body: caption,
+      });
+    }
+
+    if (send.status === "failed") {
+      throw new BadRequestException("فشل إرسال المنتج");
+    }
+
+    const message = await this.prisma.message.create({
+      data: {
+        organizationId: input.organizationId,
+        conversationId: input.conversationId,
+        direction: "outbound",
+        channel,
+        type: "product",
+        body: caption,
+        providerMessageId: send.providerMessageId || null,
+        status: send.status,
+        sentByUserId: input.sentByUserId,
+        rawPayload: asJson({ ...(send.raw || {}), productId: product.id, retailerId: product.retailerId }),
+      },
+    });
+    await this.prisma.conversation.update({
+      where: { id: input.conversationId },
+      data: { lastMessageAt: new Date(), whatsappAccountId: account.id },
+    });
+    return message;
+  }
+
+  async replyWithCatalog(input: {
+    organizationId: string;
+    conversationId: string;
+    sentByUserId?: string;
+  }) {
+    const { conversation, account } = await this.resolveWhatsAppAccount(
+      input.conversationId,
+      input.organizationId,
+    );
+    if (!account) {
+      throw new BadRequestException("اربط قناة واتساب قبل إرسال الكتالوج");
+    }
+    const commerce = await this.readCommerce(input.organizationId);
+    const products = commerce.products.filter((row) => row.active).slice(0, 10);
+    if (!products.length) throw new BadRequestException("الكتالوج فارغ");
+
+    const channel = account.channelType || "whatsapp";
+    if (usesCustomerServiceWindow(channel)) {
+      const open = await this.isWithinCustomerServiceWindow(input.conversationId);
+      if (!open) {
+        throw new BadRequestException(
+          "انتهت نافذة 24 ساعة. أرسل قالبًا أو اطلب من العميل مراسلتكم أولاً.",
+        );
+      }
+    }
+
+    const token = account.accessTokenEnc || "mock";
+    const site = (process.env.PUBLIC_WEB_URL || "https://www.weekendgate.com").replace(/\/$/, "");
+    let send = commerce.metaCatalogId
+      ? await sendWhatsAppProductList({
+          phoneNumberId: account.phoneNumberId,
+          accessToken: token,
+          to: conversation.contact.waId,
+          catalogId: commerce.metaCatalogId,
+          header: commerce.catalogNameAr,
+          body: commerce.catalogLeadAr,
+          sectionTitle: "عروض",
+          productRetailerIds: products.map((row) => row.retailerId),
+        })
+      : await sendWhatsAppCatalogCta({
+          phoneNumberId: account.phoneNumberId,
+          accessToken: token,
+          to: conversation.contact.waId,
+          body: `${commerce.catalogNameAr}\n${commerce.catalogLeadAr}`,
+          button: "عرض الكتالوج",
+          url: `${site}/catalog`,
+        });
+
+    if (send.status === "failed") {
+      send = await sendChannelText({
+        channelType: channel,
+        phoneNumberId: account.phoneNumberId,
+        accessToken: token,
+        to: conversation.contact.waId,
+        body: `${commerce.catalogNameAr}\n${commerce.catalogLeadAr}\n${site}/catalog`,
+      });
+    }
+    if (send.status === "failed") {
+      throw new BadRequestException("فشل إرسال الكتالوج");
+    }
+
+    const message = await this.prisma.message.create({
+      data: {
+        organizationId: input.organizationId,
+        conversationId: input.conversationId,
+        direction: "outbound",
+        channel,
+        type: "catalog",
+        body: commerce.catalogNameAr,
+        providerMessageId: send.providerMessageId || null,
+        status: send.status,
+        sentByUserId: input.sentByUserId,
+        rawPayload: asJson(send.raw || {}),
+      },
+    });
+    await this.prisma.conversation.update({
+      where: { id: input.conversationId },
+      data: { lastMessageAt: new Date(), whatsappAccountId: account.id },
+    });
     return message;
   }
 }

@@ -108,11 +108,36 @@ function extractMessageText(message: {
   document?: { caption?: string; filename?: string };
   audio?: { id?: string };
   button?: { text?: string; payload?: string };
+  order?: {
+    catalog_id?: string;
+    text?: string;
+    product_items?: Array<{
+      product_retailer_id?: string;
+      quantity?: number;
+      item_price?: number;
+      currency?: string;
+    }>;
+  };
   interactive?: {
+    type?: string;
+    body?: { text?: string };
     button_reply?: { title?: string; id?: string };
     list_reply?: { title?: string; id?: string };
+    action?: { catalog_id?: string; product_retailer_id?: string };
   };
 }): string | undefined {
+  if (message.type === "order" || message.order) {
+    const items = message.order?.product_items || [];
+    const summary = items
+      .map((item) => `${item.product_retailer_id || "منتج"} ×${item.quantity || 1}`)
+      .join("، ");
+    return `[طلب كتالوج] ${message.order?.text || summary || "طلب جديد"}`.trim();
+  }
+  if (message.interactive?.type === "product_inquiry") {
+    const sku = message.interactive.action?.product_retailer_id;
+    const note = message.interactive.body?.text || message.text?.body || "";
+    return `[استفسار منتج] ${sku || ""} ${note}`.trim();
+  }
   if (message.text?.body) return message.text.body;
   if (message.button?.text) return message.button.text;
   if (message.interactive?.button_reply?.title) {
@@ -153,9 +178,20 @@ export function parseInboundWebhook(payload: unknown): WhatsAppInboundMessage[] 
             document?: { caption?: string; filename?: string };
             audio?: { id?: string };
             button?: { text?: string; payload?: string };
+            order?: {
+              catalog_id?: string;
+              text?: string;
+              product_items?: Array<{
+                product_retailer_id?: string;
+                quantity?: number;
+              }>;
+            };
             interactive?: {
+              type?: string;
+              body?: { text?: string };
               button_reply?: { title?: string; id?: string };
               list_reply?: { title?: string; id?: string };
+              action?: { catalog_id?: string; product_retailer_id?: string };
             };
           }>;
         };
@@ -426,6 +462,17 @@ export async function sendWhatsAppMedia(
     raw,
   };
 }
+
+export {
+  buildCatalogCtaPayload,
+  buildMultiProductPayload,
+  buildSingleProductPayload,
+  sendWhatsAppCatalogCta,
+  sendWhatsAppProductList,
+  sendWhatsAppProductMessage,
+  upsertMetaCatalogProduct,
+} from "./commerce";
+export type { GraphCatalogProduct, SendProductInput } from "./commerce";
 
 export async function sendChannelText(
   input: ChannelSendInput,

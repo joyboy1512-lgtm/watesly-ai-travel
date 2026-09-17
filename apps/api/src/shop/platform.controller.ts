@@ -17,7 +17,14 @@ import {
 import { PlatformService } from "./platform.service";
 import { TripOrchestrationService } from "./trip-orchestration.service";
 import type { TripDraftState } from "@watesly-travel/shared";
-import type { PackageComponent, WeekendDeal, CmsState, PointsRules } from "@watesly-travel/shared";
+import type {
+  PackageComponent,
+  WeekendDeal,
+  CmsState,
+  MetaCommerceProduct,
+  MetaCommerceState,
+  PointsRules,
+} from "@watesly-travel/shared";
 
 /**
  * Additive platform routes. Public catalog stays open; CMS/admin mutations
@@ -76,6 +83,48 @@ export class PlatformController {
   @RequirePermissions("providers.manage")
   updateCms(@Body() body: Partial<CmsState>) {
     return this.platform.updateCms(body);
+  }
+
+  @Public()
+  @Get("commerce")
+  commerce() {
+    return this.platform.getPublicCommerce();
+  }
+
+  @Get("admin/commerce")
+  @RequirePermissions("whatsapp.manage")
+  adminCommerce() {
+    return this.platform.getCommerce();
+  }
+
+  @Patch("commerce")
+  @RequirePermissions("whatsapp.manage")
+  updateCommerce(@Body() body: Partial<MetaCommerceState>) {
+    return this.platform.updateCommerce(body);
+  }
+
+  @Post("commerce/products")
+  @RequirePermissions("whatsapp.manage")
+  upsertCommerceProduct(@Body() body: Partial<MetaCommerceProduct>) {
+    return this.platform.upsertCommerceProduct(body);
+  }
+
+  @Delete("commerce/products/:id")
+  @RequirePermissions("whatsapp.manage")
+  deleteCommerceProduct(@Param("id") id: string) {
+    return this.platform.deleteCommerceProduct(id);
+  }
+
+  @Post("commerce/import-deals")
+  @RequirePermissions("whatsapp.manage")
+  importCommerceDeals() {
+    return this.platform.importDealsIntoCommerce();
+  }
+
+  @Post("commerce/sync-meta")
+  @RequirePermissions("whatsapp.manage")
+  syncCommerceMeta() {
+    return this.platform.syncCommerceToMeta();
   }
 
   @Get("admin/deals")

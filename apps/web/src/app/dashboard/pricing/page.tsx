@@ -726,7 +726,7 @@ export default function PricingPage() {
             </p>
           </div>
 
-          <div className="prc-block">
+          <div className="prc-block prc-block-define">
             <p className="prc-block-title">1 · التعريف</p>
             <div className="prc-row prc-row-name">
               <label className="prc-field grow">
@@ -750,7 +750,7 @@ export default function PricingPage() {
             </div>
           </div>
 
-          <div className="prc-block">
+          <div className="prc-block prc-block-scope">
             <p className="prc-block-title">2 · نطاق التطبيق</p>
             <div className="prc-row prc-row-core">
               <label className="prc-field">
@@ -801,7 +801,7 @@ export default function PricingPage() {
             </div>
           </div>
 
-          <div className="prc-block">
+          <div className="prc-block prc-block-margin">
             <p className="prc-block-title">
               3 · الهامش{" "}
               {form.applyBasis === "booking"
@@ -940,7 +940,7 @@ export default function PricingPage() {
           </div>
 
           {showConditions ? (
-            <div className="prc-block prc-conditions">
+            <div className="prc-block prc-block-conditions prc-conditions">
               <p className="prc-block-title">5 · شروط اختيارية</p>
               <div className="prc-row prc-row-4">
                 {showOrigins ? (
@@ -1115,67 +1115,86 @@ export default function PricingPage() {
               <p>أضف أول قاعدة من النموذج أعلاه.</p>
             </div>
           ) : (
-            <div className="prc-list">
-              {rows.map((row) => {
-                const basis =
-                  row.conditions?.applyBasis === "booking"
-                    ? "إجمالي الحجز"
-                    : row.serviceType === "hotel"
-                      ? "لكل غرفة"
-                      : "لكل تذكرة";
-                const margin =
-                  row.ruleType === "fixed" && row.fixedAmount
-                    ? formatMoneyMinor(
-                        row.fixedAmount,
-                        row.currency || "KWD",
-                      )
-                    : row.percentValue != null
-                      ? `${row.percentValue}%`
-                      : "—";
-                return (
-                  <article
-                    key={row.id}
-                    className={`prc-rule ${row.isActive ? "" : "off"}`}
-                  >
-                    <div className="prc-rule-main">
-                      <div className="prc-rule-title">
-                        <strong>{row.name}</strong>
-                        <span className={row.isActive ? "on" : "off"}>
-                          {row.isActive ? "نشطة" : "معطّلة"}
-                        </span>
-                      </div>
-                      <div className="prc-rule-meta">
-                        <span>
+            <div className="cust-table-scroll">
+              <table className="cust-table prc-table">
+                <thead>
+                  <tr>
+                    <th>الاسم</th>
+                    <th>الخدمة</th>
+                    <th>النوع</th>
+                    <th>التطبيق</th>
+                    <th>الهامش</th>
+                    <th>حد أدنى</th>
+                    <th>الشروط</th>
+                    <th>الأولوية</th>
+                    <th>الحالة</th>
+                    <th>إجراءات</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.map((row) => {
+                    const basis =
+                      row.conditions?.applyBasis === "booking"
+                        ? "إجمالي الحجز"
+                        : row.serviceType === "hotel"
+                          ? "لكل غرفة"
+                          : "لكل تذكرة";
+                    const margin =
+                      row.ruleType === "fixed" && row.fixedAmount
+                        ? formatMoneyMinor(
+                            row.fixedAmount,
+                            row.currency || "KWD",
+                          )
+                        : row.percentValue != null
+                          ? `${row.percentValue}%`
+                          : "—";
+                    return (
+                      <tr
+                        key={row.id}
+                        className={row.isActive ? "" : "prc-row-off"}
+                      >
+                        <td>
+                          <strong>{row.name}</strong>
+                        </td>
+                        <td>
                           {SERVICE_LABEL[row.serviceType] || row.serviceType}
-                        </span>
-                        <span>{RULE_LABEL[row.ruleType] || row.ruleType}</span>
-                        <span>{basis}</span>
-                        <span>{margin}</span>
-                        {row.minProfitAmount != null ? (
-                          <span>
-                            حد أدنى{" "}
-                            {formatMoneyMinor(
-                              row.minProfitAmount,
-                              row.currency || "KWD",
-                            )}
+                        </td>
+                        <td>{RULE_LABEL[row.ruleType] || row.ruleType}</td>
+                        <td>{basis}</td>
+                        <td>{margin}</td>
+                        <td>
+                          {row.minProfitAmount != null
+                            ? formatMoneyMinor(
+                                row.minProfitAmount,
+                                row.currency || "KWD",
+                              )
+                            : "—"}
+                        </td>
+                        <td className="prc-cond-cell">
+                          {conditionsSummary(row.conditions, airports, cities)}
+                        </td>
+                        <td>{row.priority}</td>
+                        <td>
+                          <span
+                            className={`prc-badge ${row.isActive ? "on" : "off"}`}
+                          >
+                            {row.isActive ? "نشطة" : "معطّلة"}
                           </span>
-                        ) : null}
-                        <span>أولوية {row.priority}</span>
-                      </div>
-                      <p className="prc-rule-cond">
-                        {conditionsSummary(row.conditions, airports, cities)}
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      className="btn secondary"
-                      onClick={() => void toggle(row)}
-                    >
-                      {row.isActive ? "تعطيل" : "تفعيل"}
-                    </button>
-                  </article>
-                );
-              })}
+                        </td>
+                        <td>
+                          <button
+                            type="button"
+                            className="cust-table-btn"
+                            onClick={() => void toggle(row)}
+                          >
+                            {row.isActive ? "تعطيل" : "تفعيل"}
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
           )}
         </section>

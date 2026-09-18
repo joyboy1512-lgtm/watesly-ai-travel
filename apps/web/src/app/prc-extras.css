@@ -29,14 +29,6 @@
   white-space: nowrap;
 }
 
-.prc-cond-cell {
-  white-space: normal !important;
-  max-width: 28ch;
-  font-size: 0.82rem;
-  color: #5f7470;
-  line-height: 1.4;
-}
-
 .prc-row-off td {
   opacity: 0.72;
 }

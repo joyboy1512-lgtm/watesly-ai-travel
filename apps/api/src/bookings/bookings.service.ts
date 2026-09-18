@@ -609,6 +609,15 @@ export class BookingsService {
     const costFromDetails = Number(details.costAmountMinor) || 0;
     const sellFromClient = Math.round(input.offer.sellAmountMinor);
     const rawStars = details.stars;
+    const people =
+      (input.travelers?.length || 0) +
+      (input.guests?.length || 0) ||
+      Math.max(1, (input.adults || 0) + (input.children || 0));
+    const rooms = Math.max(1, input.stay?.rooms || 1);
+    const units =
+      serviceType === "hotel"
+        ? rooms
+        : Math.max(1, people || 1);
     const rule = selectPricingRule(rules, serviceType, {
       provider: input.offer.providerKey,
       costAmountMinor:
@@ -622,6 +631,10 @@ export class BookingsService {
         typeof rawStars === "number" || typeof rawStars === "string"
           ? rawStars
           : undefined,
+      units,
+      rooms,
+      adults: input.adults,
+      children: input.children,
     });
 
     if (costFromDetails > 0) {
@@ -630,6 +643,10 @@ export class BookingsService {
         currency,
         serviceType,
         rule,
+        units,
+        rooms,
+        adults: input.adults,
+        children: input.children,
       });
       return {
         costAmount: pricing.costAmountMinor,
@@ -645,6 +662,10 @@ export class BookingsService {
       currency,
       serviceType,
       rule,
+      units,
+      rooms,
+      adults: input.adults,
+      children: input.children,
     });
     return {
       costAmount: pricing.costAmountMinor,
@@ -834,6 +855,14 @@ export class BookingsService {
     });
     const raw = await provider.revalidateOffer(offer);
     const rawStars = (raw.offer.raw as Record<string, unknown> | undefined)?.stars;
+    const rawOffer = (raw.offer.raw as Record<string, unknown> | undefined) || {};
+    const roomsRaw = rawOffer.rooms;
+    const rooms =
+      typeof roomsRaw === "number"
+        ? roomsRaw
+        : Array.isArray(roomsRaw)
+          ? roomsRaw.length
+          : undefined;
     const rule = selectPricingRule(rules, "hotel", {
       provider: raw.offer.providerKey,
       costAmountMinor: raw.offer.costAmountMinor,
@@ -841,12 +870,16 @@ export class BookingsService {
         typeof rawStars === "number" || typeof rawStars === "string"
           ? rawStars
           : undefined,
+      rooms,
+      adults: Number(rawOffer.adults) || undefined,
     });
     const pricing = applyPricingRule({
       costAmountMinor: raw.offer.costAmountMinor,
       currency: raw.offer.currency,
       serviceType: "hotel",
       rule,
+      rooms,
+      adults: Number(rawOffer.adults) || undefined,
     });
     return {
       available: raw.available,
@@ -942,7 +975,13 @@ export class BookingsService {
           currency: offer.currency,
           serviceType: "transfer",
           rules,
-          context: { city: input.city, provider: offer.providerKey },
+          context: {
+            city: input.city,
+            provider: offer.providerKey,
+            adults: input.adults,
+            children: input.children,
+            units: Math.max(1, (input.adults || 1) + (input.children || 0)),
+          },
         });
         return {
           id: offer.providerOfferRef,
@@ -1057,7 +1096,14 @@ export class BookingsService {
           currency: offer.currency,
           serviceType: "activity",
           rules,
-          context: { city: input.destination, destination: input.destination, provider: offer.providerKey },
+          context: {
+            city: input.destination,
+            destination: input.destination,
+            provider: offer.providerKey,
+            adults: input.adults,
+            children: input.children,
+            units: Math.max(1, (input.adults || 1) + (input.children || 0)),
+          },
         });
         return {
           id: offer.providerOfferRef,

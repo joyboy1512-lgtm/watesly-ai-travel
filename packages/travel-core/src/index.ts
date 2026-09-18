@@ -167,6 +167,10 @@ function priceOffers<T extends FlightOffer | HotelOffer>(
     departDate?: string;
     checkIn?: string;
     city?: string;
+    units?: number;
+    adults?: number;
+    children?: number;
+    rooms?: number;
   },
 ): PricedOffer<T>[] {
   return offers.map((offer) => {
@@ -186,6 +190,10 @@ function priceOffers<T extends FlightOffer | HotelOffer>(
       currency: offer.currency,
       serviceType,
       rule,
+      units: context?.units,
+      adults: context?.adults,
+      children: context?.children,
+      rooms: context?.rooms,
     });
     return {
       offer,
@@ -243,6 +251,9 @@ export async function searchAndPriceFlights(input: {
     destination: input.params.destination,
     cabinClass: input.params.cabinClass ?? undefined,
     departDate: input.params.departDate,
+    adults: input.params.adults,
+    children: input.params.children,
+    units: Math.max(1, (input.params.adults || 1) + (input.params.children || 0)),
   });
 }
 
@@ -274,6 +285,10 @@ export async function searchAndPriceHotels(input: {
     city: input.params.location,
     destination: input.params.location,
     checkIn: input.params.checkInDate,
+    rooms: input.params.rooms,
+    adults: input.params.adults,
+    children: input.params.children,
+    units: Math.max(1, input.params.rooms || 1),
   });
 }
 
@@ -475,6 +490,14 @@ export async function revalidatePricedOffer(input: {
     : result.offer;
 
   const revalidateStars = (offer as { raw?: Record<string, unknown> }).raw?.stars;
+  const raw = (offer as { raw?: Record<string, unknown> }).raw || {};
+  const roomsRaw = raw.rooms;
+  const rooms =
+    typeof roomsRaw === "number"
+      ? roomsRaw
+      : Array.isArray(roomsRaw)
+        ? roomsRaw.length
+        : undefined;
   const rule = selectPricingRule(input.rules, serviceType, {
     provider: offer.providerKey,
     costAmountMinor: offer.costAmountMinor,
@@ -482,12 +505,16 @@ export async function revalidatePricedOffer(input: {
       typeof revalidateStars === "number" || typeof revalidateStars === "string"
         ? revalidateStars
         : undefined,
+    rooms,
+    adults: Number(raw.adults) || undefined,
   });
   const pricing = applyPricingRule({
     costAmountMinor: offer.costAmountMinor,
     currency: offer.currency,
     serviceType,
     rule,
+    rooms,
+    adults: Number(raw.adults) || undefined,
   });
   return {
     ...result,

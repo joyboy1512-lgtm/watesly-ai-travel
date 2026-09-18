@@ -15,6 +15,9 @@ type PricingConditionsBody = {
   maxPrice?: number;
   dateFrom?: string;
   dateTo?: string;
+  applyBasis?: "unit" | "booking";
+  bookingCommissionPercent?: number;
+  bookingCommissionAmount?: number;
 };
 
 function normalizeList(values?: string[]): string[] | undefined {
@@ -46,6 +49,21 @@ function cleanConditions(raw?: PricingConditionsBody | null) {
   }
   if (raw.dateFrom) next.dateFrom = String(raw.dateFrom).slice(0, 10);
   if (raw.dateTo) next.dateTo = String(raw.dateTo).slice(0, 10);
+  if (raw.applyBasis === "booking" || raw.applyBasis === "unit") {
+    next.applyBasis = raw.applyBasis;
+  }
+  if (
+    raw.bookingCommissionPercent != null &&
+    !Number.isNaN(Number(raw.bookingCommissionPercent))
+  ) {
+    next.bookingCommissionPercent = Number(raw.bookingCommissionPercent);
+  }
+  if (
+    raw.bookingCommissionAmount != null &&
+    !Number.isNaN(Number(raw.bookingCommissionAmount))
+  ) {
+    next.bookingCommissionAmount = Number(raw.bookingCommissionAmount);
+  }
   return Object.keys(next).length ? (next as Prisma.InputJsonValue) : Prisma.JsonNull;
 }
 

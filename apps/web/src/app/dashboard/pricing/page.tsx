@@ -22,6 +22,9 @@ type Conditions = {
   maxPrice?: number;
   dateFrom?: string;
   dateTo?: string;
+  applyBasis?: "unit" | "booking";
+  bookingCommissionPercent?: number;
+  bookingCommissionAmount?: number;
 };
 
 type Rule = {
@@ -129,11 +132,14 @@ const emptyForm = {
   name: "قاعدة جديدة",
   serviceType: "flight",
   ruleType: "percent_with_min",
+  applyBasis: "unit" as "unit" | "booking",
   percentValue: 12,
   minProfitMajor: 1.5,
   fixedMajor: 0,
   currency: "KWD",
   priority: 50,
+  bookingCommissionPercent: 0,
+  bookingCommissionMajor: 0,
   origins: [] as string[],
   destinations: [] as string[],
   cabinClasses: [] as string[],
@@ -162,6 +168,10 @@ function conditionsSummary(
 ): string {
   if (!c) return "—";
   const parts: string[] = [];
+  if (c.applyBasis === "booking") parts.push("عمولة على إجمالي الحجز");
+  else parts.push("لكل تذكرة / غرفة");
+  if (c.bookingCommissionPercent) parts.push(`عمولة ${c.bookingCommissionPercent}%`);
+  if (c.bookingCommissionAmount) parts.push(`عمولة ثابتة ${c.bookingCommissionAmount}`);
   if (c.origins?.length) {
     parts.push(
       `من ${c.origins.map((v) => optionLabel(airportOpts, v)).join(" / ")}`,
@@ -483,7 +493,9 @@ export default function PricingPage() {
   }
 
   function buildConditions(): Conditions | null {
-    const conditions: Conditions = {};
+    const conditions: Conditions = {
+      applyBasis: form.applyBasis,
+    };
     if (showOrigins && form.origins.length) conditions.origins = form.origins;
     if (form.destinations.length) conditions.destinations = form.destinations;
     if (showCabin && form.cabinClasses.length) {
@@ -497,6 +509,12 @@ export default function PricingPage() {
     if (form.maxPrice !== "") conditions.maxPrice = Number(form.maxPrice);
     if (form.dateFrom) conditions.dateFrom = form.dateFrom;
     if (form.dateTo) conditions.dateTo = form.dateTo;
+    if (Number(form.bookingCommissionPercent) > 0) {
+      conditions.bookingCommissionPercent = Number(form.bookingCommissionPercent);
+    }
+    if (Number(form.bookingCommissionMajor) > 0) {
+      conditions.bookingCommissionAmount = Number(form.bookingCommissionMajor);
+    }
     return Object.keys(conditions).length ? conditions : null;
   }
 
@@ -662,9 +680,9 @@ export default function PricingPage() {
             <p className="prc-kicker">Pricing Rules</p>
             <h3>قواعد التسعير والأرباح</h3>
             <p>
-              القاعدة النشطة تُطبَّق على أسعار محركات البحث (طيران، فنادق، نقل،
-              أنشطة) قبل ظهور النتيجة. لا تُستخدم قاعدة مبلغ ثابت بلا قيمة —
-              يُتجاوزها النظام إلى القاعدة التالية.
+              القاعدة الجديدة تُطبَّق على كل تفصيلة: التذكرة أو الشخص في الطيران،
+              والغرفة في الفندق — وليست على إجمالي الحجز. يمكنك إضافة بند عمولة
+              إجمالية يُحسب مرة واحدة على الحجز.
             </p>
           </div>
           <button
@@ -701,140 +719,229 @@ export default function PricingPage() {
         <section className="prc-card prc-new">
           <div className="prc-card-head">
             <h4>قاعدة جديدة</h4>
-            <p>أدخل الأساسيات في صف واحد ثم احفظ</p>
+            <p>
+              {isHotel
+                ? "الهامش والحد الأدنى يُحسبان لكل غرفة، ثم يمكن إضافة عمولة على إجمالي الإقامة."
+                : "الهامش والحد الأدنى يُحسبان لكل تذكرة (لكل شخص)، ثم يمكن إضافة عمولة على إجمالي الحجز."}
+            </p>
           </div>
 
-          <div className="prc-row prc-row-name">
-            <label className="prc-field grow">
-              <span>اسم القاعدة</span>
-              <input
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-                placeholder="قاعدة طيران عامة"
-              />
-            </label>
-            <label className="prc-field sm">
-              <span>الأولوية</span>
-              <input
-                type="number"
-                value={form.priority}
-                onChange={(e) =>
-                  setForm({ ...form, priority: Number(e.target.value) || 0 })
-                }
-              />
-            </label>
-          </div>
-
-          <div className="prc-row prc-row-core">
-            <label className="prc-field">
-              <span>نوع الخدمة</span>
-              <select
-                value={form.serviceType}
-                onChange={(e) => onServiceChange(e.target.value)}
-              >
-                <option value="flight">طيران</option>
-                <option value="hotel">فنادق</option>
-                <option value="transfer">نقل</option>
-                <option value="activity">أنشطة</option>
-                <option value="all">الكل</option>
-              </select>
-            </label>
-            <label className="prc-field">
-              <span>نوع القاعدة</span>
-              <select
-                value={form.ruleType}
-                onChange={(e) =>
-                  setForm({ ...form, ruleType: e.target.value })
-                }
-              >
-                <option value="percent">نسبة فقط</option>
-                <option value="percent_with_min">نسبة + حد أدنى</option>
-                <option value="fixed">مبلغ ثابت</option>
-              </select>
-            </label>
-            <label className="prc-field">
-              <span>نسبة الهامش %</span>
-              <input
-                type="number"
-                disabled={form.ruleType === "fixed"}
-                value={form.percentValue}
-                onChange={(e) =>
-                  setForm({
-                    ...form,
-                    percentValue: Number(e.target.value) || 0,
-                  })
-                }
-              />
-            </label>
-            <label className="prc-field">
-              <span>مبلغ الربح الثابت</span>
-              <input
-                type="number"
-                step="0.001"
-                disabled={form.ruleType !== "fixed"}
-                value={form.fixedMajor}
-                onChange={(e) =>
-                  setForm({
-                    ...form,
-                    fixedMajor: Number(e.target.value) || 0,
-                  })
-                }
-              />
-            </label>
-          </div>
-
-          <div className="prc-row prc-row-money">
-            <label className="prc-field">
-              <span>الحد الأدنى للربح</span>
-              <input
-                type="number"
-                step="0.001"
-                value={form.minProfitMajor}
-                onChange={(e) =>
-                  setForm({
-                    ...form,
-                    minProfitMajor: Number(e.target.value) || 0,
-                  })
-                }
-              />
-            </label>
-            <label className="prc-field">
-              <span>العملة</span>
-              <select
-                value={form.currency}
-                onChange={(e) => setForm({ ...form, currency: e.target.value })}
-              >
-                {SUPPORTED_CURRENCIES.map((c) => (
-                  <option key={c.code} value={c.code}>
-                    {c.code} · {c.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <div className="prc-field prc-actions-inline">
-              <span>&nbsp;</span>
-              <div className="prc-inline-btns">
-                <button
-                  type="button"
-                  className="btn secondary"
-                  onClick={() => setShowConditions((v) => !v)}
-                >
-                  {showConditions ? "إخفاء الشروط" : "شروط اختيارية"}
-                </button>
-                <button
-                  type="button"
-                  className="btn"
-                  disabled={loading}
-                  onClick={() => void create()}
-                >
-                  {loading ? "جارٍ الإضافة..." : "إضافة قاعدة"}
-                </button>
-              </div>
+          <div className="prc-block prc-block-define">
+            <p className="prc-block-title">1 · التعريف</p>
+            <div className="prc-row prc-row-name">
+              <label className="prc-field grow">
+                <span>اسم القاعدة</span>
+                <input
+                  value={form.name}
+                  onChange={(e) => setForm({ ...form, name: e.target.value })}
+                  placeholder="قاعدة طيران عامة"
+                />
+              </label>
+              <label className="prc-field sm">
+                <span>الأولوية</span>
+                <input
+                  type="number"
+                  value={form.priority}
+                  onChange={(e) =>
+                    setForm({ ...form, priority: Number(e.target.value) || 0 })
+                  }
+                />
+              </label>
             </div>
           </div>
 
+          <div className="prc-block prc-block-scope">
+            <p className="prc-block-title">2 · نطاق التطبيق</p>
+            <div className="prc-row prc-row-core">
+              <label className="prc-field">
+                <span>نوع الخدمة</span>
+                <select
+                  value={form.serviceType}
+                  onChange={(e) => onServiceChange(e.target.value)}
+                >
+                  <option value="flight">طيران</option>
+                  <option value="hotel">فنادق</option>
+                  <option value="transfer">نقل</option>
+                  <option value="activity">أنشطة</option>
+                  <option value="all">الكل</option>
+                </select>
+              </label>
+              <label className="prc-field grow">
+                <span>تُطبَّق على</span>
+                <select
+                  value={form.applyBasis}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      applyBasis: e.target.value as "unit" | "booking",
+                    })
+                  }
+                >
+                  <option value="unit">
+                    {isHotel
+                      ? "كل غرفة — ليس إجمالي الحجز"
+                      : "كل تذكرة / شخص — ليس إجمالي الحجز"}
+                  </option>
+                  <option value="booking">عمولة على إجمالي الحجز مرة واحدة</option>
+                </select>
+              </label>
+              <label className="prc-field">
+                <span>نوع القاعدة</span>
+                <select
+                  value={form.ruleType}
+                  onChange={(e) =>
+                    setForm({ ...form, ruleType: e.target.value })
+                  }
+                >
+                  <option value="percent">نسبة فقط</option>
+                  <option value="percent_with_min">نسبة + حد أدنى</option>
+                  <option value="fixed">مبلغ ثابت</option>
+                </select>
+              </label>
+            </div>
+          </div>
+
+          <div className="prc-block prc-block-margin">
+            <p className="prc-block-title">
+              3 · الهامش{" "}
+              {form.applyBasis === "booking"
+                ? "(مرة واحدة على الحجز)"
+                : isHotel
+                  ? "(لكل غرفة)"
+                  : "(لكل تذكرة)"}
+            </p>
+            <div className="prc-row prc-row-money">
+              <label className="prc-field">
+                <span>نسبة الهامش %</span>
+                <input
+                  type="number"
+                  disabled={form.ruleType === "fixed"}
+                  value={form.percentValue}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      percentValue: Number(e.target.value) || 0,
+                    })
+                  }
+                />
+              </label>
+              <label className="prc-field">
+                <span>
+                  مبلغ الربح الثابت{" "}
+                  {form.applyBasis === "unit"
+                    ? isHotel
+                      ? "للغرفة"
+                      : "للتذكرة"
+                    : "للحجز"}
+                </span>
+                <input
+                  type="number"
+                  step="0.001"
+                  disabled={form.ruleType !== "fixed"}
+                  value={form.fixedMajor}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      fixedMajor: Number(e.target.value) || 0,
+                    })
+                  }
+                />
+              </label>
+              <label className="prc-field">
+                <span>
+                  الحد الأدنى للربح{" "}
+                  {form.applyBasis === "unit"
+                    ? isHotel
+                      ? "للغرفة"
+                      : "للتذكرة"
+                    : "للحجز"}
+                </span>
+                <input
+                  type="number"
+                  step="0.001"
+                  value={form.minProfitMajor}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      minProfitMajor: Number(e.target.value) || 0,
+                    })
+                  }
+                />
+              </label>
+              <label className="prc-field">
+                <span>العملة</span>
+                <select
+                  value={form.currency}
+                  onChange={(e) => setForm({ ...form, currency: e.target.value })}
+                >
+                  {SUPPORTED_CURRENCIES.map((c) => (
+                    <option key={c.code} value={c.code}>
+                      {c.code} · {c.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+          </div>
+
+          <div className="prc-block prc-block-commission">
+            <p className="prc-block-title">4 · بند العمولة الإجمالية (اختياري)</p>
+            <p className="prc-block-note">
+              يُضاف مرة واحدة على إجمالي الحجز بعد هامش التذاكر أو الغرف.
+            </p>
+            <div className="prc-row prc-row-core">
+              <label className="prc-field">
+                <span>نسبة عمولة الحجز %</span>
+                <input
+                  type="number"
+                  step="0.1"
+                  value={form.bookingCommissionPercent}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      bookingCommissionPercent: Number(e.target.value) || 0,
+                    })
+                  }
+                />
+              </label>
+              <label className="prc-field">
+                <span>مبلغ عمولة ثابت للحجز</span>
+                <input
+                  type="number"
+                  step="0.001"
+                  value={form.bookingCommissionMajor}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      bookingCommissionMajor: Number(e.target.value) || 0,
+                    })
+                  }
+                />
+              </label>
+            </div>
+          </div>
+
+          <div className="prc-row prc-row-actions">
+            <button
+              type="button"
+              className="btn secondary"
+              onClick={() => setShowConditions((v) => !v)}
+            >
+              {showConditions ? "إخفاء الشروط" : "5 · شروط اختيارية"}
+            </button>
+            <button
+              type="button"
+              className="btn"
+              disabled={loading}
+              onClick={() => void create()}
+            >
+              {loading ? "جارٍ الإضافة..." : "إضافة قاعدة"}
+            </button>
+          </div>
+
           {showConditions ? (
-            <div className="prc-conditions">
+            <div className="prc-block prc-block-conditions prc-conditions">
+              <p className="prc-block-title">5 · شروط اختيارية</p>
               <div className="prc-row prc-row-4">
                 {showOrigins ? (
                   <SearchChips
@@ -1015,6 +1122,7 @@ export default function PricingPage() {
                     <th>الاسم</th>
                     <th>الخدمة</th>
                     <th>النوع</th>
+                    <th>التطبيق</th>
                     <th>الهامش</th>
                     <th>حد أدنى</th>
                     <th>الشروط</th>
@@ -1024,58 +1132,67 @@ export default function PricingPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {rows.map((row) => (
-                    <tr
-                      key={row.id}
-                      className={row.isActive ? "" : "prc-row-off"}
-                    >
-                      <td>
-                        <strong>{row.name}</strong>
-                      </td>
-                      <td>
-                        {SERVICE_LABEL[row.serviceType] || row.serviceType}
-                      </td>
-                      <td>{RULE_LABEL[row.ruleType] || row.ruleType}</td>
-                      <td>
-                        {row.ruleType === "fixed" && row.fixedAmount
-                          ? formatMoneyMinor(
-                              row.fixedAmount,
-                              row.currency || "KWD",
-                            )
-                          : row.percentValue != null
-                            ? `${row.percentValue}%`
+                  {rows.map((row) => {
+                    const basis =
+                      row.conditions?.applyBasis === "booking"
+                        ? "إجمالي الحجز"
+                        : row.serviceType === "hotel"
+                          ? "لكل غرفة"
+                          : "لكل تذكرة";
+                    const margin =
+                      row.ruleType === "fixed" && row.fixedAmount
+                        ? formatMoneyMinor(
+                            row.fixedAmount,
+                            row.currency || "KWD",
+                          )
+                        : row.percentValue != null
+                          ? `${row.percentValue}%`
+                          : "—";
+                    return (
+                      <tr
+                        key={row.id}
+                        className={row.isActive ? "" : "prc-row-off"}
+                      >
+                        <td>
+                          <strong>{row.name}</strong>
+                        </td>
+                        <td>
+                          {SERVICE_LABEL[row.serviceType] || row.serviceType}
+                        </td>
+                        <td>{RULE_LABEL[row.ruleType] || row.ruleType}</td>
+                        <td>{basis}</td>
+                        <td>{margin}</td>
+                        <td>
+                          {row.minProfitAmount != null
+                            ? formatMoneyMinor(
+                                row.minProfitAmount,
+                                row.currency || "KWD",
+                              )
                             : "—"}
-                      </td>
-                      <td>
-                        {row.minProfitAmount != null
-                          ? formatMoneyMinor(
-                              row.minProfitAmount,
-                              row.currency || "KWD",
-                            )
-                          : "—"}
-                      </td>
-                      <td className="prc-cond-cell">
-                        {conditionsSummary(row.conditions, airports, cities)}
-                      </td>
-                      <td>{row.priority}</td>
-                      <td>
-                        <span
-                          className={`wa-badge ${row.isActive ? "ok" : "warn"}`}
-                        >
-                          {row.isActive ? "نشطة" : "معطّلة"}
-                        </span>
-                      </td>
-                      <td>
-                        <button
-                          type="button"
-                          className="wa-mini-btn"
-                          onClick={() => void toggle(row)}
-                        >
-                          {row.isActive ? "تعطيل" : "تفعيل"}
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
+                        </td>
+                        <td className="prc-cond-cell">
+                          {conditionsSummary(row.conditions, airports, cities)}
+                        </td>
+                        <td>{row.priority}</td>
+                        <td>
+                          <span
+                            className={`prc-badge ${row.isActive ? "on" : "off"}`}
+                          >
+                            {row.isActive ? "نشطة" : "معطّلة"}
+                          </span>
+                        </td>
+                        <td>
+                          <button
+                            type="button"
+                            className="cust-table-btn"
+                            onClick={() => void toggle(row)}
+                          >
+                            {row.isActive ? "تعطيل" : "تفعيل"}
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>

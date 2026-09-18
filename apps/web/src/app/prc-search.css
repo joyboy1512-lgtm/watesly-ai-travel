@@ -4,9 +4,9 @@
 }
 
 .prc-search-hint {
-  color: #7a8c88;
+  color: #3d3d3d;
   font-size: 0.72rem;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .prc-suggest {
@@ -27,7 +27,7 @@
 
 .prc-suggest-empty {
   padding: 0.55rem 0.65rem;
-  color: #5f7470;
+  color: #111111;
   font-size: 0.82rem;
 }
 
@@ -46,10 +46,11 @@
 
 .prc-suggest button strong {
   font-size: 0.88rem;
+  color: #111111;
 }
 
 .prc-suggest button span {
-  color: #5f7470;
+  color: #222222;
   font-size: 0.76rem;
 }
 

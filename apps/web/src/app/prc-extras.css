@@ -12,11 +12,11 @@
   gap: 0.2rem;
   padding: 0.15rem 0.5rem;
   border-radius: 999px;
-  border: 1px solid rgba(15, 51, 64, 0.14);
-  background: #eef4f3;
-  color: #0f3340;
+  border: 1.5px solid #9aa8a4;
+  background: #fff;
+  color: #111111;
   font-size: 0.74rem;
-  font-weight: 700;
+  font-weight: 800;
   cursor: pointer;
 }
 

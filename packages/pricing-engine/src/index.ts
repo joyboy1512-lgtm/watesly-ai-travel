@@ -1,5 +1,7 @@
 import type { InternalPriceBreakdown, MoneyMinor } from "@watesly-travel/shared";
 
+export type PricingApplyBasis = "unit" | "booking";
+
 export type PricingConditions = {
   origins?: string[];
   destinations?: string[];
@@ -12,6 +14,15 @@ export type PricingConditions = {
   maxPrice?: number;
   dateFrom?: string;
   dateTo?: string;
+  /**
+   * unit = markup on each ticket/person or hotel room (default).
+   * booking = markup once on the booking total (overall commission).
+   */
+  applyBasis?: PricingApplyBasis;
+  /** Extra overall commission percent, applied once on the booking cost. */
+  bookingCommissionPercent?: number;
+  /** Extra overall commission amount in major units, applied once. */
+  bookingCommissionAmount?: number;
 };
 
 export type PricingContext = {
@@ -24,6 +35,11 @@ export type PricingContext = {
   checkIn?: string;
   city?: string;
   provider?: string;
+  /** Tickets/persons or rooms the rule should multiply against. */
+  units?: number;
+  adults?: number;
+  children?: number;
+  rooms?: number;
 };
 
 export interface PricingRuleInput {
@@ -181,13 +197,45 @@ export function selectPricingRule(
   return null;
 }
 
+export function pricingUnitCount(input: {
+  serviceType?: string;
+  applyBasis?: PricingApplyBasis | string | null;
+  units?: number;
+  adults?: number;
+  children?: number;
+  rooms?: number;
+}): number {
+  if (input.applyBasis === "booking") return 1;
+  if (input.units && input.units > 0) return Math.max(1, Math.round(input.units));
+  if ((input.serviceType || "").toLowerCase() === "hotel") {
+    return Math.max(1, Math.round(input.rooms || 1));
+  }
+  const people = Math.round((input.adults || 0) + (input.children || 0));
+  return Math.max(1, people || 1);
+}
+
 export function applyPricingRule(input: {
   costAmountMinor: MoneyMinor;
   currency: string;
   serviceType: string;
   rule: PricingRuleInput | null;
+  units?: number;
+  adults?: number;
+  children?: number;
+  rooms?: number;
 }): InternalPriceBreakdown {
   const cost = Math.max(0, Math.round(asFiniteNumber(input.costAmountMinor)));
+  const conditions = parseConditions(input.rule?.conditions);
+  const applyBasis: PricingApplyBasis =
+    conditions?.applyBasis === "booking" ? "booking" : "unit";
+  const units = pricingUnitCount({
+    serviceType: input.serviceType,
+    applyBasis,
+    units: input.units,
+    adults: input.adults,
+    children: input.children,
+    rooms: input.rooms,
+  });
   let profit = 0;
   const percent = asFiniteNumber(input.rule?.percentValue);
   const fixed = asFiniteNumber(input.rule?.fixedAmount);
@@ -196,15 +244,24 @@ export function applyPricingRule(input: {
   if (!input.rule) {
     profit = Math.round(cost * 0.1);
   } else if (input.rule.ruleType === "fixed") {
-    profit = Math.round(fixed);
+    profit = Math.round(fixed) * units;
   } else if (input.rule.ruleType === "percent_with_min") {
     profit = Math.round(cost * (percent / 100));
-    const min = Math.round(minProfit);
+    const min = Math.round(minProfit) * units;
     if (profit < min) profit = min;
   } else {
     // percent (default) — supports percent + fixed add-on like Saffat PERCENT_PLUS_FIXED
     profit = Math.round(cost * ((percent || 10) / 100));
-    if (fixed) profit += Math.round(fixed);
+    if (fixed) profit += Math.round(fixed) * units;
+  }
+
+  const commissionPercent = asFiniteNumber(conditions?.bookingCommissionPercent);
+  const commissionMajor = asFiniteNumber(conditions?.bookingCommissionAmount);
+  if (commissionPercent > 0) {
+    profit += Math.round(cost * (commissionPercent / 100));
+  }
+  if (commissionMajor > 0) {
+    profit += majorToMinor(commissionMajor, input.currency);
   }
 
   const sell = cost + profit;
@@ -249,7 +306,11 @@ export function priceCostWithRules(input: {
     currency: input.currency,
     serviceType: input.serviceType,
     rule,
+    units: input.context?.units,
+    adults: input.context?.adults,
+    children: input.context?.children,
+    rooms: input.context?.rooms,
   });
 }
 
-export { parseConditions };
+export { parseConditions, majorToMinor };

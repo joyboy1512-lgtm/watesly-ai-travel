@@ -99,4 +99,67 @@ describe("priceCostWithRules", () => {
     });
     assert.equal(priced.sellAmountMinor, 112_000);
   });
+
+  it("applies min profit per ticket, not on the booking total", () => {
+    const priced = applyPricingRule({
+      costAmountMinor: 30_000,
+      currency: "KWD",
+      serviceType: "flight",
+      units: 3,
+      rule: rule({
+        ruleType: "percent_with_min",
+        percentValue: 1,
+        minProfitAmount: 1500,
+      }),
+    });
+    // 1% of 30.000 = 0.300; min 1.500 × 3 tickets = 4.500
+    assert.equal(priced.profitAmountMinor, 4_500);
+    assert.equal(priced.sellAmountMinor, 34_500);
+  });
+
+  it("applies a fixed rule per hotel room", () => {
+    const priced = applyPricingRule({
+      costAmountMinor: 80_000,
+      currency: "KWD",
+      serviceType: "hotel",
+      rooms: 2,
+      rule: rule({
+        serviceType: "hotel",
+        ruleType: "fixed",
+        fixedAmount: 2000,
+      }),
+    });
+    assert.equal(priced.profitAmountMinor, 4_000);
+  });
+
+  it("adds overall booking commission once on top of per-unit markup", () => {
+    const priced = applyPricingRule({
+      costAmountMinor: 100_000,
+      currency: "KWD",
+      serviceType: "flight",
+      units: 2,
+      rule: rule({
+        ruleType: "percent",
+        percentValue: 10,
+        conditions: { bookingCommissionPercent: 2, bookingCommissionAmount: 1 },
+      }),
+    });
+    // 10% of 100.000 = 10.000; + 2% = 2.000; + 1.000 KWD once
+    assert.equal(priced.profitAmountMinor, 13_000);
+  });
+
+  it("applies a booking-basis rule once even with three tickets", () => {
+    const priced = applyPricingRule({
+      costAmountMinor: 90_000,
+      currency: "KWD",
+      serviceType: "flight",
+      units: 3,
+      rule: rule({
+        ruleType: "fixed",
+        fixedAmount: 5000,
+        conditions: { applyBasis: "booking" },
+      }),
+    });
+    assert.equal(priced.profitAmountMinor, 5_000);
+  });
 });

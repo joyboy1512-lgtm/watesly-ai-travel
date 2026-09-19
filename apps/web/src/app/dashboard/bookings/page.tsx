@@ -42,6 +42,40 @@ function csvCell(value: string) {
   return `"${text}"`;
 }
 
+const COL_KEYS = [
+  "ref",
+  "customer",
+  "route",
+  "travel",
+  "status",
+  "sell",
+  "cost",
+  "profit",
+  "paid",
+  "booked",
+] as const;
+
+type ColKey = (typeof COL_KEYS)[number];
+const COLS_STORAGE = "watesly_bookings_columns";
+const DEFAULT_COLS: ColKey[] = [...COL_KEYS];
+const LEAD_COLS: ColKey[] = ["ref", "customer", "route", "travel", "status"];
+
+function readStoredCols(): ColKey[] {
+  if (typeof window === "undefined") return DEFAULT_COLS;
+  try {
+    const raw = localStorage.getItem(COLS_STORAGE);
+    if (!raw) return DEFAULT_COLS;
+    const parsed = JSON.parse(raw) as unknown;
+    if (!Array.isArray(parsed)) return DEFAULT_COLS;
+    const next = parsed.filter((key): key is ColKey =>
+      COL_KEYS.includes(key as ColKey),
+    );
+    return next.length ? next : DEFAULT_COLS;
+  } catch {
+    return DEFAULT_COLS;
+  }
+}
+
 function FilterDate({
   label,
   value,
@@ -100,6 +134,9 @@ export default function BookingsPage() {
   const [printCost, setPrintCost] = useState(false);
   const [selected, setSelected] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
+  const [visibleCols, setVisibleCols] = useState<ColKey[]>(DEFAULT_COLS);
+  const [colsOpen, setColsOpen] = useState(false);
+  const colsRef = useRef<HTMLDivElement>(null);
   const canViewCost =
     getSession()?.permissions?.includes("pricing.view_cost") ?? false;
   const canBulk =
@@ -156,8 +193,61 @@ export default function BookingsPage() {
   }
 
   useEffect(() => {
+    setVisibleCols(readStoredCols());
     load().catch((err: Error) => setError(err.message));
   }, []);
+
+  useEffect(() => {
+    function onDoc(e: MouseEvent) {
+      if (!colsRef.current?.contains(e.target as Node)) setColsOpen(false);
+    }
+    document.addEventListener("mousedown", onDoc);
+    return () => document.removeEventListener("mousedown", onDoc);
+  }, []);
+
+  const colLabel: Record<ColKey, string> = {
+    ref: en ? "Reference" : "المرجع",
+    customer: i18n.c("customer"),
+    route: i18n.c("route"),
+    travel: en ? "Travel date" : "تاريخ السفر",
+    status: i18n.c("status"),
+    sell: en ? "Sell" : "البيع",
+    cost: en ? "Cost" : "التكلفة",
+    profit: en ? "Profit" : "الأرباح",
+    paid: en ? "Paid / balance" : "المدفوع / المتبقي",
+    booked: en ? "Booked" : "تاريخ الحجز",
+  };
+
+  function pickerKeys() {
+    return COL_KEYS.filter((key) => key !== "cost" || canViewCost);
+  }
+
+  function show(key: ColKey) {
+    if (key === "cost" && !canViewCost) return false;
+    return visibleCols.includes(key);
+  }
+
+  function toggleCol(key: ColKey) {
+    if (key === "cost" && !canViewCost) return;
+    setVisibleCols((prev) => {
+      const allowed = prev.filter((item) => item !== "cost" || canViewCost);
+      if (allowed.includes(key) && allowed.length <= 1) return prev;
+      const next = allowed.includes(key)
+        ? allowed.filter((item) => item !== key)
+        : [...allowed, key];
+      localStorage.setItem(COLS_STORAGE, JSON.stringify(next));
+      return next;
+    });
+  }
+
+  function resetCols() {
+    const next = canViewCost ? DEFAULT_COLS : DEFAULT_COLS.filter((key) => key !== "cost");
+    setVisibleCols(next);
+    localStorage.setItem(COLS_STORAGE, JSON.stringify(next));
+  }
+
+  const leadSpan = 1 + LEAD_COLS.filter(show).length;
+  const tailSpan = (show("booked") ? 1 : 0) + 1;
 
   function resetFilters() {
     setQ("");
@@ -225,29 +315,46 @@ export default function BookingsPage() {
 
   function exportExcel(list: Booking[]) {
     if (!list.length) return;
-    const header = en
-      ? ["Reference", "Customer", "Phone", "Route", "Travel date", "Status", "Sell", "Cost", "Profit", "Paid", "Balance", "Booked"]
-      : ["المرجع", "العميل", "الهاتف", "المسار", "تاريخ السفر", "الحالة", "البيع", "التكلفة", "الأرباح", "المدفوع", "المتبقي", "تاريخ الحجز"];
+    const headerPairs: Array<[ColKey | "phone", string]> = [
+      ["ref", en ? "Reference" : "المرجع"],
+      ["customer", en ? "Customer" : "العميل"],
+      ["phone", en ? "Phone" : "الهاتف"],
+      ["route", en ? "Route" : "المسار"],
+      ["travel", en ? "Travel date" : "تاريخ السفر"],
+      ["status", en ? "Status" : "الحالة"],
+      ["sell", en ? "Sell" : "البيع"],
+      ["cost", en ? "Cost" : "التكلفة"],
+      ["profit", en ? "Profit" : "الأرباح"],
+      ["paid", en ? "Paid" : "المدفوع"],
+      ["paid", en ? "Balance" : "المتبقي"],
+      ["booked", en ? "Booked" : "تاريخ الحجز"],
+    ];
+    const header = headerPairs
+      .filter(([key]) => key === "phone" ? show("customer") : show(key))
+      .map(([, label]) => label);
     const lines = list.map((row) => {
       const paid = paidAmount(row);
       const remaining = Math.max(0, row.totalSellAmount - paid);
       const currency = row.quote?.currency || "KWD";
       const cost = Number(row.totalCostAmount) || 0;
       const sell = Number(row.totalSellAmount) || 0;
-      return [
-        row.providerBookingRef || row.id,
-        customerName(row),
-        bookingPhone(row),
-        routeLabel(row),
-        formatDay(bookingTravelDate(row)),
-        i18n.status(row.status),
-        formatMoneyMinor(sell, currency),
-        formatMoneyMinor(cost, currency),
-        formatMoneyMinor(sell - cost, currency),
-        formatMoneyMinor(paid, currency),
-        formatMoneyMinor(remaining, currency),
-        formatDay(row.createdAt),
-      ].map((cell) => csvCell(cell));
+      const cells: Array<[ColKey | "phone", string]> = [
+        ["ref", row.providerBookingRef || row.id],
+        ["customer", customerName(row)],
+        ["phone", bookingPhone(row)],
+        ["route", routeLabel(row)],
+        ["travel", formatDay(bookingTravelDate(row))],
+        ["status", i18n.status(row.status)],
+        ["sell", formatMoneyMinor(sell, currency)],
+        ["cost", formatMoneyMinor(cost, currency)],
+        ["profit", formatMoneyMinor(sell - cost, currency)],
+        ["paid", formatMoneyMinor(paid, currency)],
+        ["paid", formatMoneyMinor(remaining, currency)],
+        ["booked", formatDay(row.createdAt)],
+      ];
+      return cells
+        .filter(([key]) => (key === "phone" ? show("customer") : show(key)))
+        .map(([, cell]) => csvCell(cell));
     });
     const csv = ["\uFEFF" + header.map(csvCell).join(","), ...lines.map((r) => r.join(","))].join("\n");
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
@@ -441,6 +548,35 @@ export default function BookingsPage() {
                 </span>
               </label>
             ) : null}
+            <div className="bk-cols" ref={colsRef}>
+              <button
+                type="button"
+                className="btn secondary"
+                aria-expanded={colsOpen}
+                onClick={() => setColsOpen((v) => !v)}
+              >
+                {en ? "Columns" : "الأعمدة"}{" "}
+                {pickerKeys().filter(show).length}/{pickerKeys().length}
+              </button>
+              {colsOpen ? (
+                <div className="bk-cols-menu" role="menu">
+                  <p>{en ? "Show or hide report columns" : "إظهار أو إخفاء أعمدة التقرير"}</p>
+                  {pickerKeys().map((key) => (
+                    <label key={key}>
+                      <input
+                        type="checkbox"
+                        checked={show(key)}
+                        onChange={() => toggleCol(key)}
+                      />
+                      <span>{colLabel[key]}</span>
+                    </label>
+                  ))}
+                  <button type="button" className="btn secondary" onClick={resetCols}>
+                    {en ? "Show all" : "إظهار الكل"}
+                  </button>
+                </div>
+              ) : null}
+            </div>
           </div>
 
           <div className="bk-bulk">
@@ -503,7 +639,12 @@ export default function BookingsPage() {
         </section>
 
         <div className="bk-table-wrap">
-          <table className="bk-table">
+          <table
+            className="bk-table"
+            style={{
+              minWidth: `${Math.max(720, 220 + pickerKeys().filter(show).length * 118)}px`,
+            }}
+          >
             <thead>
               <tr>
                 <th className="bk-check">
@@ -514,16 +655,16 @@ export default function BookingsPage() {
                     aria-label={en ? "Select all" : "تحديد الكل"}
                   />
                 </th>
-                <th>{en ? "Reference" : "المرجع"}</th>
-                <th>{i18n.c("customer")}</th>
-                <th>{i18n.c("route")}</th>
-                <th>{en ? "Travel date" : "تاريخ السفر"}</th>
-                <th>{i18n.c("status")}</th>
-                <th>{en ? "Sell" : "البيع"}</th>
-                <th>{en ? "Cost" : "التكلفة"}</th>
-                <th>{en ? "Profit" : "الأرباح"}</th>
-                <th>{en ? "Paid / balance" : "المدفوع / المتبقي"}</th>
-                <th>{en ? "Booked" : "تاريخ الحجز"}</th>
+                {show("ref") ? <th>{colLabel.ref}</th> : null}
+                {show("customer") ? <th>{colLabel.customer}</th> : null}
+                {show("route") ? <th>{colLabel.route}</th> : null}
+                {show("travel") ? <th>{colLabel.travel}</th> : null}
+                {show("status") ? <th>{colLabel.status}</th> : null}
+                {show("sell") ? <th>{colLabel.sell}</th> : null}
+                {show("cost") ? <th>{colLabel.cost}</th> : null}
+                {show("profit") ? <th>{colLabel.profit}</th> : null}
+                {show("paid") ? <th>{colLabel.paid}</th> : null}
+                {show("booked") ? <th>{colLabel.booked}</th> : null}
                 <th>{i18n.c("actions")}</th>
               </tr>
             </thead>
@@ -546,46 +687,64 @@ export default function BookingsPage() {
                         onChange={(e) => toggleOne(row.id, e.target.checked)}
                       />
                     </td>
-                    <td>
-                      <Link className="dash-ltr" dir="ltr" href={`/dashboard/bookings/${row.id}`}>
-                        {(row.providerBookingRef || row.id).slice(0, 12)}
-                      </Link>
-                    </td>
-                    <td className="bk-cell-inline">
-                      {customerName(row)}
-                      {phone ? (
-                        <span className="bk-cell-muted">
-                          {" · "}
-                          <DashLtr>{phone}</DashLtr>
+                    {show("ref") ? (
+                      <td>
+                        <Link className="dash-ltr" dir="ltr" href={`/dashboard/bookings/${row.id}`}>
+                          {(row.providerBookingRef || row.id).slice(0, 12)}
+                        </Link>
+                      </td>
+                    ) : null}
+                    {show("customer") ? (
+                      <td className="bk-cell-inline">
+                        {customerName(row)}
+                        {phone ? (
+                          <span className="bk-cell-muted">
+                            {" · "}
+                            <DashLtr>{phone}</DashLtr>
+                          </span>
+                        ) : null}
+                      </td>
+                    ) : null}
+                    {show("route") ? (
+                      <td className="bk-cell-inline">
+                        <DashLtr>{routeLabel(row)}</DashLtr>
+                      </td>
+                    ) : null}
+                    {show("travel") ? (
+                      <td>
+                        <DashLtr>{formatDay(bookingTravelDate(row))}</DashLtr>
+                      </td>
+                    ) : null}
+                    {show("status") ? (
+                      <td>
+                        <span className={`bk-badge ${row.status}`}>
+                          {i18n.status(row.status)}
                         </span>
-                      ) : null}
-                    </td>
-                    <td className="bk-cell-inline">
-                      <DashLtr>{routeLabel(row)}</DashLtr>
-                    </td>
-                    <td>
-                      <DashLtr>{formatDay(bookingTravelDate(row))}</DashLtr>
-                    </td>
-                    <td>
-                      <span className={`bk-badge ${row.status}`}>
-                        {i18n.status(row.status)}
-                      </span>
-                    </td>
-                    <td className="bk-num">{formatMoneyMinor(sell, currency)}</td>
-                    <td className="bk-num">{formatMoneyMinor(cost, currency)}</td>
-                    <td className={`bk-num ${profit < 0 ? "is-loss" : "is-profit"}`}>
-                      {formatMoneyMinor(profit, currency)}
-                    </td>
-                    <td className="bk-pay">
-                      {formatMoneyMinor(paid, currency)}
-                      {" · "}
-                      {remaining > 0
-                        ? `${en ? "Bal." : "متبقي"} ${formatMoneyMinor(remaining, currency)}`
-                        : en
-                          ? "Complete"
-                          : "مكتمل"}
-                    </td>
-                    <td>{formatDay(row.createdAt)}</td>
+                      </td>
+                    ) : null}
+                    {show("sell") ? (
+                      <td className="bk-num">{formatMoneyMinor(sell, currency)}</td>
+                    ) : null}
+                    {show("cost") ? (
+                      <td className="bk-num">{formatMoneyMinor(cost, currency)}</td>
+                    ) : null}
+                    {show("profit") ? (
+                      <td className={`bk-num ${profit < 0 ? "is-loss" : "is-profit"}`}>
+                        {formatMoneyMinor(profit, currency)}
+                      </td>
+                    ) : null}
+                    {show("paid") ? (
+                      <td className="bk-pay">
+                        {formatMoneyMinor(paid, currency)}
+                        {" · "}
+                        {remaining > 0
+                          ? `${en ? "Bal." : "متبقي"} ${formatMoneyMinor(remaining, currency)}`
+                          : en
+                            ? "Complete"
+                            : "مكتمل"}
+                      </td>
+                    ) : null}
+                    {show("booked") ? <td>{formatDay(row.createdAt)}</td> : null}
                     <td>
                       <div className="bk-row-actions">
                         <Link
@@ -627,24 +786,32 @@ export default function BookingsPage() {
               <tfoot>
                 {totals.map(([currency, sum], index) => (
                   <tr key={currency}>
-                    <td colSpan={6}>
+                    <td colSpan={Math.max(1, leadSpan)}>
                       {index === 0
                         ? en
                           ? `Filtered total · ${rows.length} bookings`
                           : `إجمالي النتائج المفلترة · ${rows.length} حجز`
                         : ""}
                     </td>
-                    <td className="bk-num">{formatMoneyMinor(sum.sell, currency)}</td>
-                    <td className="bk-num">{formatMoneyMinor(sum.cost, currency)}</td>
-                    <td className={`bk-num ${sum.profit < 0 ? "is-loss" : "is-profit"}`}>
-                      {formatMoneyMinor(sum.profit, currency)}
-                    </td>
-                    <td className="bk-pay">
-                      {formatMoneyMinor(sum.paid, currency)}
-                      {" · "}
-                      {en ? "Bal." : "متبقي"} {formatMoneyMinor(sum.remaining, currency)}
-                    </td>
-                    <td colSpan={2} />
+                    {show("sell") ? (
+                      <td className="bk-num">{formatMoneyMinor(sum.sell, currency)}</td>
+                    ) : null}
+                    {show("cost") ? (
+                      <td className="bk-num">{formatMoneyMinor(sum.cost, currency)}</td>
+                    ) : null}
+                    {show("profit") ? (
+                      <td className={`bk-num ${sum.profit < 0 ? "is-loss" : "is-profit"}`}>
+                        {formatMoneyMinor(sum.profit, currency)}
+                      </td>
+                    ) : null}
+                    {show("paid") ? (
+                      <td className="bk-pay">
+                        {formatMoneyMinor(sum.paid, currency)}
+                        {" · "}
+                        {en ? "Bal." : "متبقي"} {formatMoneyMinor(sum.remaining, currency)}
+                      </td>
+                    ) : null}
+                    {tailSpan ? <td colSpan={tailSpan} /> : null}
                   </tr>
                 ))}
               </tfoot>

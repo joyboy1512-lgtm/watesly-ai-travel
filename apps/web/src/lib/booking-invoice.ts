@@ -5,6 +5,7 @@ import {
   bookingLocator,
   dash,
   extra,
+  extraValue,
   hotelConfirmation,
   invoiceCostTotals,
   invoiceSaleLines,
@@ -148,6 +149,58 @@ export function formatPrintDate(value?: string | Date | null) {
     month: "short",
     year: "numeric",
   });
+}
+
+function positiveInt(value: unknown): number {
+  const n = Number(value);
+  return Number.isFinite(n) && n > 0 ? Math.round(n) : 0;
+}
+
+export function bookingCurrency(row: BookingInvoiceData) {
+  return (row.quote?.currency || "KWD").toUpperCase();
+}
+
+export function bookingTravelerCount(row: BookingInvoiceData) {
+  const named = [
+    ...(row.passengerDetails?.travelers || []),
+    ...(row.passengerDetails?.guests || []),
+  ].length;
+  if (named > 0) return named;
+
+  const details = row.passengerDetails as
+    | (NonNullable<BookingInvoiceData["passengerDetails"]> & {
+        adults?: number;
+        children?: number;
+        infants?: number;
+      })
+    | null
+    | undefined;
+  const fromDetails =
+    positiveInt(details?.adults) +
+    positiveInt(details?.children) +
+    positiveInt(details?.infants);
+  if (fromDetails > 0) return fromDetails;
+
+  const fromParty =
+    positiveInt(extraValue(row, "adults")) +
+    positiveInt(extraValue(row, "children")) +
+    positiveInt(extraValue(row, "infants"));
+  if (fromParty > 0) return fromParty;
+
+  const fromCount =
+    positiveInt(extraValue(row, "pax")) ||
+    positiveInt(extraValue(row, "guestCount")) ||
+    positiveInt(extraValue(row, "travelers"));
+  if (fromCount > 0) return fromCount;
+
+  const inquiry = row.quote?.inquiry;
+  const fromInquiry =
+    positiveInt(inquiry?.adults) +
+    positiveInt(inquiry?.children) +
+    positiveInt(inquiry?.infants);
+  if (fromInquiry > 0) return fromInquiry;
+
+  return 1;
 }
 
 export function customerName(row: BookingInvoiceData) {

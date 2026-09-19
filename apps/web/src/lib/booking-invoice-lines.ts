@@ -68,6 +68,9 @@ export type BookingInvoiceData = {
       destination?: string | null;
       departDate?: string | null;
       returnDate?: string | null;
+      adults?: number | null;
+      children?: number | null;
+      infants?: number | null;
     } | null;
     items?: BookingInvoiceItem[];
   } | null;

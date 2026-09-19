@@ -21,6 +21,15 @@ export function formatMoneyMinor(
   return formatMoneyMinorShared(amountMinor, currency);
 }
 
+/** Amount only, no currency code — use with a dedicated currency column. */
+export function formatAmountMinor(
+  amountMinor?: number | null,
+  currency: string = DEFAULT_CURRENCY,
+) {
+  const full = formatMoneyMinor(amountMinor, currency);
+  return full.replace(/\s+[A-Za-z]{3}$/, "").trim() || full;
+}
+
 /** One-line price for cards: "12.500 د.ك" */
 export function formatMoneyMinorCompact(
   amountMinor?: number | null,

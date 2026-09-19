@@ -9,10 +9,12 @@ import {
 } from "@/components/dashboard/DashDateCell";
 import { DashLtr, useDashI18n } from "@/lib/dashboard-i18n";
 import { apiFetch, getSession } from "@/lib/api";
-import { formatMoneyMinor } from "@/lib/format";
+import { formatAmountMinor } from "@/lib/format";
 import "../../bookings-suite.css";
 import {
+  bookingCurrency,
   bookingTravelDate,
+  bookingTravelerCount,
   customerName,
   formatDay,
   paidAmount,
@@ -48,6 +50,8 @@ const COL_KEYS = [
   "route",
   "travel",
   "status",
+  "pax",
+  "currency",
   "sell",
   "cost",
   "profit",
@@ -57,8 +61,32 @@ const COL_KEYS = [
 
 type ColKey = (typeof COL_KEYS)[number];
 const COLS_STORAGE = "watesly_bookings_columns";
+const COLS_VERSION = 2;
 const DEFAULT_COLS: ColKey[] = [...COL_KEYS];
 const LEAD_COLS: ColKey[] = ["ref", "customer", "route", "travel", "status"];
+const NEW_COLS: ColKey[] = ["pax", "currency"];
+
+function validCols(keys: unknown): ColKey[] {
+  if (!Array.isArray(keys)) return [];
+  return keys.filter((key): key is ColKey => COL_KEYS.includes(key as ColKey));
+}
+
+function insertMissingCols(cols: ColKey[], extras: ColKey[]) {
+  const next = [...cols];
+  for (const key of extras) {
+    if (next.includes(key)) continue;
+    const at = DEFAULT_COLS.indexOf(key);
+    next.splice(at < 0 ? next.length : Math.min(at, next.length), 0, key);
+  }
+  return next;
+}
+
+function persistCols(cols: ColKey[]) {
+  localStorage.setItem(
+    COLS_STORAGE,
+    JSON.stringify({ v: COLS_VERSION, cols }),
+  );
+}
 
 function readStoredCols(): ColKey[] {
   if (typeof window === "undefined") return DEFAULT_COLS;
@@ -66,11 +94,20 @@ function readStoredCols(): ColKey[] {
     const raw = localStorage.getItem(COLS_STORAGE);
     if (!raw) return DEFAULT_COLS;
     const parsed = JSON.parse(raw) as unknown;
-    if (!Array.isArray(parsed)) return DEFAULT_COLS;
-    const next = parsed.filter((key): key is ColKey =>
-      COL_KEYS.includes(key as ColKey),
-    );
-    return next.length ? next : DEFAULT_COLS;
+    if (Array.isArray(parsed)) {
+      const migrated = insertMissingCols(validCols(parsed), NEW_COLS);
+      return migrated.length ? migrated : DEFAULT_COLS;
+    }
+    if (parsed && typeof parsed === "object" && "cols" in parsed) {
+      const rec = parsed as { v?: number; cols?: unknown };
+      const cols = validCols(rec.cols);
+      const next =
+        (rec.v ?? 1) < COLS_VERSION
+          ? insertMissingCols(cols, NEW_COLS)
+          : cols;
+      return next.length ? next : DEFAULT_COLS;
+    }
+    return DEFAULT_COLS;
   } catch {
     return DEFAULT_COLS;
   }
@@ -150,10 +187,17 @@ export default function BookingsPage() {
   const totals = useMemo(() => {
     const byCurrency = new Map<
       string,
-      { sell: number; cost: number; profit: number; paid: number; remaining: number }
+      {
+        sell: number;
+        cost: number;
+        profit: number;
+        paid: number;
+        remaining: number;
+        pax: number;
+      }
     >();
     for (const row of rows) {
-      const currency = row.quote?.currency || "KWD";
+      const currency = bookingCurrency(row);
       const sell = Number(row.totalSellAmount) || 0;
       const cost = Number(row.totalCostAmount) || 0;
       const paid = paidAmount(row);
@@ -164,12 +208,14 @@ export default function BookingsPage() {
         profit: 0,
         paid: 0,
         remaining: 0,
+        pax: 0,
       };
       current.sell += sell;
       current.cost += cost;
       current.profit += sell - cost;
       current.paid += paid;
       current.remaining += remaining;
+      current.pax += bookingTravelerCount(row);
       byCurrency.set(currency, current);
     }
     return [...byCurrency.entries()];
@@ -211,6 +257,8 @@ export default function BookingsPage() {
     route: i18n.c("route"),
     travel: en ? "Travel date" : "تاريخ السفر",
     status: i18n.c("status"),
+    pax: en ? "Travelers" : "المسافرون",
+    currency: en ? "Currency" : "العملة",
     sell: en ? "Sell" : "البيع",
     cost: en ? "Cost" : "التكلفة",
     profit: en ? "Profit" : "الأرباح",
@@ -235,7 +283,7 @@ export default function BookingsPage() {
       const next = allowed.includes(key)
         ? allowed.filter((item) => item !== key)
         : [...allowed, key];
-      localStorage.setItem(COLS_STORAGE, JSON.stringify(next));
+      persistCols(next);
       return next;
     });
   }
@@ -243,7 +291,7 @@ export default function BookingsPage() {
   function resetCols() {
     const next = canViewCost ? DEFAULT_COLS : DEFAULT_COLS.filter((key) => key !== "cost");
     setVisibleCols(next);
-    localStorage.setItem(COLS_STORAGE, JSON.stringify(next));
+    persistCols(next);
   }
 
   const leadSpan = 1 + LEAD_COLS.filter(show).length;
@@ -322,6 +370,8 @@ export default function BookingsPage() {
       ["route", en ? "Route" : "المسار"],
       ["travel", en ? "Travel date" : "تاريخ السفر"],
       ["status", en ? "Status" : "الحالة"],
+      ["pax", en ? "Travelers" : "المسافرون"],
+      ["currency", en ? "Currency" : "العملة"],
       ["sell", en ? "Sell" : "البيع"],
       ["cost", en ? "Cost" : "التكلفة"],
       ["profit", en ? "Profit" : "الأرباح"],
@@ -335,7 +385,7 @@ export default function BookingsPage() {
     const lines = list.map((row) => {
       const paid = paidAmount(row);
       const remaining = Math.max(0, row.totalSellAmount - paid);
-      const currency = row.quote?.currency || "KWD";
+      const currency = bookingCurrency(row);
       const cost = Number(row.totalCostAmount) || 0;
       const sell = Number(row.totalSellAmount) || 0;
       const cells: Array<[ColKey | "phone", string]> = [
@@ -345,11 +395,13 @@ export default function BookingsPage() {
         ["route", routeLabel(row)],
         ["travel", formatDay(bookingTravelDate(row))],
         ["status", i18n.status(row.status)],
-        ["sell", formatMoneyMinor(sell, currency)],
-        ["cost", formatMoneyMinor(cost, currency)],
-        ["profit", formatMoneyMinor(sell - cost, currency)],
-        ["paid", formatMoneyMinor(paid, currency)],
-        ["paid", formatMoneyMinor(remaining, currency)],
+        ["pax", String(bookingTravelerCount(row))],
+        ["currency", currency],
+        ["sell", formatAmountMinor(sell, currency)],
+        ["cost", formatAmountMinor(cost, currency)],
+        ["profit", formatAmountMinor(sell - cost, currency)],
+        ["paid", formatAmountMinor(paid, currency)],
+        ["paid", formatAmountMinor(remaining, currency)],
         ["booked", formatDay(row.createdAt)],
       ];
       return cells
@@ -660,6 +712,8 @@ export default function BookingsPage() {
                 {show("route") ? <th>{colLabel.route}</th> : null}
                 {show("travel") ? <th>{colLabel.travel}</th> : null}
                 {show("status") ? <th>{colLabel.status}</th> : null}
+                {show("pax") ? <th>{colLabel.pax}</th> : null}
+                {show("currency") ? <th>{colLabel.currency}</th> : null}
                 {show("sell") ? <th>{colLabel.sell}</th> : null}
                 {show("cost") ? <th>{colLabel.cost}</th> : null}
                 {show("profit") ? <th>{colLabel.profit}</th> : null}
@@ -675,7 +729,8 @@ export default function BookingsPage() {
                 const cost = Number(row.totalCostAmount) || 0;
                 const profit = sell - cost;
                 const remaining = Math.max(0, sell - paid);
-                const currency = row.quote?.currency || "KWD";
+                const currency = bookingCurrency(row);
+                const pax = bookingTravelerCount(row);
                 const phone = bookingPhone(row);
                 const checked = selected.includes(row.id);
                 return (
@@ -722,23 +777,29 @@ export default function BookingsPage() {
                         </span>
                       </td>
                     ) : null}
+                    {show("pax") ? <td className="bk-num">{pax}</td> : null}
+                    {show("currency") ? (
+                      <td className="bk-ccy">
+                        <DashLtr>{currency}</DashLtr>
+                      </td>
+                    ) : null}
                     {show("sell") ? (
-                      <td className="bk-num">{formatMoneyMinor(sell, currency)}</td>
+                      <td className="bk-num">{formatAmountMinor(sell, currency)}</td>
                     ) : null}
                     {show("cost") ? (
-                      <td className="bk-num">{formatMoneyMinor(cost, currency)}</td>
+                      <td className="bk-num">{formatAmountMinor(cost, currency)}</td>
                     ) : null}
                     {show("profit") ? (
                       <td className={`bk-num ${profit < 0 ? "is-loss" : "is-profit"}`}>
-                        {formatMoneyMinor(profit, currency)}
+                        {formatAmountMinor(profit, currency)}
                       </td>
                     ) : null}
                     {show("paid") ? (
                       <td className="bk-pay">
-                        {formatMoneyMinor(paid, currency)}
+                        {formatAmountMinor(paid, currency)}
                         {" · "}
                         {remaining > 0
-                          ? `${en ? "Bal." : "متبقي"} ${formatMoneyMinor(remaining, currency)}`
+                          ? `${en ? "Bal." : "متبقي"} ${formatAmountMinor(remaining, currency)}`
                           : en
                             ? "Complete"
                             : "مكتمل"}
@@ -792,23 +853,35 @@ export default function BookingsPage() {
                           ? `Filtered total · ${rows.length} bookings`
                           : `إجمالي النتائج المفلترة · ${rows.length} حجز`
                         : ""}
+                      {!show("currency") ? (
+                        <span className="bk-foot-ccy">
+                          {index === 0 ? " · " : ""}
+                          <DashLtr>{currency}</DashLtr>
+                        </span>
+                      ) : null}
                     </td>
+                    {show("pax") ? <td className="bk-num">{sum.pax}</td> : null}
+                    {show("currency") ? (
+                      <td className="bk-ccy">
+                        <DashLtr>{currency}</DashLtr>
+                      </td>
+                    ) : null}
                     {show("sell") ? (
-                      <td className="bk-num">{formatMoneyMinor(sum.sell, currency)}</td>
+                      <td className="bk-num">{formatAmountMinor(sum.sell, currency)}</td>
                     ) : null}
                     {show("cost") ? (
-                      <td className="bk-num">{formatMoneyMinor(sum.cost, currency)}</td>
+                      <td className="bk-num">{formatAmountMinor(sum.cost, currency)}</td>
                     ) : null}
                     {show("profit") ? (
                       <td className={`bk-num ${sum.profit < 0 ? "is-loss" : "is-profit"}`}>
-                        {formatMoneyMinor(sum.profit, currency)}
+                        {formatAmountMinor(sum.profit, currency)}
                       </td>
                     ) : null}
                     {show("paid") ? (
                       <td className="bk-pay">
-                        {formatMoneyMinor(sum.paid, currency)}
+                        {formatAmountMinor(sum.paid, currency)}
                         {" · "}
-                        {en ? "Bal." : "متبقي"} {formatMoneyMinor(sum.remaining, currency)}
+                        {en ? "Bal." : "متبقي"} {formatAmountMinor(sum.remaining, currency)}
                       </td>
                     ) : null}
                     {tailSpan ? <td colSpan={tailSpan} /> : null}

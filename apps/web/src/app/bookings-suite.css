@@ -208,11 +208,16 @@
 }
 
 .bk-pay,
-.bk-num {
+.bk-num,
+.bk-ccy {
   white-space: nowrap;
   font-size: 0.8rem;
   font-weight: 700;
   color: #111;
+}
+
+.bk-ccy {
+  letter-spacing: 0.04em;
 }
 
 .bk-num.is-profit {
@@ -233,7 +238,9 @@
 }
 
 .bk-table tfoot .bk-num,
-.bk-table tfoot .bk-pay {
+.bk-table tfoot .bk-pay,
+.bk-table tfoot .bk-ccy,
+.bk-table tfoot .bk-foot-ccy {
   color: #f0c27a;
 }
 

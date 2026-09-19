@@ -8,6 +8,11 @@ import "../../customers-crm.css";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { SUPPORTED_CURRENCIES } from "@watesly-travel/shared";
 import { AppShell } from "@/components/AppShell";
+import {
+  AggregationRuleTable,
+  DEFAULT_TRAVEL_AGGREGATION,
+  type TravelAggregation,
+} from "@/components/AggregationRuleTable";
 import { apiFetch } from "@/lib/api";
 import { getPreferredCurrency } from "@/lib/currency";
 import { formatMoneyMinor } from "@/lib/format";
@@ -46,6 +51,9 @@ type Provider = {
   providerKey: string;
   displayName: string;
   enabled: boolean;
+  priority?: number;
+  capabilities?: string[];
+  archivedAt?: string | null;
 };
 
 type Airport = {
@@ -392,6 +400,10 @@ export default function PricingPage() {
   const [error, setError] = useState("");
   const [ok, setOk] = useState("");
   const [loading, setLoading] = useState(false);
+  const [aggregation, setAggregation] = useState<TravelAggregation>(
+    DEFAULT_TRAVEL_AGGREGATION,
+  );
+  const [aggSaving, setAggSaving] = useState(false);
 
   async function loadMeta() {
     const [airportRows, cityRows] = await Promise.all([
@@ -435,12 +447,34 @@ export default function PricingPage() {
   }
 
   async function load() {
-    const [rules, providerRows] = await Promise.all([
+    const [rules, providerRows, agg] = await Promise.all([
       apiFetch<Rule[]>("/pricing-rules"),
       apiFetch<Provider[]>("/providers").catch(() => []),
+      apiFetch<TravelAggregation>("/providers/aggregation").catch(
+        (): TravelAggregation => DEFAULT_TRAVEL_AGGREGATION,
+      ),
     ]);
     setRows(rules);
     setProviders(providerRows);
+    setAggregation(agg);
+  }
+
+  async function saveAggregation(next: TravelAggregation) {
+    setAggregation(next);
+    setAggSaving(true);
+    setError("");
+    try {
+      const saved = await apiFetch<TravelAggregation>("/providers/aggregation", {
+        method: "PATCH",
+        body: JSON.stringify(next),
+      });
+      setAggregation(saved);
+      setOk("تم حفظ قاعدة توحيد النتائج");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "فشل حفظ قاعدة العرض");
+    } finally {
+      setAggSaving(false);
+    }
   }
 
   useEffect(() => {
@@ -715,6 +749,26 @@ export default function PricingPage() {
 
         {error ? <p className="cust-error">{error}</p> : null}
         {ok ? <p className="wa-ok">{ok}</p> : null}
+
+        <section className="prc-card prc-agg">
+          <div className="prc-list-head">
+            <h4>قاعدة توحيد النتائج</h4>
+            <span>
+              {aggSaving ? "جاري الحفظ…" : "نتيجة واحدة من كل المزودين"}
+            </span>
+          </div>
+          <p>
+            البحث يجمع المزودين المفعّلين ثم يعرض رحلة أو فندقًا واحدًا — الأرخص
+            بعد الهامش، أو حسب أولوية المزود من جدول المزودين.
+          </p>
+          <AggregationRuleTable
+            aggregation={aggregation}
+            providers={providers}
+            saving={aggSaving}
+            tableClassName="cust-table prc-table"
+            onChange={(next) => void saveAggregation(next)}
+          />
+        </section>
 
         <section className="prc-card prc-new">
           <div className="prc-card-head">

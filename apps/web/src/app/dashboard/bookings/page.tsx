@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import {
   formatIsoDateDisplay,
@@ -24,47 +24,40 @@ import {
 type Booking = BookingInvoiceData & {
   totalCostAmount?: number;
   totalProfitAmount?: number;
+  passengerDetails?: BookingInvoiceData["passengerDetails"] & {
+    archived?: boolean;
+  };
 };
 
-function PrintCostToggle({
-  en,
-  checked,
-  onChange,
-}: {
-  en: boolean;
-  checked: boolean;
-  onChange: (v: boolean) => void;
-}) {
+function bookingPhone(row: Booking) {
   return (
-    <label className="bk-cost-toggle">
-      <input
-        type="checkbox"
-        checked={checked}
-        onChange={(e) => onChange(e.target.checked)}
-      />
-      <span>
-        {en
-          ? "Include cost on print (hidden unless checked)"
-          : "إظهار التكلفة في الطباعة (تختفي ما لم تُطلب)"}
-      </span>
-    </label>
+    row.passengerDetails?.contact?.phone ||
+    row.quote?.contact?.waId ||
+    ""
   );
+}
+
+function csvCell(value: string) {
+  const text = String(value ?? "").replace(/"/g, '""');
+  return `"${text}"`;
 }
 
 function FilterDate({
   label,
   value,
   onChange,
+  tone,
 }: {
   label: string;
   value: string;
   onChange: (v: string) => void;
+  tone: string;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const i18n = useDashI18n();
   return (
     <label
-      className="field bk-date-field"
+      className={`field bk-date-field ${tone}`}
       onClick={(e) => {
         if ((e.target as HTMLElement).tagName !== "INPUT") {
           openNativeDatePicker(inputRef.current);
@@ -94,6 +87,7 @@ export default function BookingsPage() {
   const en = i18n.lang === "en";
   const [rows, setRows] = useState<Booking[]>([]);
   const [error, setError] = useState("");
+  const [ok, setOk] = useState("");
   const [q, setQ] = useState("");
   const [status, setStatus] = useState("");
   const [serviceType, setServiceType] = useState("");
@@ -104,8 +98,17 @@ export default function BookingsPage() {
   const [origin, setOrigin] = useState("");
   const [destination, setDestination] = useState("");
   const [printCost, setPrintCost] = useState(false);
+  const [selected, setSelected] = useState<string[]>([]);
+  const [busy, setBusy] = useState(false);
   const canViewCost =
     getSession()?.permissions?.includes("pricing.view_cost") ?? false;
+  const canBulk =
+    getSession()?.permissions?.includes("bookings.issue") ?? false;
+
+  const selectedRows = useMemo(
+    () => rows.filter((row) => selected.includes(row.id)),
+    [rows, selected],
+  );
 
   async function load() {
     const params = new URLSearchParams();
@@ -119,7 +122,9 @@ export default function BookingsPage() {
     if (origin.trim()) params.set("origin", origin.trim());
     if (destination.trim()) params.set("destination", destination.trim());
     const qs = params.toString();
-    setRows(await apiFetch<Booking[]>(`/bookings${qs ? `?${qs}` : ""}`));
+    const next = await apiFetch<Booking[]>(`/bookings${qs ? `?${qs}` : ""}`);
+    setRows(next);
+    setSelected((prev) => prev.filter((id) => next.some((row) => row.id === id)));
   }
 
   useEffect(() => {
@@ -137,9 +142,23 @@ export default function BookingsPage() {
     setOrigin("");
     setDestination("");
     setError("");
+    setOk("");
     apiFetch<Booking[]>("/bookings")
-      .then(setRows)
+      .then((next) => {
+        setRows(next);
+        setSelected([]);
+      })
       .catch((err: Error) => setError(err.message));
+  }
+
+  function toggleAll(on: boolean) {
+    setSelected(on ? rows.map((row) => row.id) : []);
+  }
+
+  function toggleOne(id: string, on: boolean) {
+    setSelected((prev) =>
+      on ? Array.from(new Set([...prev, id])) : prev.filter((x) => x !== id),
+    );
   }
 
   async function issue(id: string) {
@@ -163,257 +182,413 @@ export default function BookingsPage() {
     }
   }
 
-  function printOne(row: Booking) {
+  function printRows(list: Booking[]) {
+    if (!list.length) return;
     try {
       printBookingInvoices(
-        [row],
+        list,
         getSession()?.organization.name || "WeekendGate",
         { includeCost: canViewCost && printCost },
       );
     } catch (err) {
-      setError(err instanceof Error ? err.message : en ? "Print failed" : "فشل طباعة التقرير");
+      setError(err instanceof Error ? err.message : en ? "Print failed" : "فشل الطباعة");
     }
   }
 
-  function printFiltered() {
-    if (!rows.length) return;
-    try {
-      printBookingInvoices(
-        rows,
-        getSession()?.organization.name || "WeekendGate",
-        { includeCost: canViewCost && printCost },
+  function exportExcel(list: Booking[]) {
+    if (!list.length) return;
+    const header = en
+      ? ["Reference", "Customer", "Phone", "Route", "Travel date", "Status", "Sell", "Paid", "Balance", "Booked"]
+      : ["المرجع", "العميل", "الهاتف", "المسار", "تاريخ السفر", "الحالة", "البيع", "المدفوع", "المتبقي", "تاريخ الحجز"];
+    const lines = list.map((row) => {
+      const paid = paidAmount(row);
+      const remaining = Math.max(0, row.totalSellAmount - paid);
+      const currency = row.quote?.currency || "KWD";
+      return [
+        row.providerBookingRef || row.id,
+        customerName(row),
+        bookingPhone(row),
+        routeLabel(row),
+        formatDay(bookingTravelDate(row)),
+        i18n.status(row.status),
+        formatMoneyMinor(row.totalSellAmount, currency),
+        formatMoneyMinor(paid, currency),
+        formatMoneyMinor(remaining, currency),
+        formatDay(row.createdAt),
+      ].map((cell) => csvCell(cell));
+    });
+    const csv = ["\uFEFF" + header.map(csvCell).join(","), ...lines.map((r) => r.join(","))].join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `weekendgate-bookings-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    setOk(en ? `Exported ${list.length} bookings` : `تم تصدير ${list.length} حجز`);
+  }
+
+  async function bulk(action: "archive" | "unarchive" | "delete") {
+    if (!selected.length) {
+      setError(en ? "Select bookings first" : "حدّد حجوزات أولاً");
+      return;
+    }
+    if (action === "delete") {
+      const sure = window.confirm(
+        en
+          ? `Permanently delete ${selected.length} bookings?`
+          : `حذف ${selected.length} حجز نهائياً؟`,
       );
+      if (!sure) return;
+    }
+    setBusy(true);
+    setError("");
+    try {
+      await apiFetch("/bookings/bulk", {
+        method: "POST",
+        body: JSON.stringify({ ids: selected, action }),
+      });
+      setSelected([]);
+      setOk(
+        action === "delete"
+          ? en
+            ? "Bookings deleted"
+            : "تم حذف الحجوزات"
+          : action === "archive"
+            ? en
+              ? "Bookings archived"
+              : "تمت أرشفة الحجوزات"
+            : en
+              ? "Bookings restored"
+              : "تمت استعادة الحجوزات",
+      );
+      await load();
     } catch (err) {
-      setError(err instanceof Error ? err.message : en ? "Print failed" : "فشل طباعة التقارير");
+      setError(err instanceof Error ? err.message : en ? "Action failed" : "فشل الإجراء");
+    } finally {
+      setBusy(false);
     }
   }
+
+  const allOn = rows.length > 0 && selected.length === rows.length;
 
   return (
     <AppShell title="الحجوزات">
-      <div className="panel">
-        <p className="hint" style={{ marginTop: 0 }}>
-          {en
-            ? "Filter by booking date, travel date, and route (origin only is enough). Print a bilingual itinerary and invoice from the results or each row. Cost stays hidden unless you ask to show it."
-            : "فلترة الحجوزات بتاريخ الحجز وتاريخ السفر والمسار (يمكن تحديد جهة المغادرة فقط). اطبع تقرير خط السير والفاتورة من النتائج أو من صف كل حجز. التكلفة تختفي ما لم يُطلب إظهارها."}
-        </p>
-        <div className="bk-filters">
-          <div className="bk-filter-grid">
-            <label className="field span-2">
-              <span>{i18n.c("search")}</span>
-              <input
-                value={q}
-                placeholder={
-                  en ? "Name, phone, email, reference…" : "اسم، هاتف، بريد، مرجع…"
-                }
-                onChange={(e) => setQ(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") void load();
-                }}
-              />
-            </label>
-            <label className="field">
-              <span>{i18n.c("status")}</span>
-              <select
-                value={status}
-                onChange={(e) => setStatus(e.target.value)}
-              >
-                <option value="">{i18n.service("all")}</option>
-                <option value="on_hold">{i18n.status("on_hold")}</option>
-                <option value="issued">{i18n.status("issued")}</option>
-                <option value="completed">{i18n.status("completed")}</option>
-                <option value="cancelled">{i18n.status("cancelled")}</option>
-                <option value="draft">{i18n.status("draft")}</option>
-              </select>
-            </label>
-            <label className="field">
-              <span>{en ? "Service" : "الخدمة"}</span>
-              <select
-                value={serviceType}
-                onChange={(e) => setServiceType(e.target.value)}
-              >
-                <option value="">{i18n.service("all")}</option>
-                <option value="flight">{i18n.service("flight")}</option>
-                <option value="hotel">{i18n.service("hotel")}</option>
-                <option value="transfer">{i18n.service("transfer")}</option>
-                <option value="activity">{i18n.service("activity")}</option>
-              </select>
-            </label>
-            <FilterDate
-              label={en ? "Booked from" : "تاريخ الحجز من"}
-              value={bookedFrom}
-              onChange={setBookedFrom}
-            />
-            <FilterDate
-              label={en ? "Booked to" : "تاريخ الحجز إلى"}
-              value={bookedTo}
-              onChange={setBookedTo}
-            />
-            <FilterDate
-              label={en ? "Travel from" : "تاريخ السفر من"}
-              value={travelFrom}
-              onChange={setTravelFrom}
-            />
-            <FilterDate
-              label={en ? "Travel to" : "تاريخ السفر إلى"}
-              value={travelTo}
-              onChange={setTravelTo}
-            />
-            <label className="field">
-              <span>{en ? "Route from" : "المسار من"}</span>
-              <input
-                value={origin}
-                placeholder={en ? "City / departure airport" : "مدينة / مطار المغادرة"}
-                onChange={(e) => setOrigin(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") void load();
-                }}
-              />
-            </label>
-            <label className="field">
-              <span>{en ? "Route to (optional)" : "المسار إلى (اختياري)"}</span>
-              <input
-                value={destination}
-                placeholder={
-                  en
-                    ? "Leave empty to search by origin only"
-                    : "يمكن تركه فارغًا والبحث بالمغادرة فقط"
-                }
-                onChange={(e) => setDestination(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") void load();
-                }}
-              />
-            </label>
+      <div className="bk-desk">
+        <section className="bk-hero">
+          <div>
+            <p className="bk-kicker">Bookings</p>
+            <h3>{en ? "Bookings desk" : "سجل الحجوزات"}</h3>
+            <p>
+              {en
+                ? "Colored search cards, one compact row per booking, and a selection box for archive, delete, print, or Excel export."
+                : "بطاقات بحث ملوّنة، كل حجز في صف واحد، ومربع تحديد للأرشفة أو الحذف أو الطباعة أو تصدير إكسل."}
+            </p>
           </div>
-        </div>
-        <div className="actions bk-actions">
-          <button type="button" className="btn" onClick={() => void load()}>
-            {i18n.c("apply")}
-          </button>
-          <button
-            type="button"
-            className="btn secondary"
-            onClick={resetFilters}
-          >
-            {i18n.c("reset")}
-          </button>
-          {canViewCost ? (
-            <PrintCostToggle en={en} checked={printCost} onChange={setPrintCost} />
-          ) : null}
-          <button
-            type="button"
-            className="btn"
-            disabled={!rows.length}
-            onClick={printFiltered}
-          >
-            {en
-              ? `Print itinerary & invoice (${rows.length})`
-              : `طباعة التقرير والفاتورة (${rows.length})`}
-          </button>
-        </div>
-        {error ? <p className="error">{error}</p> : null}
-      </div>
+        </section>
 
-      <div className="panel bk-table-wrap">
-        <table className="table bk-table">
-          <thead>
-            <tr>
-              <th>{en ? "Reference" : "المرجع"}</th>
-              <th>{i18n.c("customer")}</th>
-              <th>{i18n.c("route")}</th>
-              <th>{en ? "Travel date" : "تاريخ السفر"}</th>
-              <th>{i18n.c("status")}</th>
-              <th>{en ? "Sell / payment" : "البيع / الدفع"}</th>
-              <th>{en ? "Booked" : "تاريخ الحجز"}</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row) => {
-              const paid = paidAmount(row);
-              const remaining = Math.max(0, row.totalSellAmount - paid);
-              const currency = row.quote?.currency || "KWD";
-              return (
-                <tr key={row.id}>
-                  <td>
-                    <Link className="dash-ltr" dir="ltr" href={`/dashboard/bookings/${row.id}`}>
-                      {(row.providerBookingRef || row.id).slice(0, 12)}
-                    </Link>
-                  </td>
-                  <td>
-                    <div>{customerName(row)}</div>
-                    <small className="hint dash-ltr" dir="ltr">
-                      {row.passengerDetails?.contact?.phone ||
-                        row.quote?.contact?.waId ||
-                        "—"}
-                    </small>
-                  </td>
-                  <td>
-                    <DashLtr>{routeLabel(row)}</DashLtr>
-                  </td>
-                  <td>
-                    <DashLtr>{formatDay(bookingTravelDate(row))}</DashLtr>
-                  </td>
-                  <td>{i18n.status(row.status)}</td>
-                  <td>
-                    <div className="bk-pay">
-                      <strong>
-                        {formatMoneyMinor(row.totalSellAmount, currency)}
-                      </strong>
-                      <small>
-                        {en ? "Paid" : "مدفوع"} {formatMoneyMinor(paid, currency)}
-                        {remaining > 0
-                          ? ` · ${en ? "Balance" : "متبقي"} ${formatMoneyMinor(remaining, currency)}`
-                          : en
-                            ? " · Complete"
-                            : " · مكتمل"}
-                      </small>
-                    </div>
-                  </td>
-                  <td>{formatDay(row.createdAt)}</td>
-                  <td>
-                    <div className="actions" style={{ marginTop: 0 }}>
-                      <Link
-                        className="btn secondary"
-                        href={`/dashboard/bookings/${row.id}`}
-                      >
-                        {en ? "Details" : "تفاصيل"}
+        <section className="bk-card">
+          <div className="bk-filters">
+            <div className="bk-filter-grid">
+              <label className="field span-2 bk-field-search">
+                <span>{i18n.c("search")}</span>
+                <input
+                  value={q}
+                  placeholder={
+                    en ? "Name, phone, email, reference…" : "اسم، هاتف، بريد، مرجع…"
+                  }
+                  onChange={(e) => setQ(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") void load();
+                  }}
+                />
+              </label>
+              <label className="field bk-field-status">
+                <span>{i18n.c("status")}</span>
+                <select
+                  value={status}
+                  onChange={(e) => setStatus(e.target.value)}
+                >
+                  <option value="">{i18n.service("all")}</option>
+                  <option value="on_hold">{i18n.status("on_hold")}</option>
+                  <option value="issued">{i18n.status("issued")}</option>
+                  <option value="completed">{i18n.status("completed")}</option>
+                  <option value="cancelled">{i18n.status("cancelled")}</option>
+                  <option value="draft">{i18n.status("draft")}</option>
+                  <option value="archived">{en ? "Archived" : "مؤرشف"}</option>
+                </select>
+              </label>
+              <label className="field bk-field-service">
+                <span>{en ? "Service" : "الخدمة"}</span>
+                <select
+                  value={serviceType}
+                  onChange={(e) => setServiceType(e.target.value)}
+                >
+                  <option value="">{i18n.service("all")}</option>
+                  <option value="flight">{i18n.service("flight")}</option>
+                  <option value="hotel">{i18n.service("hotel")}</option>
+                  <option value="transfer">{i18n.service("transfer")}</option>
+                  <option value="activity">{i18n.service("activity")}</option>
+                </select>
+              </label>
+              <FilterDate
+                tone="bk-field-booked"
+                label={en ? "Booked from" : "تاريخ الحجز من"}
+                value={bookedFrom}
+                onChange={setBookedFrom}
+              />
+              <FilterDate
+                tone="bk-field-booked"
+                label={en ? "Booked to" : "تاريخ الحجز إلى"}
+                value={bookedTo}
+                onChange={setBookedTo}
+              />
+              <FilterDate
+                tone="bk-field-travel"
+                label={en ? "Travel from" : "تاريخ السفر من"}
+                value={travelFrom}
+                onChange={setTravelFrom}
+              />
+              <FilterDate
+                tone="bk-field-travel"
+                label={en ? "Travel to" : "تاريخ السفر إلى"}
+                value={travelTo}
+                onChange={setTravelTo}
+              />
+              <label className="field bk-field-route">
+                <span>{en ? "Route from" : "المسار من"}</span>
+                <input
+                  value={origin}
+                  placeholder={en ? "City / departure airport" : "مدينة / مطار المغادرة"}
+                  onChange={(e) => setOrigin(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") void load();
+                  }}
+                />
+              </label>
+              <label className="field bk-field-route">
+                <span>{en ? "Route to (optional)" : "المسار إلى (اختياري)"}</span>
+                <input
+                  value={destination}
+                  placeholder={
+                    en
+                      ? "Leave empty to search by origin only"
+                      : "يمكن تركه فارغًا والبحث بالمغادرة فقط"
+                  }
+                  onChange={(e) => setDestination(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") void load();
+                  }}
+                />
+              </label>
+            </div>
+          </div>
+
+          <div className="bk-actions">
+            <button type="button" className="btn" onClick={() => void load()}>
+              {i18n.c("apply")}
+            </button>
+            <button
+              type="button"
+              className="btn secondary"
+              onClick={resetFilters}
+            >
+              {i18n.c("reset")}
+            </button>
+            {canViewCost ? (
+              <label className="bk-cost-toggle">
+                <input
+                  type="checkbox"
+                  checked={printCost}
+                  onChange={(e) => setPrintCost(e.target.checked)}
+                />
+                <span>
+                  {en
+                    ? "Include cost on print"
+                    : "إظهار التكلفة في الطباعة"}
+                </span>
+              </label>
+            ) : null}
+          </div>
+
+          <div className="bk-bulk">
+            <label className="bk-bulk-count">
+              <input
+                type="checkbox"
+                checked={allOn}
+                onChange={(e) => toggleAll(e.target.checked)}
+              />
+              <span>
+                {en
+                  ? `Selected ${selected.length}`
+                  : `محدد ${selected.length}`}
+              </span>
+            </label>
+            {canBulk ? (
+              <>
+                <button
+                  type="button"
+                  className="btn secondary"
+                  disabled={busy || !selected.length}
+                  onClick={() => void bulk(status === "archived" ? "unarchive" : "archive")}
+                >
+                  {status === "archived"
+                    ? en
+                      ? "Restore"
+                      : "استعادة"
+                    : i18n.c("archive")}
+                </button>
+                <button
+                  type="button"
+                  className="btn secondary"
+                  disabled={busy || !selected.length}
+                  onClick={() => void bulk("delete")}
+                >
+                  {i18n.c("delete")}
+                </button>
+              </>
+            ) : null}
+            <button
+              type="button"
+              className="btn"
+              disabled={!selectedRows.length}
+              onClick={() => printRows(selectedRows)}
+            >
+              {en ? "Print" : "طباعة"}
+            </button>
+            <button
+              type="button"
+              className="btn"
+              disabled={!selectedRows.length}
+              onClick={() => exportExcel(selectedRows)}
+            >
+              {en ? "Export Excel" : "تصدير إكسل"}
+            </button>
+          </div>
+
+          {error ? <p className="bk-msg err">{error}</p> : null}
+          {ok ? <p className="bk-msg ok">{ok}</p> : null}
+        </section>
+
+        <div className="bk-table-wrap">
+          <table className="bk-table">
+            <thead>
+              <tr>
+                <th className="bk-check">
+                  <input
+                    type="checkbox"
+                    checked={allOn}
+                    onChange={(e) => toggleAll(e.target.checked)}
+                    aria-label={en ? "Select all" : "تحديد الكل"}
+                  />
+                </th>
+                <th>{en ? "Reference" : "المرجع"}</th>
+                <th>{i18n.c("customer")}</th>
+                <th>{i18n.c("route")}</th>
+                <th>{en ? "Travel date" : "تاريخ السفر"}</th>
+                <th>{i18n.c("status")}</th>
+                <th>{en ? "Sell / paid / balance" : "البيع / المدفوع / المتبقي"}</th>
+                <th>{en ? "Booked" : "تاريخ الحجز"}</th>
+                <th>{i18n.c("actions")}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row) => {
+                const paid = paidAmount(row);
+                const remaining = Math.max(0, row.totalSellAmount - paid);
+                const currency = row.quote?.currency || "KWD";
+                const phone = bookingPhone(row);
+                const checked = selected.includes(row.id);
+                return (
+                  <tr key={row.id} className={checked ? "is-selected" : undefined}>
+                    <td className="bk-check">
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={(e) => toggleOne(row.id, e.target.checked)}
+                      />
+                    </td>
+                    <td>
+                      <Link className="dash-ltr" dir="ltr" href={`/dashboard/bookings/${row.id}`}>
+                        {(row.providerBookingRef || row.id).slice(0, 12)}
                       </Link>
-                      <button
-                        type="button"
-                        className="btn"
-                        onClick={() => printOne(row)}
-                      >
-                        {en ? "Print" : "طباعة"}
-                      </button>
-                      {row.status === "on_hold" || row.status === "draft" ? (
+                    </td>
+                    <td className="bk-cell-inline">
+                      {customerName(row)}
+                      {phone ? (
+                        <span className="bk-cell-muted">
+                          {" · "}
+                          <DashLtr>{phone}</DashLtr>
+                        </span>
+                      ) : null}
+                    </td>
+                    <td className="bk-cell-inline">
+                      <DashLtr>{routeLabel(row)}</DashLtr>
+                    </td>
+                    <td>
+                      <DashLtr>{formatDay(bookingTravelDate(row))}</DashLtr>
+                    </td>
+                    <td>
+                      <span className={`bk-badge ${row.status}`}>
+                        {i18n.status(row.status)}
+                      </span>
+                    </td>
+                    <td className="bk-pay">
+                      {formatMoneyMinor(row.totalSellAmount, currency)}
+                      {" · "}
+                      {en ? "Paid" : "مدفوع"} {formatMoneyMinor(paid, currency)}
+                      {" · "}
+                      {remaining > 0
+                        ? `${en ? "Bal." : "متبقي"} ${formatMoneyMinor(remaining, currency)}`
+                        : en
+                          ? "Complete"
+                          : "مكتمل"}
+                    </td>
+                    <td>{formatDay(row.createdAt)}</td>
+                    <td>
+                      <div className="bk-row-actions">
+                        <Link
+                          className="btn secondary bk-mini"
+                          href={`/dashboard/bookings/${row.id}`}
+                        >
+                          {en ? "Open" : "تفاصيل"}
+                        </Link>
                         <button
                           type="button"
-                          className="btn"
-                          onClick={() => void issue(row.id)}
+                          className="btn bk-mini"
+                          onClick={() => printRows([row])}
                         >
-                          {en ? "Issue" : "إصدار"}
+                          {en ? "Print" : "طباعة"}
                         </button>
-                      ) : null}
-                      <button
-                        type="button"
-                        className="btn secondary"
-                        onClick={() => void pay(row.id, remaining || row.totalSellAmount)}
-                      >
-                        {en ? "Record payment" : "تسجيل دفع"}
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-        {rows.length === 0 ? (
-          <p className="hint">
-            {en ? "No matching bookings." : "لا توجد حجوزات مطابقة."}
-          </p>
-        ) : null}
+                        {row.status === "on_hold" || row.status === "draft" ? (
+                          <button
+                            type="button"
+                            className="btn bk-mini"
+                            onClick={() => void issue(row.id)}
+                          >
+                            {en ? "Issue" : "إصدار"}
+                          </button>
+                        ) : null}
+                        <button
+                          type="button"
+                          className="btn secondary bk-mini"
+                          onClick={() => void pay(row.id, remaining || row.totalSellAmount)}
+                        >
+                          {en ? "Pay" : "دفع"}
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+          {rows.length === 0 ? (
+            <p className="bk-empty">
+              {en ? "No matching bookings." : "لا توجد حجوزات مطابقة."}
+            </p>
+          ) : null}
+        </div>
       </div>
     </AppShell>
   );

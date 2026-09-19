@@ -77,6 +77,16 @@ function includesLoose(hay?: string | null, needle?: string) {
     .includes(needle.toLowerCase());
 }
 
+function detailsRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? { ...(value as Record<string, unknown>) }
+    : {};
+}
+
+function bookingArchived(value: unknown): boolean {
+  return detailsRecord(value).archived === true;
+}
+
 @Controller("bookings")
 export class BookingsController {
   constructor(
@@ -107,10 +117,11 @@ export class BookingsController {
     const travelStart = travelFrom?.trim() || "";
     const travelEnd = travelTo?.trim() || "";
 
+    const statusFilter = status && status !== "archived" ? status : undefined;
     const rows = await this.prisma.booking.findMany({
       where: {
         organizationId: user.organizationId,
-        ...(status ? { status } : {}),
+        ...(statusFilter ? { status: statusFilter } : {}),
         ...(serviceType
           ? {
               quote: {
@@ -247,7 +258,71 @@ export class BookingsController {
       return true;
     });
 
-    return stripCostFields(filtered, canViewCost);
+    const wantArchived = status === "archived";
+    const visible = filtered.filter((row) => {
+      const archived = bookingArchived(row.passengerDetails);
+      return wantArchived ? archived : !archived;
+    });
+
+    return stripCostFields(visible, canViewCost);
+  }
+
+  @Post("bulk")
+  @RequirePermissions("bookings.issue")
+  async bulk(
+    @CurrentUser() user: AuthUser,
+    @Body() body: { ids?: string[]; action?: "archive" | "unarchive" | "delete" },
+  ) {
+    const ids = Array.from(new Set((body.ids || []).filter(Boolean)));
+    if (!ids.length) return { ok: true, count: 0 };
+    const action = body.action;
+    if (action !== "archive" && action !== "unarchive" && action !== "delete") {
+      throw new BadRequestException("إجراء غير مدعوم");
+    }
+
+    const rows = await this.prisma.booking.findMany({
+      where: { organizationId: user.organizationId, id: { in: ids } },
+    });
+    if (!rows.length) return { ok: true, count: 0 };
+
+    if (action === "delete") {
+      await this.prisma.booking.deleteMany({
+        where: {
+          organizationId: user.organizationId,
+          id: { in: rows.map((row) => row.id) },
+        },
+      });
+      await this.audit.log({
+        organizationId: user.organizationId,
+        actorUserId: user.userId,
+        action: "bookings.bulk.delete",
+        entityType: "Booking",
+        entityId: rows.map((row) => row.id).join(","),
+        after: { count: rows.length },
+      });
+      return { ok: true, count: rows.length };
+    }
+
+    const archived = action === "archive";
+    for (const row of rows) {
+      const details = detailsRecord(row.passengerDetails);
+      details.archived = archived;
+      if (archived) details.archivedAt = new Date().toISOString();
+      else delete details.archivedAt;
+      await this.prisma.booking.update({
+        where: { id: row.id },
+        data: { passengerDetails: details as object },
+      });
+    }
+    await this.audit.log({
+      organizationId: user.organizationId,
+      actorUserId: user.userId,
+      action: archived ? "bookings.bulk.archive" : "bookings.bulk.unarchive",
+      entityType: "Booking",
+      entityId: rows.map((row) => row.id).join(","),
+      after: { count: rows.length },
+    });
+    return { ok: true, count: rows.length };
   }
 
   @Get(":id")

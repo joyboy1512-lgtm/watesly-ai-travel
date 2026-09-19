@@ -72,38 +72,8 @@
   border-radius: 9px;
   border: 1px solid rgba(15, 51, 64, 0.1);
   border-inline-start: 4px solid var(--bk-navy);
-  background: #eef4f3;
+  background: #d8e6e3;
   min-width: 0;
-}
-
-.bk-filter-grid .field.bk-field-search {
-  border-inline-start-color: #0f3340;
-  background: #d8e6e3;
-}
-
-.bk-filter-grid .field.bk-field-status {
-  border-inline-start-color: #d8a35e;
-  background: #ffe7c2;
-}
-
-.bk-filter-grid .field.bk-field-service {
-  border-inline-start-color: #1a6b4a;
-  background: #d4eedf;
-}
-
-.bk-filter-grid .field.bk-field-booked {
-  border-inline-start-color: #184a52;
-  background: #d4eaf1;
-}
-
-.bk-filter-grid .field.bk-field-travel {
-  border-inline-start-color: #c9893a;
-  background: #ffd9a3;
-}
-
-.bk-filter-grid .field.bk-field-route {
-  border-inline-start-color: #0f3340;
-  background: #d8e6e3;
 }
 
 .bk-filter-grid .field span {
@@ -213,6 +183,10 @@
   min-height: 2.1rem;
   display: flex;
   align-items: center;
+  padding: 0.28rem 0.5rem;
+  border-radius: 8px;
+  border: 1.5px solid #8a9b97;
+  background: #fff;
 }
 
 .bk-date-value.placeholder {

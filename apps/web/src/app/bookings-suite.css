@@ -78,32 +78,32 @@
 
 .bk-field-search {
   border-inline-start-color: #0f3340;
-  background: #eef4f3;
+  background: #d8e6e3;
 }
 
 .bk-field-status {
   border-inline-start-color: #d8a35e;
-  background: #fff8ec;
+  background: #ffe7c2;
 }
 
 .bk-field-service {
   border-inline-start-color: #1a6b4a;
-  background: #eef7f2;
+  background: #d4eedf;
 }
 
 .bk-field-booked {
   border-inline-start-color: #184a52;
-  background: #eef5f8;
+  background: #d4eaf1;
 }
 
 .bk-field-travel {
   border-inline-start-color: #c9893a;
-  background: #fff4e0;
+  background: #ffd9a3;
 }
 
 .bk-field-route {
   border-inline-start-color: #0f3340;
-  background: #eef4f3;
+  background: #d8e6e3;
 }
 
 .bk-filter-grid .field span {
@@ -242,7 +242,7 @@
   border-collapse: separate;
   border-spacing: 0;
   width: 100%;
-  min-width: 1180px;
+  min-width: 1080px;
 }
 
 .bk-table th,
@@ -306,7 +306,9 @@
 }
 
 .bk-badge.issued,
-.bk-badge.completed {
+.bk-badge.completed,
+.bk-badge.confirmed,
+.bk-badge.ticketed {
   background: rgba(26, 107, 74, 0.14);
   color: #145c3b;
 }

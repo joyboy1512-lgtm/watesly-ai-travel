@@ -110,6 +110,34 @@ export default function BookingsPage() {
     [rows, selected],
   );
 
+  const totals = useMemo(() => {
+    const byCurrency = new Map<
+      string,
+      { sell: number; cost: number; profit: number; paid: number; remaining: number }
+    >();
+    for (const row of rows) {
+      const currency = row.quote?.currency || "KWD";
+      const sell = Number(row.totalSellAmount) || 0;
+      const cost = Number(row.totalCostAmount) || 0;
+      const paid = paidAmount(row);
+      const remaining = Math.max(0, sell - paid);
+      const current = byCurrency.get(currency) || {
+        sell: 0,
+        cost: 0,
+        profit: 0,
+        paid: 0,
+        remaining: 0,
+      };
+      current.sell += sell;
+      current.cost += cost;
+      current.profit += sell - cost;
+      current.paid += paid;
+      current.remaining += remaining;
+      byCurrency.set(currency, current);
+    }
+    return [...byCurrency.entries()];
+  }, [rows]);
+
   async function load() {
     const params = new URLSearchParams();
     if (q.trim()) params.set("q", q.trim());
@@ -198,12 +226,14 @@ export default function BookingsPage() {
   function exportExcel(list: Booking[]) {
     if (!list.length) return;
     const header = en
-      ? ["Reference", "Customer", "Phone", "Route", "Travel date", "Status", "Sell", "Paid", "Balance", "Booked"]
-      : ["المرجع", "العميل", "الهاتف", "المسار", "تاريخ السفر", "الحالة", "البيع", "المدفوع", "المتبقي", "تاريخ الحجز"];
+      ? ["Reference", "Customer", "Phone", "Route", "Travel date", "Status", "Sell", "Cost", "Profit", "Paid", "Balance", "Booked"]
+      : ["المرجع", "العميل", "الهاتف", "المسار", "تاريخ السفر", "الحالة", "البيع", "التكلفة", "الأرباح", "المدفوع", "المتبقي", "تاريخ الحجز"];
     const lines = list.map((row) => {
       const paid = paidAmount(row);
       const remaining = Math.max(0, row.totalSellAmount - paid);
       const currency = row.quote?.currency || "KWD";
+      const cost = Number(row.totalCostAmount) || 0;
+      const sell = Number(row.totalSellAmount) || 0;
       return [
         row.providerBookingRef || row.id,
         customerName(row),
@@ -211,7 +241,9 @@ export default function BookingsPage() {
         routeLabel(row),
         formatDay(bookingTravelDate(row)),
         i18n.status(row.status),
-        formatMoneyMinor(row.totalSellAmount, currency),
+        formatMoneyMinor(sell, currency),
+        formatMoneyMinor(cost, currency),
+        formatMoneyMinor(sell - cost, currency),
         formatMoneyMinor(paid, currency),
         formatMoneyMinor(remaining, currency),
         formatDay(row.createdAt),
@@ -487,7 +519,10 @@ export default function BookingsPage() {
                 <th>{i18n.c("route")}</th>
                 <th>{en ? "Travel date" : "تاريخ السفر"}</th>
                 <th>{i18n.c("status")}</th>
-                <th>{en ? "Sell / paid / balance" : "البيع / المدفوع / المتبقي"}</th>
+                <th>{en ? "Sell" : "البيع"}</th>
+                <th>{en ? "Cost" : "التكلفة"}</th>
+                <th>{en ? "Profit" : "الأرباح"}</th>
+                <th>{en ? "Paid / balance" : "المدفوع / المتبقي"}</th>
                 <th>{en ? "Booked" : "تاريخ الحجز"}</th>
                 <th>{i18n.c("actions")}</th>
               </tr>
@@ -495,7 +530,10 @@ export default function BookingsPage() {
             <tbody>
               {rows.map((row) => {
                 const paid = paidAmount(row);
-                const remaining = Math.max(0, row.totalSellAmount - paid);
+                const sell = Number(row.totalSellAmount) || 0;
+                const cost = Number(row.totalCostAmount) || 0;
+                const profit = sell - cost;
+                const remaining = Math.max(0, sell - paid);
                 const currency = row.quote?.currency || "KWD";
                 const phone = bookingPhone(row);
                 const checked = selected.includes(row.id);
@@ -533,10 +571,13 @@ export default function BookingsPage() {
                         {i18n.status(row.status)}
                       </span>
                     </td>
+                    <td className="bk-num">{formatMoneyMinor(sell, currency)}</td>
+                    <td className="bk-num">{formatMoneyMinor(cost, currency)}</td>
+                    <td className={`bk-num ${profit < 0 ? "is-loss" : "is-profit"}`}>
+                      {formatMoneyMinor(profit, currency)}
+                    </td>
                     <td className="bk-pay">
-                      {formatMoneyMinor(row.totalSellAmount, currency)}
-                      {" · "}
-                      {en ? "Paid" : "مدفوع"} {formatMoneyMinor(paid, currency)}
+                      {formatMoneyMinor(paid, currency)}
                       {" · "}
                       {remaining > 0
                         ? `${en ? "Bal." : "متبقي"} ${formatMoneyMinor(remaining, currency)}`
@@ -582,6 +623,32 @@ export default function BookingsPage() {
                 );
               })}
             </tbody>
+            {rows.length ? (
+              <tfoot>
+                {totals.map(([currency, sum], index) => (
+                  <tr key={currency}>
+                    <td colSpan={6}>
+                      {index === 0
+                        ? en
+                          ? `Filtered total · ${rows.length} bookings`
+                          : `إجمالي النتائج المفلترة · ${rows.length} حجز`
+                        : ""}
+                    </td>
+                    <td className="bk-num">{formatMoneyMinor(sum.sell, currency)}</td>
+                    <td className="bk-num">{formatMoneyMinor(sum.cost, currency)}</td>
+                    <td className={`bk-num ${sum.profit < 0 ? "is-loss" : "is-profit"}`}>
+                      {formatMoneyMinor(sum.profit, currency)}
+                    </td>
+                    <td className="bk-pay">
+                      {formatMoneyMinor(sum.paid, currency)}
+                      {" · "}
+                      {en ? "Bal." : "متبقي"} {formatMoneyMinor(sum.remaining, currency)}
+                    </td>
+                    <td colSpan={2} />
+                  </tr>
+                ))}
+              </tfoot>
+            ) : null}
           </table>
           {rows.length === 0 ? (
             <p className="bk-empty">

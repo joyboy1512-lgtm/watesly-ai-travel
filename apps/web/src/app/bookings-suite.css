@@ -154,11 +154,42 @@
   accent-color: #0f3340;
 }
 
-.bk-pay {
+.bk-pay,
+.bk-num {
   white-space: nowrap;
   font-size: 0.8rem;
   font-weight: 700;
   color: #111;
+}
+
+.bk-num.is-profit {
+  color: #145c3b;
+}
+
+.bk-num.is-loss {
+  color: #8a2f2f;
+}
+
+.bk-table tfoot td {
+  background: #0f3340;
+  color: #f3f7f4;
+  font-weight: 800;
+  border-bottom: 0;
+  position: sticky;
+  bottom: 0;
+}
+
+.bk-table tfoot .bk-num,
+.bk-table tfoot .bk-pay {
+  color: #f0c27a;
+}
+
+.bk-table tfoot .bk-num.is-profit {
+  color: #9ee0bc;
+}
+
+.bk-table tfoot .bk-num.is-loss {
+  color: #f3b4b4;
 }
 
 .bk-cell-inline {
@@ -216,7 +247,7 @@
   border-collapse: separate;
   border-spacing: 0;
   width: 100%;
-  min-width: 1080px;
+  min-width: 1240px;
 }
 
 .bk-table th,

@@ -65,7 +65,7 @@ export default function StaffLoginForm() {
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           className="staff-login-panel-photo"
-          src="/media/hero/aviation-jet.jpg"
+          src="/media/hero/night-city-gold.jpg"
           alt=""
           aria-hidden="true"
         />

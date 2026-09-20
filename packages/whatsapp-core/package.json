@@ -16,7 +16,7 @@
     "dev": "tsc -p tsconfig.json --watch",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "echo No lint config yet for whatsapp-core",
-    "test": "node --import tsx --test src/commerce.test.ts",
+    "test": "node --import tsx --test src/commerce.test.ts src/meta-ops.test.ts",
     "clean": "rimraf dist"
   },
   "devDependencies": {

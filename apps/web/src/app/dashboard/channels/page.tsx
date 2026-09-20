@@ -83,10 +83,43 @@ export default function ChannelsPage() {
   const [typeFilter, setTypeFilter] = useState("all");
   const [connectType, setConnectType] = useState<ChannelKey | null>(null);
   const [form, setForm] = useState(emptyForm);
+  const [usage, setUsage] = useState<{
+    totals?: {
+      conversations: number;
+      inbound30d: number;
+      outbound30d: number;
+      campaignMessages30d: number;
+    };
+    channels?: Array<{
+      id: string;
+      conversations: number;
+      inbound30d: number;
+      outbound30d: number;
+      campaignMessages30d: number;
+    }>;
+  } | null>(null);
 
   async function load() {
-    const rows = await apiFetch<WaAccount[]>("/whatsapp/accounts");
+    const [rows, board] = await Promise.all([
+      apiFetch<WaAccount[]>("/whatsapp/accounts"),
+      apiFetch<{
+        totals?: {
+          conversations: number;
+          inbound30d: number;
+          outbound30d: number;
+          campaignMessages30d: number;
+        };
+        channels?: Array<{
+          id: string;
+          conversations: number;
+          inbound30d: number;
+          outbound30d: number;
+          campaignMessages30d: number;
+        }>;
+      }>("/whatsapp/usage-board").catch(() => null),
+    ]);
     setAccounts(rows);
+    setUsage(board);
   }
 
   useEffect(() => {
@@ -240,6 +273,20 @@ export default function ChannelsPage() {
     }
   }
 
+  async function archiveChannel(id: string) {
+    if (!window.confirm("أرشفة هذه القناة؟ تبقى المحادثات.")) return;
+    setBusyId(id);
+    try {
+      await apiFetch(`/whatsapp/accounts/${id}/archive`, { method: "POST" });
+      setOk("تمت أرشفة القناة");
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "فشل الأرشفة");
+    } finally {
+      setBusyId(null);
+    }
+  }
+
   async function removeChannel(id: string) {
     if (!window.confirm("هل تريد حذف هذه القناة؟")) return;
     setBusyId(id);
@@ -304,6 +351,16 @@ export default function ChannelsPage() {
             </button>
           ))}
         </section>
+
+        {usage?.totals ? (
+          <section className="wa-stats">
+            <article className="wa-stat"><span>محادثات</span><strong>{usage.totals.conversations}</strong></article>
+            <article className="wa-stat"><span>وارد 30ي</span><strong>{usage.totals.inbound30d}</strong></article>
+            <article className="wa-stat"><span>صادر 30ي</span><strong>{usage.totals.outbound30d}</strong></article>
+            <article className="wa-stat"><span>رسائل حملات</span><strong>{usage.totals.campaignMessages30d}</strong></article>
+            <article className="wa-stat"><span>قنوات مربوطة</span><strong>{accounts.length}</strong></article>
+          </section>
+        ) : null}
 
         {error ? <p className="cust-error">{error}</p> : null}
         {ok ? <p className="wa-ok">{ok}</p> : null}
@@ -535,12 +592,14 @@ export default function ChannelsPage() {
                   <th>العرض / المعرّف</th>
                   <th>ID</th>
                   <th>الحالة</th>
+                  <th>الاستخدام 30ي</th>
                   <th>إجراءات</th>
                 </tr>
               </thead>
               <tbody>
                 {filtered.map((a) => {
                   const type = a.channelType || "whatsapp";
+                  const use = usage?.channels?.find((c) => c.id === a.id);
                   return (
                     <tr key={a.id}>
                       <td>
@@ -566,6 +625,16 @@ export default function ChannelsPage() {
                         >
                           {STATUS_LABEL[a.status] || a.status}
                         </span>
+                      </td>
+                      <td>
+                        {use ? (
+                          <div className="wa-health">
+                            <span>محادثات {use.conversations}</span>
+                            <span>وارد {use.inbound30d} · صادر {use.outbound30d}</span>
+                          </div>
+                        ) : (
+                          "—"
+                        )}
                       </td>
                       <td>
                         <div className="wa-row-actions">
@@ -605,6 +674,14 @@ export default function ChannelsPage() {
                               افتراضي
                             </button>
                           ) : null}
+                          <button
+                            type="button"
+                            className="wa-mini-btn"
+                            disabled={busyId === a.id}
+                            onClick={() => void archiveChannel(a.id)}
+                          >
+                            أرشفة
+                          </button>
                           <button
                             type="button"
                             className="wa-mini-btn danger"

@@ -3,6 +3,20 @@ import type {
   HotelOffer,
   TransferOffer,
 } from "@watesly-travel/shared";
+import { currencyMinorFactor } from "@watesly-travel/shared";
+
+type WithSell<T> = T & { sellAmountMinor?: number };
+
+function sellMinor(row: { costAmountMinor: number; sellAmountMinor?: number }): number {
+  return Number.isFinite(row.sellAmountMinor)
+    ? Number(row.sellAmountMinor)
+    : row.costAmountMinor;
+}
+
+function sellMajor(row: { costAmountMinor: number; sellAmountMinor?: number; currency?: string }): number {
+  const currency = row.currency || "KWD";
+  return sellMinor(row) / currencyMinorFactor(currency);
+}
 import type {
   HotelPropertyDetails,
   HotelRateOption,
@@ -39,14 +53,12 @@ function slicePolicies(rate: HotelRateOption) {
 }
 
 /** Short list row: name + starting price only. Full rooms/services come from get_hotel_details. */
-function serializeHotelListItem(row: HotelOffer) {
+function serializeHotelListItem(row: WithSell<HotelOffer>) {
   const raw = row.raw as HotelPropertyDetails | undefined;
   const currency = row.currency || raw?.currency || "";
-  const priceFrom =
-    raw?.minRate ??
-    (Number.isFinite(row.costAmountMinor)
-      ? row.costAmountMinor / 100
-      : undefined);
+  const priceFrom = Number.isFinite(sellMinor(row))
+    ? sellMajor({ ...row, currency })
+    : raw?.minRate;
   const priceLabel = formatMoney(priceFrom);
   return {
     id: row.providerOfferRef,
@@ -78,8 +90,7 @@ function serializeRateDetail(rate: HotelRateOption) {
     roomCode: rate.roomCode,
     boardCode: rate.boardCode,
     boardName: rate.boardName,
-    net: rate.net,
-    sellingRate: rate.sellingRate,
+    sellingRate: rate.sellingRate ?? rate.net,
     currency: rate.currency,
     rateType: rate.rateType,
     paymentType: rate.paymentType,
@@ -109,8 +120,7 @@ export function serializeHotelDetailsForAi(row: HotelOffer): string {
       rateKey: rate.rateKey,
       boardCode: rate.boardCode,
       boardName: rate.boardName,
-      net: rate.net,
-      sellingRate: rate.sellingRate,
+      sellingRate: rate.sellingRate ?? rate.net,
       currency: rate.currency,
       rateType: rate.rateType,
       paymentType: rate.paymentType,
@@ -140,9 +150,9 @@ export function serializeHotelDetailsForAi(row: HotelOffer): string {
     checkOutDate: raw?.checkOutDate,
     nights: raw?.nights,
     currency: row.currency,
-    minRate: raw?.minRate,
+    minRate: sellMajor(row as WithSell<HotelOffer>),
     maxRate: raw?.maxRate,
-    cheapestAmountMinor: row.costAmountMinor,
+    priceFrom: sellMajor(row as WithSell<HotelOffer>),
     boards: raw?.boards,
     boardCodes: raw?.boardCodes,
     paymentTypes: raw?.paymentTypes,
@@ -170,13 +180,13 @@ export function serializeHotelDetailsForAi(row: HotelOffer): string {
   return boundedJson(payload, limits.detailMaxJsonChars);
 }
 
-function serializeFlight(row: FlightOffer) {
+function serializeFlight(row: WithSell<FlightOffer>) {
   const raw = row.raw as Record<string, unknown> | undefined;
   return {
     id: row.providerOfferRef,
     provider: row.providerKey,
     description: row.description,
-    amountMinor: row.costAmountMinor,
+    amountMinor: sellMinor(row),
     currency: row.currency,
     expiresAt: row.expiresAt,
     carrier: raw?.carrier,
@@ -191,13 +201,13 @@ function serializeFlight(row: FlightOffer) {
   };
 }
 
-function serializeTransfer(row: TransferOffer) {
+function serializeTransfer(row: WithSell<TransferOffer>) {
   const raw = row.raw as TransferServiceDetails | undefined;
   return {
     id: row.providerOfferRef,
     provider: row.providerKey,
     description: row.description,
-    amountMinor: row.costAmountMinor,
+    amountMinor: sellMinor(row),
     currency: row.currency,
     transferType: raw?.transferTypeLabel || raw?.transferType,
     vehicle: raw?.vehicleName,

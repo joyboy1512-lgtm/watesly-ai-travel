@@ -33,9 +33,14 @@ type WaAccount = {
 const STATUS_LABEL: Record<string, string> = {
   draft: "مسودة",
   scheduled: "مجدولة",
+  approved: "معتمدة",
   running: "قيد الإرسال",
+  paused: "متوقفة",
   completed: "مكتملة",
+  completed_with_errors: "تمت بأخطاء",
+  cancelled: "ملغاة",
   failed: "فشلت",
+  archived: "مؤرشفة",
 };
 
 export default function CampaignsPage() {
@@ -65,7 +70,8 @@ export default function CampaignsPage() {
     setContacts(c);
     setCampaigns(camps);
     setWaAccounts(wa);
-    if (!templateId && t[0]) setTemplateId(t[0].id);
+    const approved = t.find((row) => row.status === "approved") || t[0];
+    if (!templateId && approved) setTemplateId(approved.id);
   }
 
   useEffect(() => {
@@ -153,12 +159,13 @@ export default function CampaignsPage() {
       if (mode === "draft") {
         setOk(
           scheduledAt
-            ? "تم حفظ الحملة كمسودة مجدولة. أرسلها لاحقًا من القائمة أدناه."
-            : "تم حفظ الحملة كمسودة. أرسلها لاحقًا من القائمة أدناه.",
+            ? "تم حفظ الحملة كمسودة مجدولة. اعتمدها ثم ابدأ الإرسال من الجدول."
+            : "تم حفظ الحملة كمسودة. اعتمدها ثم ابدأ الإرسال من الجدول.",
         );
       } else {
+        await apiFetch(`/campaigns/${campaign.id}/approve`, { method: "POST" });
         const result = await apiFetch<Campaign>(
-          `/campaigns/${campaign.id}/send`,
+          `/campaigns/${campaign.id}/start`,
           { method: "POST" },
         );
         setOk(
@@ -176,8 +183,8 @@ export default function CampaignsPage() {
     }
   }
 
-  async function sendExisting(id: string) {
-    if (!hasDefaultChannel) {
+  async function campaignAction(id: string, action: string) {
+    if (action === "start" && !hasDefaultChannel) {
       setError("عيّن قناة واتساب افتراضية متصلة قبل الإرسال");
       return;
     }
@@ -185,13 +192,30 @@ export default function CampaignsPage() {
     setOk("");
     setLoading("send");
     try {
-      const result = await apiFetch<Campaign>(`/campaigns/${id}/send`, {
+      if (action === "start") {
+        const pre = await apiFetch<{ ok: boolean; issues: string[] }>("/campaigns/preflight", {
+          method: "POST",
+          body: JSON.stringify({ campaignId: id }),
+        });
+        if (!pre.ok) {
+          setError(pre.issues.join(" · "));
+          return;
+        }
+      }
+      const result = await apiFetch<Campaign>(`/campaigns/${id}/${action}`, {
         method: "POST",
+        body: action === "cancel" ? JSON.stringify({ reason: "cancelled_from_desk" }) : undefined,
       });
       const s = formatCampaignStats(result.stats, result.recipients?.length);
-      setOk(
-        `تم إرسال الحملة · نجح ${s.sent} من ${s.total} (${s.rate}%) · فشل ${s.failed}${s.pending > 0 ? ` · معلّق ${s.pending}` : ""}`,
-      );
+      const labels: Record<string, string> = {
+        approve: "تم اعتماد الحملة",
+        start: `بدأ الإرسال · نجح ${s.sent} من ${s.total} · فشل ${s.failed}`,
+        pause: "تم إيقاف الحملة مؤقتاً",
+        cancel: "تم إلغاء الحملة",
+        "retry-failed": `أُعيدت المحاولة · نجح ${s.sent} · فشل ${s.failed}`,
+        archive: "تمت أرشفة الحملة",
+      };
+      setOk(labels[action] || `تم تنفيذ ${action}`);
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : "فشل إرسال الحملة");
@@ -328,10 +352,12 @@ export default function CampaignsPage() {
                   value={templateId}
                   onChange={(e) => setTemplateId(e.target.value)}
                 >
-                  {templates.length === 0 ? (
-                    <option value="">لا توجد قوالب</option>
+                  {templates.filter((t) => t.status === "approved").length === 0 ? (
+                    <option value="">لا توجد قوالب معتمدة</option>
                   ) : null}
-                  {templates.map((t) => (
+                  {templates
+                    .filter((t) => t.status === "approved")
+                    .map((t) => (
                     <option key={t.id} value={t.id}>
                       {t.name}
                     </option>
@@ -534,21 +560,93 @@ export default function CampaignsPage() {
                         </td>
                         <td>
                           <div className="wa-row-actions">
-                            {row.status === "draft" ||
+                            {row.status === "draft" || row.status === "scheduled" ? (
+                              <button
+                                type="button"
+                                className="cust-table-btn"
+                                disabled={loading !== null}
+                                onClick={() => void campaignAction(row.id, "approve")}
+                              >
+                                اعتماد
+                              </button>
+                            ) : null}
+                            {row.status === "approved" ||
+                            row.status === "paused" ||
                             row.status === "scheduled" ? (
                               <button
                                 type="button"
                                 className="cust-table-btn"
-                                disabled={
-                                  loading !== null || !hasDefaultChannel
-                                }
-                                onClick={() => void sendExisting(row.id)}
+                                disabled={loading !== null || !hasDefaultChannel}
+                                onClick={() => void campaignAction(row.id, "start")}
                               >
-                                إرسال
+                                بدء
                               </button>
-                            ) : (
-                              <span className="hint">—</span>
-                            )}
+                            ) : null}
+                            {row.status === "running" ? (
+                              <button
+                                type="button"
+                                className="wa-mini-btn"
+                                disabled={loading !== null}
+                                onClick={() => void campaignAction(row.id, "pause")}
+                              >
+                                إيقاف
+                              </button>
+                            ) : null}
+                            {row.status !== "completed" &&
+                            row.status !== "cancelled" &&
+                            row.status !== "archived" ? (
+                              <button
+                                type="button"
+                                className="wa-mini-btn"
+                                disabled={loading !== null}
+                                onClick={() => void campaignAction(row.id, "cancel")}
+                              >
+                                إلغاء
+                              </button>
+                            ) : null}
+                            {row.status === "completed" ||
+                            row.status === "completed_with_errors" ||
+                            row.status === "failed" ||
+                            row.status === "paused" ? (
+                              <button
+                                type="button"
+                                className="wa-mini-btn"
+                                disabled={loading !== null}
+                                onClick={() => void campaignAction(row.id, "retry-failed")}
+                              >
+                                إعادة الفاشل
+                              </button>
+                            ) : null}
+                            {row.status === "completed" ||
+                            row.status === "completed_with_errors" ||
+                            row.status === "failed" ||
+                            row.status === "cancelled" ||
+                            row.status === "paused" ? (
+                              <button
+                                type="button"
+                                className="wa-mini-btn"
+                                disabled={loading !== null}
+                                onClick={() => void campaignAction(row.id, "archive")}
+                              >
+                                أرشفة
+                              </button>
+                            ) : null}
+                            <button
+                              type="button"
+                              className="wa-mini-btn"
+                              onClick={async () => {
+                                const report = await apiFetch<{
+                                  sent: number;
+                                  failed: number;
+                                  deliveryRate: number;
+                                }>(`/campaigns/${row.id}/report`);
+                                setOk(
+                                  `تقرير ${row.name}: نجح ${report.sent} · فشل ${report.failed} · تسليم ${report.deliveryRate}%`,
+                                );
+                              }}
+                            >
+                              تقرير
+                            </button>
                           </div>
                         </td>
                       </tr>

@@ -20,6 +20,14 @@ type WaAccount = {
   isDefault?: boolean;
   hasAccessToken?: boolean;
   webhookVerifiedAt?: string | null;
+  webhookSet?: boolean;
+  health?: {
+    qualityRating?: string | null;
+    qualityLabel?: string | null;
+    messagingLimitHint?: string | null;
+    metaStatusMessage?: string | null;
+    healthSyncedAt?: string | null;
+  };
 };
 
 const STATUS_LABEL: Record<string, string> = {
@@ -140,6 +148,59 @@ export default function WhatsAppPage() {
     setError("");
   }
 
+  async function syncHealth(id: string) {
+    setBusyId(id);
+    setError("");
+    setOk("");
+    try {
+      const result = await apiFetch<WaAccount>(`/whatsapp/accounts/${id}/sync-health`, {
+        method: "POST",
+      });
+      setOk(result.health?.metaStatusMessage || "تمت مزامنة صحة الحساب من ميتا");
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "فشل مزامنة الصحة");
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  async function ensureWebhook(id: string) {
+    setBusyId(id);
+    try {
+      const result = await apiFetch<{ message: string; subscribed?: boolean }>(
+        `/whatsapp/accounts/${id}/ensure-webhook`,
+        { method: "POST" },
+      );
+      setOk(result.message);
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "فشل ضمان Webhook");
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  async function checkToken(id: string) {
+    setBusyId(id);
+    try {
+      const result = await apiFetch<{ valid: boolean; mock?: boolean; error?: string }>(
+        `/whatsapp/accounts/${id}/token-status`,
+      );
+      setOk(
+        result.valid
+          ? result.mock
+            ? "التوكن تجريبي وصالح محلياً"
+            : "التوكن صالح لدى ميتا"
+          : result.error || "التوكن غير صالح",
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "فشل فحص التوكن");
+    } finally {
+      setBusyId(null);
+    }
+  }
+
   async function testAccount(id: string) {
     setBusyId(id);
     setError("");
@@ -167,6 +228,20 @@ export default function WhatsAppPage() {
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : "فشل التعيين");
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  async function archiveAccount(id: string) {
+    if (!window.confirm("أرشفة هذا الحساب؟ تبقى المحادثات ويمكن إعادة الربط لاحقاً.")) return;
+    setBusyId(id);
+    try {
+      await apiFetch(`/whatsapp/accounts/${id}/archive`, { method: "POST" });
+      setOk("تمت أرشفة الحساب");
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "فشل الأرشفة");
     } finally {
       setBusyId(null);
     }
@@ -278,6 +353,7 @@ export default function WhatsAppPage() {
                     <th>Meta IDs</th>
                     <th>التوكن</th>
                     <th>آخر تحقق</th>
+                    <th>صحة ميتا</th>
                     <th>الحالة</th>
                     <th>إجراءات</th>
                   </tr>
@@ -298,12 +374,23 @@ export default function WhatsAppPage() {
                       </td>
                       <td>{a.hasAccessToken ? <span className="wa-badge ok">مفعّل</span> : <span className="wa-badge warn">غير موجود</span>}</td>
                       <td className="cust-date">{formatDate(a.webhookVerifiedAt)}</td>
+                      <td>
+                        <div className="wa-health">
+                          <strong>{a.health?.qualityLabel || a.health?.qualityRating || "—"}</strong>
+                          <span>{a.health?.messagingLimitHint || ""}</span>
+                          <span>{a.health?.metaStatusMessage || ""}</span>
+                        </div>
+                      </td>
                       <td><span className={`wa-badge ${a.status === "connected" ? "ok" : a.status === "pending" ? "warn" : "bad"}`}>{STATUS_LABEL[a.status] || a.status}</span></td>
                       <td>
                         <div className="wa-row-actions">
+                          <button type="button" className="cust-table-btn" disabled={busyId === a.id} onClick={() => void syncHealth(a.id)}>صحة ميتا</button>
+                          <button type="button" className="wa-mini-btn" disabled={busyId === a.id} onClick={() => void ensureWebhook(a.id)}>Webhook</button>
+                          <button type="button" className="wa-mini-btn" disabled={busyId === a.id} onClick={() => void checkToken(a.id)}>التوكن</button>
                           <button type="button" className="cust-table-btn" disabled={busyId === a.id} onClick={() => void testAccount(a.id)}>مزامنة</button>
                           <button type="button" className="wa-mini-btn" onClick={() => editAccount(a)}>إعدادات</button>
                           {!a.isDefault ? <button type="button" className="wa-mini-btn" disabled={busyId === a.id} onClick={() => void setDefault(a.id)}>افتراضي</button> : null}
+                          <button type="button" className="wa-mini-btn" disabled={busyId === a.id} onClick={() => void archiveAccount(a.id)}>أرشفة</button>
                           <button type="button" className="wa-mini-btn danger" disabled={busyId === a.id} onClick={() => void removeAccount(a.id)}>فصل</button>
                         </div>
                       </td>

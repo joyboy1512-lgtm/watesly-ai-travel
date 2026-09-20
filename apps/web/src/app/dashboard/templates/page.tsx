@@ -244,6 +244,41 @@ export default function TemplatesPage() {
     setTab("create");
   }
 
+  async function submitToMeta(id: string) {
+    setError("");
+    setOk("");
+    try {
+      const row = await apiFetch<Template>(`/campaigns/templates/${id}/submit`, {
+        method: "POST",
+      });
+      setOk(
+        row.status === "approved"
+          ? `تم اعتماد القالب ${row.name}`
+          : `أُرسل القالب إلى ميتا — الحالة: ${STATUS_LABEL[row.status] || row.status}`,
+      );
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "فشل إرسال القالب إلى ميتا");
+    }
+  }
+
+  async function syncFromMeta() {
+    setError("");
+    setOk("");
+    try {
+      const result = await apiFetch<{ created: number; updated: number; mock?: boolean }>(
+        "/campaigns/templates/sync",
+        { method: "POST", body: JSON.stringify({}) },
+      );
+      setOk(
+        `مزامنة القوالب: أُضيف ${result.created} وحدّث ${result.updated}${result.mock ? " (تجريبي)" : ""}`,
+      );
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "فشل مزامنة القوالب");
+    }
+  }
+
   async function remove(id: string) {
     if (!window.confirm("حذف هذا القالب؟")) return;
     try {
@@ -285,6 +320,13 @@ export default function TemplatesPage() {
             <Link className="btn secondary" href="/dashboard/campaigns">
               الحملات
             </Link>
+            <button
+              type="button"
+              className="btn secondary"
+              onClick={() => void syncFromMeta()}
+            >
+              مزامنة ميتا
+            </button>
             <button
               type="button"
               className="btn"
@@ -651,6 +693,15 @@ export default function TemplatesPage() {
                         </td>
                         <td>
                           <div className="wa-row-actions">
+                            {t.status !== "approved" ? (
+                              <button
+                                type="button"
+                                className="cust-table-btn"
+                                onClick={() => void submitToMeta(t.id)}
+                              >
+                                إرسال لميتا
+                              </button>
+                            ) : null}
                             <button
                               type="button"
                               className="wa-mini-btn"

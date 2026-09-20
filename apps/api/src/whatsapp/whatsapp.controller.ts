@@ -78,8 +78,29 @@ export class WhatsappController {
 
   @Get("accounts")
   @RequirePermissions("whatsapp.manage")
-  list(@CurrentUser() user: AuthUser) {
-    return this.whatsapp.listAccounts(user.organizationId);
+  list(
+    @CurrentUser() user: AuthUser,
+    @Query("includeArchived") includeArchived?: string,
+  ) {
+    return this.whatsapp.listAccounts(
+      user.organizationId,
+      includeArchived === "1" || includeArchived === "true",
+    );
+  }
+
+  @Get("usage-board")
+  @RequirePermissions("whatsapp.manage")
+  usageBoard(@CurrentUser() user: AuthUser) {
+    return this.whatsapp.usageBoard(user.organizationId);
+  }
+
+  @Get("commerce/readiness")
+  @RequirePermissions("whatsapp.manage")
+  commerceReadiness(
+    @CurrentUser() user: AuthUser,
+    @Query("accountId") accountId?: string,
+  ) {
+    return this.whatsapp.commerceReadiness(user.organizationId, accountId);
   }
 
   @Post("accounts")
@@ -133,5 +154,44 @@ export class WhatsappController {
     @Param("id") id: string,
   ) {
     return this.whatsapp.testConnection(user.organizationId, id);
+  }
+
+  @Post("accounts/:id/archive")
+  @RequirePermissions("whatsapp.manage")
+  archive(@CurrentUser() user: AuthUser, @Param("id") id: string) {
+    return this.whatsapp.archiveAccount(user.organizationId, id, user.userId);
+  }
+
+  @Get("accounts/:id/token-status")
+  @RequirePermissions("whatsapp.manage")
+  tokenStatus(@CurrentUser() user: AuthUser, @Param("id") id: string) {
+    return this.whatsapp.tokenStatus(user.organizationId, id);
+  }
+
+  @Get("accounts/:id/webhook-status")
+  @RequirePermissions("whatsapp.manage")
+  webhookStatus(@CurrentUser() user: AuthUser, @Param("id") id: string) {
+    return this.whatsapp.webhookStatus(user.organizationId, id);
+  }
+
+  @Post("accounts/:id/ensure-webhook")
+  @RequirePermissions("whatsapp.manage")
+  ensureWebhook(@CurrentUser() user: AuthUser, @Param("id") id: string) {
+    return this.whatsapp.ensureWebhook(user.organizationId, id);
+  }
+
+  @Post("accounts/:id/sync-health")
+  @RequirePermissions("whatsapp.manage")
+  syncHealth(@CurrentUser() user: AuthUser, @Param("id") id: string) {
+    return this.whatsapp.syncHealth(user.organizationId, id);
+  }
+
+  @Get("accounts/:id/commerce/readiness")
+  @RequirePermissions("whatsapp.manage")
+  accountCommerceReadiness(
+    @CurrentUser() user: AuthUser,
+    @Param("id") id: string,
+  ) {
+    return this.whatsapp.commerceReadiness(user.organizationId, id);
   }
 }

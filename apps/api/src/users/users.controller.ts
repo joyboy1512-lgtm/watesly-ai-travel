@@ -14,6 +14,20 @@ import { CurrentUser, RequirePermissions } from "../auth/decorators";
 import type { AuthUser } from "../auth/auth.types";
 import { PrismaService } from "../prisma/prisma.service";
 import { AuditService } from "../common/audit.service";
+import { readOrgSettings, writeOrgSettings } from "../common/org-settings";
+import {
+  mergePermissions,
+  overrideForMembership,
+  readTeamSettings,
+  sanitizePermissionCodes,
+  writeTeamSettings,
+  type PermissionOverride,
+} from "../common/team-permissions";
+import { PERMISSION_CATALOG, ROLE_PERMISSIONS } from "@watesly-travel/shared";
+
+function rolePermissionsFromRole(code: string): string[] {
+  return [...(ROLE_PERMISSIONS[code] || ROLE_PERMISSIONS.agent || [])];
+}
 
 @Controller("users")
 export class UsersController {
@@ -37,18 +51,33 @@ export class UsersController {
             lastLoginAt: true,
           },
         },
-        role: { select: { id: true, code: true, name: true } },
+        role: {
+          select: {
+            id: true,
+            code: true,
+            name: true,
+            permissions: { include: { permission: true } },
+          },
+        },
       },
       orderBy: { createdAt: "asc" },
     });
 
+    const settings = await readOrgSettings(this.prisma, user.organizationId);
     return {
-      items: members.map((m) => ({
-        membershipId: m.id,
-        status: m.status,
-        user: m.user,
-        role: m.role,
-      })),
+      catalog: PERMISSION_CATALOG,
+      items: members.map((m) => {
+        const rolePermissions = m.role.permissions.map((rp) => rp.permission.code);
+        const override = overrideForMembership(settings, m.id);
+        return {
+          membershipId: m.id,
+          status: m.status,
+          user: m.user,
+          role: { id: m.role.id, code: m.role.code, name: m.role.name },
+          override: override || { grant: [], revoke: [] },
+          permissions: mergePermissions(m.role.code, rolePermissions, override),
+        };
+      }),
     };
   }
 
@@ -62,6 +91,8 @@ export class UsersController {
       name: string;
       password: string;
       roleCode?: string;
+      grant?: string[];
+      revoke?: string[];
     },
   ) {
     const email = body.email?.trim().toLowerCase();
@@ -132,13 +163,31 @@ export class UsersController {
       },
     });
 
+    const override: PermissionOverride = {
+      grant: sanitizePermissionCodes(body.grant),
+      revoke: sanitizePermissionCodes(body.revoke),
+    };
+    if (override.grant?.length || override.revoke?.length) {
+      const settings = await readOrgSettings(this.prisma, actor.organizationId);
+      const team = readTeamSettings(settings);
+      team.permissionOverrides = {
+        ...(team.permissionOverrides || {}),
+        [membership.id]: override,
+      };
+      await writeOrgSettings(
+        this.prisma,
+        actor.organizationId,
+        writeTeamSettings(settings, team),
+      );
+    }
+
     await this.audit.log({
       organizationId: actor.organizationId,
       actorUserId: actor.userId,
       action: "users.invite",
       entityType: "Membership",
       entityId: membership.id,
-      after: { email, roleCode },
+      after: { email, roleCode, override },
     });
 
     return {
@@ -146,6 +195,8 @@ export class UsersController {
       status: membership.status,
       user: membership.user,
       role: membership.role,
+      override,
+      permissions: mergePermissions(roleCode, rolePermissionsFromRole(roleCode), override),
     };
   }
 
@@ -214,7 +265,13 @@ export class UsersController {
   async update(
     @CurrentUser() actor: AuthUser,
     @Param("membershipId") membershipId: string,
-    @Body() body: { roleCode?: string; status?: string },
+    @Body()
+    body: {
+      roleCode?: string;
+      status?: string;
+      grant?: string[];
+      revoke?: string[];
+    },
   ) {
     const membership = await this.prisma.membership.findFirst({
       where: { id: membershipId, organizationId: actor.organizationId },
@@ -268,11 +325,42 @@ export class UsersController {
       after: { role: updated.role.code, status: updated.status },
     });
 
+    let override = overrideForMembership(
+      await readOrgSettings(this.prisma, actor.organizationId),
+      membershipId,
+    );
+    if (body.grant !== undefined || body.revoke !== undefined) {
+      if (updated.role.code === "owner") {
+        throw new BadRequestException("لا يمكن تقييد صلاحيات المالك");
+      }
+      override = {
+        grant: sanitizePermissionCodes(body.grant),
+        revoke: sanitizePermissionCodes(body.revoke),
+      };
+      const settings = await readOrgSettings(this.prisma, actor.organizationId);
+      const team = readTeamSettings(settings);
+      team.permissionOverrides = {
+        ...(team.permissionOverrides || {}),
+        [membershipId]: override,
+      };
+      await writeOrgSettings(
+        this.prisma,
+        actor.organizationId,
+        writeTeamSettings(settings, team),
+      );
+    }
+
     return {
       membershipId: updated.id,
       status: updated.status,
       user: updated.user,
       role: updated.role,
+      override: override || { grant: [], revoke: [] },
+      permissions: mergePermissions(
+        updated.role.code,
+        rolePermissionsFromRole(updated.role.code),
+        override,
+      ),
     };
   }
 }

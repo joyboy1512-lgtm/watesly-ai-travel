@@ -474,6 +474,44 @@ export {
 } from "./commerce";
 export type { GraphCatalogProduct, SendProductInput } from "./commerce";
 
+export {
+  GRAPH_BASE,
+  GRAPH_VERSION,
+  QUALITY_LABELS_AR,
+  TIER_DAILY_LIMITS,
+  buildMetaStatusMessage,
+  buildMetaTemplateComponents,
+  createMessageTemplate,
+  debugAccessToken,
+  deleteMessageTemplate,
+  deriveAccountStatus,
+  fetchPhoneHealth,
+  fetchWabaHealth,
+  fetchWabaSubscribedApps,
+  formatTierHint,
+  inspectCommerceCatalog,
+  isMockToken,
+  isTokenAuthError,
+  listMessageTemplates,
+  mockAccountHealth,
+  normalizeTemplateName,
+  parsePhoneHealth,
+  parseWabaHealth,
+  resolveEffectiveNameStatus,
+  subscribeWabaWebhook,
+  syncAccountHealth,
+  tierToDailyLimit,
+} from "./meta-ops";
+export type {
+  AccountHealth,
+  CommerceReadiness,
+  LocalTemplateInput,
+  MetaTemplate,
+  PhoneHealth,
+  WabaHealth,
+} from "./meta-ops";
+
+
 export async function sendChannelText(
   input: ChannelSendInput,
 ): Promise<SendResult> {

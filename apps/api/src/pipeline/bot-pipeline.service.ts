@@ -87,7 +87,11 @@ export class BotPipelineService {
         ? "telegram"
         : "whatsapp";
 
+    const aiEnabled = process.env.WHATSAPP_AI_ENABLED !== "false";
     try {
+      if (!aiEnabled) {
+        throw new Error("WHATSAPP_AI_DISABLED");
+      }
       const aiResult = await this.travelAi.turn({
         organizationId: input.organizationId,
         channel,

@@ -17,6 +17,8 @@ import {
   type HotelProviderAdapter,
   type HotelSearchParams,
   type TravelProviderAdapter,
+  readProviderResultCache,
+  writeProviderResultCache,
 } from "@watesly-travel/provider-sdk";
 import type {
   CapabilityAggregation,
@@ -225,6 +227,19 @@ export function dedupeFlightsByCheapest(
   );
 }
 
+const PROVIDER_RESULT_TTL_MS = 8 * 60 * 1000;
+
+async function loadProviderOffers<T>(
+  key: string,
+  load: () => Promise<T>,
+): Promise<T> {
+  const cached = await readProviderResultCache<T>(key);
+  if (cached != null) return cached;
+  const fresh = await load();
+  void writeProviderResultCache(key, fresh, PROVIDER_RESULT_TTL_MS);
+  return fresh;
+}
+
 export async function searchAndPriceFlights(input: {
   params: FlightSearchParams;
   rules: PricingRuleInput[];
@@ -235,7 +250,20 @@ export async function searchAndPriceFlights(input: {
 }): Promise<PricedOffer<FlightOffer>[]> {
   const provider =
     input.provider ?? getFlightProvider(input.providerKey);
-  const offers = await provider.searchFlights(input.params);
+  const offers = await loadProviderOffers(
+    `flight:${provider.providerKey}:${JSON.stringify({
+      origin: input.params.origin,
+      destination: input.params.destination,
+      departDate: input.params.departDate,
+      returnDate: input.params.returnDate,
+      adults: input.params.adults,
+      children: input.params.children,
+      infants: input.params.infants,
+      cabinClass: input.params.cabinClass,
+      currency: input.params.currency,
+    })}`,
+    () => provider.searchFlights(input.params),
+  );
   const lookup = input.fxRates?.length
     ? buildFxLookup(input.fxRates)
     : undefined;
@@ -270,7 +298,19 @@ export async function searchAndPriceHotels(input: {
   if (!provider.searchHotels) {
     throw new Error(`المزود لا يدعم البحث عن الفنادق`);
   }
-  const offers = await provider.searchHotels(input.params);
+  const offers = await loadProviderOffers(
+    `hotel:${provider.providerKey}:${JSON.stringify({
+      location: input.params.location,
+      hotelCode: input.params.hotelCode,
+      checkInDate: input.params.checkInDate,
+      checkOutDate: input.params.checkOutDate,
+      rooms: input.params.rooms,
+      adults: input.params.adults,
+      children: input.params.children,
+      currency: input.params.currency,
+    })}`,
+    () => provider.searchHotels!(input.params),
+  );
   const lookup = input.fxRates?.length
     ? buildFxLookup(input.fxRates)
     : undefined;

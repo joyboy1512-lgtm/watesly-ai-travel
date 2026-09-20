@@ -72,6 +72,18 @@ async function main() {
       { ...queueOptions, concurrency },
     ),
     new Worker(
+      QUEUE_NAMES.searchQuote,
+      async (job) => ({
+        ok: true,
+        kind: (job.data as { kind?: string } | undefined)?.kind || "ack",
+        processedAt: new Date().toISOString(),
+      }),
+      {
+        ...queueOptions,
+        concurrency: Number(process.env.SEARCH_QUEUE_CONCURRENCY ?? 8),
+      },
+    ),
+    new Worker(
       QUEUE_NAMES.campaignSend,
       async (job) => {
         const data = job.data as { campaignId: string; organizationId: string };

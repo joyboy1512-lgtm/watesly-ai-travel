@@ -12,7 +12,8 @@ import {
   clientIpFromRequest,
   isProductionRuntime,
 } from "./common/security-env";
-import { sharedIncr } from "./common/shared-kv";
+import { bindProviderResultCache } from "@watesly-travel/provider-sdk";
+import { sharedGet, sharedIncr, sharedIncrStrict, sharedSet } from "./common/shared-kv";
 
 async function bootstrap() {
   assertProductionSecrets();
@@ -94,13 +95,21 @@ async function bootstrap() {
 
     const ip = clientIpFromRequest(req);
     const bucket = `rl:${ip}:${path.split("/").slice(0, 3).join("/")}`;
+    const failClosed =
+      maxHits === maxHitsAuth ||
+      maxHits === maxHitsSearch ||
+      maxHits === maxHitsAssistant;
     try {
-      const count = await sharedIncr(bucket, windowMs);
+      const count = failClosed
+        ? await sharedIncrStrict(bucket, windowMs)
+        : await sharedIncr(bucket, windowMs);
       if (count > maxHits) {
         return res.status(429).json({ message: "طلبات كثيرة، حاول لاحقًا" });
       }
     } catch {
-      // fail-open on shared store errors
+      if (failClosed) {
+        return res.status(429).json({ message: "طلبات كثيرة، حاول لاحقًا" });
+      }
     }
     return next();
   });
@@ -133,6 +142,11 @@ async function bootstrap() {
   app.enableCors({
     origin: corsOrigins,
     credentials: true,
+  });
+
+  bindProviderResultCache({
+    get: sharedGet,
+    set: sharedSet,
   });
 
   if (isProductionRuntime()) {

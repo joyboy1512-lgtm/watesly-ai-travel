@@ -169,13 +169,20 @@ export class BookingsController {
       include: {
         quote: {
           include: {
-            items: true,
+            items: {
+              select: {
+                id: true,
+                serviceType: true,
+                description: true,
+                sellAmount: true,
+                costAmount: true,
+                profitAmount: true,
+              },
+            },
             contact: true,
             inquiry: true,
-            pricingRule: true,
           },
         },
-        bookingRequest: true,
         payments: true,
       },
       orderBy: { createdAt: "desc" },

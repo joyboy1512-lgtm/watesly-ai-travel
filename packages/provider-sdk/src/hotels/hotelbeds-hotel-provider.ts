@@ -36,6 +36,10 @@ import { isTransientProviderError, providerErrorCode } from "../ops/errors";
 import { singleflight } from "../ops/inflight";
 import { logProviderOps, newRequestId } from "../ops/provider-log";
 import { withTimeoutSignal } from "../ops/with-timeout";
+import {
+  readProviderResultCache,
+  writeProviderResultCache,
+} from "../ops/result-cache";
 
 const SEARCH_CACHE_TTL_MS = 8 * 60 * 1000;
 const SEARCH_STALE_TTL_MS = 60 * 60 * 1000;
@@ -220,7 +224,9 @@ export class HotelbedsHotelProvider implements HotelProviderAdapter {
 
   async searchHotels(params: HotelSearchParams): Promise<HotelOffer[]> {
     const cacheKey = searchCacheKey(params);
-    return singleflight(`hb-search:${cacheKey}`, () => this.searchHotelsInner(params, cacheKey));
+    return singleflight(`hb-search:${cacheKey}`, () =>
+      this.searchHotelsInner(params, cacheKey),
+    );
   }
 
   private async searchHotelsInner(
@@ -237,6 +243,19 @@ export class HotelbedsHotelProvider implements HotelProviderAdapter {
         status: "cache_hit",
       });
       return cached.offers.map((offer) => ({ ...offer }));
+    }
+    const shared = await readProviderResultCache<HotelOffer[]>(
+      `hb-search:${cacheKey}`,
+    );
+    if (shared?.length) {
+      hotelSearchCache.set(cacheKey, { offers: shared, savedAt: Date.now() });
+      logProviderOps({
+        provider: "hotelbeds",
+        operation: "searchHotels",
+        durationMs: 0,
+        status: "cache_hit",
+      });
+      return shared.map((offer) => ({ ...offer }));
     }
 
     const hotelCodeRaw = String(params.hotelCode || "").trim();
@@ -439,6 +458,11 @@ export class HotelbedsHotelProvider implements HotelProviderAdapter {
 
     const sorted = offers.sort((a, b) => a.costAmountMinor - b.costAmountMinor);
     hotelSearchCache.set(cacheKey, { offers: sorted, savedAt: Date.now() });
+    void writeProviderResultCache(
+      `hb-search:${cacheKey}`,
+      sorted,
+      SEARCH_CACHE_TTL_MS,
+    );
     // Bound memory: drop oldest when oversized
     if (hotelSearchCache.size > 40) {
       const oldest = [...hotelSearchCache.entries()].sort(

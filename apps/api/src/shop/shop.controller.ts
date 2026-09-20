@@ -28,6 +28,7 @@ import {
 } from "./shop-auth";
 import { ShopService } from "./shop.service";
 import { VOICE_MAX_BYTES } from "@watesly-travel/ai-core";
+import { guardShopSearch } from "../common/shop-search-guard";
 
 @Controller("shop")
 @Public()
@@ -79,7 +80,7 @@ export class ShopController {
     },
     @ShopCustomerMaybe() customer?: ShopCustomer,
   ) {
-    return this.shop.searchFlights(body, customer);
+    return guardShopSearch("flights", () => this.shop.searchFlights(body, customer));
   }
 
   @Post("search-hotels")
@@ -100,7 +101,7 @@ export class ShopController {
     },
     @ShopCustomerMaybe() customer?: ShopCustomer,
   ) {
-    return this.shop.searchHotels(body, customer);
+    return guardShopSearch("hotels", () => this.shop.searchHotels(body, customer));
   }
 
   @Post("search-transfers")
@@ -122,7 +123,7 @@ export class ShopController {
       toLabel?: string;
     },
   ) {
-    return this.shop.searchTransfers(body);
+    return guardShopSearch("transfers", () => this.shop.searchTransfers(body));
   }
 
   @Post("search-activities")
@@ -136,7 +137,7 @@ export class ShopController {
       children?: number;
     },
   ) {
-    return this.shop.searchActivities(body);
+    return guardShopSearch("activities", () => this.shop.searchActivities(body));
   }
 
   @Post("checkrate-hotel")

@@ -216,6 +216,58 @@ export async function sharedDelete(key: string): Promise<void> {
   }
 }
 
+export async function sharedDecr(key: string): Promise<number> {
+  if (!redisUrl()) {
+    const cur = Math.max(0, Number(memGet(key) || "0") - 1);
+    const existing = memory.get(key);
+    memory.set(key, {
+      value: String(cur),
+      expiresAt: existing?.expiresAt ?? Date.now() + 60_000,
+    });
+    return cur;
+  }
+  try {
+    return await withRedis(async (send) => {
+      const n = await send(["DECR", key]);
+      const count = typeof n === "number" ? n : Number(n);
+      return Number.isFinite(count) ? count : 0;
+    });
+  } catch {
+    const cur = Math.max(0, Number(memGet(key) || "0") - 1);
+    const existing = memory.get(key);
+    memory.set(key, {
+      value: String(cur),
+      expiresAt: existing?.expiresAt ?? Date.now() + 60_000,
+    });
+    return cur;
+  }
+}
+
+export async function sharedPing(): Promise<boolean> {
+  if (!redisUrl()) return true;
+  try {
+    const v = await withRedis((send) => send(["PING"]));
+    return v === "PONG" || v === "OK";
+  } catch {
+    return false;
+  }
+}
+
+/** Increment that fails closed when Redis is configured but unreachable. */
+export async function sharedIncrStrict(key: string, ttlMs: number): Promise<number> {
+  if (!redisUrl()) {
+    return sharedIncr(key, ttlMs);
+  }
+  return withRedis(async (send) => {
+    const n = await send(["INCR", key]);
+    const count = typeof n === "number" ? n : Number(n);
+    if (count === 1) {
+      await send(["PEXPIRE", key, String(Math.ceil(ttlMs))]);
+    }
+    return count;
+  });
+}
+
 export async function sharedIncr(key: string, ttlMs: number): Promise<number> {
   if (!redisUrl()) {
     const existing = memory.get(key);

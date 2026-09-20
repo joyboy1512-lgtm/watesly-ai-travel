@@ -18,6 +18,25 @@ services:
       timeout: 5s
       retries: 10
 
+  pgbouncer:
+    image: edoburu/pgbouncer:v1.23.1-p1
+    container_name: watesly-travel-pgbouncer
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DB_HOST: postgres
+      DB_USER: watesly
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-change-me}
+      DB_NAME: watesly_travel
+      POOL_MODE: transaction
+      MAX_CLIENT_CONN: 200
+      DEFAULT_POOL_SIZE: 20
+      AUTH_TYPE: md5
+    ports:
+      - "6432:6432"
+
   redis:
     image: redis:7-alpine
     container_name: watesly-travel-redis

@@ -25,33 +25,18 @@
 }
 
 .staff-login-brand .wg-logo-lockup-img {
-  height: 2.15rem;
+  height: 3.4rem;
   width: auto;
-}
-
-.staff-login-kicker {
-  margin: 0.35rem 0 0;
-  color: #e2b36a;
-  font-size: 0.72rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
 }
 
 .staff-login-brand h1 {
   margin: 0;
-  font-size: clamp(1.55rem, 3vw, 2.1rem);
-  line-height: 1.25;
+  max-width: 16ch;
+  color: #f3f7f4;
+  font-size: clamp(1.7rem, 3.2vw, 2.35rem);
+  line-height: 1.3;
   font-weight: 800;
   letter-spacing: -0.02em;
-}
-
-.staff-login-brand > p {
-  margin: 0;
-  max-width: 42ch;
-  color: rgba(243, 247, 244, 0.78);
-  font-size: 0.88rem;
-  line-height: 1.6;
 }
 
 .staff-login-menu {

@@ -48,12 +48,7 @@ export default function StaffLoginForm() {
     <main className="staff-login">
       <section className="staff-login-brand">
         <WeekendGateLogo light />
-        <p className="staff-login-kicker">Control Desk</p>
-        <h1>دخول لوحة التحكم</h1>
-        <p>
-          {COMPANY_LEGAL.legalNameAr} — غرفة تشغيل الاستعلامات والحجوزات
-          والمزودين من شاشة واحدة.
-        </p>
+        <h1>{COMPANY_LEGAL.legalNameAr}</h1>
         <ul className="staff-login-menu">
           {DESK_LIST.map((item) => (
             <li key={item}>{item}</li>
@@ -76,7 +71,6 @@ export default function StaffLoginForm() {
             <span className="staff-login-logo-legal">{COMPANY_LEGAL.legalNameAr}</span>
           </div>
           <h2>تسجيل الدخول</h2>
-          <p className="lead">استخدم بريد فريق العمل للوصول إلى المكاتب.</p>
           {error ? <p className="staff-login-alert">{error}</p> : null}
           <form className="staff-login-form" onSubmit={onSubmit}>
             <label className="staff-login-field">
@@ -109,7 +103,7 @@ export default function StaffLoginForm() {
               </span>
             </label>
             <button type="submit" className="staff-login-submit" disabled={busy}>
-              {busy ? "جارٍ الدخول..." : "دخول لوحة التحكم"}
+              {busy ? "جارٍ الدخول..." : "دخول"}
             </button>
           </form>
           <p className="staff-login-foot">

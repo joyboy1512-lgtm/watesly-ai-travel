@@ -63,6 +63,11 @@ export default function StaffLoginForm() {
 
       <section className="staff-login-panel">
         <div className="staff-login-card">
+          <div className="staff-login-card-brand">
+            <WeekendGateLogo />
+            <strong>{COMPANY_LEGAL.brandName}</strong>
+            <span>{COMPANY_LEGAL.legalNameAr}</span>
+          </div>
           <h2>تسجيل الدخول</h2>
           <p className="lead">استخدم بريد فريق العمل للوصول إلى المكاتب.</p>
           {error ? <p className="staff-login-alert">{error}</p> : null}

@@ -355,19 +355,19 @@ export default function ProvidersPage() {
         </section>
 
         <section className="prov-stats">
-          <div className="prov-stat">
+          <div className="prov-stat prov-stat-total">
             <span>المضافون</span>
             <strong>{stats.total}</strong>
           </div>
-          <div className="prov-stat">
+          <div className="prov-stat prov-stat-on">
             <span>مفعّلون</span>
             <strong>{stats.enabled}</strong>
           </div>
-          <div className="prov-stat">
+          <div className="prov-stat prov-stat-keys">
             <span>بمفاتيح جاهزة</span>
             <strong>{stats.withKeys}</strong>
           </div>
-          <div className="prov-stat">
+          <div className="prov-stat prov-stat-archived">
             <span>مؤرشفون</span>
             <strong>{stats.archived}</strong>
           </div>
@@ -455,7 +455,7 @@ export default function ProvidersPage() {
                       <td>
                         <div className="prov-caps">
                           {(row.capabilities || []).map((cap) => (
-                            <span key={cap} className="prov-chip">
+                            <span key={cap} className={`prov-chip cap-${cap}`}>
                               {CAPABILITY_LABEL[cap] || cap}
                             </span>
                           ))}

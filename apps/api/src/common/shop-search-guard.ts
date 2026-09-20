@@ -1,4 +1,5 @@
 import { HttpException, HttpStatus } from "@nestjs/common";
+import { postBeeceptorDebug } from "./beeceptor-debug";
 import { sharedDecr, sharedIncrStrict } from "./shared-kv";
 
 const SLOT_KEY = "shop:search:inflight";
@@ -46,20 +47,22 @@ export async function guardShopSearch<T>(
   const started = Date.now();
   const allowed = await tryAcquireSearchSlot();
   if (!allowed) {
-    logSearch({ service, status: "shed", ms: Date.now() - started });
+    const ms = Date.now() - started;
+    logSearch({ service, status: "shed", ms });
+    postBeeceptorDebug("/debug/shop-search", { service, status: "shed", ms });
     throw new HttpException("طلبات كثيرة، حاول لاحقًا", HttpStatus.TOO_MANY_REQUESTS);
   }
   try {
     const result = await run();
-    logSearch({ service, status: "ok", ms: Date.now() - started });
+    const ms = Date.now() - started;
+    logSearch({ service, status: "ok", ms });
+    postBeeceptorDebug("/debug/shop-search", { service, status: "ok", ms });
     return result;
   } catch (err) {
-    logSearch({
-      service,
-      status: "error",
-      ms: Date.now() - started,
-      error: err instanceof Error ? err.message.slice(0, 160) : "error",
-    });
+    const ms = Date.now() - started;
+    const error = err instanceof Error ? err.message.slice(0, 160) : "error";
+    logSearch({ service, status: "error", ms, error });
+    postBeeceptorDebug("/debug/shop-search", { service, status: "error", ms, error });
     throw err;
   } finally {
     await releaseSearchSlot();

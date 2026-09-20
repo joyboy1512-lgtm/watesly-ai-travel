@@ -29,6 +29,7 @@ import {
   revokeSessionJti,
   storeCsrfToken,
 } from "../common/session-cookies";
+import { postBeeceptorDebug } from "../common/beeceptor-debug";
 import { PublicOrgService } from "./public-org";
 import { dispatchCustomerNotification } from "./platform-notify";
 import type { CustomerJwtPayload, ShopCustomer } from "./shop-auth";
@@ -698,7 +699,7 @@ export class ShopService {
         sendToCustomer: false,
         includeHotels: true,
       });
-      return {
+      const payload = {
         inquiryId: inquiry.id,
         quoteId: result.quote?.id,
         quoteItems: (result.quote?.items || []).map((item) => ({
@@ -712,11 +713,33 @@ export class ShopService {
         hotels: result.hotels.map((row) => this.mapPricedOffer(row)),
         hotelError: result.hotelError,
       };
+      postBeeceptorDebug("/debug/hotel-search", {
+        destination: body.destination,
+        checkIn: body.checkIn,
+        checkOut: body.checkOut,
+        rooms: body.rooms || 1,
+        adults: body.adults || 1,
+        children: body.children || 0,
+        hotelCount: payload.hotels.length,
+        providerKey: payload.providerKey,
+        providerName: payload.providerName,
+        liveMode: payload.liveMode,
+        hotelError: payload.hotelError || null,
+        status: payload.hotelError ? "partial" : "ok",
+      });
+      return payload;
     } catch (err) {
       const raw = err instanceof Error ? err.message : "تعذر البحث عن الفنادق";
       const message = /quota has been exceeded/i.test(raw)
         ? "تم تجاوز حد طلبات مزود الفنادق التجريبي مؤقتًا. أعد المحاولة بعد قليل."
         : raw;
+      postBeeceptorDebug("/debug/hotel-search", {
+        destination: body.destination,
+        checkIn: body.checkIn,
+        checkOut: body.checkOut,
+        status: "error",
+        error: message,
+      });
       throw new BadRequestException(message);
     }
   }

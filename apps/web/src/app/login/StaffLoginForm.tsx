@@ -47,8 +47,10 @@ export default function StaffLoginForm() {
   return (
     <main className="staff-login">
       <section className="staff-login-brand">
-        <WeekendGateLogo light />
-        <h1>{COMPANY_LEGAL.legalNameAr}</h1>
+        <div className="staff-login-brand-mark">
+          <WeekendGateLogo light />
+          <h1>{COMPANY_LEGAL.legalNameAr}</h1>
+        </div>
         <ul className="staff-login-menu">
           {DESK_LIST.map((item) => (
             <li key={item}>{item}</li>

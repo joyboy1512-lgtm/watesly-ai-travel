@@ -106,12 +106,51 @@
 
 .prc-block {
   display: grid;
-  gap: 0.4rem;
-  padding: 0.45rem 0.6rem 0.5rem;
-  border-radius: 9px;
-  border: 1px solid rgba(15, 51, 64, 0.1);
-  border-inline-start: 4px solid var(--prc-navy);
+  gap: 0.45rem;
+  padding: 0.65rem 0.7rem 0.7rem;
+  border-radius: 11px;
+  border: 1px solid rgba(15, 51, 64, 0.12);
+  border-inline-start: 5px solid var(--prc-navy);
   background: #f6f9f8;
+}
+
+.prc-step {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.35rem;
+  height: 1.35rem;
+  margin-inline-end: 0.4rem;
+  border-radius: 999px;
+  background: var(--prc-navy);
+  color: #f3f7f4;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.prc-item {
+  padding: 0.4rem 0.5rem 0.45rem;
+  border-radius: 8px;
+  border: 1px solid rgba(15, 51, 64, 0.1);
+  background: rgba(255, 255, 255, 0.78);
+}
+
+.prc-item-currency {
+  border-color: rgba(216, 163, 94, 0.45);
+  background: #fffaf2;
+}
+
+.prc-cond-toggle {
+  justify-self: start;
+  border: 1px solid rgba(15, 51, 64, 0.16);
+  background: #fff;
+  color: var(--prc-navy);
+  border-radius: 8px;
+  padding: 0.28rem 0.7rem;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
 }
 
 .prc-block-define {
@@ -141,10 +180,18 @@
 
 .prc-block-title {
   margin: 0;
+  display: flex;
+  align-items: center;
   color: var(--prc-navy);
-  font-size: 0.76rem;
+  font-size: 0.82rem;
   font-weight: 800;
 }
+
+.prc-block-define .prc-step { background: #0f3340; }
+.prc-block-scope .prc-step { background: #1a6b4a; }
+.prc-block-margin .prc-step { background: #c9893a; }
+.prc-block-commission .prc-step { background: #a86b1f; }
+.prc-block-conditions .prc-step { background: #184a52; }
 
 .prc-block-commission .prc-block-title {
   color: #7a4e12;
@@ -298,11 +345,19 @@
 
 .prc-suite .cust-table {
   min-width: 980px;
+  border-collapse: collapse;
 }
 
 .prc-suite .cust-table thead th {
   padding: 0.58rem 0.65rem;
   font-size: 0.8rem;
+  background: linear-gradient(145deg, #184a52, #0f3340);
+  color: #f3f7f4;
+}
+
+.prc-suite .cust-table th,
+.prc-suite .cust-table td {
+  border: 1px solid rgba(15, 51, 64, 0.1);
 }
 
 .prc-suite .cust-table tbody td {
@@ -316,7 +371,7 @@
 }
 
 .prc-suite .cust-table tbody tr:nth-child(even) td {
-  background: #e8f1ee;
+  background: #cfe3dd;
 }
 
 .prc-suite .cust-table tbody tr:hover td {

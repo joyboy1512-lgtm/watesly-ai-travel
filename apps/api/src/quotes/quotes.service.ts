@@ -39,6 +39,7 @@ export class QuotesService implements OnModuleInit, OnModuleDestroy {
     const expired = await this.prisma.quote.findMany({
       where: {
         ...(organizationId ? { organizationId } : {}),
+        status: { not: "archived" },
         OR: [{ expiresAt: { lt: now } }, { createdAt: { lt: threeDaysAgo } }],
       },
       select: {
@@ -112,5 +113,98 @@ export class QuotesService implements OnModuleInit, OnModuleDestroy {
     });
 
     return { ok: true, id: row.id };
+  }
+
+  async bulkQuotes(input: {
+    organizationId: string;
+    userId: string;
+    ids: string[];
+    action?: "archive" | "unarchive" | "delete";
+  }) {
+    const ids = Array.from(new Set(input.ids.filter(Boolean)));
+    if (!ids.length) return { ok: true, count: 0 };
+    if (
+      input.action !== "archive" &&
+      input.action !== "unarchive" &&
+      input.action !== "delete"
+    ) {
+      throw new BadRequestException("إجراء غير مدعوم");
+    }
+
+    const rows = await this.prisma.quote.findMany({
+      where: { organizationId: input.organizationId, id: { in: ids } },
+      include: {
+        items: { select: { id: true, description: true, serviceType: true } },
+        bookings: { select: { id: true, status: true } },
+      },
+    });
+    if (!rows.length) return { ok: true, count: 0 };
+
+    if (input.action === "delete") {
+      const deletable = rows.filter((row) => this.canDeleteQuote(row));
+      if (!deletable.length) {
+        throw new BadRequestException(
+          "لا يمكن حذف عروض مرتبطة بحجز نشط. ألغِ الحجز أولاً.",
+        );
+      }
+      await this.prisma.quote.deleteMany({
+        where: { id: { in: deletable.map((row) => row.id) } },
+      });
+      await this.audit.log({
+        organizationId: input.organizationId,
+        actorUserId: input.userId,
+        action: "quotes.bulk.delete",
+        entityType: "quote",
+        entityId: deletable.map((row) => row.id).join(","),
+        after: { count: deletable.length },
+      });
+      return { ok: true, count: deletable.length };
+    }
+
+    const archived = input.action === "archive";
+    for (const row of rows) {
+      const payload =
+        row.customerVisiblePayload &&
+        typeof row.customerVisiblePayload === "object" &&
+        !Array.isArray(row.customerVisiblePayload)
+          ? { ...(row.customerVisiblePayload as Record<string, unknown>) }
+          : {};
+      if (archived) {
+        if (row.status === "archived") continue;
+        payload._prevStatus = row.status;
+        await this.prisma.quote.update({
+          where: { id: row.id },
+          data: {
+            status: "archived",
+            customerVisiblePayload: payload as object,
+          },
+        });
+      } else {
+        const prev =
+          typeof payload._prevStatus === "string" && payload._prevStatus
+            ? payload._prevStatus
+            : row.sentAt
+              ? "sent"
+              : "draft";
+        delete payload._prevStatus;
+        await this.prisma.quote.update({
+          where: { id: row.id },
+          data: {
+            status: prev === "archived" ? "draft" : prev,
+            customerVisiblePayload: payload as object,
+          },
+        });
+      }
+    }
+
+    await this.audit.log({
+      organizationId: input.organizationId,
+      actorUserId: input.userId,
+      action: archived ? "quotes.bulk.archive" : "quotes.bulk.unarchive",
+      entityType: "quote",
+      entityId: rows.map((row) => row.id).join(","),
+      after: { count: rows.length },
+    });
+    return { ok: true, count: rows.length };
   }
 }

@@ -4,11 +4,6 @@ import "../../prov-desk.css";
 
 import { useEffect, useMemo, useState } from "react";
 import { AppShell } from "@/components/AppShell";
-import {
-  AggregationRuleTable,
-  DEFAULT_TRAVEL_AGGREGATION,
-  type TravelAggregation,
-} from "@/components/AggregationRuleTable";
 import { apiFetch } from "@/lib/api";
 
 type CatalogEntry = {
@@ -78,10 +73,6 @@ export default function ProvidersPage() {
   const [priority, setPriority] = useState(50);
   const [enabled, setEnabled] = useState(true);
   const [credentials, setCredentials] = useState<Record<string, string>>({});
-  const [aggregation, setAggregation] = useState<TravelAggregation>(
-    DEFAULT_TRAVEL_AGGREGATION,
-  );
-  const [aggSaving, setAggSaving] = useState(false);
 
   const selected = useMemo(
     () => catalog.find((c) => c.providerKey === selectedKey) || null,
@@ -109,16 +100,12 @@ export default function ProvidersPage() {
       ...(status === "disabled" ? { status: "disabled" } : {}),
       ...(q.trim() ? { q: q.trim() } : {}),
     });
-    const [c, r, agg] = await Promise.all([
+    const [c, r] = await Promise.all([
       apiFetch<CatalogEntry[]>("/providers/catalog"),
       apiFetch<ProviderRow[]>(`/providers?${params.toString()}`),
-      apiFetch<TravelAggregation>("/providers/aggregation").catch(
-        (): TravelAggregation => DEFAULT_TRAVEL_AGGREGATION,
-      ),
     ]);
     setCatalog(c);
     setRows(r);
-    setAggregation(agg);
     if (!c.find((x) => x.providerKey === selectedKey) && c[0]) {
       setSelectedKey(c[0].providerKey);
     }
@@ -219,24 +206,6 @@ export default function ProvidersPage() {
     }
   }
 
-  async function saveAggregation(next: TravelAggregation) {
-    setAggregation(next);
-    setAggSaving(true);
-    setError("");
-    try {
-      const saved = await apiFetch<TravelAggregation>("/providers/aggregation", {
-        method: "PATCH",
-        body: JSON.stringify(next),
-      });
-      setAggregation(saved);
-      setOk("تم حفظ سياسة التجميع والعرض");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "فشل حفظ سياسة التجميع");
-    } finally {
-      setAggSaving(false);
-    }
-  }
-
   async function setRowPriority(row: ProviderRow, next: number) {
     setError("");
     try {
@@ -314,8 +283,7 @@ export default function ProvidersPage() {
             <p className="prov-kicker">Provider Operations</p>
             <h3>غرفة تشغيل المزودين</h3>
             <p>
-              قاعدة العرض: البحث يجمع كل المزودين المفعّلين ثم يظهر نتيجة واحدة
-              لنفس الرحلة أو الفندق. غيّر القاعدة من الجدول أدناه — الأرخص أو حسب الأولوية.
+              أضف المزودين، فعّلهم، وأدر المفاتيح والأولوية من الجدول أدناه.
             </p>
           </div>
           <div className="prov-hero-actions">
@@ -334,25 +302,6 @@ export default function ProvidersPage() {
 
         {error ? <div className="prov-alert err">{error}</div> : null}
         {ok ? <div className="prov-alert ok">{ok}</div> : null}
-
-        <section className="prov-panel prov-agg">
-          <div className="prov-panel-head">
-            <div>
-              <h4>قاعدة توحيد النتائج</h4>
-              <p>
-                نفس الرحلة أو الفندق من عدة مزودين تُعرض مرة واحدة. اختر الأرخص
-                أو مزودًا مفضّلًا حسب رقم الأولوية في جدول المزودين.
-              </p>
-            </div>
-            {aggSaving ? <span className="prov-chip">جاري الحفظ…</span> : null}
-          </div>
-          <AggregationRuleTable
-            aggregation={aggregation}
-            providers={rows}
-            saving={aggSaving}
-            onChange={(next) => void saveAggregation(next)}
-          />
-        </section>
 
         <section className="prov-stats">
           <div className="prov-stat prov-stat-total">

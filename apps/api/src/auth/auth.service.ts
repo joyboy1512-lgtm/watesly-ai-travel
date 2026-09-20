@@ -14,6 +14,7 @@ import {
   createSystemRolesWithPermissions,
   seedOrgDefaults,
 } from "../common/org-bootstrap";
+import { mergePermissions, overrideForMembership } from "../common/team-permissions";
 
 @Injectable()
 export class AuthService {
@@ -85,7 +86,11 @@ export class AuthService {
       organizationName: membership.organization.name,
       membershipId: membership.id,
       roleCode: membership.role.code,
-      permissions: membership.role.permissions.map((rp) => rp.permission.code),
+      permissions: mergePermissions(
+        membership.role.code,
+        membership.role.permissions.map((rp) => rp.permission.code),
+        overrideForMembership(membership.organization.settings, membership.id),
+      ),
     });
   }
 
@@ -228,7 +233,11 @@ export class AuthService {
         code: membership.role.code,
         name: membership.role.name,
       },
-      permissions: membership.role.permissions.map((rp) => rp.permission.code),
+      permissions: mergePermissions(
+        membership.role.code,
+        membership.role.permissions.map((rp) => rp.permission.code),
+        overrideForMembership(membership.organization.settings, membership.id),
+      ),
     };
   }
 

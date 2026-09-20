@@ -10,6 +10,7 @@ import type { Request } from "express";
 import { IS_PUBLIC_KEY } from "./decorators";
 import type { AuthUser, JwtPayload } from "./auth.types";
 import { PrismaService } from "../prisma/prisma.service";
+import { mergePermissions, overrideForMembership } from "../common/team-permissions";
 
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
@@ -74,6 +75,10 @@ export class JwtAuthGuard implements CanActivate {
       throw new UnauthorizedException("العضوية غير نشطة");
     }
 
+    const rolePermissions = membership.role.permissions.map(
+      (rp) => rp.permission.code,
+    );
+
     request.user = {
       userId: membership.user.id,
       email: membership.user.email,
@@ -82,7 +87,11 @@ export class JwtAuthGuard implements CanActivate {
       organizationName: membership.organization.name,
       membershipId: membership.id,
       roleCode: membership.role.code,
-      permissions: membership.role.permissions.map((rp) => rp.permission.code),
+      permissions: mergePermissions(
+        membership.role.code,
+        rolePermissions,
+        overrideForMembership(membership.organization.settings, membership.id),
+      ),
     };
 
     return true;

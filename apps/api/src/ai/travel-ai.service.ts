@@ -25,6 +25,7 @@ import {
   getTransferProviderForOrg,
 } from "../common/provider-runtime";
 import { hotelCatalogEntry, serializeHotelDetailsForAi, serializeSearchResult } from "./tool-result-serializers";
+import { applyAiSellPrices, loadActivePricingRules } from "./apply-ai-sell-prices";
 import type { HotelOffer } from "@watesly-travel/shared";
 import { chatTextForAi, parseChatAttachments } from "@watesly-travel/shared";
 
@@ -1030,10 +1031,19 @@ export class TravelAiService {
       children: Math.max(0, int(args.children, 0)),
       cabinClass: str(args.cabinClass) || "economy",
     });
+    const rules = await loadActivePricingRules(this.prisma, organizationId);
+    const priced = applyAiSellPrices(rows, rules, "flight", {
+      origin,
+      destination,
+      departDate,
+      cabinClass: str(args.cabinClass) || "economy",
+      adults: Math.max(1, int(args.adults, 1)),
+      children: Math.max(0, int(args.children, 0)),
+    });
     return serializeSearchResult({
       liveMode: provider.liveMode,
       provider: provider.displayName,
-      rows,
+      rows: priced,
       kind: "flight",
       ...toolSliceArgs(args),
     });
@@ -1129,9 +1139,17 @@ export class TravelAiService {
       currency,
     });
 
+    const rules = await loadActivePricingRules(this.prisma, organizationId);
+    const priced = applyAiSellPrices(rows, rules, "hotel", {
+      city: location,
+      checkIn: checkInDate,
+      adults: Math.max(1, int(args.adults, 1)),
+      children: Math.max(0, int(args.children, 0)),
+      rooms: Math.max(1, int(args.rooms, 1)),
+    });
     const sliceArgs = toolSliceArgs(args);
     if (threadId) {
-      const catalog = rows.map((row) => hotelCatalogEntry(row as HotelOffer));
+      const catalog = priced.map((row) => hotelCatalogEntry(row as HotelOffer));
       const existing = await this.prisma.aiThread.findUnique({
         where: { id: threadId },
         select: { metadata: true },
@@ -1160,7 +1178,7 @@ export class TravelAiService {
     return serializeSearchResult({
       liveMode: provider.liveMode,
       provider: provider.displayName,
-      rows,
+      rows: priced,
       kind: "hotel",
       ...sliceArgs,
     });
@@ -1275,7 +1293,15 @@ export class TravelAiService {
       });
     }
 
-    return serializeHotelDetailsForAi(match);
+    const rules = await loadActivePricingRules(this.prisma, organizationId);
+    const [priced] = applyAiSellPrices([match], rules, "hotel", {
+      city: location,
+      checkIn: checkInDate,
+      adults: Math.max(1, int(args.adults, saved.adults ?? 1)),
+      children: Math.max(0, int(args.children, saved.children ?? 0)),
+      rooms: Math.max(1, int(args.rooms, saved.rooms ?? 1)),
+    });
+    return serializeHotelDetailsForAi(priced || match);
   }
 
   private async toolSearchTransfers(
@@ -1318,10 +1344,16 @@ export class TravelAiService {
       children: Math.max(0, int(args.children, 0)),
       currency,
     });
+    const rules = await loadActivePricingRules(this.prisma, organizationId);
+    const priced = applyAiSellPrices(rows, rules, "transfer", {
+      city,
+      adults: Math.max(1, int(args.adults, 1)),
+      children: Math.max(0, int(args.children, 0)),
+    });
     return serializeSearchResult({
       liveMode: provider.liveMode,
       provider: provider.displayName,
-      rows,
+      rows: priced,
       kind: "transfer",
       ...toolSliceArgs(args),
     });

@@ -34,6 +34,13 @@ export default function DashboardCatalogPage() {
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState(emptyProduct);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [readiness, setReadiness] = useState<{
+    ready?: boolean;
+    issues?: string[];
+    productCount?: number;
+    catalogId?: string | null;
+    mock?: boolean;
+  } | null>(null);
   const [settings, setSettings] = useState({
     catalogNameAr: "",
     catalogNameEn: "",
@@ -45,6 +52,14 @@ export default function DashboardCatalogPage() {
 
   async function load() {
     const next = await apiFetch<MetaCommerceState>("/shop/platform/admin/commerce");
+    const ready = await apiFetch<{
+      ready?: boolean;
+      issues?: string[];
+      productCount?: number;
+      catalogId?: string | null;
+      mock?: boolean;
+    }>("/whatsapp/commerce/readiness").catch(() => null);
+    setReadiness(ready);
     setState(next);
     setSettings({
       catalogNameAr: next.catalogNameAr,
@@ -201,6 +216,13 @@ export default function DashboardCatalogPage() {
           </div>
         </section>
 
+        {readiness ? (
+          <div className="wa-banner">
+            {readiness.ready
+              ? `الكتالوج جاهز للمزامنة${readiness.mock ? " (وضع تجريبي)" : ""} · ${readiness.productCount || 0} منتج`
+              : `غير جاهز: ${(readiness.issues || []).join(" · ") || "أكمل ربط واتساب ومعرّف الكتالوج"}`}
+          </div>
+        ) : null}
         {error ? <div className="wa-banner">{error}</div> : null}
         {ok ? <div className="wa-banner">{ok}</div> : null}
         {loading ? <p>جارٍ التحميل…</p> : null}

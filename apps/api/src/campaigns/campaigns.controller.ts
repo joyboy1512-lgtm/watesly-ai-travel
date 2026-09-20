@@ -12,10 +12,6 @@ import {
 } from "@nestjs/common";
 import { FileInterceptor } from "@nestjs/platform-express";
 import { Prisma } from "@watesly-travel/database";
-import {
-  sendWhatsAppTemplate,
-  sendWhatsAppText,
-} from "@watesly-travel/whatsapp-core";
 import { diskStorage } from "multer";
 import { extname, join } from "path";
 import { existsSync, mkdirSync } from "fs";
@@ -24,6 +20,7 @@ import { CurrentUser, RequirePermissions } from "../auth/decorators";
 import type { AuthUser } from "../auth/auth.types";
 import { PrismaService } from "../prisma/prisma.service";
 import { AuditService } from "../common/audit.service";
+import { CampaignsService } from "./campaigns.service";
 
 const UPLOAD_ROOT = process.env.UPLOADS_DIR
   || join(process.cwd(), "..", "..", "uploads");
@@ -75,6 +72,7 @@ export class CampaignsController {
   constructor(
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,
+    private readonly campaigns: CampaignsService,
   ) {}
 
   @Get("templates")
@@ -194,7 +192,7 @@ export class CampaignsController {
           body: text,
           language: body.language || "ar",
           category: body.category || "marketing",
-          status: "approved",
+          status: "draft",
           header: headerType === "text" ? (body.header?.trim() || null) : null,
           footer: body.footer?.trim() || null,
           headerType,
@@ -215,7 +213,21 @@ export class CampaignsController {
         entityId: template.id,
       });
 
-      return template;
+      try {
+        return await this.campaigns.submitTemplate(
+          user.organizationId,
+          template.id,
+          user.userId,
+        );
+      } catch (submitError) {
+        return {
+          ...template,
+          submitError:
+            submitError instanceof Error
+              ? submitError.message
+              : "تعذر إرسال القالب إلى ميتا",
+        };
+      }
     } catch (error) {
       if (
         error instanceof Prisma.PrismaClientKnownRequestError &&
@@ -323,6 +335,7 @@ export class CampaignsController {
       );
     }
 
+    await this.campaigns.deleteTemplateOnMeta(user.organizationId, existing.name);
     await this.prisma.template.delete({ where: { id } });
     await this.audit.log({
       organizationId: user.organizationId,
@@ -335,14 +348,36 @@ export class CampaignsController {
     return { ok: true };
   }
 
+  @Post("templates/:id/submit")
+  @RequirePermissions("campaigns.manage")
+  submitTemplate(@CurrentUser() user: AuthUser, @Param("id") id: string) {
+    return this.campaigns.submitTemplate(user.organizationId, id, user.userId);
+  }
+
+  @Post("templates/sync")
+  @RequirePermissions("campaigns.manage")
+  syncTemplates(
+    @CurrentUser() user: AuthUser,
+    @Body() body: { accountId?: string },
+  ) {
+    return this.campaigns.syncTemplates(
+      user.organizationId,
+      user.userId,
+      body.accountId,
+    );
+  }
+
   @Get()
   @RequirePermissions("campaigns.manage")
   list(@CurrentUser() user: AuthUser) {
     return this.prisma.campaign.findMany({
-      where: { organizationId: user.organizationId },
+      where: {
+        organizationId: user.organizationId,
+        status: { not: "archived" },
+      },
       include: { template: true, recipients: true },
       orderBy: { createdAt: "desc" },
-      take: 50,
+      take: 80,
     });
   }
 
@@ -376,6 +411,11 @@ export class CampaignsController {
     });
     if (!template) {
       throw new BadRequestException("القالب المحدد غير موجود");
+    }
+    if (template.status !== "approved") {
+      throw new BadRequestException(
+        "لا يمكن إنشاء حملة إلا بقالب معتمد من ميتا",
+      );
     }
 
     const owned = await this.prisma.contact.findMany({
@@ -420,177 +460,76 @@ export class CampaignsController {
     return campaign;
   }
 
+  @Post("preflight")
+  @RequirePermissions("campaigns.manage")
+  preflight(
+    @CurrentUser() user: AuthUser,
+    @Body()
+    body: { templateId?: string; contactIds?: string[]; campaignId?: string },
+  ) {
+    return this.campaigns.preflight(user.organizationId, body);
+  }
+
+  @Get(":id/report")
+  @RequirePermissions("campaigns.manage")
+  report(@CurrentUser() user: AuthUser, @Param("id") id: string) {
+    return this.campaigns.report(user.organizationId, id);
+  }
+
+  @Post(":id/approve")
+  @RequirePermissions("campaigns.manage")
+  approve(@CurrentUser() user: AuthUser, @Param("id") id: string) {
+    return this.campaigns.approve(user.organizationId, id, user.userId);
+  }
+
+  @Post(":id/start")
+  @RequirePermissions("campaigns.manage")
+  start(@CurrentUser() user: AuthUser, @Param("id") id: string) {
+    return this.campaigns.start(user.organizationId, id, user.userId);
+  }
+
   @Post(":id/send")
   @RequirePermissions("campaigns.manage")
-  async send(@CurrentUser() user: AuthUser, @Param("id") id: string) {
-    const campaign = await this.prisma.campaign.findFirst({
-      where: { id, organizationId: user.organizationId },
-      include: {
-        template: true,
-        recipients: { include: { contact: true } },
-      },
-    });
-    if (!campaign) {
-      throw new BadRequestException("الحملة غير موجودة");
-    }
-    if (!campaign.recipients.length) {
-      throw new BadRequestException("لا يوجد مستلمون لهذه الحملة");
-    }
-    if (!campaign.templateId || !campaign.template?.body) {
-      throw new BadRequestException("الحملة بلا قالب صالح");
-    }
+  send(@CurrentUser() user: AuthUser, @Param("id") id: string) {
+    return this.campaigns.start(user.organizationId, id, user.userId);
+  }
 
-    const account = await this.prisma.whatsAppAccount.findFirst({
-      where: {
-        organizationId: user.organizationId,
-        status: { in: ["connected", "pending"] },
-        channelType: "whatsapp",
-      },
-      orderBy: [{ isDefault: "desc" }, { updatedAt: "desc" }],
-    });
-    if (!account) {
-      throw new BadRequestException(
-        "اربط قناة واتساب أولًا من صفحة قنوات واتساب قبل إرسال الحملات",
-      );
-    }
+  @Post(":id/pause")
+  @RequirePermissions("campaigns.manage")
+  pause(@CurrentUser() user: AuthUser, @Param("id") id: string) {
+    return this.campaigns.pause(user.organizationId, id, user.userId);
+  }
 
-    let sent = 0;
-    let failed = 0;
+  @Post(":id/cancel")
+  @RequirePermissions("campaigns.manage")
+  cancel(
+    @CurrentUser() user: AuthUser,
+    @Param("id") id: string,
+    @Body() body: { reason?: string },
+  ) {
+    return this.campaigns.cancel(
+      user.organizationId,
+      id,
+      user.userId,
+      body.reason,
+    );
+  }
 
-    await this.prisma.campaign.update({
-      where: { id },
-      data: { status: "running" },
-    });
+  @Post(":id/retry-failed")
+  @RequirePermissions("campaigns.manage")
+  retryFailed(@CurrentUser() user: AuthUser, @Param("id") id: string) {
+    return this.campaigns.retryFailed(user.organizationId, id, user.userId);
+  }
 
-    for (const recipient of campaign.recipients) {
-      const recipientName = recipient.contact.name || recipient.contact.waId;
-      const bodyText = campaign.template.body.replace(
-        /\{\{\s*1\s*\}\}/g,
-        recipientName,
-      );
+  @Post(":id/archive")
+  @RequirePermissions("campaigns.manage")
+  archive(@CurrentUser() user: AuthUser, @Param("id") id: string) {
+    return this.campaigns.archive(user.organizationId, id, user.userId);
+  }
 
-      let result;
-      try {
-        result = await sendWhatsAppTemplate({
-          phoneNumberId: account.phoneNumberId,
-          accessToken: account.accessTokenEnc || "mock",
-          to: recipient.contact.waId,
-          templateName: campaign.template.name,
-          language: campaign.template.language,
-          components: [
-            {
-              type: "body",
-              parameters: [{ type: "text", text: recipientName }],
-            },
-          ],
-        });
-        if (result.status === "failed") {
-          throw new Error("template send failed");
-        }
-      } catch {
-        try {
-          result = await sendWhatsAppText({
-            phoneNumberId: account.phoneNumberId,
-            accessToken: account.accessTokenEnc || "mock",
-            to: recipient.contact.waId,
-            body: bodyText,
-          });
-        } catch (error) {
-          failed += 1;
-          await this.prisma.campaignRecipient.update({
-            where: { id: recipient.id },
-            data: {
-              status: "failed",
-              error: error instanceof Error ? error.message : "error",
-            },
-          });
-          continue;
-        }
-      }
-
-      await this.prisma.campaignRecipient.update({
-        where: { id: recipient.id },
-        data: {
-          status: result.status === "failed" ? "failed" : "sent",
-          sentAt: new Date(),
-          error: result.status === "failed" ? "send failed" : null,
-        },
-      });
-
-      if (result.status === "failed") {
-        failed += 1;
-        continue;
-      }
-      sent += 1;
-
-      // Log outbound template into conversation (create/open if missing).
-      try {
-        let conversation = await this.prisma.conversation.findFirst({
-          where: {
-            organizationId: user.organizationId,
-            contactId: recipient.contactId,
-            status: { in: ["open", "pending"] },
-          },
-          orderBy: { updatedAt: "desc" },
-        });
-        if (!conversation) {
-          conversation = await this.prisma.conversation.create({
-            data: {
-              organizationId: user.organizationId,
-              contactId: recipient.contactId,
-              whatsappAccountId: account.id,
-              status: "open",
-              assigneeType: "bot",
-              lastMessageAt: new Date(),
-              unreadCount: 0,
-            },
-          });
-        }
-        await this.prisma.message.create({
-          data: {
-            organizationId: user.organizationId,
-            conversationId: conversation.id,
-            direction: "outbound",
-            channel: "whatsapp",
-            type: "template",
-            body: bodyText,
-            templateName: campaign.template.name,
-            providerMessageId: result.providerMessageId || null,
-            status: result.status,
-            sentByUserId: user.userId,
-            rawPayload: result.raw ? asJson(result.raw) : undefined,
-          },
-        });
-        await this.prisma.conversation.update({
-          where: { id: conversation.id },
-          data: {
-            lastMessageAt: new Date(),
-            whatsappAccountId: account.id,
-          },
-        });
-      } catch {
-        // Never fail the campaign send because of best-effort message logging.
-      }
-    }
-
-    const updated = await this.prisma.campaign.update({
-      where: { id },
-      data: {
-        status: "completed",
-        stats: { sent, failed, pending: 0 },
-      },
-      include: { recipients: true, template: true },
-    });
-
-    await this.audit.log({
-      organizationId: user.organizationId,
-      actorUserId: user.userId,
-      action: "campaigns.send",
-      entityType: "Campaign",
-      entityId: id,
-      after: { sent, failed },
-    });
-
-    return updated;
+  @Post(":id/unarchive")
+  @RequirePermissions("campaigns.manage")
+  unarchive(@CurrentUser() user: AuthUser, @Param("id") id: string) {
+    return this.campaigns.unarchive(user.organizationId, id, user.userId);
   }
 }

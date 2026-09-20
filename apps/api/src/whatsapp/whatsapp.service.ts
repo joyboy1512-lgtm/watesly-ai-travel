@@ -5,6 +5,10 @@ import {
 } from "@nestjs/common";
 import { Prisma } from "@watesly-travel/database";
 import {
+  debugAccessToken,
+  fetchWabaSubscribedApps,
+  formatTierHint,
+  inspectCommerceCatalog,
   parseInboundWebhook,
   parseMetaMessagingWebhook,
   parseStatusWebhook,
@@ -14,11 +18,15 @@ import {
   formatPeerId,
   metaWebhookObject,
   normalizeChannelType,
+  QUALITY_LABELS_AR,
   setTelegramWebhook,
+  subscribeWabaWebhook,
+  syncAccountHealth,
   telegramGetMe,
   verifyWebhookChallenge,
 } from "@watesly-travel/whatsapp-core";
 import type { WhatsAppInboundMessage } from "@watesly-travel/whatsapp-core";
+import { readOrgSettings } from "../common/org-settings";
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { PrismaService } from "../prisma/prisma.service";
 import { BotPipelineService } from "../pipeline/bot-pipeline.service";
@@ -29,6 +37,13 @@ import { parseInboundIntent } from "./inbound-intent";
 
 function asJson(value: unknown): Prisma.InputJsonValue {
   return value as Prisma.InputJsonValue;
+}
+
+function asJsonRecord(value: unknown): Record<string, unknown> {
+  if (value && typeof value === "object" && !Array.isArray(value)) {
+    return { ...(value as Record<string, unknown>) };
+  }
+  return {};
 }
 
 @Injectable()
@@ -83,14 +98,15 @@ export class WhatsappService {
     return true;
   }
 
-  async listAccounts(organizationId: string) {
+  async listAccounts(organizationId: string, includeArchived = false) {
     const rows = await this.prisma.whatsAppAccount.findMany({
-      where: { organizationId },
+      where: {
+        organizationId,
+        ...(includeArchived ? {} : { status: { not: "archived" } }),
+      },
       orderBy: { createdAt: "desc" },
     });
-    return rows.map((row) =>
-      sanitizeWhatsAppAccount(row as unknown as Record<string, unknown>),
-    );
+    return rows.map((row) => this.presentAccount(row));
   }
 
   async upsertAccount(
@@ -169,9 +185,7 @@ export class WhatsappService {
       after: { phoneNumberId: account.phoneNumberId, status: account.status },
     });
 
-    return sanitizeWhatsAppAccount(
-      account as unknown as Record<string, unknown>,
-    );
+    return this.presentAccount(account);
   }
 
   async deleteAccount(organizationId: string, id: string, actorUserId: string) {
@@ -239,9 +253,303 @@ export class WhatsappService {
       entityId: id,
     });
 
-    return sanitizeWhatsAppAccount(
-      account as unknown as Record<string, unknown>,
-    );
+    return this.presentAccount(account);
+  }
+
+  async archiveAccount(organizationId: string, id: string, actorUserId: string) {
+    const account = await this.getAccountOrThrow(organizationId, id);
+    const prevMeta = this.accountMeta(account);
+    const updated = await this.prisma.whatsAppAccount.update({
+      where: { id },
+      data: {
+        status: "archived",
+        isDefault: false,
+        meta: asJson({
+          ...prevMeta,
+          archivedAt: new Date().toISOString(),
+        }),
+      },
+    });
+    if (account.isDefault) {
+      const next = await this.prisma.whatsAppAccount.findFirst({
+        where: {
+          organizationId,
+          id: { not: id },
+          status: { not: "archived" },
+        },
+        orderBy: { createdAt: "asc" },
+      });
+      if (next) {
+        await this.prisma.whatsAppAccount.update({
+          where: { id: next.id },
+          data: { isDefault: true },
+        });
+      }
+    }
+    await this.audit.log({
+      organizationId,
+      actorUserId,
+      action: "whatsapp.account.archive",
+      entityType: "WhatsAppAccount",
+      entityId: id,
+    });
+    return this.presentAccount(updated);
+  }
+
+  async usageBoard(organizationId: string) {
+    const accounts = await this.prisma.whatsAppAccount.findMany({
+      where: { organizationId, status: { not: "archived" } },
+      orderBy: [{ isDefault: "desc" }, { createdAt: "asc" }],
+    });
+    const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    const items = [];
+    for (const account of accounts) {
+      const [conversations, inbound, outbound, campaignSent] = await Promise.all([
+        this.prisma.conversation.count({
+          where: { organizationId, whatsappAccountId: account.id },
+        }),
+        this.prisma.message.count({
+          where: {
+            organizationId,
+            direction: "inbound",
+            createdAt: { gte: since },
+            conversation: { whatsappAccountId: account.id },
+          },
+        }),
+        this.prisma.message.count({
+          where: {
+            organizationId,
+            direction: "outbound",
+            createdAt: { gte: since },
+            conversation: { whatsappAccountId: account.id },
+          },
+        }),
+        this.prisma.message.count({
+          where: {
+            organizationId,
+            type: "template",
+            createdAt: { gte: since },
+            conversation: { whatsappAccountId: account.id },
+          },
+        }),
+      ]);
+      const presented = this.presentAccount(account);
+      items.push({
+        ...presented,
+        conversations,
+        inbound30d: inbound,
+        outbound30d: outbound,
+        campaignMessages30d: campaignSent,
+      });
+    }
+    return {
+      cycleDays: 30,
+      channels: items,
+      totals: {
+        channels: items.length,
+        conversations: items.reduce((sum, row) => sum + row.conversations, 0),
+        inbound30d: items.reduce((sum, row) => sum + row.inbound30d, 0),
+        outbound30d: items.reduce((sum, row) => sum + row.outbound30d, 0),
+        campaignMessages30d: items.reduce(
+          (sum, row) => sum + row.campaignMessages30d,
+          0,
+        ),
+      },
+    };
+  }
+
+  async tokenStatus(organizationId: string, accountId: string) {
+    const account = await this.getAccountOrThrow(organizationId, accountId);
+    const inspected = await debugAccessToken({
+      accessToken: account.accessTokenEnc || "",
+    });
+    const prevMeta = this.accountMeta(account);
+    await this.prisma.whatsAppAccount.update({
+      where: { id: account.id },
+      data: {
+        meta: asJson({
+          ...prevMeta,
+          tokenValid: inspected.valid,
+          tokenError: inspected.error || null,
+          tokenCheckedAt: new Date().toISOString(),
+        }),
+      },
+    });
+    return {
+      accountId: account.id,
+      ...inspected,
+    };
+  }
+
+  async webhookStatus(organizationId: string, accountId: string) {
+    const account = await this.getAccountOrThrow(organizationId, accountId);
+    const channelType = normalizeChannelType(account.channelType);
+    if (channelType === "telegram") {
+      const meta = this.accountMeta(account);
+      return {
+        accountId: account.id,
+        channelType,
+        subscribed: Boolean(meta.webhookSet),
+        mock: (account.accessTokenEnc || "").startsWith("mock"),
+        webhookUrl: meta.webhookUrl || this.telegramWebhookUrl(account.id),
+        message: meta.webhookSet
+          ? "Webhook تلجرام مضبوط"
+          : "اضغط مزامنة لضبط Webhook تلجرام",
+      };
+    }
+    if (channelType !== "whatsapp") {
+      return {
+        accountId: account.id,
+        channelType,
+        subscribed: Boolean(account.webhookVerifiedAt),
+        mock: (account.accessTokenEnc || "").startsWith("mock"),
+        webhookUrl: `${this.publicApiBase()}/whatsapp/webhook`,
+        message: "ماسنجر/إنستغرام يستخدمان نفس عنوان Webhook ميتا",
+      };
+    }
+    const wabaId = account.businessAccountId || "";
+    const result = await fetchWabaSubscribedApps({
+      accessToken: account.accessTokenEnc || "",
+      wabaId,
+    });
+    return {
+      accountId: account.id,
+      channelType,
+      wabaId: wabaId || null,
+      webhookUrl: `${this.publicApiBase()}/whatsapp/webhook`,
+      ...result,
+    };
+  }
+
+  async ensureWebhook(organizationId: string, accountId: string) {
+    const account = await this.getAccountOrThrow(organizationId, accountId);
+    const channelType = normalizeChannelType(account.channelType);
+    const prevMeta = this.accountMeta(account);
+    if (channelType === "telegram") {
+      const probed = await this.testConnection(organizationId, accountId);
+      return {
+        accountId: account.id,
+        channelType,
+        subscribed: Boolean(probed.ok),
+        webhookUrl: probed.webhookUrl,
+        mock: probed.mode === "mock",
+        message: probed.message,
+      };
+    }
+    if (channelType !== "whatsapp") {
+      return {
+        accountId: account.id,
+        channelType,
+        subscribed: true,
+        mock: (account.accessTokenEnc || "").startsWith("mock"),
+        webhookUrl: `${this.publicApiBase()}/whatsapp/webhook`,
+        message: "أضف اشتراك الرسائل في تطبيق ميتا على /whatsapp/webhook",
+      };
+    }
+    const wabaId = account.businessAccountId || "";
+    const result = await subscribeWabaWebhook({
+      accessToken: account.accessTokenEnc || "",
+      wabaId,
+    });
+    await this.prisma.whatsAppAccount.update({
+      where: { id: account.id },
+      data: {
+        webhookVerifiedAt: result.ok ? new Date() : account.webhookVerifiedAt,
+        meta: asJson({
+          ...prevMeta,
+          webhookSet: result.ok,
+          webhookUrl: `${this.publicApiBase()}/whatsapp/webhook`,
+          webhookEnsuredAt: new Date().toISOString(),
+        }),
+      },
+    });
+    return {
+      accountId: account.id,
+      channelType,
+      wabaId: wabaId || null,
+      webhookUrl: `${this.publicApiBase()}/whatsapp/webhook`,
+      ...result,
+    };
+  }
+
+  async syncHealth(organizationId: string, accountId: string) {
+    const account = await this.getAccountOrThrow(organizationId, accountId);
+    const health = await syncAccountHealth({
+      accessToken: account.accessTokenEnc || "",
+      phoneNumberId: account.phoneNumberId,
+      wabaId: account.businessAccountId,
+      displayPhone: account.displayPhone || undefined,
+      channelName: account.channelName || undefined,
+    });
+    const prevMeta = this.accountMeta(account);
+    const nextStatus =
+      account.status === "archived"
+        ? "archived"
+        : health.derivedStatus === "connected"
+          ? "connected"
+          : health.derivedStatus === "suspended"
+            ? "disconnected"
+            : "disconnected";
+    const updated = await this.prisma.whatsAppAccount.update({
+      where: { id: account.id },
+      data: {
+        status: nextStatus,
+        displayPhone: health.displayPhoneNumber || account.displayPhone,
+        channelName: health.verifiedName || account.channelName,
+        webhookVerifiedAt: health.derivedStatus === "connected"
+          ? new Date()
+          : account.webhookVerifiedAt,
+        meta: asJson({
+          ...prevMeta,
+          health,
+          healthSyncedAt: new Date().toISOString(),
+          qualityRating: health.qualityRating,
+          messagingLimitTier: health.messagingLimitTier,
+          messagingLimit: health.messagingLimit,
+          metaStatusMessage: health.metaStatusMessage,
+        }),
+      },
+    });
+    return this.presentAccount(updated);
+  }
+
+  async commerceReadiness(organizationId: string, accountId?: string) {
+    const account = accountId
+      ? await this.getAccountOrThrow(organizationId, accountId)
+      : await this.prisma.whatsAppAccount.findFirst({
+          where: {
+            organizationId,
+            channelType: "whatsapp",
+            status: { not: "archived" },
+          },
+          orderBy: [{ isDefault: "desc" }, { updatedAt: "desc" }],
+        });
+    const settings = await readOrgSettings(this.prisma, organizationId);
+    const commerce = asJsonRecord(settings.metaCommerce);
+    const catalogId =
+      (typeof commerce.metaCatalogId === "string" && commerce.metaCatalogId) ||
+      "";
+    const products = Array.isArray(commerce.products) ? commerce.products : [];
+    const inspected = await inspectCommerceCatalog({
+      accessToken: account?.accessTokenEnc || "mock",
+      catalogId,
+    });
+    const issues = [...inspected.issues];
+    if (!account) issues.push("اربط حساب واتساب قبل مزامنة الكتالوج");
+    else if (account.status !== "connected") {
+      issues.push("حساب واتساب غير متصل");
+    }
+    if (!products.length) issues.push("أضف منتجاً واحداً على الأقل");
+    return {
+      accountId: account?.id || null,
+      catalogId: catalogId || null,
+      productCount: products.length,
+      lastSyncedAt: commerce.lastSyncedAt || null,
+      lastSyncError: commerce.lastSyncError || null,
+      ...inspected,
+      ready: inspected.ready && Boolean(account) && account?.status === "connected" && products.length > 0,
+      issues,
+    };
   }
 
   async testConnection(organizationId: string, accountId: string) {
@@ -834,5 +1142,50 @@ export class WhatsappService {
     }
 
     return { messageId: message.id, conversationId: conversation.id };
+  }
+
+  private accountMeta(account: { meta?: unknown }): Record<string, unknown> {
+    return asJsonRecord(account.meta);
+  }
+
+  private presentAccount(account: Record<string, unknown> | object) {
+    const sanitized = sanitizeWhatsAppAccount(
+      account as unknown as Record<string, unknown>,
+    );
+    const meta = asJsonRecord(
+      (sanitized as { meta?: unknown }).meta,
+    );
+    const health = asJsonRecord(meta.health);
+    const quality =
+      (typeof health.qualityRating === "string" && health.qualityRating) ||
+      (typeof meta.qualityRating === "string" && meta.qualityRating) ||
+      null;
+    return {
+      ...sanitized,
+      health: {
+        qualityRating: quality,
+        qualityLabel: quality
+          ? QUALITY_LABELS_AR[quality] || quality
+          : null,
+        messagingLimitTier: health.messagingLimitTier || meta.messagingLimitTier || null,
+        messagingLimit: health.messagingLimit ?? meta.messagingLimit ?? null,
+        messagingLimitHint: formatTierHint(
+          (health.messagingLimitTier || meta.messagingLimitTier) as string | undefined,
+          (health.messagingLimit ?? meta.messagingLimit) as number | null | undefined,
+        ),
+        metaPhoneStatus: health.metaPhoneStatus || null,
+        metaNameStatus: health.metaNameStatus || null,
+        metaCanSendMessage: health.metaCanSendMessage || null,
+        metaAccountReviewStatus: health.metaAccountReviewStatus || null,
+        metaStatusMessage:
+          (health.metaStatusMessage as string) ||
+          (meta.metaStatusMessage as string) ||
+          null,
+        healthSyncedAt: meta.healthSyncedAt || health.healthSyncedAt || null,
+        mock: Boolean(health.mock),
+      },
+      archivedAt: meta.archivedAt || null,
+      webhookSet: Boolean(meta.webhookSet),
+    };
   }
 }

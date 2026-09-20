@@ -62,6 +62,13 @@ export default function StaffLoginForm() {
       </section>
 
       <section className="staff-login-panel">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          className="staff-login-panel-photo"
+          src="/media/hero/brand-sky-wing.jpg"
+          alt=""
+          aria-hidden="true"
+        />
         <div className="staff-login-card">
           <div className="staff-login-logo-card">
             <WeekendGateLogo light />

@@ -1,11 +1,23 @@
 "use client";
 
+import "../staff-login.css";
+
 import Link from "next/link";
 import { FormEvent, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { COMPANY_LEGAL } from "@watesly-travel/shared";
+import { WeekendGateLogo } from "@/components/shop/WeekendGateLogo";
 import { loginRequest, saveSession } from "@/lib/api";
 import { safeNextPath } from "@/lib/safe-next-path";
+
+const DESK_LIST = [
+  "الاستعلامات",
+  "الحجوزات",
+  "مزودو السفر",
+  "قواعد التسعير",
+  "العملاء",
+  "واتساب",
+];
 
 export default function StaffLoginForm() {
   const router = useRouter();
@@ -13,6 +25,7 @@ export default function StaffLoginForm() {
   const next = safeNextPath(searchParams.get("next"), "/dashboard/inquiries");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPass, setShowPass] = useState(false);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
@@ -32,42 +45,74 @@ export default function StaffLoginForm() {
   }
 
   return (
-    <main className="shell staff-login">
-      <div className="staff-login-card">
-        <p className="brand">{COMPANY_LEGAL.brandName}</p>
-        <p className="hint">{COMPANY_LEGAL.legalNameAr}</p>
-        <h1>دخول فريق العمل</h1>
-        <p className="lead">لوحة التحكم — الاستعلامات، الحجوزات، والمحادثات</p>
-        {error ? <p className="error">{error}</p> : null}
-        <form className="form-grid" onSubmit={onSubmit}>
-          <label>
-            البريد الإلكتروني
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              autoComplete="username"
-              required
-            />
-          </label>
-          <label>
-            كلمة المرور
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              autoComplete="current-password"
-              required
-            />
-          </label>
-          <button type="submit" className="btn primary" disabled={busy}>
-            {busy ? "..." : "دخول"}
-          </button>
-        </form>
-        <p className="hint staff-login-foot">
-          <Link href="/">← العودة إلى الموقع</Link>
-        </p>
-      </div>
+    <main className="staff-login">
+      <section className="staff-login-brand">
+        <div className="staff-login-brand-mark">
+          <WeekendGateLogo light />
+          <h1>{COMPANY_LEGAL.legalNameAr}</h1>
+        </div>
+        <ul className="staff-login-menu">
+          {DESK_LIST.map((item) => (
+            <li key={item}>{item}</li>
+          ))}
+        </ul>
+      </section>
+
+      <section className="staff-login-panel">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          className="staff-login-panel-photo"
+          src="/media/hero/night-city-gold.jpg"
+          alt=""
+          aria-hidden="true"
+        />
+        <div className="staff-login-card">
+          <div className="staff-login-logo-card">
+            <WeekendGateLogo light />
+            <strong>{COMPANY_LEGAL.brandName}</strong>
+            <span className="staff-login-logo-legal">{COMPANY_LEGAL.legalNameAr}</span>
+          </div>
+          <h2>تسجيل الدخول</h2>
+          {error ? <p className="staff-login-alert">{error}</p> : null}
+          <form className="staff-login-form" onSubmit={onSubmit}>
+            <label className="staff-login-field">
+              <span>البريد الإلكتروني</span>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                autoComplete="username"
+                required
+              />
+            </label>
+            <label className="staff-login-field">
+              <span>كلمة المرور</span>
+              <span className="staff-login-pass">
+                <input
+                  type={showPass ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  autoComplete="current-password"
+                  required
+                />
+                <button
+                  type="button"
+                  className="staff-login-eye"
+                  onClick={() => setShowPass((v) => !v)}
+                >
+                  {showPass ? "إخفاء" : "إظهار"}
+                </button>
+              </span>
+            </label>
+            <button type="submit" className="staff-login-submit" disabled={busy}>
+              {busy ? "جارٍ الدخول..." : "دخول"}
+            </button>
+          </form>
+          <p className="staff-login-foot">
+            <Link href="/">العودة إلى الموقع</Link>
+          </p>
+        </div>
+      </section>
     </main>
   );
 }

@@ -1,4 +1,4 @@
-import { TooManyRequestsException } from "@nestjs/common";
+import { HttpException, HttpStatus } from "@nestjs/common";
 import { sharedDecr, sharedIncrStrict } from "./shared-kv";
 
 const SLOT_KEY = "shop:search:inflight";
@@ -47,7 +47,7 @@ export async function guardShopSearch<T>(
   const allowed = await tryAcquireSearchSlot();
   if (!allowed) {
     logSearch({ service, status: "shed", ms: Date.now() - started });
-    throw new TooManyRequestsException("طلبات كثيرة، حاول لاحقًا");
+    throw new HttpException("طلبات كثيرة، حاول لاحقًا", HttpStatus.TOO_MANY_REQUESTS);
   }
   try {
     const result = await run();

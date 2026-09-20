@@ -396,7 +396,7 @@ export default function PricingPage() {
     ...emptyForm,
     currency: getPreferredCurrency(),
   });
-  const [showConditions, setShowConditions] = useState(false);
+  const [showConditions, setShowConditions] = useState(true);
   const [error, setError] = useState("");
   const [ok, setOk] = useState("");
   const [loading, setLoading] = useState(false);
@@ -775,15 +775,19 @@ export default function PricingPage() {
             <h4>قاعدة جديدة</h4>
             <p>
               {isHotel
-                ? "الهامش والحد الأدنى يُحسبان لكل غرفة، ثم يمكن إضافة عمولة على إجمالي الإقامة."
-                : "الهامش والحد الأدنى يُحسبان لكل تذكرة (لكل شخص)، ثم يمكن إضافة عمولة على إجمالي الحجز."}
+                ? "خمسة بنود مميّزة: التعريف، النطاق، الهامش لكل غرفة، عمولة الإجمالي، ثم الشروط."
+                : "خمسة بنود مميّزة: التعريف، النطاق، الهامش لكل تذكرة، عمولة الإجمالي، ثم الشروط."}
             </p>
           </div>
 
           <div className="prc-block prc-block-define">
-            <p className="prc-block-title">1 · التعريف</p>
+            <p className="prc-block-title">
+              <span className="prc-step">1</span>
+              التعريف
+            </p>
+            <p className="prc-block-note">اسم يظهر في الجدول وأولوية التنفيذ.</p>
             <div className="prc-row prc-row-name">
-              <label className="prc-field grow">
+              <label className="prc-field prc-item grow">
                 <span>اسم القاعدة</span>
                 <input
                   value={form.name}
@@ -791,7 +795,7 @@ export default function PricingPage() {
                   placeholder="قاعدة طيران عامة"
                 />
               </label>
-              <label className="prc-field sm">
+              <label className="prc-field prc-item sm">
                 <span>الأولوية</span>
                 <input
                   type="number"
@@ -805,9 +809,13 @@ export default function PricingPage() {
           </div>
 
           <div className="prc-block prc-block-scope">
-            <p className="prc-block-title">2 · نطاق التطبيق</p>
+            <p className="prc-block-title">
+              <span className="prc-step">2</span>
+              نطاق التطبيق
+            </p>
+            <p className="prc-block-note">حدد الخدمة وكيف تُحسب القاعدة.</p>
             <div className="prc-row prc-row-core">
-              <label className="prc-field">
+              <label className="prc-field prc-item">
                 <span>نوع الخدمة</span>
                 <select
                   value={form.serviceType}
@@ -820,7 +828,7 @@ export default function PricingPage() {
                   <option value="all">الكل</option>
                 </select>
               </label>
-              <label className="prc-field grow">
+              <label className="prc-field prc-item grow">
                 <span>تُطبَّق على</span>
                 <select
                   value={form.applyBasis}
@@ -839,7 +847,7 @@ export default function PricingPage() {
                   <option value="booking">عمولة على إجمالي الحجز مرة واحدة</option>
                 </select>
               </label>
-              <label className="prc-field">
+              <label className="prc-field prc-item">
                 <span>نوع القاعدة</span>
                 <select
                   value={form.ruleType}
@@ -857,15 +865,19 @@ export default function PricingPage() {
 
           <div className="prc-block prc-block-margin">
             <p className="prc-block-title">
-              3 · الهامش{" "}
+              <span className="prc-step">3</span>
+              الهامش{" "}
               {form.applyBasis === "booking"
                 ? "(مرة واحدة على الحجز)"
                 : isHotel
                   ? "(لكل غرفة)"
                   : "(لكل تذكرة)"}
             </p>
+            <p className="prc-block-note">
+              أرقام الهامش والحد الأدنى فقط — العملة في عمود مستقل على اليسار.
+            </p>
             <div className="prc-row prc-row-money">
-              <label className="prc-field">
+              <label className="prc-field prc-item">
                 <span>نسبة الهامش %</span>
                 <input
                   type="number"
@@ -879,7 +891,7 @@ export default function PricingPage() {
                   }
                 />
               </label>
-              <label className="prc-field">
+              <label className="prc-field prc-item">
                 <span>
                   مبلغ الربح الثابت{" "}
                   {form.applyBasis === "unit"
@@ -901,7 +913,7 @@ export default function PricingPage() {
                   }
                 />
               </label>
-              <label className="prc-field">
+              <label className="prc-field prc-item">
                 <span>
                   الحد الأدنى للربح{" "}
                   {form.applyBasis === "unit"
@@ -922,7 +934,7 @@ export default function PricingPage() {
                   }
                 />
               </label>
-              <label className="prc-field">
+              <label className="prc-field prc-item prc-item-currency">
                 <span>العملة</span>
                 <select
                   value={form.currency}
@@ -939,12 +951,15 @@ export default function PricingPage() {
           </div>
 
           <div className="prc-block prc-block-commission">
-            <p className="prc-block-title">4 · بند العمولة الإجمالية (اختياري)</p>
+            <p className="prc-block-title">
+              <span className="prc-step">4</span>
+              بند العمولة الإجمالية
+            </p>
             <p className="prc-block-note">
-              يُضاف مرة واحدة على إجمالي الحجز بعد هامش التذاكر أو الغرف.
+              اختياري. يُضاف مرة واحدة على إجمالي الحجز بعد هامش التذاكر أو الغرف.
             </p>
             <div className="prc-row prc-row-core">
-              <label className="prc-field">
+              <label className="prc-field prc-item">
                 <span>نسبة عمولة الحجز %</span>
                 <input
                   type="number"
@@ -958,7 +973,7 @@ export default function PricingPage() {
                   }
                 />
               </label>
-              <label className="prc-field">
+              <label className="prc-field prc-item">
                 <span>مبلغ عمولة ثابت للحجز</span>
                 <input
                   type="number"
@@ -975,27 +990,23 @@ export default function PricingPage() {
             </div>
           </div>
 
-          <div className="prc-row prc-row-actions">
-            <button
-              type="button"
-              className="btn secondary"
-              onClick={() => setShowConditions((v) => !v)}
-            >
-              {showConditions ? "إخفاء الشروط" : "5 · شروط اختيارية"}
-            </button>
-            <button
-              type="button"
-              className="btn"
-              disabled={loading}
-              onClick={() => void create()}
-            >
-              {loading ? "جارٍ الإضافة..." : "إضافة قاعدة"}
-            </button>
-          </div>
-
-          {showConditions ? (
-            <div className="prc-block prc-block-conditions prc-conditions">
-              <p className="prc-block-title">5 · شروط اختيارية</p>
+          <div className="prc-block prc-block-conditions prc-conditions">
+              <p className="prc-block-title">
+                <span className="prc-step">5</span>
+                شروط اختيارية
+              </p>
+              <p className="prc-block-note">
+                ضيّق القاعدة على مطارات أو مدن أو مزود أو مدى سعر وتاريخ.
+              </p>
+              <button
+                type="button"
+                className="prc-cond-toggle"
+                onClick={() => setShowConditions((v) => !v)}
+              >
+                {showConditions ? "طي البنود" : "إظهار بنود الشروط"}
+              </button>
+              {showConditions ? (
+                <>
               <div className="prc-row prc-row-4">
                 {showOrigins ? (
                   <SearchChips
@@ -1110,7 +1121,7 @@ export default function PricingPage() {
               </div>
 
               <div className="prc-row prc-row-4">
-                <label className="prc-field">
+                <label className="prc-field prc-item">
                   <span>أقل سعر تكلفة</span>
                   <input
                     type="number"
@@ -1121,7 +1132,7 @@ export default function PricingPage() {
                     }
                   />
                 </label>
-                <label className="prc-field">
+                <label className="prc-field prc-item">
                   <span>أعلى سعر تكلفة</span>
                   <input
                     type="number"
@@ -1132,7 +1143,7 @@ export default function PricingPage() {
                     }
                   />
                 </label>
-                <label className="prc-field">
+                <label className="prc-field prc-item">
                   <span>من تاريخ</span>
                   <input
                     type="date"
@@ -1142,7 +1153,7 @@ export default function PricingPage() {
                     }
                   />
                 </label>
-                <label className="prc-field">
+                <label className="prc-field prc-item">
                   <span>إلى تاريخ</span>
                   <input
                     type="date"
@@ -1153,8 +1164,20 @@ export default function PricingPage() {
                   />
                 </label>
               </div>
-            </div>
-          ) : null}
+                </>
+              ) : null}
+          </div>
+
+          <div className="prc-row prc-row-actions">
+            <button
+              type="button"
+              className="btn"
+              disabled={loading}
+              onClick={() => void create()}
+            >
+              {loading ? "جارٍ الإضافة..." : "إضافة قاعدة"}
+            </button>
+          </div>
         </section>
 
         <section className="prc-card">

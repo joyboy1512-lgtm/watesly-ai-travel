@@ -467,21 +467,13 @@ export default function BookingsPage() {
     <AppShell title="الحجوزات">
       <div className="bk-desk">
         <section className="bk-hero">
-          <div>
-            <p className="bk-kicker">Bookings</p>
-            <h3>{en ? "Bookings desk" : "سجل الحجوزات"}</h3>
-            <p>
-              {en
-                ? "Colored search cards, one compact row per booking, and a selection box for archive, delete, print, or Excel export."
-                : "بطاقات بحث ملوّنة، كل حجز في صف واحد، ومربع تحديد للأرشفة أو الحذف أو الطباعة أو تصدير إكسل."}
-            </p>
-          </div>
+          <h3>{en ? "Bookings desk" : "سجل الحجوزات"}</h3>
         </section>
 
         <section className="bk-card">
           <div className="bk-filters">
-            <div className="bk-filter-grid">
-              <label className="field span-2 bk-field-search">
+            <div className="bk-filter-row bk-filter-row-search">
+              <label className="field bk-field-search">
                 <span>{i18n.c("search")}</span>
                 <input
                   value={q}
@@ -494,6 +486,8 @@ export default function BookingsPage() {
                   }}
                 />
               </label>
+            </div>
+            <div className="bk-filter-row bk-filter-row-meta">
               <label className="field bk-field-status">
                 <span>{i18n.c("status")}</span>
                 <select
@@ -522,30 +516,6 @@ export default function BookingsPage() {
                   <option value="activity">{i18n.service("activity")}</option>
                 </select>
               </label>
-              <FilterDate
-                tone="bk-field-booked"
-                label={en ? "Booked from" : "تاريخ الحجز من"}
-                value={bookedFrom}
-                onChange={setBookedFrom}
-              />
-              <FilterDate
-                tone="bk-field-booked"
-                label={en ? "Booked to" : "تاريخ الحجز إلى"}
-                value={bookedTo}
-                onChange={setBookedTo}
-              />
-              <FilterDate
-                tone="bk-field-travel"
-                label={en ? "Travel from" : "تاريخ السفر من"}
-                value={travelFrom}
-                onChange={setTravelFrom}
-              />
-              <FilterDate
-                tone="bk-field-travel"
-                label={en ? "Travel to" : "تاريخ السفر إلى"}
-                value={travelTo}
-                onChange={setTravelTo}
-              />
               <label className="field bk-field-route">
                 <span>{en ? "Route from" : "المسار من"}</span>
                 <input
@@ -572,6 +542,32 @@ export default function BookingsPage() {
                   }}
                 />
               </label>
+            </div>
+            <div className="bk-filter-row bk-filter-row-dates">
+              <FilterDate
+                tone="bk-field-booked"
+                label={en ? "Booked from" : "تاريخ الحجز من"}
+                value={bookedFrom}
+                onChange={setBookedFrom}
+              />
+              <FilterDate
+                tone="bk-field-booked"
+                label={en ? "Booked to" : "تاريخ الحجز إلى"}
+                value={bookedTo}
+                onChange={setBookedTo}
+              />
+              <FilterDate
+                tone="bk-field-travel"
+                label={en ? "Travel from" : "تاريخ السفر من"}
+                value={travelFrom}
+                onChange={setTravelFrom}
+              />
+              <FilterDate
+                tone="bk-field-travel"
+                label={en ? "Travel to" : "تاريخ السفر إلى"}
+                value={travelTo}
+                onChange={setTravelTo}
+              />
             </div>
           </div>
 

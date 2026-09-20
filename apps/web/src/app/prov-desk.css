@@ -295,7 +295,7 @@
 
 .prov-table {
   width: 100%;
-  border-collapse: separate;
+  border-collapse: collapse;
   border-spacing: 0;
   min-width: 860px;
 }
@@ -304,7 +304,7 @@
 .prov-table td {
   padding: 0.48rem 0.7rem;
   text-align: start;
-  border-bottom: 1px solid var(--prov-line);
+  border: 1px solid rgba(15, 51, 64, 0.1);
   vertical-align: middle;
   font-size: 0.82rem;
 }

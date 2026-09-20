@@ -72,6 +72,7 @@ const COPY = {
     accepted: { ar: "مقبول", en: "Accepted" },
     expired: { ar: "منتهي", en: "Expired" },
     booked: { ar: "محجوز", en: "Booked" },
+    archived: { ar: "مؤرشف", en: "Archived" },
     open: { ar: "مفتوحة", en: "Open" },
     pending: { ar: "بانتظار الرد", en: "Waiting" },
     closed: { ar: "مغلقة", en: "Closed" },

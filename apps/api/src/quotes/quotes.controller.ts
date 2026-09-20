@@ -1,9 +1,11 @@
 import {
+  Body,
   Controller,
   Delete,
   Get,
   Param,
   Post,
+  Query,
 } from "@nestjs/common";
 import { CurrentUser, RequirePermissions } from "../auth/decorators";
 import type { AuthUser } from "../auth/auth.types";
@@ -22,12 +24,22 @@ export class QuotesController {
 
   @Get()
   @RequirePermissions("conversations.read")
-  async list(@CurrentUser() user: AuthUser) {
+  async list(
+    @CurrentUser() user: AuthUser,
+    @Query("status") status?: string,
+  ) {
     await this.quotes.purgeExpiredQuotes(user.organizationId);
 
     const canViewCost = user.permissions.includes("pricing.view_cost");
     const rows = await this.prisma.quote.findMany({
-      where: { organizationId: user.organizationId },
+      where: {
+        organizationId: user.organizationId,
+        ...(status === "archived"
+          ? { status: "archived" }
+          : status && status !== "all"
+            ? { status }
+            : { status: { not: "archived" } }),
+      },
       include: {
         inquiry: true,
         contact: true,
@@ -60,6 +72,20 @@ export class QuotesController {
         stripCostFields(item as unknown as Record<string, unknown>, canViewCost),
       ),
     };
+  }
+
+  @Post("bulk")
+  @RequirePermissions("quotes.create")
+  bulk(
+    @CurrentUser() user: AuthUser,
+    @Body() body: { ids?: string[]; action?: "archive" | "unarchive" | "delete" },
+  ) {
+    return this.quotes.bulkQuotes({
+      organizationId: user.organizationId,
+      userId: user.userId,
+      ids: body.ids || [],
+      action: body.action,
+    });
   }
 
   @Post(":id/send")

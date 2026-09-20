@@ -224,9 +224,10 @@
 .prov-toolbar .prov-field {
   padding: 0.4rem 0.55rem 0.45rem;
   border-radius: 9px;
-  border: 1px solid rgba(15, 51, 64, 0.1);
+  border: 1px solid rgba(15, 51, 64, 0.14);
   border-inline-start: 4px solid var(--prov-navy);
   background: #d8e6e3;
+  box-shadow: 0 4px 10px rgba(7, 24, 34, 0.04);
 }
 
 .prov-toolbar .prov-field span {
@@ -294,7 +295,8 @@
 
 .prov-table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
   min-width: 860px;
 }
 
@@ -307,7 +309,7 @@
   font-size: 0.82rem;
 }
 
-.prov-table th {
+.prov-table thead th {
   background: linear-gradient(145deg, #184a52, #0f3340);
   color: #f3f7f4;
   font-size: 0.78rem;

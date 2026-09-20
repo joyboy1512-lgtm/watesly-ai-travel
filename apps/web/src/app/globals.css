@@ -219,29 +219,6 @@ h1 {
   border-color: rgba(216, 163, 94, 0.55);
 }
 
-.staff-login {
-  min-height: 100vh;
-  display: grid;
-  place-items: center;
-  padding: 2rem 1rem;
-}
-
-.staff-login-card {
-  width: min(420px, 100%);
-  padding: 1.75rem;
-  border-radius: 16px;
-  border: 1px solid var(--line);
-  background: rgba(255, 255, 255, 0.03);
-}
-
-.staff-login-card h1 {
-  margin: 0.75rem 0 0.35rem;
-}
-
-.staff-login-foot {
-  margin-top: 1.25rem;
-}
-
 .app-shell {
   min-height: 100vh;
   display: grid;

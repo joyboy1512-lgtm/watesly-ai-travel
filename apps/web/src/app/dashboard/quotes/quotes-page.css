@@ -49,18 +49,18 @@
   border-radius: 9px;
   border: 1px solid rgba(15, 51, 64, 0.1);
   border-inline-start: 4px solid var(--qt-navy);
-  background: #d8e6e3;
+  background: #c3d6d1;
   min-width: 0;
 }
 
 .quotes-field-status {
   border-inline-start-color: #d8a35e;
-  background: #efe6d4;
+  background: #ecd7a8;
 }
 
 .quotes-field-service {
   border-inline-start-color: #1a6b4a;
-  background: #d8e6e3;
+  background: #b7d4c4;
 }
 
 .quotes-field span {
@@ -222,7 +222,7 @@
 }
 
 .quotes-table tbody tr:nth-child(even) td {
-  background: #e8f1ee;
+  background: #cfe3dd;
 }
 
 .quotes-table tbody tr:hover td,

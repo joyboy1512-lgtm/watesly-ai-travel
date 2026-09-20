@@ -85,38 +85,38 @@
   border-radius: 9px;
   border: 1px solid rgba(15, 51, 64, 0.16);
   border-inline-start: 4px solid var(--bk-navy);
-  background: #d8e6e3;
+  background: #c3d6d1;
   min-width: 0;
 }
 
 .bk-field-search {
   border-inline-start-color: #0f3340;
-  background: #d8e6e3;
+  background: #c3d6d1;
 }
 
 .bk-field-status {
   border-inline-start-color: #d8a35e;
-  background: #efe6d4;
+  background: #ecd7a8;
 }
 
 .bk-field-service {
   border-inline-start-color: #1a6b4a;
-  background: #d6e8df;
+  background: #b7d4c4;
 }
 
 .bk-field-route {
   border-inline-start-color: #184a52;
-  background: #d5e3e6;
+  background: #b7cdd3;
 }
 
 .bk-field-booked {
   border-inline-start-color: #c9893a;
-  background: #efe6d4;
+  background: #ecd7a8;
 }
 
 .bk-field-travel {
   border-inline-start-color: #0f3340;
-  background: #d8e6e3;
+  background: #c3d6d1;
 }
 
 .bk-filters .field span {
@@ -376,7 +376,7 @@
 }
 
 .bk-table tbody tr:nth-child(even) td {
-  background: #e8f1ee;
+  background: #cfe3dd;
 }
 
 .bk-table tbody tr:hover td {

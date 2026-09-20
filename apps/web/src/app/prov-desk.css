@@ -330,7 +330,7 @@
 }
 
 .prov-table tbody tr:nth-child(even) td {
-  background: #e8f1ee;
+  background: #cfe3dd;
 }
 
 .prov-table tbody tr:hover td {
@@ -722,7 +722,7 @@
 }
 
 .prov-agg .prov-table tbody tr:nth-child(even) td {
-  background: #e8f1ee;
+  background: #cfe3dd;
 }
 
 .prov-agg .prov-table tbody tr:hover td {

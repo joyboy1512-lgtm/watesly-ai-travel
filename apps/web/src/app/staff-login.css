@@ -95,43 +95,48 @@
   display: grid;
   place-items: center;
   padding: clamp(1.1rem, 3vw, 2rem);
-  background: #eef3f1;
+  background: #d8e6e3;
 }
 
 .staff-login-card {
   width: min(560px, 100%);
   display: grid;
   gap: 0.95rem;
-  padding: 2rem 2.1rem 1.55rem;
+  padding: 1.15rem 1.2rem 1.45rem;
   border-radius: 20px;
-  border: 1px solid rgba(15, 51, 64, 0.12);
+  border: 2.5px solid #0f3340;
   background: #fff;
-  box-shadow: 0 20px 44px rgba(7, 24, 34, 0.12);
+  box-shadow:
+    0 0 0 6px rgba(15, 51, 64, 0.08),
+    0 22px 48px rgba(7, 24, 34, 0.2);
 }
 
-.staff-login-card-brand {
+.staff-login-logo-card {
   display: grid;
-  justify-items: start;
+  justify-items: center;
+  text-align: center;
   gap: 0.28rem;
-  padding-bottom: 0.85rem;
-  border-bottom: 1px solid rgba(15, 51, 64, 0.1);
+  padding: 1.15rem 1.2rem 1.05rem;
+  border-radius: 14px;
+  background: linear-gradient(145deg, #184a52, #0f3340);
+  box-shadow: 0 10px 22px rgba(7, 24, 34, 0.2);
 }
 
-.staff-login-card-brand .wg-logo-lockup-img {
+.staff-login-logo-card .wg-logo-lockup-img {
   height: 3.1rem;
   width: auto;
 }
 
-.staff-login-card-brand strong {
-  color: var(--sl-navy);
+.staff-login-logo-card strong {
+  color: #f0c27a;
   font-size: 1.35rem;
   font-weight: 800;
   letter-spacing: -0.02em;
 }
 
-.staff-login-card-brand span {
-  color: #3d4d4a;
-  font-size: 0.92rem;
+.staff-login-logo-legal {
+  color: rgba(243, 247, 244, 0.86);
+  font-size: 0.9rem;
   font-weight: 700;
 }
 

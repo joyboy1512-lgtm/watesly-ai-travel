@@ -86,6 +86,7 @@ function searchCacheKey(params: HotelSearchParams): string {
     roomOccupancies: params.roomOccupancies || null,
     currency: params.currency || "",
     maxHotels: params.maxHotels ?? 30,
+    maxRooms: params.maxRoomsPerHotel ?? (params.hotelCode ? 50 : 25),
     radiusKm: params.radiusKm || 25,
     boardCode: params.boardCode || "",
     paymentType: params.paymentType || "",

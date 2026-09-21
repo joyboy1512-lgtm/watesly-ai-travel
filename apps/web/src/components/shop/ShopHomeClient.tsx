@@ -11,8 +11,10 @@ import { ShopHeroBanner, type FlightLeg, type FlightTripType } from "@/component
 import type { ShopDestination, ShopOffer } from "@/lib/shop-content";
 import { buildFlightResultsHref } from "@/lib/flight-results-url";
 import {
+  buildHotelDetailHref,
   buildHotelResultsHref,
   encodeRoomOccupancies,
+  isHotelSuggestItem,
 } from "@/lib/hotel-results-url";
 import {
   buildActivityResultsHref,
@@ -113,6 +115,7 @@ function ShopHomeInner() {
   const [destination, setDestination] = useState("DXB");
   const [destinationLabel, setDestinationLabel] = useState("DXB · دبي، الإمارات");
   const [stayQuery, setStayQuery] = useState("دبي");
+  const [stayHotelCode, setStayHotelCode] = useState("");
   const [activityDest, setActivityDest] = useState("DXB");
   const [activityLabel, setActivityLabel] = useState("دبي");
   const [departDate, setDepartDate] = useState(plusDays(14));
@@ -351,19 +354,22 @@ function ShopHomeInner() {
         const occErr = validateOccupancy(stayOccupancy);
         if (occErr) throw new Error(occErr);
         const totals = occupancyTotals(stayOccupancy);
+        const stay = {
+          destination: stayQuery,
+          destinationLabel: stayQuery,
+          checkIn: departDate,
+          checkOut: returnDate,
+          adults: totals.adults,
+          children: totals.children,
+          infants,
+          rooms: totals.rooms,
+          childrenAges: totals.childrenAgesCsv,
+          occ: encodeRoomOccupancies(stayOccupancy.rooms),
+        };
         router.push(
-          buildHotelResultsHref({
-            destination: stayQuery,
-            destinationLabel: stayQuery,
-            checkIn: departDate,
-            checkOut: returnDate,
-            adults: totals.adults,
-            children: totals.children,
-            infants,
-            rooms: totals.rooms,
-            childrenAges: totals.childrenAgesCsv,
-            occ: encodeRoomOccupancies(stayOccupancy.rooms),
-          }),
+          stayHotelCode
+            ? buildHotelDetailHref(stayHotelCode, stay)
+            : buildHotelResultsHref(stay),
         );
       } catch (err) {
         setError(err instanceof Error ? err.message : "فشل البحث");
@@ -437,6 +443,7 @@ function ShopHomeInner() {
     setDestination(dest.code);
     setDestinationLabel(`${dest.code} · ${dest.name}`);
     setStayQuery(dest.name);
+    setStayHotelCode("");
     setActivityDest(dest.code);
     setActivityLabel(dest.name);
     setError("");
@@ -456,6 +463,7 @@ function ShopHomeInner() {
     }
     if (offer.mode === "stays" || offer.mode === "cars") {
       setStayQuery(offer.destination || "دبي");
+      setStayHotelCode("");
     }
     if (offer.mode === "cars") {
       setTransferDropoff(offer.destination || "الكويت");
@@ -559,8 +567,16 @@ function ShopHomeInner() {
           setDestination(item.code);
           setDestinationLabel(item.title);
         }}
-        onStayQueryChange={setStayQuery}
-        onStayPick={(item) => setStayQuery(item.title)}
+        onStayQueryChange={(text) => {
+          setStayQuery(text);
+          setStayHotelCode("");
+        }}
+        onStayPick={(item) => {
+          setStayQuery(item.title);
+          setStayHotelCode(
+            isHotelSuggestItem(item) && /^\d+$/.test(item.code) ? item.code : "",
+          );
+        }}
         onActivityClear={(text) => {
           setActivityDest(text);
           setActivityLabel(text);

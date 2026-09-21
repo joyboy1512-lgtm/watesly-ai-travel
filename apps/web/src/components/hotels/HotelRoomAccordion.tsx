@@ -41,8 +41,9 @@ function occupancyLabel(room: HotelRoomOption) {
 }
 
 function cancellationSummary(rate: HotelRateOption) {
+  const policies = rate.cancellationPolicies || [];
   if (rate.freeCancellation) {
-    const first = rate.cancellationPolicies.find((p) => Number(p.amount) === 0);
+    const first = policies.find((p) => Number(p.amount) === 0);
     if (first?.from) {
       const deadline = new Date(first.from);
       const now = Date.now();
@@ -61,7 +62,7 @@ function cancellationSummary(rate: HotelRateOption) {
     }
     return { text: "إلغاء مجاني*", deadline: "حسب سياسة الفندق", good: true };
   }
-  const first = rate.cancellationPolicies[0];
+  const first = policies[0];
   if (first?.from) {
     const fee = Number(first.amount);
     const feeLabel =

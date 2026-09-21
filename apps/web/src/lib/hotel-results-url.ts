@@ -221,8 +221,14 @@ export function nightsBetween(from: string, to: string) {
   return Math.max(1, Math.round((b - a) / 86400000));
 }
 
-export function hotelSearchPreferencesJson(params: HotelResultsSearchParams) {
+export function hotelSearchPreferencesJson(
+  params: HotelResultsSearchParams,
+  extras?: { hotelCode?: string },
+) {
   const roomOcc = occupancyFromSearchParams(params);
+  const hotelCode = String(extras?.hotelCode || "")
+    .trim()
+    .replace(/^hb-/i, "");
   return JSON.stringify({
     query: params.destination,
     rooms: params.rooms || 1,
@@ -232,5 +238,78 @@ export function hotelSearchPreferencesJson(params: HotelResultsSearchParams) {
       children: r.childAges.length,
       childrenAges: r.childAges,
     })),
+    ...(hotelCode ? { hotelCode } : {}),
   });
+}
+
+/** Hotelbeds shop ids are `hb-12345`. Accept that prefix or a bare numeric code. */
+export function hotelOfferCode(raw: string): string {
+  return String(raw || "")
+    .trim()
+    .replace(/^hb-/i, "");
+}
+
+export function hotelDetailId(raw: string): string {
+  const code = hotelOfferCode(raw);
+  if (!code) return "";
+  return /^\d+$/.test(code) ? `hb-${code}` : code;
+}
+
+export function isHotelSuggestItem(item: { id?: string; code?: string; subtitle?: string }) {
+  const id = String(item.id || "");
+  const code = String(item.code || "").trim();
+  const subtitle = String(item.subtitle || "");
+  return (
+    id.startsWith("hotel-") ||
+    /^\d+$/.test(code) ||
+    /فندق|hotel/i.test(subtitle)
+  );
+}
+
+export function matchShopHotel<
+  T extends { id: string; details?: Record<string, unknown> },
+>(hotels: T[], hotelId: string): T | undefined {
+  const needle = String(hotelId || "").trim().toLowerCase();
+  if (!needle) return undefined;
+  const code = hotelOfferCode(needle).toLowerCase();
+  return hotels.find((hotel) => {
+    const id = String(hotel.id || "").toLowerCase();
+    const hc = hotelOfferCode(String(hotel.details?.hotelCode || "")).toLowerCase();
+    return (
+      id === needle ||
+      id === `hb-${code}` ||
+      id === code ||
+      (code && (hc === code || hc === needle))
+    );
+  });
+}
+
+export function buildHotelDetailHref(
+  hotelId: string,
+  params: Partial<HotelResultsSearchParams> = {},
+) {
+  const id = hotelDetailId(hotelId) || hotelId;
+  const results = buildHotelResultsHref(params);
+  const q = results.includes("?") ? results.slice(results.indexOf("?") + 1) : "";
+  return `/hotels/${encodeURIComponent(id)}${q ? `?${q}` : ""}`;
+}
+
+export function hotelSearchRequestBody(
+  params: HotelResultsSearchParams,
+  extras?: { hotelCode?: string },
+) {
+  const hotelCode = hotelOfferCode(extras?.hotelCode || "");
+  return {
+    destination: params.destination || undefined,
+    checkIn: params.checkIn,
+    checkOut: params.checkOut,
+    rooms: params.rooms,
+    adults: params.adults,
+    children: params.children,
+    infants: params.infants,
+    childrenAges: params.childrenAges || undefined,
+    occ: params.occ || undefined,
+    hotelCode: hotelCode || undefined,
+    preferences: hotelSearchPreferencesJson(params, { hotelCode }),
+  };
 }

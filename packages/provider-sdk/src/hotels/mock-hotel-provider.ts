@@ -61,7 +61,14 @@ export class MockHotelProvider implements HotelProviderAdapter {
             params.location.includes(label),
           )?.[0] || locUpper.slice(0, 3);
     const label = geo?.label || MOCK_DESTINATION_LABELS[destCode] || params.location;
-    const hotels = hotelsForDestination(destCode, label);
+    const hotelCode = String(params.hotelCode || "")
+      .replace(/^hb-/i, "")
+      .trim()
+      .toLowerCase();
+    const hotels = hotelsForDestination(destCode, label).filter((hotel) => {
+      if (!hotelCode) return true;
+      return String(hotel.id || "").toLowerCase() === hotelCode;
+    });
 
     // Attach package/tour/transfer snapshots for quote enrichment (not sold as separate hotel rows)
     const ancillaries = buildMockAncillaryOffers({

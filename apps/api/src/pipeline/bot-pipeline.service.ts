@@ -478,6 +478,7 @@ export class BotPipelineService {
         .slice(0, 10);
 
     let hotelLocation = inquiry.destination || inquiry.origin || "";
+    let hotelCode: string | undefined;
     let hotelRooms = 1;
     let childrenAges: string | undefined;
     let roomOccupancies:
@@ -494,6 +495,7 @@ export class BotPipelineService {
           query?: string;
           rooms?: number;
           preferredHotel?: string;
+          hotelCode?: string;
           childrenAges?: string;
           roomOccupancies?: Array<{
             adults: number;
@@ -511,6 +513,11 @@ export class BotPipelineService {
           pref.preferredHotel ||
           inquiry.preferences ||
           hotelLocation;
+        if (pref.hotelCode?.trim()) {
+          hotelCode = pref.hotelCode.trim().replace(/^hb-/i, "");
+        } else if (pref.preferredHotel && /^hb-?\d+$/i.test(pref.preferredHotel.trim())) {
+          hotelCode = pref.preferredHotel.trim().replace(/^hb-/i, "");
+        }
         if (pref.rooms && pref.rooms > 0) hotelRooms = pref.rooms;
         if (pref.childrenAges?.trim()) childrenAges = pref.childrenAges.trim();
         if (Array.isArray(pref.roomOccupancies) && pref.roomOccupancies.length) {
@@ -660,6 +667,8 @@ export class BotPipelineService {
               childrenAges: r.childrenAges || [],
             })),
             currency: searchCurrency,
+            hotelCode: hotelCode || undefined,
+            maxRoomsPerHotel: hotelCode ? 50 : undefined,
             shiftDays,
             minRate,
             maxRate,

@@ -16,10 +16,12 @@ import {
   type HotelSearchFilters,
 } from "@/lib/hotel-search";
 import {
+  buildHotelDetailHref,
   buildHotelResultsHref,
   encodeRoomOccupancies,
   formatHotelSearchSummary,
   hotelSearchPreferencesJson,
+  isHotelSuggestItem,
   nightsBetween,
   occupancyFromSearchParams,
   parseHotelResultsSearch,
@@ -511,8 +513,7 @@ export function ShopHotelResultsClient() {
           }
         : undefined,
     });
-    const q = searchParams.toString();
-    router.push(`/hotels/${encodeURIComponent(hotel.id)}${q ? `?${q}` : ""}`);
+    router.push(buildHotelDetailHref(hotel.id, params));
   }
 
   return (
@@ -706,15 +707,30 @@ export function ShopHotelResultsClient() {
             onStayQueryChange={(text) =>
               router.push(buildHotelResultsHref({ ...params, destination: text, destinationLabel: text }))
             }
-            onStayPick={(item) =>
+            onStayPick={(item) => {
+              if (isHotelSuggestItem(item) && /^\d+$/.test(item.code)) {
+                const city =
+                  String(item.subtitle || "")
+                    .replace(/^فندق(?:\s*·\s*)?/, "")
+                    .replace(/^Hotel(?:\s*·\s*)?/i, "")
+                    .trim() || item.title;
+                router.push(
+                  buildHotelDetailHref(item.code, {
+                    ...params,
+                    destination: city,
+                    destinationLabel: item.title,
+                  }),
+                );
+                return;
+              }
               router.push(
                 buildHotelResultsHref({
                   ...params,
                   destination: item.title,
                   destinationLabel: item.title,
                 }),
-              )
-            }
+              );
+            }}
             onDepartDateChange={(v) =>
               router.push(buildHotelResultsHref({ ...params, checkIn: v }))
             }

@@ -253,20 +253,39 @@ export function HotelDetailModal({
   }
 
   return (
-    <div className="flight-modal-backdrop" onClick={onClose} role="presentation">
+    <div
+      className={shopStyle ? "tvlk-hotel-detail" : "flight-modal-backdrop"}
+      onClick={shopStyle ? undefined : onClose}
+      role={shopStyle ? undefined : "presentation"}
+    >
       <div
-        className={`flight-modal hotel-detail-modal${shopStyle ? " hotel-detail-modal-shop" : ""}`}
-        role="dialog"
-        aria-modal="true"
+        className={
+          shopStyle
+            ? "tvlk-hotel-detail-inner hotel-detail-modal hotel-detail-modal-shop"
+            : "flight-modal hotel-detail-modal"
+        }
+        role={shopStyle ? "region" : "dialog"}
+        aria-modal={shopStyle ? undefined : "true"}
         aria-labelledby="hotel-detail-title"
-        onClick={(e) => e.stopPropagation()}
+        onClick={shopStyle ? undefined : (e) => e.stopPropagation()}
       >
-        <div className="hotel-modal-sticky-head">
-          <div className="hotel-modal-toolbar">
-            <button type="button" className="flight-modal-close" aria-label="إغلاق" onClick={onClose}>
-              ×
+        {shopStyle ? (
+          <nav className="tvlk-hotel-crumb" aria-label={t("backToHotelResults")}>
+            <button type="button" onClick={onClose}>
+              {t("backToHotelResults")}
             </button>
-          </div>
+            <span aria-hidden>/</span>
+            <span>{name}</span>
+          </nav>
+        ) : null}
+        <div className="hotel-modal-sticky-head">
+          {shopStyle ? null : (
+            <div className="hotel-modal-toolbar">
+              <button type="button" className="flight-modal-close" aria-label="إغلاق" onClick={onClose}>
+                ×
+              </button>
+            </div>
+          )}
 
           <div className="hotel-name-chip" title={name}>
             <h2 id="hotel-detail-title">{name}</h2>

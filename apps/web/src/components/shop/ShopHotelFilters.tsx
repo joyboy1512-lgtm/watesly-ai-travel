@@ -168,6 +168,55 @@ function FiltersPanel({
         </button>
       </div>
 
+      <FilterSection title={t("popularFilters")}>
+        {facets.bookingPolicies?.freeCancellation ? (
+          <FilterCheck
+            id="popular-freeCancellation"
+            label={t("freeCancel")}
+            count={facets.bookingPolicies.freeCancellation}
+            checked={filters.freeCancellation}
+            onToggle={() =>
+              onChange({ ...filters, freeCancellation: !filters.freeCancellation })
+            }
+          />
+        ) : null}
+        {facets.breakfastIncluded ? (
+          <FilterCheck
+            id="popular-breakfast"
+            label={t("breakfastIncl")}
+            count={facets.breakfastIncluded}
+            checked={filters.breakfast}
+            onToggle={() => onChange({ ...filters, breakfast: !filters.breakfast })}
+          />
+        ) : null}
+        {facets.bookingPolicies?.noPrepayment ? (
+          <FilterCheck
+            id="popular-noPrepayment"
+            label={t("payAtHotelOpt")}
+            count={facets.bookingPolicies.noPrepayment}
+            checked={filters.noPrepayment}
+            onToggle={() => onChange({ ...filters, noPrepayment: !filters.noPrepayment })}
+          />
+        ) : null}
+        {(facets.starRatings || []).some((o) => Number(o.id) >= 4) ? (
+          <FilterCheck
+            id="popular-stars4"
+            label={shopFilterOptionLabel(locale, "4", "4+", "star")}
+            checked={(filters.starRatings || []).includes("4") || (filters.starRatings || []).includes("5")}
+            onToggle={() => {
+              const current = filters.starRatings || [];
+              const has = current.includes("4") || current.includes("5");
+              onChange({
+                ...filters,
+                starRatings: has
+                  ? current.filter((id) => id !== "4" && id !== "5")
+                  : [...new Set([...current, "4", "5"])],
+              });
+            }}
+          />
+        ) : null}
+      </FilterSection>
+
       {destCode ? (
         <FilterSection title={t("city")}>
           <FilterCheck
@@ -185,18 +234,23 @@ function FiltersPanel({
         </FilterSection>
       ) : null}
 
-      {facets.priceMaxMajor > 0 ? (
-        <FilterSection title={t("priceRangeKwd")}>
+      {(facets.priceMaxPerNightMajor || facets.priceMaxMajor) > 0 ? (
+        <FilterSection title={t("pricePerRoomNight")}>
           <ShopPriceRangeSlider
             min={0}
-            max={facets.priceMaxMajor}
-            value={filters.maxPrice ? Number(filters.maxPrice) : facets.priceMaxMajor}
-            onChange={(v) =>
+            max={facets.priceMaxPerNightMajor || facets.priceMaxMajor}
+            value={
+              filters.maxPricePerNight
+                ? Number(filters.maxPricePerNight)
+                : facets.priceMaxPerNightMajor || facets.priceMaxMajor
+            }
+            onChange={(v) => {
+              const cap = facets.priceMaxPerNightMajor || facets.priceMaxMajor;
               onChange({
                 ...filters,
-                maxPrice: v >= facets.priceMaxMajor ? "" : String(v),
-              })
-            }
+                maxPricePerNight: v >= cap ? "" : String(v),
+              });
+            }}
           />
         </FilterSection>
       ) : null}

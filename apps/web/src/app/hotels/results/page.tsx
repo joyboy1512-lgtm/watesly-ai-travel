@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import "../../shop.css";
+import "../../tvlk-hotel.css";
 import { StoreFront } from "@/components/shop/StoreFront";
 import { ShopHotelResultsClient } from "@/components/shop/ShopHotelResultsClient";
 

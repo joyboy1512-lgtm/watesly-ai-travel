@@ -4,6 +4,7 @@ import Link from "next/link";
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import "../../../shop.css";
+import "../../../tvlk-hotel.css";
 import { StoreFront } from "@/components/shop/StoreFront";
 import { ShopMockBanner } from "@/components/shop/ShopMockBanner";
 import { HotelCheckout, validateHotelCheckout } from "@/components/hotels/HotelCheckout";

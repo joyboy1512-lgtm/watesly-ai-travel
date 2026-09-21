@@ -142,7 +142,7 @@ export function ShopHotelResults(props: Props) {
 
       <div className="shop-hotel-results-head">
         <h2>
-          {title}: {t("propertiesCount", { n: props.hotels.length })}
+          {t("hotelFoundIn", { n: props.hotels.length, dest: title })}
         </h2>
         <div className="shop-hotel-results-sort">
           <button
@@ -193,21 +193,6 @@ export function ShopHotelResults(props: Props) {
           ) : null}
         </div>
       </div>
-
-      {mapOpen && mapPins.length ? (
-        <HotelResultsMap
-          pins={mapPins}
-          selectedId={mapHotelId || visibleHotels[0]?.id}
-          onSelect={(id) => {
-            setMapHotelId(id);
-            const row = props.hotels.find((h) => h.id === id);
-            if (row) {
-              const el = document.getElementById(`hotel-card-${id}`);
-              el?.scrollIntoView({ behavior: "smooth", block: "center" });
-            }
-          }}
-        />
-      ) : null}
 
       <div className="shop-hotel-results-layout">
         <ShopHotelFilters
@@ -264,6 +249,24 @@ export function ShopHotelResults(props: Props) {
             <p className="shop-hotel-results-empty">{t("noHotels")}</p>
           ) : null}
         </div>
+
+        {mapPins.length ? (
+          <aside className={`shop-hotel-results-mapcol${mapOpen ? " is-open" : ""}`}>
+            <HotelResultsMap
+              variant="sidebar"
+              pins={mapPins}
+              selectedId={mapHotelId || visibleHotels[0]?.id}
+              onSelect={(id) => {
+                setMapHotelId(id);
+                const row = props.hotels.find((h) => h.id === id);
+                if (row) {
+                  const el = document.getElementById(`hotel-card-${id}`);
+                  el?.scrollIntoView({ behavior: "smooth", block: "center" });
+                }
+              }}
+            />
+          </aside>
+        ) : null}
       </div>
     </section>
   );

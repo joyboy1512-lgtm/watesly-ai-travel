@@ -58,6 +58,8 @@ export type HotelFilterFacets = {
   };
   breakfastIncluded: number;
   priceMaxMajor: number;
+  /** Stay-total major units converted to a per-room-per-night ceiling. */
+  priceMaxPerNightMajor: number;
 };
 
 
@@ -98,6 +100,8 @@ export type HotelSearchFilters = {
   minBathrooms?: number;
   onlinePayment?: boolean;
   maxPrice: string;
+  /** Per room per night, stay-currency major units (Traveloka price slider). */
+  maxPricePerNight?: string;
   refundableOnly: boolean;
   bookableOnly: boolean;
   /** Keep hotels whose destinationCode matches the searched destination (e.g. DXB only). */
@@ -129,6 +133,7 @@ export const defaultHotelFilters = (): HotelSearchFilters => ({
   minBathrooms: 0,
   onlinePayment: false,
   maxPrice: "",
+  maxPricePerNight: "",
   refundableOnly: false,
   bookableOnly: false,
   destinationCodeOnly: "",
@@ -162,6 +167,7 @@ export function countHotelFilters(filters: HotelSearchFilters) {
   if ((filters.minBathrooms || 0) > 0) n += 1;
   if (filters.onlinePayment) n += 1;
   if (filters.maxPrice) n += 1;
+  if (filters.maxPricePerNight) n += 1;
   if (filters.refundableOnly) n += 1;
   if (filters.bookableOnly) n += 1;
   if (filters.destinationCodeOnly) n += 1;
@@ -216,6 +222,13 @@ function matchingRates(h: HotelOfferRow, filters: HotelSearchFilters): HotelRate
     const maxMajor = Number(filters.maxPrice);
     if (Number.isFinite(maxMajor) && maxMajor > 0) {
       rates = rates.filter((r) => r.net <= maxMajor);
+    }
+  }
+  if (filters.maxPricePerNight) {
+    const maxNight = Number(filters.maxPricePerNight);
+    const stayNights = Math.max(1, Number(h.details.nights || 1));
+    if (Number.isFinite(maxNight) && maxNight > 0) {
+      rates = rates.filter((r) => r.net / stayNights <= maxNight + 0.0001);
     }
   }
   if (filters.onlinePayment) {
@@ -524,6 +537,12 @@ export function collectFilterFacets(hotels: HotelOfferRow[]): HotelFilterFacets 
     },
     breakfastIncluded: hotels.filter((h) => hotelHasBoard(h, "BB")).length,
     priceMaxMajor: robustPriceMaxMajor(hotels.map((h) => displayPriceMajor(h))),
+    priceMaxPerNightMajor: robustPriceMaxMajor(
+      hotels.map((h) => {
+        const nights = Math.max(1, Number(h.details.nights || 1));
+        return Math.ceil(displayPriceMajor(h) / nights);
+      }),
+    ),
   };
 }
 

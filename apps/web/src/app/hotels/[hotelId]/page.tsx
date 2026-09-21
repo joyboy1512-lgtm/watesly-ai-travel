@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import "../../shop.css";
+import "../../tvlk-hotel.css";
 import { StoreFront } from "@/components/shop/StoreFront";
 import { ShopMockBanner } from "@/components/shop/ShopMockBanner";
 import { saveHotelDraft } from "@/lib/booking-draft";
@@ -304,7 +305,7 @@ function HotelDetailInner() {
   }
 
   return (
-    <div className="shop-hotel-detail-page">
+    <div className="shop-hotel-detail-page tvlk-hotel">
       <ShopMockBanner kind="hotel" />
       <HotelDetailModal
         hotel={hotel}

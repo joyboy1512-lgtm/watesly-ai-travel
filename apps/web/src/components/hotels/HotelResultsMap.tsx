@@ -18,6 +18,7 @@ type Props = {
   pins: HotelMapPin[];
   selectedId?: string | null;
   onSelect?: (id: string) => void;
+  variant?: "default" | "sidebar";
 };
 
 const TILE = 256;
@@ -44,7 +45,7 @@ function tileUrl(x: number, y: number, z: number) {
  * Interactive OSM tile map with price markers — no extra map SDK.
  * Identity stays the existing shop navy/card chrome.
  */
-export function HotelResultsMap({ pins, selectedId, onSelect }: Props) {
+export function HotelResultsMap({ pins, selectedId, onSelect, variant = "default" }: Props) {
   const { t } = useShopCopy();
   const active = pins.find((p) => p.id === selectedId) || pins[0];
   const layout = useMemo(() => {
@@ -83,7 +84,7 @@ export function HotelResultsMap({ pins, selectedId, onSelect }: Props) {
   }
 
   return (
-    <div className="shop-hotel-map">
+    <div className={`shop-hotel-map${variant === "sidebar" ? " shop-hotel-map-sidebar" : ""}`}>
       <div
         className="shop-hotel-map-canvas"
         role="img"
@@ -114,6 +115,7 @@ export function HotelResultsMap({ pins, selectedId, onSelect }: Props) {
         ))}
         <span className="shop-hotel-map-copy">{t("osmAttribution")}</span>
       </div>
+      {variant === "sidebar" ? null : (
       <ul className="shop-hotel-map-pins">
         {pins.slice(0, 24).map((pin) => (
           <li key={pin.id}>
@@ -132,6 +134,7 @@ export function HotelResultsMap({ pins, selectedId, onSelect }: Props) {
           </li>
         ))}
       </ul>
+      )}
     </div>
   );
 }

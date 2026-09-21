@@ -150,7 +150,7 @@ export function HotelCheckout({
   submitting,
   onSubmit,
 }: Props) {
-  const { locale } = useShopCopy();
+  const { locale, t } = useShopCopy();
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const formRef = useRef<HTMLDivElement>(null);
   const rate = draft.selectedRate;
@@ -230,7 +230,7 @@ export function HotelCheckout({
   }
 
   return (
-    <div className="shop-flight-checkout shop-hotel-checkout" ref={formRef}>
+    <div className="shop-flight-checkout shop-hotel-checkout tvlk-hotel" ref={formRef}>
       <ShopMockBanner compact kind="hotel" />
       <div className="shop-flight-checkout-steps" aria-label="خطوات الحجز">
         {["مراجعة الإقامة", "بيانات الضيوف", "الدفع"].map((label, idx) => (
@@ -265,7 +265,7 @@ export function HotelCheckout({
       <div className="shop-flight-checkout-layout">
         <div className="shop-flight-checkout-main">
           <section className="shop-flight-checkout-card">
-            <h2>بيانات صاحب الطلب</h2>
+            <h2>{t("guestNamesTitle")}</h2>
             <div className="shop-flight-contact-grid">
               <label htmlFor="field-name">
                 الاسم الكامل

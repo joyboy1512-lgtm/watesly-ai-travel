@@ -245,7 +245,13 @@
 
 .tvlk-hotel .shop-hotel-results-mapcol .shop-hotel-map,
 .tvlk-hotel .shop-hotel-results-mapcol .shop-hotel-map-sidebar {
+  display: block;
   width: 100%;
+  max-width: none;
+  margin: 0;
+  grid-template-columns: none;
+  border: 0;
+  border-radius: 0;
 }
 
 .tvlk-hotel .shop-hotel-map-sidebar .shop-hotel-map-canvas {

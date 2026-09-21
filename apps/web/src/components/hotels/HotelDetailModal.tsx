@@ -289,8 +289,9 @@ export function HotelDetailModal({
                   .join(" · ") || "—"}
               </p>
               <div className="hotel-modal-sticky-price">
-                <strong>{formatMoneyMinor(hotel.displayFromMinor, hotel.currency)}</strong>
-                <small>التكلفة الكلية · يبدأ من</small>
+                <strong>{formatMoneyMinor(perNight, hotel.currency)}</strong>
+                <small>لليلة · يبدأ من · دون ضريبة المدينة</small>
+                <em>{formatMoneyMinor(hotel.displayFromMinor, hotel.currency)} إجمالي الإقامة</em>
                 <button
                   type="button"
                   className="btn hotel-choose-room-cta"
@@ -467,8 +468,8 @@ export function HotelDetailModal({
               <div className={`hotel-detail-from${shopStyle ? " hotel-detail-from-shop" : ""}`}>
                 <small>يبدأ من</small>
                 <strong>{formatMoneyMinor(perNight, hotel.currency)}</strong>
-                <em>/ ليلة</em>
-                <span>{formatMoneyMinor(hotel.displayFromMinor, hotel.currency)} إجمالي</span>
+                <em>/ ليلة · دون ضريبة المدينة</em>
+                <span>{formatMoneyMinor(hotel.displayFromMinor, hotel.currency)} إجمالي الإقامة</span>
               </div>
             </div>
 

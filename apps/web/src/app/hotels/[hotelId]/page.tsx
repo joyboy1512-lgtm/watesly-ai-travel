@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
@@ -21,6 +21,8 @@ import {
 } from "@/lib/hotel-search";
 import {
   buildHotelResultsHref,
+  hotelSearchRequestBody,
+  matchShopHotel,
   nightsBetween,
   occupancyFromSearchParams,
   parseHotelResultsSearch,
@@ -28,8 +30,10 @@ import {
 import {
   getHotelSearchSession,
   resolveQuoteItemId,
+  type HotelSearchSession,
 } from "@/lib/hotel-search-session";
 import { shopFetch } from "@/lib/shop-session";
+import { humanizeHotelSearchError } from "@/lib/hotel-search-errors";
 
 const HotelDetailModal = dynamic(
   () => import("@/components/hotels/HotelDetailModal").then((m) => m.HotelDetailModal),
@@ -41,6 +45,26 @@ type HotelRow = HotelOfferRow & {
   displayFromMinor: number;
 };
 
+function enrichHotel(raw: HotelOfferRow): HotelRow | null {
+  return (
+    filterHotelOffers([raw], defaultHotelFilters(), "price_asc")[0] || null
+  );
+}
+
+function sessionStayMatches(
+  session: HotelSearchSession,
+  params: ReturnType<typeof parseHotelResultsSearch>,
+) {
+  if (!params.checkIn || !params.checkOut) return true;
+  return (
+    session.meta.departDate === params.checkIn &&
+    session.meta.returnDate === params.checkOut &&
+    session.meta.adults === params.adults &&
+    session.meta.children === params.children &&
+    session.meta.rooms === params.rooms
+  );
+}
+
 function HotelDetailInner() {
   const router = useRouter();
   const params = useParams<{ hotelId: string }>();
@@ -50,6 +74,8 @@ function HotelDetailInner() {
 
   const [hotel, setHotel] = useState<HotelRow | null>(null);
   const [missing, setMissing] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const [inquiryId, setInquiryId] = useState<string | undefined>();
   const [quoteItemId, setQuoteItemId] = useState<string | undefined>();
   const [meta, setMeta] = useState({
@@ -63,6 +89,7 @@ function HotelDetailInner() {
     destinationLabel: urlParams.destinationLabel || urlParams.destination,
     nights: nightsBetween(urlParams.checkIn, urlParams.checkOut),
   });
+  const fetchGen = useRef(0);
 
   const resultsHref = useMemo(() => {
     const session = getHotelSearchSession();
@@ -82,53 +109,129 @@ function HotelDetailInner() {
   }, [urlParams]);
 
   useEffect(() => {
+    const gen = ++fetchGen.current;
     const session = getHotelSearchSession();
-    if (!session?.hotels?.length || !hotelId) {
-      setMissing(true);
-      return;
-    }
-    const raw = session.hotels.find((h) => h.id === hotelId) as HotelOfferRow | undefined;
-    if (!raw) {
-      setMissing(true);
-      return;
-    }
-    const sortKey =
-      session.sortKey === "price_desc" ||
-      session.sortKey === "rating_desc" ||
-      session.sortKey === "best" ||
-      session.sortKey === "distance"
-        ? session.sortKey
-        : "price_asc";
-    const enriched = filterHotelOffers(
-      [raw],
-      session.filters || defaultHotelFilters(),
-      sortKey,
-    )[0];
-    if (!enriched) {
-      setMissing(true);
-      return;
-    }
-    setHotel(enriched);
-    setInquiryId(session.inquiryId);
-    setQuoteItemId(resolveQuoteItemId(session, hotelId));
-    setMeta({
-      stayQuery: session.meta.stayQuery || urlParams.destination,
-      departDate: session.meta.departDate || urlParams.checkIn,
-      returnDate: session.meta.returnDate || urlParams.checkOut,
-      rooms: session.meta.rooms || urlParams.rooms,
-      adults: session.meta.adults || urlParams.adults,
-      children: session.meta.children || urlParams.children,
-      infants: session.meta.infants ?? urlParams.infants,
-      destinationLabel:
-        session.meta.destination || urlParams.destinationLabel || urlParams.destination,
-      nights:
-        session.meta.nights ||
-        nightsBetween(
-          session.meta.departDate || urlParams.checkIn,
-          session.meta.returnDate || urlParams.checkOut,
+    const apply = (
+      raw: HotelOfferRow,
+      extras?: { inquiryId?: string; quoteItemId?: string },
+    ) => {
+      const enriched = enrichHotel(raw);
+      if (!enriched) {
+        setMissing(true);
+        setLoading(false);
+        return;
+      }
+      setHotel(enriched);
+      setInquiryId(extras?.inquiryId);
+      setQuoteItemId(extras?.quoteItemId);
+      const city =
+        String(enriched.details.destinationName || enriched.details.location || "") ||
+        urlParams.destination;
+      setMeta({
+        stayQuery: city || urlParams.destination,
+        departDate: urlParams.checkIn || session?.meta.departDate || "",
+        returnDate: urlParams.checkOut || session?.meta.returnDate || "",
+        rooms: urlParams.rooms || session?.meta.rooms || 1,
+        adults: urlParams.adults || session?.meta.adults || 1,
+        children: urlParams.children || session?.meta.children || 0,
+        infants: urlParams.infants ?? session?.meta.infants ?? 0,
+        destinationLabel:
+          urlParams.destinationLabel ||
+          session?.meta.destination ||
+          city ||
+          urlParams.destination,
+        nights: nightsBetween(
+          urlParams.checkIn || session?.meta.departDate || "",
+          urlParams.checkOut || session?.meta.returnDate || "",
         ),
-    });
+      });
+      setMissing(false);
+      setError("");
+      setLoading(false);
+    };
+
+    if (session?.hotels?.length && hotelId && sessionStayMatches(session, urlParams)) {
+      const raw = matchShopHotel(session.hotels as HotelOfferRow[], hotelId);
+      if (raw) {
+        apply(raw, {
+          inquiryId: session.inquiryId,
+          quoteItemId: resolveQuoteItemId(session, raw.id),
+        });
+        return;
+      }
+    }
+
+    const checkIn = urlParams.checkIn;
+    const checkOut = urlParams.checkOut;
+    if (!hotelId || !checkIn || !checkOut) {
+      setMissing(true);
+      setLoading(false);
+      return;
+    }
+
+    if (urlParams.children > 0) {
+      const occ = occupancyFromSearchParams(urlParams);
+      const ages = occ.flatMap((r) => r.childAges);
+      if (ages.length < urlParams.children) {
+        setError("حدد عمر كل طفل قبل فتح تفاصيل الفندق");
+        setMissing(true);
+        setLoading(false);
+        return;
+      }
+    }
+
+    setLoading(true);
     setMissing(false);
+    setError("");
+    const controller = new AbortController();
+    void (async () => {
+      try {
+        const result = await shopFetch<{
+          inquiryId: string;
+          quoteItems?: Array<{
+            id: string;
+            providerOfferRef: string;
+            serviceType: string;
+          }>;
+          hotels: HotelOfferRow[];
+        }>("/shop/search-hotels", {
+          method: "POST",
+          timeoutMs: 60000,
+          signal: controller.signal,
+          body: JSON.stringify(
+            hotelSearchRequestBody(urlParams, { hotelCode: hotelId }),
+          ),
+        });
+        if (gen !== fetchGen.current) return;
+        const raw =
+          matchShopHotel(result.hotels || [], hotelId) || result.hotels?.[0];
+        if (!raw) {
+          setMissing(true);
+          setLoading(false);
+          return;
+        }
+        apply(raw, {
+          inquiryId: result.inquiryId,
+          quoteItemId: result.quoteItems?.find(
+            (item) =>
+              item.providerOfferRef === raw.id && item.serviceType === "hotel",
+          )?.id,
+        });
+      } catch (err) {
+        if (gen !== fetchGen.current || controller.signal.aborted) return;
+        setError(
+          humanizeHotelSearchError(
+            err instanceof Error ? err.message : "تعذر جلب تفاصيل الفندق",
+          ),
+        );
+        setMissing(true);
+        setLoading(false);
+      }
+    })();
+
+    return () => {
+      controller.abort();
+    };
   }, [hotelId, urlParams]);
 
   function continueToReview(
@@ -180,22 +283,22 @@ function HotelDetailInner() {
     router.push("/hotels/book/review");
   }
 
-  if (missing) {
-    return (
-      <div className="shop-flight-results-error">
-        <p>تعذر العثور على الفندق. أعد البحث من صفحة النتائج.</p>
-        <Link href={resultsHref || "/hotels/results"} className="shop-btn">
-          العودة إلى النتائج
-        </Link>
-      </div>
-    );
-  }
-
-  if (!hotel) {
+  if (loading) {
     return (
       <div className="shop-flight-results-loading">
         <div className="shop-flight-spinner" aria-hidden />
         <p>جاري تحميل تفاصيل الفندق…</p>
+      </div>
+    );
+  }
+
+  if (missing || !hotel) {
+    return (
+      <div className="shop-flight-results-error">
+        <p>{error || "تعذر العثور على الفندق. أعد البحث من صفحة النتائج."}</p>
+        <Link href={resultsHref || "/hotels/results"} className="shop-btn">
+          العودة إلى النتائج
+        </Link>
       </div>
     );
   }

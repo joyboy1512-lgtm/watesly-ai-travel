@@ -651,11 +651,16 @@ export class ShopService {
       children?: number;
       infants?: number;
       childrenAges?: string;
+      hotelCode?: string;
       preferences?: string;
     },
     customer?: ShopCustomer,
   ) {
-    if (!body.destination || !body.checkIn || !body.checkOut) {
+    const hotelCode = String(body.hotelCode || "")
+      .trim()
+      .replace(/^hb-/i, "");
+    const destination = String(body.destination || "").trim() || hotelCode;
+    if ((!destination && !hotelCode) || !body.checkIn || !body.checkOut) {
       throw new BadRequestException("أدخل الوجهة وتاريخ الوصول والمغادرة");
     }
     const childCount = Math.max(0, body.children || 0);
@@ -671,19 +676,31 @@ export class ShopService {
       }
     }
     const org = await this.orgs.resolve();
-    const preferences =
-      body.preferences ||
-      JSON.stringify({
-        query: body.destination,
+    let preferences = body.preferences;
+    if (!preferences) {
+      preferences = JSON.stringify({
+        query: destination,
         rooms: body.rooms || 1,
         childrenAges: body.childrenAges || undefined,
+        hotelCode: hotelCode || undefined,
       });
+    } else if (hotelCode) {
+      try {
+        const pref = JSON.parse(preferences) as Record<string, unknown>;
+        if (!pref.hotelCode) {
+          pref.hotelCode = hotelCode;
+          preferences = JSON.stringify(pref);
+        }
+      } catch {
+        /* keep raw preferences */
+      }
+    }
     const inquiry = await this.createShopInquiry({
       organizationId: org.id,
       customerId: customer?.id,
       contactId: customer?.contactId || undefined,
       serviceTypes: ["hotel"],
-      destination: body.destination,
+      destination,
       departDate: body.checkIn,
       returnDate: body.checkOut,
       adults: body.adults,
@@ -713,8 +730,20 @@ export class ShopService {
         hotels: result.hotels.map((row) => this.mapPricedOffer(row)),
         hotelError: result.hotelError,
       };
+      if (hotelCode) {
+        const needle = hotelCode.toLowerCase();
+        const matched = payload.hotels.filter((row) => {
+          const id = String(row.id || "").toLowerCase();
+          const code = String(row.details?.hotelCode || "")
+            .replace(/^hb-/i, "")
+            .toLowerCase();
+          return id === needle || id === `hb-${needle}` || code === needle;
+        });
+        if (matched.length) payload.hotels = matched;
+      }
       postBeeceptorDebug("/debug/hotel-search", {
-        destination: body.destination,
+        destination,
+        hotelCode: hotelCode || null,
         checkIn: body.checkIn,
         checkOut: body.checkOut,
         rooms: body.rooms || 1,
@@ -734,7 +763,8 @@ export class ShopService {
         ? "تم تجاوز حد طلبات مزود الفنادق التجريبي مؤقتًا. أعد المحاولة بعد قليل."
         : raw;
       postBeeceptorDebug("/debug/hotel-search", {
-        destination: body.destination,
+        destination,
+        hotelCode: hotelCode || null,
         checkIn: body.checkIn,
         checkOut: body.checkOut,
         status: "error",

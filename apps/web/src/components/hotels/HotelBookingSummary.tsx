@@ -140,7 +140,7 @@ export function HotelBookingSummary({
     ? (hotel.details.facilityLabels as string[])
     : [];
   const roomImage = roomMeta?.imageUrl;
-  const cancelPolicy = rate.cancellationPolicies[0];
+  const cancelPolicy = rate.cancellationPolicies?.[0];
   const taxItems = rate.taxes?.items || [];
   const roomName = translateRoomNameAr(rate.roomName);
   const comments = summarizeRateCommentsAr(rate.rateComments);

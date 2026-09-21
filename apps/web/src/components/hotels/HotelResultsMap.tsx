@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { formatMoneyMinor } from "@/lib/format";
 import { useShopCopy } from "@/components/shop/ShopI18nProvider";
 
@@ -25,7 +25,7 @@ const TILE = 256;
 const ZOOM = 13;
 const VIEW_W = 640;
 const VIEW_H = 360;
-const SIDEBAR_VIEW_W = 360;
+const SIDEBAR_VIEW_W = 450;
 const SIDEBAR_VIEW_H = 520;
 
 function project(lat: number, lng: number, zoom: number) {
@@ -49,9 +49,27 @@ function tileUrl(x: number, y: number, z: number) {
  */
 export function HotelResultsMap({ pins, selectedId, onSelect, variant = "default" }: Props) {
   const { t } = useShopCopy();
+  const canvasRef = useRef<HTMLDivElement>(null);
+  const [box, setBox] = useState({ w: 0, h: 0 });
   const active = pins.find((p) => p.id === selectedId) || pins[0];
-  const viewW = variant === "sidebar" ? SIDEBAR_VIEW_W : VIEW_W;
-  const viewH = variant === "sidebar" ? SIDEBAR_VIEW_H : VIEW_H;
+  useEffect(() => {
+    const el = canvasRef.current;
+    if (!el) return;
+    const apply = () => {
+      const r = el.getBoundingClientRect();
+      if (r.width > 8 && r.height > 8) {
+        setBox({ w: Math.round(r.width), h: Math.round(r.height) });
+      }
+    };
+    apply();
+    const ro = new ResizeObserver(apply);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [variant, pins.length]);
+  const viewW =
+    box.w || (variant === "sidebar" ? SIDEBAR_VIEW_W : VIEW_W);
+  const viewH =
+    box.h || (variant === "sidebar" ? SIDEBAR_VIEW_H : VIEW_H);
   const layout = useMemo(() => {
     if (!active) return null;
     const center = project(active.lat, active.lng, ZOOM);
@@ -90,6 +108,7 @@ export function HotelResultsMap({ pins, selectedId, onSelect, variant = "default
   return (
     <div className={`shop-hotel-map${variant === "sidebar" ? " shop-hotel-map-sidebar" : ""}`}>
       <div
+        ref={canvasRef}
         className="shop-hotel-map-canvas"
         role="img"
         aria-label={t("mapHotelsNearby")}

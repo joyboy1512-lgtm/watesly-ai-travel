@@ -47,7 +47,7 @@
 }
 
 .tvlk-hotel.shop-hotel-results-page {
-  max-width: min(1560px, 100%);
+  max-width: min(1640px, 100%);
   width: 100%;
   margin: 0 auto;
   padding: 0 20px 40px;
@@ -203,7 +203,7 @@
 }
 
 .tvlk-hotel .shop-hotel-results-layout.has-map {
-  grid-template-columns: 300px minmax(0, 1fr) 340px;
+  grid-template-columns: 280px minmax(0, 1fr) 450px;
 }
 
 .tvlk-hotel .shop-hotel-filters {
@@ -234,6 +234,7 @@
   position: sticky;
   top: 12px;
   align-self: start;
+  width: 100%;
   background: var(--tvlk-card);
   border: 1px solid var(--tvlk-line);
   border-radius: var(--tvlk-radius);
@@ -242,7 +243,13 @@
   min-height: 520px;
 }
 
+.tvlk-hotel .shop-hotel-results-mapcol .shop-hotel-map,
+.tvlk-hotel .shop-hotel-results-mapcol .shop-hotel-map-sidebar {
+  width: 100%;
+}
+
 .tvlk-hotel .shop-hotel-map-sidebar .shop-hotel-map-canvas {
+  width: 100%;
   height: 520px;
   min-height: 520px;
 }

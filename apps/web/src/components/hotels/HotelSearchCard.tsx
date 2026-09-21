@@ -182,7 +182,7 @@ export function HotelSearchCard({
             ))}
           </div>
         ) : null}
-        {highlight && highlightLabel ? (
+        {!isShop && highlight && highlightLabel ? (
           <span className={`hotel-search-card-highlight hotel-highlight-${highlight}`}>
             {highlightLabel}
           </span>
@@ -252,20 +252,22 @@ export function HotelSearchCard({
         <p className="hotel-search-card-location">
           {location}
           {distanceLabel ? ` · ${distanceLabel} ${t("fromCenter")}` : ""}
-          {landmarkHint ? ` · ${t("near")} ${landmarkHint}` : ""}
+          {!isShop && landmarkHint ? ` · ${t("near")} ${landmarkHint}` : ""}
         </p>
 
-        <div className="hotel-search-card-badges">
-          {cheapest?.freeCancellation ? (
-            <span className="hotel-chip good">{t("freeCancel")}</span>
-          ) : null}
-          {cheapest && /^(BB|HB|FB|AI)/i.test(String(cheapest.boardCode || "")) ? (
-            <span className="hotel-chip">{t("breakfastIncl")}</span>
-          ) : null}
-          {allotment != null && allotment > 0 && allotment <= 5 ? (
-            <span className="hotel-chip warn">{t("roomsLeft", { n: allotment })}</span>
-          ) : null}
-        </div>
+        {!isShop ? (
+          <div className="hotel-search-card-badges">
+            {cheapest?.freeCancellation ? (
+              <span className="hotel-chip good">{t("freeCancel")}</span>
+            ) : null}
+            {cheapest && /^(BB|HB|FB|AI)/i.test(String(cheapest.boardCode || "")) ? (
+              <span className="hotel-chip">{t("breakfastIncl")}</span>
+            ) : null}
+            {allotment != null && allotment > 0 && allotment <= 5 ? (
+              <span className="hotel-chip warn">{t("roomsLeft", { n: allotment })}</span>
+            ) : null}
+          </div>
+        ) : null}
 
         {isShop && guest ? (
           <div className="hotel-search-card-score hotel-search-card-score-inline">
@@ -277,7 +279,7 @@ export function HotelSearchCard({
           </div>
         ) : null}
 
-        {facilities.length ? (
+        {!isShop && facilities.length ? (
           <ul className="hotel-search-card-poi">
             {facilities.map((f) => (
               <li key={f}>{f}</li>
@@ -285,7 +287,7 @@ export function HotelSearchCard({
           </ul>
         ) : null}
 
-        {mapUrl ? (
+        {!isShop && mapUrl ? (
           <a
             href={mapUrl}
             target="_blank"
@@ -314,10 +316,6 @@ export function HotelSearchCard({
                     {formatMoney(perNightMinor, hotel.currency)}
                   </strong>
                   <small>{t("perRoomPerNight")}</small>
-                  <small>{t("nightNoTax")}</small>
-                  <em>
-                    {formatMoney(hotel.displayFromMinor, hotel.currency)} · {nightsNote}
-                  </em>
                 </div>
               ) : (
                 <>
@@ -344,10 +342,14 @@ export function HotelSearchCard({
                   )}
                 </>
               )}
-              <span className="hotel-rooms-left">{availabilityLabel}</span>
-              {cheapest?.freeCancellation ? (
-                <span className="hotel-rooms-left">{t("freeCancel")}</span>
-              ) : null}
+              {isShop ? null : (
+                <>
+                  <span className="hotel-rooms-left">{availabilityLabel}</span>
+                  {cheapest?.freeCancellation ? (
+                    <span className="hotel-rooms-left">{t("freeCancel")}</span>
+                  ) : null}
+                </>
+              )}
             </div>
             {!isShop && cheapest ? (
               <p className="hotel-search-card-room-below-price">

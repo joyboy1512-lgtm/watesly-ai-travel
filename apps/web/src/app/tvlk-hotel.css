@@ -35,7 +35,7 @@
 .tvlk-hotel.shop-hotel-detail-page,
 .tvlk-hotel.shop-hotel-review-page,
 .tvlk-hotel.shop-hotel-checkout {
-  max-width: 1280px;
+  max-width: 1180px;
   margin: 0 auto;
   padding: 0 16px 40px;
 }
@@ -147,59 +147,72 @@
 
 .tvlk-hotel .shop-hotel-results-head {
   margin: 0 0 12px;
-  align-items: flex-end;
+  align-items: center;
 }
 
 .tvlk-hotel .shop-hotel-results-head h2 {
-  font-size: 1.25rem;
+  font-size: 1.125rem;
   font-weight: 700;
   color: var(--tvlk-ink);
 }
 
 .tvlk-hotel .shop-hotel-results-sort {
-  background: var(--tvlk-card);
-  border: 1px solid var(--tvlk-line);
-  border-radius: 999px;
-  padding: 4px;
-  gap: 2px;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  gap: 6px;
 }
 
 .tvlk-hotel .shop-hotel-results-sort button {
-  border: 0;
-  background: transparent;
-  border-radius: 999px;
-  padding: 7px 14px;
+  border: 1px solid var(--tvlk-line);
+  background: var(--tvlk-card);
+  border-radius: 8px;
+  padding: 6px 12px;
   color: var(--tvlk-muted);
   font-weight: 600;
+  font-size: 0.8rem;
 }
 
 .tvlk-hotel .shop-hotel-results-sort button.on {
   background: var(--tvlk-blue-soft);
+  border-color: var(--tvlk-blue);
   color: var(--tvlk-blue);
 }
 
-/* —— 3-column layout: filters | cards | map —— */
+/* —— 2-column layout: filters | cards (Traveloka results) —— */
 .tvlk-hotel .shop-hotel-results-layout {
   display: grid;
-  grid-template-columns: 260px minmax(0, 1fr) 300px;
+  grid-template-columns: 248px minmax(0, 1fr);
   gap: 16px;
   align-items: start;
 }
 
-.tvlk-hotel .shop-hotel-results-list {
-  gap: 12px;
+.tvlk-hotel .shop-hotel-filters {
+  min-width: 0;
 }
 
-.tvlk-hotel .shop-hotel-results-mapcol {
-  position: sticky;
-  top: 12px;
-  align-self: start;
-  background: var(--tvlk-card);
+.tvlk-hotel .shop-hotel-filters-drawer,
+.tvlk-hotel .shop-hotel-filters-mobile-toggle {
+  display: none;
+}
+
+.tvlk-hotel .shop-hotel-results-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.tvlk-hotel .shop-hotel-results-list .shop-hotel-map-sidebar {
   border: 1px solid var(--tvlk-line);
   border-radius: var(--tvlk-radius);
   overflow: hidden;
-  box-shadow: var(--tvlk-shadow);
-  min-height: 420px;
+  background: var(--tvlk-card);
+}
+
+.tvlk-hotel .shop-hotel-results-mapcol {
+  display: none;
 }
 
 .tvlk-hotel .shop-hotel-map-sidebar .shop-hotel-map-canvas {
@@ -227,6 +240,8 @@
   border-radius: var(--tvlk-radius);
   box-shadow: var(--tvlk-shadow);
   padding: 14px 14px 18px;
+  position: sticky;
+  top: 12px;
 }
 
 .tvlk-hotel .shop-hotel-filters-title {
@@ -254,9 +269,37 @@
   font-size: 0.92rem;
 }
 
-.tvlk-hotel .shop-hotel-filter-row {
+.tvlk-hotel .shop-hotel-filter-row,
+.tvlk-hotel .shop-hotel-filter-check.shop-hotel-filter-row,
+.tvlk-hotel .shop-hotel-filter-radio.shop-hotel-filter-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  direction: inherit;
   color: var(--tvlk-ink);
-  font-size: 0.86rem;
+  font-size: 0.84rem;
+}
+
+.tvlk-hotel .shop-hotel-filter-row input {
+  order: 0;
+  margin: 0;
+  flex: 0 0 auto;
+  accent-color: var(--tvlk-blue);
+}
+
+.tvlk-hotel .shop-hotel-filter-label {
+  order: 1;
+  flex: 1;
+  direction: inherit;
+  text-align: start;
+}
+
+.tvlk-hotel .shop-hotel-filter-count {
+  order: 2;
+  flex: 0 0 auto;
+  color: var(--tvlk-muted);
+  text-align: end;
 }
 
 .tvlk-hotel .shop-hotel-filter-more {
@@ -264,35 +307,47 @@
   font-weight: 700;
 }
 
-/* —— Hotel cards —— */
+/* —— Hotel cards (Traveloka horizontal row) —— */
+.tvlk-hotel .shop-hotel-results .hotel-search-card-shop,
 .tvlk-hotel .hotel-search-card-shop {
   display: grid;
-  grid-template-columns: 220px minmax(0, 1fr) 196px;
+  grid-template-columns: 240px minmax(0, 1fr) 176px;
   gap: 0;
+  align-items: stretch;
   background: var(--tvlk-card);
   border: 1px solid var(--tvlk-line);
-  border-radius: var(--tvlk-radius);
-  box-shadow: var(--tvlk-shadow);
+  border-radius: 8px;
+  box-shadow: none;
   overflow: hidden;
   padding: 0;
-  min-height: 188px;
+  min-height: 168px;
 }
 
+.tvlk-hotel .hotel-search-card-shop .hotel-search-card-highlight,
+.tvlk-hotel .hotel-search-card-shop .shop-wishlist-btn,
+.tvlk-hotel .shop-hotel-results .hotel-search-card-shop .shop-wishlist-btn {
+  display: none;
+}
+
+.tvlk-hotel .shop-hotel-results .hotel-search-card-shop:hover,
 .tvlk-hotel .hotel-search-card-shop:hover {
   border-color: var(--tvlk-blue);
   box-shadow: var(--tvlk-shadow-hover);
 }
 
+.tvlk-hotel .shop-hotel-results .hotel-search-card-shop .hotel-search-card-media,
 .tvlk-hotel .hotel-search-card-shop .hotel-search-card-media {
   order: 1;
-  min-height: 188px;
+  min-height: 168px;
+  height: 100%;
   border-radius: 0;
 }
 
+.tvlk-hotel .shop-hotel-results .hotel-search-card-shop .hotel-search-card-photo,
 .tvlk-hotel .hotel-search-card-shop .hotel-search-card-photo {
   width: 100%;
   height: 100%;
-  min-height: 188px;
+  min-height: 168px;
   object-fit: cover;
 }
 
@@ -300,22 +355,36 @@
   display: none;
 }
 
+.tvlk-hotel .shop-hotel-results .hotel-search-card-shop .hotel-search-card-main,
 .tvlk-hotel .hotel-search-card-shop .hotel-search-card-main {
   order: 2;
   padding: 14px 16px;
   min-width: 0;
 }
 
+.tvlk-hotel .shop-hotel-results .hotel-search-card-shop .hotel-search-card-head,
 .tvlk-hotel .hotel-search-card-shop .hotel-search-card-head {
   padding-inline-start: 0;
+  position: static;
 }
 
+.tvlk-hotel .shop-hotel-results .hotel-search-card-title-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 8px;
+}
+
+.tvlk-hotel .shop-hotel-results .hotel-search-card-shop .hotel-search-card-head h3,
 .tvlk-hotel .hotel-search-card-shop .hotel-search-card-head h3 {
   margin: 0;
-  font-size: 1.05rem;
+  font-size: 1rem;
   font-weight: 700;
   color: var(--tvlk-ink);
   line-height: 1.3;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
 }
 
 .tvlk-hotel .hotel-search-card-stars {
@@ -382,16 +451,18 @@
   font-weight: 500;
 }
 
+.tvlk-hotel .shop-hotel-results .hotel-search-card-shop .hotel-search-card-action,
 .tvlk-hotel .hotel-search-card-shop .hotel-search-card-action {
   order: 3;
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
-  justify-content: flex-end;
-  gap: 8px;
+  align-items: stretch;
+  justify-content: center;
+  gap: 10px;
   padding: 14px 16px;
   border-inline-start: 1px solid var(--tvlk-line);
   text-align: end;
+  min-width: 0;
 }
 
 .tvlk-hotel .hotel-search-card-shop .hotel-search-card-price small,
@@ -412,8 +483,8 @@
 
 .tvlk-hotel .tvlk-night-price strong,
 .tvlk-hotel .hotel-search-card-shop .hotel-price-panel-total {
-  color: var(--tvlk-blue);
-  font-size: 1.35rem;
+  color: var(--tvlk-ink);
+  font-size: 1.15rem;
   font-weight: 800;
   line-height: 1.15;
 }
@@ -424,9 +495,11 @@
   font-weight: 700;
 }
 
+.tvlk-hotel .shop-hotel-results .hotel-search-card-shop .hotel-search-card-cta,
 .tvlk-hotel .hotel-search-card-shop .hotel-search-card-cta {
   width: 100%;
   background: var(--tvlk-blue);
+  border: 0;
   border-color: var(--tvlk-blue);
   color: #fff;
   border-radius: 8px;
@@ -671,17 +744,7 @@
 
 @media (max-width: 1100px) {
   .tvlk-hotel .shop-hotel-results-layout {
-    grid-template-columns: 240px minmax(0, 1fr);
-  }
-
-  .tvlk-hotel .shop-hotel-results-mapcol {
-    display: none;
-  }
-
-  .tvlk-hotel .shop-hotel-results-mapcol.is-open {
-    display: block;
-    position: static;
-    grid-column: 1 / -1;
+    grid-template-columns: 220px minmax(0, 1fr);
   }
 }
 
@@ -694,6 +757,19 @@
     grid-template-columns: 1fr;
   }
 
+  .tvlk-hotel .shop-hotel-filters-mobile-toggle {
+    display: block;
+  }
+
+  .tvlk-hotel .shop-hotel-filters-desktop {
+    display: none;
+  }
+
+  .tvlk-hotel .shop-hotel-filters-drawer.open {
+    display: block;
+  }
+
+  .tvlk-hotel .shop-hotel-results .hotel-search-card-shop,
   .tvlk-hotel .hotel-search-card-shop {
     grid-template-columns: 1fr;
   }

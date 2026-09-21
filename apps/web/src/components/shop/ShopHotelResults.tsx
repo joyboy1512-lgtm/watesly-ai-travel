@@ -206,6 +206,18 @@ export function ShopHotelResults(props: Props) {
         />
 
         <div className="shop-hotel-results-list">
+          {mapOpen && mapPins.length ? (
+            <HotelResultsMap
+              variant="sidebar"
+              pins={mapPins}
+              selectedId={mapHotelId || visibleHotels[0]?.id}
+              onSelect={(id) => {
+                setMapHotelId(id);
+                const el = document.getElementById(`hotel-card-${id}`);
+                el?.scrollIntoView({ behavior: "smooth", block: "center" });
+              }}
+            />
+          ) : null}
           {props.loading ? (
             <div className="shop-hotel-skeleton-grid" aria-busy="true">
               {Array.from({ length: 6 }, (_, i) => (
@@ -249,24 +261,6 @@ export function ShopHotelResults(props: Props) {
             <p className="shop-hotel-results-empty">{t("noHotels")}</p>
           ) : null}
         </div>
-
-        {mapPins.length ? (
-          <aside className={`shop-hotel-results-mapcol${mapOpen ? " is-open" : ""}`}>
-            <HotelResultsMap
-              variant="sidebar"
-              pins={mapPins}
-              selectedId={mapHotelId || visibleHotels[0]?.id}
-              onSelect={(id) => {
-                setMapHotelId(id);
-                const row = props.hotels.find((h) => h.id === id);
-                if (row) {
-                  const el = document.getElementById(`hotel-card-${id}`);
-                  el?.scrollIntoView({ behavior: "smooth", block: "center" });
-                }
-              }}
-            />
-          </aside>
-        ) : null}
       </div>
     </section>
   );

@@ -8,6 +8,7 @@ import {
 import {
   BED_TYPE_OPTIONS,
   BRAND_PATTERNS,
+  collectExtraFacilityOptions,
   countOptions,
   DISTANCE_OPTIONS,
   FACILITY_OPTIONS,
@@ -21,6 +22,7 @@ import {
   hotelHasOnlinePayment,
   hotelHasRoomFacility,
   hotelLandmarks,
+  hotelPropertyType,
   hotelReviewScore,
   MEAL_FILTER_OPTIONS,
   PROPERTY_TYPE_OPTIONS,
@@ -328,9 +330,7 @@ export function filterHotelOffers(
     list = list.filter((h) => hotelReviewScore(h) >= min);
   }
   if (filters.propertyTypes.length) {
-    list = list.filter((h) =>
-      filters.propertyTypes.includes(String(h.details.propertyType || "hotel")),
-    );
+    list = list.filter((h) => filters.propertyTypes.includes(hotelPropertyType(h)));
   }
   if (filters.facilities.length) {
     list = list.filter((h) => filters.facilities.every((f) => hotelHasFacility(h, f)));
@@ -484,16 +484,31 @@ export function collectFilterFacets(hotels: HotelOfferRow[]): HotelFilterFacets 
     }
   }
 
+  const meals = countOptions(hotels, MEAL_FILTER_OPTIONS, (h, id) => hotelHasBoard(h, id));
+  const seenMeals = new Set(meals.map((o) => o.id));
+  for (const code of boardCodes) {
+    if (seenMeals.has(code)) continue;
+    const count = hotels.filter((h) => hotelHasBoard(h, code)).length;
+    if (!count) continue;
+    meals.push({
+      id: code,
+      label: BOARD_LABELS_AR[code] || code,
+      count,
+    });
+    seenMeals.add(code);
+  }
+
   return {
     boardCodes: [...boardCodes].sort(),
     zones: zoneList,
     paymentTypes: [...paymentTypes].sort(),
     rateTypes: [...rateTypes].sort(),
-    meals: countOptions(hotels, MEAL_FILTER_OPTIONS, (h, id) => hotelHasBoard(h, id)),
-    propertyTypes: countOptions(hotels, PROPERTY_TYPE_OPTIONS, (h, id) =>
-      String(h.details.propertyType || "hotel") === id,
-    ),
-    facilities: countOptions(hotels, FACILITY_OPTIONS, (h, id) => hotelHasFacility(h, id)),
+    meals,
+    propertyTypes: countOptions(hotels, PROPERTY_TYPE_OPTIONS, (h, id) => hotelPropertyType(h) === id),
+    facilities: [
+      ...countOptions(hotels, FACILITY_OPTIONS, (h, id) => hotelHasFacility(h, id)),
+      ...collectExtraFacilityOptions(hotels),
+    ],
     roomFacilities: countOptions(hotels, ROOM_FACILITY_OPTIONS, (h, id) =>
       hotelHasRoomFacility(h, id),
     ),

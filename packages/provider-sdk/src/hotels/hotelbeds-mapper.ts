@@ -1,4 +1,4 @@
-import type { HotelOffer } from "@watesly-travel/shared";
+import { inferHotelPropertyType, type HotelOffer } from "@watesly-travel/shared";
 import type {
   HotelPropertyDetails,
   HotelRateOption,
@@ -300,7 +300,11 @@ export function mapHotelbedsToOffer(input: {
     zones,
     promotions,
     roomsAvailable: Math.max(...rateOptions.map((r) => r.allotment ?? 0), 0) || undefined,
-    propertyType: "hotel",
+    propertyType: inferHotelPropertyType({
+      categoryCode: hotel.categoryCode,
+      categoryName: hotel.categoryName,
+      name: hotel.name,
+    }),
     fetchedAt: new Date().toISOString(),
     source: src.source,
     sourceLabel: src.sourceLabel,

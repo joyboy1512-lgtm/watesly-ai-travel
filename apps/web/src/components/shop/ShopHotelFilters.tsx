@@ -148,12 +148,17 @@ function FiltersPanel({
   searchDestinationLabel?: string;
 }) {
   const { t, locale } = useShopI18n();
-  const facilityOptions = (facets.facilities || []).filter((f) =>
-    ["pool", "wifi", "parking", "accessibility"].includes(f.id),
-  );
+  const facilityOptions = facets.facilities || [];
+  const mealOptions = facets.meals || [];
+  const roomFacilityOptions = facets.roomFacilities || [];
+  const landmarkOptions = facets.landmarks || [];
+  const brandOptions = facets.brands || [];
+  const bedTypeOptions = facets.bedTypes || [];
   const hasGuestReviews = (facets.reviewScores || []).some((o) => o.count > 0);
   const destCode = (searchDestinationCode || "").trim().toUpperCase();
   const destLabel = searchDestinationLabel || destCode;
+  const popularPool = facilityOptions.find((o) => o.id === "pool");
+  const popularWifi = facilityOptions.find((o) => o.id === "wifi");
 
   return (
     <aside className="shop-hotel-filters-panel">
@@ -167,6 +172,16 @@ function FiltersPanel({
           {t("clearAll")}
         </button>
       </div>
+
+      <FilterSection title={t("hotelNameFilter")}>
+        <input
+          type="search"
+          className="shop-hotel-filter-search"
+          value={filters.hotelQuery}
+          placeholder={t("hotelNamePlaceholder")}
+          onChange={(e) => onChange({ ...filters, hotelQuery: e.target.value })}
+        />
+      </FilterSection>
 
       <FilterSection title={t("popularFilters")}>
         {facets.bookingPolicies?.freeCancellation ? (
@@ -213,6 +228,28 @@ function FiltersPanel({
                   : [...new Set([...current, "4", "5"])],
               });
             }}
+          />
+        ) : null}
+        {popularPool ? (
+          <FilterCheck
+            id="popular-pool"
+            label={shopFilterOptionLabel(locale, popularPool.id, popularPool.label, "facility")}
+            count={popularPool.count}
+            checked={(filters.facilities || []).includes("pool")}
+            onToggle={() =>
+              onChange({ ...filters, facilities: toggleList(filters.facilities || [], "pool") })
+            }
+          />
+        ) : null}
+        {popularWifi ? (
+          <FilterCheck
+            id="popular-wifi"
+            label={shopFilterOptionLabel(locale, popularWifi.id, popularWifi.label, "facility")}
+            count={popularWifi.count}
+            checked={(filters.facilities || []).includes("wifi")}
+            onToggle={() =>
+              onChange({ ...filters, facilities: toggleList(filters.facilities || [], "wifi") })
+            }
           />
         ) : null}
       </FilterSection>
@@ -315,7 +352,24 @@ function FiltersPanel({
         </FilterSection>
       ) : null}
 
-      {facets.breakfastIncluded ? (
+      {mealOptions.length ? (
+        <FilterSection title={t("meals")}>
+          <ExpandableChecks
+            name="mealTypes"
+            options={mealOptions.map((o) => ({
+              ...o,
+              label: shopFilterOptionLabel(locale, o.id, o.label, "meal"),
+            }))}
+            selected={filters.mealTypes || []}
+            onToggle={(id) =>
+              onChange({
+                ...filters,
+                mealTypes: toggleList(filters.mealTypes || [], id),
+              })
+            }
+          />
+        </FilterSection>
+      ) : facets.breakfastIncluded ? (
         <FilterSection title={t("breakfast")}>
           <FilterCheck
             id="breakfast"
@@ -405,6 +459,68 @@ function FiltersPanel({
             selected={filters.facilities}
             onToggle={(id) =>
               onChange({ ...filters, facilities: toggleList(filters.facilities, id) })
+            }
+            initial={8}
+          />
+        </FilterSection>
+      ) : null}
+
+      {roomFacilityOptions.length ? (
+        <FilterSection title={t("roomFacilities")}>
+          <ExpandableChecks
+            name="roomFacilities"
+            options={roomFacilityOptions.map((o) => ({
+              ...o,
+              label: shopFilterOptionLabel(locale, o.id, o.label, "room"),
+            }))}
+            selected={filters.roomFacilities || []}
+            onToggle={(id) =>
+              onChange({
+                ...filters,
+                roomFacilities: toggleList(filters.roomFacilities || [], id),
+              })
+            }
+          />
+        </FilterSection>
+      ) : null}
+
+      {landmarkOptions.length ? (
+        <FilterSection title={t("landmarks")}>
+          <ExpandableChecks
+            name="landmarks"
+            options={landmarkOptions}
+            selected={filters.landmarks || []}
+            onToggle={(id) =>
+              onChange({ ...filters, landmarks: toggleList(filters.landmarks || [], id) })
+            }
+          />
+        </FilterSection>
+      ) : null}
+
+      {bedTypeOptions.length ? (
+        <FilterSection title={t("bedType")}>
+          <ExpandableChecks
+            name="bedTypes"
+            options={bedTypeOptions.map((o) => ({
+              ...o,
+              label: shopFilterOptionLabel(locale, o.id, o.label, "bed"),
+            }))}
+            selected={filters.bedTypes || []}
+            onToggle={(id) =>
+              onChange({ ...filters, bedTypes: toggleList(filters.bedTypes || [], id) })
+            }
+          />
+        </FilterSection>
+      ) : null}
+
+      {brandOptions.length ? (
+        <FilterSection title={t("hotelBrand")}>
+          <ExpandableChecks
+            name="brands"
+            options={brandOptions}
+            selected={filters.brands || []}
+            onToggle={(id) =>
+              onChange({ ...filters, brands: toggleList(filters.brands || [], id) })
             }
           />
         </FilterSection>

@@ -198,3 +198,39 @@ export function taxTypeLabelAr(type?: string): string {
   if (key === "CITYTAX" || key === "CITY") return "ضريبة بلدية";
   return type || "رسوم/ضريبة";
 }
+
+export type HotelPropertyTypeId = "hotel" | "apartment" | "resort" | "guest_house";
+
+/** Infer stay type from Hotelbeds category / name when the mapper left it as "hotel". */
+export function inferHotelPropertyType(input: {
+  propertyType?: string | null;
+  categoryCode?: string | null;
+  categoryName?: string | null;
+  name?: string | null;
+  nameEn?: string | null;
+}): HotelPropertyTypeId {
+  const explicit = String(input.propertyType || "")
+    .trim()
+    .toLowerCase();
+  if (
+    explicit === "apartment" ||
+    explicit === "resort" ||
+    explicit === "guest_house"
+  ) {
+    return explicit;
+  }
+  const blob = [input.categoryCode, input.categoryName, input.name, input.nameEn]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+  if (/apart|apth|aparthotel|studio|شقق|شقة/.test(blob)) return "apartment";
+  if (/resort|منتجع/.test(blob)) return "resort";
+  if (
+    /guest\s*house|guesthouse|hostel|riad|villa|motel|\bghs\b|بيت ضيافة|دار ضيافة|نزل|استراحة/.test(
+      blob,
+    )
+  ) {
+    return "guest_house";
+  }
+  return "hotel";
+}

@@ -282,6 +282,19 @@
   padding: 14px 14px 18px;
   position: sticky;
   top: 12px;
+  max-height: calc(100vh - 24px);
+  overflow-y: auto;
+}
+
+.tvlk-hotel .shop-hotel-filter-search {
+  width: 100%;
+  margin-top: 8px;
+  border: 1px solid var(--tvlk-line);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 0.86rem;
+  color: var(--tvlk-ink);
+  background: #fff;
 }
 
 .tvlk-hotel .shop-hotel-filters-title {

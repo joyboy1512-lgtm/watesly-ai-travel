@@ -1,4 +1,4 @@
-import type { HotelPropertyDetails } from "@watesly-travel/shared";
+import { inferHotelPropertyType, type HotelPropertyDetails } from "@watesly-travel/shared";
 import { buildDistanceInfo, type GeoCenter } from "./hotelbeds-geo";
 import {
   pickPrimaryHotelImage,
@@ -10,11 +10,47 @@ import {
 import type { HbContentFacility, HbContentHotel } from "./hotelbeds-content-types";
 
 const FILTER_FACILITY_MAP: Record<string, string[]> = {
-  wifi: ["70:550", "60:261", "60:100"],
+  wifi: ["70:550", "60:261", "60:100", "70:261"],
   parking: ["70:200", "70:220", "70:230"],
-  pool: ["70:320", "73:10", "73:20"],
+  pool: ["70:320", "73:10", "73:20", "70:330"],
+  indoor_pool: ["73:20"],
   gym: ["70:470"],
-  spa: ["70:620", "70:560"],
+  spa: ["70:620", "70:560", "70:590"],
+  restaurant: ["70:500", "70:510"],
+  bar: ["70:520"],
+  airport_shuttle: ["70:680", "70:670"],
+  reception_24h: ["70:30"],
+  elevator: ["70:70"],
+  ac: ["70:10", "60:220", "60:230"],
+  beach: ["70:310"],
+  kids_club: ["70:480"],
+  room_service: ["70:100"],
+  hot_tub: ["70:350"],
+  sauna: ["70:560"],
+  laundry: ["70:690"],
+  accessibility: ["60:300", "70:80"],
+};
+
+const FILTER_FACILITY_KEYWORDS: Record<string, RegExp> = {
+  wifi: /wifi|wi-?fi|wireless|internet|إنترنت|واي/i,
+  parking: /parking|car park|garage|موقف/i,
+  pool: /pool|swimming|مسبح/i,
+  indoor_pool: /indoor pool|مسبح داخلي|مسبح مغطى/i,
+  gym: /gym|fitness|نادي رياضي|لياقة|صالة رياضية/i,
+  spa: /\bspa\b|سبا|wellness/i,
+  restaurant: /restaurant|مطعم/i,
+  bar: /\bbar\b|بار|lounge/i,
+  airport_shuttle: /airport shuttle|airport transfer|نقل المطار|shuttle/i,
+  reception_24h: /24[- ]?hour|24h|استقبال 24/i,
+  elevator: /elevator|\blift\b|مصعد/i,
+  ac: /air.?condition|a\/c|مكيف|تكييف/i,
+  beach: /beach|شاطئ/i,
+  kids_club: /kids club|children'?s club|نادي أطفال/i,
+  room_service: /room service|خدمة الغرف/i,
+  hot_tub: /jacuzzi|hot tub|جاكوزي|حوض ساخن/i,
+  sauna: /sauna|ساونا/i,
+  laundry: /laundry|غسيل/i,
+  accessibility: /wheelchair|accessible|disability|ذوي|إعاق|كراسي متحركة/i,
 };
 
 const FALLBACK_LABELS: Record<string, string> = {
@@ -67,6 +103,9 @@ function mapFacilityLabels(
     }
     for (const [filterId, keys] of Object.entries(FILTER_FACILITY_MAP)) {
       if (keys.includes(key)) filterIds.add(filterId);
+    }
+    for (const [filterId, re] of Object.entries(FILTER_FACILITY_KEYWORDS)) {
+      if (re.test(base) || re.test(key)) filterIds.add(filterId);
     }
   }
 
@@ -155,7 +194,14 @@ export function enrichDetailsFromContent(input: {
 
   const mapped = mapFacilityLabels(content.facilities, facilityCatalog);
   details.facilities = [...new Set([...(details.facilities || []), ...mapped.filterIds])];
-  details.facilityLabels = mapped.human.slice(0, 16);
+  details.facilityLabels = mapped.human.slice(0, 24);
+  details.propertyType = inferHotelPropertyType({
+    propertyType: details.propertyType,
+    categoryCode: content.categoryCode || details.categoryCode,
+    categoryName: details.categoryName,
+    name: details.name,
+    nameEn: details.nameEn,
+  });
 
   if (content.description?.content) {
     details.description = content.description.content;

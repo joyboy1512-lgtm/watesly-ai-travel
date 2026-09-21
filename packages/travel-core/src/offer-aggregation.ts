@@ -44,6 +44,72 @@ function tagRates(
   });
 }
 
+function uniqStrings(values: unknown[]): string[] {
+  const out: string[] = [];
+  const seen = new Set<string>();
+  for (const value of values) {
+    const text = String(value || "").trim();
+    if (!text || seen.has(text)) continue;
+    seen.add(text);
+    out.push(text);
+  }
+  return out;
+}
+
+function mergeStringLists(...lists: unknown[]): string[] {
+  return uniqStrings(lists.flatMap((list) => (Array.isArray(list) ? list : [])));
+}
+
+function mergePoiDistances(...lists: unknown[]): Array<{ nameAr: string; km: number; label: string }> {
+  const map = new Map<string, { nameAr: string; km: number; label: string }>();
+  for (const list of lists) {
+    if (!Array.isArray(list)) continue;
+    for (const raw of list) {
+      const rec = asRecord(raw);
+      const nameAr = String(rec.nameAr || rec.name || "").trim();
+      if (!nameAr) continue;
+      const km = Number(rec.km);
+      const next = {
+        nameAr,
+        km: Number.isFinite(km) ? km : 0,
+        label: String(rec.label || nameAr),
+      };
+      const existing = map.get(nameAr);
+      if (!existing || next.km < existing.km) map.set(nameAr, next);
+    }
+  }
+  return [...map.values()];
+}
+
+function mergeRoomLists(...lists: unknown[]): unknown[] {
+  const map = new Map<string, Record<string, unknown>>();
+  for (const list of lists) {
+    if (!Array.isArray(list)) continue;
+    for (const raw of list) {
+      const room = asRecord(raw);
+      const key = String(room.code || room.name || "");
+      if (!key) continue;
+      const existing = map.get(key);
+      if (!existing) {
+        map.set(key, { ...room });
+        continue;
+      }
+      map.set(key, {
+        ...existing,
+        ...room,
+        facilities: mergeStringLists(existing.facilities, room.facilities),
+        imageUrl: existing.imageUrl || room.imageUrl,
+        images:
+          (Array.isArray(existing.images) && existing.images.length
+            ? existing.images
+            : room.images) || [],
+        rates: existing.rates,
+      });
+    }
+  }
+  return [...map.values()];
+}
+
 function mergeRaw(
   winner: Record<string, unknown>,
   others: Array<{ raw: Record<string, unknown>; providerKey: string; displayName: string }>,
@@ -54,25 +120,29 @@ function mergeRaw(
   const allRates = [
     ...tagRates(winner.rateOptions, meta.winnerProvider, winnerCode, winnerName),
   ];
-  let images = Array.isArray(winner.images) ? [...winner.images] : [];
-  let rooms = Array.isArray(winner.rooms) ? [...winner.rooms] : [];
+  const otherRaws = others.map((other) => other.raw);
 
   for (const other of others) {
     const code = String(other.raw.hotelCode || "");
     allRates.push(
       ...tagRates(other.raw.rateOptions, other.providerKey, code, other.displayName),
     );
-    const otherImages = Array.isArray(other.raw.images) ? other.raw.images : [];
-    if (otherImages.length > images.length) images = otherImages;
-    const otherRooms = Array.isArray(other.raw.rooms) ? other.raw.rooms : [];
-    if (otherRooms.length > rooms.length) rooms = otherRooms;
   }
+
+  const images = [winner.images, ...otherRaws.map((raw) => raw.images)].reduce<unknown[]>(
+    (best, next) => (Array.isArray(next) && next.length > best.length ? next : best),
+    Array.isArray(winner.images) ? [...winner.images] : [],
+  );
+  const rooms = mergeRoomLists(winner.rooms, ...otherRaws.map((raw) => raw.rooms));
 
   const nets = allRates
     .map((r) => Number(r.net))
     .filter((n) => Number.isFinite(n) && n > 0);
   const minRate = nets.length ? Math.min(...nets) : winner.minRate;
   const maxRate = nets.length ? Math.max(...nets) : winner.maxRate;
+  const richerType = [winner.propertyType, ...otherRaws.map((raw) => raw.propertyType)]
+    .map((value) => String(value || ""))
+    .find((value) => value && value !== "hotel");
 
   return {
     ...winner,
@@ -81,6 +151,21 @@ function mergeRaw(
     images,
     minRate,
     maxRate,
+    facilities: mergeStringLists(winner.facilities, ...otherRaws.map((raw) => raw.facilities)),
+    facilityLabels: mergeStringLists(
+      winner.facilityLabels,
+      ...otherRaws.map((raw) => raw.facilityLabels),
+    ),
+    boardCodes: mergeStringLists(winner.boardCodes, ...otherRaws.map((raw) => raw.boardCodes)),
+    boards: mergeStringLists(winner.boards, ...otherRaws.map((raw) => raw.boards)),
+    paymentTypes: mergeStringLists(winner.paymentTypes, ...otherRaws.map((raw) => raw.paymentTypes)),
+    rateTypes: mergeStringLists(winner.rateTypes, ...otherRaws.map((raw) => raw.rateTypes)),
+    zones: mergeStringLists(winner.zones, ...otherRaws.map((raw) => raw.zones)),
+    poiDistances: mergePoiDistances(
+      winner.poiDistances,
+      ...otherRaws.map((raw) => raw.poiDistances),
+    ),
+    propertyType: richerType || winner.propertyType,
     aggregation: meta,
     supplierCount: meta.supplierCount,
     sourceProviders: meta.suppliers.map((s) => s.providerKey),

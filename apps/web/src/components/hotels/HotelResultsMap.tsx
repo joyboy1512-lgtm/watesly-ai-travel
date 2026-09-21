@@ -25,6 +25,8 @@ const TILE = 256;
 const ZOOM = 13;
 const VIEW_W = 640;
 const VIEW_H = 360;
+const SIDEBAR_VIEW_W = 360;
+const SIDEBAR_VIEW_H = 520;
 
 function project(lat: number, lng: number, zoom: number) {
   const n = 2 ** zoom;
@@ -48,15 +50,17 @@ function tileUrl(x: number, y: number, z: number) {
 export function HotelResultsMap({ pins, selectedId, onSelect, variant = "default" }: Props) {
   const { t } = useShopCopy();
   const active = pins.find((p) => p.id === selectedId) || pins[0];
+  const viewW = variant === "sidebar" ? SIDEBAR_VIEW_W : VIEW_W;
+  const viewH = variant === "sidebar" ? SIDEBAR_VIEW_H : VIEW_H;
   const layout = useMemo(() => {
     if (!active) return null;
     const center = project(active.lat, active.lng, ZOOM);
-    const originX = center.x * TILE - VIEW_W / 2;
-    const originY = center.y * TILE - VIEW_H / 2;
+    const originX = center.x * TILE - viewW / 2;
+    const originY = center.y * TILE - viewH / 2;
     const minTx = Math.floor(originX / TILE);
     const minTy = Math.floor(originY / TILE);
-    const maxTx = Math.floor((originX + VIEW_W) / TILE);
-    const maxTy = Math.floor((originY + VIEW_H) / TILE);
+    const maxTx = Math.floor((originX + viewW) / TILE);
+    const maxTy = Math.floor((originY + viewH) / TILE);
     const tiles: Array<{ key: string; left: number; top: number; src: string }> = [];
     for (let ty = minTy; ty <= maxTy; ty += 1) {
       for (let tx = minTx; tx <= maxTx; tx += 1) {
@@ -77,7 +81,7 @@ export function HotelResultsMap({ pins, selectedId, onSelect, variant = "default
       };
     });
     return { tiles, markers };
-  }, [active, pins]);
+  }, [active, pins, viewW, viewH]);
 
   if (!active || !layout) {
     return <p className="shop-hotel-map-empty">{t("map")}</p>;

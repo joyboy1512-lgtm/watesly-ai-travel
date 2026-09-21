@@ -47,7 +47,7 @@
 }
 
 .tvlk-hotel.shop-hotel-results-page {
-  max-width: min(1760px, 100%);
+  max-width: min(1560px, 100%);
   width: 100%;
   margin: 0 auto;
   padding: 0 20px 40px;
@@ -197,13 +197,13 @@
 /* —— Layout: filters | cards | map —— */
 .tvlk-hotel .shop-hotel-results-layout {
   display: grid;
-  grid-template-columns: 248px minmax(0, 1fr);
+  grid-template-columns: 300px minmax(0, 1fr);
   gap: 16px;
   align-items: start;
 }
 
 .tvlk-hotel .shop-hotel-results-layout.has-map {
-  grid-template-columns: 220px minmax(0, 1fr) 260px;
+  grid-template-columns: 300px minmax(0, 1fr) 340px;
 }
 
 .tvlk-hotel .shop-hotel-filters {
@@ -239,12 +239,12 @@
   border-radius: var(--tvlk-radius);
   overflow: hidden;
   box-shadow: var(--tvlk-shadow);
-  min-height: 420px;
+  min-height: 520px;
 }
 
 .tvlk-hotel .shop-hotel-map-sidebar .shop-hotel-map-canvas {
-  height: 420px;
-  min-height: 420px;
+  height: 520px;
+  min-height: 520px;
 }
 
 .tvlk-hotel .shop-hotel-map-sidebar .shop-hotel-map-pins {
@@ -832,16 +832,16 @@
   color: var(--tvlk-star);
 }
 
-@media (max-width: 1200px) {
+@media (max-width: 1280px) {
   .tvlk-hotel .shop-hotel-results-layout,
   .tvlk-hotel .shop-hotel-results-layout.has-map {
-    grid-template-columns: 220px minmax(0, 1fr);
+    grid-template-columns: 260px minmax(0, 1fr);
   }
 
   .tvlk-hotel .shop-hotel-results-mapcol {
     grid-column: 1 / -1;
     position: static;
-    min-height: 280px;
+    min-height: 360px;
   }
 }
 

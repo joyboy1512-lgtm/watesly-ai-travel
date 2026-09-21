@@ -418,13 +418,20 @@
   border: 0;
 }
 
+.tvlk-hotel .shop-hotel-results .hotel-search-card-shop .hotel-search-card-score,
+.tvlk-hotel .shop-hotel-results .hotel-search-card-shop .hotel-search-card-score-inline,
 .tvlk-hotel .hotel-search-card-score-inline {
+  position: static;
+  inset: auto;
   display: inline-flex;
   align-items: center;
   gap: 8px;
   margin: 8px 0 0;
+  text-align: start;
 }
 
+.tvlk-hotel .shop-hotel-results .hotel-search-card-shop .hotel-search-card-score-inline strong,
+.tvlk-hotel .shop-hotel-results .hotel-search-card-shop .tvlk-score-pill,
 .tvlk-hotel .hotel-search-card-score-inline strong,
 .tvlk-hotel .tvlk-score-pill {
   display: inline-flex;

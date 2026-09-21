@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import dynamic from "next/dynamic";
+import "@/app/tvlk-hotel.css";
 import { ShopHotelResults } from "@/components/shop/ShopHotelResults";
 import { ShopMockBanner } from "@/components/shop/ShopMockBanner";
 import { type SuggestItem } from "@/components/shop/ShopAutocomplete";
@@ -11,13 +11,14 @@ import {
   collectFilterFacets,
   defaultHotelFilters,
   filterHotelOffers,
-  rateDisplayMinor,
   type HotelOfferRow,
   type HotelSearchFilters,
 } from "@/lib/hotel-search";
 import {
+  HOTEL_STAY_CAPS,
   buildHotelDetailHref,
   buildHotelResultsHref,
+  clampHotelSearchParams,
   encodeRoomOccupancies,
   formatHotelSearchSummary,
   hotelSearchPreferencesJson,
@@ -34,7 +35,6 @@ import {
   shouldRestoreHotelResultsSession,
   type HotelSortKey,
 } from "@/lib/hotel-results-session";
-import { saveHotelDraft } from "@/lib/booking-draft";
 import { trackFunnel } from "@/lib/funnel-analytics";
 import {
   shopGuestCount,
@@ -42,10 +42,6 @@ import {
   shopRoomCount,
 } from "@/lib/hotel-occupancy";
 import { useShopI18n } from "@/components/shop/ShopI18nProvider";
-import {
-  buildHotelDraftPriceBreakdown,
-  toDraftHotelRate,
-} from "@/lib/hotel-draft-price";
 import {
   getHotelSearchSession,
   saveHotelSearchSession,
@@ -62,11 +58,6 @@ function inferHotelDestinationCode(destination: string): string {
   if (/^[a-z]{3}$/i.test(destination.trim())) return destination.trim().toUpperCase();
   return "";
 }
-
-const HotelDetailModal = dynamic(
-  () => import("@/components/hotels/HotelDetailModal").then((m) => m.HotelDetailModal),
-  { ssr: false },
-);
 
 type QuoteItem = { id: string; providerOfferRef: string; serviceType: string };
 
@@ -394,81 +385,21 @@ export function ShopHotelResultsClient() {
         childrenAges: ages.slice(0, next.children).join(","),
       };
     }
-    const synced = syncHotelSearchParams(
-      { ...params, ...next },
-      {
-        adults: next.adults,
-        children: next.children,
-        rooms: next.rooms,
-        childrenAges: next.childrenAges,
-      },
+    const synced = clampHotelSearchParams(
+      syncHotelSearchParams(
+        { ...params, ...next },
+        {
+          adults: next.adults,
+          children: next.children,
+          rooms: next.rooms,
+          childrenAges: next.childrenAges,
+        },
+      ),
     );
     const href = buildHotelResultsHref(synced);
     router.push(href);
     setEditOpen(false);
   }
-
-  function quoteItemIdFor(offerId: string) {
-    return quoteItems.find(
-      (item) => item.providerOfferRef === offerId && item.serviceType === "hotel",
-    )?.id;
-  }
-
-  function continueToReview(
-    hotel: HotelOfferRow,
-    rate: import("@/lib/hotel-search").HotelRateOption,
-    extras?: {
-      priceChanged?: boolean;
-      previousTotalMinor?: number;
-    },
-  ) {
-    persistSession();
-    const totalMinor = rateDisplayMinor(rate, hotel, nights);
-    const priceBreakdown = buildHotelDraftPriceBreakdown(rate, hotel, nights);
-    const roomOcc = occupancyFromSearchParams(params);
-    saveHotelDraft({
-      hotel: {
-        id: hotel.id,
-        description: hotel.description,
-        sellAmountMinor: totalMinor,
-        currency: hotel.currency,
-        details: {
-          ...hotel.details,
-          costAmountMinor: hotel.costAmountMinor,
-          validatedAt: new Date().toISOString(),
-        },
-      },
-      selectedRate: toDraftHotelRate(rate),
-      checkIn: params.checkIn,
-      checkOut: params.checkOut,
-      rooms: params.rooms,
-      adults: params.adults,
-      children: params.children,
-      infants: params.infants,
-      childAges: roomOcc.flatMap((r) => r.childAges),
-      roomOccupancies: roomOcc.map((r) => ({
-        adults: r.adults,
-        childAges: r.childAges,
-      })),
-      location: params.destination,
-      locationLabel: params.destinationLabel || params.destination,
-      createdAt: new Date().toISOString(),
-      inquiryId,
-      quoteItemId: quoteItemIdFor(hotel.id),
-      nights,
-      totalMinor: priceBreakdown.payNowMinor || totalMinor,
-      priceBreakdown,
-      validatedAt: new Date().toISOString(),
-      priceChanged: extras?.priceChanged,
-      previousTotalMinor: extras?.previousTotalMinor,
-      resultsReturnHref: resultsHref,
-    });
-    setHotelOpen(null);
-    router.push("/hotels/book/review");
-  }
-
-
-
 
   function openHotel(hotel: HotelRow) {
     persistSession();
@@ -517,7 +448,7 @@ export function ShopHotelResultsClient() {
   }
 
   return (
-    <div className="shop-hotel-results-page">
+    <div className="shop-hotel-results-page tvlk-hotel">
       <h1 className="shop-flight-results-h1">{t("hotelResultsTitle")}</h1>
       <ShopMockBanner kind="hotel" />
 
@@ -584,11 +515,15 @@ export function ShopHotelResultsClient() {
               <input
                 type="number"
                 min={1}
+                max={HOTEL_STAY_CAPS.maxGuests}
                 value={draft.adults}
                 onChange={(e) =>
                   setDraft((d) => ({
                     ...d,
-                    adults: Math.max(1, Number(e.target.value) || 1),
+                    adults: Math.max(
+                      1,
+                      Math.min(HOTEL_STAY_CAPS.maxGuests, Number(e.target.value) || 1),
+                    ),
                     occ: "",
                   }))
                 }
@@ -599,9 +534,13 @@ export function ShopHotelResultsClient() {
               <input
                 type="number"
                 min={0}
+                max={HOTEL_STAY_CAPS.maxChildren}
                 value={draft.children}
                 onChange={(e) => {
-                  const children = Math.max(0, Number(e.target.value) || 0);
+                  const children = Math.max(
+                    0,
+                    Math.min(HOTEL_STAY_CAPS.maxChildren, Number(e.target.value) || 0),
+                  );
                   setDraft((d) => {
                     const ages = String(d.childrenAges || "")
                       .split(",")
@@ -653,11 +592,15 @@ export function ShopHotelResultsClient() {
               <input
                 type="number"
                 min={1}
+                max={HOTEL_STAY_CAPS.maxRooms}
                 value={draft.rooms}
                 onChange={(e) =>
                   setDraft((d) => ({
                     ...d,
-                    rooms: Math.max(1, Number(e.target.value) || 1),
+                    rooms: Math.max(
+                      1,
+                      Math.min(HOTEL_STAY_CAPS.maxRooms, Number(e.target.value) || 1),
+                    ),
                     occ: "",
                   }))
                 }
@@ -702,6 +645,7 @@ export function ShopHotelResultsClient() {
             onFiltersChange={setFilters}
             onSortChange={setSortKey}
             searchDestinationCode={inferHotelDestinationCode(params.destination)}
+            hideSearchBar
             initialVisibleCount={visibleCount}
             onVisibleCountChange={setVisibleCount}
             onStayQueryChange={(text) =>

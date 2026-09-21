@@ -70,10 +70,10 @@ export function HotelBookReview({ booking }: Props) {
   }
 
   return (
-    <div className="shop-flight-review-page shop-hotel-review-page">
+    <div className="shop-flight-review-page shop-hotel-review-page tvlk-hotel">
       <ShopMockBanner kind="hotel" />
       <header className="shop-flight-review-head">
-        <h1>مراجعة الحجز</h1>
+        <h1>{t("reviewStayTitle")}</h1>
         <p>تأكّد من تفاصيل الإقامة والسعر قبل إدخال بيانات الضيوف</p>
       </header>
 
@@ -156,10 +156,10 @@ export function HotelBookReview({ booking }: Props) {
 
       <footer className="shop-flight-review-foot">
         <button type="button" className="shop-flight-review-back" onClick={backToResults}>
-          العودة إلى النتائج
+          {t("backToHotelResults")}
         </button>
         <button type="button" className="shop-flight-review-continue" onClick={continueToGuests}>
-          متابعة لإدخال بيانات الضيوف
+          {t("continueGuestNames")}
         </button>
         <button
           type="button"

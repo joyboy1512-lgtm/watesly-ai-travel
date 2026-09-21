@@ -63,7 +63,7 @@ type Props = {
 export function ShopHotelResults(props: Props) {
   const { t } = useShopI18n();
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const [mapOpen, setMapOpen] = useState(false);
+  const [mapOpen, setMapOpen] = useState(true);
   const [mapHotelId, setMapHotelId] = useState<string | null>(null);
   const [visibleCount, setVisibleCount] = useState(props.initialVisibleCount || PAGE_SIZE);
   const title = props.destination || props.stayQuery || t("staysFallback");
@@ -142,7 +142,7 @@ export function ShopHotelResults(props: Props) {
 
       <div className="shop-hotel-results-head">
         <h2>
-          {title}: {t("propertiesCount", { n: props.hotels.length })}
+          {t("hotelFoundIn", { n: props.hotels.length, dest: title })}
         </h2>
         <div className="shop-hotel-results-sort">
           <button
@@ -194,22 +194,9 @@ export function ShopHotelResults(props: Props) {
         </div>
       </div>
 
-      {mapOpen && mapPins.length ? (
-        <HotelResultsMap
-          pins={mapPins}
-          selectedId={mapHotelId || visibleHotels[0]?.id}
-          onSelect={(id) => {
-            setMapHotelId(id);
-            const row = props.hotels.find((h) => h.id === id);
-            if (row) {
-              const el = document.getElementById(`hotel-card-${id}`);
-              el?.scrollIntoView({ behavior: "smooth", block: "center" });
-            }
-          }}
-        />
-      ) : null}
-
-      <div className="shop-hotel-results-layout">
+      <div
+        className={`shop-hotel-results-layout${mapOpen && mapPins.length ? " has-map" : ""}`}
+      >
         <ShopHotelFilters
           filters={props.filters}
           facets={props.facets}
@@ -264,6 +251,21 @@ export function ShopHotelResults(props: Props) {
             <p className="shop-hotel-results-empty">{t("noHotels")}</p>
           ) : null}
         </div>
+
+        {mapOpen && mapPins.length ? (
+          <aside className="shop-hotel-results-mapcol is-open">
+            <HotelResultsMap
+              variant="sidebar"
+              pins={mapPins}
+              selectedId={mapHotelId || visibleHotels[0]?.id}
+              onSelect={(id) => {
+                setMapHotelId(id);
+                const el = document.getElementById(`hotel-card-${id}`);
+                el?.scrollIntoView({ behavior: "smooth", block: "center" });
+              }}
+            />
+          </aside>
+        ) : null}
       </div>
     </section>
   );

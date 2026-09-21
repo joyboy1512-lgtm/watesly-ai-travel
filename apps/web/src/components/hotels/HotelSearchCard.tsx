@@ -1,12 +1,13 @@
 "use client";
 
-import { translateRoomNameAr, shopGuestCount, shopNightCount, shopRoomCount } from "@watesly-travel/shared";
+import { translateRoomNameAr, shopNightCount } from "@watesly-travel/shared";
 import type { HotelRateOption, HotelHighlightBadge } from "@/lib/hotel-search";
 import { HotelLiveBadge } from "./HotelLiveBadge";
 import { HotelMediaImage } from "./HotelMediaImage";
 import { HotelPricePanel } from "./HotelPricePanel";
 import { buildHotelDraftPriceBreakdown } from "@/lib/hotel-draft-price";
 import { pickHotelHighlightFacilities } from "@/lib/hotel-facilities";
+import { guestScoreBand } from "@/lib/hotel-review-highlights";
 import { useShopCopy } from "@/components/shop/ShopI18nProvider";
 import { ShopWishlistButton } from "@/components/shop/ShopWishlistButton";
 
@@ -54,8 +55,8 @@ function guestRatingOf(details: Record<string, unknown>): {
 export function HotelSearchCard({
   hotel,
   nights,
-  guests = 1,
-  rooms = 1,
+  guests: _guests = 1,
+  rooms: _rooms = 1,
   variant = "default",
   highlight,
   highlightLabel,
@@ -77,7 +78,14 @@ export function HotelSearchCard({
     locationParts.length > 0
       ? locationParts.join(" · ")
       : String(hotel.details.address || "—");
-  const mapUrl = typeof hotel.details.mapUrl === "string" ? hotel.details.mapUrl : "";
+  const lat = Number(hotel.details.latitude);
+  const lng = Number(hotel.details.longitude);
+  const mapUrl =
+    typeof hotel.details.mapUrl === "string" && hotel.details.mapUrl
+      ? hotel.details.mapUrl
+      : Number.isFinite(lat) && Number.isFinite(lng)
+        ? `https://www.google.com/maps?q=${lat},${lng}`
+        : "";
   const distanceLabel = hotel.details.distanceToCenterLabel
     ? String(hotel.details.distanceToCenterLabel)
     : "";
@@ -123,12 +131,10 @@ export function HotelSearchCard({
       ? t("roomsLeft", { n: allotment })
       : t("availableToBook");
 
-  const ctaLabel = variant === "shop" ? t("viewRooms") : t("viewRoomsPrices");
+  const ctaLabel = variant === "shop" ? t("selectRoom") : t("viewRoomsPrices");
   const mapLabel = variant === "shop" ? t("viewMap") : t("mapLink");
   const isShop = variant === "shop";
 
-  const guestNote = shopGuestCount(locale, guests);
-  const roomNote = shopRoomCount(locale, rooms);
   const nightsNote = shopNightCount(locale, nights);
   const translated = cheapest ? translateRoomNameAr(cheapest.roomName) : null;
   const roomNameLabel = translated
@@ -171,7 +177,7 @@ export function HotelSearchCard({
           alt={name}
           className="hotel-search-card-photo"
         />
-        {galleryUrls.length > 1 ? (
+        {!isShop && galleryUrls.length > 1 ? (
           <div className="hotel-search-card-thumbs" aria-hidden>
             {galleryUrls.slice(0, 6).map((src) => (
               <HotelMediaImage
@@ -229,18 +235,20 @@ export function HotelSearchCard({
           ) : null}
         </div>
 
-        <HotelLiveBadge
-          compact
-          liveMode={!sandbox && Boolean(hotel.details.liveMode)}
-          sandbox={sandbox}
-          sourceLabel={
-            typeof hotel.details.sourceLabel === "string" ? hotel.details.sourceLabel : undefined
-          }
-          fetchedAt={
-            typeof hotel.details.fetchedAt === "string" ? hotel.details.fetchedAt : undefined
-          }
-        />
-        {Number(hotel.details.supplierCount) > 1 ? (
+        {!isShop ? (
+          <HotelLiveBadge
+            compact
+            liveMode={!sandbox && Boolean(hotel.details.liveMode)}
+            sandbox={sandbox}
+            sourceLabel={
+              typeof hotel.details.sourceLabel === "string" ? hotel.details.sourceLabel : undefined
+            }
+            fetchedAt={
+              typeof hotel.details.fetchedAt === "string" ? hotel.details.fetchedAt : undefined
+            }
+          />
+        ) : null}
+        {!isShop && Number(hotel.details.supplierCount) > 1 ? (
           <p className="hotel-search-card-agg">
             {locale === "en"
               ? `Best of ${hotel.details.supplierCount} suppliers`
@@ -268,10 +276,11 @@ export function HotelSearchCard({
 
         {isShop && guest ? (
           <div className="hotel-search-card-score hotel-search-card-score-inline">
-            <strong>{guest.score}</strong>
-            <span>
+            <strong className="tvlk-score-pill">{guest.score}</strong>
+            <span>{t(guestScoreBand(Number(guest.score)))}</span>
+            <small>
               {guest.count ? t("reviewsShort", { n: guest.count }) : guest.source}
-            </span>
+            </small>
           </div>
         ) : null}
 
@@ -295,9 +304,10 @@ export function HotelSearchCard({
           </a>
         ) : null}
 
-        {!isShop && !soldOut && cheapest ? (
+        {!soldOut && cheapest ? (
           <p className="hotel-search-card-offer-line">
-            <strong>{cheapest.roomName}</strong> · {cheapest.boardName}
+            <strong>{roomNameLabel}</strong>
+            {cheapest.boardName ? ` · ${cheapest.boardName}` : ""}
           </p>
         ) : null}
       </div>
@@ -306,29 +316,40 @@ export function HotelSearchCard({
         {!soldOut ? (
           <>
             <div className="hotel-search-card-price">
-              <small>
-                {isShop
-                  ? `${nightsNote} · ${guestNote} · ${roomNote}`
-                  : `${nightsNote} · ${roomNameLabel}`}
-              </small>
-              {priceBreakdown ? (
-                <HotelPricePanel
-                  currency={hotel.currency}
-                  nights={nights}
-                  breakdown={priceBreakdown}
-                  variant="card"
-                />
+              {isShop ? (
+                <div className="tvlk-night-price">
+                  <strong data-display-currency={displayCurrency}>
+                    {formatMoney(perNightMinor, hotel.currency)}
+                  </strong>
+                  <small>{t("perRoomPerNight")}</small>
+                  <small>{t("nightNoTax")}</small>
+                  <em>
+                    {formatMoney(hotel.displayFromMinor, hotel.currency)} · {nightsNote}
+                  </em>
+                </div>
               ) : (
                 <>
-                  <strong data-display-currency={displayCurrency}>
-                    {formatMoney(hotel.displayFromMinor, hotel.currency)}
-                  </strong>
-                  <em>
-                    {t("avgPerNight", {
-                      price: formatMoney(perNightMinor, hotel.currency),
-                      taxes: taxesNote,
-                    })}
-                  </em>
+                  <small>{`${nightsNote} · ${roomNameLabel}`}</small>
+                  {priceBreakdown ? (
+                    <HotelPricePanel
+                      currency={hotel.currency}
+                      nights={nights}
+                      breakdown={priceBreakdown}
+                      variant="card"
+                    />
+                  ) : (
+                    <>
+                      <strong data-display-currency={displayCurrency}>
+                        {formatMoney(hotel.displayFromMinor, hotel.currency)}
+                      </strong>
+                      <em>
+                        {t("avgPerNight", {
+                          price: formatMoney(perNightMinor, hotel.currency),
+                          taxes: taxesNote,
+                        })}
+                      </em>
+                    </>
+                  )}
                 </>
               )}
               <span className="hotel-rooms-left">{availabilityLabel}</span>
@@ -336,7 +357,7 @@ export function HotelSearchCard({
                 <span className="hotel-rooms-left">{t("freeCancel")}</span>
               ) : null}
             </div>
-            {isShop && cheapest ? (
+            {cheapest ? (
               <p className="hotel-search-card-room-below-price">
                 <strong>{roomNameLabel}</strong>
                 {cheapest.roomName && cheapest.roomName !== roomNameLabel ? (

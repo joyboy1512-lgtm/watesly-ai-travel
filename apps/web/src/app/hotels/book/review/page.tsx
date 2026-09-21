@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import "../../../shop.css";
+import "../../../tvlk-hotel.css";
 import { StoreFront } from "@/components/shop/StoreFront";
 import { HotelBookReview } from "@/components/shop/HotelBookReview";
 import { getBookingDraft, type HotelBookingDraft } from "@/lib/booking-draft";

@@ -33,6 +33,78 @@ const DEFAULTS: HotelResultsSearchParams = {
   occ: "",
 };
 
+/** Stay caps used after Search — same limits as Traveloka hotel search. */
+export const HOTEL_STAY_CAPS = {
+  maxRooms: 8,
+  maxChildren: 6,
+  maxGuests: 30,
+  maxNights: 30,
+  maxChildAge: 17,
+  defaultChildAge: 8,
+} as const;
+
+export function addDaysIso(iso: string, days: number): string {
+  const d = new Date(`${iso}T12:00:00`);
+  if (!Number.isFinite(d.getTime())) return iso;
+  d.setDate(d.getDate() + days);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+export function clampHotelSearchParams(
+  params: HotelResultsSearchParams,
+): HotelResultsSearchParams {
+  let rooms = Math.min(HOTEL_STAY_CAPS.maxRooms, Math.max(1, params.rooms || 1));
+  let children = Math.min(HOTEL_STAY_CAPS.maxChildren, Math.max(0, params.children || 0));
+  let adults = Math.max(1, params.adults || 1);
+  if (adults + children > HOTEL_STAY_CAPS.maxGuests) {
+    adults = Math.max(1, HOTEL_STAY_CAPS.maxGuests - children);
+  }
+  const ages = String(params.childrenAges || "")
+    .split(",")
+    .map((p) => Number(p.trim()))
+    .filter((a) => Number.isFinite(a));
+  while (ages.length < children) ages.push(HOTEL_STAY_CAPS.defaultChildAge);
+  const childrenAges = ages
+    .slice(0, children)
+    .map((a) =>
+      String(Math.max(0, Math.min(HOTEL_STAY_CAPS.maxChildAge, Math.round(a)))),
+    )
+    .join(",");
+
+  let checkIn = params.checkIn;
+  let checkOut = params.checkOut;
+  if (checkIn && checkOut) {
+    const nights = nightsBetween(checkIn, checkOut);
+    if (nights > HOTEL_STAY_CAPS.maxNights) {
+      checkOut = addDaysIso(checkIn, HOTEL_STAY_CAPS.maxNights);
+    }
+  }
+
+  const next: HotelResultsSearchParams = {
+    ...params,
+    rooms,
+    children,
+    adults,
+    childrenAges,
+    checkIn,
+    checkOut,
+  };
+  const occRooms = occupancyFromSearchParams(next)
+    .slice(0, rooms)
+    .map((r) => ({
+      adults: Math.max(1, r.adults),
+      childAges: r.childAges
+        .slice(0, HOTEL_STAY_CAPS.maxChildren)
+        .map((a) => Math.max(0, Math.min(HOTEL_STAY_CAPS.maxChildAge, a))),
+    }));
+  while (occRooms.length < rooms) occRooms.push({ adults: 1, childAges: [] });
+  next.occ = encodeRoomOccupancies(occRooms);
+  return next;
+}
+
 function num(value: string | null, fallback: number) {
   const n = Number(value);
   return Number.isFinite(n) && n >= 0 ? n : fallback;
@@ -122,7 +194,7 @@ export function parseHotelResultsSearch(
     rooms = roomsDecoded.length;
   }
 
-  return {
+  return clampHotelSearchParams({
     destination,
     destinationLabel: String(get("destinationLabel") || destination),
     checkIn: String(get("checkIn") || get("departDate") || ""),
@@ -137,7 +209,7 @@ export function parseHotelResultsSearch(
         ? roomsDecoded.flatMap((r) => r.childAges).join(",")
         : ""),
     occ: occ || (roomsDecoded ? encodeRoomOccupancies(roomsDecoded) : ""),
-  };
+  });
 }
 
 /** Reconcile `occ` with adults/children/rooms after toolbar or edit changes. */
@@ -171,7 +243,7 @@ export function syncHotelSearchParams(
       .flatMap((r) => r.childAges)
       .join(",");
   }
-  return next;
+  return clampHotelSearchParams(next);
 }
 
 export function buildHotelResultsHref(params: Partial<HotelResultsSearchParams>) {

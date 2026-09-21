@@ -1,13 +1,16 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  HOTEL_STAY_CAPS,
   buildHotelDetailHref,
+  clampHotelSearchParams,
   hotelDetailId,
   hotelOfferCode,
   hotelSearchPreferencesJson,
   hotelSearchRequestBody,
   isHotelSuggestItem,
   matchShopHotel,
+  nightsBetween,
   parseHotelResultsSearch,
 } from "./hotel-results-url";
 
@@ -95,4 +98,41 @@ test("hotelSearchRequestBody passes hotelCode into preferences", () => {
     occ: "",
   });
   assert.equal(JSON.parse(empty).hotelCode, undefined);
+});
+
+test("clampHotelSearchParams enforces Traveloka stay caps", () => {
+  const clamped = clampHotelSearchParams({
+    destination: "Dubai",
+    destinationLabel: "Dubai",
+    checkIn: "2026-09-21",
+    checkOut: "2026-11-30",
+    adults: 40,
+    children: 10,
+    infants: 0,
+    rooms: 12,
+    childrenAges: "8,8,8,8,8,8,8,8,8,8",
+    occ: "",
+  });
+  assert.equal(clamped.rooms, HOTEL_STAY_CAPS.maxRooms);
+  assert.equal(clamped.children, HOTEL_STAY_CAPS.maxChildren);
+  assert.ok(clamped.adults + clamped.children <= HOTEL_STAY_CAPS.maxGuests);
+  assert.ok(nightsBetween(clamped.checkIn, clamped.checkOut) <= HOTEL_STAY_CAPS.maxNights);
+  assert.equal(clamped.childrenAges.split(",").length, HOTEL_STAY_CAPS.maxChildren);
+});
+
+test("parseHotelResultsSearch clamps oversize occupancy from the URL", () => {
+  const q = parseHotelResultsSearch(
+    new URLSearchParams({
+      destination: "Barcelona",
+      adults: "28",
+      children: "8",
+      rooms: "20",
+      checkIn: "2026-09-21",
+      checkOut: "2026-12-01",
+    }),
+  );
+  assert.equal(q.rooms, 8);
+  assert.equal(q.children, 6);
+  assert.ok(q.adults + q.children <= 30);
+  assert.ok(nightsBetween(q.checkIn, q.checkOut) <= 30);
 });

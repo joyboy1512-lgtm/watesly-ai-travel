@@ -8,6 +8,7 @@ import {
 import {
   BED_TYPE_OPTIONS,
   BRAND_PATTERNS,
+  collectExtraFacilityOptions,
   countOptions,
   DISTANCE_OPTIONS,
   FACILITY_OPTIONS,
@@ -21,6 +22,7 @@ import {
   hotelHasOnlinePayment,
   hotelHasRoomFacility,
   hotelLandmarks,
+  hotelPropertyType,
   hotelReviewScore,
   MEAL_FILTER_OPTIONS,
   PROPERTY_TYPE_OPTIONS,
@@ -58,6 +60,8 @@ export type HotelFilterFacets = {
   };
   breakfastIncluded: number;
   priceMaxMajor: number;
+  /** Stay-total major units converted to a per-room-per-night ceiling. */
+  priceMaxPerNightMajor: number;
 };
 
 
@@ -98,6 +102,8 @@ export type HotelSearchFilters = {
   minBathrooms?: number;
   onlinePayment?: boolean;
   maxPrice: string;
+  /** Per room per night, stay-currency major units (Traveloka price slider). */
+  maxPricePerNight?: string;
   refundableOnly: boolean;
   bookableOnly: boolean;
   /** Keep hotels whose destinationCode matches the searched destination (e.g. DXB only). */
@@ -129,6 +135,7 @@ export const defaultHotelFilters = (): HotelSearchFilters => ({
   minBathrooms: 0,
   onlinePayment: false,
   maxPrice: "",
+  maxPricePerNight: "",
   refundableOnly: false,
   bookableOnly: false,
   destinationCodeOnly: "",
@@ -162,6 +169,7 @@ export function countHotelFilters(filters: HotelSearchFilters) {
   if ((filters.minBathrooms || 0) > 0) n += 1;
   if (filters.onlinePayment) n += 1;
   if (filters.maxPrice) n += 1;
+  if (filters.maxPricePerNight) n += 1;
   if (filters.refundableOnly) n += 1;
   if (filters.bookableOnly) n += 1;
   if (filters.destinationCodeOnly) n += 1;
@@ -216,6 +224,13 @@ function matchingRates(h: HotelOfferRow, filters: HotelSearchFilters): HotelRate
     const maxMajor = Number(filters.maxPrice);
     if (Number.isFinite(maxMajor) && maxMajor > 0) {
       rates = rates.filter((r) => r.net <= maxMajor);
+    }
+  }
+  if (filters.maxPricePerNight) {
+    const maxNight = Number(filters.maxPricePerNight);
+    const stayNights = Math.max(1, Number(h.details.nights || 1));
+    if (Number.isFinite(maxNight) && maxNight > 0) {
+      rates = rates.filter((r) => r.net / stayNights <= maxNight + 0.0001);
     }
   }
   if (filters.onlinePayment) {
@@ -315,9 +330,7 @@ export function filterHotelOffers(
     list = list.filter((h) => hotelReviewScore(h) >= min);
   }
   if (filters.propertyTypes.length) {
-    list = list.filter((h) =>
-      filters.propertyTypes.includes(String(h.details.propertyType || "hotel")),
-    );
+    list = list.filter((h) => filters.propertyTypes.includes(hotelPropertyType(h)));
   }
   if (filters.facilities.length) {
     list = list.filter((h) => filters.facilities.every((f) => hotelHasFacility(h, f)));
@@ -471,16 +484,31 @@ export function collectFilterFacets(hotels: HotelOfferRow[]): HotelFilterFacets 
     }
   }
 
+  const meals = countOptions(hotels, MEAL_FILTER_OPTIONS, (h, id) => hotelHasBoard(h, id));
+  const seenMeals = new Set(meals.map((o) => o.id));
+  for (const code of boardCodes) {
+    if (seenMeals.has(code)) continue;
+    const count = hotels.filter((h) => hotelHasBoard(h, code)).length;
+    if (!count) continue;
+    meals.push({
+      id: code,
+      label: BOARD_LABELS_AR[code] || code,
+      count,
+    });
+    seenMeals.add(code);
+  }
+
   return {
     boardCodes: [...boardCodes].sort(),
     zones: zoneList,
     paymentTypes: [...paymentTypes].sort(),
     rateTypes: [...rateTypes].sort(),
-    meals: countOptions(hotels, MEAL_FILTER_OPTIONS, (h, id) => hotelHasBoard(h, id)),
-    propertyTypes: countOptions(hotels, PROPERTY_TYPE_OPTIONS, (h, id) =>
-      String(h.details.propertyType || "hotel") === id,
-    ),
-    facilities: countOptions(hotels, FACILITY_OPTIONS, (h, id) => hotelHasFacility(h, id)),
+    meals,
+    propertyTypes: countOptions(hotels, PROPERTY_TYPE_OPTIONS, (h, id) => hotelPropertyType(h) === id),
+    facilities: [
+      ...countOptions(hotels, FACILITY_OPTIONS, (h, id) => hotelHasFacility(h, id)),
+      ...collectExtraFacilityOptions(hotels),
+    ],
     roomFacilities: countOptions(hotels, ROOM_FACILITY_OPTIONS, (h, id) =>
       hotelHasRoomFacility(h, id),
     ),
@@ -524,6 +552,12 @@ export function collectFilterFacets(hotels: HotelOfferRow[]): HotelFilterFacets 
     },
     breakfastIncluded: hotels.filter((h) => hotelHasBoard(h, "BB")).length,
     priceMaxMajor: robustPriceMaxMajor(hotels.map((h) => displayPriceMajor(h))),
+    priceMaxPerNightMajor: robustPriceMaxMajor(
+      hotels.map((h) => {
+        const nights = Math.max(1, Number(h.details.nights || 1));
+        return Math.ceil(displayPriceMajor(h) / nights);
+      }),
+    ),
   };
 }
 

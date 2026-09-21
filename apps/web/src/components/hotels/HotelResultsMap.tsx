@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { formatMoneyMinor } from "@/lib/format";
 import { useShopCopy } from "@/components/shop/ShopI18nProvider";
 
@@ -18,12 +18,15 @@ type Props = {
   pins: HotelMapPin[];
   selectedId?: string | null;
   onSelect?: (id: string) => void;
+  variant?: "default" | "sidebar";
 };
 
 const TILE = 256;
 const ZOOM = 13;
 const VIEW_W = 640;
 const VIEW_H = 360;
+const SIDEBAR_VIEW_W = 450;
+const SIDEBAR_VIEW_H = 520;
 
 function project(lat: number, lng: number, zoom: number) {
   const n = 2 ** zoom;
@@ -44,18 +47,38 @@ function tileUrl(x: number, y: number, z: number) {
  * Interactive OSM tile map with price markers — no extra map SDK.
  * Identity stays the existing shop navy/card chrome.
  */
-export function HotelResultsMap({ pins, selectedId, onSelect }: Props) {
+export function HotelResultsMap({ pins, selectedId, onSelect, variant = "default" }: Props) {
   const { t } = useShopCopy();
+  const canvasRef = useRef<HTMLDivElement>(null);
+  const [box, setBox] = useState({ w: 0, h: 0 });
   const active = pins.find((p) => p.id === selectedId) || pins[0];
+  useEffect(() => {
+    const el = canvasRef.current;
+    if (!el) return;
+    const apply = () => {
+      const r = el.getBoundingClientRect();
+      if (r.width > 8 && r.height > 8) {
+        setBox({ w: Math.round(r.width), h: Math.round(r.height) });
+      }
+    };
+    apply();
+    const ro = new ResizeObserver(apply);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [variant, pins.length]);
+  const viewW =
+    box.w || (variant === "sidebar" ? SIDEBAR_VIEW_W : VIEW_W);
+  const viewH =
+    box.h || (variant === "sidebar" ? SIDEBAR_VIEW_H : VIEW_H);
   const layout = useMemo(() => {
     if (!active) return null;
     const center = project(active.lat, active.lng, ZOOM);
-    const originX = center.x * TILE - VIEW_W / 2;
-    const originY = center.y * TILE - VIEW_H / 2;
+    const originX = center.x * TILE - viewW / 2;
+    const originY = center.y * TILE - viewH / 2;
     const minTx = Math.floor(originX / TILE);
     const minTy = Math.floor(originY / TILE);
-    const maxTx = Math.floor((originX + VIEW_W) / TILE);
-    const maxTy = Math.floor((originY + VIEW_H) / TILE);
+    const maxTx = Math.floor((originX + viewW) / TILE);
+    const maxTy = Math.floor((originY + viewH) / TILE);
     const tiles: Array<{ key: string; left: number; top: number; src: string }> = [];
     for (let ty = minTy; ty <= maxTy; ty += 1) {
       for (let tx = minTx; tx <= maxTx; tx += 1) {
@@ -76,15 +99,16 @@ export function HotelResultsMap({ pins, selectedId, onSelect }: Props) {
       };
     });
     return { tiles, markers };
-  }, [active, pins]);
+  }, [active, pins, viewW, viewH]);
 
   if (!active || !layout) {
     return <p className="shop-hotel-map-empty">{t("map")}</p>;
   }
 
   return (
-    <div className="shop-hotel-map">
+    <div className={`shop-hotel-map${variant === "sidebar" ? " shop-hotel-map-sidebar" : ""}`}>
       <div
+        ref={canvasRef}
         className="shop-hotel-map-canvas"
         role="img"
         aria-label={t("mapHotelsNearby")}
@@ -114,6 +138,7 @@ export function HotelResultsMap({ pins, selectedId, onSelect }: Props) {
         ))}
         <span className="shop-hotel-map-copy">{t("osmAttribution")}</span>
       </div>
+      {variant === "sidebar" ? null : (
       <ul className="shop-hotel-map-pins">
         {pins.slice(0, 24).map((pin) => (
           <li key={pin.id}>
@@ -132,6 +157,7 @@ export function HotelResultsMap({ pins, selectedId, onSelect }: Props) {
           </li>
         ))}
       </ul>
+      )}
     </div>
   );
 }

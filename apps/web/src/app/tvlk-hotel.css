@@ -24,6 +24,8 @@
 }
 
 .tvlk-hotel .shop-mock-banner,
+.tvlk-hotel .shop-flight-mock-banner,
+.tvlk-hotel .shop-hotel-sandbox-banner,
 .tvlk-hotel .shop-flight-results-h1,
 .tvlk-hotel .shop-flight-results-msg {
   display: none;
@@ -330,7 +332,8 @@
 }
 
 .tvlk-hotel .hotel-search-card-shop .hotel-live-badge,
-.tvlk-hotel .hotel-search-card-shop .hotel-search-card-agg {
+.tvlk-hotel .hotel-search-card-shop .hotel-search-card-agg,
+.tvlk-hotel .hotel-modal-live {
   display: none;
 }
 
@@ -509,6 +512,14 @@
   grid-template-columns: 1fr auto;
   gap: 12px 20px;
   align-items: center;
+}
+
+.tvlk-hotel .hotel-name-chip {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  padding: 0;
+  max-width: none;
 }
 
 .tvlk-hotel .hotel-name-chip h2 {

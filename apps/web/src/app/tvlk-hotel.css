@@ -58,11 +58,13 @@
 .tvlk-hotel-search {
   position: relative;
   z-index: 30;
-  width: calc(100% - 6cm);
-  max-width: 100%;
-  margin: 12px auto 18px;
-  min-height: 420px;
-  padding: 16px 22px 48px;
+  width: 100vw;
+  max-width: none;
+  margin: 12px 0 18px;
+  margin-inline: calc(50% - 50vw);
+  min-height: 210px;
+  height: 210px;
+  padding: 14px 0 16px;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
@@ -70,10 +72,19 @@
   overflow: visible;
 }
 
+.tvlk-hotel-search-inner {
+  position: relative;
+  z-index: 1;
+  width: min(1640px, calc(100vw - 40px));
+  margin-inline: auto;
+  padding-inline: 20px;
+  box-sizing: border-box;
+}
+
 .tvlk-hotel-search-vista {
   position: absolute;
   inset: 0;
-  border-radius: 18px;
+  border-radius: 0;
   overflow: hidden;
   z-index: 0;
   pointer-events: none;
@@ -83,7 +94,7 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: center 45%;
+  object-position: center 48%;
   display: block;
 }
 
@@ -93,9 +104,9 @@
   inset: 0;
   background: linear-gradient(
     180deg,
-    rgba(15, 23, 42, 0.4) 0%,
-    rgba(15, 23, 42, 0.12) 42%,
-    rgba(15, 23, 42, 0.22) 100%
+    rgba(0, 27, 53, 0.28) 0%,
+    rgba(0, 27, 53, 0.1) 55%,
+    rgba(0, 27, 53, 0.2) 100%
   );
 }
 
@@ -1369,9 +1380,15 @@
 
 @media (max-width: 860px) {
   .tvlk-hotel-search {
+    width: 100vw;
+    min-height: 180px;
+    height: 180px;
+    padding: 10px 0 12px;
+  }
+
+  .tvlk-hotel-search-inner {
     width: 100%;
-    min-height: 320px;
-    padding: 12px 12px 28px;
+    padding-inline: 12px;
   }
 
   .tvlk-hotel-search-card {

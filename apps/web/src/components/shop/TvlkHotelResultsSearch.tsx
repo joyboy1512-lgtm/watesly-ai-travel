@@ -204,6 +204,7 @@ export function TvlkHotelResultsSearch(props: Props) {
       <div className="tvlk-hotel-search-vista" aria-hidden="true">
         <img src={vistaSrc} alt="" />
       </div>
+      <div className="tvlk-hotel-search-inner">
       <div className="tvlk-hotel-search-tabs" role="tablist" aria-label={t("propertyType")}>
         {tabs.map((tab) => (
           <button
@@ -464,6 +465,7 @@ export function TvlkHotelResultsSearch(props: Props) {
           <IconSearch />
         </button>
       </form>
+      </div>
     </div>
   );
 }

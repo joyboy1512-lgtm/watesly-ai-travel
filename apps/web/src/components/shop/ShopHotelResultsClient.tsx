@@ -268,8 +268,8 @@ export function ShopHotelResultsClient() {
         // Prefer stale session results when provider quota is exhausted
         if (
           cacheMatches &&
-          cacheAgeMs < 60 * 60 * 1000 &&
-          /quota|تجاوز حد طلبات/i.test(raw)
+          cacheAgeMs < 12 * 60 * 60 * 1000 &&
+          /quota|403|تجاوز حد طلبات/i.test(raw)
         ) {
           setInquiryId(cached!.inquiryId || "");
           setQuoteItems(

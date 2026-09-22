@@ -12,6 +12,7 @@ import {
   resolveHotelbedsCredentials,
   type HotelbedsCredentials,
 } from "./hotelbeds-auth";
+import { hotelbedsResponseError, isHotelbedsQuotaError } from "./hotelbeds-errors";
 import {
   fetchHotelbedsContentMap,
   fetchHotelbedsFacilityCatalog,
@@ -42,7 +43,8 @@ import {
 } from "../ops/result-cache";
 
 const SEARCH_CACHE_TTL_MS = 8 * 60 * 1000;
-const SEARCH_STALE_TTL_MS = 60 * 60 * 1000;
+/** Serve last good availability this long when Hotelbeds sandbox quota is hit. */
+const SEARCH_STALE_TTL_MS = 12 * 60 * 60 * 1000;
 const REQUEST_TIMEOUT_MS = 35_000;
 
 const hotelbedsCircuit = new CircuitBreaker({
@@ -60,7 +62,7 @@ const hotelSearchCache = new Map<string, SearchCacheEntry>();
 
 function humanizeHotelbedsError(message: string): string {
   const m = String(message || "").trim();
-  if (/quota has been exceeded/i.test(m)) {
+  if (/quota exceeded|quota has been exceeded/i.test(m)) {
     return "تم تجاوز حد طلبات مزود الفنادق التجريبي مؤقتًا. أعد المحاولة بعد قليل.";
   }
   if (/too many requests|rate limit/i.test(m)) {
@@ -70,7 +72,7 @@ function humanizeHotelbedsError(message: string): string {
 }
 
 function isQuotaError(message: string): boolean {
-  return /quota has been exceeded|too many requests|rate limit/i.test(message);
+  return isHotelbedsQuotaError(message);
 }
 
 function searchCacheKey(params: HotelSearchParams): string {
@@ -160,14 +162,7 @@ export class HotelbedsHotelProvider implements HotelProviderAdapter {
         error?: { message?: string; code?: string };
       };
       if (!response.ok) {
-        const err = json as { error?: { message?: string }; message?: string };
-        throw new Error(
-          humanizeHotelbedsError(
-            err.error?.message ||
-              err.message ||
-              `Hotelbeds HTTP ${response.status}`,
-          ),
-        );
+        throw new Error(humanizeHotelbedsError(hotelbedsResponseError(json, response.status)));
       }
       hotelbedsCircuit.recordSuccess();
       logProviderOps({
@@ -397,13 +392,20 @@ export class HotelbedsHotelProvider implements HotelProviderAdapter {
         `[hotelbeds-availability] fail ms=${Date.now() - availStarted}`,
         msg,
       );
-      if (isQuotaError(msg) && cached && cacheAge < SEARCH_STALE_TTL_MS) {
-        console.info(
-          `[hotelbeds-availability] stale-cache after quota ageMs=${Math.round(cacheAge)} hotels=${cached.offers.length}`,
+      if (isQuotaError(msg)) {
+        const staleShared = await readProviderResultCache<HotelOffer[]>(
+          `hb-stale:${cacheKey}`,
         );
-        return cached.offers.map((offer) => ({
-          ...offer,
-        }));
+        const stale =
+          cached && cacheAge < SEARCH_STALE_TTL_MS && cached.offers.length
+            ? cached.offers
+            : staleShared;
+        if (stale?.length) {
+          console.info(
+            `[hotelbeds-availability] stale-cache after quota hotels=${stale.length}`,
+          );
+          return stale.map((offer) => ({ ...offer }));
+        }
       }
       // One retry on timeout/network only — never retry quota/auth
       if (isTransientProviderError(err) && !isQuotaError(msg)) {
@@ -464,6 +466,7 @@ export class HotelbedsHotelProvider implements HotelProviderAdapter {
       sorted,
       SEARCH_CACHE_TTL_MS,
     );
+    void writeProviderResultCache(`hb-stale:${cacheKey}`, sorted, SEARCH_STALE_TTL_MS);
     // Bound memory: drop oldest when oversized
     if (hotelSearchCache.size > 40) {
       const oldest = [...hotelSearchCache.entries()].sort(

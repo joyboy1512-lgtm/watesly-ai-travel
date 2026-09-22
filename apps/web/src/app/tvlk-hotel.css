@@ -58,7 +58,9 @@
 .tvlk-hotel-search {
   position: relative;
   z-index: 30;
-  margin: 12px 0 18px;
+  width: calc(100% - 6cm);
+  max-width: 100%;
+  margin: 12px auto 18px;
 }
 
 .tvlk-hotel-search-tabs {
@@ -1324,6 +1326,10 @@
 }
 
 @media (max-width: 860px) {
+  .tvlk-hotel-search {
+    width: 100%;
+  }
+
   .tvlk-hotel-search-card {
     flex-direction: column;
     border-radius: 12px;

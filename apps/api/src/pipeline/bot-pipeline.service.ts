@@ -796,6 +796,16 @@ export class BotPipelineService {
           flightsFound: search.flights.length,
           hotelsFound: search.hotels.length,
           optionsOffered: options.length,
+          hotelSnapshot: sortedHotels.slice(0, 40).map((row) => ({
+            id: row.offer.providerOfferRef,
+            serviceType: "hotel",
+            description: row.offer.description,
+            sellAmountMinor: row.pricing.sellAmountMinor,
+            costAmountMinor: row.pricing.costAmountMinor,
+            currency: row.pricing.currency,
+            expiresAt: row.offer.expiresAt,
+            details: row.offer.raw,
+          })),
         }),
       },
     });

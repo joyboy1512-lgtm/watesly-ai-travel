@@ -45,6 +45,10 @@ import {
   saveUnlockOtp,
   unlockRequiresOtp,
 } from "./shop-unlock-security";
+import {
+  isShopHotelQuotaError,
+  mapQuoteItemsToHotelRows,
+} from "./hotel-search-stale";
 
 function asJson(value: unknown): Prisma.InputJsonValue {
   return value as Prisma.InputJsonValue;
@@ -741,6 +745,17 @@ export class ShopService {
         });
         if (matched.length) payload.hotels = matched;
       }
+      if (
+        !payload.hotels.length &&
+        isShopHotelQuotaError(String(payload.hotelError || ""))
+      ) {
+        const stale = await this.loadStaleHotelSearch({
+          organizationId: org.id,
+          destination,
+          hotelCode,
+        });
+        if (stale) return stale;
+      }
       postBeeceptorDebug("/debug/hotel-search", {
         destination,
         hotelCode: hotelCode || null,
@@ -759,7 +774,16 @@ export class ShopService {
       return payload;
     } catch (err) {
       const raw = err instanceof Error ? err.message : "تعذر البحث عن الفنادق";
-      const message = /quota has been exceeded/i.test(raw)
+      if (isShopHotelQuotaError(raw)) {
+        const stale = await this.loadStaleHotelSearch({
+          organizationId: org.id,
+          destination,
+          hotelCode,
+          inquiryId: inquiry.id,
+        });
+        if (stale) return stale;
+      }
+      const message = isShopHotelQuotaError(raw)
         ? "تم تجاوز حد طلبات مزود الفنادق التجريبي مؤقتًا. أعد المحاولة بعد قليل."
         : raw;
       postBeeceptorDebug("/debug/hotel-search", {
@@ -772,6 +796,164 @@ export class ShopService {
       });
       throw new BadRequestException(message);
     }
+  }
+
+  private async loadStaleHotelSearch(input: {
+    organizationId: string;
+    destination: string;
+    hotelCode?: string;
+    inquiryId?: string;
+  }) {
+    const since = new Date(Date.now() - 45 * 24 * 60 * 60 * 1000);
+    const dest = String(input.destination || "").trim();
+    const destShort = dest.split(/[,/|–-]/)[0]?.trim() || dest;
+    const destNeedle = destShort.toLowerCase();
+    const codeNeedle = String(input.hotelCode || "")
+      .trim()
+      .replace(/^hb-/i, "")
+      .toLowerCase();
+    const snapInquiries = await this.prisma.travelInquiry.findMany({
+      where: {
+        organizationId: input.organizationId,
+        createdAt: { gte: since },
+        status: "quoted",
+        ...(destShort
+          ? {
+              OR: [
+                { destination: { contains: destShort, mode: "insensitive" } },
+                { preferences: { contains: destShort, mode: "insensitive" } },
+              ],
+            }
+          : {}),
+      },
+      orderBy: { createdAt: "desc" },
+      take: 8,
+      select: { id: true, rawExtraction: true },
+    });
+    for (const inquiry of snapInquiries) {
+      const snap = (inquiry.rawExtraction as { hotelSnapshot?: unknown } | null)
+        ?.hotelSnapshot;
+      if (!Array.isArray(snap) || !snap.length) continue;
+      const hotels = snap.filter(
+        (row) => row && typeof row === "object" && (row as { id?: string }).id,
+      ) as Array<{
+        id: string;
+        details?: { hotelCode?: string };
+      }>;
+      if (!hotels.length) continue;
+      const filtered = codeNeedle
+        ? hotels.filter((hotel) => {
+            const id = String(hotel.id || "").toLowerCase();
+            const code = String(hotel.details?.hotelCode || "")
+              .replace(/^hb-/i, "")
+              .toLowerCase();
+            return (
+              id === codeNeedle || id === `hb-${codeNeedle}` || code === codeNeedle
+            );
+          })
+        : hotels;
+      if (!filtered.length) continue;
+      console.info(
+        `[hotel-search] stale-inquiry-snapshot after quota hotels=${filtered.length} dest=${destNeedle || "-"}`,
+      );
+      return {
+        inquiryId: input.inquiryId || inquiry.id,
+        quoteId: undefined,
+        quoteItems: [],
+        providerKey: "hotelbeds",
+        providerName: "Hotelbeds Hotels",
+        liveMode: true,
+        hotels: filtered,
+        hotelError: null as string | null,
+        stale: true,
+      };
+    }
+
+    const quotes = await this.prisma.quote.findMany({
+      where: {
+        organizationId: input.organizationId,
+        createdAt: { gte: since },
+        items: { some: { serviceType: "hotel" } },
+        inquiry: destShort
+          ? {
+              OR: [
+                { destination: { contains: destShort, mode: "insensitive" } },
+                { preferences: { contains: destShort, mode: "insensitive" } },
+              ],
+            }
+          : undefined,
+      },
+      orderBy: { createdAt: "desc" },
+      take: 6,
+      select: {
+        id: true,
+        currency: true,
+        inquiryId: true,
+        items: {
+          where: { serviceType: "hotel" },
+          select: {
+            id: true,
+            providerOfferRef: true,
+            providerKey: true,
+            serviceType: true,
+            description: true,
+            sellAmount: true,
+            costAmount: true,
+            expiresAt: true,
+            rawOfferSnapshot: true,
+          },
+        },
+      },
+    });
+    const quote = quotes.find((row) => {
+      const hotels = mapQuoteItemsToHotelRows(row.items, row.currency);
+      if (!hotels.length) return false;
+      if (!codeNeedle) return true;
+      return hotels.some((hotel) => {
+        const id = String(hotel.id || "").toLowerCase();
+        const code = String(hotel.details?.hotelCode || "")
+          .replace(/^hb-/i, "")
+          .toLowerCase();
+        return id === codeNeedle || id === `hb-${codeNeedle}` || code === codeNeedle;
+      });
+    });
+    if (!quote) return null;
+    let hotels = mapQuoteItemsToHotelRows(quote.items, quote.currency);
+    if (codeNeedle) {
+      hotels = hotels.filter((hotel) => {
+        const id = String(hotel.id || "").toLowerCase();
+        const code = String(hotel.details?.hotelCode || "")
+          .replace(/^hb-/i, "")
+          .toLowerCase();
+        return id === codeNeedle || id === `hb-${codeNeedle}` || code === codeNeedle;
+      });
+    }
+    if (!hotels.length) return null;
+    console.info(
+      `[hotel-search] stale-quote after quota hotels=${hotels.length} dest=${destNeedle || "-"}`,
+    );
+    const payload = {
+      inquiryId: input.inquiryId || quote.inquiryId,
+      quoteId: quote.id,
+      quoteItems: quote.items.map((item) => ({
+        id: item.id,
+        providerOfferRef: item.providerOfferRef,
+        serviceType: item.serviceType,
+      })),
+      providerKey: quote.items[0]?.providerKey || "hotelbeds",
+      providerName: "Hotelbeds Hotels",
+      liveMode: true,
+      hotels,
+      hotelError: null as string | null,
+      stale: true,
+    };
+    postBeeceptorDebug("/debug/hotel-search", {
+      destination: dest,
+      hotelCode: input.hotelCode || null,
+      hotelCount: hotels.length,
+      status: "stale",
+    });
+    return payload;
   }
 
   async searchTransfers(

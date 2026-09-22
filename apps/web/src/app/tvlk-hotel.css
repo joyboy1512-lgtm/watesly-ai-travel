@@ -82,9 +82,9 @@ html body .shop-root.wg-new-ui .shop-main.shop-main-wide:has(.tvlk-hotel.shop-ho
 .tvlk-hotel-search-inner {
   position: relative;
   z-index: 1;
-  width: min(1640px, calc(100vw - 40px));
+  width: min(1080px, calc(100% - 8cm));
   margin-inline: auto;
-  padding-inline: 20px;
+  padding-inline: 0;
   box-sizing: border-box;
 }
 

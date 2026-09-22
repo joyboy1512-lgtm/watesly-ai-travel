@@ -32,6 +32,7 @@ export function parseRoomSize(text: string): string | null {
 }
 
 function looksLikeBed(text: string): boolean {
+  if (/أطفال|cot|crib|infant/i.test(text)) return false;
   return /سرير|bed|sofa|كنبة|twin|king|queen|double/i.test(text);
 }
 

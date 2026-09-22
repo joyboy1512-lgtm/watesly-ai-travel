@@ -21,13 +21,20 @@ import {
   type HotelRateOption,
 } from "@/lib/hotel-search";
 import {
+  buildHotelDetailHref,
   buildHotelResultsHref,
+  clampHotelSearchParams,
   hotelSearchRequestBody,
+  isHotelSuggestItem,
   matchShopHotel,
   nightsBetween,
   occupancyFromSearchParams,
   parseHotelResultsSearch,
+  syncHotelSearchParams,
 } from "@/lib/hotel-results-url";
+import { TvlkHotelResultsSearch } from "@/components/shop/TvlkHotelResultsSearch";
+import type { SuggestItem } from "@/components/shop/ShopAutocomplete";
+import { hotelSuggestBadge } from "@/lib/hotel-suggest";
 import {
   getHotelSearchSession,
   resolveQuoteItemId,
@@ -77,6 +84,7 @@ function HotelDetailInner() {
   const [missing, setMissing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [draft, setDraft] = useState(urlParams);
   const [inquiryId, setInquiryId] = useState<string | undefined>();
   const [quoteItemId, setQuoteItemId] = useState<string | undefined>();
   const [meta, setMeta] = useState({
@@ -91,6 +99,15 @@ function HotelDetailInner() {
     nights: nightsBetween(urlParams.checkIn, urlParams.checkOut),
   });
   const fetchGen = useRef(0);
+
+  useEffect(() => {
+    const hotelName = hotel ? String(hotel.details.name || "") : "";
+    setDraft({
+      ...urlParams,
+      destination: hotelName || urlParams.destination,
+      destinationLabel: hotelName || urlParams.destinationLabel || urlParams.destination,
+    });
+  }, [urlParams, hotel]);
 
   const resultsHref = useMemo(() => {
     const session = getHotelSearchSession();
@@ -284,11 +301,78 @@ function HotelDetailInner() {
     router.push("/hotels/book/review");
   }
 
+  async function searchCities(q: string): Promise<SuggestItem[]> {
+    if (q.trim().length < 2) return [];
+    const rows = await shopFetch<
+      Array<{
+        city: string | null;
+        country: string | null;
+        iataCode?: string | null;
+        kind?: string;
+        label?: string;
+        subtitle?: string;
+      }>
+    >(`/shop/cities?q=${encodeURIComponent(q)}`);
+    return rows.slice(0, 14).map((c, idx) => {
+      const kind = c.kind || "city";
+      return {
+        id: `${kind}-${c.city}-${c.iataCode || idx}`,
+        code: c.iataCode || c.city || q,
+        title: c.label || c.city || q,
+        subtitle:
+          c.subtitle ||
+          (kind === "hotel" ? `فندق · ${c.country || ""}` : c.country || undefined),
+        kind,
+        badge: hotelSuggestBadge(c.label || c.city || q, kind),
+      };
+    });
+  }
+
+  function applyStaySearch() {
+    const synced = clampHotelSearchParams(
+      syncHotelSearchParams(
+        { ...urlParams, ...draft },
+        {
+          adults: draft.adults,
+          children: draft.children,
+          rooms: draft.rooms,
+          childrenAges: draft.childrenAges,
+        },
+      ),
+    );
+    router.push(buildHotelDetailHref(hotelId, synced));
+  }
+
+  function pickSuggestHotel(item: SuggestItem) {
+    if (isHotelSuggestItem(item) && /^\d+$/.test(item.code)) {
+      router.push(buildHotelDetailHref(item.code, draft));
+      return;
+    }
+    setDraft((d) => ({ ...d, destination: item.title, destinationLabel: item.title }));
+  }
+
+  const searchBar = (
+    <TvlkHotelResultsSearch
+      compact
+      draft={draft}
+      loading={loading}
+      stayType="all"
+      onDraftChange={setDraft}
+      onStayTypeChange={() => undefined}
+      onSearch={applyStaySearch}
+      onPickHotel={pickSuggestHotel}
+      searchCities={searchCities}
+    />
+  );
+
   if (loading) {
     return (
-      <div className="shop-flight-results-loading">
-        <div className="shop-flight-spinner" aria-hidden />
-        <p>جاري تحميل تفاصيل الفندق…</p>
+      <div className="shop-hotel-detail-page tvlk-hotel">
+        {searchBar}
+        <div className="shop-flight-results-loading">
+          <div className="shop-flight-spinner" aria-hidden />
+          <p>جاري تحميل تفاصيل الفندق…</p>
+        </div>
       </div>
     );
   }
@@ -306,6 +390,7 @@ function HotelDetailInner() {
 
   return (
     <div className="shop-hotel-detail-page tvlk-hotel">
+      {searchBar}
       <ShopMockBanner kind="hotel" />
       <HotelDetailModal
         hotel={hotel}

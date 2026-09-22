@@ -20,6 +20,8 @@ type Props = {
   onSearch: () => void;
   onPickHotel: (item: SuggestItem) => void;
   searchCities: (q: string) => Promise<SuggestItem[]>;
+  /** Slim bar for hotel detail — same fields, no vista or stay-type tabs. */
+  compact?: boolean;
 };
 
 function IconPin() {
@@ -200,11 +202,14 @@ export function TvlkHotelResultsSearch(props: Props) {
   }
 
   return (
-    <div className="tvlk-hotel-search">
-      <div className="tvlk-hotel-search-vista" aria-hidden="true">
-        <img src={vistaSrc} alt="" />
-      </div>
+    <div className={`tvlk-hotel-search${props.compact ? " is-detail" : ""}`}>
+      {props.compact ? null : (
+        <div className="tvlk-hotel-search-vista" aria-hidden="true">
+          <img src={vistaSrc} alt="" />
+        </div>
+      )}
       <div className="tvlk-hotel-search-inner">
+      {props.compact ? null : (
       <div className="tvlk-hotel-search-tabs" role="tablist" aria-label={t("propertyType")}>
         {tabs.map((tab) => (
           <button
@@ -220,6 +225,7 @@ export function TvlkHotelResultsSearch(props: Props) {
           </button>
         ))}
       </div>
+      )}
 
       <form
         className="tvlk-hotel-search-card"

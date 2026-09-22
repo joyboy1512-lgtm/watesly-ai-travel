@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import "@/app/hotel-rich.css";
 import { formatHotelDay, rateDisplayMinor, type HotelRateOption } from "@/lib/hotel-search";
 import { type HotelOfferRow } from "@/lib/hotel-search";
@@ -10,6 +10,7 @@ import { HotelRoomAccordion } from "./HotelRoomAccordion";
 import { HotelBookingSummary } from "./HotelBookingSummary";
 import { HotelLiveBadge } from "./HotelLiveBadge";
 import { HotelGallery } from "./HotelGallery";
+import { TvlkHotelRoomCards } from "./TvlkHotelRoomCards";
 import { HotelMediaImage } from "./HotelMediaImage";
 import { pickHotelHighlightFacilities } from "@/lib/hotel-facilities";
 import { hotelReviewHighlights, guestScoreBand } from "@/lib/hotel-review-highlights";
@@ -83,9 +84,36 @@ export function HotelDetailModal({
   const shopStyle = variant === "shop";
   const [descOpen, setDescOpen] = useState(false);
   const [selectedRate, setSelectedRate] = useState<HotelRateOption | null>(null);
-  const [tab, setTab] = useState<"photos" | "rooms" | "map" | "reviews" | "facilities" | "policies">(
-    "rooms",
+  const [tab, setTab] = useState<"overview" | "photos" | "rooms" | "map" | "reviews" | "facilities" | "policies">(
+    shopStyle ? "overview" : "rooms",
   );
+
+  useEffect(() => {
+    if (!shopStyle) return;
+    const ids = ["overview", "rooms", "map", "facilities", "reviews", "policies"];
+    const nodes = ids
+      .map((id) => document.getElementById(`tvlk-sec-${id}`))
+      .filter((el): el is HTMLElement => Boolean(el));
+    if (!nodes.length) return;
+    const obs = new IntersectionObserver(
+      (entries) => {
+        const hit = entries
+          .filter((e) => e.isIntersecting)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+        if (!hit?.target.id) return;
+        const next = hit.target.id.replace("tvlk-sec-", "") as typeof tab;
+        setTab(next);
+      },
+      { rootMargin: "-18% 0px -62% 0px", threshold: [0.12, 0.28, 0.5] },
+    );
+    nodes.forEach((n) => obs.observe(n));
+    return () => obs.disconnect();
+  }, [shopStyle, hotel.id]);
+
+  const scrollToSection = (id: string) => {
+    setTab(id as typeof tab);
+    document.getElementById(`tvlk-sec-${id}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
   const [checkingRateKey, setCheckingRateKey] = useState<string | null>(null);
   const [checkPhase, setCheckPhase] = useState<
     "idle" | "checking" | "confirmed" | "changed" | "soldout" | "error" | "expired"
@@ -314,9 +342,9 @@ export function HotelDetailModal({
                 <button
                   type="button"
                   className="btn hotel-choose-room-cta"
-                  onClick={() => setTab("rooms")}
+                  onClick={() => scrollToSection("rooms")}
                 >
-                  اختر غرفتك
+                  {t("chooseYourRoom")}
                 </button>
               </div>
             </div>
@@ -492,7 +520,7 @@ export function HotelDetailModal({
               </div>
             </div>
 
-            {description ? (
+            {!shopStyle && description ? (
               <section className="flight-modal-section hotel-desc-section">
                 <h3>عن الفندق</h3>
                 <p className={descOpen ? "hotel-detail-desc is-open" : "hotel-detail-desc is-clamp"}>
@@ -512,20 +540,29 @@ export function HotelDetailModal({
 
             <nav className="hotel-detail-tabs hotel-detail-tabs-sticky" aria-label="أقسام الفندق">
               {(
-                [
-                  ["photos", "الصور"],
-                  ["rooms", "الغرف والأسعار"],
-                  ["map", "الموقع"],
-                  ["facilities", "المرافق"],
-                  ["reviews", "التقييمات"],
-                  ["policies", "السياسات"],
-                ] as const
+                shopStyle
+                  ? ([
+                      ["overview", t("hotelOverview")],
+                      ["rooms", t("roomsAndPrices")],
+                      ["map", t("hotelLocationSec")],
+                      ["facilities", t("facilities")],
+                      ["reviews", t("hotelReviewsSec")],
+                      ["policies", t("hotelPoliciesSec")],
+                    ] as const)
+                  : ([
+                      ["photos", "الصور"],
+                      ["rooms", "الغرف والأسعار"],
+                      ["map", "الموقع"],
+                      ["facilities", "المرافق"],
+                      ["reviews", "التقييمات"],
+                      ["policies", "السياسات"],
+                    ] as const)
               ).map(([id, label]) => (
                 <button
                   key={id}
                   type="button"
                   className={tab === id ? "on" : undefined}
-                  onClick={() => setTab(id)}
+                  onClick={() => (shopStyle ? scrollToSection(id) : setTab(id))}
                 >
                   {label}
                 </button>
@@ -534,6 +571,62 @@ export function HotelDetailModal({
 
             {checkError && checkPhase === "idle" ? (
               <p className="hotel-check-error">{checkError}</p>
+            ) : null}
+
+            {shopStyle ? (
+              <section id="tvlk-sec-overview" className="flight-modal-section hotel-tab-panel tvlk-hotel-section">
+                <h3>{t("hotelOverview")}</h3>
+                <div className="tvlk-overview-stay">
+                  <p>
+                    {formatDay(meta.departDate)} → {formatDay(meta.returnDate)} · {shopNightCount(locale, nights)}
+                  </p>
+                  <p>
+                    {shopRoomCount(locale, meta.rooms)} · {shopAdultCount(locale, meta.adults)}
+                    {meta.children ? ` · ${shopChildCount(locale, meta.children)}` : ""}
+                  </p>
+                  {hotel.details.distanceToCenterLabel ? (
+                    <p className="hotel-detail-distance">
+                      {String(hotel.details.distanceToCenterLabel)} من مركز {meta.stayQuery}
+                    </p>
+                  ) : null}
+                </div>
+                {description ? (
+                  <>
+                    <h4 className="hotel-review-subhead">{t("aboutThisHotel")}</h4>
+                    <p className={descOpen ? "hotel-detail-desc is-open" : "hotel-detail-desc is-clamp"}>
+                      {description}
+                    </p>
+                    {description.length > 90 ? (
+                      <button
+                        type="button"
+                        className="hotel-desc-more"
+                        onClick={() => setDescOpen((v) => !v)}
+                      >
+                        {descOpen ? t("showLess") : "عرض المزيد"}
+                      </button>
+                    ) : null}
+                  </>
+                ) : null}
+                {facilityLabels.length ? (
+                  <>
+                    <h4 className="hotel-review-subhead">{t("mainFacilities")}</h4>
+                    <ul className="hotel-facility-chips">
+                      {facilityLabels.map((f) => (
+                        <li key={f}>{f}</li>
+                      ))}
+                    </ul>
+                  </>
+                ) : null}
+                {poiDistances.length ? (
+                  <ul className="hotel-detail-poi-list">
+                    {poiDistances.slice(0, 6).map((poi) => (
+                      <li key={poi.nameAr}>
+                        {poi.label} · {poi.nameAr}
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
+              </section>
             ) : null}
 
             {tab === "photos" ? (
@@ -558,20 +651,32 @@ export function HotelDetailModal({
               </section>
             ) : null}
 
-            {tab === "rooms" ? (
-              <section className="flight-modal-section hotel-detail-rooms-section">
-                <HotelRoomAccordion
-                  hotel={hotel}
-                  nights={nights}
-                  checkingRateKey={checkingRateKey}
-                  shopStyle={shopStyle}
-                  onBookRate={(rate) => void handleBookRate(rate)}
-                />
+            {shopStyle || tab === "rooms" ? (
+              <section
+                id="tvlk-sec-rooms"
+                className="flight-modal-section hotel-detail-rooms-section tvlk-hotel-section"
+              >
+                {shopStyle ? (
+                  <TvlkHotelRoomCards
+                    hotel={hotel}
+                    nights={nights}
+                    checkingRateKey={checkingRateKey}
+                    onBookRate={(rate) => void handleBookRate(rate)}
+                  />
+                ) : (
+                  <HotelRoomAccordion
+                    hotel={hotel}
+                    nights={nights}
+                    checkingRateKey={checkingRateKey}
+                    shopStyle={shopStyle}
+                    onBookRate={(rate) => void handleBookRate(rate)}
+                  />
+                )}
               </section>
             ) : null}
 
-            {tab === "map" ? (
-              <section className="flight-modal-section hotel-tab-panel">
+            {shopStyle || tab === "map" ? (
+              <section id="tvlk-sec-map" className="flight-modal-section hotel-tab-panel tvlk-hotel-section">
                 <h3>موقع الفندق</h3>
                 {hotel.details.address ? (
                   <p>{String(hotel.details.address)}</p>
@@ -602,8 +707,8 @@ export function HotelDetailModal({
               </section>
             ) : null}
 
-            {tab === "reviews" ? (
-              <section className="flight-modal-section hotel-tab-panel">
+            {shopStyle || tab === "reviews" ? (
+              <section id="tvlk-sec-reviews" className="flight-modal-section hotel-tab-panel tvlk-hotel-section">
                 <h3>{t("reviewScoreLabel")}</h3>
                 {guestRating ? (
                   <div className="hotel-review-score">
@@ -649,8 +754,8 @@ export function HotelDetailModal({
               </section>
             ) : null}
 
-            {tab === "facilities" ? (
-              <section className="flight-modal-section hotel-tab-panel">
+            {shopStyle || tab === "facilities" ? (
+              <section id="tvlk-sec-facilities" className="flight-modal-section hotel-tab-panel tvlk-hotel-section">
                 <h3>المرافق</h3>
                 {facilityLabels.length ? (
                   <ul className="hotel-facility-chips">
@@ -664,8 +769,8 @@ export function HotelDetailModal({
               </section>
             ) : null}
 
-            {tab === "policies" ? (
-              <section className="flight-modal-section hotel-tab-panel">
+            {shopStyle || tab === "policies" ? (
+              <section id="tvlk-sec-policies" className="flight-modal-section hotel-tab-panel tvlk-hotel-section">
                 <h3>سياسات مكان الإقامة</h3>
                 <ul className="hotel-policy-list">
                   <li>

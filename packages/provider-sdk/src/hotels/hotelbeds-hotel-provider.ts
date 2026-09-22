@@ -12,6 +12,7 @@ import {
   resolveHotelbedsCredentials,
   type HotelbedsCredentials,
 } from "./hotelbeds-auth";
+import { hotelbedsResponseError, isHotelbedsQuotaError } from "./hotelbeds-errors";
 import {
   fetchHotelbedsContentMap,
   fetchHotelbedsFacilityCatalog,
@@ -40,9 +41,12 @@ import {
   readProviderResultCache,
   writeProviderResultCache,
 } from "../ops/result-cache";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
 
 const SEARCH_CACHE_TTL_MS = 8 * 60 * 1000;
-const SEARCH_STALE_TTL_MS = 60 * 60 * 1000;
+/** Serve last good availability this long when Hotelbeds sandbox quota is hit. */
+const SEARCH_STALE_TTL_MS = 12 * 60 * 60 * 1000;
 const REQUEST_TIMEOUT_MS = 35_000;
 
 const hotelbedsCircuit = new CircuitBreaker({
@@ -60,7 +64,7 @@ const hotelSearchCache = new Map<string, SearchCacheEntry>();
 
 function humanizeHotelbedsError(message: string): string {
   const m = String(message || "").trim();
-  if (/quota has been exceeded/i.test(m)) {
+  if (/quota exceeded|quota has been exceeded/i.test(m)) {
     return "تم تجاوز حد طلبات مزود الفنادق التجريبي مؤقتًا. أعد المحاولة بعد قليل.";
   }
   if (/too many requests|rate limit/i.test(m)) {
@@ -70,7 +74,7 @@ function humanizeHotelbedsError(message: string): string {
 }
 
 function isQuotaError(message: string): boolean {
-  return /quota has been exceeded|too many requests|rate limit/i.test(message);
+  return isHotelbedsQuotaError(message);
 }
 
 function searchCacheKey(params: HotelSearchParams): string {
@@ -93,6 +97,74 @@ function searchCacheKey(params: HotelSearchParams): string {
     minStars: params.minStars || null,
     maxStars: params.maxStars || null,
   });
+}
+
+function locationStaleKey(location: string): string {
+  return `hb-stale-loc:${String(location || "").trim().toLowerCase()}`;
+}
+
+function staleCacheDir(): string {
+  return (
+    process.env.HOTELBEDS_STALE_DIR?.trim() ||
+    join(process.cwd(), ".cache", "hotelbeds")
+  );
+}
+
+function diskStalePath(location: string): string {
+  const safe =
+    String(location || "")
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9\u0600-\u06ff-]+/gi, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 80) || "unknown";
+  return join(staleCacheDir(), `hb-stale-loc-${safe}.json`);
+}
+
+function readDiskStale(location: string): HotelOffer[] | null {
+  try {
+    const parsed = JSON.parse(readFileSync(diskStalePath(location), "utf8")) as {
+      savedAt?: number;
+      offers?: HotelOffer[];
+    };
+    if (!parsed?.offers?.length) return null;
+    if (parsed.savedAt && Date.now() - parsed.savedAt >= SEARCH_STALE_TTL_MS) {
+      return null;
+    }
+    return parsed.offers;
+  } catch {
+    return null;
+  }
+}
+
+function writeDiskStale(location: string, offers: HotelOffer[]): void {
+  try {
+    const dir = staleCacheDir();
+    if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
+    writeFileSync(
+      diskStalePath(location),
+      JSON.stringify({ savedAt: Date.now(), location, offers }),
+    );
+  } catch {
+    /* keep process cache even if disk is unavailable */
+  }
+}
+
+function memoryStaleForLocation(location: string): HotelOffer[] | null {
+  const loc = String(location || "").trim().toLowerCase();
+  let best: SearchCacheEntry | null = null;
+  for (const [key, entry] of hotelSearchCache) {
+    if (!entry.offers.length) continue;
+    if (Date.now() - entry.savedAt >= SEARCH_STALE_TTL_MS) continue;
+    try {
+      const parsed = JSON.parse(key) as { location?: string };
+      if (String(parsed.location || "").trim().toLowerCase() !== loc) continue;
+      if (!best || entry.savedAt > best.savedAt) best = entry;
+    } catch {
+      /* ignore malformed keys */
+    }
+  }
+  return best?.offers?.length ? best.offers : null;
 }
 
 function normalizeChildrenAges(children: number, raw?: string): number[] {
@@ -160,14 +232,7 @@ export class HotelbedsHotelProvider implements HotelProviderAdapter {
         error?: { message?: string; code?: string };
       };
       if (!response.ok) {
-        const err = json as { error?: { message?: string }; message?: string };
-        throw new Error(
-          humanizeHotelbedsError(
-            err.error?.message ||
-              err.message ||
-              `Hotelbeds HTTP ${response.status}`,
-          ),
-        );
+        throw new Error(humanizeHotelbedsError(hotelbedsResponseError(json, response.status)));
       }
       hotelbedsCircuit.recordSuccess();
       logProviderOps({
@@ -180,7 +245,9 @@ export class HotelbedsHotelProvider implements HotelProviderAdapter {
       return json;
     } catch (error) {
       const msg = error instanceof Error ? error.message : String(error);
-      hotelbedsCircuit.recordFailure();
+      if (!isQuotaError(msg)) {
+        hotelbedsCircuit.recordFailure();
+      }
       logProviderOps({
         requestId,
         provider: "hotelbeds",
@@ -397,13 +464,27 @@ export class HotelbedsHotelProvider implements HotelProviderAdapter {
         `[hotelbeds-availability] fail ms=${Date.now() - availStarted}`,
         msg,
       );
-      if (isQuotaError(msg) && cached && cacheAge < SEARCH_STALE_TTL_MS) {
-        console.info(
-          `[hotelbeds-availability] stale-cache after quota ageMs=${Math.round(cacheAge)} hotels=${cached.offers.length}`,
+      if (isQuotaError(msg) || /CIRCUIT_OPEN/i.test(msg)) {
+        const staleShared = await readProviderResultCache<HotelOffer[]>(
+          `hb-stale:${cacheKey}`,
         );
-        return cached.offers.map((offer) => ({
-          ...offer,
-        }));
+        const staleLoc = await readProviderResultCache<HotelOffer[]>(
+          locationStaleKey(params.location),
+        );
+        const stale =
+          cached && cacheAge < SEARCH_STALE_TTL_MS && cached.offers.length
+            ? cached.offers
+            : staleShared?.length
+              ? staleShared
+              : memoryStaleForLocation(params.location) ||
+                staleLoc ||
+                readDiskStale(params.location);
+        if (stale?.length) {
+          console.info(
+            `[hotelbeds-availability] stale-cache after quota hotels=${stale.length}`,
+          );
+          return stale.map((offer) => ({ ...offer }));
+        }
       }
       // One retry on timeout/network only — never retry quota/auth
       if (isTransientProviderError(err) && !isQuotaError(msg)) {
@@ -464,6 +545,13 @@ export class HotelbedsHotelProvider implements HotelProviderAdapter {
       sorted,
       SEARCH_CACHE_TTL_MS,
     );
+    void writeProviderResultCache(`hb-stale:${cacheKey}`, sorted, SEARCH_STALE_TTL_MS);
+    void writeProviderResultCache(
+      locationStaleKey(params.location),
+      sorted,
+      SEARCH_STALE_TTL_MS,
+    );
+    writeDiskStale(params.location, sorted);
     // Bound memory: drop oldest when oversized
     if (hotelSearchCache.size > 40) {
       const oldest = [...hotelSearchCache.entries()].sort(

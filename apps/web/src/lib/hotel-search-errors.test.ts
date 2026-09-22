@@ -8,6 +8,18 @@ test("humanizeHotelSearchError maps Hotelbeds quota", () => {
   assert.doesNotMatch(msg, /quota has been exceeded/i);
 });
 
+test("humanizeHotelSearchError maps Hotelbeds HTTP 403 quota", () => {
+  assert.match(
+    humanizeHotelSearchError("Hotelbeds Hotels: Hotelbeds HTTP 403"),
+    /تجاوز حد طلبات/,
+  );
+  assert.match(humanizeHotelSearchError("Quota exceeded"), /تجاوز حد طلبات/);
+  assert.match(
+    humanizeHotelSearchError("Hotelbeds Hotels: مزود الفنادق غير متاح مؤقتًا (CIRCUIT_OPEN)."),
+    /تجاوز حد طلبات/,
+  );
+});
+
 test("humanizeHotelSearchError keeps Arabic messages", () => {
   assert.equal(
     humanizeHotelSearchError("حدد عمر كل طفل قبل البحث"),

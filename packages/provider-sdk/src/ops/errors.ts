@@ -1,5 +1,7 @@
 export function isQuotaOrRateLimitError(message: string): boolean {
-  return /quota has been exceeded|too many requests|rate limit|429/i.test(message);
+  return /quota exceeded|quota has been exceeded|too many requests|rate limit|429|تجاوز حد طلبات/i.test(
+    message,
+  );
 }
 
 export function isAuthError(message: string): boolean {

@@ -514,6 +514,7 @@ export function ShopHotelResultsClient() {
         searchCities={searchCities}
       />
 
+      <div className="tvlk-hotel-results-body">
       {loading ? (
         <div className="shop-flight-results-loading">
           <div className="shop-flight-spinner" aria-hidden />
@@ -603,6 +604,7 @@ export function ShopHotelResultsClient() {
           />
         </>
       )}
+      </div>
 
       {/* hotel detail opens on /hotels/[hotelId] */}
     </div>

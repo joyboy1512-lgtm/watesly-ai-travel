@@ -31,11 +31,14 @@
   display: none;
 }
 
-.shop-main:has(.tvlk-hotel.shop-hotel-results-page),
-.shop-main-wide:has(.tvlk-hotel.shop-hotel-results-page) {
-  width: 100%;
-  max-width: none;
-  padding-inline: 0;
+html body .shop-root .shop-main:has(.tvlk-hotel.shop-hotel-results-page),
+html body .shop-root .shop-main-wide:has(.tvlk-hotel.shop-hotel-results-page),
+html body .shop-root.wg-new-ui .shop-main.shop-main-wide:has(.tvlk-hotel.shop-hotel-results-page) {
+  width: 100% !important;
+  max-width: none !important;
+  margin-inline: 0 !important;
+  padding-inline: 0 !important;
+  overflow: visible !important;
 }
 
 .tvlk-hotel.shop-hotel-detail-page,
@@ -47,21 +50,25 @@
 }
 
 .tvlk-hotel.shop-hotel-results-page {
-  max-width: min(1640px, 100%);
+  max-width: none;
   width: 100%;
   margin: 0 auto;
-  padding: 0 20px 40px;
+  padding: 0 0 40px;
   box-sizing: border-box;
+}
+
+.tvlk-hotel-results-body {
+  width: min(1640px, calc(100% - 40px));
+  margin-inline: auto;
 }
 
 /* —— Traveloka-style results search (replaces تعديل البحث) —— */
 .tvlk-hotel-search {
   position: relative;
   z-index: 30;
-  width: 100vw;
+  width: 100%;
   max-width: none;
-  margin: 12px 0 18px;
-  margin-inline: calc(50% - 50vw);
+  margin: 0 0 18px;
   min-height: 210px;
   height: 210px;
   padding: 14px 0 16px;
@@ -1380,7 +1387,7 @@
 
 @media (max-width: 860px) {
   .tvlk-hotel-search {
-    width: 100vw;
+    width: 100%;
     min-height: 180px;
     height: 180px;
     padding: 10px 0 12px;

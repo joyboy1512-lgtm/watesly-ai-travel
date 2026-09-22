@@ -61,6 +61,48 @@
   width: calc(100% - 6cm);
   max-width: 100%;
   margin: 12px auto 18px;
+  min-height: 260px;
+  padding: 28px 22px 26px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  overflow: visible;
+}
+
+.tvlk-hotel-search-vista {
+  position: absolute;
+  inset: 0;
+  border-radius: 18px;
+  overflow: hidden;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.tvlk-hotel-search-vista img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 38%;
+  display: block;
+}
+
+.tvlk-hotel-search-vista::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(15, 23, 42, 0.18) 0%,
+    rgba(15, 23, 42, 0.38) 70%,
+    rgba(15, 23, 42, 0.5) 100%
+  );
+}
+
+.tvlk-hotel-search-tabs,
+.tvlk-hotel-search-card {
+  position: relative;
+  z-index: 1;
 }
 
 .tvlk-hotel-search-tabs {
@@ -68,7 +110,7 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 4px 8px;
-  margin: 0 0 10px;
+  margin: 0 0 12px;
 }
 
 .tvlk-hotel-search-tabs button {
@@ -77,7 +119,7 @@
   gap: 6px;
   border: 0;
   background: transparent;
-  color: var(--tvlk-muted);
+  color: rgba(255, 255, 255, 0.88);
   font-weight: 600;
   font-size: 0.9rem;
   padding: 6px 10px 8px;
@@ -86,12 +128,12 @@
 }
 
 .tvlk-hotel-search-tabs button svg {
-  opacity: 0.85;
+  opacity: 0.9;
 }
 
 .tvlk-hotel-search-tabs button.on {
-  color: var(--tvlk-blue);
-  border-bottom-color: var(--tvlk-blue);
+  color: #fff;
+  border-bottom-color: #fff;
 }
 
 .tvlk-hotel-search-card {
@@ -1328,6 +1370,8 @@
 @media (max-width: 860px) {
   .tvlk-hotel-search {
     width: 100%;
+    min-height: 220px;
+    padding: 18px 12px 16px;
   }
 
   .tvlk-hotel-search-card {

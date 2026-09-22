@@ -6,6 +6,7 @@ import { useShopI18n } from "@/components/shop/ShopI18nProvider";
 import type { SuggestItem } from "@/components/shop/ShopAutocomplete";
 import { HOTEL_STAY_CAPS, type HotelResultsSearchParams } from "@/lib/hotel-results-url";
 import { groupHotelSuggests, hotelSuggestBadge, type HotelSuggestItem } from "@/lib/hotel-suggest";
+import { hotelSearchBackdrop } from "@/lib/hotel-search-backdrop";
 import { shopAdultCount, shopChildCount, shopRoomCount } from "@/lib/hotel-occupancy";
 
 export type StayTypeTab = "all" | "hotel" | "apartment" | "villa";
@@ -121,6 +122,7 @@ export function TvlkHotelResultsSearch(props: Props) {
   const destRef = useRef<HTMLDivElement | null>(null);
   const guestsRef = useRef<HTMLDivElement | null>(null);
   const destValue = props.draft.destinationLabel || props.draft.destination;
+  const vistaSrc = hotelSearchBackdrop(destValue);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -199,6 +201,9 @@ export function TvlkHotelResultsSearch(props: Props) {
 
   return (
     <div className="tvlk-hotel-search">
+      <div className="tvlk-hotel-search-vista" aria-hidden="true">
+        <img src={vistaSrc} alt="" />
+      </div>
       <div className="tvlk-hotel-search-tabs" role="tablist" aria-label={t("propertyType")}>
         {tabs.map((tab) => (
           <button

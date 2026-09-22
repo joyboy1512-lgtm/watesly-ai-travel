@@ -1,6 +1,12 @@
 export const MAP_TILE = 256;
 export const MAP_MIN_ZOOM = 11;
 export const MAP_MAX_ZOOM = 16;
+/** Movement below this (px) is a tap/click, not a pan. */
+export const MAP_CLICK_SLOP_PX = 5;
+
+export function mapPointerWasClick(dx: number, dy: number, slop = MAP_CLICK_SLOP_PX): boolean {
+  return Math.hypot(dx, dy) < slop;
+}
 
 export type MapLatLng = { lat: number; lng: number };
 

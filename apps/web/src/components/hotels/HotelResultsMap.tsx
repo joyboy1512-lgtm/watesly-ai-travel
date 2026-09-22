@@ -9,6 +9,7 @@ import {
   MAP_TILE,
   centroidLatLng,
   clampMapZoom,
+  mapPointerWasClick,
   markerInView,
   panCenter,
   worldPixels,
@@ -32,7 +33,7 @@ export type HotelMapPin = {
 type Props = {
   pins: HotelMapPin[];
   selectedId?: string | null;
-  onSelect?: (id: string) => void;
+  onSelect?: (id: string | null) => void;
   /** Open the hotel detail page for this pin. */
   onOpen?: (id: string) => void;
   variant?: "default" | "sidebar";
@@ -69,7 +70,9 @@ export function HotelResultsMap({
   const { t } = useShopCopy();
   const canvasRef = useRef<HTMLDivElement>(null);
   const skipPanRef = useRef(false);
-  const dragRef = useRef<{ x: number; y: number } | null>(null);
+  const dragRef = useRef<{ startX: number; startY: number; lastX: number; lastY: number } | null>(
+    null,
+  );
   const centerRef = useRef<MapLatLng | null>(null);
   const zoomRef = useRef(13);
   const [box, setBox] = useState({ w: 0, h: 0 });
@@ -91,6 +94,11 @@ export function HotelResultsMap({
     setZoom(zoomToFitPins(list, width, height));
   };
 
+  const dismissPopup = () => {
+    setPickedId(null);
+    onSelect?.(null);
+  };
+
   useEffect(() => {
     const el = canvasRef.current;
     if (!el) return;
@@ -108,6 +116,7 @@ export function HotelResultsMap({
 
   useEffect(() => {
     if (!pins.length) return;
+    setPickedId(null);
     fitView(pins, viewW, viewH);
     // Refit when the visible hotel set changes (search / filters).
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -234,26 +243,36 @@ export function HotelResultsMap({
     ) {
       return;
     }
-    dragRef.current = { x: e.clientX, y: e.clientY };
+    dragRef.current = {
+      startX: e.clientX,
+      startY: e.clientY,
+      lastX: e.clientX,
+      lastY: e.clientY,
+    };
     setDragging(true);
     e.currentTarget.setPointerCapture(e.pointerId);
   };
 
   const onCanvasPointerMove = (e: ReactPointerEvent<HTMLDivElement>) => {
     if (!dragRef.current || !center) return;
-    const dx = e.clientX - dragRef.current.x;
-    const dy = e.clientY - dragRef.current.y;
+    const dx = e.clientX - dragRef.current.lastX;
+    const dy = e.clientY - dragRef.current.lastY;
     if (Math.abs(dx) < 1 && Math.abs(dy) < 1) return;
-    dragRef.current = { x: e.clientX, y: e.clientY };
+    dragRef.current.lastX = e.clientX;
+    dragRef.current.lastY = e.clientY;
     setCenter(panCenter(center, zoom, dx, dy));
   };
 
   const endDrag = (e: ReactPointerEvent<HTMLDivElement>) => {
-    if (dragRef.current) {
+    const drag = dragRef.current;
+    if (drag) {
       try {
         e.currentTarget.releasePointerCapture(e.pointerId);
       } catch {
         /* already released */
+      }
+      if (mapPointerWasClick(e.clientX - drag.startX, e.clientY - drag.startY)) {
+        dismissPopup();
       }
     }
     dragRef.current = null;
@@ -272,7 +291,8 @@ export function HotelResultsMap({
     return <p className="shop-hotel-map-empty">{t("map")}</p>;
   }
 
-  const popup = layout.markers.find((pin) => pin.id === selected?.id);
+  const popup = layout.markers.find((pin) => pin.id === pickedId);
+  const activeId = pickedId || selected?.id;
 
   return (
     <div
@@ -311,7 +331,7 @@ export function HotelResultsMap({
           <button
             key={pin.id}
             type="button"
-            className={`shop-hotel-map-marker${pin.id === selected?.id ? " on" : ""}`}
+            className={`shop-hotel-map-marker${pin.id === activeId ? " on" : ""}`}
             style={{ left: pin.left, top: pin.top }}
             onClick={() => pickHotel(pin.id)}
             onDoubleClick={() => onOpen?.(pin.id)}
@@ -382,7 +402,7 @@ export function HotelResultsMap({
             <li key={pin.id}>
               <button
                 type="button"
-                className={pin.id === selected?.id ? "on" : undefined}
+                className={pin.id === activeId ? "on" : undefined}
                 onClick={() => pickHotel(pin.id)}
                 onDoubleClick={() => onOpen?.(pin.id)}
                 onMouseEnter={() => onSelect?.(pin.id)}

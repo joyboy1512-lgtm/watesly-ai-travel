@@ -4,6 +4,7 @@ import {
   centroidLatLng,
   clampMapZoom,
   latLngFromWorldPixels,
+  mapPointerWasClick,
   panCenter,
   projectLatLng,
   unprojectLatLng,
@@ -56,4 +57,11 @@ test("world pixel helper stays consistent with project", () => {
   ]);
   assert.equal(mid?.lat, 42);
   assert.equal(mid?.lng, 3);
+});
+
+test("mapPointerWasClick treats tiny movement as a tap", () => {
+  assert.equal(mapPointerWasClick(0, 0), true);
+  assert.equal(mapPointerWasClick(3, 2), true);
+  assert.equal(mapPointerWasClick(8, 1), false);
+  assert.equal(mapPointerWasClick(-20, 0), false);
 });

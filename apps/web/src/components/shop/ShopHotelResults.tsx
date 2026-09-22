@@ -71,6 +71,7 @@ export function ShopHotelResults(props: Props) {
 
   useEffect(() => {
     setVisibleCount(props.initialVisibleCount || PAGE_SIZE);
+    setMapHotelId(null);
   }, [props.hotels, props.sortKey, props.filters, props.initialVisibleCount]);
 
   useEffect(() => {
@@ -251,9 +252,10 @@ export function ShopHotelResults(props: Props) {
             <HotelResultsMap
               variant="sidebar"
               pins={mapPins}
-              selectedId={mapHotelId || visibleHotels[0]?.id}
+              selectedId={mapHotelId}
               onSelect={(id) => {
                 setMapHotelId(id);
+                if (!id) return;
                 const el = document.getElementById(`hotel-card-${id}`);
                 el?.scrollIntoView({ behavior: "smooth", block: "center" });
               }}

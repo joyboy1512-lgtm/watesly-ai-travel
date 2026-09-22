@@ -10,8 +10,15 @@ import {
   type HotelRateOption,
   type HotelRoomOption,
 } from "@/lib/hotel-search";
+import {
+  cheapestBreakfastRateKey,
+  classifyRoomFact,
+  guestCountForRate,
+  looksLikeBed,
+  pickRoomFacts,
+  type RoomFactKind,
+} from "@/lib/hotel-room-table";
 import { formatMoneyMinor } from "@/lib/format";
-import { shopNightCount } from "@/lib/hotel-occupancy";
 import { useShopCopy } from "@/components/shop/ShopI18nProvider";
 import { HotelMediaImage } from "@/components/hotels/HotelMediaImage";
 
@@ -23,13 +30,6 @@ type Props = {
 };
 
 type RateChip = "all" | "breakfast" | "freeCancel" | "payHotel";
-
-function occupancyLine(room: HotelRoomOption, t: ReturnType<typeof useShopCopy>["t"]) {
-  const o = room.occupancy;
-  if (o?.maxPax) return t("maxGuestsN", { n: o.maxPax });
-  if (o?.maxAdults) return t("maxAdultsN", { n: o.maxAdults });
-  return "";
-}
 
 function cancellationSummary(rate: HotelRateOption) {
   const policies = rate.cancellationPolicies || [];
@@ -70,11 +70,112 @@ function collectRooms(hotel: Props["hotel"]): HotelRoomOption[] {
   return groupRatesIntoRooms(hotel.matchingRates);
 }
 
-/** Compact Traveloka-style room cards: name, a few facts, price, select. */
+function GuestIcons({ count }: { count: number }) {
+  const n = Math.min(6, Math.max(1, count));
+  return (
+    <span className="tvlk-rate-guests" aria-label={`${n}`}>
+      {Array.from({ length: n }, (_, i) => (
+        <svg key={i} viewBox="0 0 16 16" width="14" height="14" aria-hidden>
+          <circle cx="8" cy="5" r="2.4" fill="currentColor" />
+          <path
+            d="M3.2 13.2c.4-2.6 2.3-4 4.8-4s4.4 1.4 4.8 4"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.6"
+            strokeLinecap="round"
+          />
+        </svg>
+      ))}
+    </span>
+  );
+}
+
+function CheckIcon() {
+  return (
+    <svg viewBox="0 0 16 16" width="13" height="13" aria-hidden>
+      <path
+        d="M3.1 8.2 6.5 11.5 12.9 4.6"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function FactIcon({ kind }: { kind: RoomFactKind }) {
+  const common = { viewBox: "0 0 16 16", width: 14, height: 14, "aria-hidden": true as const };
+  if (kind === "size") {
+    return (
+      <svg {...common}>
+        <rect x="2.2" y="2.2" width="11.6" height="11.6" rx="1.4" fill="none" stroke="currentColor" strokeWidth="1.3" />
+      </svg>
+    );
+  }
+  if (kind === "bed") {
+    return (
+      <svg {...common}>
+        <path
+          d="M2 11.4V6.6A1.6 1.6 0 0 1 3.6 5h4.2A2.2 2.2 0 0 1 10 7.2V11"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.3"
+        />
+        <path d="M2 11.4h12M10 7.4h2.4A1.6 1.6 0 0 1 14 9v2.4" fill="none" stroke="currentColor" strokeWidth="1.3" />
+      </svg>
+    );
+  }
+  if (kind === "access") {
+    return (
+      <svg {...common}>
+        <circle cx="8" cy="3.4" r="1.4" fill="currentColor" />
+        <path
+          d="M6.2 6.4h3.1l1.6 6.2M5.2 13.2l1.6-5.2M4.4 9.2h6.4"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.3"
+          strokeLinecap="round"
+        />
+      </svg>
+    );
+  }
+  if (kind === "ac") {
+    return (
+      <svg {...common}>
+        <rect x="2" y="4" width="12" height="7.2" rx="1.4" fill="none" stroke="currentColor" strokeWidth="1.3" />
+        <path d="M4 12.8h8" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+      </svg>
+    );
+  }
+  if (kind === "wifi") {
+    return (
+      <svg {...common}>
+        <path
+          d="M3 7.1a7 7 0 0 1 10 0M5.1 9.2a4.2 4.2 0 0 1 5.8 0"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.3"
+          strokeLinecap="round"
+        />
+        <circle cx="8" cy="12" r="1.1" fill="currentColor" />
+      </svg>
+    );
+  }
+  return (
+    <svg {...common}>
+      <circle cx="8" cy="8" r="5.2" fill="none" stroke="currentColor" strokeWidth="1.3" />
+    </svg>
+  );
+}
+
+/** Traveloka-style room + rate table: photo, options, terms, nightly price, Choose. */
 export function TvlkHotelRoomCards({ hotel, nights, checkingRateKey, onBookRate }: Props) {
-  const { t, locale } = useShopCopy();
+  const { t } = useShopCopy();
   const rooms = useMemo(() => collectRooms(hotel), [hotel]);
   const [chip, setChip] = useState<RateChip>("all");
+  const [openDetails, setOpenDetails] = useState<string | null>(null);
 
   const visible = rooms
     .map((room) => ({ ...room, rates: room.rates.filter((r) => rateMatchesChip(r, chip)) }))
@@ -126,61 +227,114 @@ export function TvlkHotelRoomCards({ hotel, nights, checkingRateKey, onBookRate 
 
       {visible.map((room) => {
         const names = translateRoomNameAr(room.name);
-        const occ = occupancyLine(room, t);
         const photo = room.imageUrl || room.images?.[0];
+        const facts = pickRoomFacts(room);
+        const roomId = room.code || room.name;
+        const detailsOpen = openDetails === roomId;
+        const extraFacilities = (room.facilities || []).filter((f) => !facts.includes(f));
+        const breakfastDeal = cheapestBreakfastRateKey(room.rates);
 
         return (
-          <article key={room.code || room.name} className="tvlk-room-card">
-            <div className="tvlk-room-card-top">
-              <HotelMediaImage
-                src={photo}
-                alt={names.ar}
-                className="tvlk-room-photo-main"
-                preferMedium
-                compactEmpty
-              />
-              <div className="tvlk-room-meta">
-                <h3>{names.ar}</h3>
-                {occ ? <p className="tvlk-room-occ">{occ}</p> : null}
-                {room.facilities?.length ? (
-                  <p className="tvlk-room-facs">{room.facilities.slice(0, 3).join(" · ")}</p>
+          <article key={roomId} className="tvlk-room-card tvlk-room-table-card">
+            <h3 className="tvlk-room-title">{names.ar}</h3>
+            <div className="tvlk-room-table-grid">
+              <aside className="tvlk-room-aside">
+                <HotelMediaImage
+                  src={photo}
+                  alt={names.ar}
+                  className="tvlk-room-photo-main"
+                  preferMedium
+                  compactEmpty
+                />
+                {facts.length ? (
+                  <ul className="tvlk-room-facts">
+                    {facts.map((fact) => (
+                      <li key={fact}>
+                        <FactIcon kind={classifyRoomFact(fact)} />
+                        <span>{fact}</span>
+                      </li>
+                    ))}
+                  </ul>
                 ) : null}
-              </div>
-            </div>
+                {room.description || extraFacilities.length ? (
+                  <button
+                    type="button"
+                    className="tvlk-room-details-link"
+                    onClick={() => setOpenDetails(detailsOpen ? null : roomId)}
+                  >
+                    {detailsOpen ? t("hideRoomDetails") : t("seeRoomDetails")}
+                  </button>
+                ) : null}
+                {detailsOpen ? (
+                  <div className="tvlk-room-details-panel">
+                    {room.description ? <p>{room.description}</p> : null}
+                    {extraFacilities.length ? (
+                      <ul>
+                        {extraFacilities.map((fac) => (
+                          <li key={fac}>{fac}</li>
+                        ))}
+                      </ul>
+                    ) : null}
+                  </div>
+                ) : null}
+              </aside>
 
-            <div className="tvlk-room-rates">
-              {room.rates.map((rate) => {
-                const totalMinor = rateDisplayMinor(rate, hotel, nights);
-                const perNightMinor = nights > 0 ? Math.round(totalMinor / nights) : totalMinor;
-                const cancel = cancellationSummary(rate);
-                const busy = checkingRateKey === rate.rateKey;
-                const pay = normalizePaymentTypeAr(rate.paymentType).ar || "";
-                const board = boardLabelAr(rate.boardCode, rate.boardName);
+              <div className="tvlk-room-table-wrap">
+                <div className="tvlk-room-thead" aria-hidden>
+                  <span>{t("roomOptionCol")}</span>
+                  <span>{t("termsStatusCol")}</span>
+                  <span>{t("guestsCol")}</span>
+                  <span>{t("pricePerRoomNight")}</span>
+                  <span>{t("roomsCountCol")}</span>
+                  <span />
+                </div>
+                {room.rates.map((rate) => {
+                  const totalMinor = rateDisplayMinor(rate, hotel, nights);
+                  const perNightMinor = nights > 0 ? Math.round(totalMinor / nights) : totalMinor;
+                  const cancel = cancellationSummary(rate);
+                  const busy = checkingRateKey === rate.rateKey;
+                  const board = boardLabelAr(rate.boardCode, rate.boardName);
+                  const guests = guestCountForRate(rate, room);
+                  const roomCount = Math.max(1, Number(rate.rooms || 1));
+                  const bedLine = facts.find(looksLikeBed);
+                  const pay = normalizePaymentTypeAr(rate.paymentType).ar;
 
-                return (
-                  <div key={rate.rateKey} className="tvlk-rate-row">
-                    <div className="tvlk-rate-facts">
-                      <strong className="tvlk-rate-board">{board}</strong>
-                      <p className={cancel.good ? "good" : "warn"}>{cancel.text}</p>
-                      {pay ? <p>{pay}</p> : null}
-                    </div>
-                    <div className="tvlk-rate-price">
-                      <strong>{formatMoneyMinor(perNightMinor, hotel.currency)}</strong>
-                      <em>
-                        {formatMoneyMinor(totalMinor, hotel.currency)} · {shopNightCount(locale, nights)}
-                      </em>
+                  return (
+                    <div key={rate.rateKey} className="tvlk-rate-table-row">
+                      <div className="tvlk-rate-option">
+                        <strong>{board}</strong>
+                        {bedLine ? <p className="tvlk-rate-bed">{bedLine}</p> : null}
+                      </div>
+                      <div className="tvlk-rate-terms">
+                        <p className={cancel.good ? "good" : "warn"}>
+                          {cancel.good ? <CheckIcon /> : null}
+                          <span>{cancel.text}</span>
+                        </p>
+                        {pay ? <p className="tvlk-rate-pay">{pay}</p> : null}
+                      </div>
+                      <GuestIcons count={guests} />
+                      <div className="tvlk-rate-price">
+                        <strong>{formatMoneyMinor(perNightMinor, hotel.currency)}</strong>
+                        <em>{t("nightNoTax")}</em>
+                      </div>
+                      <div className="tvlk-rate-qty">
+                        {breakfastDeal === rate.rateKey ? (
+                          <span className="tvlk-rate-deal">{t("cheapestWithBreakfast")}</span>
+                        ) : null}
+                        <span>{t("roomTimesN", { n: roomCount })}</span>
+                      </div>
                       <button
                         type="button"
                         className="tvlk-rate-select"
                         disabled={Boolean(checkingRateKey)}
                         onClick={() => onBookRate(rate)}
                       >
-                        {busy ? t("checkingPrice") : t("selectThisRoom")}
+                        {busy ? t("checkingPrice") : t("chooseRate")}
                       </button>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
           </article>
         );

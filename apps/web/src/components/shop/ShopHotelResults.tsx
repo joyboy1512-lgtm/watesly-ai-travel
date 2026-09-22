@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import "@/app/hotel-rich.css";
 import { HotelSearchCard } from "@/components/hotels/HotelSearchCard";
-import { HotelResultsMap } from "@/components/hotels/HotelResultsMap";
+import { HotelResultsMap, type HotelMapPin } from "@/components/hotels/HotelResultsMap";
 import { ShopHotelFilters } from "@/components/shop/ShopHotelFilters";
 import { ShopHotelResultsBar } from "@/components/shop/ShopHotelResultsBar";
 import type { SuggestItem } from "@/components/shop/ShopAutocomplete";
@@ -97,17 +97,11 @@ export function ShopHotelResults(props: Props) {
             rating: Number(h.details.guestRatingScore) > 0
               ? Number(h.details.guestRatingScore)
               : undefined,
+            stars: Number(h.details.stars) > 0 ? Number(h.details.stars) : undefined,
+            imageUrl: typeof h.details.imageUrl === "string" ? h.details.imageUrl : undefined,
           };
         })
-        .filter(Boolean) as Array<{
-        id: string;
-        name: string;
-        lat: number;
-        lng: number;
-        priceMinor: number;
-        currency: string;
-        rating?: number;
-      }>,
+        .filter(Boolean) as HotelMapPin[],
     [props.hotels, t],
   );
 
@@ -144,54 +138,6 @@ export function ShopHotelResults(props: Props) {
         <h2>
           {t("hotelFoundIn", { n: props.hotels.length, dest: title })}
         </h2>
-        <div className="shop-hotel-results-sort">
-          <button
-            type="button"
-            className={props.sortKey === "best" ? "on" : undefined}
-            onClick={() => props.onSortChange("best")}
-          >
-            {t("sortBest")}
-          </button>
-          <button
-            type="button"
-            className={props.sortKey === "price_asc" ? "on" : undefined}
-            onClick={() => props.onSortChange("price_asc")}
-          >
-            {t("sortPriceAsc")}
-          </button>
-          <button
-            type="button"
-            className={props.sortKey === "price_desc" ? "on" : undefined}
-            onClick={() => props.onSortChange("price_desc")}
-          >
-            {t("sortPriceDesc")}
-          </button>
-          {props.hotels.some((h) => Number(h.details.guestRatingScore || 0) > 0) ? (
-            <button
-              type="button"
-              className={props.sortKey === "rating_desc" ? "on" : undefined}
-              onClick={() => props.onSortChange("rating_desc")}
-            >
-              {t("sortRating")}
-            </button>
-          ) : null}
-          <button
-            type="button"
-            className={props.sortKey === "distance" ? "on" : undefined}
-            onClick={() => props.onSortChange("distance")}
-          >
-            {t("sortNearest")}
-          </button>
-          {mapPins.length ? (
-            <button
-              type="button"
-              className={mapOpen ? "on" : undefined}
-              onClick={() => setMapOpen((v) => !v)}
-            >
-              {mapOpen ? t("hideMap") : t("map")}
-            </button>
-          ) : null}
-        </div>
       </div>
 
       <div
@@ -208,6 +154,54 @@ export function ShopHotelResults(props: Props) {
         />
 
         <div className="shop-hotel-results-list">
+          <div className="shop-hotel-results-sort">
+            <button
+              type="button"
+              className={props.sortKey === "best" ? "on" : undefined}
+              onClick={() => props.onSortChange("best")}
+            >
+              {t("sortBest")}
+            </button>
+            <button
+              type="button"
+              className={props.sortKey === "price_asc" ? "on" : undefined}
+              onClick={() => props.onSortChange("price_asc")}
+            >
+              {t("sortPriceAsc")}
+            </button>
+            <button
+              type="button"
+              className={props.sortKey === "price_desc" ? "on" : undefined}
+              onClick={() => props.onSortChange("price_desc")}
+            >
+              {t("sortPriceDesc")}
+            </button>
+            {props.hotels.some((h) => Number(h.details.guestRatingScore || 0) > 0) ? (
+              <button
+                type="button"
+                className={props.sortKey === "rating_desc" ? "on" : undefined}
+                onClick={() => props.onSortChange("rating_desc")}
+              >
+                {t("sortRating")}
+              </button>
+            ) : null}
+            <button
+              type="button"
+              className={props.sortKey === "distance" ? "on" : undefined}
+              onClick={() => props.onSortChange("distance")}
+            >
+              {t("sortNearest")}
+            </button>
+            {mapPins.length ? (
+              <button
+                type="button"
+                className={mapOpen ? "on" : undefined}
+                onClick={() => setMapOpen((v) => !v)}
+              >
+                {mapOpen ? t("hideMap") : t("map")}
+              </button>
+            ) : null}
+          </div>
           {props.loading ? (
             <div className="shop-hotel-skeleton-grid" aria-busy="true">
               {Array.from({ length: 6 }, (_, i) => (
@@ -262,6 +256,10 @@ export function ShopHotelResults(props: Props) {
                 setMapHotelId(id);
                 const el = document.getElementById(`hotel-card-${id}`);
                 el?.scrollIntoView({ behavior: "smooth", block: "center" });
+              }}
+              onOpen={(id) => {
+                const hotel = props.hotels.find((h) => h.id === id);
+                if (hotel) props.onOpenHotel(hotel);
               }}
             />
           </aside>

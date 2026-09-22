@@ -138,54 +138,6 @@ export function ShopHotelResults(props: Props) {
         <h2>
           {t("hotelFoundIn", { n: props.hotels.length, dest: title })}
         </h2>
-        <div className="shop-hotel-results-sort">
-          <button
-            type="button"
-            className={props.sortKey === "best" ? "on" : undefined}
-            onClick={() => props.onSortChange("best")}
-          >
-            {t("sortBest")}
-          </button>
-          <button
-            type="button"
-            className={props.sortKey === "price_asc" ? "on" : undefined}
-            onClick={() => props.onSortChange("price_asc")}
-          >
-            {t("sortPriceAsc")}
-          </button>
-          <button
-            type="button"
-            className={props.sortKey === "price_desc" ? "on" : undefined}
-            onClick={() => props.onSortChange("price_desc")}
-          >
-            {t("sortPriceDesc")}
-          </button>
-          {props.hotels.some((h) => Number(h.details.guestRatingScore || 0) > 0) ? (
-            <button
-              type="button"
-              className={props.sortKey === "rating_desc" ? "on" : undefined}
-              onClick={() => props.onSortChange("rating_desc")}
-            >
-              {t("sortRating")}
-            </button>
-          ) : null}
-          <button
-            type="button"
-            className={props.sortKey === "distance" ? "on" : undefined}
-            onClick={() => props.onSortChange("distance")}
-          >
-            {t("sortNearest")}
-          </button>
-          {mapPins.length ? (
-            <button
-              type="button"
-              className={mapOpen ? "on" : undefined}
-              onClick={() => setMapOpen((v) => !v)}
-            >
-              {mapOpen ? t("hideMap") : t("map")}
-            </button>
-          ) : null}
-        </div>
       </div>
 
       <div
@@ -202,6 +154,54 @@ export function ShopHotelResults(props: Props) {
         />
 
         <div className="shop-hotel-results-list">
+          <div className="shop-hotel-results-sort">
+            <button
+              type="button"
+              className={props.sortKey === "best" ? "on" : undefined}
+              onClick={() => props.onSortChange("best")}
+            >
+              {t("sortBest")}
+            </button>
+            <button
+              type="button"
+              className={props.sortKey === "price_asc" ? "on" : undefined}
+              onClick={() => props.onSortChange("price_asc")}
+            >
+              {t("sortPriceAsc")}
+            </button>
+            <button
+              type="button"
+              className={props.sortKey === "price_desc" ? "on" : undefined}
+              onClick={() => props.onSortChange("price_desc")}
+            >
+              {t("sortPriceDesc")}
+            </button>
+            {props.hotels.some((h) => Number(h.details.guestRatingScore || 0) > 0) ? (
+              <button
+                type="button"
+                className={props.sortKey === "rating_desc" ? "on" : undefined}
+                onClick={() => props.onSortChange("rating_desc")}
+              >
+                {t("sortRating")}
+              </button>
+            ) : null}
+            <button
+              type="button"
+              className={props.sortKey === "distance" ? "on" : undefined}
+              onClick={() => props.onSortChange("distance")}
+            >
+              {t("sortNearest")}
+            </button>
+            {mapPins.length ? (
+              <button
+                type="button"
+                className={mapOpen ? "on" : undefined}
+                onClick={() => setMapOpen((v) => !v)}
+              >
+                {mapOpen ? t("hideMap") : t("map")}
+              </button>
+            ) : null}
+          </div>
           {props.loading ? (
             <div className="shop-hotel-skeleton-grid" aria-busy="true">
               {Array.from({ length: 6 }, (_, i) => (

@@ -162,6 +162,7 @@
 .tvlk-hotel .shop-hotel-results-head {
   margin: 0 0 12px;
   align-items: center;
+  justify-content: flex-start;
 }
 
 .tvlk-hotel .shop-hotel-results-head h2 {
@@ -170,12 +171,17 @@
   color: var(--tvlk-ink);
 }
 
-.tvlk-hotel .shop-hotel-results-sort {
-  background: transparent;
-  border: 0;
-  border-radius: 0;
-  padding: 0;
+.tvlk-hotel .shop-hotel-results-list > .shop-hotel-results-sort {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  width: 100%;
+  background: var(--tvlk-card);
+  border: 1px solid var(--tvlk-line);
+  border-radius: 8px;
+  padding: 8px 10px;
   gap: 6px;
+  margin: 0 0 8px;
 }
 
 .tvlk-hotel .shop-hotel-results-sort button {

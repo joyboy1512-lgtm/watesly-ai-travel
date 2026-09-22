@@ -2974,7 +2974,7 @@
 .shop-hotel-results-head {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 1rem;
   flex-wrap: wrap;
   margin: 1rem 0 0.85rem;
@@ -2990,6 +2990,11 @@
   display: flex;
   flex-wrap: wrap;
   gap: 0.45rem;
+}
+
+.shop-hotel-results-list > .shop-hotel-results-sort {
+  width: 100%;
+  margin: 0 0 0.15rem;
 }
 
 .shop-hotel-results-sort button {

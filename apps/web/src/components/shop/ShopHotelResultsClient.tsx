@@ -269,7 +269,7 @@ export function ShopHotelResultsClient() {
         if (
           cacheMatches &&
           cacheAgeMs < 12 * 60 * 60 * 1000 &&
-          /quota|403|تجاوز حد طلبات/i.test(raw)
+          /quota|403|تجاوز حد طلبات|CIRCUIT_OPEN/i.test(raw)
         ) {
           setInquiryId(cached!.inquiryId || "");
           setQuoteItems(

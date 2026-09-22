@@ -1,6 +1,6 @@
 /** Detect Hotelbeds sandbox quota, including the string-body 403 payload. */
 export function isShopHotelQuotaError(message: string): boolean {
-  return /quota exceeded|quota has been exceeded|hotelbeds http 403|تجاوز حد طلبات/i.test(
+  return /quota exceeded|quota has been exceeded|hotelbeds http 403|تجاوز حد طلبات|CIRCUIT_OPEN/i.test(
     String(message || ""),
   );
 }

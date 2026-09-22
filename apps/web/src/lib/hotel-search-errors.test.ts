@@ -14,6 +14,10 @@ test("humanizeHotelSearchError maps Hotelbeds HTTP 403 quota", () => {
     /تجاوز حد طلبات/,
   );
   assert.match(humanizeHotelSearchError("Quota exceeded"), /تجاوز حد طلبات/);
+  assert.match(
+    humanizeHotelSearchError("Hotelbeds Hotels: مزود الفنادق غير متاح مؤقتًا (CIRCUIT_OPEN)."),
+    /تجاوز حد طلبات/,
+  );
 });
 
 test("humanizeHotelSearchError keeps Arabic messages", () => {

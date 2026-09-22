@@ -245,7 +245,9 @@ export class HotelbedsHotelProvider implements HotelProviderAdapter {
       return json;
     } catch (error) {
       const msg = error instanceof Error ? error.message : String(error);
-      hotelbedsCircuit.recordFailure();
+      if (!isQuotaError(msg)) {
+        hotelbedsCircuit.recordFailure();
+      }
       logProviderOps({
         requestId,
         provider: "hotelbeds",
@@ -462,7 +464,7 @@ export class HotelbedsHotelProvider implements HotelProviderAdapter {
         `[hotelbeds-availability] fail ms=${Date.now() - availStarted}`,
         msg,
       );
-      if (isQuotaError(msg)) {
+      if (isQuotaError(msg) || /CIRCUIT_OPEN/i.test(msg)) {
         const staleShared = await readProviderResultCache<HotelOffer[]>(
           `hb-stale:${cacheKey}`,
         );

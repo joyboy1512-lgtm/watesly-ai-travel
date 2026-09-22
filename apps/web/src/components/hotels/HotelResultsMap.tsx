@@ -77,6 +77,7 @@ export function HotelResultsMap({
   const [center, setCenter] = useState<MapLatLng | null>(null);
   const [dragging, setDragging] = useState(false);
   const [pickedId, setPickedId] = useState<string | null>(null);
+  const [expanded, setExpanded] = useState(false);
 
   const selected = pins.find((p) => p.id === selectedId) || null;
   const viewW = box.w || (variant === "sidebar" ? SIDEBAR_VIEW_W : VIEW_W);
@@ -103,7 +104,7 @@ export function HotelResultsMap({
     const ro = new ResizeObserver(apply);
     ro.observe(el);
     return () => ro.disconnect();
-  }, [variant, pins.length]);
+  }, [variant, pins.length, expanded]);
 
   useEffect(() => {
     if (!pins.length) return;
@@ -158,6 +159,31 @@ export function HotelResultsMap({
     return () => el.removeEventListener("wheel", onWheelNative);
   }, [viewW, viewH]);
 
+  useEffect(() => {
+    if (!expanded) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setExpanded(false);
+    };
+    window.addEventListener("keydown", onKey);
+    const frame = requestAnimationFrame(() => {
+      const el = canvasRef.current;
+      if (!el || !pins.length) return;
+      const r = el.getBoundingClientRect();
+      if (r.width > 8 && r.height > 8) {
+        setBox({ w: Math.round(r.width), h: Math.round(r.height) });
+        fitView(pins, r.width, r.height);
+      }
+    });
+    return () => {
+      document.body.style.overflow = prev;
+      window.removeEventListener("keydown", onKey);
+      cancelAnimationFrame(frame);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [expanded]);
+
   const layout = useMemo(() => {
     if (!center) return null;
     const origin = worldPixels(center.lat, center.lng, zoom);
@@ -201,7 +227,11 @@ export function HotelResultsMap({
 
   const onCanvasPointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
     const target = e.target as HTMLElement;
-    if (target.closest(".shop-hotel-map-marker, .shop-hotel-map-popup, .shop-hotel-map-tools")) {
+    if (
+      target.closest(
+        ".shop-hotel-map-marker, .shop-hotel-map-popup, .shop-hotel-map-tools, .shop-hotel-map-expand, .shop-hotel-map-fullhead",
+      )
+    ) {
       return;
     }
     dragRef.current = { x: e.clientX, y: e.clientY };
@@ -245,7 +275,17 @@ export function HotelResultsMap({
   const popup = layout.markers.find((pin) => pin.id === selected?.id);
 
   return (
-    <div className={`shop-hotel-map${variant === "sidebar" ? " shop-hotel-map-sidebar" : ""}`}>
+    <div
+      className={`shop-hotel-map${variant === "sidebar" ? " shop-hotel-map-sidebar" : ""}${expanded ? " is-expanded" : ""}`}
+    >
+      {expanded ? (
+        <div className="shop-hotel-map-fullhead">
+          <strong>{t("mapHotelsNearby")}</strong>
+          <button type="button" onClick={() => setExpanded(false)}>
+            {t("closeFullMap")}
+          </button>
+        </div>
+      ) : null}
       <div
         ref={canvasRef}
         className={`shop-hotel-map-canvas${dragging ? " is-dragging" : ""}`}
@@ -305,6 +345,15 @@ export function HotelResultsMap({
             </div>
           </div>
         ) : null}
+        {expanded ? null : (
+          <button
+            type="button"
+            className="shop-hotel-map-expand"
+            onClick={() => setExpanded(true)}
+          >
+            {t("expandFullMap")}
+          </button>
+        )}
         <div className="shop-hotel-map-tools">
           <button type="button" onClick={() => bumpZoom(1)} disabled={zoom >= MAP_MAX_ZOOM} aria-label={t("mapZoomIn")}>
             +
@@ -315,6 +364,15 @@ export function HotelResultsMap({
           <button type="button" onClick={() => fitView(pins, viewW, viewH)} aria-label={t("mapFitHotels")}>
             ⌂
           </button>
+          {expanded ? (
+            <button type="button" onClick={() => setExpanded(false)} aria-label={t("closeFullMap")}>
+              ✕
+            </button>
+          ) : (
+            <button type="button" onClick={() => setExpanded(true)} aria-label={t("expandFullMap")}>
+              ⛶
+            </button>
+          )}
         </div>
         <span className="shop-hotel-map-copy">{t("osmAttribution")}</span>
       </div>

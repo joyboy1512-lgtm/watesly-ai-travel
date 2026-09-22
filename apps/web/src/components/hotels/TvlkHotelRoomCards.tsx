@@ -13,6 +13,7 @@ import {
 import {
   cheapestBreakfastRateKey,
   guestCountForRate,
+  looksLikeBed,
   pickRoomFacts,
 } from "@/lib/hotel-room-table";
 import { formatMoneyMinor } from "@/lib/format";
@@ -209,7 +210,7 @@ export function TvlkHotelRoomCards({ hotel, nights, checkingRateKey, onBookRate 
                   const board = boardLabelAr(rate.boardCode, rate.boardName);
                   const guests = guestCountForRate(rate, room);
                   const roomCount = Math.max(1, Number(rate.rooms || 1));
-                  const bedLine = facts.find((f) => /سرير|bed|sofa|كنبة/i.test(f));
+                  const bedLine = facts.find(looksLikeBed);
 
                   return (
                     <div key={rate.rateKey} className="tvlk-rate-table-row">

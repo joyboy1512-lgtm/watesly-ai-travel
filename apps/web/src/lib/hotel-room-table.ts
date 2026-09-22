@@ -31,7 +31,7 @@ export function parseRoomSize(text: string): string | null {
   return `${m[1].replace(",", ".")} m²`;
 }
 
-function looksLikeBed(text: string): boolean {
+export function looksLikeBed(text: string): boolean {
   if (/أطفال|cot|crib|infant/i.test(text)) return false;
   return /سرير|bed|sofa|كنبة|twin|king|queen|double/i.test(text);
 }
@@ -72,6 +72,7 @@ export function pickRoomFacts(room: HotelRoomOption): string[] {
     if (facts.length >= 5) break;
     if (facts.includes(fac)) continue;
     if (parseRoomSize(fac)) continue;
+    if (/أطفال|cot|crib|infant/i.test(fac)) continue;
     facts.push(fac);
   }
   return facts.slice(0, 5);

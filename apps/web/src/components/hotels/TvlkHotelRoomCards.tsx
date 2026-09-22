@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { boardLabelAr, normalizePaymentTypeAr, translateRoomNameAr } from "@watesly-travel/shared";
+import { boardLabelAr, translateRoomNameAr } from "@watesly-travel/shared";
 import {
   formatPolicyDate,
   groupRatesIntoRooms,
@@ -10,8 +10,12 @@ import {
   type HotelRateOption,
   type HotelRoomOption,
 } from "@/lib/hotel-search";
+import {
+  cheapestBreakfastRateKey,
+  guestCountForRate,
+  pickRoomFacts,
+} from "@/lib/hotel-room-table";
 import { formatMoneyMinor } from "@/lib/format";
-import { shopNightCount } from "@/lib/hotel-occupancy";
 import { useShopCopy } from "@/components/shop/ShopI18nProvider";
 import { HotelMediaImage } from "@/components/hotels/HotelMediaImage";
 
@@ -23,13 +27,6 @@ type Props = {
 };
 
 type RateChip = "all" | "breakfast" | "freeCancel" | "payHotel";
-
-function occupancyLine(room: HotelRoomOption, t: ReturnType<typeof useShopCopy>["t"]) {
-  const o = room.occupancy;
-  if (o?.maxPax) return t("maxGuestsN", { n: o.maxPax });
-  if (o?.maxAdults) return t("maxAdultsN", { n: o.maxAdults });
-  return "";
-}
 
 function cancellationSummary(rate: HotelRateOption) {
   const policies = rate.cancellationPolicies || [];
@@ -70,11 +67,32 @@ function collectRooms(hotel: Props["hotel"]): HotelRoomOption[] {
   return groupRatesIntoRooms(hotel.matchingRates);
 }
 
-/** Compact Traveloka-style room cards: name, a few facts, price, select. */
+function GuestIcons({ count }: { count: number }) {
+  const n = Math.min(6, Math.max(1, count));
+  return (
+    <span className="tvlk-rate-guests" aria-label={`${n}`}>
+      {Array.from({ length: n }, (_, i) => (
+        <svg key={i} viewBox="0 0 16 16" width="14" height="14" aria-hidden>
+          <circle cx="8" cy="5" r="2.4" fill="currentColor" />
+          <path
+            d="M3.2 13.2c.4-2.6 2.3-4 4.8-4s4.4 1.4 4.8 4"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.6"
+            strokeLinecap="round"
+          />
+        </svg>
+      ))}
+    </span>
+  );
+}
+
+/** Traveloka-style room + rate table: photo, options, nightly price, Choose. */
 export function TvlkHotelRoomCards({ hotel, nights, checkingRateKey, onBookRate }: Props) {
-  const { t, locale } = useShopCopy();
+  const { t } = useShopCopy();
   const rooms = useMemo(() => collectRooms(hotel), [hotel]);
   const [chip, setChip] = useState<RateChip>("all");
+  const [openDetails, setOpenDetails] = useState<string | null>(null);
 
   const visible = rooms
     .map((room) => ({ ...room, rates: room.rates.filter((r) => rateMatchesChip(r, chip)) }))
@@ -126,61 +144,106 @@ export function TvlkHotelRoomCards({ hotel, nights, checkingRateKey, onBookRate 
 
       {visible.map((room) => {
         const names = translateRoomNameAr(room.name);
-        const occ = occupancyLine(room, t);
         const photo = room.imageUrl || room.images?.[0];
+        const facts = pickRoomFacts(room);
+        const roomId = room.code || room.name;
+        const detailsOpen = openDetails === roomId;
+        const extraFacilities = (room.facilities || []).filter((f) => !facts.includes(f));
+        const breakfastDeal = cheapestBreakfastRateKey(room.rates);
 
         return (
-          <article key={room.code || room.name} className="tvlk-room-card">
-            <div className="tvlk-room-card-top">
-              <HotelMediaImage
-                src={photo}
-                alt={names.ar}
-                className="tvlk-room-photo-main"
-                preferMedium
-                compactEmpty
-              />
-              <div className="tvlk-room-meta">
-                <h3>{names.ar}</h3>
-                {occ ? <p className="tvlk-room-occ">{occ}</p> : null}
-                {room.facilities?.length ? (
-                  <p className="tvlk-room-facs">{room.facilities.slice(0, 3).join(" · ")}</p>
+          <article key={roomId} className="tvlk-room-card tvlk-room-table-card">
+            <h3 className="tvlk-room-title">{names.ar}</h3>
+            <div className="tvlk-room-table-grid">
+              <aside className="tvlk-room-aside">
+                <HotelMediaImage
+                  src={photo}
+                  alt={names.ar}
+                  className="tvlk-room-photo-main"
+                  preferMedium
+                  compactEmpty
+                />
+                {facts.length ? (
+                  <ul className="tvlk-room-facts">
+                    {facts.map((fact) => (
+                      <li key={fact}>{fact}</li>
+                    ))}
+                  </ul>
                 ) : null}
-              </div>
-            </div>
+                {room.description || extraFacilities.length ? (
+                  <button
+                    type="button"
+                    className="tvlk-room-details-link"
+                    onClick={() => setOpenDetails(detailsOpen ? null : roomId)}
+                  >
+                    {detailsOpen ? t("hideRoomDetails") : t("seeRoomDetails")}
+                  </button>
+                ) : null}
+                {detailsOpen ? (
+                  <div className="tvlk-room-details-panel">
+                    {room.description ? <p>{room.description}</p> : null}
+                    {extraFacilities.length ? (
+                      <ul>
+                        {extraFacilities.map((fac) => (
+                          <li key={fac}>{fac}</li>
+                        ))}
+                      </ul>
+                    ) : null}
+                  </div>
+                ) : null}
+              </aside>
 
-            <div className="tvlk-room-rates">
-              {room.rates.map((rate) => {
-                const totalMinor = rateDisplayMinor(rate, hotel, nights);
-                const perNightMinor = nights > 0 ? Math.round(totalMinor / nights) : totalMinor;
-                const cancel = cancellationSummary(rate);
-                const busy = checkingRateKey === rate.rateKey;
-                const pay = normalizePaymentTypeAr(rate.paymentType).ar || "";
-                const board = boardLabelAr(rate.boardCode, rate.boardName);
+              <div className="tvlk-room-table-wrap">
+                <div className="tvlk-room-thead" aria-hidden>
+                  <span>{t("roomOptionCol")}</span>
+                  <span>{t("guestsCol")}</span>
+                  <span>{t("pricePerRoomNight")}</span>
+                  <span>{t("roomsCountCol")}</span>
+                  <span />
+                </div>
+                {room.rates.map((rate) => {
+                  const totalMinor = rateDisplayMinor(rate, hotel, nights);
+                  const perNightMinor = nights > 0 ? Math.round(totalMinor / nights) : totalMinor;
+                  const cancel = cancellationSummary(rate);
+                  const busy = checkingRateKey === rate.rateKey;
+                  const board = boardLabelAr(rate.boardCode, rate.boardName);
+                  const guests = guestCountForRate(rate, room);
+                  const roomCount = Math.max(1, Number(rate.rooms || 1));
+                  const bedLine = facts.find((f) => /سرير|bed|sofa|كنبة/i.test(f));
 
-                return (
-                  <div key={rate.rateKey} className="tvlk-rate-row">
-                    <div className="tvlk-rate-facts">
-                      <strong className="tvlk-rate-board">{board}</strong>
-                      <p className={cancel.good ? "good" : "warn"}>{cancel.text}</p>
-                      {pay ? <p>{pay}</p> : null}
-                    </div>
-                    <div className="tvlk-rate-price">
-                      <strong>{formatMoneyMinor(perNightMinor, hotel.currency)}</strong>
-                      <em>
-                        {formatMoneyMinor(totalMinor, hotel.currency)} · {shopNightCount(locale, nights)}
-                      </em>
+                  return (
+                    <div key={rate.rateKey} className="tvlk-rate-table-row">
+                      <div className="tvlk-rate-option">
+                        <strong>{board}</strong>
+                        {bedLine ? <p className="tvlk-rate-bed">{bedLine}</p> : null}
+                        <p className={cancel.good ? "good" : "warn"}>
+                          {cancel.good ? "✓ " : ""}
+                          {cancel.text}
+                        </p>
+                      </div>
+                      <GuestIcons count={guests} />
+                      <div className="tvlk-rate-price">
+                        <strong>{formatMoneyMinor(perNightMinor, hotel.currency)}</strong>
+                        <em>{t("nightNoTax")}</em>
+                      </div>
+                      <div className="tvlk-rate-qty">
+                        {breakfastDeal === rate.rateKey ? (
+                          <span className="tvlk-rate-deal">{t("cheapestWithBreakfast")}</span>
+                        ) : null}
+                        <span>{t("roomTimesN", { n: roomCount })}</span>
+                      </div>
                       <button
                         type="button"
                         className="tvlk-rate-select"
                         disabled={Boolean(checkingRateKey)}
                         onClick={() => onBookRate(rate)}
                       >
-                        {busy ? t("checkingPrice") : t("selectThisRoom")}
+                        {busy ? t("checkingPrice") : t("chooseRate")}
                       </button>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
           </article>
         );

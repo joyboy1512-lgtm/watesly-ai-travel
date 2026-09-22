@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   cheapestBreakfastRateKey,
+  classifyRoomFact,
   guestCountForRate,
   parseRoomSize,
   pickRoomFacts,
@@ -70,4 +71,13 @@ test("pickRoomFacts keeps size, bed, access, aircon, wifi first", () => {
   assert.ok(facts.some((f) => /wheelchair/i.test(f)));
   assert.ok(facts.some((f) => /air/i.test(f)));
   assert.ok(facts.some((f) => /wifi/i.test(f)));
+});
+
+test("classifyRoomFact maps Traveloka-style room facts", () => {
+  assert.equal(classifyRoomFact("26.0 m²"), "size");
+  assert.equal(classifyRoomFact("1 full bed and 1 sofa bed"), "bed");
+  assert.equal(classifyRoomFact("Accessible by wheelchair"), "access");
+  assert.equal(classifyRoomFact("Air conditioning"), "ac");
+  assert.equal(classifyRoomFact("Free WiFi"), "wifi");
+  assert.equal(classifyRoomFact("Mini bar"), "other");
 });

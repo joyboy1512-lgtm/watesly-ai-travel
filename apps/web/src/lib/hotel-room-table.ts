@@ -48,6 +48,17 @@ function looksLikeWifi(text: string): boolean {
   return /واي فاي|wifi|wi-fi/i.test(text);
 }
 
+export type RoomFactKind = "size" | "bed" | "access" | "ac" | "wifi" | "other";
+
+export function classifyRoomFact(text: string): RoomFactKind {
+  if (parseRoomSize(text)) return "size";
+  if (looksLikeBed(text)) return "bed";
+  if (looksLikeAccess(text)) return "access";
+  if (looksLikeAircon(text)) return "ac";
+  if (looksLikeWifi(text)) return "wifi";
+  return "other";
+}
+
 /** Facts shown under the room photo, Traveloka-style. */
 export function pickRoomFacts(room: HotelRoomOption): string[] {
   const blob = [room.name, room.description, ...(room.facilities || [])].join(" · ");

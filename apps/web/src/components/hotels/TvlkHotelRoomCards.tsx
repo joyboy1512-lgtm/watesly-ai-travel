@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { boardLabelAr, translateRoomNameAr } from "@watesly-travel/shared";
+import { boardLabelAr, normalizePaymentTypeAr, translateRoomNameAr } from "@watesly-travel/shared";
 import {
   formatPolicyDate,
   groupRatesIntoRooms,
@@ -12,9 +12,11 @@ import {
 } from "@/lib/hotel-search";
 import {
   cheapestBreakfastRateKey,
+  classifyRoomFact,
   guestCountForRate,
   looksLikeBed,
   pickRoomFacts,
+  type RoomFactKind,
 } from "@/lib/hotel-room-table";
 import { formatMoneyMinor } from "@/lib/format";
 import { useShopCopy } from "@/components/shop/ShopI18nProvider";
@@ -88,7 +90,87 @@ function GuestIcons({ count }: { count: number }) {
   );
 }
 
-/** Traveloka-style room + rate table: photo, options, nightly price, Choose. */
+function CheckIcon() {
+  return (
+    <svg viewBox="0 0 16 16" width="13" height="13" aria-hidden>
+      <path
+        d="M3.1 8.2 6.5 11.5 12.9 4.6"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function FactIcon({ kind }: { kind: RoomFactKind }) {
+  const common = { viewBox: "0 0 16 16", width: 14, height: 14, "aria-hidden": true as const };
+  if (kind === "size") {
+    return (
+      <svg {...common}>
+        <rect x="2.2" y="2.2" width="11.6" height="11.6" rx="1.4" fill="none" stroke="currentColor" strokeWidth="1.3" />
+      </svg>
+    );
+  }
+  if (kind === "bed") {
+    return (
+      <svg {...common}>
+        <path
+          d="M2 11.4V6.6A1.6 1.6 0 0 1 3.6 5h4.2A2.2 2.2 0 0 1 10 7.2V11"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.3"
+        />
+        <path d="M2 11.4h12M10 7.4h2.4A1.6 1.6 0 0 1 14 9v2.4" fill="none" stroke="currentColor" strokeWidth="1.3" />
+      </svg>
+    );
+  }
+  if (kind === "access") {
+    return (
+      <svg {...common}>
+        <circle cx="8" cy="3.4" r="1.4" fill="currentColor" />
+        <path
+          d="M6.2 6.4h3.1l1.6 6.2M5.2 13.2l1.6-5.2M4.4 9.2h6.4"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.3"
+          strokeLinecap="round"
+        />
+      </svg>
+    );
+  }
+  if (kind === "ac") {
+    return (
+      <svg {...common}>
+        <rect x="2" y="4" width="12" height="7.2" rx="1.4" fill="none" stroke="currentColor" strokeWidth="1.3" />
+        <path d="M4 12.8h8" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+      </svg>
+    );
+  }
+  if (kind === "wifi") {
+    return (
+      <svg {...common}>
+        <path
+          d="M3 7.1a7 7 0 0 1 10 0M5.1 9.2a4.2 4.2 0 0 1 5.8 0"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.3"
+          strokeLinecap="round"
+        />
+        <circle cx="8" cy="12" r="1.1" fill="currentColor" />
+      </svg>
+    );
+  }
+  return (
+    <svg {...common}>
+      <circle cx="8" cy="8" r="5.2" fill="none" stroke="currentColor" strokeWidth="1.3" />
+    </svg>
+  );
+}
+
+/** Traveloka-style room + rate table: photo, options, terms, nightly price, Choose. */
 export function TvlkHotelRoomCards({ hotel, nights, checkingRateKey, onBookRate }: Props) {
   const { t } = useShopCopy();
   const rooms = useMemo(() => collectRooms(hotel), [hotel]);
@@ -167,7 +249,10 @@ export function TvlkHotelRoomCards({ hotel, nights, checkingRateKey, onBookRate 
                 {facts.length ? (
                   <ul className="tvlk-room-facts">
                     {facts.map((fact) => (
-                      <li key={fact}>{fact}</li>
+                      <li key={fact}>
+                        <FactIcon kind={classifyRoomFact(fact)} />
+                        <span>{fact}</span>
+                      </li>
                     ))}
                   </ul>
                 ) : null}
@@ -197,6 +282,7 @@ export function TvlkHotelRoomCards({ hotel, nights, checkingRateKey, onBookRate 
               <div className="tvlk-room-table-wrap">
                 <div className="tvlk-room-thead" aria-hidden>
                   <span>{t("roomOptionCol")}</span>
+                  <span>{t("termsStatusCol")}</span>
                   <span>{t("guestsCol")}</span>
                   <span>{t("pricePerRoomNight")}</span>
                   <span>{t("roomsCountCol")}</span>
@@ -211,16 +297,20 @@ export function TvlkHotelRoomCards({ hotel, nights, checkingRateKey, onBookRate 
                   const guests = guestCountForRate(rate, room);
                   const roomCount = Math.max(1, Number(rate.rooms || 1));
                   const bedLine = facts.find(looksLikeBed);
+                  const pay = normalizePaymentTypeAr(rate.paymentType).ar;
 
                   return (
                     <div key={rate.rateKey} className="tvlk-rate-table-row">
                       <div className="tvlk-rate-option">
                         <strong>{board}</strong>
                         {bedLine ? <p className="tvlk-rate-bed">{bedLine}</p> : null}
+                      </div>
+                      <div className="tvlk-rate-terms">
                         <p className={cancel.good ? "good" : "warn"}>
-                          {cancel.good ? "✓ " : ""}
-                          {cancel.text}
+                          {cancel.good ? <CheckIcon /> : null}
+                          <span>{cancel.text}</span>
                         </p>
+                        {pay ? <p className="tvlk-rate-pay">{pay}</p> : null}
                       </div>
                       <GuestIcons count={guests} />
                       <div className="tvlk-rate-price">

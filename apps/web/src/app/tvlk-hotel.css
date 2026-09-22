@@ -1,3 +1,5 @@
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap");
+
 /* Traveloka-matching hotel funnel (results → detail → review → guests).
    Scoped under .tvlk-hotel so the homepage hero search is untouched. */
 
@@ -20,7 +22,10 @@
   --tvlk-shadow-hover: 0 4px 16px rgba(37, 42, 49, 0.12);
   background: var(--tvlk-bg);
   color: var(--tvlk-ink);
-  font-family: "Inter", "Segoe UI", "Noto Sans Arabic", system-ui, sans-serif;
+  font-family: "IBM Plex Sans Arabic", Inter, "Noto Sans Arabic", "Segoe UI", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
 .tvlk-hotel .shop-mock-banner,
@@ -1541,7 +1546,12 @@ html body .shop-root.wg-new-ui .shop-main.shop-main-wide:has(.tvlk-hotel.shop-ho
 .tvlk-room-list {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 16px;
+  font-family: "IBM Plex Sans Arabic", Inter, "Noto Sans Arabic", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  letter-spacing: 0;
 }
 
 .tvlk-room-list-head {
@@ -1554,7 +1564,9 @@ html body .shop-root.wg-new-ui .shop-main.shop-main-wide:has(.tvlk-hotel.shop-ho
 
 .tvlk-room-list-head h2 {
   margin: 0;
-  font-size: 1.05rem;
+  font-size: 1.2rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
   color: var(--tvlk-ink);
 }
 
@@ -1583,25 +1595,26 @@ html body .shop-root.wg-new-ui .shop-main.shop-main-wide:has(.tvlk-hotel.shop-ho
 
 .tvlk-room-card.tvlk-room-table-card {
   background: #fff;
-  border: 1px solid var(--tvlk-line);
+  border: 1px solid #e6ecf0;
   border-radius: 16px;
   overflow: hidden;
-  box-shadow: var(--tvlk-shadow);
-  padding: 16px 18px 10px;
+  box-shadow: 0 1px 2px rgba(37, 42, 49, 0.04);
+  padding: 18px 20px 8px;
 }
 
 .tvlk-room-title {
-  margin: 0 0 12px;
-  font-size: 1.05rem;
-  font-weight: 800;
+  margin: 0 0 14px;
+  font-size: 1.12rem;
+  font-weight: 700;
+  letter-spacing: -0.015em;
   color: var(--tvlk-ink);
-  line-height: 1.35;
+  line-height: 1.4;
 }
 
 .tvlk-room-table-grid {
   display: grid;
-  grid-template-columns: 200px minmax(0, 1fr);
-  gap: 16px 20px;
+  grid-template-columns: 184px minmax(0, 1fr);
+  gap: 18px 22px;
   align-items: start;
 }
 
@@ -1634,19 +1647,29 @@ html body .shop-root.wg-new-ui .shop-main.shop-main-wide:has(.tvlk-hotel.shop-ho
 }
 
 .tvlk-room-facts li {
-  color: var(--tvlk-muted);
-  font-size: 0.78rem;
-  line-height: 1.35;
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  color: #5e6b73;
+  font-size: 0.8rem;
+  font-weight: 400;
+  line-height: 1.45;
+}
+
+.tvlk-room-facts li svg {
+  flex: 0 0 auto;
+  margin-top: 2px;
+  color: #8b939b;
 }
 
 .tvlk-room-details-link {
-  margin-top: 10px;
+  margin-top: 12px;
   padding: 0;
   border: 0;
   background: none;
   color: var(--tvlk-blue);
-  font-size: 0.8rem;
-  font-weight: 700;
+  font-size: 0.82rem;
+  font-weight: 600;
   cursor: pointer;
 }
 
@@ -1677,22 +1700,35 @@ html body .shop-root.wg-new-ui .shop-main.shop-main-wide:has(.tvlk-hotel.shop-ho
 .tvlk-room-thead,
 .tvlk-rate-table-row {
   display: grid;
-  grid-template-columns: minmax(160px, 1.5fr) 72px minmax(110px, 0.9fr) 88px 104px;
-  gap: 8px;
+  grid-template-columns:
+    minmax(130px, 1.15fr)
+    minmax(150px, 1.2fr)
+    64px
+    minmax(108px, 0.85fr)
+    72px
+    100px;
+  gap: 10px 12px;
   align-items: center;
 }
 
 .tvlk-room-thead {
-  padding: 0 4px 8px;
-  border-bottom: 1px solid var(--tvlk-line);
-  color: var(--tvlk-muted);
+  padding: 0 2px 10px;
+  border-bottom: 1px solid #edf1f4;
+  color: #8b959c;
   font-size: 0.72rem;
-  font-weight: 600;
+  font-weight: 500;
+  letter-spacing: 0;
+  line-height: 1.35;
+}
+
+.tvlk-room-thead span:nth-child(3),
+.tvlk-room-thead span:nth-child(5) {
+  text-align: center;
 }
 
 .tvlk-rate-table-row {
-  padding: 12px 4px;
-  border-bottom: 1px solid #f1f4f6;
+  padding: 14px 2px;
+  border-bottom: 1px solid #f3f6f8;
 }
 
 .tvlk-rate-table-row:last-child {
@@ -1701,25 +1737,55 @@ html body .shop-root.wg-new-ui .shop-main.shop-main-wide:has(.tvlk-hotel.shop-ho
 
 .tvlk-rate-option strong {
   display: block;
-  margin-bottom: 2px;
-  font-size: 0.9rem;
+  margin-bottom: 3px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
   color: var(--tvlk-ink);
 }
 
 .tvlk-rate-option p,
 .tvlk-rate-bed {
   margin: 0;
-  font-size: 0.74rem;
-  color: var(--tvlk-muted);
-  line-height: 1.35;
+  font-size: 0.78rem;
+  font-weight: 400;
+  color: #687176;
+  line-height: 1.4;
 }
 
-.tvlk-rate-option p.good {
+.tvlk-rate-terms {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.tvlk-rate-terms p {
+  display: flex;
+  align-items: flex-start;
+  gap: 5px;
+  margin: 0;
+  font-size: 0.78rem;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.tvlk-rate-terms p svg {
+  flex: 0 0 auto;
+  margin-top: 2px;
+}
+
+.tvlk-rate-terms p.good {
   color: var(--tvlk-green);
 }
 
-.tvlk-rate-option p.warn {
-  color: var(--tvlk-warn);
+.tvlk-rate-terms p.warn {
+  color: #c4541a;
+}
+
+.tvlk-rate-terms .tvlk-rate-pay {
+  color: #687176;
+  font-weight: 400;
 }
 
 .tvlk-rate-guests {
@@ -1736,16 +1802,20 @@ html body .shop-root.wg-new-ui .shop-main.shop-main-wide:has(.tvlk-hotel.shop-ho
 .tvlk-rate-price strong {
   display: block;
   color: var(--tvlk-price);
-  font-size: 1.05rem;
-  font-weight: 800;
-  line-height: 1.15;
+  font-size: 1.12rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
 }
 
 .tvlk-rate-price em {
   display: block;
+  margin-top: 2px;
   font-style: normal;
-  font-size: 0.68rem;
-  color: var(--tvlk-muted);
+  font-size: 0.7rem;
+  font-weight: 400;
+  color: #8b959c;
 }
 
 .tvlk-rate-qty {
@@ -1754,15 +1824,15 @@ html body .shop-root.wg-new-ui .shop-main.shop-main-wide:has(.tvlk-hotel.shop-ho
   align-items: center;
   gap: 4px;
   color: var(--tvlk-ink);
-  font-size: 0.8rem;
-  font-weight: 700;
+  font-size: 0.86rem;
+  font-weight: 600;
 }
 
 .tvlk-rate-deal {
   color: var(--tvlk-green);
-  font-size: 0.64rem;
-  font-weight: 700;
-  line-height: 1.25;
+  font-size: 0.68rem;
+  font-weight: 600;
+  line-height: 1.3;
   text-align: center;
 }
 
@@ -1771,10 +1841,11 @@ html body .shop-root.wg-new-ui .shop-main.shop-main-wide:has(.tvlk-hotel.shop-ho
   color: #fff;
   border: 0;
   border-radius: 8px;
-  font-weight: 800;
-  font-size: 0.82rem;
-  padding: 8px 12px;
-  min-width: 88px;
+  font-weight: 700;
+  font-size: 0.84rem;
+  letter-spacing: 0;
+  padding: 8px 14px;
+  min-width: 92px;
   cursor: pointer;
 }
 
@@ -1801,11 +1872,13 @@ html body .shop-root.wg-new-ui .shop-main.shop-main-wide:has(.tvlk-hotel.shop-ho
     grid-template-columns: 1fr auto;
     grid-template-areas:
       "option choose"
-      "guests choose"
+      "terms choose"
+      "guests qty"
       "price qty";
   }
 
   .tvlk-rate-option { grid-area: option; }
+  .tvlk-rate-terms { grid-area: terms; }
   .tvlk-rate-guests { grid-area: guests; justify-content: flex-start; }
   .tvlk-rate-price { grid-area: price; }
   .tvlk-rate-qty { grid-area: qty; align-items: flex-end; }

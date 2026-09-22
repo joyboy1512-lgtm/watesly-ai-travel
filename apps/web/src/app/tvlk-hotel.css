@@ -31,11 +31,14 @@
   display: none;
 }
 
-.shop-main:has(.tvlk-hotel.shop-hotel-results-page),
-.shop-main-wide:has(.tvlk-hotel.shop-hotel-results-page) {
-  width: 100%;
-  max-width: none;
-  padding-inline: 0;
+html body .shop-root .shop-main:has(.tvlk-hotel.shop-hotel-results-page),
+html body .shop-root .shop-main-wide:has(.tvlk-hotel.shop-hotel-results-page),
+html body .shop-root.wg-new-ui .shop-main.shop-main-wide:has(.tvlk-hotel.shop-hotel-results-page) {
+  width: 100% !important;
+  max-width: none !important;
+  margin-inline: 0 !important;
+  padding-inline: 0 !important;
+  overflow: visible !important;
 }
 
 .tvlk-hotel.shop-hotel-detail-page,
@@ -47,11 +50,363 @@
 }
 
 .tvlk-hotel.shop-hotel-results-page {
-  max-width: min(1640px, 100%);
+  max-width: none;
   width: 100%;
   margin: 0 auto;
-  padding: 0 20px 40px;
+  padding: 0 0 40px;
   box-sizing: border-box;
+}
+
+.tvlk-hotel-results-body {
+  width: min(1640px, calc(100% - 40px));
+  margin-inline: auto;
+}
+
+/* —— Traveloka-style results search (replaces تعديل البحث) —— */
+.tvlk-hotel-search {
+  position: relative;
+  z-index: 30;
+  width: 100%;
+  max-width: none;
+  margin: 0 0 18px;
+  min-height: 210px;
+  height: 210px;
+  padding: 14px 0 16px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  overflow: visible;
+}
+
+.tvlk-hotel-search-inner {
+  position: relative;
+  z-index: 1;
+  width: min(1080px, calc(100% - 8cm));
+  margin-inline: auto;
+  padding-inline: 0;
+  box-sizing: border-box;
+}
+
+.tvlk-hotel-search-vista {
+  position: absolute;
+  inset: 0;
+  border-radius: 0;
+  overflow: hidden;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.tvlk-hotel-search-vista img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 48%;
+  display: block;
+}
+
+.tvlk-hotel-search-vista::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(0, 27, 53, 0.28) 0%,
+    rgba(0, 27, 53, 0.1) 55%,
+    rgba(0, 27, 53, 0.2) 100%
+  );
+}
+
+.tvlk-hotel-search-tabs,
+.tvlk-hotel-search-card {
+  position: relative;
+  z-index: 1;
+}
+
+.tvlk-hotel-search-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  margin: 0 0 12px;
+}
+
+.tvlk-hotel-search-tabs button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 0;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.88);
+  font-weight: 600;
+  font-size: 0.9rem;
+  padding: 6px 10px 8px;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+}
+
+.tvlk-hotel-search-tabs button svg {
+  opacity: 0.9;
+}
+
+.tvlk-hotel-search-tabs button.on {
+  color: #fff;
+  border-bottom-color: #fff;
+}
+
+.tvlk-hotel-search-card {
+  display: flex;
+  align-items: stretch;
+  background: var(--tvlk-card);
+  border: 1px solid var(--tvlk-line);
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(37, 42, 49, 0.08);
+  overflow: visible;
+  min-height: 72px;
+}
+
+.tvlk-hotel-search-cell {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 8px 14px 10px;
+  border-inline-start: 1px solid var(--tvlk-line);
+}
+
+.tvlk-hotel-search-cell:first-child {
+  border-inline-start: 0;
+}
+
+.tvlk-hotel-search-cell.dest {
+  flex: 1.35;
+}
+
+.tvlk-hotel-search-cell.dates {
+  flex: 1.45;
+}
+
+.tvlk-hotel-search-cell.guests {
+  flex: 1.1;
+}
+
+.tvlk-hotel-search-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--tvlk-muted);
+  margin-bottom: 2px;
+}
+
+.tvlk-hotel-search-field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  font: inherit;
+  color: var(--tvlk-ink);
+  text-align: start;
+  cursor: pointer;
+}
+
+.tvlk-hotel-search-field input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  font: inherit;
+  font-weight: 600;
+  color: var(--tvlk-ink);
+}
+
+.tvlk-hotel-search-icon {
+  flex-shrink: 0;
+  color: var(--tvlk-muted);
+  display: inline-flex;
+}
+
+.tvlk-hotel-search-clear {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  border: 0;
+  border-radius: 50%;
+  background: #e8edf1;
+  color: var(--tvlk-muted);
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.tvlk-hotel-search-guests-btn {
+  cursor: pointer;
+}
+
+.tvlk-hotel-search-guests-btn span:last-child {
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tvlk-hotel .tvlk-hotel-search-field .shop-date-range-trigger {
+  white-space: normal;
+  font-weight: 600;
+  color: var(--tvlk-ink);
+  line-height: 1.3;
+}
+
+.tvlk-hotel .tvlk-hotel-search-field .shop-date-range {
+  flex: 1;
+}
+
+.tvlk-hotel-search-go {
+  flex-shrink: 0;
+  align-self: center;
+  width: 52px;
+  height: 52px;
+  margin: 10px;
+  border: 0;
+  border-radius: 50%;
+  background: #ff5e1f;
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 6px 14px rgba(255, 94, 31, 0.28);
+}
+
+.tvlk-hotel-search-go:hover {
+  background: #e04e14;
+}
+
+.tvlk-hotel-search-go:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+
+.tvlk-hotel-search-ac {
+  position: absolute;
+  inset-inline-start: 0;
+  top: calc(100% + 8px);
+  width: min(440px, 92vw);
+  max-height: min(420px, 70vh);
+  overflow: auto;
+  background: #fff;
+  border: 1px solid var(--tvlk-line);
+  border-radius: 12px;
+  box-shadow: 0 16px 40px rgba(37, 42, 49, 0.16);
+  z-index: 100030;
+  padding: 6px 0;
+}
+
+.tvlk-hotel-search-ac-head {
+  margin: 8px 16px 4px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--tvlk-ink);
+}
+
+.tvlk-hotel-search-ac button {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  border: 0;
+  background: transparent;
+  padding: 10px 16px;
+  text-align: start;
+  cursor: pointer;
+  color: var(--tvlk-ink);
+}
+
+.tvlk-hotel-search-ac button:hover,
+.tvlk-hotel-search-ac button.is-primary {
+  background: #f7f9fa;
+}
+
+.tvlk-hotel-search-ac-icon {
+  color: var(--tvlk-muted);
+  display: inline-flex;
+}
+
+.tvlk-hotel-search-ac-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.tvlk-hotel-search-ac-text strong {
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+.tvlk-hotel-search-ac-text em {
+  font-style: normal;
+  font-size: 0.75rem;
+  color: var(--tvlk-muted);
+}
+
+.tvlk-hotel-search-ac-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  color: var(--tvlk-muted);
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+
+.tvlk-hotel-search-ac-meta b {
+  font-weight: 600;
+}
+
+.tvlk-hotel-search-ac-meta i {
+  font-style: normal;
+}
+
+.tvlk-hotel-search-guests-pop {
+  position: absolute;
+  inset-inline-end: 0;
+  top: calc(100% + 8px);
+  min-width: 260px;
+  background: #fff;
+  border: 1px solid var(--tvlk-line);
+  border-radius: 12px;
+  box-shadow: 0 16px 40px rgba(37, 42, 49, 0.16);
+  padding: 12px;
+  z-index: 100030;
+}
+
+.tvlk-hotel-search-ages {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 8px 0;
+}
+
+.tvlk-hotel-search-ages label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.75rem;
+  color: var(--tvlk-muted);
+}
+
+.tvlk-hotel-search-ages select {
+  border: 1px solid var(--tvlk-line-strong);
+  border-radius: 8px;
+  padding: 6px 8px;
+  color: var(--tvlk-ink);
 }
 
 /* —— Results topbar (stay spec + edit) —— */
@@ -1031,6 +1386,40 @@
 }
 
 @media (max-width: 860px) {
+  .tvlk-hotel-search {
+    width: 100%;
+    min-height: 180px;
+    height: 180px;
+    padding: 10px 0 12px;
+  }
+
+  .tvlk-hotel-search-inner {
+    width: 100%;
+    padding-inline: 12px;
+  }
+
+  .tvlk-hotel-search-card {
+    flex-direction: column;
+    border-radius: 12px;
+  }
+
+  .tvlk-hotel-search-cell,
+  .tvlk-hotel-search-cell:first-child {
+    border-inline-start: 0;
+    border-top: 1px solid var(--tvlk-line);
+  }
+
+  .tvlk-hotel-search-cell:first-child {
+    border-top: 0;
+  }
+
+  .tvlk-hotel-search-go {
+    width: auto;
+    border-radius: 10px;
+    margin: 0 12px 12px;
+    height: 46px;
+  }
+
   .tvlk-hotel .shop-hotel-results-layout,
   .tvlk-hotel .shop-hotel-results-layout.has-map,
   .tvlk-hotel .shop-flight-review-grid,

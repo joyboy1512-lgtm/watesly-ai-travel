@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useShopCopy } from "@/components/shop/ShopI18nProvider";
+import { shopNightCount } from "@/lib/hotel-occupancy";
 
 type Props = {
   checkIn: string;
@@ -38,6 +39,8 @@ function addDays(iso: string, days: number) {
 
 const WEEKDAY_SHORT_AR = ["أحد", "اثنين", "ثلاثاء", "أربعاء", "خميس", "جمعة", "سبت"];
 const WEEKDAY_SHORT_EN = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const WEEKDAY_LONG_AR = ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
+const WEEKDAY_LONG_EN = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
 function formatShort(iso: string, locale: string) {
   const d = parseIso(iso);
@@ -48,6 +51,24 @@ function formatShort(iso: string, locale: string) {
     month: "short",
   });
   return `${weekday} ${rest}`;
+}
+
+function formatStayDay(iso: string, locale: string) {
+  const d = parseIso(iso);
+  if (!d) return "—";
+  const weekday = (locale === "en" ? WEEKDAY_LONG_EN : WEEKDAY_LONG_AR)[d.getDay()];
+  const rest = d.toLocaleDateString(locale === "en" ? "en-GB" : "ar-KW", {
+    day: "numeric",
+    month: "short",
+  });
+  return `${weekday}, ${rest}`;
+}
+
+function nightsBetweenIso(from: string, to: string) {
+  const a = parseIso(from)?.getTime();
+  const b = parseIso(to)?.getTime();
+  if (!a || !b || b <= a) return 1;
+  return Math.max(1, Math.round((b - a) / 86400000));
 }
 
 function monthLabel(year: number, month: number, locale: string) {
@@ -161,6 +182,7 @@ export function ShopDateRangePicker({
   endLabel,
   placeholder,
   forcePortal = false,
+  showNights = false,
 }: Props) {
   const { t, locale } = useShopCopy();
   const resolvedPlaceholder = placeholder || t("selectDates");
@@ -244,15 +266,18 @@ export function ShopDateRangePicker({
     setOpen(false);
   }
 
-  const summary = open
-    ? draftIn && draftOut
-      ? `${formatShort(draftIn, locale)} – ${formatShort(draftOut, locale)}`
-      : draftIn
-        ? `${formatShort(draftIn, locale)} – …`
-        : resolvedPlaceholder
-    : checkIn && checkOut
-      ? `${formatShort(checkIn, locale)} – ${formatShort(checkOut, locale)}`
-      : resolvedPlaceholder;
+  const inIso = open ? draftIn : checkIn;
+  const outIso = open ? draftOut : checkOut;
+  const stayNights = inIso && outIso ? nightsBetweenIso(inIso, outIso) : 0;
+  const nightBit =
+    showNights && stayNights > 0 ? ` (${shopNightCount(locale, stayNights)})` : "";
+  const dayFmt = showNights ? formatStayDay : formatShort;
+  const summary =
+    inIso && outIso
+      ? `${dayFmt(inIso, locale)} – ${dayFmt(outIso, locale)}${nightBit}`
+      : inIso
+        ? `${dayFmt(inIso, locale)} – …`
+        : resolvedPlaceholder;
 
   const panel = (
     <div

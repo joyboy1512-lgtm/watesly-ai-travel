@@ -1,12 +1,17 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import "@/app/tvlk-hotel.css";
 import { ShopHotelResults } from "@/components/shop/ShopHotelResults";
 import { ShopMockBanner } from "@/components/shop/ShopMockBanner";
 import { type SuggestItem } from "@/components/shop/ShopAutocomplete";
+import {
+  TvlkHotelResultsSearch,
+  type StayTypeTab,
+} from "@/components/shop/TvlkHotelResultsSearch";
+import { hotelSuggestBadge } from "@/lib/hotel-suggest";
 import {
   collectFilterFacets,
   defaultHotelFilters,
@@ -15,12 +20,10 @@ import {
   type HotelSearchFilters,
 } from "@/lib/hotel-search";
 import {
-  HOTEL_STAY_CAPS,
   buildHotelDetailHref,
   buildHotelResultsHref,
   clampHotelSearchParams,
   encodeRoomOccupancies,
-  formatHotelSearchSummary,
   hotelSearchPreferencesJson,
   isHotelSuggestItem,
   nightsBetween,
@@ -36,11 +39,6 @@ import {
   type HotelSortKey,
 } from "@/lib/hotel-results-session";
 import { trackFunnel } from "@/lib/funnel-analytics";
-import {
-  shopGuestCount,
-  shopNightCount,
-  shopRoomCount,
-} from "@/lib/hotel-occupancy";
 import { useShopI18n } from "@/components/shop/ShopI18nProvider";
 import {
   getHotelSearchSession,
@@ -67,13 +65,12 @@ type HotelRow = HotelOfferRow & {
 };
 
 export function ShopHotelResultsClient() {
-  const { t, locale } = useShopI18n();
+  const { t } = useShopI18n();
   const router = useRouter();
   const searchParams = useSearchParams();
   const params = useMemo(() => parseHotelResultsSearch(searchParams), [searchParams]);
   const resultsHref = useMemo(() => buildHotelResultsHref(params), [params]);
   const nights = nightsBetween(params.checkIn, params.checkOut);
-  const summary = formatHotelSearchSummary(params);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -83,7 +80,7 @@ export function ShopHotelResultsClient() {
   const [quoteItems, setQuoteItems] = useState<QuoteItem[]>([]);
   const [filters, setFilters] = useState<HotelSearchFilters>(defaultHotelFilters());
   const [sortKey, setSortKey] = useState<HotelSortKey>("best");
-  const [editOpen, setEditOpen] = useState(false);
+  const [stayType, setStayType] = useState<StayTypeTab>("all");
   const [draft, setDraft] = useState<HotelResultsSearchParams>(params);
   const [hotelOpen, setHotelOpen] = useState<HotelRow | null>(null);
   const [visibleCount, setVisibleCount] = useState(12);
@@ -140,6 +137,7 @@ export function ShopHotelResultsClient() {
       if (!shouldRestoreHotelResultsSession(href)) {
         setFilters(defaultHotelFilters());
         setSortKey("best");
+        setStayType("all");
         restoredRef.current = false;
       }
 
@@ -337,14 +335,19 @@ export function ShopHotelResultsClient() {
         subtitle?: string;
       }>
     >(`/shop/cities?q=${encodeURIComponent(q)}`);
-    const items = rows.map((c, idx) => ({
-      id: `${c.kind || "city"}-${c.city}-${c.iataCode || idx}`,
-      code: c.iataCode || c.city || q,
-      title: c.label || c.city || q,
-      subtitle:
-        c.subtitle ||
-        (c.kind === "hotel" ? `فندق · ${c.country || ""}` : c.country || undefined),
-    }));
+    const items: SuggestItem[] = rows.map((c, idx) => {
+      const kind = c.kind || "city";
+      return {
+        id: `${kind}-${c.city}-${c.iataCode || idx}`,
+        code: c.iataCode || c.city || q,
+        title: c.label || c.city || q,
+        subtitle:
+          c.subtitle ||
+          (kind === "hotel" ? `فندق · ${c.country || ""}` : c.country || undefined),
+        kind,
+        badge: hotelSuggestBadge(c.label || c.city || q, kind),
+      };
+    });
     const trimmed = q.trim();
     if (trimmed.length >= 3) {
       try {
@@ -352,7 +355,11 @@ export function ShopHotelResultsClient() {
           items?: Array<{ code: string; name: string; city: string }>;
         }>("/shop/suggest-hotels", {
           method: "POST",
-          body: JSON.stringify({ query: trimmed }),
+          body: JSON.stringify({
+            query: trimmed,
+            checkIn: draft.checkIn,
+            checkOut: draft.checkOut,
+          }),
         });
         const seen = new Set(items.map((i) => i.title.toLowerCase()));
         for (const h of (hotelRes.items || []).slice(0, 6)) {
@@ -362,17 +369,40 @@ export function ShopHotelResultsClient() {
             code: h.code,
             title: h.name,
             subtitle: h.city ? `فندق · ${h.city}` : "فندق",
+            kind: "hotel",
+            badge: hotelSuggestBadge(h.name, "hotel"),
           });
         }
       } catch {
         /* optional */
       }
     }
-    return items.slice(0, 12);
+    return items.slice(0, 14);
   }
 
-  function applyEdit(e: FormEvent) {
-    e.preventDefault();
+  function applyStayType(tab: StayTypeTab) {
+    setStayType(tab);
+    const propertyTypes =
+      tab === "hotel"
+        ? ["hotel"]
+        : tab === "apartment"
+          ? ["apartment"]
+          : tab === "villa"
+            ? ["guest_house"]
+            : [];
+    setFilters((prev) => ({ ...prev, propertyTypes }));
+  }
+
+  function onFiltersChange(next: HotelSearchFilters) {
+    setFilters(next);
+    const pts = next.propertyTypes;
+    if (pts.length === 1 && pts[0] === "hotel") setStayType("hotel");
+    else if (pts.length === 1 && pts[0] === "apartment") setStayType("apartment");
+    else if (pts.length === 1 && pts[0] === "guest_house") setStayType("villa");
+    else setStayType("all");
+  }
+
+  function applySearch() {
     let next = { ...draft };
     if (next.children > 0) {
       const ages = String(next.childrenAges || "")
@@ -396,9 +426,30 @@ export function ShopHotelResultsClient() {
         },
       ),
     );
-    const href = buildHotelResultsHref(synced);
-    router.push(href);
-    setEditOpen(false);
+    router.push(buildHotelResultsHref(synced));
+  }
+
+  function pickSuggestHotel(item: SuggestItem) {
+    if (isHotelSuggestItem(item) && /^\d+$/.test(item.code)) {
+      const city =
+        String(item.subtitle || "")
+          .replace(/^فندق(?:\s*·\s*)?/, "")
+          .replace(/^Hotel(?:\s*·\s*)?/i, "")
+          .trim() || item.title;
+      router.push(
+        buildHotelDetailHref(item.code, {
+          ...draft,
+          destination: city,
+          destinationLabel: item.title,
+        }),
+      );
+      return;
+    }
+    setDraft((d) => ({
+      ...d,
+      destination: item.title,
+      destinationLabel: item.title,
+    }));
   }
 
   function openHotel(hotel: HotelRow) {
@@ -452,167 +503,18 @@ export function ShopHotelResultsClient() {
       <h1 className="shop-flight-results-h1">{t("hotelResultsTitle")}</h1>
       <ShopMockBanner kind="hotel" />
 
-      <div className="shop-flight-results-topbar shop-hotel-results-topbar">
-        <div className="shop-flight-results-topbar-inner">
-          <div className="shop-flight-results-summary">
-            <strong>{summary.destination}</strong>
-            <span>{summary.dates}</span>
-            <span>
-              {shopNightCount(locale, summary.nights)} · {shopGuestCount(locale, summary.guests)} ·{" "}
-              {shopRoomCount(locale, summary.rooms)}
-            </span>
-          </div>
-          <div className="shop-flight-results-topbar-actions">
-            <button
-              type="button"
-              className="shop-flight-change-btn"
-              onClick={() => setEditOpen((v) => !v)}
-            >
-              {editOpen ? "إغلاق" : "تعديل البحث"}
-            </button>
-            <Link href="/#search" className="shop-flight-home-link">
-              الصفحة الرئيسية
-            </Link>
-          </div>
-        </div>
+      <TvlkHotelResultsSearch
+        draft={draft}
+        loading={loading}
+        stayType={stayType}
+        onDraftChange={setDraft}
+        onStayTypeChange={applyStayType}
+        onSearch={applySearch}
+        onPickHotel={pickSuggestHotel}
+        searchCities={searchCities}
+      />
 
-        {editOpen ? (
-          <form className="shop-flight-edit-bar shop-hotel-edit-bar" onSubmit={applyEdit}>
-            <label>
-              الوجهة
-              <input
-                value={draft.destination}
-                onChange={(e) =>
-                  setDraft((d) => ({
-                    ...d,
-                    destination: e.target.value,
-                    destinationLabel: e.target.value,
-                  }))
-                }
-                required
-              />
-            </label>
-            <label>
-              الوصول
-              <input
-                type="date"
-                value={draft.checkIn}
-                onChange={(e) => setDraft((d) => ({ ...d, checkIn: e.target.value }))}
-                required
-              />
-            </label>
-            <label>
-              المغادرة
-              <input
-                type="date"
-                value={draft.checkOut}
-                onChange={(e) => setDraft((d) => ({ ...d, checkOut: e.target.value }))}
-                required
-              />
-            </label>
-            <label>
-              بالغون
-              <input
-                type="number"
-                min={1}
-                max={HOTEL_STAY_CAPS.maxGuests}
-                value={draft.adults}
-                onChange={(e) =>
-                  setDraft((d) => ({
-                    ...d,
-                    adults: Math.max(
-                      1,
-                      Math.min(HOTEL_STAY_CAPS.maxGuests, Number(e.target.value) || 1),
-                    ),
-                    occ: "",
-                  }))
-                }
-              />
-            </label>
-            <label>
-              أطفال
-              <input
-                type="number"
-                min={0}
-                max={HOTEL_STAY_CAPS.maxChildren}
-                value={draft.children}
-                onChange={(e) => {
-                  const children = Math.max(
-                    0,
-                    Math.min(HOTEL_STAY_CAPS.maxChildren, Number(e.target.value) || 0),
-                  );
-                  setDraft((d) => {
-                    const ages = String(d.childrenAges || "")
-                      .split(",")
-                      .map((p) => p.trim())
-                      .filter(Boolean);
-                    while (ages.length < children) ages.push("8");
-                    return {
-                      ...d,
-                      children,
-                      childrenAges: ages.slice(0, children).join(","),
-                      occ: "",
-                    };
-                  });
-                }}
-              />
-            </label>
-            {draft.children > 0 ? (
-              <div className="shop-hotel-edit-child-ages">
-                {Array.from({ length: draft.children }, (_, i) => (
-                  <label key={i}>
-                    عمر الطفل {i + 1}
-                    <select
-                      value={Number(String(draft.childrenAges || "").split(",")[i] || 8)}
-                      onChange={(e) => {
-                        const ages = String(draft.childrenAges || "")
-                          .split(",")
-                          .map((p) => p.trim());
-                        while (ages.length < draft.children) ages.push("8");
-                        ages[i] = String(Number(e.target.value));
-                        setDraft((d) => ({
-                          ...d,
-                          childrenAges: ages.slice(0, d.children).join(","),
-                          occ: "",
-                        }));
-                      }}
-                    >
-                      {Array.from({ length: 18 }, (_, age) => (
-                        <option key={age} value={age}>
-                          {age}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                ))}
-              </div>
-            ) : null}
-            <label>
-              غرف
-              <input
-                type="number"
-                min={1}
-                max={HOTEL_STAY_CAPS.maxRooms}
-                value={draft.rooms}
-                onChange={(e) =>
-                  setDraft((d) => ({
-                    ...d,
-                    rooms: Math.max(
-                      1,
-                      Math.min(HOTEL_STAY_CAPS.maxRooms, Number(e.target.value) || 1),
-                    ),
-                    occ: "",
-                  }))
-                }
-              />
-            </label>
-            <button type="submit" className="shop-flight-edit-submit">
-              بحث
-            </button>
-          </form>
-        ) : null}
-      </div>
-
+      <div className="tvlk-hotel-results-body">
       {loading ? (
         <div className="shop-flight-results-loading">
           <div className="shop-flight-spinner" aria-hidden />
@@ -642,7 +544,7 @@ export function ShopHotelResultsClient() {
             filters={filters}
             facets={facets}
             sortKey={sortKey}
-            onFiltersChange={setFilters}
+            onFiltersChange={onFiltersChange}
             onSortChange={setSortKey}
             searchDestinationCode={inferHotelDestinationCode(params.destination)}
             hideSearchBar
@@ -702,6 +604,7 @@ export function ShopHotelResultsClient() {
           />
         </>
       )}
+      </div>
 
       {/* hotel detail opens on /hotels/[hotelId] */}
     </div>

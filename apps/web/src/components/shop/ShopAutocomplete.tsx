@@ -7,6 +7,9 @@ export type SuggestItem = {
   code: string;
   title: string;
   subtitle?: string;
+  kind?: string;
+  badge?: string;
+  meta?: string;
 };
 
 type Props = {

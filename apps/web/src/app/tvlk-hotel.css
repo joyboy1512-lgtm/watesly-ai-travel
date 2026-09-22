@@ -271,6 +271,92 @@
 .tvlk-hotel .shop-hotel-map-marker.on {
   background: var(--tvlk-ink);
   color: #fff;
+  z-index: 4;
+}
+
+.tvlk-hotel .shop-hotel-map-canvas {
+  cursor: grab;
+  touch-action: none;
+}
+
+.tvlk-hotel .shop-hotel-map-canvas.is-dragging {
+  cursor: grabbing;
+}
+
+.tvlk-hotel .shop-hotel-map-tools {
+  position: absolute;
+  inset-inline-end: 10px;
+  top: 10px;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.tvlk-hotel .shop-hotel-map-tools button {
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--tvlk-line);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--tvlk-ink);
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: var(--tvlk-shadow);
+}
+
+.tvlk-hotel .shop-hotel-map-tools button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.tvlk-hotel .shop-hotel-map-popup {
+  position: absolute;
+  z-index: 6;
+  transform: translate(-50%, calc(-100% - 14px));
+  width: min(220px, 70%);
+  background: #fff;
+  border: 1px solid var(--tvlk-line);
+  border-radius: 10px;
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.2);
+  overflow: hidden;
+}
+
+.tvlk-hotel .shop-hotel-map-popup-img {
+  display: block;
+  width: 100%;
+  height: 88px;
+  object-fit: cover;
+}
+
+.tvlk-hotel .shop-hotel-map-popup-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 10px 10px;
+}
+
+.tvlk-hotel .shop-hotel-map-popup-body strong {
+  font-size: 0.82rem;
+  line-height: 1.3;
+  color: var(--tvlk-ink);
+}
+
+.tvlk-hotel .shop-hotel-map-popup-body span {
+  font-size: 0.74rem;
+  color: var(--tvlk-muted);
+}
+
+.tvlk-hotel .shop-hotel-map-popup-go {
+  margin-top: 4px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--tvlk-blue);
+  color: #fff;
+  font-weight: 800;
+  font-size: 0.78rem;
+  padding: 7px 8px;
+  cursor: pointer;
 }
 
 /* —— Filters —— */

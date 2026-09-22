@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import "@/app/hotel-rich.css";
 import { HotelSearchCard } from "@/components/hotels/HotelSearchCard";
-import { HotelResultsMap } from "@/components/hotels/HotelResultsMap";
+import { HotelResultsMap, type HotelMapPin } from "@/components/hotels/HotelResultsMap";
 import { ShopHotelFilters } from "@/components/shop/ShopHotelFilters";
 import { ShopHotelResultsBar } from "@/components/shop/ShopHotelResultsBar";
 import type { SuggestItem } from "@/components/shop/ShopAutocomplete";
@@ -97,17 +97,11 @@ export function ShopHotelResults(props: Props) {
             rating: Number(h.details.guestRatingScore) > 0
               ? Number(h.details.guestRatingScore)
               : undefined,
+            stars: Number(h.details.stars) > 0 ? Number(h.details.stars) : undefined,
+            imageUrl: typeof h.details.imageUrl === "string" ? h.details.imageUrl : undefined,
           };
         })
-        .filter(Boolean) as Array<{
-        id: string;
-        name: string;
-        lat: number;
-        lng: number;
-        priceMinor: number;
-        currency: string;
-        rating?: number;
-      }>,
+        .filter(Boolean) as HotelMapPin[],
     [props.hotels, t],
   );
 
@@ -262,6 +256,10 @@ export function ShopHotelResults(props: Props) {
                 setMapHotelId(id);
                 const el = document.getElementById(`hotel-card-${id}`);
                 el?.scrollIntoView({ behavior: "smooth", block: "center" });
+              }}
+              onOpen={(id) => {
+                const hotel = props.hotels.find((h) => h.id === id);
+                if (hotel) props.onOpenHotel(hotel);
               }}
             />
           </aside>

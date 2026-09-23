@@ -32,7 +32,7 @@ import {
   parseHotelResultsSearch,
   syncHotelSearchParams,
 } from "@/lib/hotel-results-url";
-import { TvlkHotelResultsSearch } from "@/components/shop/TvlkHotelResultsSearch";
+import { TvlkHotelResultsSearch, type StayTypeTab } from "@/components/shop/TvlkHotelResultsSearch";
 import type { SuggestItem } from "@/components/shop/ShopAutocomplete";
 import { hotelSuggestBadge } from "@/lib/hotel-suggest";
 import {
@@ -85,6 +85,7 @@ function HotelDetailInner() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [draft, setDraft] = useState(urlParams);
+  const [stayType, setStayType] = useState<StayTypeTab>("all");
   const [inquiryId, setInquiryId] = useState<string | undefined>();
   const [quoteItemId, setQuoteItemId] = useState<string | undefined>();
   const [meta, setMeta] = useState({
@@ -353,12 +354,11 @@ function HotelDetailInner() {
 
   const searchBar = (
     <TvlkHotelResultsSearch
-      compact
       draft={draft}
       loading={loading}
-      stayType="all"
+      stayType={stayType}
       onDraftChange={setDraft}
-      onStayTypeChange={() => undefined}
+      onStayTypeChange={setStayType}
       onSearch={applyStaySearch}
       onPickHotel={pickSuggestHotel}
       searchCities={searchCities}

@@ -14,6 +14,7 @@ type Props = {
   hotelName: string;
   /** Primary hero URL (may duplicate first gallery item) */
   heroUrl?: string;
+  seeAllLabel?: string;
 };
 
 function normalizeList(images: HotelGalleryImage[], heroUrl?: string): string[] {
@@ -32,7 +33,7 @@ function normalizeList(images: HotelGalleryImage[], heroUrl?: string): string[] 
  * Hotel gallery: desktop main + side grid, mobile swipe, counter,
  * fullscreen + keyboard. Renders nothing when empty (no reserved whitespace).
  */
-export function HotelGallery({ images, hotelName, heroUrl }: Props) {
+export function HotelGallery({ images, hotelName, heroUrl, seeAllLabel }: Props) {
   const urls = useMemo(() => normalizeList(images, heroUrl), [images, heroUrl]);
   const [active, setActive] = useState(0);
   const [fullscreen, setFullscreen] = useState(false);
@@ -79,20 +80,24 @@ export function HotelGallery({ images, hotelName, heroUrl }: Props) {
         </button>
         {side.length ? (
           <div className="hotel-gallery-side">
-            {side.map((url, idx) => (
+            {side.map((url, idx) => {
+              const last = Boolean(seeAllLabel) && idx === side.length - 1 && urls.length > 4;
+              return (
               <button
                 key={url}
                 type="button"
                 className={idx + 1 === index ? "on" : undefined}
-                aria-label={`عرض الصورة ${idx + 2}`}
+                aria-label={last ? seeAllLabel : `عرض الصورة ${idx + 2}`}
                 onClick={() => {
                   setActive(idx + 1);
                   setFullscreen(true);
                 }}
               >
                 <HotelMediaImage src={url} alt="" preferMedium />
+                {last ? <span className="hotel-gallery-see-all">{seeAllLabel}</span> : null}
               </button>
-            ))}
+              );
+            })}
           </div>
         ) : null}
       </div>

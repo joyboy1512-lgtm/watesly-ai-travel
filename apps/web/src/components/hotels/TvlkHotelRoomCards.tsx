@@ -16,11 +16,13 @@ import {
   guestCountForRate,
   looksLikeBed,
   pickRoomFacts,
+  VISIBLE_RATE_LIMIT,
   type RoomFactKind,
 } from "@/lib/hotel-room-table";
 import { formatMoneyMinor } from "@/lib/format";
 import { useShopCopy } from "@/components/shop/ShopI18nProvider";
 import { HotelMediaImage } from "@/components/hotels/HotelMediaImage";
+import { TvlkRoomDetailsPanel } from "@/components/hotels/TvlkRoomDetailsPanel";
 
 type Props = {
   hotel: HotelOfferRow & { matchingRates: HotelRateOption[]; displayFromMinor: number };
@@ -175,7 +177,8 @@ export function TvlkHotelRoomCards({ hotel, nights, checkingRateKey, onBookRate 
   const { t } = useShopCopy();
   const rooms = useMemo(() => collectRooms(hotel), [hotel]);
   const [chip, setChip] = useState<RateChip>("all");
-  const [openDetails, setOpenDetails] = useState<string | null>(null);
+  const [openPanel, setOpenPanel] = useState<string | null>(null);
+  const [expandedRates, setExpandedRates] = useState<Record<string, boolean>>({});
 
   const visible = rooms
     .map((room) => ({ ...room, rates: room.rates.filter((r) => rateMatchesChip(r, chip)) }))
@@ -230,22 +233,33 @@ export function TvlkHotelRoomCards({ hotel, nights, checkingRateKey, onBookRate 
         const photo = room.imageUrl || room.images?.[0];
         const facts = pickRoomFacts(room);
         const roomId = room.code || room.name;
-        const detailsOpen = openDetails === roomId;
-        const extraFacilities = (room.facilities || []).filter((f) => !facts.includes(f));
         const breakfastDeal = cheapestBreakfastRateKey(room.rates);
+        const ratesOpen = Boolean(expandedRates[roomId]);
+        const visibleRates = ratesOpen ? room.rates : room.rates.slice(0, VISIBLE_RATE_LIMIT);
+        const hiddenCount = Math.max(0, room.rates.length - VISIBLE_RATE_LIMIT);
+        const cheapest = room.rates[0];
+        const cheapestStay = cheapest ? rateDisplayMinor(cheapest, hotel, nights) : hotel.displayFromMinor;
+        const cheapestMinor = nights > 0 ? Math.round(cheapestStay / nights) : cheapestStay;
 
         return (
-          <article key={roomId} className="tvlk-room-card tvlk-room-table-card">
+          <article key={roomId} id={`tvlk-room-${roomId}`} className="tvlk-room-card tvlk-room-table-card">
             <h3 className="tvlk-room-title">{names.ar}</h3>
             <div className="tvlk-room-table-grid">
               <aside className="tvlk-room-aside">
-                <HotelMediaImage
-                  src={photo}
-                  alt={names.ar}
-                  className="tvlk-room-photo-main"
-                  preferMedium
-                  compactEmpty
-                />
+                <button
+                  type="button"
+                  className="tvlk-room-photo-btn"
+                  onClick={() => setOpenPanel(roomId)}
+                  aria-label={t("seeRoomDetails")}
+                >
+                  <HotelMediaImage
+                    src={photo}
+                    alt={names.ar}
+                    className="tvlk-room-photo-main"
+                    preferMedium
+                    compactEmpty
+                  />
+                </button>
                 {facts.length ? (
                   <ul className="tvlk-room-facts">
                     {facts.map((fact) => (
@@ -256,27 +270,13 @@ export function TvlkHotelRoomCards({ hotel, nights, checkingRateKey, onBookRate 
                     ))}
                   </ul>
                 ) : null}
-                {room.description || extraFacilities.length ? (
-                  <button
-                    type="button"
-                    className="tvlk-room-details-link"
-                    onClick={() => setOpenDetails(detailsOpen ? null : roomId)}
-                  >
-                    {detailsOpen ? t("hideRoomDetails") : t("seeRoomDetails")}
-                  </button>
-                ) : null}
-                {detailsOpen ? (
-                  <div className="tvlk-room-details-panel">
-                    {room.description ? <p>{room.description}</p> : null}
-                    {extraFacilities.length ? (
-                      <ul>
-                        {extraFacilities.map((fac) => (
-                          <li key={fac}>{fac}</li>
-                        ))}
-                      </ul>
-                    ) : null}
-                  </div>
-                ) : null}
+                <button
+                  type="button"
+                  className="tvlk-room-details-link"
+                  onClick={() => setOpenPanel(roomId)}
+                >
+                  {t("seeRoomDetails")}
+                </button>
               </aside>
 
               <div className="tvlk-room-table-wrap">
@@ -288,7 +288,7 @@ export function TvlkHotelRoomCards({ hotel, nights, checkingRateKey, onBookRate 
                   <span>{t("roomsCountCol")}</span>
                   <span />
                 </div>
-                {room.rates.map((rate) => {
+                {visibleRates.map((rate) => {
                   const totalMinor = rateDisplayMinor(rate, hotel, nights);
                   const perNightMinor = nights > 0 ? Math.round(totalMinor / nights) : totalMinor;
                   const cancel = cancellationSummary(rate);
@@ -334,8 +334,33 @@ export function TvlkHotelRoomCards({ hotel, nights, checkingRateKey, onBookRate 
                     </div>
                   );
                 })}
+                {hiddenCount > 0 ? (
+                  <button
+                    type="button"
+                    className="tvlk-rate-more"
+                    onClick={() =>
+                      setExpandedRates((prev) => ({ ...prev, [roomId]: !ratesOpen }))
+                    }
+                  >
+                    {ratesOpen ? t("showLessRates") : t("showMoreRates", { n: hiddenCount })}
+                  </button>
+                ) : null}
               </div>
             </div>
+            {openPanel === roomId ? (
+              <TvlkRoomDetailsPanel
+                room={room}
+                hotel={hotel}
+                fromMinor={cheapestMinor}
+                onClose={() => setOpenPanel(null)}
+                onSeeOptions={() => {
+                  setOpenPanel(null);
+                  document
+                    .getElementById(`tvlk-room-${roomId}`)
+                    ?.scrollIntoView({ behavior: "smooth", block: "start" });
+                }}
+              />
+            ) : null}
           </article>
         );
       })}

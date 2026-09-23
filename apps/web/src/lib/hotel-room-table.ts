@@ -25,6 +25,10 @@ export function guestCountForRate(rate: HotelRateOption, room: HotelRoomOption):
   return 2;
 }
 
+export function guestCountForRoom(room: HotelRoomOption): number {
+  return guestCountForRate(room.rates[0] || ({} as HotelRateOption), room);
+}
+
 export function parseRoomSize(text: string): string | null {
   const m = String(text || "").match(/(\d+(?:[.,]\d+)?)\s*(m²|m2|متر(?: مربع)?)/i);
   if (!m?.[1]) return null;
@@ -87,4 +91,57 @@ export function pickRoomFacts(room: HotelRoomOption): string[] {
     facts.push(fac);
   }
   return facts.slice(0, 5);
+}
+
+export const VISIBLE_RATE_LIMIT = 3;
+
+export function collectRoomImages(
+  room: HotelRoomOption,
+  extras?: {
+    hotelImages?: Array<{ url?: string; roomCode?: string; type?: string }>;
+    hotelHero?: string;
+  },
+): string[] {
+  const urls: string[] = [];
+  const push = (u?: string) => {
+    const v = String(u || "").trim();
+    if (v && !urls.includes(v)) urls.push(v);
+  };
+  push(room.imageUrl);
+  for (const u of room.images || []) push(u);
+  for (const img of extras?.hotelImages || []) {
+    if (img.roomCode && room.code && String(img.roomCode) === String(room.code)) {
+      push(img.url);
+    }
+  }
+  if (urls.length < 2) {
+    for (const img of extras?.hotelImages || []) {
+      if (/HAB|ROOM|room/i.test(String(img.type || ""))) push(img.url);
+    }
+  }
+  if (!urls.length) push(extras?.hotelHero);
+  return urls;
+}
+
+export function groupRoomDetailFacts(room: HotelRoomOption) {
+  const facts = pickRoomFacts(room);
+  const info = facts.filter((f) => {
+    const kind = classifyRoomFact(f);
+    return kind === "size" || kind === "bed";
+  });
+  const features = facts.filter((f) => {
+    const kind = classifyRoomFact(f);
+    return kind === "access" || kind === "ac" || kind === "wifi";
+  });
+  const used = new Set([...info, ...features]);
+  const rest = (room.facilities || []).filter(
+    (f) => !used.has(f) && !parseRoomSize(f) && !/أطفال|cot|crib|infant/i.test(f),
+  );
+  const mid = Math.ceil(rest.length / 2);
+  return {
+    info,
+    features,
+    basic: rest.slice(0, mid),
+    room: rest.slice(mid),
+  };
 }

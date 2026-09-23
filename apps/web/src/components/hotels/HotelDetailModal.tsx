@@ -306,14 +306,36 @@ export function HotelDetailModal({
             <span>{name}</span>
           </nav>
         ) : null}
+        {shopStyle && !selectedRate ? (
+          <nav className="hotel-detail-tabs hotel-detail-tabs-sticky" aria-label="أقسام الفندق">
+            {(
+              [
+                ["overview", t("hotelOverview")],
+                ["rooms", t("roomsAndPrices")],
+                ["map", t("hotelLocationSec")],
+                ["facilities", t("facilities")],
+                ["reviews", t("hotelReviewsSec")],
+                ["policies", t("hotelPoliciesSec")],
+              ] as const
+            ).map(([id, label]) => (
+              <button
+                key={id}
+                type="button"
+                className={tab === id ? "on" : undefined}
+                onClick={() => scrollToSection(id)}
+              >
+                {label}
+              </button>
+            ))}
+          </nav>
+        ) : null}
+        {shopStyle ? null : (
         <div className="hotel-modal-sticky-head">
-          {shopStyle ? null : (
             <div className="hotel-modal-toolbar">
               <button type="button" className="flight-modal-close" aria-label="إغلاق" onClick={onClose}>
                 ×
               </button>
             </div>
-          )}
 
           <div className="hotel-name-chip" title={name}>
             <h2 id="hotel-detail-title">{name}</h2>
@@ -325,31 +347,8 @@ export function HotelDetailModal({
               </div>
             ) : null}
           </div>
-          {shopStyle ? (
-            <div className="hotel-modal-sticky-meta">
-              <p>
-                {[
-                  String(hotel.details.destinationName || hotel.details.location || ""),
-                  String(hotel.details.zoneName || hotel.details.neighborhood || ""),
-                ]
-                  .filter(Boolean)
-                  .join(" · ") || "—"}
-              </p>
-              <div className="hotel-modal-sticky-price">
-                <strong>{formatMoneyMinor(perNight, hotel.currency)}</strong>
-                <small>لليلة · يبدأ من · دون ضريبة المدينة</small>
-                <em>{formatMoneyMinor(hotel.displayFromMinor, hotel.currency)} إجمالي الإقامة</em>
-                <button
-                  type="button"
-                  className="btn hotel-choose-room-cta"
-                  onClick={() => scrollToSection("rooms")}
-                >
-                  {t("chooseYourRoom")}
-                </button>
-              </div>
-            </div>
-          ) : null}
         </div>
+        )}
 
         <div className="hotel-modal-live">
           <HotelLiveBadge
@@ -458,7 +457,7 @@ export function HotelDetailModal({
           />
         ) : (
           <>
-            {galleryObjects.length > 0 ? (
+            {!shopStyle && galleryObjects.length > 0 ? (
               <HotelGallery
                 images={galleryObjects}
                 hotelName={name}
@@ -466,6 +465,7 @@ export function HotelDetailModal({
               />
             ) : null}
 
+            {shopStyle ? null : (
             <div className={`hotel-detail-modal-hero${galleryObjects.length ? " no-photo" : ""}`}>
               {galleryObjects.length === 0 ? (
                 <HotelMediaImage
@@ -512,13 +512,14 @@ export function HotelDetailModal({
                   </a>
                 ) : null}
               </div>
-              <div className={`hotel-detail-from${shopStyle ? " hotel-detail-from-shop" : ""}`}>
+              <div className="hotel-detail-from">
                 <small>يبدأ من</small>
                 <strong>{formatMoneyMinor(perNight, hotel.currency)}</strong>
                 <em>/ ليلة · دون ضريبة المدينة</em>
                 <span>{formatMoneyMinor(hotel.displayFromMinor, hotel.currency)} إجمالي الإقامة</span>
               </div>
             </div>
+            )}
 
             {!shopStyle && description ? (
               <section className="flight-modal-section hotel-desc-section">
@@ -538,36 +539,29 @@ export function HotelDetailModal({
               </section>
             ) : null}
 
+            {shopStyle ? null : (
             <nav className="hotel-detail-tabs hotel-detail-tabs-sticky" aria-label="أقسام الفندق">
               {(
-                shopStyle
-                  ? ([
-                      ["overview", t("hotelOverview")],
-                      ["rooms", t("roomsAndPrices")],
-                      ["map", t("hotelLocationSec")],
-                      ["facilities", t("facilities")],
-                      ["reviews", t("hotelReviewsSec")],
-                      ["policies", t("hotelPoliciesSec")],
-                    ] as const)
-                  : ([
+                  [
                       ["photos", "الصور"],
                       ["rooms", "الغرف والأسعار"],
                       ["map", "الموقع"],
                       ["facilities", "المرافق"],
                       ["reviews", "التقييمات"],
                       ["policies", "السياسات"],
-                    ] as const)
+                    ] as const
               ).map(([id, label]) => (
                 <button
                   key={id}
                   type="button"
                   className={tab === id ? "on" : undefined}
-                  onClick={() => (shopStyle ? scrollToSection(id) : setTab(id))}
+                  onClick={() => setTab(id)}
                 >
                   {label}
                 </button>
               ))}
             </nav>
+            )}
 
             {checkError && checkPhase === "idle" ? (
               <p className="hotel-check-error">{checkError}</p>
@@ -575,7 +569,54 @@ export function HotelDetailModal({
 
             {shopStyle ? (
               <section id="tvlk-sec-overview" className="flight-modal-section hotel-tab-panel tvlk-hotel-section">
-                <h3>{t("hotelOverview")}</h3>
+                <div className="hotel-modal-sticky-head">
+                  <div className="hotel-name-chip" title={name}>
+                    <h2 id="hotel-detail-title">{name}</h2>
+                    {stars > 0 ? (
+                      <div className="hotel-gold-stars" aria-label={`${stars} نجوم`}>
+                        {Array.from({ length: Math.min(5, stars) }, (_, i) => (
+                          <span key={i}>★</span>
+                        ))}
+                      </div>
+                    ) : null}
+                  </div>
+                  <div className="hotel-modal-sticky-meta">
+                    <p>
+                      {[
+                        String(hotel.details.destinationName || hotel.details.location || ""),
+                        String(hotel.details.zoneName || hotel.details.neighborhood || ""),
+                      ]
+                        .filter(Boolean)
+                        .join(" · ") || "—"}
+                    </p>
+                    <div className="hotel-modal-sticky-price">
+                      <strong>{formatMoneyMinor(perNight, hotel.currency)}</strong>
+                      <small>لليلة · يبدأ من · دون ضريبة المدينة</small>
+                      <em>{formatMoneyMinor(hotel.displayFromMinor, hotel.currency)} إجمالي الإقامة</em>
+                      <button
+                        type="button"
+                        className="btn hotel-choose-room-cta"
+                        onClick={() => scrollToSection("rooms")}
+                      >
+                        {t("chooseYourRoom")}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                {galleryObjects.length > 0 ? (
+                  <HotelGallery
+                    images={galleryObjects}
+                    hotelName={name}
+                    heroUrl={imageUrl || undefined}
+                  />
+                ) : (
+                  <HotelMediaImage
+                    src={imageUrl}
+                    alt={name}
+                    className="hotel-detail-modal-photo"
+                    compactEmpty
+                  />
+                )}
                 <div className="tvlk-overview-stay">
                   <p>
                     {formatDay(meta.departDate)} → {formatDay(meta.returnDate)} · {shopNightCount(locale, nights)}

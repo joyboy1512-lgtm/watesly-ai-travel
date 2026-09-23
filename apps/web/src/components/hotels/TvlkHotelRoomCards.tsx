@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { boardLabelAr, normalizePaymentTypeAr, translateRoomNameAr } from "@watesly-travel/shared";
 import {
   formatPolicyDate,
@@ -194,13 +194,20 @@ export function TvlkHotelRoomCards({
     Array.from({ length: slots }, () => null),
   );
   const [activeSlot, setActiveSlot] = useState(0);
+  const picksRef = useRef(picks);
+  const activeSlotRef = useRef(activeSlot);
 
   useEffect(() => {
-    setPicks(Array.from({ length: slots }, () => null));
+    const empty = Array.from({ length: slots }, () => null);
+    setPicks(empty);
     setActiveSlot(0);
+    picksRef.current = empty;
+    activeSlotRef.current = 0;
   }, [slots, hotel.id]);
 
   const slotPicks = picks.length === slots ? picks : Array.from({ length: slots }, () => null);
+  picksRef.current = slotPicks;
+  activeSlotRef.current = activeSlot;
   const pickedRates = slotPicks.filter((p): p is HotelRateOption => Boolean(p));
   const pickTotalMinor = pickedRates.reduce(
     (sum, rate) => sum + rateDisplayMinor(rate, hotel, nights),
@@ -212,11 +219,23 @@ export function TvlkHotelRoomCards({
       onBookRate(rate);
       return;
     }
-    const next = slotPicks.map((p, i) => (i === activeSlot ? rate : p));
-    setPicks(next);
-    const laterEmpty = next.findIndex((p, i) => i > activeSlot && !p);
-    const anyEmpty = next.findIndex((p) => !p);
-    setActiveSlot(laterEmpty >= 0 ? laterEmpty : anyEmpty >= 0 ? anyEmpty : activeSlot);
+    const current =
+      picksRef.current.length === slots
+        ? picksRef.current.slice()
+        : Array.from({ length: slots }, () => null);
+    let idx = activeSlotRef.current;
+    if (idx < 0 || idx >= slots) {
+      idx = current.findIndex((p) => !p);
+    }
+    if (idx < 0 || idx >= slots) idx = 0;
+    current[idx] = rate;
+    picksRef.current = current;
+    const laterEmpty = current.findIndex((p, i) => i > idx && !p);
+    const anyEmpty = current.findIndex((p) => !p);
+    const nextSlot = laterEmpty >= 0 ? laterEmpty : anyEmpty >= 0 ? anyEmpty : idx;
+    activeSlotRef.current = nextSlot;
+    setPicks(current);
+    setActiveSlot(nextSlot);
   }
 
   const visible = rooms

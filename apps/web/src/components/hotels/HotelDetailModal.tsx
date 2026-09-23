@@ -68,6 +68,67 @@ function formatDay(value?: string) {
   return formatHotelDay(value) || "—";
 }
 
+function FacilityIcon({ label }: { label: string }) {
+  const common = { viewBox: "0 0 24 24", width: 18, height: 18, "aria-hidden": true as const };
+  if (/wifi|واي/i.test(label)) {
+    return (
+      <svg {...common}>
+        <path d="M12 18.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zm-4.2-3.8a6 6 0 0 1 8.4 0M4.8 11.5a10 10 0 0 1 14.4 0" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+      </svg>
+    );
+  }
+  if (/pool|مسبح/i.test(label)) {
+    return (
+      <svg {...common}>
+        <path d="M4 16c1.3 1 2.7 1 4 0s2.7-1 4 0 2.7 1 4 0 2.7-1 4 0M5 8h4l2 3h8" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+      </svg>
+    );
+  }
+  if (/restaurant|مطعم|breakfast|إفطار/i.test(label)) {
+    return (
+      <svg {...common}>
+        <path d="M7 4v8M5 4v5a2 2 0 0 0 4 0V4M16 4v16M14 4h5l-1 6h-4" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+      </svg>
+    );
+  }
+  if (/parking|موقف/i.test(label)) {
+    return (
+      <svg {...common}>
+        <rect x="4" y="4" width="16" height="16" rx="3" fill="none" stroke="currentColor" strokeWidth="1.7" />
+        <path d="M9 16V8h4.2a3 3 0 0 1 0 6H9" fill="none" stroke="currentColor" strokeWidth="1.7" />
+      </svg>
+    );
+  }
+  if (/gym|نادي|fitness/i.test(label)) {
+    return (
+      <svg {...common}>
+        <path d="M4 10v4M8 8v8M16 8v8M20 10v4M8 12h8" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+      </svg>
+    );
+  }
+  if (/elevator|مصعد/i.test(label)) {
+    return (
+      <svg {...common}>
+        <rect x="5" y="3" width="14" height="18" rx="2" fill="none" stroke="currentColor" strokeWidth="1.7" />
+        <path d="M12 7l3 3H9l3-3zm0 10-3-3h6l-3 3z" fill="currentColor" />
+      </svg>
+    );
+  }
+  if (/24|desk|استقبال|front/i.test(label)) {
+    return (
+      <svg {...common}>
+        <circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" strokeWidth="1.7" />
+        <path d="M12 7v5l3 2" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+      </svg>
+    );
+  }
+  return (
+    <svg {...common}>
+      <path d="M12 21s-7-4.6-7-11a7 7 0 1 1 14 0c0 6.4-7 11-7 11z" fill="none" stroke="currentColor" strokeWidth="1.7" />
+    </svg>
+  );
+}
+
 export function HotelDetailModal({
   hotel,
   nights,
@@ -568,46 +629,13 @@ export function HotelDetailModal({
             ) : null}
 
             {shopStyle ? (
-              <section id="tvlk-sec-overview" className="flight-modal-section hotel-tab-panel tvlk-hotel-section">
-                <div className="hotel-modal-sticky-head">
-                  <div className="hotel-name-chip" title={name}>
-                    <h2 id="hotel-detail-title">{name}</h2>
-                    {stars > 0 ? (
-                      <div className="hotel-gold-stars" aria-label={`${stars} نجوم`}>
-                        {Array.from({ length: Math.min(5, stars) }, (_, i) => (
-                          <span key={i}>★</span>
-                        ))}
-                      </div>
-                    ) : null}
-                  </div>
-                  <div className="hotel-modal-sticky-meta">
-                    <p>
-                      {[
-                        String(hotel.details.destinationName || hotel.details.location || ""),
-                        String(hotel.details.zoneName || hotel.details.neighborhood || ""),
-                      ]
-                        .filter(Boolean)
-                        .join(" · ") || "—"}
-                    </p>
-                    <div className="hotel-modal-sticky-price">
-                      <strong>{formatMoneyMinor(perNight, hotel.currency)}</strong>
-                      <small>لليلة · يبدأ من · دون ضريبة المدينة</small>
-                      <em>{formatMoneyMinor(hotel.displayFromMinor, hotel.currency)} إجمالي الإقامة</em>
-                      <button
-                        type="button"
-                        className="btn hotel-choose-room-cta"
-                        onClick={() => scrollToSection("rooms")}
-                      >
-                        {t("chooseYourRoom")}
-                      </button>
-                    </div>
-                  </div>
-                </div>
+              <section id="tvlk-sec-overview" className="tvlk-overview tvlk-hotel-section">
                 {galleryObjects.length > 0 ? (
                   <HotelGallery
                     images={galleryObjects}
                     hotelName={name}
                     heroUrl={imageUrl || undefined}
+                    seeAllLabel={t("seeAllPhotos")}
                   />
                 ) : (
                   <HotelMediaImage
@@ -617,56 +645,141 @@ export function HotelDetailModal({
                     compactEmpty
                   />
                 )}
-                <div className="tvlk-overview-stay">
-                  <p>
-                    {formatDay(meta.departDate)} → {formatDay(meta.returnDate)} · {shopNightCount(locale, nights)}
-                  </p>
-                  <p>
-                    {shopRoomCount(locale, meta.rooms)} · {shopAdultCount(locale, meta.adults)}
-                    {meta.children ? ` · ${shopChildCount(locale, meta.children)}` : ""}
-                  </p>
-                  {hotel.details.distanceToCenterLabel ? (
-                    <p className="hotel-detail-distance">
-                      {String(hotel.details.distanceToCenterLabel)} من مركز {meta.stayQuery}
-                    </p>
-                  ) : null}
-                </div>
-                {description ? (
-                  <>
-                    <h4 className="hotel-review-subhead">{t("aboutThisHotel")}</h4>
-                    <p className={descOpen ? "hotel-detail-desc is-open" : "hotel-detail-desc is-clamp"}>
-                      {description}
-                    </p>
-                    {description.length > 90 ? (
+                <div className="tvlk-overview-card">
+                  <header className="tvlk-overview-head">
+                    <div className="hotel-name-chip" title={name}>
+                      <h2 id="hotel-detail-title">{name}</h2>
+                      <p className="tvlk-overview-type">
+                        {t("typeHotel")}
+                        {stars > 0 ? (
+                          <span className="hotel-gold-stars" aria-label={`${stars} نجوم`}>
+                            {Array.from({ length: Math.min(5, stars) }, (_, i) => (
+                              <span key={i}>★</span>
+                            ))}
+                          </span>
+                        ) : null}
+                      </p>
+                    </div>
+                    <div className="tvlk-overview-price">
+                      <small>{t("priceRoomNightFrom")}</small>
+                      <strong>{formatMoneyMinor(perNight, hotel.currency)}</strong>
                       <button
                         type="button"
-                        className="hotel-desc-more"
-                        onClick={() => setDescOpen((v) => !v)}
+                        className="btn hotel-choose-room-cta"
+                        onClick={() => scrollToSection("rooms")}
                       >
-                        {descOpen ? t("showLess") : "عرض المزيد"}
+                        {t("chooseYourRoom")}
                       </button>
-                    ) : null}
-                  </>
-                ) : null}
-                {facilityLabels.length ? (
-                  <>
-                    <h4 className="hotel-review-subhead">{t("mainFacilities")}</h4>
-                    <ul className="hotel-facility-chips">
-                      {facilityLabels.map((f) => (
-                        <li key={f}>{f}</li>
-                      ))}
-                    </ul>
-                  </>
-                ) : null}
-                {poiDistances.length ? (
-                  <ul className="hotel-detail-poi-list">
-                    {poiDistances.slice(0, 6).map((poi) => (
-                      <li key={poi.nameAr}>
-                        {poi.label} · {poi.nameAr}
-                      </li>
-                    ))}
-                  </ul>
-                ) : null}
+                    </div>
+                  </header>
+                  <div className="tvlk-overview-cols">
+                    <div className="tvlk-overview-col">
+                      {guestRating ? (
+                        <button
+                          type="button"
+                          className="tvlk-overview-score"
+                          onClick={() => scrollToSection("reviews")}
+                        >
+                          <strong>
+                            {guestRating.score.toFixed(1)}
+                            <em>/{hotel.details.guestRatingScale === 5 ? 5 : 10}</em>
+                          </strong>
+                          <span>
+                            <b>{t(guestScoreBand(guestRating.score, hotel.details.guestRatingScale === 5 ? 5 : 10))}</b>
+                            {guestRating.count ? (
+                              <small>{t("basedOnReviews", { n: guestRating.count })}</small>
+                            ) : (
+                              <small>{guestRating.source}</small>
+                            )}
+                          </span>
+                        </button>
+                      ) : (
+                        <p className="tvlk-overview-muted">{t("noGuestReviews")}</p>
+                      )}
+                      {reviewHighlights.length ? (
+                        <>
+                          <h3>{t("whatGuestsSay")}</h3>
+                          <ul className="tvlk-overview-quotes">
+                            {reviewHighlights.slice(0, 4).map((item) => (
+                              <li key={item}>{item}</li>
+                            ))}
+                          </ul>
+                        </>
+                      ) : null}
+                    </div>
+                    <div className="tvlk-overview-col">
+                      <div className="tvlk-overview-col-head">
+                        <h3>{t("inTheArea")}</h3>
+                        {mapUrl ? (
+                          <a href={mapUrl} target="_blank" rel="noopener noreferrer">
+                            {t("seeMap")}
+                          </a>
+                        ) : (
+                          <button type="button" onClick={() => scrollToSection("map")}>
+                            {t("seeMap")}
+                          </button>
+                        )}
+                      </div>
+                      <p className="tvlk-overview-address">
+                        {[
+                          hotel.details.address ? String(hotel.details.address) : "",
+                          String(hotel.details.zoneName || hotel.details.neighborhood || ""),
+                          String(hotel.details.destinationName || hotel.details.location || meta.stayQuery),
+                        ]
+                          .filter(Boolean)
+                          .join(" · ") || "—"}
+                      </p>
+                      {poiDistances.length ? (
+                        <ul className="tvlk-overview-poi">
+                          {poiDistances.slice(0, 8).map((poi) => (
+                            <li key={poi.nameAr}>
+                              <span>{poi.nameAr}</span>
+                              <em>{poi.label}</em>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : hotel.details.distanceToCenterLabel ? (
+                        <p className="tvlk-overview-muted">
+                          {String(hotel.details.distanceToCenterLabel)} من مركز {meta.stayQuery}
+                        </p>
+                      ) : null}
+                    </div>
+                    <div className="tvlk-overview-col">
+                      <div className="tvlk-overview-col-head">
+                        <h3>{t("mainFacilities")}</h3>
+                        <button type="button" onClick={() => scrollToSection("facilities")}>
+                          {t("seeMoreLink")}
+                        </button>
+                      </div>
+                      {facilityLabels.length ? (
+                        <ul className="tvlk-overview-facilities">
+                          {facilityLabels.slice(0, 6).map((f) => (
+                            <li key={f}>
+                              <FacilityIcon label={f} />
+                              <span>{f}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : null}
+                    </div>
+                  </div>
+                  {description ? (
+                    <div className="tvlk-overview-about">
+                      <p className={descOpen ? "hotel-detail-desc is-open" : "hotel-detail-desc is-clamp"}>
+                        {description}
+                      </p>
+                      {description.length > 90 ? (
+                        <button
+                          type="button"
+                          className="hotel-desc-more"
+                          onClick={() => setDescOpen((v) => !v)}
+                        >
+                          {descOpen ? t("showLess") : t("seeMoreLink")}
+                        </button>
+                      ) : null}
+                    </div>
+                  ) : null}
+                </div>
               </section>
             ) : null}
 

@@ -156,5 +156,6 @@ test("stayWithRoomCount adds a second occupancy without forcing the same room ty
   );
   assert.equal(next.rooms, 2);
   assert.equal(next.adults, 2);
-  assert.equal(next.occ.split("|").length, 2);
+  assert.equal(next.children, 0);
+  assert.equal(next.occ, "1|1");
 });

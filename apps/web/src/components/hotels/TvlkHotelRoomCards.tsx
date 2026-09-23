@@ -28,9 +28,11 @@ type Props = {
   hotel: HotelOfferRow & { matchingRates: HotelRateOption[]; displayFromMinor: number };
   nights: number;
   neededRooms?: number;
+  maxRooms?: number;
   checkingRateKey?: string | null;
   onBookRate: (rate: HotelRateOption) => void;
   onBookRates?: (rates: HotelRateOption[]) => void;
+  onNeededRoomsChange?: (rooms: number) => void;
 };
 
 type RateChip = "all" | "breakfast" | "freeCancel" | "payHotel";
@@ -179,9 +181,11 @@ export function TvlkHotelRoomCards({
   hotel,
   nights,
   neededRooms = 1,
+  maxRooms = 8,
   checkingRateKey,
   onBookRate,
   onBookRates,
+  onNeededRoomsChange,
 }: Props) {
   const { t } = useShopCopy();
   const rooms = useMemo(() => collectRooms(hotel), [hotel]);
@@ -284,58 +288,83 @@ export function TvlkHotelRoomCards({
         ) : null}
       </header>
 
-      {mixMatch ? (
-        <div className="tvlk-room-pick-bar">
-          <p>{t("selectRoomSlotOf", { n: activeSlot + 1, total: slots })}</p>
-          <ol>
-            {slotPicks.map((pick, i) => {
-              const names = pick ? translateRoomNameAr(pick.roomName) : null;
-              return (
-                <li key={i}>
-                  <button
-                    type="button"
-                    className={activeSlot === i ? "on" : undefined}
-                    onClick={() => setActiveSlot(i)}
-                  >
-                    <strong>{t("chooseRoomSlot", { n: i + 1 })}</strong>
-                    <span>
-                      {pick
-                        ? `${names?.ar || pick.roomName} · ${boardLabelAr(pick.boardCode, pick.boardName)}`
-                        : t("selectThisRoom")}
-                    </span>
-                  </button>
-                  {pick ? (
+      <div className="tvlk-room-pick-bar">
+        <div className="tvlk-room-edit-head">
+          <div>
+            <p>{mixMatch ? t("selectRoomSlotOf", { n: activeSlot + 1, total: slots }) : t("editStayRooms")}</p>
+            <small>{t("mixMatchHint")}</small>
+          </div>
+          {onNeededRoomsChange ? (
+            <div className="tvlk-room-edit-actions">
+              <button
+                type="button"
+                disabled={slots <= 1 || Boolean(checkingRateKey)}
+                onClick={() => onNeededRoomsChange(slots - 1)}
+              >
+                {t("removeLastRoom")}
+              </button>
+              <button
+                type="button"
+                disabled={slots >= maxRooms || Boolean(checkingRateKey)}
+                onClick={() => onNeededRoomsChange(slots + 1)}
+              >
+                {t("addAnotherRoom")}
+              </button>
+            </div>
+          ) : null}
+        </div>
+        {mixMatch ? (
+          <>
+            <ol>
+              {slotPicks.map((pick, i) => {
+                const names = pick ? translateRoomNameAr(pick.roomName) : null;
+                return (
+                  <li key={i}>
                     <button
                       type="button"
-                      className="tvlk-room-pick-clear"
-                      onClick={() => {
-                        setPicks((prev) => prev.map((p, idx) => (idx === i ? null : p)));
-                        setActiveSlot(i);
-                      }}
+                      className={activeSlot === i ? "on" : undefined}
+                      onClick={() => setActiveSlot(i)}
                     >
-                      {t("changeRoomPick")}
+                      <strong>{t("chooseRoomSlot", { n: i + 1 })}</strong>
+                      <span>
+                        {pick
+                          ? `${names?.ar || pick.roomName} · ${boardLabelAr(pick.boardCode, pick.boardName)}`
+                          : t("selectThisRoom")}
+                      </span>
                     </button>
-                  ) : null}
-                </li>
-              );
-            })}
-          </ol>
-          <div className="tvlk-room-pick-total">
-            <span>{t("roomsPickedOf", { picked: pickedRates.length, total: slots })}</span>
-            {pickedRates.length ? (
-              <strong>{formatMoneyMinor(pickTotalMinor, hotel.currency)}</strong>
-            ) : null}
-            <button
-              type="button"
-              className="tvlk-rate-select"
-              disabled={pickedRates.length !== slots || Boolean(checkingRateKey)}
-              onClick={() => (onBookRates || ((rates) => onBookRate(rates[0]!)))(pickedRates)}
-            >
-              {t("continuePickedRooms")}
-            </button>
-          </div>
-        </div>
-      ) : null}
+                    {pick ? (
+                      <button
+                        type="button"
+                        className="tvlk-room-pick-clear"
+                        onClick={() => {
+                          setPicks((prev) => prev.map((p, idx) => (idx === i ? null : p)));
+                          setActiveSlot(i);
+                        }}
+                      >
+                        {t("changeRoomPick")}
+                      </button>
+                    ) : null}
+                  </li>
+                );
+              })}
+            </ol>
+            <div className="tvlk-room-pick-total">
+              <span>{t("roomsPickedOf", { picked: pickedRates.length, total: slots })}</span>
+              {pickedRates.length ? (
+                <strong>{formatMoneyMinor(pickTotalMinor, hotel.currency)}</strong>
+              ) : null}
+              <button
+                type="button"
+                className="tvlk-rate-select"
+                disabled={pickedRates.length !== slots || Boolean(checkingRateKey)}
+                onClick={() => (onBookRates || ((rates) => onBookRate(rates[0]!)))(pickedRates)}
+              >
+                {t("continuePickedRooms")}
+              </button>
+            </div>
+          </>
+        ) : null}
+      </div>
 
       {visible.length === 0 ? <p className="hint">{t("noMatchingRoomOffers")}</p> : null}
 
@@ -406,7 +435,7 @@ export function TvlkHotelRoomCards({
                   const busy = checkingRateKey === rate.rateKey;
                   const board = boardLabelAr(rate.boardCode, rate.boardName);
                   const guests = guestCountForRate(rate, room);
-                  const roomCount = Math.max(1, Number(rate.rooms || 1));
+                  const roomCount = mixMatch ? 1 : Math.max(1, Number(rate.rooms || 1));
                   const bedLine = facts.find(looksLikeBed);
                   const pay = normalizePaymentTypeAr(rate.paymentType).ar;
                   const picked = mixMatch && slotPicks.some((p) => p?.rateKey === rate.rateKey);
@@ -444,7 +473,13 @@ export function TvlkHotelRoomCards({
                         disabled={Boolean(checkingRateKey)}
                         onClick={() => assignRate(rate)}
                       >
-                        {busy ? t("checkingPrice") : picked ? t("roomPickedShort") : t("chooseRate")}
+                        {busy
+                          ? t("checkingPrice")
+                          : mixMatch
+                            ? picked
+                              ? t("roomPickedShort")
+                              : t("assignToRoomSlot", { n: activeSlot + 1 })
+                            : t("chooseRate")}
                       </button>
                     </div>
                   );

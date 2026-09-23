@@ -172,6 +172,18 @@ export function occupancyFromSearchParams(params: HotelResultsSearchParams): Hot
   return rooms;
 }
 
+/** Change stay room count and rebuild occupancy. Extra rooms get at least one adult. */
+export function stayWithRoomCount(
+  params: HotelResultsSearchParams,
+  rooms: number,
+): HotelResultsSearchParams {
+  const n = Math.min(HOTEL_STAY_CAPS.maxRooms, Math.max(1, rooms));
+  const adults = Math.max(params.adults || 1, n);
+  return clampHotelSearchParams(
+    syncHotelSearchParams({ ...params, occ: "" }, { rooms: n, adults }),
+  );
+}
+
 export function parseHotelResultsSearch(
   input: URLSearchParams | Record<string, string | string[] | undefined>,
 ): HotelResultsSearchParams {

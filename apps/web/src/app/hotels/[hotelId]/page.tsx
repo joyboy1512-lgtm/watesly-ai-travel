@@ -25,6 +25,7 @@ import {
   buildHotelResultsHref,
   clampHotelSearchParams,
   hotelSearchRequestBody,
+  stayWithRoomCount,
   isHotelSuggestItem,
   matchShopHotel,
   nightsBetween,
@@ -344,6 +345,12 @@ function HotelDetailInner() {
     });
   }
 
+  function changeNeededRooms(rooms: number) {
+    const next = stayWithRoomCount({ ...urlParams, ...draft }, rooms);
+    setDraft(next);
+    router.push(buildHotelDetailHref(hotelId, next));
+  }
+
   function applyStaySearch() {
     const synced = clampHotelSearchParams(
       syncHotelSearchParams(
@@ -424,6 +431,7 @@ function HotelDetailInner() {
         variant="shop"
         onClose={() => router.push(resultsHref)}
         onContinueToReview={continueToReview}
+        onNeededRoomsChange={changeNeededRooms}
       />
     </div>
   );

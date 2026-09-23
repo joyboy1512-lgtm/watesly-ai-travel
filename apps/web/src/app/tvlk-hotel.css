@@ -1821,9 +1821,51 @@ html body .shop-root.wg-new-ui .shop-main.shop-main-wide:has(.tvlk-hotel.shop-ho
   color: #111827;
 }
 
-.tvlk-room-pick-bar > p {
+.tvlk-room-pick-bar > p,
+.tvlk-room-edit-head p {
   margin: 0 0 10px;
   font-weight: 700;
+}
+
+.tvlk-room-edit-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px 16px;
+  margin-bottom: 10px;
+}
+
+.tvlk-room-edit-head p {
+  margin: 0 0 4px;
+}
+
+.tvlk-room-edit-head small {
+  display: block;
+  color: #4b5563;
+  font-weight: 500;
+  line-height: 1.45;
+}
+
+.tvlk-room-edit-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.tvlk-room-edit-actions button {
+  border: 1px solid #d8dee3;
+  background: #fff;
+  color: #111827;
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.tvlk-room-edit-actions button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
 .tvlk-room-pick-bar ol {

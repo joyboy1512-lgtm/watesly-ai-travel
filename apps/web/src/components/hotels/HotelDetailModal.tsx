@@ -50,6 +50,7 @@ type Props = {
     extras?: { priceChanged?: boolean; previousTotalMinor?: number },
     allRates?: HotelRateOption[],
   ) => void;
+  onNeededRoomsChange?: (rooms: number) => void;
   checkRatePath?: string;
   fetchJson?: typeof apiFetch;
   variant?: "default" | "shop";
@@ -138,6 +139,7 @@ export function HotelDetailModal({
   onEnterGuestData,
   onCheckout,
   onContinueToReview,
+  onNeededRoomsChange,
   checkRatePath = "/bookings/checkrate-hotel",
   fetchJson = apiFetch,
   variant = "default",
@@ -901,6 +903,7 @@ export function HotelDetailModal({
                     checkingRateKey={checkingRateKey}
                     onBookRate={(rate) => void handleBookRate(rate)}
                     onBookRates={(rates) => void handleBookRates(rates)}
+                    onNeededRoomsChange={onNeededRoomsChange}
                   />
                 ) : (
                   <HotelRoomAccordion

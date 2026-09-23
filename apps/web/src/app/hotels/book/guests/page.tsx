@@ -311,6 +311,7 @@ export default function HotelGuestsPage() {
             phoneCountry,
             roomGuests,
             selectedRate: draft.selectedRate,
+            selectedRates: draft.selectedRates,
             priceBreakdown: draft.priceBreakdown,
           },
         }),
@@ -336,8 +337,20 @@ export default function HotelGuestsPage() {
     );
   }
 
-  const rate = draft.selectedRate;
-  const roomLabel = rate ? translateRoomNameAr(rate.roomName).ar : "غرفة";
+  const rates = draft.selectedRates?.length
+    ? draft.selectedRates
+    : draft.selectedRate
+      ? [draft.selectedRate]
+      : [];
+  const rate = rates[0];
+  const roomLabel = rates.length
+    ? rates
+        .map((row, i) => {
+          const name = translateRoomNameAr(row.roomName).ar;
+          return rates.length > 1 ? `${i + 1}. ${name}` : name;
+        })
+        .join(" · ")
+    : "غرفة";
   const bd = draft.priceBreakdown;
   const payNow = bd?.payNowMinor ?? draft.totalMinor ?? draft.hotel.sellAmountMinor;
   const payAtHotel = bd?.payAtHotelMinor ?? 0;

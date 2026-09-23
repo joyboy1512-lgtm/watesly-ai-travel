@@ -82,6 +82,8 @@ export type HotelRoomOption = {
   facilities?: string[];
   description?: string;
   occupancy?: HotelRoomOccupancy;
+  /** Square metres when Hotelbeds content sends a numeric room-size facility. */
+  sizeSqm?: number;
 };
 
 export type HotelImageRef = {

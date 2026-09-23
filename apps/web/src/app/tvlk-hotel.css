@@ -1813,6 +1813,76 @@ html body .shop-root.wg-new-ui .shop-main.shop-main-wide:has(.tvlk-hotel.shop-ho
   color: #111827;
 }
 
+.tvlk-room-pick-bar {
+  background: #fff;
+  border: 1px solid #e6ecf0;
+  border-radius: 14px;
+  padding: 14px 16px;
+  color: #111827;
+}
+
+.tvlk-room-pick-bar > p {
+  margin: 0 0 10px;
+  font-weight: 700;
+}
+
+.tvlk-room-pick-bar ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 8px;
+}
+
+.tvlk-room-pick-bar li {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.tvlk-room-pick-bar li > button:first-child {
+  border: 1px solid #d8dee3;
+  background: #fff;
+  border-radius: 10px;
+  padding: 10px 12px;
+  text-align: start;
+  cursor: pointer;
+  color: #111827;
+}
+
+.tvlk-room-pick-bar li > button.on {
+  border-color: var(--tvlk-blue);
+  background: var(--tvlk-blue-soft);
+}
+
+.tvlk-room-pick-bar li strong,
+.tvlk-room-pick-bar li span {
+  display: block;
+}
+
+.tvlk-room-pick-clear {
+  border: 0;
+  background: none;
+  color: var(--tvlk-blue);
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0;
+  text-align: start;
+}
+
+.tvlk-room-pick-total {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+  margin-top: 12px;
+}
+
+.tvlk-rate-table-row.is-picked {
+  background: #f3f9fe;
+}
+
 .tvlk-rate-more {
   display: block;
   width: 100%;

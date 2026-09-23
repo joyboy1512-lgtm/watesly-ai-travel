@@ -99,6 +99,8 @@ export type HotelBookingDraft = {
   serviceType: "hotel";
   hotel: BookingDraftHotel;
   selectedRate?: BookingDraftHotelRate;
+  /** One rate per searched room when the guest mix-and-matches. */
+  selectedRates?: BookingDraftHotelRate[];
   checkIn: string;
   checkOut: string;
   rooms: number;

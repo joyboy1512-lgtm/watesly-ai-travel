@@ -41,7 +41,12 @@ function formatCancelPolicy(rate: NonNullable<HotelBookingDraft["selectedRate"]>
 export function HotelBookReview({ booking }: Props) {
   const router = useRouter();
   const { t, locale } = useShopCopy();
-  const rate = booking.selectedRate;
+  const rates = booking.selectedRates?.length
+    ? booking.selectedRates
+    : booking.selectedRate
+      ? [booking.selectedRate]
+      : [];
+  const rate = rates[0];
   const nights = booking.nights || 1;
   const hotelName = String(booking.hotel.details.name || booking.hotel.description || t("hotelFallback"));
   const stars = Number(booking.hotel.details.stars || 0);
@@ -101,16 +106,24 @@ export function HotelBookReview({ booking }: Props) {
             {booking.locationLabel || booking.location}
           </p>
 
-          {rate ? (
+          {rates.length ? (
             <article className="shop-hotel-review-room">
-              <h3>الغرفة المختارة</h3>
-              <p>
-                <strong>{roomLabel}</strong> · {rate.boardName}
-              </p>
-              {rate.roomName && rate.roomName !== roomLabel ? (
-                <small className="shop-hotel-room-original">{rate.roomName}</small>
-              ) : null}
-              <small>{formatCancelPolicy(rate)}</small>
+              <h3>{rates.length > 1 ? t("roomsAndPrices") : "الغرفة المختارة"}</h3>
+              {rates.map((row, i) => {
+                const names = translateRoomNameAr(row.roomName);
+                const label = locale === "en" ? names.original || row.roomName : names.ar;
+                return (
+                  <p key={`${row.rateKey}-${i}`}>
+                    <strong>
+                      {t("chooseRoomSlot", { n: i + 1 })} · {label}
+                    </strong>
+                    {" · "}
+                    {row.boardName}
+                    <br />
+                    <small>{formatCancelPolicy(row)}</small>
+                  </p>
+                );
+              })}
             </article>
           ) : null}
 

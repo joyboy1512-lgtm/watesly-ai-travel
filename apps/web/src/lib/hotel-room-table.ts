@@ -35,6 +35,10 @@ export function parseRoomSize(text: string): string | null {
   return `${m[1].replace(",", ".")} m²`;
 }
 
+function looksLikeEmptySizeLabel(text: string): boolean {
+  return /size|sqm|m²|m2|متر مربع|حجم الغرفة|square\s*metr/i.test(text) && !parseRoomSize(text);
+}
+
 export function looksLikeBed(text: string): boolean {
   if (/أطفال|cot|crib|infant/i.test(text)) return false;
   return /سرير|bed|sofa|كنبة|twin|king|queen|double/i.test(text);
@@ -67,7 +71,10 @@ export function classifyRoomFact(text: string): RoomFactKind {
 export function pickRoomFacts(room: HotelRoomOption): string[] {
   const blob = [room.name, room.description, ...(room.facilities || [])].join(" · ");
   const facts: string[] = [];
-  const size = parseRoomSize(blob);
+  const size =
+    room.sizeSqm && room.sizeSqm > 0
+      ? `${String(room.sizeSqm).replace(/\.0$/, "")} m²`
+      : parseRoomSize(blob);
   if (size) facts.push(size);
 
   const facilities = room.facilities || [];
@@ -86,7 +93,7 @@ export function pickRoomFacts(room: HotelRoomOption): string[] {
   for (const fac of facilities) {
     if (facts.length >= 5) break;
     if (facts.includes(fac)) continue;
-    if (parseRoomSize(fac)) continue;
+    if (parseRoomSize(fac) || looksLikeEmptySizeLabel(fac)) continue;
     if (/أطفال|cot|crib|infant/i.test(fac)) continue;
     facts.push(fac);
   }
@@ -135,7 +142,11 @@ export function groupRoomDetailFacts(room: HotelRoomOption) {
   });
   const used = new Set([...info, ...features]);
   const rest = (room.facilities || []).filter(
-    (f) => !used.has(f) && !parseRoomSize(f) && !/أطفال|cot|crib|infant/i.test(f),
+    (f) =>
+      !used.has(f) &&
+      !parseRoomSize(f) &&
+      !looksLikeEmptySizeLabel(f) &&
+      !/أطفال|cot|crib|infant/i.test(f),
   );
   const mid = Math.ceil(rest.length / 2);
   return {

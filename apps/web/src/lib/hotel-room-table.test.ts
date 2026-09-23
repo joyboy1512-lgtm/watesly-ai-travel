@@ -75,6 +75,28 @@ test("pickRoomFacts keeps size, bed, access, aircon, wifi first", () => {
   assert.ok(facts.some((f) => /wifi/i.test(f)));
 });
 
+test("pickRoomFacts uses sizeSqm from provider content", () => {
+  const facts = pickRoomFacts({
+    code: "FAM",
+    name: "Family",
+    rates: [],
+    sizeSqm: 26,
+    facilities: ["Air conditioning"],
+  });
+  assert.equal(facts[0], "26 m²");
+});
+
+test("pickRoomFacts hides size labels that have no number", () => {
+  const facts = pickRoomFacts({
+    code: "DBL",
+    name: "Deluxe",
+    rates: [],
+    facilities: ["حجم الغرفة (متر مربع)", "Air conditioning"],
+  });
+  assert.ok(!facts.some((f) => /حجم الغرفة/.test(f)));
+  assert.ok(facts.includes("Air conditioning"));
+});
+
 test("classifyRoomFact maps Traveloka-style room facts", () => {
   assert.equal(classifyRoomFact("26.0 m²"), "size");
   assert.equal(classifyRoomFact("1 full bed and 1 sofa bed"), "bed");

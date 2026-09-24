@@ -236,3 +236,73 @@ export function inferHotelPropertyType(input: {
   }
   return "hotel";
 }
+
+/** Same board, stay total, pay/cancel terms — Hotelbeds often repeats this twice for 2 rooms. */
+export function hotelRateOfferFingerprint(rate: HotelRateOption): string {
+  const net = Math.round(Number(rate.net || 0) * 1000) / 1000;
+  const from = rate.cancellationPolicies?.[0]?.from || "";
+  return [
+    String(rate.boardCode || "").toUpperCase(),
+    net,
+    String(rate.paymentType || ""),
+    rate.freeCancellation ? "1" : "0",
+    from,
+    Number(rate.adults || 0),
+    Number(rate.children || 0),
+    Number(rate.rooms || 1),
+  ].join("|");
+}
+
+export function pickPreferredHotelRate(a: HotelRateOption, b: HotelRateOption): HotelRateOption {
+  const bookable = (r: HotelRateOption) => String(r.rateType || "").toUpperCase() === "BOOKABLE";
+  if (bookable(a) !== bookable(b)) return bookable(a) ? a : b;
+  const allotA = Number(a.allotment || 0);
+  const allotB = Number(b.allotment || 0);
+  if (allotA !== allotB) return allotA > allotB ? a : b;
+  return a;
+}
+
+export function dedupeHotelRates(rates: HotelRateOption[]): HotelRateOption[] {
+  const byKey = new Map<string, HotelRateOption>();
+  for (const rate of rates) {
+    const key = String(rate.rateKey || "").trim();
+    if (!key) continue;
+    const prev = byKey.get(key);
+    byKey.set(key, prev ? pickPreferredHotelRate(prev, rate) : rate);
+  }
+  const byOffer = new Map<string, HotelRateOption>();
+  for (const rate of byKey.values()) {
+    const fp = hotelRateOfferFingerprint(rate);
+    const prev = byOffer.get(fp);
+    byOffer.set(fp, prev ? pickPreferredHotelRate(prev, rate) : rate);
+  }
+  return [...byOffer.values()].sort((a, b) => a.net - b.net);
+}
+
+export function mergeHotelRoomsByCode(rooms: HotelRoomOption[]): HotelRoomOption[] {
+  const map = new Map<string, HotelRoomOption>();
+  for (const room of rooms) {
+    const key = String(room.code || room.name || "").trim().toUpperCase();
+    if (!key) continue;
+    const prev = map.get(key);
+    if (!prev) {
+      map.set(key, { ...room, rates: [...(room.rates || [])] });
+      continue;
+    }
+    map.set(key, {
+      ...prev,
+      name: prev.name || room.name,
+      imageUrl: prev.imageUrl || room.imageUrl,
+      images: [...new Set([...(prev.images || []), ...(room.images || [])])],
+      facilities: [...new Set([...(prev.facilities || []), ...(room.facilities || [])])],
+      description: prev.description || room.description,
+      occupancy: prev.occupancy || room.occupancy,
+      sizeSqm: prev.sizeSqm ?? room.sizeSqm,
+      rates: [...prev.rates, ...(room.rates || [])],
+    });
+  }
+  return [...map.values()]
+    .map((room) => ({ ...room, rates: dedupeHotelRates(room.rates) }))
+    .filter((room) => room.rates.length > 0)
+    .sort((a, b) => (a.rates[0]?.net ?? Infinity) - (b.rates[0]?.net ?? Infinity));
+}

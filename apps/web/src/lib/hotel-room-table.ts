@@ -1,4 +1,9 @@
-import type { HotelRateOption, HotelRoomOption } from "@watesly-travel/shared";
+import {
+  type HotelRateOption,
+  type HotelRoomOption,
+} from "@watesly-travel/shared";
+
+export { uniqueShopRooms } from "@watesly-travel/shared";
 
 const BREAKFAST_BOARDS = new Set(["BB", "HB", "FB", "AI", "DB"]);
 

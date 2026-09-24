@@ -8,6 +8,7 @@ import {
   guestCountForRate,
   parseRoomSize,
   pickRoomFacts,
+  uniqueShopRooms,
 } from "./hotel-room-table";
 import type { HotelRateOption, HotelRoomOption } from "@watesly-travel/shared";
 
@@ -123,6 +124,24 @@ test("collectRoomImages prefers room photos then matching hotel images", () => {
     },
   );
   assert.deepEqual(urls, ["https://cdn.example/room.jpg", "https://cdn.example/match.jpg"]);
+});
+
+test("uniqueShopRooms drops a repeated family offer", () => {
+  const rooms: HotelRoomOption[] = [
+    {
+      code: "FAM.ST",
+      name: "FAMILY ROOM STANDARD",
+      rates: [rate({ rateKey: "fam-a", roomCode: "FAM.ST", boardCode: "RO", net: 120.963 })],
+    },
+    {
+      code: "FAM.ST",
+      name: "FAMILY ROOM STANDARD",
+      rates: [rate({ rateKey: "fam-b", roomCode: "FAM.ST", boardCode: "RO", net: 120.963 })],
+    },
+  ];
+  const unique = uniqueShopRooms(rooms);
+  assert.equal(unique.length, 1);
+  assert.equal(unique[0]?.rates.length, 1);
 });
 
 test("groupRoomDetailFacts splits size/bed from features", () => {

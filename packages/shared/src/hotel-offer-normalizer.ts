@@ -4,7 +4,12 @@
  */
 
 import type { HotelPropertyDetails, HotelRateOption, HotelRoomOption } from "./hotel-display";
-import { boardLabelAr, paymentTypeLabelAr } from "./hotel-display";
+import {
+  boardLabelAr,
+  hotelRateOfferFingerprint,
+  mergeHotelRoomsByCode,
+  paymentTypeLabelAr,
+} from "./hotel-display";
 import type { MoneyMinor } from "./types";
 import {
   buildHotelPriceBreakdown,
@@ -92,6 +97,9 @@ const ROOM_NAME_AR: Record<string, string> = {
   "DOUBLE STANDARD": "غرفة مزدوجة قياسية",
   "STANDARD DOUBLE": "غرفة مزدوجة قياسية",
   "DOUBLE OR TWIN STANDARD": "غرفة مزدوجة قياسية",
+  "DOUBLE DELUXE SUPERIOR": "غرفة مزدوجة ديلوكس سوبيريور",
+  "TWIN DELUXE SUPERIOR": "غرفة توأم ديلوكس سوبيريور",
+  "FAMILY ROOM STANDARD": "غرفة عائلية قياسية",
   "DOUBLE DELUXE": "غرفة مزدوجة ديلوكس",
   "SINGLE DELUXE": "غرفة مفردة ديلوكس",
   "SINGLE STANDARD": "غرفة مفردة قياسية",
@@ -121,6 +129,25 @@ export function translateRoomNameAr(name?: string): { ar: string; original?: str
     }
   }
   return { ar: raw };
+}
+
+/** Collapse Hotelbeds repeats and rooms that only differ by a duplicate offer. */
+export function uniqueShopRooms(rooms: HotelRoomOption[]): HotelRoomOption[] {
+  const merged = mergeHotelRoomsByCode(rooms);
+  const byLabel = new Map<string, HotelRoomOption>();
+  for (const room of merged) {
+    const fps = room.rates.map(hotelRateOfferFingerprint).sort().join("||");
+    const label = `${translateRoomNameAr(room.name).ar}::${fps}`;
+    const prev = byLabel.get(label);
+    if (!prev) {
+      byLabel.set(label, room);
+      continue;
+    }
+    byLabel.set(label, mergeHotelRoomsByCode([prev, { ...room, code: prev.code }])[0] ?? prev);
+  }
+  return [...byLabel.values()].sort(
+    (a, b) => (a.rates[0]?.net ?? Infinity) - (b.rates[0]?.net ?? Infinity),
+  );
 }
 
 export function translateFacilityLabelAr(label: string): string {

@@ -16,6 +16,7 @@ import {
   guestCountForRate,
   looksLikeBed,
   pickRoomFacts,
+  uniqueShopRooms,
   VISIBLE_RATE_LIMIT,
   type RoomFactKind,
 } from "@/lib/hotel-room-table";
@@ -81,8 +82,7 @@ function collectRooms(hotel: Props["hotel"]): HotelRoomOption[] {
         .sort((a, b) => a.net - b.net),
     }))
     .filter((room) => room.rates.length > 0);
-  if (filtered.length) return filtered;
-  return groupRatesIntoRooms(hotel.matchingRates);
+  return uniqueShopRooms(filtered.length ? filtered : groupRatesIntoRooms(hotel.matchingRates));
 }
 
 function GuestIcons({ count }: { count: number }) {
@@ -251,22 +251,23 @@ export function TvlkHotelRoomCards({
     setActiveSlot(nextSlot);
   }
 
+  const uniqueRates = rooms.flatMap((room) => room.rates);
   const visible = rooms
     .map((room) => ({ ...room, rates: room.rates.filter((r) => rateMatchesChip(r, chip)) }))
     .filter((room) => room.rates.length > 0);
 
   const chips = (
     [
-      { id: "all" as const, label: t("allRoomOffers"), count: hotel.matchingRates.length },
+      { id: "all" as const, label: t("allRoomOffers"), count: uniqueRates.length },
       {
         id: "breakfast" as const,
         label: t("filterBreakfast"),
-        count: hotel.matchingRates.filter((r) => rateMatchesChip(r, "breakfast")).length,
+        count: uniqueRates.filter((r) => rateMatchesChip(r, "breakfast")).length,
       },
       {
         id: "freeCancel" as const,
         label: t("filterFreeCancel"),
-        count: hotel.matchingRates.filter((r) => r.freeCancellation).length,
+        count: uniqueRates.filter((r) => r.freeCancellation).length,
       },
     ] satisfies Array<{ id: RateChip; label: string; count: number }>
   ).filter((c) => c.id === "all" || c.count > 0);

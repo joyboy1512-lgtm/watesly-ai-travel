@@ -1,5 +1,6 @@
 import {
   displayFromMinorForOffer,
+  uniqueShopRooms,
   sellMinorForStayNet,
   taxTypeLabelAr,
   validateHotelSellPrice,
@@ -293,12 +294,12 @@ export function groupRatesIntoRooms(rates: HotelRateOption[]): HotelRoomOption[]
       });
     }
   }
-  return [...map.values()]
-    .map((room) => ({
+  return uniqueShopRooms(
+    [...map.values()].map((room) => ({
       ...room,
       rates: room.rates.sort((a, b) => a.net - b.net),
-    }))
-    .sort((a, b) => (a.rates[0]?.net ?? Infinity) - (b.rates[0]?.net ?? Infinity));
+    })),
+  );
 }
 
 export function filterHotelOffers(
@@ -416,9 +417,10 @@ export function filterHotelOffers(
         rateNetMajor: cheapest.net,
       });
       if (!priced.valid) return null;
+      const sourceRates = rates.length ? rates : allRates;
       return {
         ...h,
-        matchingRates: rates.length ? rates : rateOptionsOf(h),
+        matchingRates: groupRatesIntoRooms(sourceRates).flatMap((room) => room.rates),
         displayFromMinor: priced.displayFromMinor,
       };
     })

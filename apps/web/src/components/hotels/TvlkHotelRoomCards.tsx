@@ -19,6 +19,7 @@ import {
   VISIBLE_RATE_LIMIT,
   type RoomFactKind,
 } from "@/lib/hotel-room-table";
+import { shopNightCount } from "@/lib/hotel-occupancy";
 import { formatMoneyMinor } from "@/lib/format";
 import { useShopCopy } from "@/components/shop/ShopI18nProvider";
 import { HotelMediaImage } from "@/components/hotels/HotelMediaImage";
@@ -59,6 +60,14 @@ function rateMatchesChip(rate: HotelRateOption, chip: RateChip) {
   if (chip === "freeCancel") return rate.freeCancellation;
   if (chip === "payHotel") return rate.paymentType === "AT_HOTEL";
   return true;
+}
+
+function roomForRate(rooms: HotelRoomOption[], rate: HotelRateOption | null): HotelRoomOption | undefined {
+  if (!rate) return undefined;
+  return (
+    rooms.find((room) => room.rates.some((row) => row.rateKey === rate.rateKey)) ||
+    rooms.find((room) => room.code && room.code === rate.roomCode)
+  );
 }
 
 function collectRooms(hotel: Props["hotel"]): HotelRoomOption[] {
@@ -187,7 +196,7 @@ export function TvlkHotelRoomCards({
   onBookRates,
   onNeededRoomsChange,
 }: Props) {
-  const { t } = useShopCopy();
+  const { t, locale } = useShopCopy();
   const rooms = useMemo(() => collectRooms(hotel), [hotel]);
   const slots = Math.max(1, neededRooms);
   const mixMatch = slots > 1;
@@ -315,52 +324,137 @@ export function TvlkHotelRoomCards({
         </div>
         {mixMatch ? (
           <>
-            <ol>
+            <div className="tvlk-pick-stack">
               {slotPicks.map((pick, i) => {
+                const room = roomForRate(rooms, pick);
                 const names = pick ? translateRoomNameAr(pick.roomName) : null;
+                const photo = room?.imageUrl || room?.images?.[0];
+                const facts = room ? pickRoomFacts(room) : [];
+                const board = pick ? boardLabelAr(pick.boardCode, pick.boardName) : "";
+                const cancel = pick ? cancellationSummary(pick) : null;
+                const pay = pick ? normalizePaymentTypeAr(pick.paymentType).ar : "";
+                const guests = pick && room ? guestCountForRate(pick, room) : 0;
+                const stayMinor = pick ? rateDisplayMinor(pick, hotel, nights) : 0;
+                const nightMinor = pick && nights > 0 ? Math.round(stayMinor / nights) : stayMinor;
+                const active = activeSlot === i;
                 return (
-                  <li key={i}>
-                    <button
-                      type="button"
-                      className={activeSlot === i ? "on" : undefined}
-                      onClick={() => setActiveSlot(i)}
-                    >
-                      <strong>{t("chooseRoomSlot", { n: i + 1 })}</strong>
-                      <span>
-                        {pick
-                          ? `${names?.ar || pick.roomName} · ${boardLabelAr(pick.boardCode, pick.boardName)}`
-                          : t("selectThisRoom")}
-                      </span>
-                    </button>
-                    {pick ? (
-                      <button
-                        type="button"
-                        className="tvlk-room-pick-clear"
-                        onClick={() => {
-                          setPicks((prev) => prev.map((p, idx) => (idx === i ? null : p)));
-                          setActiveSlot(i);
-                        }}
-                      >
-                        {t("changeRoomPick")}
+                  <article
+                    key={i}
+                    className={`tvlk-pick-card${active ? " is-active" : ""}${pick ? " is-filled" : " is-empty"}`}
+                  >
+                    <header className="tvlk-pick-card-head">
+                      <button type="button" onClick={() => setActiveSlot(i)}>
+                        <strong>{t("chooseRoomSlot", { n: i + 1 })}</strong>
+                        <span>
+                          {pick
+                            ? names?.ar || pick.roomName
+                            : active
+                              ? t("pickSlotActive")
+                              : t("pickSlotWaiting")}
+                        </span>
                       </button>
-                    ) : null}
-                  </li>
+                      {pick ? (
+                        <button
+                          type="button"
+                          className="tvlk-room-pick-clear"
+                          onClick={() => {
+                            setPicks((prev) => prev.map((p, idx) => (idx === i ? null : p)));
+                            setActiveSlot(i);
+                          }}
+                        >
+                          {t("changeRoomPick")}
+                        </button>
+                      ) : null}
+                    </header>
+                    {pick ? (
+                      <div className="tvlk-pick-card-body">
+                        <HotelMediaImage
+                          src={photo}
+                          alt={names?.ar || pick.roomName}
+                          className="tvlk-pick-card-photo"
+                          preferMedium
+                          compactEmpty
+                        />
+                        <div className="tvlk-pick-card-meta">
+                          <h4>{names?.ar || pick.roomName}</h4>
+                          <p className="tvlk-pick-card-board">{board}</p>
+                          <ul>
+                            {facts[0] ? <li>{facts[0]}</li> : null}
+                            {facts.find(looksLikeBed) && facts.find(looksLikeBed) !== facts[0] ? (
+                              <li>{facts.find(looksLikeBed)}</li>
+                            ) : null}
+                            {guests ? <li>{t("guestsInRoom", { n: guests })}</li> : null}
+                            {cancel ? (
+                              <li className={cancel.good ? "good" : "warn"}>{cancel.text}</li>
+                            ) : null}
+                            {pay ? <li>{pay}</li> : null}
+                          </ul>
+                        </div>
+                        <div className="tvlk-pick-card-price">
+                          <strong>{formatMoneyMinor(nightMinor, hotel.currency)}</strong>
+                          <em>{t("pricePerRoomNight")}</em>
+                          <span>
+                            {shopNightCount(locale, nights)} · {formatMoneyMinor(stayMinor, hotel.currency)}
+                          </span>
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="tvlk-pick-card-empty">{t("emptyRoomSlotHint")}</p>
+                    )}
+                  </article>
                 );
               })}
-            </ol>
-            <div className="tvlk-room-pick-total">
-              <span>{t("roomsPickedOf", { picked: pickedRates.length, total: slots })}</span>
-              {pickedRates.length ? (
-                <strong>{formatMoneyMinor(pickTotalMinor, hotel.currency)}</strong>
-              ) : null}
-              <button
-                type="button"
-                className="tvlk-rate-select"
-                disabled={pickedRates.length !== slots || Boolean(checkingRateKey)}
-                onClick={() => (onBookRates || ((rates) => onBookRate(rates[0]!)))(pickedRates)}
-              >
-                {t("continuePickedRooms")}
-              </button>
+            </div>
+            <div className="tvlk-pick-summary">
+              <h3>{t("selectedRoomsSummary")}</h3>
+              <table>
+                <thead>
+                  <tr>
+                    <th>{t("roomSlotCol")}</th>
+                    <th>{t("roomOptionCol")}</th>
+                    <th>{t("pricePerRoomNight")}</th>
+                    <th>{t("roomStayCol")}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {slotPicks.map((pick, i) => {
+                    const names = pick ? translateRoomNameAr(pick.roomName) : null;
+                    const stayMinor = pick ? rateDisplayMinor(pick, hotel, nights) : 0;
+                    const nightMinor = pick && nights > 0 ? Math.round(stayMinor / nights) : stayMinor;
+                    return (
+                      <tr key={i} className={pick ? undefined : "is-empty"}>
+                        <th scope="row">{t("chooseRoomSlot", { n: i + 1 })}</th>
+                        <td>
+                          {pick
+                            ? `${names?.ar || pick.roomName} · ${boardLabelAr(pick.boardCode, pick.boardName)}`
+                            : t("pickSlotWaiting")}
+                        </td>
+                        <td>{pick ? formatMoneyMinor(nightMinor, hotel.currency) : "—"}</td>
+                        <td>{pick ? formatMoneyMinor(stayMinor, hotel.currency) : "—"}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+                <tfoot>
+                  <tr>
+                    <th scope="row" colSpan={3}>
+                      {t("roomsGrandTotal")} · {shopNightCount(locale, nights)}
+                    </th>
+                    <td>{formatMoneyMinor(pickTotalMinor, hotel.currency)}</td>
+                  </tr>
+                </tfoot>
+              </table>
+              <div className="tvlk-room-pick-total">
+                <span>{t("roomsPickedOf", { picked: pickedRates.length, total: slots })}</span>
+                <button
+                  type="button"
+                  className="tvlk-rate-select"
+                  disabled={pickedRates.length !== slots || Boolean(checkingRateKey)}
+                  onClick={() => (onBookRates || ((rates) => onBookRate(rates[0]!)))(pickedRates)}
+                >
+                  {t("continuePickedRooms")}
+                </button>
+              </div>
             </div>
           </>
         ) : null}

@@ -79,6 +79,50 @@ function isPresent(f: HbContentFacility): boolean {
   return true;
 }
 
+function isRoomSizeFacility(key: string, base: string): boolean {
+  return (
+    key === "60:295" ||
+    /size|sqm|m²|m2|متر مربع|حجم الغرفة|square\s*metr/i.test(base)
+  );
+}
+
+export function formatHotelbedsFacilityLabel(
+  f: HbContentFacility,
+  catalog?: Map<string, string>,
+  withFee = false,
+): string | null {
+  const key = facilityKey(f);
+  const base =
+    catalog?.get(key) ||
+    FALLBACK_LABELS[key] ||
+    f.description?.content?.trim() ||
+    "";
+  const num = Number(f.number);
+  const hasNum = Number.isFinite(num) && num > 0;
+  let label = base;
+  if (isRoomSizeFacility(key, base) && hasNum) {
+    label = `${String(num).replace(/\.0$/, "")} m²`;
+  } else if (hasNum && base) {
+    label = `${base} (${num})`;
+  }
+  if (!label) return null;
+  if (withFee && f.indFee) label = `${label} (برسوم)`;
+  return label;
+}
+
+export function roomSizeSqmFromFacilities(facilities: HbContentFacility[] | undefined): number | undefined {
+  for (const f of facilities || []) {
+    if (!isPresent(f)) continue;
+    const key = facilityKey(f);
+    const base = f.description?.content?.trim() || "";
+    const num = Number(f.number);
+    if (isRoomSizeFacility(key, base) && Number.isFinite(num) && num > 0) {
+      return num;
+    }
+  }
+  return undefined;
+}
+
 function mapFacilityLabels(
   facilities: HbContentFacility[] | undefined,
   catalog?: Map<string, string>,
@@ -91,12 +135,8 @@ function mapFacilityLabels(
   for (const f of facilities || []) {
     if (!isPresent(f)) continue;
     const key = facilityKey(f);
-    const base =
-      catalog?.get(key) ||
-      FALLBACK_LABELS[key] ||
-      f.description?.content?.trim();
-    if (!base) continue;
-    const label = withFee && f.indFee ? `${base} (برسوم)` : base;
+    const label = formatHotelbedsFacilityLabel(f, catalog, withFee);
+    if (!label) continue;
     if (!seen.has(label)) {
       seen.add(label);
       human.push(label);
@@ -105,7 +145,7 @@ function mapFacilityLabels(
       if (keys.includes(key)) filterIds.add(filterId);
     }
     for (const [filterId, re] of Object.entries(FILTER_FACILITY_KEYWORDS)) {
-      if (re.test(base) || re.test(key)) filterIds.add(filterId);
+      if (re.test(label) || re.test(key)) filterIds.add(filterId);
     }
   }
 
@@ -119,7 +159,7 @@ function mapRoomFacilities(
 ): string[] {
   const resolved = resolveContentRoomCode(content, roomCode) || roomCode;
   const room = content?.rooms?.find((r) => r.roomCode === resolved);
-  return mapFacilityLabels(room?.roomFacilities, catalog, true).human.slice(0, 12);
+  return mapFacilityLabels(room?.roomFacilities, catalog, true).human.slice(0, 20);
 }
 
 function contentRoomOf(content: HbContentHotel | undefined, roomCode: string) {
@@ -252,6 +292,7 @@ export function enrichDetailsFromContent(input: {
           imageUrl,
         images: images.slice(0, 8),
         facilities: mapRoomFacilities(content, resolved || room.code, facilityCatalog),
+        sizeSqm: roomSizeSqmFromFacilities(contentRoom?.roomFacilities) ?? room.sizeSqm,
         description: contentRoom?.description?.content?.trim() || room.description,
         occupancy: contentRoom
           ? {

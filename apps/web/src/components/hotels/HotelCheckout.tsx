@@ -355,9 +355,15 @@ export function HotelCheckout({
             </div>
           </section>
 
-          {roomsGrouped.map(([roomIndex, guests]) => (
+          {roomsGrouped.map(([roomIndex, guests]) => {
+            const picked = draft.selectedRates?.[roomIndex] || (roomIndex === 0 ? draft.selectedRate : undefined);
+            const pickedName = picked ? translateRoomNameAr(picked.roomName).ar : "";
+            return (
             <section key={roomIndex} className="shop-flight-checkout-card">
-              <h2>نزلاء الغرفة {roomIndex + 1}</h2>
+              <h2>
+                نزلاء الغرفة {roomIndex + 1}
+                {pickedName ? ` · ${pickedName}` : ""}
+              </h2>
               {fieldErrors[`room-${roomIndex}-lead`] ? (
                 <p className="shop-field-error" id={`field-room-${roomIndex}-lead`}>
                   {fieldErrors[`room-${roomIndex}-lead`]}
@@ -519,7 +525,8 @@ export function HotelCheckout({
                 );
               })}
             </section>
-          ))}
+            );
+          })}
 
           <section className="shop-flight-checkout-card">
             <h2>طلبات خاصة (اختياري)</h2>

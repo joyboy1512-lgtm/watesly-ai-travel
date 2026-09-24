@@ -148,11 +148,16 @@ export function occupancyFromSearchParams(params: HotelResultsSearchParams): Hot
   if (decoded?.length) return decoded;
   const ages = String(params.childrenAges || "")
     .split(",")
-    .map((a) => Number(a.trim()))
+    .map((p) => p.trim())
+    .filter(Boolean)
+    .map((a) => Number(a))
     .filter((a) => Number.isFinite(a) && a >= 0 && a <= 17);
   const roomCount = Math.max(1, params.rooms || 1);
   const adults = Math.max(1, params.adults || 1);
-  const children = Math.max(0, params.children || ages.length);
+  const children = Math.max(
+    0,
+    Number.isFinite(params.children) ? Number(params.children) : ages.length,
+  );
   while (ages.length < children) ages.push(8);
   const rooms: HotelRoomOccParam[] = [];
   let remainingAdults = adults;
@@ -170,6 +175,22 @@ export function occupancyFromSearchParams(params: HotelResultsSearchParams): Hot
   if (remainingAdults > 0) rooms[0]!.adults += remainingAdults;
   if (remainingAges.length) rooms[0]!.childAges.push(...remainingAges);
   return rooms;
+}
+
+/** Change stay room count and rebuild occupancy. Extra rooms get at least one adult. */
+export function stayWithRoomCount(
+  params: HotelResultsSearchParams,
+  rooms: number,
+): HotelResultsSearchParams {
+  const n = Math.min(HOTEL_STAY_CAPS.maxRooms, Math.max(1, rooms));
+  const adults = Math.max(params.adults || 1, n);
+  const children = Math.max(0, params.children || 0);
+  return clampHotelSearchParams(
+    syncHotelSearchParams(
+      { ...params, occ: "", childrenAges: children ? params.childrenAges : "" },
+      { rooms: n, adults, children },
+    ),
+  );
 }
 
 export function parseHotelResultsSearch(

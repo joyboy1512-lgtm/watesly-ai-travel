@@ -1,10 +1,12 @@
-import { inferHotelPropertyType, type HotelOffer } from "@watesly-travel/shared";
-import type {
-  HotelPropertyDetails,
-  HotelRateOption,
-  HotelRoomOption,
+import {
+  boardLabelAr,
+  inferHotelPropertyType,
+  uniqueShopRooms,
+  type HotelOffer,
+  type HotelPropertyDetails,
+  type HotelRateOption,
+  type HotelRoomOption,
 } from "@watesly-travel/shared";
-import { boardLabelAr } from "@watesly-travel/shared";
 import type { HotelSearchParams } from "../types";
 import { amountToMinor } from "../types";
 import { enrichDetailsFromContent } from "./hotelbeds-content-mapper";
@@ -191,12 +193,10 @@ export function extractHotelbedsRateOptions(
     }
   }
 
-  rateOptions.sort((a, b) => a.net - b.net);
-  rooms.sort(
-    (a, b) => (a.rates[0]?.net ?? Infinity) - (b.rates[0]?.net ?? Infinity),
-  );
+  const mergedRooms = uniqueShopRooms(rooms);
+  const uniqueRates = mergedRooms.flatMap((room) => room.rates).sort((a, b) => a.net - b.net);
 
-  return { rooms, rateOptions };
+  return { rooms: mergedRooms, rateOptions: uniqueRates };
 }
 
 function sourceMeta(liveMode: boolean, baseUrl?: string) {

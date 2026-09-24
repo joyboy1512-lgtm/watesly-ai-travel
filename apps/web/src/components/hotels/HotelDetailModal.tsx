@@ -48,7 +48,9 @@ type Props = {
   onContinueToReview?: (
     rate: HotelRateOption,
     extras?: { priceChanged?: boolean; previousTotalMinor?: number },
+    allRates?: HotelRateOption[],
   ) => void;
+  onNeededRoomsChange?: (rooms: number) => void;
   checkRatePath?: string;
   fetchJson?: typeof apiFetch;
   variant?: "default" | "shop";
@@ -137,6 +139,7 @@ export function HotelDetailModal({
   onEnterGuestData,
   onCheckout,
   onContinueToReview,
+  onNeededRoomsChange,
   checkRatePath = "/bookings/checkrate-hotel",
   fetchJson = apiFetch,
   variant = "default",
@@ -321,6 +324,88 @@ export function HotelDetailModal({
           ? "انتهت مهلة الاتصال بالمزوّد. حاول مرة أخرى أو اختر تعرفة أخرى."
           : msg,
       );
+    } finally {
+      setCheckingRateKey(null);
+    }
+  }
+
+  async function handleBookRates(rates: HotelRateOption[]) {
+    if (rates.length <= 1) {
+      await handleBookRate(rates[0]!);
+      return;
+    }
+    setCheckError("");
+    setPriceChange(null);
+    setPendingRate(null);
+    setPriceAccepted(false);
+    const expMs = hotel.expiresAt ? new Date(hotel.expiresAt).getTime() : NaN;
+    if (Number.isFinite(expMs) && expMs <= Date.now()) {
+      setCheckPhase("expired");
+      setCheckError("انتهت صلاحية هذا العرض المحفوظ. ارجع إلى النتائج وأعد البحث.");
+      return;
+    }
+    setCheckPhase("checking");
+    const confirmed: HotelRateOption[] = [];
+    let previousTotal = 0;
+    let changed = false;
+    try {
+      for (const rate of rates) {
+        setCheckingRateKey(rate.rateKey);
+        const result = await fetchJson<CheckRateResponse>(checkRatePath, {
+          method: "POST",
+          timeoutMs: 35000,
+          body: JSON.stringify({
+            rateKey: rate.rateKey,
+            offer: {
+              providerKey: String(
+                rate.sourceProvider || hotel.details.provider || "hotelbeds",
+              ),
+              providerOfferRef: hotel.id,
+              description: hotel.description,
+              costAmountMinor: hotel.costAmountMinor || hotel.sellAmountMinor,
+              currency: hotel.currency,
+              revalidationToken: JSON.stringify({
+                hotelCode: rate.sourceHotelCode || hotel.details.hotelCode,
+                rateKey: rate.rateKey,
+                rateType: rate.rateType,
+                checkIn: hotel.details.checkInDate || meta.departDate,
+                checkOut: hotel.details.checkOutDate || meta.returnDate,
+              }),
+              expiresAt: hotel.expiresAt,
+              raw: hotel.details,
+            },
+          }),
+        });
+        if (!result.available) {
+          setCheckPhase("soldout");
+          setCheckError("انتهى التوفر لهذه التعرفة. اختر غرفة أخرى أو أعد البحث.");
+          return;
+        }
+        const nextRate: HotelRateOption = {
+          ...rate,
+          ...(result.selectedRate || {}),
+          rateComments: result.rateComments || result.selectedRate?.rateComments || rate.rateComments,
+        };
+        confirmed.push(nextRate);
+        previousTotal += rateDisplayMinor(rate, hotel, nights);
+        if (result.priceChanged) changed = true;
+      }
+      if (onContinueToReview) {
+        onContinueToReview(
+          confirmed[0]!,
+          changed ? { priceChanged: true, previousTotalMinor: previousTotal } : undefined,
+          confirmed,
+        );
+        return;
+      }
+      setSelectedRate(confirmed[0]!);
+      setCheckPhase("confirmed");
+    } catch (err) {
+      setCheckPhase("error");
+      const msg = err instanceof Error ? err.message : "تعذر التحقق من السعر";
+      setCheckError(/timeout|abort|timed out|انتهت/i.test(msg)
+        ? "انتهت مهلة الاتصال بالمزوّد. حاول مرة أخرى أو اختر تعرفة أخرى."
+        : msg);
     } finally {
       setCheckingRateKey(null);
     }
@@ -814,8 +899,11 @@ export function HotelDetailModal({
                   <TvlkHotelRoomCards
                     hotel={hotel}
                     nights={nights}
+                    neededRooms={meta.rooms}
                     checkingRateKey={checkingRateKey}
                     onBookRate={(rate) => void handleBookRate(rate)}
+                    onBookRates={(rates) => void handleBookRates(rates)}
+                    onNeededRoomsChange={onNeededRoomsChange}
                   />
                 ) : (
                   <HotelRoomAccordion

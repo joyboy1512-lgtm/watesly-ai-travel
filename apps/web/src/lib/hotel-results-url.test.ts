@@ -12,6 +12,7 @@ import {
   matchShopHotel,
   nightsBetween,
   parseHotelResultsSearch,
+  stayWithRoomCount,
 } from "./hotel-results-url";
 
 test("hotelOfferCode strips hb- prefix", () => {
@@ -135,4 +136,26 @@ test("parseHotelResultsSearch clamps oversize occupancy from the URL", () => {
   assert.equal(q.children, 6);
   assert.ok(q.adults + q.children <= 30);
   assert.ok(nightsBetween(q.checkIn, q.checkOut) <= 30);
+});
+
+test("stayWithRoomCount adds a second occupancy without forcing the same room type", () => {
+  const next = stayWithRoomCount(
+    {
+      destination: "Dubai",
+      destinationLabel: "Dubai",
+      checkIn: "2026-10-20",
+      checkOut: "2026-10-22",
+      adults: 2,
+      children: 0,
+      infants: 0,
+      rooms: 1,
+      childrenAges: "",
+      occ: "2",
+    },
+    2,
+  );
+  assert.equal(next.rooms, 2);
+  assert.equal(next.adults, 2);
+  assert.equal(next.children, 0);
+  assert.equal(next.occ, "1|1");
 });

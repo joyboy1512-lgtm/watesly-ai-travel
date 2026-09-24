@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { boardLabelAr, normalizePaymentTypeAr, translateRoomNameAr } from "@watesly-travel/shared";
 import {
   formatPolicyDate,
@@ -16,9 +16,11 @@ import {
   guestCountForRate,
   looksLikeBed,
   pickRoomFacts,
+  uniqueShopRooms,
   VISIBLE_RATE_LIMIT,
   type RoomFactKind,
 } from "@/lib/hotel-room-table";
+import { shopNightCount } from "@/lib/hotel-occupancy";
 import { formatMoneyMinor } from "@/lib/format";
 import { useShopCopy } from "@/components/shop/ShopI18nProvider";
 import { HotelMediaImage } from "@/components/hotels/HotelMediaImage";
@@ -27,8 +29,12 @@ import { TvlkRoomDetailsPanel } from "@/components/hotels/TvlkRoomDetailsPanel";
 type Props = {
   hotel: HotelOfferRow & { matchingRates: HotelRateOption[]; displayFromMinor: number };
   nights: number;
+  neededRooms?: number;
+  maxRooms?: number;
   checkingRateKey?: string | null;
   onBookRate: (rate: HotelRateOption) => void;
+  onBookRates?: (rates: HotelRateOption[]) => void;
+  onNeededRoomsChange?: (rooms: number) => void;
 };
 
 type RateChip = "all" | "breakfast" | "freeCancel" | "payHotel";
@@ -57,6 +63,14 @@ function rateMatchesChip(rate: HotelRateOption, chip: RateChip) {
   return true;
 }
 
+function roomForRate(rooms: HotelRoomOption[], rate: HotelRateOption | null): HotelRoomOption | undefined {
+  if (!rate) return undefined;
+  return (
+    rooms.find((room) => room.rates.some((row) => row.rateKey === rate.rateKey)) ||
+    rooms.find((room) => room.code && room.code === rate.roomCode)
+  );
+}
+
 function collectRooms(hotel: Props["hotel"]): HotelRoomOption[] {
   const raw = hotel.details.rooms;
   const fromDetails = Array.isArray(raw) ? (raw as HotelRoomOption[]) : [];
@@ -68,8 +82,7 @@ function collectRooms(hotel: Props["hotel"]): HotelRoomOption[] {
         .sort((a, b) => a.net - b.net),
     }))
     .filter((room) => room.rates.length > 0);
-  if (filtered.length) return filtered;
-  return groupRatesIntoRooms(hotel.matchingRates);
+  return uniqueShopRooms(filtered.length ? filtered : groupRatesIntoRooms(hotel.matchingRates));
 }
 
 function GuestIcons({ count }: { count: number }) {
@@ -173,29 +186,88 @@ function FactIcon({ kind }: { kind: RoomFactKind }) {
 }
 
 /** Traveloka-style room + rate table: photo, options, terms, nightly price, Choose. */
-export function TvlkHotelRoomCards({ hotel, nights, checkingRateKey, onBookRate }: Props) {
-  const { t } = useShopCopy();
+export function TvlkHotelRoomCards({
+  hotel,
+  nights,
+  neededRooms = 1,
+  maxRooms = 8,
+  checkingRateKey,
+  onBookRate,
+  onBookRates,
+  onNeededRoomsChange,
+}: Props) {
+  const { t, locale } = useShopCopy();
   const rooms = useMemo(() => collectRooms(hotel), [hotel]);
+  const slots = Math.max(1, neededRooms);
+  const mixMatch = slots > 1;
   const [chip, setChip] = useState<RateChip>("all");
   const [openPanel, setOpenPanel] = useState<string | null>(null);
   const [expandedRates, setExpandedRates] = useState<Record<string, boolean>>({});
+  const [picks, setPicks] = useState<Array<HotelRateOption | null>>(() =>
+    Array.from({ length: slots }, () => null),
+  );
+  const [activeSlot, setActiveSlot] = useState(0);
+  const picksRef = useRef(picks);
+  const activeSlotRef = useRef(activeSlot);
 
+  useEffect(() => {
+    const empty = Array.from({ length: slots }, () => null);
+    setPicks(empty);
+    setActiveSlot(0);
+    picksRef.current = empty;
+    activeSlotRef.current = 0;
+  }, [slots, hotel.id]);
+
+  const slotPicks = picks.length === slots ? picks : Array.from({ length: slots }, () => null);
+  picksRef.current = slotPicks;
+  activeSlotRef.current = activeSlot;
+  const pickedRates = slotPicks.filter((p): p is HotelRateOption => Boolean(p));
+  const pickTotalMinor = pickedRates.reduce(
+    (sum, rate) => sum + rateDisplayMinor(rate, hotel, nights),
+    0,
+  );
+
+  function assignRate(rate: HotelRateOption) {
+    if (!mixMatch) {
+      onBookRate(rate);
+      return;
+    }
+    const current =
+      picksRef.current.length === slots
+        ? picksRef.current.slice()
+        : Array.from({ length: slots }, () => null);
+    let idx = activeSlotRef.current;
+    if (idx < 0 || idx >= slots) {
+      idx = current.findIndex((p) => !p);
+    }
+    if (idx < 0 || idx >= slots) idx = 0;
+    current[idx] = rate;
+    picksRef.current = current;
+    const laterEmpty = current.findIndex((p, i) => i > idx && !p);
+    const anyEmpty = current.findIndex((p) => !p);
+    const nextSlot = laterEmpty >= 0 ? laterEmpty : anyEmpty >= 0 ? anyEmpty : idx;
+    activeSlotRef.current = nextSlot;
+    setPicks(current);
+    setActiveSlot(nextSlot);
+  }
+
+  const uniqueRates = rooms.flatMap((room) => room.rates);
   const visible = rooms
     .map((room) => ({ ...room, rates: room.rates.filter((r) => rateMatchesChip(r, chip)) }))
     .filter((room) => room.rates.length > 0);
 
   const chips = (
     [
-      { id: "all" as const, label: t("allRoomOffers"), count: hotel.matchingRates.length },
+      { id: "all" as const, label: t("allRoomOffers"), count: uniqueRates.length },
       {
         id: "breakfast" as const,
         label: t("filterBreakfast"),
-        count: hotel.matchingRates.filter((r) => rateMatchesChip(r, "breakfast")).length,
+        count: uniqueRates.filter((r) => rateMatchesChip(r, "breakfast")).length,
       },
       {
         id: "freeCancel" as const,
         label: t("filterFreeCancel"),
-        count: hotel.matchingRates.filter((r) => r.freeCancellation).length,
+        count: uniqueRates.filter((r) => r.freeCancellation).length,
       },
     ] satisfies Array<{ id: RateChip; label: string; count: number }>
   ).filter((c) => c.id === "all" || c.count > 0);
@@ -225,6 +297,138 @@ export function TvlkHotelRoomCards({ hotel, nights, checkingRateKey, onBookRate 
           </div>
         ) : null}
       </header>
+
+      <div className="tvlk-room-pick-bar">
+        <div className="tvlk-room-edit-head">
+          <div>
+            <p>{mixMatch ? t("selectRoomSlotOf", { n: activeSlot + 1, total: slots }) : t("editStayRooms")}</p>
+            <small>{t("mixMatchHint")}</small>
+          </div>
+          {onNeededRoomsChange ? (
+            <div className="tvlk-room-edit-actions">
+              <button
+                type="button"
+                disabled={slots <= 1 || Boolean(checkingRateKey)}
+                onClick={() => onNeededRoomsChange(slots - 1)}
+              >
+                {t("removeLastRoom")}
+              </button>
+              <button
+                type="button"
+                disabled={slots >= maxRooms || Boolean(checkingRateKey)}
+                onClick={() => onNeededRoomsChange(slots + 1)}
+              >
+                {t("addAnotherRoom")}
+              </button>
+            </div>
+          ) : null}
+        </div>
+        {mixMatch ? (
+          <div className="tvlk-pick-summary">
+            <h3>{t("selectedRoomsSummary")}</h3>
+            <table>
+              <thead>
+                <tr>
+                  <th>{t("roomSlotCol")}</th>
+                  <th>{t("roomDetailsCol")}</th>
+                  <th>{t("pricePerRoomNight")}</th>
+                  <th>{t("roomStayCol")}</th>
+                  <th />
+                </tr>
+              </thead>
+              <tbody>
+                {slotPicks.map((pick, i) => {
+                  const room = roomForRate(rooms, pick);
+                  const names = pick ? translateRoomNameAr(pick.roomName) : null;
+                  const photo = room?.imageUrl || room?.images?.[0];
+                  const facts = room ? pickRoomFacts(room) : [];
+                  const bed = facts.find(looksLikeBed);
+                  const stayMinor = pick ? rateDisplayMinor(pick, hotel, nights) : 0;
+                  const nightMinor = pick && nights > 0 ? Math.round(stayMinor / nights) : stayMinor;
+                  const cancel = pick ? cancellationSummary(pick) : null;
+                  const pay = pick ? normalizePaymentTypeAr(pick.paymentType).ar : "";
+                  const guests = pick && room ? guestCountForRate(pick, room) : 0;
+                  const active = activeSlot === i;
+                  return (
+                    <tr
+                      key={i}
+                      className={`${pick ? "is-filled" : "is-empty"}${active ? " is-active" : ""}`}
+                      onClick={() => setActiveSlot(i)}
+                    >
+                      <th scope="row">{t("chooseRoomSlot", { n: i + 1 })}</th>
+                      <td>
+                        {pick ? (
+                          <div className="tvlk-pick-detail">
+                            <HotelMediaImage
+                              src={photo}
+                              alt={names?.ar || pick.roomName}
+                              className="tvlk-pick-thumb"
+                              preferMedium
+                              compactEmpty
+                            />
+                            <div>
+                              <strong>{names?.ar || pick.roomName}</strong>
+                              <span>
+                                {boardLabelAr(pick.boardCode, pick.boardName)}
+                                {facts[0] ? ` · ${facts[0]}` : ""}
+                                {bed && bed !== facts[0] ? ` · ${bed}` : ""}
+                                {guests ? ` · ${t("guestsInRoom", { n: guests })}` : ""}
+                              </span>
+                              <span>
+                                {cancel ? cancel.text : ""}
+                                {pay ? ` · ${pay}` : ""}
+                              </span>
+                            </div>
+                          </div>
+                        ) : (
+                          t(active ? "pickSlotActive" : "pickSlotWaiting")
+                        )}
+                      </td>
+                      <td>{pick ? formatMoneyMinor(nightMinor, hotel.currency) : "—"}</td>
+                      <td>{pick ? formatMoneyMinor(stayMinor, hotel.currency) : "—"}</td>
+                      <td>
+                        {pick ? (
+                          <button
+                            type="button"
+                            className="tvlk-room-pick-clear"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setPicks((prev) => prev.map((p, idx) => (idx === i ? null : p)));
+                              setActiveSlot(i);
+                            }}
+                          >
+                            {t("changeRoomPick")}
+                          </button>
+                        ) : null}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+              <tfoot>
+                <tr>
+                  <th scope="row" colSpan={3}>
+                    {t("roomsGrandTotal")} · {shopNightCount(locale, nights)}
+                  </th>
+                  <td>{formatMoneyMinor(pickTotalMinor, hotel.currency)}</td>
+                  <td />
+                </tr>
+              </tfoot>
+            </table>
+            <div className="tvlk-room-pick-total">
+              <span>{t("roomsPickedOf", { picked: pickedRates.length, total: slots })}</span>
+              <button
+                type="button"
+                className="tvlk-rate-select"
+                disabled={pickedRates.length !== slots || Boolean(checkingRateKey)}
+                onClick={() => (onBookRates || ((rates) => onBookRate(rates[0]!)))(pickedRates)}
+              >
+                {t("continuePickedRooms")}
+              </button>
+            </div>
+          </div>
+        ) : null}
+      </div>
 
       {visible.length === 0 ? <p className="hint">{t("noMatchingRoomOffers")}</p> : null}
 
@@ -295,12 +499,16 @@ export function TvlkHotelRoomCards({ hotel, nights, checkingRateKey, onBookRate 
                   const busy = checkingRateKey === rate.rateKey;
                   const board = boardLabelAr(rate.boardCode, rate.boardName);
                   const guests = guestCountForRate(rate, room);
-                  const roomCount = Math.max(1, Number(rate.rooms || 1));
+                  const roomCount = mixMatch ? 1 : Math.max(1, Number(rate.rooms || 1));
                   const bedLine = facts.find(looksLikeBed);
                   const pay = normalizePaymentTypeAr(rate.paymentType).ar;
+                  const picked = mixMatch && slotPicks.some((p) => p?.rateKey === rate.rateKey);
 
                   return (
-                    <div key={rate.rateKey} className="tvlk-rate-table-row">
+                    <div
+                      key={rate.rateKey}
+                      className={`tvlk-rate-table-row${picked ? " is-picked" : ""}`}
+                    >
                       <div className="tvlk-rate-option">
                         <strong>{board}</strong>
                         {bedLine ? <p className="tvlk-rate-bed">{bedLine}</p> : null}
@@ -327,9 +535,15 @@ export function TvlkHotelRoomCards({ hotel, nights, checkingRateKey, onBookRate 
                         type="button"
                         className="tvlk-rate-select"
                         disabled={Boolean(checkingRateKey)}
-                        onClick={() => onBookRate(rate)}
+                        onClick={() => assignRate(rate)}
                       >
-                        {busy ? t("checkingPrice") : t("chooseRate")}
+                        {busy
+                          ? t("checkingPrice")
+                          : mixMatch
+                            ? picked
+                              ? t("roomPickedShort")
+                              : t("assignToRoomSlot", { n: activeSlot + 1 })
+                            : t("chooseRate")}
                       </button>
                     </div>
                   );

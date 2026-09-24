@@ -25,6 +25,7 @@ import {
   buildHotelResultsHref,
   clampHotelSearchParams,
   hotelSearchRequestBody,
+  stayWithRoomCount,
   isHotelSuggestItem,
   matchShopHotel,
   nightsBetween,
@@ -256,11 +257,25 @@ function HotelDetailInner() {
   function continueToReview(
     rate: HotelRateOption,
     extras?: { priceChanged?: boolean; previousTotalMinor?: number },
+    allRates?: HotelRateOption[],
   ) {
     if (!hotel) return;
-    const totalMinor = rateDisplayMinor(rate, hotel, meta.nights);
+    const rates = allRates?.length ? allRates : [rate];
+    const totalMinor = rates.reduce((sum, row) => sum + rateDisplayMinor(row, hotel, meta.nights), 0);
     if (!totalMinor) return;
-    const priceBreakdown = buildHotelDraftPriceBreakdown(rate, hotel, meta.nights);
+    const priceBreakdown = rates
+      .map((row) => buildHotelDraftPriceBreakdown(row, hotel, meta.nights))
+      .reduce((acc, row) => ({
+        stayMinor: acc.stayMinor + row.stayMinor,
+        includedTaxMinor: acc.includedTaxMinor + row.includedTaxMinor,
+        excludedTaxMinor: acc.excludedTaxMinor + row.excludedTaxMinor,
+        serviceFeeMinor: acc.serviceFeeMinor + row.serviceFeeMinor,
+        payNowMinor: acc.payNowMinor + row.payNowMinor,
+        payAtHotelMinor: acc.payAtHotelMinor + row.payAtHotelMinor,
+        tripTotalMinor: acc.tripTotalMinor + row.tripTotalMinor,
+        perNightMinor: acc.perNightMinor + row.perNightMinor,
+        taxesIncluded: acc.taxesIncluded && row.taxesIncluded,
+      }));
     const roomOcc = occupancyFromSearchParams(urlParams);
     saveHotelDraft({
       hotel: {
@@ -274,10 +289,11 @@ function HotelDetailInner() {
           validatedAt: new Date().toISOString(),
         },
       },
-      selectedRate: toDraftHotelRate(rate),
+      selectedRate: toDraftHotelRate(rates[0]!),
+      selectedRates: rates.map(toDraftHotelRate),
       checkIn: meta.departDate,
       checkOut: meta.returnDate,
-      rooms: meta.rooms,
+      rooms: Math.max(meta.rooms, rates.length),
       adults: meta.adults,
       children: meta.children,
       infants: meta.infants,
@@ -327,6 +343,12 @@ function HotelDetailInner() {
         badge: hotelSuggestBadge(c.label || c.city || q, kind),
       };
     });
+  }
+
+  function changeNeededRooms(rooms: number) {
+    const next = stayWithRoomCount({ ...urlParams, ...draft }, rooms);
+    setDraft(next);
+    router.push(buildHotelDetailHref(hotelId, next));
   }
 
   function applyStaySearch() {
@@ -409,6 +431,7 @@ function HotelDetailInner() {
         variant="shop"
         onClose={() => router.push(resultsHref)}
         onContinueToReview={continueToReview}
+        onNeededRoomsChange={changeNeededRooms}
       />
     </div>
   );

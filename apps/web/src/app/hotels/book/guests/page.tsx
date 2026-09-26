@@ -22,6 +22,7 @@ import {
 } from "@/lib/shop-session";
 import { unlockShopCustomer, verifyShopUnlock } from "@/lib/shop-unlock";
 import { translateRoomNameAr } from "@watesly-travel/shared";
+import { draftOfferPricing } from "@/lib/hotel-draft-price";
 import { formatMoneyMinor } from "@/lib/format";
 import {
   shopAdultCount,
@@ -278,7 +279,8 @@ export default function HotelGuestsPage() {
           offer: {
             id: draft.hotel.id,
             description: draft.hotel.description,
-            sellAmountMinor: draft.hotel.sellAmountMinor,
+            sellAmountMinor:
+              draftOfferPricing(draft)?.payNowMinor ?? draft.hotel.sellAmountMinor,
             currency: draft.hotel.currency,
             details: draft.hotel.details,
             providerOfferRef: draft.hotel.id,
@@ -312,7 +314,7 @@ export default function HotelGuestsPage() {
             roomGuests,
             selectedRate: draft.selectedRate,
             selectedRates: draft.selectedRates,
-            priceBreakdown: draft.priceBreakdown,
+            priceBreakdown: draftOfferPricing(draft) || draft.priceBreakdown,
           },
         }),
       });
@@ -351,7 +353,7 @@ export default function HotelGuestsPage() {
         })
         .join(" · ")
     : "غرفة";
-  const bd = draft.priceBreakdown;
+  const bd = draftOfferPricing(draft) || draft.priceBreakdown;
   const payNow = bd?.payNowMinor ?? draft.totalMinor ?? draft.hotel.sellAmountMinor;
   const payAtHotel = bd?.payAtHotelMinor ?? 0;
   const hotelName = String(draft.hotel.details.name || draft.hotel.description || "فندق");

@@ -146,18 +146,7 @@ export function HotelSearchCard({
     cheapest?.taxes?.allIncluded === false ? t("taxesExcluded") : t("taxesIncluded");
   const priceBreakdown =
     cheapest && hotel.displayFromMinor > 0
-      ? buildHotelDraftPriceBreakdown(
-          cheapest,
-          {
-            id: hotel.id,
-            description: hotel.description || String(hotel.details.name || t("hotelFallback")),
-            sellAmountMinor: hotel.sellAmountMinor,
-            costAmountMinor: hotel.costAmountMinor,
-            currency: hotel.currency,
-            details: hotel.details,
-          },
-          nights,
-        )
+      ? buildHotelDraftPriceBreakdown(cheapest, hotel, nights)
       : null;
 
   const sandbox =

@@ -82,6 +82,30 @@ export function hotelMinorToMajor(minor: MoneyMinor, currency: string): number {
   return minor / currencyMinorFactor(currency);
 }
 
+/**
+ * Guest-facing markup only. A real 10–200% rule stays as-is.
+ * Ratios like 10×–20× are unit/rule leftovers and must never appear as
+ * “WeekendGate commission”.
+ */
+export const HOTEL_DISPLAY_MARKUP_CAP = 3;
+export const HOTEL_DISPLAY_MARKUP_FALLBACK = 1.1;
+
+export function safeHotelMarkupRatio(sellMinor?: number, costMinor?: number): number {
+  const sell = Number(sellMinor || 0);
+  const cost = Number(costMinor || 0);
+  if (!(sell > 0) || !(cost > 0)) return HOTEL_DISPLAY_MARKUP_FALLBACK;
+  const ratio = sell / cost;
+  if (!Number.isFinite(ratio) || ratio < 1) return HOTEL_DISPLAY_MARKUP_FALLBACK;
+  if (ratio > HOTEL_DISPLAY_MARKUP_CAP) return HOTEL_DISPLAY_MARKUP_FALLBACK;
+  return ratio;
+}
+
+export function safeHotelSellMinor(costMinor: MoneyMinor, sellMinor?: MoneyMinor): MoneyMinor {
+  const cost = Number(costMinor || 0);
+  if (!(cost > 0)) return Math.max(0, Math.round(Number(sellMinor || 0)));
+  return Math.round(cost * safeHotelMarkupRatio(sellMinor, cost));
+}
+
 export function formatHotelMoney(minor: MoneyMinor, currency: string): string {
   return formatMoneyMinorShared(minor, currency);
 }
@@ -106,12 +130,12 @@ export function sellMinorForStayNet(input: {
   if (rateCostMinor <= 0) return 0;
 
   if (costAmountMinor && costAmountMinor > 0) {
-    return Math.round(rateCostMinor * (sellAmountMinor / costAmountMinor));
+    return Math.round(rateCostMinor * safeHotelMarkupRatio(sellAmountMinor, costAmountMinor));
   }
 
   const refMajor = referenceNetMajor && referenceNetMajor > 0 ? referenceNetMajor : rateNetMajor;
-  // sellMinor / majorRef would incorrectly re-apply the minor factor — use ratio of majors.
-  return Math.round(sellAmountMinor * (rateNetMajor / refMajor));
+  const scaled = Math.round(sellAmountMinor * (rateNetMajor / refMajor));
+  return safeHotelSellMinor(rateCostMinor, scaled);
 }
 
 /**
@@ -192,8 +216,9 @@ export function buildHotelPriceBreakdown(input: {
   const costMinor = input.costAmountMinor && input.costAmountMinor > 0
     ? input.costAmountMinor
     : baseMinor;
-  const serviceFeeMinor = Math.max(0, input.sellAmountMinor - costMinor);
-  const totalMinor = input.sellAmountMinor > 0 ? input.sellAmountMinor : baseMinor + serviceFeeMinor;
+  const rawSell = Number(input.sellAmountMinor || 0);
+  const totalMinor = rawSell > 0 ? safeHotelSellMinor(costMinor, rawSell) : baseMinor;
+  const serviceFeeMinor = Math.max(0, totalMinor - costMinor);
   const perNightMinor = nights > 0 ? Math.round(totalMinor / nights) : totalMinor;
   const payNowMinor = totalMinor;
   const payAtHotelMinor = taxes.excludedMinor;

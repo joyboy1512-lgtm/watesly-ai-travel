@@ -16,7 +16,6 @@ import {
 import {
   defaultHotelFilters,
   filterHotelOffers,
-  rateDisplayMinor,
   type HotelOfferRow,
   type HotelRateOption,
 } from "@/lib/hotel-search";
@@ -261,8 +260,6 @@ function HotelDetailInner() {
   ) {
     if (!hotel) return;
     const rates = allRates?.length ? allRates : [rate];
-    const totalMinor = rates.reduce((sum, row) => sum + rateDisplayMinor(row, hotel, meta.nights), 0);
-    if (!totalMinor) return;
     const priceBreakdown = rates
       .map((row) => buildHotelDraftPriceBreakdown(row, hotel, meta.nights))
       .reduce((acc, row) => ({
@@ -276,6 +273,11 @@ function HotelDetailInner() {
         perNightMinor: acc.perNightMinor + row.perNightMinor,
         taxesIncluded: acc.taxesIncluded && row.taxesIncluded,
       }));
+    const totalMinor = priceBreakdown.payNowMinor;
+    if (!totalMinor) return;
+    priceBreakdown.perNightMinor = Math.round(
+      priceBreakdown.payNowMinor / Math.max(1, meta.nights),
+    );
     const roomOcc = occupancyFromSearchParams(urlParams);
     saveHotelDraft({
       hotel: {
@@ -286,6 +288,7 @@ function HotelDetailInner() {
         details: {
           ...hotel.details,
           costAmountMinor: hotel.costAmountMinor,
+          offerSellAmountMinor: hotel.sellAmountMinor,
           validatedAt: new Date().toISOString(),
         },
       },

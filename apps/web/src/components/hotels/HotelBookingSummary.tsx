@@ -2,19 +2,18 @@
 
 import { useState } from "react";
 import {
-  buildHotelPriceBreakdown,
   hotelMajorToMinor,
   translateRoomNameAr,
 } from "@watesly-travel/shared";
 import {
   formatHotelDay,
   formatPolicyDate,
-  rateDisplayMinor,
   taxTypeLabelAr,
   type HotelOfferRow,
   type HotelRateOption,
   type HotelRoomOption,
 } from "@/lib/hotel-search";
+import { buildHotelDraftPriceBreakdown } from "@/lib/hotel-draft-price";
 import { formatMoneyMinor } from "@/lib/format";
 import { summarizeRateCommentsAr } from "@/lib/hotel-rate-comments";
 import {
@@ -25,7 +24,6 @@ import {
 } from "@/lib/hotel-occupancy";
 import { useShopCopy } from "@/components/shop/ShopI18nProvider";
 import { HotelPricePanel } from "./HotelPricePanel";
-import type { HotelDraftPriceBreakdown } from "@/lib/booking-draft";
 
 type StayMeta = {
   stayQuery: string;
@@ -129,7 +127,8 @@ export function HotelBookingSummary({
   const [showOriginalComments, setShowOriginalComments] = useState(false);
 
   const hotelName = String(hotel.details.name || "فندق");
-  const totalMinor = rateDisplayMinor(rate, hotel, nights);
+  const draftBreakdown = buildHotelDraftPriceBreakdown(rate, hotel, nights);
+  const totalMinor = draftBreakdown.payNowMinor;
   const perNight = nights > 0 ? Math.round(totalMinor / nights) : totalMinor;
   const rooms = Array.isArray(hotel.details.rooms)
     ? (hotel.details.rooms as HotelRoomOption[])
@@ -144,29 +143,7 @@ export function HotelBookingSummary({
   const taxItems = rate.taxes?.items || [];
   const roomName = translateRoomNameAr(rate.roomName);
   const comments = summarizeRateCommentsAr(rate.rateComments);
-  const breakdown = buildHotelPriceBreakdown({
-    stayNetMajor: rate.net,
-    currency: hotel.currency,
-    nights,
-    rooms: rate.rooms,
-    sellAmountMinor: totalMinor || hotel.sellAmountMinor,
-    costAmountMinor: hotel.costAmountMinor,
-    dailyRates: rate.dailyRates,
-    taxes: rate.taxes,
-    netBasis: rate.netBasis || "stay",
-  });
-
-  const panelBreakdown: HotelDraftPriceBreakdown = {
-    stayMinor: breakdown.baseMinor,
-    includedTaxMinor: breakdown.includedTaxMinor,
-    excludedTaxMinor: breakdown.excludedTaxMinor,
-    serviceFeeMinor: breakdown.serviceFeeMinor,
-    payNowMinor: breakdown.payNowMinor,
-    payAtHotelMinor: breakdown.payAtHotelMinor,
-    tripTotalMinor: breakdown.tripTotalMinor,
-    perNightMinor: breakdown.perNightMinor,
-    taxesIncluded: breakdown.taxesIncluded,
-  };
+  const panelBreakdown = draftBreakdown;
 
   const infoSections = [
     { title: "خدمات الغرفة", items: roomFacilities },

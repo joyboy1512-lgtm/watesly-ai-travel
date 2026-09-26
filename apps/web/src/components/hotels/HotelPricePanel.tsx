@@ -2,6 +2,7 @@
 
 import type { HotelDraftPriceBreakdown } from "@/lib/booking-draft";
 import { useShopCopy } from "@/components/shop/ShopI18nProvider";
+import { sanitizeHotelDraftBreakdown } from "@/lib/hotel-draft-price";
 
 export type HotelPricePanelInput = {
   currency: string;
@@ -38,7 +39,7 @@ export function HotelPricePanel({
     tripTotalMinor,
     perNightMinor,
     taxesIncluded,
-  } = breakdown;
+  } = sanitizeHotelDraftBreakdown(breakdown, nights);
 
   if (variant === "card") {
     return (
@@ -137,6 +138,9 @@ export function HotelPricePanel({
             : t("localFeesHotel")}
         </p>
       )}
+      {serviceFeeMinor > 0 ? (
+        <p className="hotel-price-panel-note">{t("wgFeeHint")}</p>
+      ) : null}
     </div>
   );
 }

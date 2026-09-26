@@ -326,14 +326,14 @@ export function TvlkHotelRoomCards({
         {mixMatch ? (
           <div className="tvlk-pick-summary">
             <h3>{t("selectedRoomsSummary")}</h3>
-            <table>
+            <table className="tvlk-pick-grid">
               <thead>
                 <tr>
                   <th>{t("roomSlotCol")}</th>
                   <th>{t("roomDetailsCol")}</th>
                   <th>{t("pricePerRoomNight")}</th>
                   <th>{t("roomStayCol")}</th>
-                  <th />
+                  <th>{t("changeRoomPick")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -406,7 +406,7 @@ export function TvlkHotelRoomCards({
                 })}
               </tbody>
               <tfoot>
-                <tr>
+                <tr className="tvlk-pick-total-row">
                   <th scope="row" colSpan={3}>
                     {t("roomsGrandTotal")} · {shopNightCount(locale, nights)}
                   </th>

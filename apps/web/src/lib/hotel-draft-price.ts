@@ -1,21 +1,57 @@
-import { buildHotelPriceBreakdown, type HotelRateOption } from "@watesly-travel/shared";
-import type { HotelDraftPriceBreakdown } from "@/lib/booking-draft";
-import { rateDisplayMinor, type HotelOfferRow } from "@/lib/hotel-search";
+import {
+  buildHotelPriceBreakdown,
+  hotelMajorToMinor,
+  type HotelRateOption,
+} from "@watesly-travel/shared";
+import type { HotelDraftPriceBreakdown } from "./booking-draft";
+
+type PricedHotelOffer = {
+  currency: string;
+  sellAmountMinor?: number;
+  costAmountMinor?: number;
+};
+
+/** Active-rule sell/cost, ignoring unit-bug ratios that look like 10×–20× markups. */
+export function hotelOfferMarkupRatio(sellMinor?: number, costMinor?: number): number {
+  const sell = Number(sellMinor || 0);
+  const cost = Number(costMinor || 0);
+  if (!(sell > 0) || !(cost > 0)) return 1.1;
+  const ratio = sell / cost;
+  if (!Number.isFinite(ratio) || ratio < 1) return 1.1;
+  if (ratio > 3) return 1.1;
+  return ratio;
+}
+
+export function hotelRateStayCostMinor(rate: HotelRateOption, currency: string): number {
+  return hotelMajorToMinor(Number(rate.net || 0), currency);
+}
+
+/** Sell for this selected rate only — never the cheapest hotel residual. */
+export function sellMinorForSelectedRate(
+  rate: HotelRateOption,
+  offer: PricedHotelOffer,
+  _nights?: number,
+): number {
+  const stayCost = hotelRateStayCostMinor(rate, offer.currency);
+  if (!(stayCost > 0)) return 0;
+  return Math.round(stayCost * hotelOfferMarkupRatio(offer.sellAmountMinor, offer.costAmountMinor));
+}
 
 /** Build review-ready price breakdown from a selected rate + offer. */
 export function buildHotelDraftPriceBreakdown(
   rate: HotelRateOption,
-  offer: HotelOfferRow,
+  offer: PricedHotelOffer,
   nights: number,
 ): HotelDraftPriceBreakdown {
-  const sellMinor = rateDisplayMinor(rate, offer, nights);
+  const stayCost = hotelRateStayCostMinor(rate, offer.currency);
+  const sellMinor = sellMinorForSelectedRate(rate, offer, nights);
   const breakdown = buildHotelPriceBreakdown({
     stayNetMajor: rate.net,
     currency: offer.currency,
     nights,
-    rooms: rate.rooms,
-    sellAmountMinor: sellMinor || offer.sellAmountMinor,
-    costAmountMinor: offer.costAmountMinor,
+    rooms: 1,
+    sellAmountMinor: sellMinor,
+    costAmountMinor: stayCost,
     dailyRates: rate.dailyRates,
     taxes: rate.taxes,
     netBasis: rate.netBasis || "stay",

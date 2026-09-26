@@ -131,11 +131,16 @@ export function HotelPricePanel({
           {t("totalLine", { price: formatMoney(tripTotalMinor, currency) })}
         </p>
       ) : (
-        <p className="hotel-price-panel-note">
-          {taxesIncluded
-            ? t("taxesInPrice")
-            : t("localFeesHotel")}
-        </p>
+        <>
+          <p className="hotel-price-panel-note">
+            {taxesIncluded
+              ? t("taxesInPrice")
+              : t("localFeesHotel")}
+          </p>
+          {serviceFeeMinor > 0 ? (
+            <p className="hotel-price-panel-note">{t("wgFeeHint")}</p>
+          ) : null}
+        </>
       )}
     </div>
   );

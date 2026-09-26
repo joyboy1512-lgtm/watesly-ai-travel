@@ -2,7 +2,6 @@
 
 import type { HotelDraftPriceBreakdown } from "@/lib/booking-draft";
 import { useShopCopy } from "@/components/shop/ShopI18nProvider";
-import { sanitizeHotelDraftBreakdown } from "@/lib/hotel-draft-price";
 
 export type HotelPricePanelInput = {
   currency: string;
@@ -30,16 +29,16 @@ export function HotelPricePanel({
 }: HotelPricePanelInput) {
   const { t, currency: displayCurrency, formatMoney } = useShopCopy();
   const {
-    stayMinor,
     includedTaxMinor,
     excludedTaxMinor,
-    serviceFeeMinor,
     payNowMinor,
     payAtHotelMinor,
     tripTotalMinor,
     perNightMinor,
     taxesIncluded,
-  } = sanitizeHotelDraftBreakdown(breakdown, nights);
+  } = breakdown;
+  /** Guest stay line is the priced sell — never cost, never a profit row. */
+  const stayPriceMinor = payNowMinor;
 
   if (variant === "card") {
     return (
@@ -85,7 +84,7 @@ export function HotelPricePanel({
       <dl className="hotel-price-panel-dl">
         <div>
           <dt>{t("stayPrice")}</dt>
-          <dd>{formatMoney(stayMinor, currency)}</dd>
+          <dd>{formatMoney(stayPriceMinor, currency)}</dd>
         </div>
         {includedTaxMinor > 0 ? (
           <div>
@@ -97,12 +96,6 @@ export function HotelPricePanel({
           <div>
             <dt>{t("excludedTaxes")}</dt>
             <dd>{formatMoney(excludedTaxMinor, currency)}</dd>
-          </div>
-        ) : null}
-        {serviceFeeMinor > 0 ? (
-          <div>
-            <dt>{t("wgFees")}</dt>
-            <dd>{formatMoney(serviceFeeMinor, currency)}</dd>
           </div>
         ) : null}
         <div>
@@ -138,9 +131,6 @@ export function HotelPricePanel({
             : t("localFeesHotel")}
         </p>
       )}
-      {serviceFeeMinor > 0 ? (
-        <p className="hotel-price-panel-note">{t("wgFeeHint")}</p>
-      ) : null}
     </div>
   );
 }

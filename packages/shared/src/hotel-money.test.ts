@@ -27,7 +27,7 @@ describe("hotel money — Hotelbeds stay-total semantics", () => {
     assert.equal(hotelMinorToMajor(150500, "KWD").toFixed(3), "150.500");
   });
 
-  it("does not paint a 20× leftover as WeekendGate commission", () => {
+  it("follows the offer sell/cost rule instead of inventing 10%", () => {
     const stayNet = 611.184;
     const costMinor = hotelMajorToMinor(stayNet, "KWD");
     const display = sellMinorForStayNet({
@@ -37,7 +37,7 @@ describe("hotel money — Hotelbeds stay-total semantics", () => {
       costAmountMinor: 519_462,
       referenceNetMajor: stayNet,
     });
-    assert.equal(display, Math.round(costMinor * 1.1));
+    assert.equal(display, Math.round(costMinor * (12_003_095 / 519_462)));
     const breakdown = buildHotelPriceBreakdown({
       stayNetMajor: stayNet,
       currency: "KWD",
@@ -47,8 +47,8 @@ describe("hotel money — Hotelbeds stay-total semantics", () => {
       costAmountMinor: costMinor,
     });
     assert.equal(breakdown.baseMinor, costMinor);
-    assert.ok(breakdown.serviceFeeMinor < costMinor * 0.3, `fee=${breakdown.serviceFeeMinor}`);
-    assert.ok(breakdown.payNowMinor < 800_000, `payNow=${breakdown.payNowMinor}`);
+    assert.equal(breakdown.payNowMinor, 12_003_095);
+    assert.equal(breakdown.serviceFeeMinor, 12_003_095 - costMinor);
   });
 
   it("does NOT re-apply ×1000 when computing sell from stay net", () => {
@@ -217,7 +217,7 @@ describe("hotel offer normalizer — ratings", () => {
     assert.equal(priced.perNightMinor, Math.round(165550 / 7));
   });
 
-  it("displayFromMinorForOffer clamps a 20× leftover sell", () => {
+  it("displayFromMinorForOffer keeps the active-rule sell", () => {
     const priced = displayFromMinorForOffer({
       sellAmountMinor: 12_003_095,
       costAmountMinor: 611184,
@@ -227,6 +227,6 @@ describe("hotel offer normalizer — ratings", () => {
       rateNetMajor: 611.184,
     });
     assert.equal(priced.valid, true);
-    assert.equal(priced.displayFromMinor, Math.round(611184 * 1.1));
+    assert.equal(priced.displayFromMinor, 12_003_095);
   });
 });

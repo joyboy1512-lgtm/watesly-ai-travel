@@ -1,7 +1,7 @@
 import {
   buildHotelPriceBreakdown,
   hotelMajorToMinor,
-  safeHotelMarkupRatio,
+  hotelOfferMarkupRatio,
   type HotelRateOption,
 } from "@watesly-travel/shared";
 import type { HotelDraftPriceBreakdown } from "./booking-draft";
@@ -12,13 +12,13 @@ type PricedHotelOffer = {
   costAmountMinor?: number;
 };
 
-export const hotelOfferMarkupRatio = safeHotelMarkupRatio;
+export { hotelOfferMarkupRatio };
 
 export function hotelRateStayCostMinor(rate: HotelRateOption, currency: string): number {
   return hotelMajorToMinor(Number(rate.net || 0), currency);
 }
 
-/** Sell for this selected rate only — never the cheapest hotel residual. */
+/** Sell for this selected rate using the offer's active pricing-rule ratio. */
 export function sellMinorForSelectedRate(
   rate: HotelRateOption,
   offer: PricedHotelOffer,
@@ -58,29 +58,6 @@ export function buildHotelDraftPriceBreakdown(
     tripTotalMinor: breakdown.tripTotalMinor,
     perNightMinor: breakdown.perNightMinor,
     taxesIncluded: breakdown.taxesIncluded,
-  };
-}
-
-/** Never paint a leftover sell−cheapest dump as WeekendGate commission. */
-export function sanitizeHotelDraftBreakdown(
-  breakdown: HotelDraftPriceBreakdown,
-  nights = 1,
-): HotelDraftPriceBreakdown {
-  const stay = Number(breakdown.stayMinor || 0);
-  const fee = Number(breakdown.serviceFeeMinor || 0);
-  const payNow = Number(breakdown.payNowMinor || 0);
-  const payAtHotel = Number(breakdown.payAtHotelMinor || 0);
-  if (!(stay > 0)) return breakdown;
-  if (fee <= stay * 0.3 && payNow <= stay * 3) return breakdown;
-  const serviceFeeMinor = Math.round(stay * 0.1);
-  const payNowMinor = stay + serviceFeeMinor;
-  const safeNights = Math.max(1, Math.round(nights) || 1);
-  return {
-    ...breakdown,
-    serviceFeeMinor,
-    payNowMinor,
-    tripTotalMinor: payNowMinor + payAtHotel,
-    perNightMinor: Math.round(payNowMinor / safeNights),
   };
 }
 
@@ -143,7 +120,7 @@ export function reviewBreakdownFromDraft(input: {
   const summed = sumHotelDraftBreakdowns(rows);
   if (!summed) return null;
   summed.perNightMinor = Math.round(summed.payNowMinor / Math.max(1, input.nights));
-  return sanitizeHotelDraftBreakdown(summed, input.nights);
+  return summed;
 }
 
 export function sumHotelDraftBreakdowns(

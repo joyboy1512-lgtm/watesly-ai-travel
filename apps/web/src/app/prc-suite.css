@@ -416,6 +416,25 @@
   font-size: 0.78rem;
 }
 
+.prc-suite .prc-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.prc-suite .cust-table-btn.danger {
+  color: #8b1e1e;
+  border-color: #d7a3a3;
+  background: #fff6f6;
+}
+
+.prc-suite .prc-row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  align-items: center;
+}
+
 .prc-suite .sr-only {
   position: absolute;
   width: 1px;

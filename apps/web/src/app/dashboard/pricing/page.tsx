@@ -396,6 +396,8 @@ export default function PricingPage() {
     ...emptyForm,
     currency: getPreferredCurrency(),
   });
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const formCardRef = useRef<HTMLElement | null>(null);
   const [showConditions, setShowConditions] = useState(true);
   const [error, setError] = useState("");
   const [ok, setOk] = useState("");
@@ -515,6 +517,17 @@ export default function PricingPage() {
       ? "الوجهات (مطارات)"
       : "مطارات الوصول";
 
+  function majorFromMinor(minor: number, currency: string) {
+    const exp =
+      currency === "KWD" ||
+      currency === "BHD" ||
+      currency === "OMR" ||
+      currency === "JOD"
+        ? 3
+        : 2;
+    return Number((minor / 10 ** exp).toFixed(exp));
+  }
+
   function minorFromMajor(major: number, currency: string) {
     const exp =
       currency === "KWD" ||
@@ -552,7 +565,63 @@ export default function PricingPage() {
     return Object.keys(conditions).length ? conditions : null;
   }
 
-  async function create() {
+  function resetForm() {
+    setEditingId(null);
+    setForm({ ...emptyForm, currency: getPreferredCurrency() });
+    setShowConditions(true);
+  }
+
+  function startEdit(row: Rule) {
+    const c = row.conditions || {};
+    const currency = row.currency || getPreferredCurrency();
+    setEditingId(row.id);
+    setForm({
+      name: row.name,
+      serviceType: row.serviceType,
+      ruleType: row.ruleType,
+      applyBasis: c.applyBasis === "booking" ? "booking" : "unit",
+      percentValue: Number(row.percentValue || 0),
+      minProfitMajor:
+        row.minProfitAmount != null ? majorFromMinor(row.minProfitAmount, currency) : 0,
+      fixedMajor: row.fixedAmount != null ? majorFromMinor(row.fixedAmount, currency) : 0,
+      currency,
+      priority: row.priority,
+      bookingCommissionPercent: Number(c.bookingCommissionPercent || 0),
+      bookingCommissionMajor: Number(c.bookingCommissionAmount || 0),
+      origins: c.origins || [],
+      destinations: c.destinations || [],
+      cabinClasses: c.cabinClasses || [],
+      hotelStars: c.hotelStars || [],
+      providers: c.providers || [],
+      minPrice: c.minPrice != null ? String(c.minPrice) : "",
+      maxPrice: c.maxPrice != null ? String(c.maxPrice) : "",
+      dateFrom: c.dateFrom || "",
+      dateTo: c.dateTo || "",
+    });
+    setShowConditions(true);
+    setError("");
+    setOk(`جاري تعديل «${row.name}»`);
+    formCardRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  function rulePayload() {
+    return {
+      name: form.name.trim(),
+      serviceType: form.serviceType,
+      ruleType: form.ruleType,
+      percentValue: form.ruleType === "fixed" ? 0 : form.percentValue,
+      fixedAmount:
+        form.ruleType === "fixed"
+          ? minorFromMajor(form.fixedMajor, form.currency)
+          : 0,
+      minProfitAmount: minorFromMajor(form.minProfitMajor, form.currency),
+      currency: form.currency,
+      priority: form.priority,
+      conditions: buildConditions(),
+    };
+  }
+
+  async function save() {
     setError("");
     setOk("");
     if (!form.name.trim()) {
@@ -569,29 +638,23 @@ export default function PricingPage() {
     }
     setLoading(true);
     try {
-      await apiFetch("/pricing-rules", {
-        method: "POST",
-        body: JSON.stringify({
-          name: form.name.trim(),
-          serviceType: form.serviceType,
-          ruleType: form.ruleType,
-          percentValue: form.ruleType === "fixed" ? 0 : form.percentValue,
-          fixedAmount:
-            form.ruleType === "fixed"
-              ? minorFromMajor(form.fixedMajor, form.currency)
-              : undefined,
-          minProfitAmount: minorFromMajor(form.minProfitMajor, form.currency),
-          currency: form.currency,
-          priority: form.priority,
-          conditions: buildConditions(),
-        }),
-      });
-      setOk("تمت إضافة قاعدة التسعير");
-      setForm({ ...emptyForm, currency: getPreferredCurrency() });
-      setShowConditions(false);
+      if (editingId) {
+        await apiFetch(`/pricing-rules/${editingId}`, {
+          method: "PATCH",
+          body: JSON.stringify(rulePayload()),
+        });
+        setOk("تم حفظ تعديلات القاعدة");
+      } else {
+        await apiFetch("/pricing-rules", {
+          method: "POST",
+          body: JSON.stringify(rulePayload()),
+        });
+        setOk("تمت إضافة قاعدة التسعير");
+      }
+      resetForm();
       await load();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "فشل الإنشاء");
+      setError(err instanceof Error ? err.message : "فشل الحفظ");
     } finally {
       setLoading(false);
     }
@@ -599,14 +662,39 @@ export default function PricingPage() {
 
   async function toggle(row: Rule) {
     setError("");
+    setOk("");
     try {
       await apiFetch(`/pricing-rules/${row.id}`, {
         method: "PATCH",
         body: JSON.stringify({ isActive: !row.isActive }),
       });
+      setOk(
+        row.isActive
+          ? `تم إلغاء تفعيل «${row.name}». الأسعار تظهر كما هي من المزوّد إذا لم تبقَ قاعدة مفعّلة.`
+          : `تم تفعيل «${row.name}»`,
+      );
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : "فشل التحديث");
+    }
+  }
+
+  async function remove(row: Rule) {
+    const okDelete = window.confirm(
+      row.isActive
+        ? `حذف القاعدة المفعّلة «${row.name}»؟ إذا لم تبقَ قاعدة مفعّلة لنفس الخدمة، ستظهر الأسعار كما هي من المزوّد.`
+        : `حذف القاعدة «${row.name}» نهائياً؟`,
+    );
+    if (!okDelete) return;
+    setError("");
+    setOk("");
+    try {
+      await apiFetch(`/pricing-rules/${row.id}`, { method: "DELETE" });
+      if (editingId === row.id) resetForm();
+      setOk(`تم حذف «${row.name}»`);
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "فشل الحذف");
     }
   }
 
@@ -714,9 +802,9 @@ export default function PricingPage() {
             <p className="prc-kicker">Pricing Rules</p>
             <h3>قواعد التسعير والأرباح</h3>
             <p>
-              القاعدة الجديدة تُطبَّق على كل تفصيلة: التذكرة أو الشخص في الطيران،
-              والغرفة في الفندق — وليست على إجمالي الحجز. يمكنك إضافة بند عمولة
-              إجمالية يُحسب مرة واحدة على الحجز.
+              يمكن تعديل أي قاعدة محفوظة أو إلغاء تفعيلها أو حذفها — بما فيها
+              المفعّلة. إذا لم تبقَ قاعدة مفعّلة لنفس الخدمة، تظهر الأسعار كما هي
+              من المزوّد دون هامش.
             </p>
           </div>
           <button
@@ -770,13 +858,15 @@ export default function PricingPage() {
           />
         </section>
 
-        <section className="prc-card prc-new">
+        <section className="prc-card prc-new" ref={formCardRef}>
           <div className="prc-card-head">
-            <h4>قاعدة جديدة</h4>
+            <h4>{editingId ? "تعديل قاعدة محفوظة" : "قاعدة جديدة"}</h4>
             <p>
-              {isHotel
-                ? "خمسة بنود مميّزة: التعريف، النطاق، الهامش لكل غرفة، عمولة الإجمالي، ثم الشروط."
-                : "خمسة بنود مميّزة: التعريف، النطاق، الهامش لكل تذكرة، عمولة الإجمالي، ثم الشروط."}
+              {editingId
+                ? "التغييرات تُحفظ على نفس القاعدة المفعّلة أو المعطّلة."
+                : isHotel
+                  ? "خمسة بنود مميّزة: التعريف، النطاق، الهامش لكل غرفة، عمولة الإجمالي، ثم الشروط."
+                  : "خمسة بنود مميّزة: التعريف، النطاق، الهامش لكل تذكرة، عمولة الإجمالي، ثم الشروط."}
             </p>
           </div>
 
@@ -1173,10 +1263,27 @@ export default function PricingPage() {
               type="button"
               className="btn"
               disabled={loading}
-              onClick={() => void create()}
+              onClick={() => void save()}
             >
-              {loading ? "جارٍ الإضافة..." : "إضافة قاعدة"}
+              {loading
+                ? "جارٍ الحفظ..."
+                : editingId
+                  ? "حفظ التعديل"
+                  : "إضافة قاعدة"}
             </button>
+            {editingId ? (
+              <button
+                type="button"
+                className="btn secondary"
+                disabled={loading}
+                onClick={() => {
+                  resetForm();
+                  setOk("");
+                }}
+              >
+                إلغاء التعديل
+              </button>
+            ) : null}
           </div>
         </section>
 
@@ -1259,13 +1366,29 @@ export default function PricingPage() {
                           </span>
                         </td>
                         <td>
-                          <button
-                            type="button"
-                            className="cust-table-btn"
-                            onClick={() => void toggle(row)}
-                          >
-                            {row.isActive ? "تعطيل" : "تفعيل"}
-                          </button>
+                          <div className="prc-actions">
+                            <button
+                              type="button"
+                              className="cust-table-btn"
+                              onClick={() => startEdit(row)}
+                            >
+                              تعديل
+                            </button>
+                            <button
+                              type="button"
+                              className="cust-table-btn"
+                              onClick={() => void toggle(row)}
+                            >
+                              {row.isActive ? "إلغاء التفعيل" : "تفعيل"}
+                            </button>
+                            <button
+                              type="button"
+                              className="cust-table-btn danger"
+                              onClick={() => void remove(row)}
+                            >
+                              حذف
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     );

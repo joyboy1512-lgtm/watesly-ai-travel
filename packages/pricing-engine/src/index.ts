@@ -242,7 +242,7 @@ export function applyPricingRule(input: {
   const minProfit = asFiniteNumber(input.rule?.minProfitAmount);
 
   if (!input.rule) {
-    profit = Math.round(cost * 0.1);
+    profit = 0;
   } else if (input.rule.ruleType === "fixed") {
     profit = Math.round(fixed) * units;
   } else if (input.rule.ruleType === "percent_with_min") {

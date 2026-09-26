@@ -1893,28 +1893,56 @@ html body .shop-root.wg-new-ui .shop-main.shop-main-wide:has(.tvlk-hotel.shop-ho
   border-bottom: 1px solid var(--tvlk-line);
 }
 
-.tvlk-pick-summary table {
+.tvlk-pick-summary table,
+.tvlk-pick-summary .tvlk-pick-grid {
   width: 100%;
   border-collapse: collapse;
+  table-layout: fixed;
   font-size: 0.9rem;
 }
 
 .tvlk-pick-summary th,
 .tvlk-pick-summary td {
-  padding: 10px 14px;
-  border-bottom: 1px solid #eef2f5;
+  padding: 11px 14px;
+  border: 1px solid #d7dee6;
   text-align: start;
   color: #111827;
+  vertical-align: middle;
+}
+
+.tvlk-pick-summary .tvlk-pick-grid th:nth-child(1),
+.tvlk-pick-summary .tvlk-pick-grid td:nth-child(1) {
+  width: 14%;
+}
+
+.tvlk-pick-summary .tvlk-pick-grid th:nth-child(3),
+.tvlk-pick-summary .tvlk-pick-grid td:nth-child(3),
+.tvlk-pick-summary .tvlk-pick-grid th:nth-child(4),
+.tvlk-pick-summary .tvlk-pick-grid td:nth-child(4) {
+  width: 16%;
+}
+
+.tvlk-pick-summary .tvlk-pick-grid th:nth-child(5),
+.tvlk-pick-summary .tvlk-pick-grid td:nth-child(5) {
+  width: 12%;
 }
 
 .tvlk-pick-summary thead th {
-  font-size: 0.78rem;
-  color: #4b5563;
-  background: #fff;
+  background: #001b35;
+  color: #fff;
+  font-size: 0.88rem;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  border-color: #001b35;
 }
 
 .tvlk-pick-summary tbody tr {
   cursor: pointer;
+  background: #fff;
+}
+
+.tvlk-pick-summary tbody tr:nth-child(even) {
+  background: #f8fafc;
 }
 
 .tvlk-pick-summary tbody tr.is-empty td,
@@ -1923,7 +1951,7 @@ html body .shop-root.wg-new-ui .shop-main.shop-main-wide:has(.tvlk-hotel.shop-ho
 }
 
 .tvlk-pick-summary tbody tr.is-active {
-  background: #f3f9fe;
+  background: #e6f5fe;
 }
 
 .tvlk-pick-detail {
@@ -1957,10 +1985,11 @@ html body .shop-root.wg-new-ui .shop-main.shop-main-wide:has(.tvlk-hotel.shop-ho
   line-height: 1.45;
 }
 
-.tvlk-pick-summary tfoot th,
-.tvlk-pick-summary tfoot td {
-  border-bottom: 0;
-  background: #f3f9fe;
+.tvlk-pick-summary tfoot .tvlk-pick-total-row th,
+.tvlk-pick-summary tfoot .tvlk-pick-total-row td {
+  background: #c9a227;
+  color: #001b35;
+  border-color: #b8921d;
   font-weight: 800;
   font-size: 1rem;
 }
@@ -1985,31 +2014,14 @@ html body .shop-root.wg-new-ui .shop-main.shop-main-wide:has(.tvlk-hotel.shop-ho
 }
 
 @media (max-width: 720px) {
+  .tvlk-pick-summary {
+    overflow-x: auto;
+  }
+
   .tvlk-pick-summary table,
-  .tvlk-pick-summary thead,
-  .tvlk-pick-summary tbody,
-  .tvlk-pick-summary tfoot,
-  .tvlk-pick-summary tr,
-  .tvlk-pick-summary th,
-  .tvlk-pick-summary td {
-    display: block;
-    width: 100%;
-  }
-
-  .tvlk-pick-summary thead {
-    display: none;
-  }
-
-  .tvlk-pick-summary td,
-  .tvlk-pick-summary th {
-    border-bottom: 0;
-    padding: 4px 14px;
-  }
-
-  .tvlk-pick-summary tbody tr,
-  .tvlk-pick-summary tfoot tr {
-    padding: 10px 0;
-    border-bottom: 1px solid #eef2f5;
+  .tvlk-pick-summary .tvlk-pick-grid {
+    min-width: 640px;
+    table-layout: auto;
   }
 }
 

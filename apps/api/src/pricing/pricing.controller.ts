@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post } from "@nestjs/common";
+import { Body, Controller, Delete, Get, NotFoundException, Param, Patch, Post } from "@nestjs/common";
 import { CurrentUser, RequirePermissions } from "../auth/decorators";
 import type { AuthUser } from "../auth/auth.types";
 import { PrismaService } from "../prisma/prisma.service";
@@ -193,13 +193,14 @@ export class PricingController {
       isActive?: boolean;
       priority?: number;
       ruleType?: string;
+      currency?: string;
       conditions?: PricingConditionsBody | null;
     },
   ) {
     const existing = await this.prisma.pricingRule.findFirst({
       where: { id, organizationId: user.organizationId },
     });
-    if (!existing) return null;
+    if (!existing) throw new NotFoundException("قاعدة التسعير غير موجودة");
 
     const data: Prisma.PricingRuleUpdateInput = {};
     if (body.name !== undefined) data.name = body.name;
@@ -212,6 +213,9 @@ export class PricingController {
     if (body.isActive !== undefined) data.isActive = body.isActive;
     if (body.priority !== undefined) data.priority = body.priority;
     if (body.ruleType !== undefined) data.ruleType = body.ruleType;
+    if (body.currency !== undefined) {
+      data.currency = body.currency.trim().toUpperCase();
+    }
     if (body.conditions !== undefined) {
       data.conditions = cleanConditions(body.conditions);
     }
@@ -232,5 +236,25 @@ export class PricingController {
     });
 
     return row;
+  }
+
+  @Delete(":id")
+  @RequirePermissions("pricing.manage")
+  async remove(@CurrentUser() user: AuthUser, @Param("id") id: string) {
+    const existing = await this.prisma.pricingRule.findFirst({
+      where: { id, organizationId: user.organizationId },
+    });
+    if (!existing) throw new NotFoundException("قاعدة التسعير غير موجودة");
+
+    await this.prisma.pricingRule.delete({ where: { id } });
+    await this.audit.log({
+      organizationId: user.organizationId,
+      actorUserId: user.userId,
+      action: "pricing.rule.delete",
+      entityType: "PricingRule",
+      entityId: id,
+      before: existing,
+    });
+    return { ok: true, id };
   }
 }

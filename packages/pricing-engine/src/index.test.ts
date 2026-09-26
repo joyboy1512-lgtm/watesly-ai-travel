@@ -79,6 +79,29 @@ describe("selectPricingRule", () => {
 });
 
 describe("priceCostWithRules", () => {
+  it("uses the provider cost as-is when no active rule matches", () => {
+    const priced = applyPricingRule({
+      costAmountMinor: 80_000,
+      currency: "KWD",
+      serviceType: "hotel",
+      rule: null,
+    });
+    assert.equal(priced.sellAmountMinor, 80_000);
+    assert.equal(priced.profitAmountMinor, 0);
+    assert.equal(priced.pricingRuleId, undefined);
+  });
+
+  it("uses the provider cost when every saved rule is inactive", () => {
+    const priced = priceCostWithRules({
+      costAmountMinor: 50_000,
+      currency: "KWD",
+      serviceType: "hotel",
+      rules: [rule({ id: "off", serviceType: "hotel", percentValue: 25, isActive: false })],
+    });
+    assert.equal(priced.sellAmountMinor, 50_000);
+    assert.equal(priced.profitAmountMinor, 0);
+  });
+
   it("marks up a transfer with an all percent rule", () => {
     const priced = priceCostWithRules({
       costAmountMinor: 20_000,

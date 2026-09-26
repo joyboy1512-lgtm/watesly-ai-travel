@@ -13,6 +13,7 @@ import {
 import type { MoneyMinor } from "./types";
 import {
   buildHotelPriceBreakdown,
+  safeHotelSellMinor,
   sellMinorForStayNet,
   validateHotelSellPrice,
   type HotelNetBasis,
@@ -457,14 +458,16 @@ export function displayFromMinorForOffer(input: {
   const nights = Math.max(1, input.nights || 1);
   const rateNet = input.rateNetMajor ?? input.minRateMajor;
   let display = input.sellAmountMinor;
-  if (rateNet && input.minRateMajor && rateNet !== input.minRateMajor) {
+  if (rateNet && rateNet > 0) {
     display = sellMinorForStayNet({
       rateNetMajor: rateNet,
       currency: input.currency,
       sellAmountMinor: input.sellAmountMinor,
       costAmountMinor: input.costAmountMinor,
-      referenceNetMajor: input.minRateMajor,
+      referenceNetMajor: input.minRateMajor || rateNet,
     });
+  } else if (input.costAmountMinor && input.costAmountMinor > 0) {
+    display = safeHotelSellMinor(input.costAmountMinor, input.sellAmountMinor);
   }
   const validation = validateHotelSellPrice({
     totalMinor: display,

@@ -6,6 +6,7 @@ import { translateRoomNameAr } from "@watesly-travel/shared";
 import { formatHotelDay } from "@/lib/hotel-search";
 import { ShopMockBanner } from "@/components/shop/ShopMockBanner";
 import { HotelPricePanel, hotelPriceFromParts } from "@/components/hotels/HotelPricePanel";
+import { draftOfferPricing } from "@/lib/hotel-draft-price";
 import type { HotelBookingDraft, HotelRoomGuestDraft } from "@/lib/booking-draft";
 import {
   shopAdultCount,
@@ -156,7 +157,7 @@ export function HotelCheckout({
   const rate = draft.selectedRate;
   const nights = draft.nights || 1;
   const hotelName = String(draft.hotel.details.name || draft.hotel.description || "فندق");
-  const bd = draft.priceBreakdown;
+  const bd = draftOfferPricing(draft) || draft.priceBreakdown;
   const currency = draft.hotel.currency;
   const payNow = bd?.payNowMinor ?? draft.totalMinor ?? draft.hotel.sellAmountMinor;
   const payAtHotel = bd?.payAtHotelMinor ?? 0;

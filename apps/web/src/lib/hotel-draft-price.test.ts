@@ -3,6 +3,8 @@ import test from "node:test";
 import {
   buildHotelDraftPriceBreakdown,
   hotelOfferMarkupRatio,
+  reviewBreakdownFromDraft,
+  sanitizeHotelDraftBreakdown,
   sellMinorForSelectedRate,
 } from "./hotel-draft-price";
 import type { HotelRateOption } from "@watesly-travel/shared";
@@ -54,6 +56,45 @@ test("review breakdown shows a small WG commission instead of sell minus cheapes
   assert.ok(row.serviceFeeMinor > 0 && row.serviceFeeMinor < row.stayMinor * 0.3);
   assert.ok(row.payNowMinor < 280_000);
   assert.ok(row.serviceFeeMinor < 80_000, `fee=${row.serviceFeeMinor}`);
+});
+
+test("sanitizeHotelDraftBreakdown hides a leftover 11k commission", () => {
+  const sanitized = sanitizeHotelDraftBreakdown(
+    {
+      stayMinor: 611184,
+      includedTaxMinor: 0,
+      excludedTaxMinor: 35112,
+      serviceFeeMinor: 11_483_633,
+      payNowMinor: 11_967_983,
+      payAtHotelMinor: 35112,
+      tripTotalMinor: 12_003_095,
+      perNightMinor: 1_709_712,
+      taxesIncluded: false,
+    },
+    7,
+  );
+  assert.equal(sanitized.stayMinor, 611184);
+  assert.equal(sanitized.serviceFeeMinor, Math.round(611184 * 0.1));
+  assert.ok(sanitized.payNowMinor < 800_000);
+  assert.ok(sanitized.tripTotalMinor < 850_000);
+});
+
+test("reviewBreakdownFromDraft rebuilds the Avani 3-room screenshot without a huge fee", () => {
+  const bd = reviewBreakdownFromDraft({
+    rates: [
+      { net: 200 },
+      { net: 210 },
+      { net: 201.184, taxes: { allIncluded: false, items: [{ amount: 35.112, currency: "KWD", included: false }] } },
+    ],
+    currency: "KWD",
+    sellAmountMinor: 12_003_095,
+    costAmountMinor: 519_462,
+    nights: 7,
+  });
+  assert.ok(bd);
+  assert.equal(bd!.stayMinor, 611184);
+  assert.ok(bd!.serviceFeeMinor < bd!.stayMinor * 0.3, `fee=${bd!.serviceFeeMinor}`);
+  assert.ok(bd!.payNowMinor < 800_000, `payNow=${bd!.payNowMinor}`);
 });
 
 test("three mix-match rooms do not inherit the hotel sell three times", () => {

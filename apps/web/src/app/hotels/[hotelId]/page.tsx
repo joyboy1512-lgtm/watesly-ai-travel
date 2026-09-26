@@ -288,6 +288,7 @@ function HotelDetailInner() {
         details: {
           ...hotel.details,
           costAmountMinor: hotel.costAmountMinor,
+          offerSellAmountMinor: hotel.sellAmountMinor,
           validatedAt: new Date().toISOString(),
         },
       },

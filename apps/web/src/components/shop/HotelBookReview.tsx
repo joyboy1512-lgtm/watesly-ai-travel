@@ -10,6 +10,7 @@ import { formatHotelDay } from "@/lib/hotel-search";
 import { formatMoneyMinor } from "@/lib/format";
 import { ShopMockBanner } from "@/components/shop/ShopMockBanner";
 import { HotelPricePanel, hotelPriceFromParts } from "@/components/hotels/HotelPricePanel";
+import { draftOfferPricing } from "@/lib/hotel-draft-price";
 import {
   shopAdultCount,
   shopChildCount,
@@ -51,7 +52,7 @@ export function HotelBookReview({ booking }: Props) {
   const hotelName = String(booking.hotel.details.name || booking.hotel.description || t("hotelFallback"));
   const stars = Number(booking.hotel.details.stars || 0);
   const currency = booking.hotel.currency;
-  const bd = booking.priceBreakdown;
+  const bd = draftOfferPricing(booking) || booking.priceBreakdown;
   const payNow = bd?.payNowMinor ?? booking.totalMinor ?? booking.hotel.sellAmountMinor;
   const payAtHotel = bd?.payAtHotelMinor ?? 0;
   const translated = rate ? translateRoomNameAr(rate.roomName) : null;

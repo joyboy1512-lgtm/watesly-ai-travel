@@ -1,6 +1,7 @@
 import {
   buildHotelPriceBreakdown,
   hotelMajorToMinor,
+  safeHotelMarkupRatio,
   type HotelRateOption,
 } from "@watesly-travel/shared";
 import type { HotelDraftPriceBreakdown } from "./booking-draft";
@@ -11,16 +12,7 @@ type PricedHotelOffer = {
   costAmountMinor?: number;
 };
 
-/** Active-rule sell/cost, ignoring unit-bug ratios that look like 10×–20× markups. */
-export function hotelOfferMarkupRatio(sellMinor?: number, costMinor?: number): number {
-  const sell = Number(sellMinor || 0);
-  const cost = Number(costMinor || 0);
-  if (!(sell > 0) || !(cost > 0)) return 1.1;
-  const ratio = sell / cost;
-  if (!Number.isFinite(ratio) || ratio < 1) return 1.1;
-  if (ratio > 3) return 1.1;
-  return ratio;
-}
+export const hotelOfferMarkupRatio = safeHotelMarkupRatio;
 
 export function hotelRateStayCostMinor(rate: HotelRateOption, currency: string): number {
   return hotelMajorToMinor(Number(rate.net || 0), currency);
@@ -67,6 +59,108 @@ export function buildHotelDraftPriceBreakdown(
     perNightMinor: breakdown.perNightMinor,
     taxesIncluded: breakdown.taxesIncluded,
   };
+}
+
+/** Never paint a leftover sell−cheapest dump as WeekendGate commission. */
+export function sanitizeHotelDraftBreakdown(
+  breakdown: HotelDraftPriceBreakdown,
+  nights = 1,
+): HotelDraftPriceBreakdown {
+  const stay = Number(breakdown.stayMinor || 0);
+  const fee = Number(breakdown.serviceFeeMinor || 0);
+  const payNow = Number(breakdown.payNowMinor || 0);
+  const payAtHotel = Number(breakdown.payAtHotelMinor || 0);
+  if (!(stay > 0)) return breakdown;
+  if (fee <= stay * 0.3 && payNow <= stay * 3) return breakdown;
+  const serviceFeeMinor = Math.round(stay * 0.1);
+  const payNowMinor = stay + serviceFeeMinor;
+  const safeNights = Math.max(1, Math.round(nights) || 1);
+  return {
+    ...breakdown,
+    serviceFeeMinor,
+    payNowMinor,
+    tripTotalMinor: payNowMinor + payAtHotel,
+    perNightMinor: Math.round(payNowMinor / safeNights),
+  };
+}
+
+export function draftOfferPricing(draft: {
+  selectedRates?: Array<{
+    net?: number;
+    taxes?: HotelRateOption["taxes"];
+    dailyRates?: HotelRateOption["dailyRates"];
+    netBasis?: HotelRateOption["netBasis"];
+  }>;
+  selectedRate?: {
+    net?: number;
+    taxes?: HotelRateOption["taxes"];
+    dailyRates?: HotelRateOption["dailyRates"];
+    netBasis?: HotelRateOption["netBasis"];
+  };
+  hotel: { currency: string; sellAmountMinor: number; details: Record<string, unknown> };
+  nights?: number;
+}): HotelDraftPriceBreakdown | null {
+  const rates = draft.selectedRates?.length
+    ? draft.selectedRates
+    : draft.selectedRate
+      ? [draft.selectedRate]
+      : [];
+  return reviewBreakdownFromDraft({
+    rates,
+    currency: draft.hotel.currency,
+    sellAmountMinor:
+      Number(draft.hotel.details.offerSellAmountMinor) || draft.hotel.sellAmountMinor,
+    costAmountMinor: Number(draft.hotel.details.costAmountMinor) || undefined,
+    nights: draft.nights || 1,
+  });
+}
+
+export function reviewBreakdownFromDraft(input: {
+  rates: Array<{
+    net?: number;
+    taxes?: HotelRateOption["taxes"];
+    dailyRates?: HotelRateOption["dailyRates"];
+    netBasis?: HotelRateOption["netBasis"];
+  }>;
+  currency: string;
+  sellAmountMinor?: number;
+  costAmountMinor?: number;
+  nights: number;
+}): HotelDraftPriceBreakdown | null {
+  const rows = input.rates
+    .filter((row) => Number(row.net) > 0)
+    .map((row) =>
+      buildHotelDraftPriceBreakdown(
+        row as HotelRateOption,
+        {
+          currency: input.currency,
+          sellAmountMinor: input.sellAmountMinor,
+          costAmountMinor: input.costAmountMinor,
+        },
+        input.nights,
+      ),
+    );
+  const summed = sumHotelDraftBreakdowns(rows);
+  if (!summed) return null;
+  summed.perNightMinor = Math.round(summed.payNowMinor / Math.max(1, input.nights));
+  return sanitizeHotelDraftBreakdown(summed, input.nights);
+}
+
+export function sumHotelDraftBreakdowns(
+  rows: HotelDraftPriceBreakdown[],
+): HotelDraftPriceBreakdown | null {
+  if (!rows.length) return null;
+  return rows.reduce((acc, row) => ({
+    stayMinor: acc.stayMinor + row.stayMinor,
+    includedTaxMinor: acc.includedTaxMinor + row.includedTaxMinor,
+    excludedTaxMinor: acc.excludedTaxMinor + row.excludedTaxMinor,
+    serviceFeeMinor: acc.serviceFeeMinor + row.serviceFeeMinor,
+    payNowMinor: acc.payNowMinor + row.payNowMinor,
+    payAtHotelMinor: acc.payAtHotelMinor + row.payAtHotelMinor,
+    tripTotalMinor: acc.tripTotalMinor + row.tripTotalMinor,
+    perNightMinor: acc.perNightMinor + row.perNightMinor,
+    taxesIncluded: acc.taxesIncluded && row.taxesIncluded,
+  }));
 }
 
 export function toDraftHotelRate(rate: HotelRateOption) {

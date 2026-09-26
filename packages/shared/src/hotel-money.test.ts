@@ -27,6 +27,30 @@ describe("hotel money — Hotelbeds stay-total semantics", () => {
     assert.equal(hotelMinorToMajor(150500, "KWD").toFixed(3), "150.500");
   });
 
+  it("does not paint a 20× leftover as WeekendGate commission", () => {
+    const stayNet = 611.184;
+    const costMinor = hotelMajorToMinor(stayNet, "KWD");
+    const display = sellMinorForStayNet({
+      rateNetMajor: stayNet,
+      currency: "KWD",
+      sellAmountMinor: 12_003_095,
+      costAmountMinor: 519_462,
+      referenceNetMajor: stayNet,
+    });
+    assert.equal(display, Math.round(costMinor * 1.1));
+    const breakdown = buildHotelPriceBreakdown({
+      stayNetMajor: stayNet,
+      currency: "KWD",
+      nights: 7,
+      rooms: 3,
+      sellAmountMinor: 12_003_095,
+      costAmountMinor: costMinor,
+    });
+    assert.equal(breakdown.baseMinor, costMinor);
+    assert.ok(breakdown.serviceFeeMinor < costMinor * 0.3, `fee=${breakdown.serviceFeeMinor}`);
+    assert.ok(breakdown.payNowMinor < 800_000, `payNow=${breakdown.payNowMinor}`);
+  });
+
   it("does NOT re-apply ×1000 when computing sell from stay net", () => {
     // Hotelbeds: stay net 150.500 KWD → cost 150500 minor, sell +10% = 165550
     const display = sellMinorForStayNet({
@@ -191,5 +215,18 @@ describe("hotel offer normalizer — ratings", () => {
     assert.equal(priced.valid, true);
     assert.equal(priced.displayFromMinor, 165550);
     assert.equal(priced.perNightMinor, Math.round(165550 / 7));
+  });
+
+  it("displayFromMinorForOffer clamps a 20× leftover sell", () => {
+    const priced = displayFromMinorForOffer({
+      sellAmountMinor: 12_003_095,
+      costAmountMinor: 611184,
+      currency: "KWD",
+      nights: 7,
+      minRateMajor: 611.184,
+      rateNetMajor: 611.184,
+    });
+    assert.equal(priced.valid, true);
+    assert.equal(priced.displayFromMinor, Math.round(611184 * 1.1));
   });
 });

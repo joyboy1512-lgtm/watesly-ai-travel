@@ -317,15 +317,17 @@ export function HotelSearchCard({
           <>
             <div className="hotel-search-card-price">
               {isShop ? (
-                <div className="tvlk-night-price">
+                <div className="tvlk-night-price tvlk-stay-price">
                   <strong data-display-currency={displayCurrency}>
-                    {formatMoney(perNightMinor, hotel.currency)}
+                    {formatMoney(hotel.displayFromMinor, hotel.currency)}
                   </strong>
-                  <small>{t("perRoomPerNight")}</small>
-                  <small>{t("nightNoTax")}</small>
+                  <small>
+                    {t("stayTotalLabel")} · {nightsNote}
+                  </small>
                   <em>
-                    {formatMoney(hotel.displayFromMinor, hotel.currency)} · {nightsNote}
+                    {formatMoney(perNightMinor, hotel.currency)} · {t("perRoomPerNight")}
                   </em>
+                  <small>{t("nightNoTax")}</small>
                 </div>
               ) : (
                 <>

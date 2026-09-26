@@ -1136,6 +1136,15 @@ html body .shop-root.wg-new-ui .shop-main.shop-main-wide:has(.tvlk-hotel.shop-ho
   line-height: 1.15;
 }
 
+.tvlk-hotel .tvlk-stay-price em {
+  display: block;
+  color: var(--tvlk-ink);
+  font-size: 0.86rem;
+  font-weight: 650;
+  font-style: normal;
+  line-height: 1.3;
+}
+
 .tvlk-hotel .hotel-search-card-shop .hotel-rooms-left {
   color: var(--tvlk-green);
   font-size: 0.78rem;

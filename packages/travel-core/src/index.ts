@@ -308,7 +308,6 @@ export async function searchAndPriceHotels(input: {
       adults: input.params.adults,
       children: input.params.children,
       currency: input.params.currency,
-      maxRoomsPerHotel: input.params.maxRoomsPerHotel || null,
     })}`,
     () => provider.searchHotels!(input.params),
   );

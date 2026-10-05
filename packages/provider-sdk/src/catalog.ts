@@ -79,51 +79,26 @@ export const PROVIDER_CATALOG: ProviderCatalogEntry[] = [
     providerKey: "travelport",
     displayName: "Travelport",
     displayNameAr: "Travelport",
-    description:
-      "بحث TripServices Catalog Search — فئات التذكرة (Flex / Saver / Comfort) من GDS",
+    description: "ربط GDS (Galileo/Worldspan/Apollo) — هيكل جاهز للتفعيل",
     capabilities: ["flight"],
-    status: "ready",
+    status: "scaffold",
     envKeys: [
       "TRAVELPORT_USER",
       "TRAVELPORT_PASSWORD",
-      "TRAVELPORT_CLIENT_ID",
-      "TRAVELPORT_CLIENT_SECRET",
       "TRAVELPORT_TARGET_BRANCH",
+      "TRAVELPORT_ENDPOINT",
     ],
     credentialFields: [
       { key: "username", label: "Username", required: true },
       { key: "password", label: "Password", secret: true, required: true },
-      {
-        key: "clientId",
-        label: "Client ID",
-        required: true,
-        placeholder: "OAuth client_id من خطاب Travelport",
-      },
-      {
-        key: "clientSecret",
-        label: "Client Secret",
-        secret: true,
-        required: true,
-      },
-      {
-        key: "targetBranch",
-        label: "Target Branch / PCC",
-        required: true,
-        placeholder: "DU7_1G",
-      },
-      {
-        key: "accessGroup",
-        label: "Access Group",
-        placeholder: "UUID من خطاب التفعيل (اختياري إن وُجد PCC)",
-      },
+      { key: "targetBranch", label: "Target Branch", required: true },
       {
         key: "endpoint",
         label: "API Endpoint",
-        placeholder: "https://api.pp.travelport.net/11",
+        placeholder: "https://…",
       },
     ],
-    notes:
-      "JSON Catalog Search وليس Universal API XML. أرسل maxNumberOfUpsellsToReturn=4 لإرجاع فئات التذكرة. الحجز/AirPrice ما زالا لاحقين.",
+    notes: "يحتاج بيانات اعتماد Travelport Enterprise لإكمال البحث الحي",
   },
   {
     providerKey: "travelfusion",
@@ -180,7 +155,7 @@ export const PROVIDER_CATALOG: ProviderCatalogEntry[] = [
       },
     ],
     notes:
-      "يجري البحث بالتوازي مع WebBeds وRateHawk وTBO وDidaTravel وArabiaBeds عند تفعيلهم. نفس الفندق يُعرض مرة واحدة بالسعر الأفضل أو حسب أولوية المزود من لوحة التحكم.",
+      "فعّل HOTEL_PROVIDER=hotelbeds مع HOTELBEDS_API_KEY / HOTELBEDS_API_SECRET. مواصلات Hotelbeds مزود منفصل.",
   },
   {
     providerKey: "hotelbeds-transfers",
@@ -253,77 +228,6 @@ export const PROVIDER_CATALOG: ProviderCatalogEntry[] = [
     ],
     notes:
       "فعّل ACTIVITY_PROVIDER=hotelbeds-activities مع HOTELBEDS_ACTIVITY_API_KEY / SECRET.",
-  },
-  {
-    providerKey: "webbeds",
-    displayName: "WebBeds",
-    displayNameAr: "WebBeds",
-    description:
-      "مورد فنادق B2B — يدخل محرك تجميع WeekendGate بعد ربط المفاتيح",
-    capabilities: ["hotel"],
-    status: "scaffold",
-    envKeys: ["WEBBEDS_API_KEY", "WEBBEDS_API_SECRET", "WEBBEDS_BASE_URL"],
-    credentialFields: [
-      { key: "apiKey", label: "API Key", secret: true, required: true },
-      { key: "apiSecret", label: "API Secret", secret: true, required: true },
-      { key: "baseUrl", label: "Base URL", placeholder: "https://…" },
-    ],
-    notes:
-      "هيكل جاهز. البحث الحي يُفعَّل بعد تسليم بيانات اعتماد WebBeds. النتائج تُدمج مع Hotelbeds وباقي الموردين.",
-  },
-  {
-    providerKey: "ratehawk",
-    displayName: "RateHawk",
-    displayNameAr: "RateHawk",
-    description: "مورد فنادق (Emerging Travel Group) ضمن طبقة التجميع",
-    capabilities: ["hotel"],
-    status: "scaffold",
-    envKeys: ["RATEHAWK_KEY_ID", "RATEHAWK_API_KEY"],
-    credentialFields: [
-      { key: "apiKey", label: "Key ID", required: true },
-      { key: "apiSecret", label: "API Key", secret: true, required: true },
-    ],
-    notes: "هيكل جاهز للربط. لن يظهر فندق مكرر بجانب Hotelbeds بعد التفعيل.",
-  },
-  {
-    providerKey: "tbo",
-    displayName: "TBO",
-    displayNameAr: "TBO Holidays",
-    description: "مورد فنادق TBO ضمن محرك التجميع",
-    capabilities: ["hotel"],
-    status: "scaffold",
-    envKeys: ["TBO_ACCOUNT", "TBO_USERNAME", "TBO_PASSWORD"],
-    credentialFields: [
-      { key: "username", label: "Username", required: true },
-      { key: "password", label: "Password", secret: true, required: true },
-      { key: "account", label: "Account / Agency", placeholder: "اختياري" },
-    ],
-  },
-  {
-    providerKey: "didatravel",
-    displayName: "DidaTravel",
-    displayNameAr: "DidaTravel",
-    description: "مورد فنادق DidaTravel ضمن محرك التجميع",
-    capabilities: ["hotel"],
-    status: "scaffold",
-    envKeys: ["DIDA_CLIENT_ID", "DIDA_LICENSE_KEY"],
-    credentialFields: [
-      { key: "apiKey", label: "Client ID", required: true },
-      { key: "apiSecret", label: "License Key", secret: true, required: true },
-    ],
-  },
-  {
-    providerKey: "arabiabeds",
-    displayName: "ArabiaBeds",
-    displayNameAr: "ArabiaBeds",
-    description: "مورد فنادق للمنطقة العربية ضمن محرك التجميع",
-    capabilities: ["hotel"],
-    status: "scaffold",
-    envKeys: ["ARABIABEDS_API_KEY", "ARABIABEDS_API_SECRET"],
-    credentialFields: [
-      { key: "apiKey", label: "API Key", secret: true, required: true },
-      { key: "apiSecret", label: "API Secret", secret: true, required: true },
-    ],
   },
 ];
 

@@ -97,7 +97,6 @@ export class ShopController {
       children?: number;
       infants?: number;
       childrenAges?: string;
-      hotelCode?: string;
       preferences?: string;
     },
     @ShopCustomerMaybe() customer?: ShopCustomer,

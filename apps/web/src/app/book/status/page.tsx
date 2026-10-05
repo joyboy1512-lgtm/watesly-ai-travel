@@ -143,7 +143,14 @@ function StatusInner() {
               <strong>مرجع شركة الطيران:</strong> {row.providerRef || "غير متوفر بعد"}
             </li>
             <li>
-              <strong>الدفع:</strong> {row.paymentStatus || "unpaid"}
+              <strong>الدفع:</strong>{" "}
+              {row.paymentStatus === "paid"
+                ? "تم الدفع"
+                : row.paymentStatus === "failed"
+                  ? "فشل الدفع"
+                  : row.paymentStatus === "refunded"
+                    ? "مسترد"
+                    : "بانتظار الدفع"}
             </li>
             <li>
               <strong>المبلغ:</strong> {formatMoneyMinor(row.totalSellAmount, row.currency)}

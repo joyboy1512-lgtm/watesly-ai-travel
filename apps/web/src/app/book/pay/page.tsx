@@ -76,11 +76,11 @@ export default function FlightPayPage() {
 
   async function ensureGuest() {
     if (getShopSession()) return;
+    // The phone on this step is booking contact info, not a login; sign-in stays optional.
     const result = await unlockShopCustomer({
-      phone: draft?.contactPhone || undefined,
       name: draft?.contactName || undefined,
       email: draft?.contactEmail || undefined,
-      guest: !draft?.contactPhone,
+      guest: true,
     });
     if (result.needsCode) {
       throw new Error("أدخل رمز التحقق من صفحة المسافرين أو أكمل الحجز كضيف بدون جوال");

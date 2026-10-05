@@ -66,6 +66,12 @@ function asJson(value: unknown): Prisma.InputJsonValue {
   return value as Prisma.InputJsonValue;
 }
 
+/** Bookings start with an unpaid placeholder; a captured payment always wins over it. */
+function primaryPayment<T extends { status: string }>(payments?: T[] | null): T | undefined {
+  if (!payments?.length) return undefined;
+  return payments.find((p) => p.status === "paid") || payments[payments.length - 1];
+}
+
 /** Search results carry the engine under `details.provider`; never let a live offer fall back to mock. */
 function flightOfferProviderKey(
   explicit: string | undefined,
@@ -1758,7 +1764,7 @@ export class ShopService {
       serviceType:
         row.quote?.items[0]?.serviceType ||
         (row.passengerDetails as { serviceType?: string } | null)?.serviceType,
-      paymentStatus: row.payments[0]?.status || "unpaid",
+      paymentStatus: primaryPayment(row.payments)?.status || "unpaid",
       passengerDetails: row.passengerDetails,
     }));
   }
@@ -2062,7 +2068,7 @@ export class ShopService {
     }
     const tickets = Array.isArray(pd.tickets) ? pd.tickets : [];
     const lifecycle = deriveFlightShopLifecycle({
-      paymentStatus: row.payments[0]?.status,
+      paymentStatus: primaryPayment(row.payments)?.status,
       bookingStatus: row.status,
       shopLifecycle: String(pd.shopLifecycle || ""),
       providerRef: row.providerBookingRef || String(pd.providerBookingRef || ""),
@@ -2077,8 +2083,8 @@ export class ShopService {
         undefined,
       status: row.status,
       lifecycle,
-      paymentStatus: row.payments[0]?.status || "unpaid",
-      paymentMethod: row.payments[0]?.method,
+      paymentStatus: primaryPayment(row.payments)?.status || "unpaid",
+      paymentMethod: primaryPayment(row.payments)?.method,
       description: row.quote?.items[0]?.description || "حجز",
       totalSellAmount: row.totalSellAmount,
       currency: row.quote?.currency || "KWD",
@@ -2088,7 +2094,7 @@ export class ShopService {
       issueError: typeof pd.issueError === "string" ? pd.issueError : undefined,
       timeline: [
         { at: row.createdAt.toISOString(), label: "تم إنشاء الطلب" },
-        ...(row.payments[0]?.status === "paid"
+        ...(primaryPayment(row.payments)?.status === "paid"
           ? [{ at: (row.updatedAt || row.createdAt).toISOString(), label: "تم تأكيد الدفع" }]
           : []),
         ...(row.status === "ticketed"
@@ -2339,7 +2345,7 @@ export class ShopService {
     if (!booking) throw new BadRequestException("الحجز غير موجود لهذه النية");
     return {
       intent,
-      paymentStatus: booking.payments[0]?.status || "unpaid",
+      paymentStatus: primaryPayment(booking.payments)?.status || "unpaid",
       bookingId: booking.id,
     };
   }
@@ -2537,11 +2543,11 @@ export class ShopService {
         weekendgateRef: String(pd.weekendgateRef || weekendgateRefFromId(row.id)),
         shopLifecycle: String(pd.shopLifecycle || "paying"),
       },
-      payment: row.payments?.[0]
+      payment: primaryPayment(row.payments)
         ? {
-            id: row.payments[0].id,
-            status: row.payments[0].status,
-            method: row.payments[0].method,
+            id: primaryPayment(row.payments)!.id,
+            status: primaryPayment(row.payments)!.status,
+            method: primaryPayment(row.payments)!.method,
           }
         : { status: "unpaid", method: "manual" },
     };
@@ -2577,7 +2583,7 @@ export class ShopService {
     const pd = (row.passengerDetails as Record<string, unknown> | null) || {};
     const tickets = Array.isArray(pd.tickets) ? pd.tickets : [];
     const lifecycle = deriveFlightShopLifecycle({
-      paymentStatus: row.payments[0]?.status,
+      paymentStatus: primaryPayment(row.payments)?.status,
       bookingStatus: row.status,
       shopLifecycle: String(pd.shopLifecycle || ""),
       issuedAt: row.issuedAt?.toISOString(),
@@ -2604,8 +2610,8 @@ export class ShopService {
                   : lifecycle === "booking"
                     ? "جارٍ الحجز"
                     : "جارٍ التحقق",
-      paymentStatus: row.payments[0]?.status || "unpaid",
-      paymentMethod: row.payments[0]?.method,
+      paymentStatus: primaryPayment(row.payments)?.status || "unpaid",
+      paymentMethod: primaryPayment(row.payments)?.method,
       totalSellAmount: row.totalSellAmount,
       currency: row.quote?.currency || "KWD",
       description: row.quote?.items[0]?.description || String(pd.description || "حجز طيران"),

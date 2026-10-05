@@ -42,6 +42,31 @@ export type BookingDraftHotel = {
   details: Record<string, unknown>;
 };
 
+export type FlightTravelerDraft = {
+  type: "adult" | "child" | "infant";
+  title: string;
+  firstName: string;
+  middleName?: string;
+  lastName: string;
+  birthDate: string;
+  nationality: string;
+  passportNumber: string;
+  passportIssueDate: string;
+  passportExpiry: string;
+  gender: string;
+};
+
+export type FlightExtraDraft = {
+  id: string;
+  kind: "bag" | "seat" | "meal" | "fare_upgrade";
+  labelAr: string;
+  amountMinor: number;
+  currency: string;
+  passengerIndex?: number;
+  segmentKey?: string;
+  seatConfirmed?: false;
+};
+
 export type FlightBookingDraft = {
   serviceType: "flight";
   flight: BookingDraftFlight;
@@ -65,6 +90,23 @@ export type FlightBookingDraft = {
   selectedReturn?: SelectedLeg | null;
   validatedAt?: string;
   resultsReturnHref?: string;
+  travelers?: FlightTravelerDraft[];
+  extras?: FlightExtraDraft[];
+  contactName?: string;
+  contactEmail?: string;
+  contactPhone?: string;
+  priceChanged?: boolean;
+  previousTotalMinor?: number;
+  priceChangeConsentAt?: string;
+  availableExtras?: FlightExtraDraft[];
+  holdGuaranteed?: boolean;
+  holdExpiresAt?: string;
+  /** Opaque server proof of the last price/availability check; required to book. */
+  checkToken?: string;
+  checkedOfferRef?: string;
+  idempotencyKey?: string;
+  bookingId?: string;
+  paymentIntentId?: string;
 };
 
 export type HotelDraftPriceBreakdown = {

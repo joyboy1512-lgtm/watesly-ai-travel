@@ -140,6 +140,38 @@ export class ShopController {
     return guardShopSearch("activities", () => this.shop.searchActivities(body));
   }
 
+  @Post("check-flight-offer")
+  checkFlightOffer(
+    @Body()
+    body: {
+      offer: {
+        providerKey?: string;
+        providerOfferRef?: string;
+        description?: string;
+        costAmountMinor?: number;
+        sellAmountMinor?: number;
+        currency: string;
+        revalidationToken?: string;
+        expiresAt?: string;
+        raw?: Record<string, unknown>;
+        details?: Record<string, unknown>;
+      };
+      companionOffer?: {
+        providerKey?: string;
+        providerOfferRef?: string;
+        description?: string;
+        costAmountMinor?: number;
+        currency: string;
+        revalidationToken?: string;
+        expiresAt?: string;
+        raw?: Record<string, unknown>;
+      };
+      previousSellAmountMinor?: number;
+    },
+  ) {
+    return this.shop.checkFlightOffer(body);
+  }
+
   @Post("checkrate-hotel")
   checkHotelRate(
     @Body()
@@ -394,9 +426,48 @@ export class ShopController {
       extras?: Record<string, unknown>;
       ticketType?: string;
       seatPref?: string;
+      idempotencyKey?: string;
+      priceChangeConsent?: boolean;
+      checkToken?: string;
     },
   ) {
     return this.shop.book(customer, body);
+  }
+
+  @Get("payments/intent/:id")
+  @UseGuards(CustomerAuthGuard)
+  getPaymentIntent(
+    @CurrentCustomer() customer: ShopCustomer,
+    @Param("id") id: string,
+  ) {
+    return this.shop.getPaymentIntent(customer, id);
+  }
+
+  @Post("payments/sandbox-confirm")
+  @UseGuards(CustomerAuthGuard)
+  confirmSandboxPayment(
+    @CurrentCustomer() customer: ShopCustomer,
+    @Body() body: { intentId?: string; outcome?: "captured" | "failed" },
+  ) {
+    return this.shop.confirmSandboxPayment(customer, body);
+  }
+
+  @Post("bookings/:id/issue")
+  @UseGuards(CustomerAuthGuard)
+  issueShopBooking(
+    @CurrentCustomer() customer: ShopCustomer,
+    @Param("id") id: string,
+  ) {
+    return this.shop.issueShopBooking(customer, id);
+  }
+
+  @Post("bookings/:id/email-tickets")
+  @UseGuards(CustomerAuthGuard)
+  emailShopTickets(
+    @CurrentCustomer() customer: ShopCustomer,
+    @Param("id") id: string,
+  ) {
+    return this.shop.emailShopTickets(customer, id);
   }
 
   @Post("assistant/chat")

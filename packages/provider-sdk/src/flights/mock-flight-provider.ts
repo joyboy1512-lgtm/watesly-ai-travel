@@ -337,6 +337,26 @@ function buildReturnSegments(
   };
 }
 
+/** Like a real GDS, the mock prices rechecks from the offers it issued, not from client-sent amounts. */
+const ISSUED_OFFERS = new Map<string, Pick<FlightOffer, "costAmountMinor" | "currency" | "raw">>();
+const ISSUED_OFFERS_MAX = 5000;
+
+function rememberIssuedOffers(offers: FlightOffer[]) {
+  for (const offer of offers) {
+    ISSUED_OFFERS.delete(offer.providerOfferRef);
+    ISSUED_OFFERS.set(offer.providerOfferRef, {
+      costAmountMinor: offer.costAmountMinor,
+      currency: offer.currency,
+      raw: offer.raw,
+    });
+  }
+  while (ISSUED_OFFERS.size > ISSUED_OFFERS_MAX) {
+    const oldest = ISSUED_OFFERS.keys().next().value;
+    if (oldest === undefined) break;
+    ISSUED_OFFERS.delete(oldest);
+  }
+}
+
 export class MockFlightProvider implements FlightProviderAdapter {
   readonly providerKey = "mock";
   readonly displayName = "مزود تجريبي (Mock)";
@@ -509,10 +529,21 @@ export class MockFlightProvider implements FlightProviderAdapter {
       } satisfies FlightOffer;
     });
 
-    return offers.flatMap(expandAirlineFareFamilies);
+    const expanded = offers.flatMap(expandAirlineFareFamilies);
+    rememberIssuedOffers(expanded);
+    return expanded;
   }
 
-  async revalidateOffer(offer: FlightOffer): Promise<FlightRevalidateResult> {
+  async revalidateOffer(input: FlightOffer): Promise<FlightRevalidateResult> {
+    const issued = ISSUED_OFFERS.get(input.providerOfferRef);
+    const offer: FlightOffer = issued
+      ? {
+          ...input,
+          costAmountMinor: issued.costAmountMinor,
+          currency: issued.currency,
+          raw: { ...(input.raw || {}), ...(issued.raw || {}) },
+        }
+      : input;
     const scenario =
       scenarioFromOfferRef(offer.providerOfferRef) ||
       String(offer.raw?.scenario || "normal");
@@ -555,6 +586,20 @@ export class MockFlightProvider implements FlightProviderAdapter {
       };
     }
 
+    const checked = String((offer.raw as { baggage?: { checked?: string } } | undefined)?.baggage?.checked || "");
+    const extras =
+      /اختياري|رسوم|غير مشمول/.test(checked)
+        ? [
+            {
+              id: "bag-23-extra",
+              kind: "bag",
+              labelAr: "حقيبة مشحونة إضافية 23 كجم",
+              amountMinor: 4500,
+              currency: offer.currency,
+            },
+          ]
+        : [];
+
     return {
       available: true,
       priceChanged: false,
@@ -562,13 +607,18 @@ export class MockFlightProvider implements FlightProviderAdapter {
       offer: {
         ...offer,
         expiresAt: new Date(Date.now() + 20 * 60 * 1000).toISOString(),
+        raw: {
+          ...offer.raw,
+          holdGuaranteed: false,
+          ...(extras.length ? { availableExtras: extras } : {}),
+        },
       },
     };
   }
 
   async createBooking(
     offer: FlightOffer,
-    _passengers?: unknown,
+    passengers?: unknown,
   ): Promise<ProviderBookingResult> {
     const scenario =
       scenarioFromOfferRef(offer.providerOfferRef) ||
@@ -587,9 +637,27 @@ export class MockFlightProvider implements FlightProviderAdapter {
       );
     }
 
+    let hash = 2166136261;
+    for (const ch of offer.providerOfferRef) {
+      hash = Math.imul(hash ^ ch.charCodeAt(0), 16777619) >>> 0;
+    }
+    const pnr = `PNR-MOCK-${hash.toString(36).toUpperCase().padStart(6, "0").slice(-6)}`;
+    const ticketBase = String(hash % 100_000_000).padStart(8, "0");
+    const ticketFor = (idx: number) => `176-${ticketBase}${String(idx + 1).padStart(2, "0")}`;
+    const rows = Array.isArray(passengers) ? passengers : [];
+    const tickets = rows.map((row, idx) => {
+      const rec = row && typeof row === "object" ? (row as Record<string, unknown>) : {};
+      const name = [rec.firstName, rec.lastName].filter(Boolean).join(" ").trim();
+      return {
+        passengerName: name || `PAX${idx + 1}`,
+        ticketNumber: ticketFor(idx),
+      };
+    });
+
     return {
-      providerBookingRef: `PNR-MOCK-${offer.providerOfferRef.replace(/[^A-Z0-9]/gi, "").slice(-6) || "000000"}`,
+      providerBookingRef: pnr,
       status: "confirmed",
+      tickets: tickets.length ? tickets : [{ ticketNumber: ticketFor(0) }],
     };
   }
 }

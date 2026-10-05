@@ -9,9 +9,16 @@ import {
 import {
   getFlightProvider,
   getHotelProvider,
+  resolveFlightProviderKey,
   revalidatePricedOffer,
 } from "@watesly-travel/travel-core";
-import type { FlightOffer, HotelOffer } from "@watesly-travel/shared";
+import {
+  extrasTotalMinor,
+  holdTimerFromOffer,
+  listOfferExtras,
+  type FlightOffer,
+  type HotelOffer,
+} from "@watesly-travel/shared";
 import { Prisma } from "@watesly-travel/database";
 import { PrismaService } from "../prisma/prisma.service";
 import { AuditService } from "../common/audit.service";
@@ -68,6 +75,12 @@ export type CreateFromDraftInput = {
   ticketType?: string;
   seatPref?: string;
   payment?: { method: string; status?: string };
+  /** Server-verified amounts (e.g. signed flight check); bypasses client-supplied price fields. */
+  verifiedPricing?: {
+    costAmountMinor: number;
+    sellAmountMinor: number;
+    pricingRuleId?: string;
+  };
 };
 
 @Injectable()
@@ -350,7 +363,10 @@ export class BookingsService {
   async issue(input: {
     organizationId: string;
     bookingId: string;
-    actorUserId: string;
+    actorUserId?: string;
+    passengers?: unknown;
+    markTicketed?: boolean;
+    onProviderFailure?: "failed" | "needs_followup";
   }) {
     const booking = await this.prisma.booking.findFirst({
       where: { id: input.bookingId, organizationId: input.organizationId },
@@ -375,11 +391,31 @@ export class BookingsService {
       ) || booking.quote.items[0];
 
     let providerRef = `PNR-${Date.now()}`;
+    let issuedTickets: Array<{ passengerName?: string; ticketNumber: string }> = [];
+    // Customer-facing issuance must come from a real provider booking — no synthetic PNRs.
+    const requireProviderTicket = Boolean(input.markTicketed) && item?.serviceType !== "hotel";
+    const failIssue = async (message: string): Promise<never> => {
+      await this.markIssueFailure(input, message);
+      throw new BadRequestException(message);
+    };
+    if (requireProviderTicket && !item) {
+      await failIssue("لا يوجد عرض مزود مرتبط بهذا الحجز — يحتاج متابعة من الفريق");
+    }
     if (item) {
       const isHotel = item.serviceType === "hotel";
-      const provider = isHotel
-        ? getHotelProvider(item.providerKey)
-        : getFlightProvider(item.providerKey);
+      let provider: ReturnType<typeof getFlightProvider> | ReturnType<typeof getHotelProvider>;
+      try {
+        provider = isHotel
+          ? getHotelProvider(item.providerKey)
+          : getFlightProvider(item.providerKey);
+      } catch (error) {
+        if (!requireProviderTicket) throw error;
+        return failIssue(
+          `مزود الطيران (${item.providerKey}) غير مهيأ للإصدار: ${
+            error instanceof Error ? error.message : "خطأ غير معروف"
+          }`,
+        );
+      }
       const offer: FlightOffer = {
         providerKey: item.providerKey,
         providerOfferRef: item.providerOfferRef,
@@ -392,26 +428,27 @@ export class BookingsService {
       };
       if (provider.createBooking) {
         try {
-          const created = await provider.createBooking(offer as never, {});
+          const created = await provider.createBooking(
+            offer as never,
+            input.passengers ?? {},
+          );
           if (
             created.status === "failed" ||
             !created.providerBookingRef?.trim()
           ) {
-            await this.prisma.booking.update({
-              where: { id: input.bookingId },
-              data: { status: "failed" },
-            });
+            await this.markIssueFailure(input, "العرض غير متاح أو نفدت المقاعد من المزود");
             throw new BadRequestException(
               "العرض غير متاح أو نفدت المقاعد/الغرف من المزود",
             );
           }
           providerRef = created.providerBookingRef;
+          issuedTickets = created.tickets || [];
         } catch (error) {
           if (error instanceof BadRequestException) throw error;
-          await this.prisma.booking.update({
-            where: { id: input.bookingId },
-            data: { status: "failed" },
-          });
+          await this.markIssueFailure(
+            input,
+            error instanceof Error ? error.message : "فشل مزود الخدمة أثناء الإصدار",
+          );
           throw new BadRequestException(
             error instanceof Error
               ? error.message
@@ -419,21 +456,46 @@ export class BookingsService {
           );
         }
       } else if (item.providerKey === "duffel") {
+        await this.markIssueFailure(
+          input,
+          "إصدار Duffel الحقيقي غير مفعّل بعد — استخدم المزود التجريبي أو فعّل createBooking",
+        );
         throw new BadRequestException(
           "إصدار Duffel الحقيقي غير مفعّل بعد — استخدم المزود التجريبي أو فعّل createBooking",
+        );
+      } else if (requireProviderTicket) {
+        await failIssue(
+          `الإصدار التلقائي غير مدعوم لدى مزود ${item.providerKey} — تم استلام الدفع وسيتابع الفريق الإصدار يدويًا`,
         );
       }
     }
 
+    const ticketsPending = requireProviderTicket && issuedTickets.length === 0;
+
+    const prevDetails =
+      (booking.passengerDetails as Record<string, unknown> | null) || {};
     const updated = await this.prisma.booking.update({
       where: { id: input.bookingId },
       data: {
-        status: "confirmed",
+        status: input.markTicketed && !ticketsPending ? "ticketed" : "confirmed",
         providerBookingRef: providerRef,
-        issuedByUserId: input.actorUserId,
+        issuedByUserId: input.actorUserId || undefined,
         issuedAt: new Date(),
-        approvedByUserId: input.actorUserId,
+        approvedByUserId: input.actorUserId || undefined,
         approvedAt: new Date(),
+        passengerDetails: asJson({
+          ...prevDetails,
+          providerBookingRef: providerRef,
+          tickets: issuedTickets,
+          shopLifecycle: ticketsPending
+            ? "needs_followup"
+            : input.markTicketed
+              ? "ticketed"
+              : prevDetails.shopLifecycle,
+          ...(ticketsPending
+            ? { issueError: "تم إنشاء الحجز لدى شركة الطيران وأرقام التذاكر قيد الإصدار — سيتابع الفريق" }
+            : {}),
+        }),
       },
     });
 
@@ -447,6 +509,32 @@ export class BookingsService {
     });
 
     return updated;
+  }
+
+  private async markIssueFailure(
+    input: {
+      organizationId: string;
+      bookingId: string;
+      onProviderFailure?: "failed" | "needs_followup";
+    },
+    message: string,
+  ) {
+    const booking = await this.prisma.booking.findFirst({
+      where: { id: input.bookingId, organizationId: input.organizationId },
+    });
+    const prev = (booking?.passengerDetails as Record<string, unknown> | null) || {};
+    const followUp = input.onProviderFailure === "needs_followup";
+    await this.prisma.booking.update({
+      where: { id: input.bookingId },
+      data: {
+        status: followUp ? booking?.status || "on_hold" : "failed",
+        passengerDetails: asJson({
+          ...prev,
+          shopLifecycle: followUp ? "needs_followup" : "failed",
+          issueError: message,
+        }),
+      },
+    });
   }
 
   async createFromDraft(input: CreateFromDraftInput) {
@@ -595,6 +683,15 @@ export class BookingsService {
   }
 
   private async resolveMinimalPricing(input: CreateFromDraftInput) {
+    if (input.verifiedPricing) {
+      const { costAmountMinor, sellAmountMinor, pricingRuleId } = input.verifiedPricing;
+      return {
+        costAmount: Math.round(costAmountMinor),
+        sellAmount: Math.round(sellAmountMinor),
+        profitAmount: Math.max(0, Math.round(sellAmountMinor - costAmountMinor)),
+        pricingRuleId,
+      };
+    }
     const currency = input.offer.currency || "KWD";
     const details = (input.offer.details || {}) as Record<string, unknown>;
     const serviceType =
@@ -895,6 +992,151 @@ export class BookingsService {
         summary: raw.offer.description,
         expiresAt: raw.offer.expiresAt,
       }),
+    };
+  }
+
+  async checkFlightOffer(input: {
+    organizationId: string;
+    offer: {
+      providerKey?: string;
+      providerOfferRef?: string;
+      description?: string;
+      costAmountMinor?: number;
+      sellAmountMinor?: number;
+      currency: string;
+      revalidationToken?: string;
+      expiresAt?: string;
+      raw?: Record<string, unknown>;
+    };
+    companionOffer?: {
+      providerKey?: string;
+      providerOfferRef?: string;
+      description?: string;
+      costAmountMinor?: number;
+      currency: string;
+      revalidationToken?: string;
+      expiresAt?: string;
+      raw?: Record<string, unknown>;
+    };
+    previousSellAmountMinor?: number;
+  }) {
+    const expiredAlready =
+      Boolean(input.offer.expiresAt) &&
+      Date.parse(input.offer.expiresAt ?? "") < Date.now() - 1000;
+    const rules = await this.loadActiveRules(input.organizationId);
+    const offer: FlightOffer = {
+      providerKey: input.offer.providerKey || resolveFlightProviderKey(),
+      providerOfferRef: input.offer.providerOfferRef || "",
+      description: input.offer.description || "",
+      costAmountMinor: Number(input.offer.costAmountMinor || 0),
+      currency: input.offer.currency || "KWD",
+      revalidationToken: input.offer.revalidationToken || input.offer.providerOfferRef || "",
+      expiresAt: input.offer.expiresAt || new Date().toISOString(),
+      raw: input.offer.raw || {},
+    };
+
+    const primary = await revalidatePricedOffer({
+      offer,
+      serviceType: "flight",
+      rules,
+      providerKey: offer.providerKey,
+    });
+
+    let companionUnavailable = false;
+    let companionPricing: { sellAmountMinor: number; costAmountMinor: number } | null = null;
+    if (input.companionOffer?.providerOfferRef) {
+      const companion: FlightOffer = {
+        providerKey: input.companionOffer.providerKey || offer.providerKey,
+        providerOfferRef: input.companionOffer.providerOfferRef,
+        description: input.companionOffer.description || offer.description,
+        costAmountMinor: Number(input.companionOffer.costAmountMinor || 0),
+        currency: input.companionOffer.currency || offer.currency,
+        revalidationToken:
+          input.companionOffer.revalidationToken ||
+          input.companionOffer.providerOfferRef,
+        expiresAt: input.companionOffer.expiresAt || offer.expiresAt,
+        raw: input.companionOffer.raw || {},
+      };
+      const companionResult = await revalidatePricedOffer({
+        offer: companion,
+        serviceType: "flight",
+        rules,
+        providerKey: companion.providerKey,
+      });
+      companionUnavailable = !companionResult.available;
+      companionPricing = {
+        sellAmountMinor: companionResult.pricing.sellAmountMinor,
+        costAmountMinor: companionResult.pricing.costAmountMinor,
+      };
+    }
+
+    const pricedSell = companionPricing
+      ? primary.pricing.sellAmountMinor > 0 && companionPricing.sellAmountMinor > 0
+      : primary.pricing.sellAmountMinor > 0;
+    const available =
+      !expiredAlready && primary.available && !companionUnavailable && pricedSell;
+    const previousSell = Math.round(
+      Number(input.previousSellAmountMinor ?? input.offer.sellAmountMinor ?? 0),
+    );
+    // Mixed legs reuse the results page split (outbound share of offer A + return share of offer B).
+    const OUTBOUND_SHARE = 0.52;
+    const legShare = (amount: number, share: number) => Math.round(amount * share);
+    const nextSell = companionPricing
+      ? legShare(primary.pricing.sellAmountMinor, OUTBOUND_SHARE) +
+        legShare(companionPricing.sellAmountMinor, 1 - OUTBOUND_SHARE)
+      : Math.round(primary.pricing.sellAmountMinor);
+    const nextCost = companionPricing
+      ? legShare(primary.pricing.costAmountMinor, OUTBOUND_SHARE) +
+        legShare(companionPricing.costAmountMinor, 1 - OUTBOUND_SHARE)
+      : Math.round(primary.pricing.costAmountMinor);
+    const priceChanged = available && previousSell > 0 && nextSell !== previousSell;
+    const raw = (primary.offer.raw || {}) as Record<string, unknown>;
+    const hold = holdTimerFromOffer(raw);
+    const extras = listOfferExtras(raw, primary.pricing.currency);
+
+    let messageAr = "تم التحقق من السعر والتوافر";
+    if (!available) {
+      messageAr = expiredAlready
+        ? "انتهى هذا العرض. ارجع إلى النتائج واختر رحلة أخرى."
+        : "العرض لم يعد متاحًا. ارجع إلى النتائج واختر رحلة أخرى.";
+    } else if (priceChanged) {
+      messageAr = "تغيّر السعر بعد التحقق. أكّد السعر الجديد للمتابعة.";
+    }
+
+    return {
+      available,
+      expired: !available,
+      priceChanged,
+      previousSellAmountMinor: previousSell || undefined,
+      sellAmountMinor: nextSell,
+      currency: primary.pricing.currency,
+      expiresAt: primary.offer.expiresAt,
+      holdGuaranteed: hold.show,
+      holdExpiresAt: hold.expiresAt,
+      extras,
+      extrasTotalMinor: extrasTotalMinor(extras),
+      validatedAt: new Date().toISOString(),
+      mixedLegs: Boolean(companionPricing),
+      verified: {
+        costAmountMinor: nextCost,
+        pricingRuleId: primary.pricing.pricingRuleId ?? null,
+      },
+      offer: {
+        providerKey: primary.offer.providerKey,
+        providerOfferRef: primary.offer.providerOfferRef,
+        description: primary.offer.description,
+        currency: primary.offer.currency,
+        expiresAt: primary.offer.expiresAt,
+        revalidationToken: primary.offer.revalidationToken,
+        raw,
+      },
+      customerVisible: toCustomerVisible({
+        sellAmountMinor: nextSell,
+        currency: primary.pricing.currency,
+        summary: primary.offer.description,
+        expiresAt: primary.offer.expiresAt,
+      }),
+      messageAr,
     };
   }
 

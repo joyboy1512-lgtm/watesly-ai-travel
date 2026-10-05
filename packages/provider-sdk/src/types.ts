@@ -85,6 +85,7 @@ export interface ActivitySearchParams {
 export interface ProviderBookingResult {
   providerBookingRef: string;
   status: string;
+  tickets?: Array<{ passengerName?: string; ticketNumber: string }>;
 }
 
 export interface FlightRevalidateResult {

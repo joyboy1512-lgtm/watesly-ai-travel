@@ -48,7 +48,7 @@ describe("MockFlightProvider booking stages", () => {
     ]);
     assert.equal(created.status, "confirmed");
     assert.match(created.providerBookingRef, /^PNR-MOCK-/);
-    assert.equal(created.tickets?.[0]?.ticketNumber?.startsWith("176-"), true);
+    assert.match(created.tickets?.[0]?.ticketNumber || "", /^176-\d{10}$/);
   });
 
   it("fails issuance for provider_fail without a ticket number", async () => {

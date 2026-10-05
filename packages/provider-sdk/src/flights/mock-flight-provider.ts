@@ -557,7 +557,7 @@ export class MockFlightProvider implements FlightProviderAdapter {
 
     const checked = String((offer.raw as { baggage?: { checked?: string } } | undefined)?.baggage?.checked || "");
     const extras =
-      /اختياري|رسوم/.test(checked)
+      /اختياري|رسوم|غير مشمول/.test(checked)
         ? [
             {
               id: "bag-23-extra",
@@ -606,21 +606,27 @@ export class MockFlightProvider implements FlightProviderAdapter {
       );
     }
 
-    const pnr = `PNR-MOCK-${offer.providerOfferRef.replace(/[^A-Z0-9]/gi, "").slice(-6) || "000000"}`;
+    let hash = 2166136261;
+    for (const ch of offer.providerOfferRef) {
+      hash = Math.imul(hash ^ ch.charCodeAt(0), 16777619) >>> 0;
+    }
+    const pnr = `PNR-MOCK-${hash.toString(36).toUpperCase().padStart(6, "0").slice(-6)}`;
+    const ticketBase = String(hash % 100_000_000).padStart(8, "0");
+    const ticketFor = (idx: number) => `176-${ticketBase}${String(idx + 1).padStart(2, "0")}`;
     const rows = Array.isArray(passengers) ? passengers : [];
     const tickets = rows.map((row, idx) => {
       const rec = row && typeof row === "object" ? (row as Record<string, unknown>) : {};
       const name = [rec.firstName, rec.lastName].filter(Boolean).join(" ").trim();
       return {
         passengerName: name || `PAX${idx + 1}`,
-        ticketNumber: `176-${pnr.slice(-6)}${String(idx + 1).padStart(2, "0")}`,
+        ticketNumber: ticketFor(idx),
       };
     });
 
     return {
       providerBookingRef: pnr,
       status: "confirmed",
-      tickets: tickets.length ? tickets : [{ ticketNumber: `176-${pnr.slice(-6)}01` }],
+      tickets: tickets.length ? tickets : [{ ticketNumber: ticketFor(0) }],
     };
   }
 }

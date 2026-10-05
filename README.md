@@ -25,7 +25,7 @@ Dashboard: `/dashboard/providers` — catalog, encrypted credentials, enable/dis
 
 API: `GET /providers/catalog`, `GET|POST /providers`, `PATCH /providers/:id`.
 
-**Note:** Production source of truth remains on the droplet; this repo snapshot documents the UI work for review.
+**Source of truth:** This GitHub branch (`cursor/live-site-snapshot-f5c3`) is the unified backup of the published WeekendGate stack. See `SNAPSHOT.md`. Secrets stay on the droplet only.
 
 
 ## Conversations ↔ WhatsApp

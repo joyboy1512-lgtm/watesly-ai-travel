@@ -101,6 +101,9 @@ export type FlightBookingDraft = {
   availableExtras?: FlightExtraDraft[];
   holdGuaranteed?: boolean;
   holdExpiresAt?: string;
+  /** Opaque server proof of the last price/availability check; required to book. */
+  checkToken?: string;
+  checkedOfferRef?: string;
   idempotencyKey?: string;
   bookingId?: string;
   paymentIntentId?: string;

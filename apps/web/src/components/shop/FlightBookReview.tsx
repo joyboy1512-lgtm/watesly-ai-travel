@@ -28,6 +28,7 @@ type CheckResult = {
   validatedAt: string;
   offer?: { raw?: Record<string, unknown>; providerOfferRef?: string };
   messageAr?: string;
+  checkToken?: string;
 };
 
 export function FlightBookReview({ booking }: { booking: FlightBookingDraft }) {
@@ -65,13 +66,18 @@ export function FlightBookReview({ booking }: { booking: FlightBookingDraft }) {
           offer: {
             providerKey: String(draft.flight.details.providerKey || ""),
             providerOfferRef: String(
-              draft.flight.details.originalOfferId ||
+              (mixMatch && outboundRef) ||
+                draft.flight.details.originalOfferId ||
                 draft.flight.details.selectedFareOfferId ||
                 draft.flight.id,
             ),
             description: draft.flight.description,
             sellAmountMinor: draft.flight.sellAmountMinor,
-            costAmountMinor: Number(draft.flight.details.costAmountMinor || 0),
+            costAmountMinor: Number(
+              (draft.flight as { costAmountMinor?: number }).costAmountMinor ||
+                draft.flight.details.costAmountMinor ||
+                0,
+            ),
             currency: draft.flight.currency,
             expiresAt: String(draft.flight.details.expiresAt || ""),
             details: draft.flight.details,
@@ -110,6 +116,8 @@ export function FlightBookReview({ booking }: { booking: FlightBookingDraft }) {
         availableExtras: result.extras || [],
         holdGuaranteed: result.holdGuaranteed === true,
         holdExpiresAt: result.holdExpiresAt,
+        checkToken: result.available ? result.checkToken : undefined,
+        checkedOfferRef: result.offer?.providerOfferRef,
       });
       if (!result.available) {
         setCheckError(result.messageAr || "انتهى هذا العرض.");

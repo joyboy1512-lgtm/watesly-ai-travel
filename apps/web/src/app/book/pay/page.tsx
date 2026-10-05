@@ -22,6 +22,7 @@ import { unlockShopCustomer } from "@/lib/shop-unlock";
 import {
   buildFlightPriceBreakdown,
   extrasTotalMinor,
+  isRecentValidation,
   newShopIdempotencyKey,
   splitOfferSell,
 } from "@watesly-travel/shared";
@@ -37,7 +38,11 @@ export default function FlightPayPage() {
 
   useEffect(() => {
     const loaded = getBookingDraft();
-    if (!loaded || loaded.serviceType !== "flight") {
+    if (
+      !loaded ||
+      loaded.serviceType !== "flight" ||
+      (!loaded.bookingId && (!loaded.checkToken || !isRecentValidation(loaded.validatedAt)))
+    ) {
       router.replace("/book/review");
       return;
     }
@@ -109,6 +114,7 @@ export default function FlightPayPage() {
           quoteItemId: draft.quoteItemId,
           idempotencyKey: draft.idempotencyKey,
           priceChangeConsent: Boolean(draft.priceChangeConsentAt || !draft.priceChanged),
+          checkToken: draft.checkToken,
           offer: {
             id: draft.flight.id,
             description: draft.flight.description,
@@ -121,7 +127,7 @@ export default function FlightPayPage() {
               availableExtras: draft.availableExtras,
             },
             providerOfferRef: String(
-              draft.flight.details.originalOfferId || draft.flight.id,
+              draft.checkedOfferRef || draft.flight.details.originalOfferId || draft.flight.id,
             ),
           },
           route: {

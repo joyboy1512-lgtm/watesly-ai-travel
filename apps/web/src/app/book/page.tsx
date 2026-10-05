@@ -8,9 +8,20 @@ import { StoreFront } from "@/components/shop/StoreFront";
 import {
   clearBookingDraft,
   getBookingDraft,
+  saveFlightDraft,
   type BookingDraft,
   type FlightBookingDraft,
+  type FlightExtraDraft,
+  type FlightTravelerDraft,
 } from "@/lib/booking-draft";
+import { FlightBookingSteps } from "@/components/shop/FlightBookingSteps";
+import { FlightExtrasPicker } from "@/components/shop/FlightExtrasPicker";
+import {
+  extrasTotalMinor,
+  passportRequiredForOffer,
+  validateFlightContact,
+  validateFlightTraveler,
+} from "@watesly-travel/shared";
 import { formatDay } from "@/lib/flight-search";
 import { formatMoneyMinor } from "@/lib/format";
 import { ShopMockBanner } from "@/components/shop/ShopMockBanner";
@@ -66,22 +77,12 @@ function buildHotelRoomGuests(draft: HotelBookingDraft): HotelRoomGuestDraft[] {
     : [{ roomIndex: 0, isLead: true, title: "mr", firstName: "", lastName: "", type: "adult" }];
 }
 
-type Traveler = {
-  title: string;
-  firstName: string;
-  middleName: string;
-  lastName: string;
-  birthDate: string;
-  nationality: string;
-  passportNumber: string;
-  passportIssueDate: string;
-  passportExpiry: string;
-  gender: string;
-};
+type Traveler = FlightTravelerDraft & { middleName: string };
 
-function emptyTraveler(): Traveler {
+function emptyTraveler(type: Traveler["type"] = "adult"): Traveler {
   return {
-    title: "mr",
+    type,
+    title: type === "adult" ? "mr" : "miss",
     firstName: "",
     middleName: "",
     lastName: "",
@@ -90,7 +91,7 @@ function emptyTraveler(): Traveler {
     passportNumber: "",
     passportIssueDate: "",
     passportExpiry: "",
-    gender: "male",
+    gender: type === "adult" ? "male" : "female",
   };
 }
 
@@ -125,17 +126,23 @@ function draftTitle(draft: BookingDraft) {
   return draft.activity.description;
 }
 
-function travelerComplete(t: Traveler) {
-  return Boolean(
-    t.firstName.trim() &&
-      t.lastName.trim() &&
-      t.gender &&
-      t.birthDate &&
-      t.nationality.trim() &&
-      t.passportNumber.trim() &&
-      t.passportIssueDate &&
-      t.passportExpiry,
-  );
+function travelerComplete(t: Traveler, travelDate: string, requirePassport: boolean) {
+  return Object.keys(validateFlightTraveler(t, travelDate, requirePassport)).length === 0;
+}
+
+function buildFlightTravelers(draft: FlightBookingDraft): Traveler[] {
+  if (draft.travelers?.length) {
+    return draft.travelers.map((t) => ({
+      ...emptyTraveler(t.type),
+      ...t,
+      middleName: t.middleName || "",
+    }));
+  }
+  const rows: Traveler[] = [];
+  for (let i = 0; i < Math.max(0, draft.adults); i += 1) rows.push(emptyTraveler("adult"));
+  for (let i = 0; i < Math.max(0, draft.children); i += 1) rows.push(emptyTraveler("child"));
+  for (let i = 0; i < Math.max(0, draft.infants || 0); i += 1) rows.push(emptyTraveler("infant"));
+  return rows.length ? rows : [emptyTraveler("adult")];
 }
 
 function splitBirthDate(iso: string) {
@@ -236,12 +243,15 @@ function FlightCheckout({
   draft,
   travelers,
   setTravelers,
+  extras,
+  setExtras,
   email,
   setEmail,
   phone,
   setPhone,
   name,
   setName,
+  fieldErrors,
   error,
   submitting,
   onSubmit,
@@ -249,12 +259,15 @@ function FlightCheckout({
   draft: FlightBookingDraft;
   travelers: Traveler[];
   setTravelers: Dispatch<SetStateAction<Traveler[]>>;
+  extras: FlightExtraDraft[];
+  setExtras: Dispatch<SetStateAction<FlightExtraDraft[]>>;
   email: string;
   setEmail: (v: string) => void;
   phone: string;
   setPhone: (v: string) => void;
   name: string;
   setName: (v: string) => void;
+  fieldErrors: Record<string, string>;
   error: string;
   submitting: boolean;
   onSubmit: () => void;
@@ -269,14 +282,16 @@ function FlightCheckout({
   const passportInputRef = useRef<HTMLInputElement | null>(null);
   const scanTargetRef = useRef<number>(0);
   const ignoreBackdropCloseRef = useRef(false);
-  const baggage = (draft.flight.details.baggage || {}) as Record<string, string>;
+  const needPassport = passportRequiredForOffer(draft.flight.details);
   const tripLabel =
     draft.tripType === "roundtrip"
       ? "ذهاب وعودة"
       : draft.tripType === "multicity"
         ? "وجهات متعددة"
         : "اتجاه واحد";
-  const pax = draft.adults + draft.children;
+  const pax = draft.adults + draft.children + (draft.infants || 0);
+  const extrasMinor = extrasTotalMinor(extras);
+  const availableExtras = draft.availableExtras || [];
   const dateLabel = [
     formatDay(draft.departDate),
     draft.returnDate ? formatDay(draft.returnDate) : "",
@@ -458,23 +473,7 @@ function FlightCheckout({
   return (
     <div className="shop-flight-checkout">
       <ShopMockBanner compact />
-      <div className="shop-flight-checkout-steps" aria-label="خطوات الحجز">
-        {[
-          "بياناتك",
-          "نوع التذكرة",
-          "إضافات",
-          "اختيار المقعد",
-          "المراجعة والدفع",
-        ].map((label, idx) => (
-          <span
-            key={label}
-            className={`shop-flight-checkout-step${idx === 0 ? " on" : ""}`}
-          >
-            <i>{idx + 1}</i>
-            {label}
-          </span>
-        ))}
-      </div>
+      <FlightBookingSteps current={2} />
 
       <div className="shop-flight-checkout-summary">
         <p>
@@ -493,14 +492,20 @@ function FlightCheckout({
           <section className="shop-flight-checkout-card">
             <h2>أدخل بياناتك</h2>
             {travelers.map((traveler, idx) => {
-              const done = travelerComplete(traveler);
+              const done = travelerComplete(traveler, draft.departDate, needPassport);
+              const typeLabel =
+                traveler.type === "infant"
+                  ? "رضيع"
+                  : traveler.type === "child"
+                    ? "طفل"
+                    : "بالغ";
               return (
                 <div key={idx} className="shop-traveler-row">
                   <div className="shop-traveler-meta">
                     <i>👤</i>
                     <div>
                       <strong>
-                        {idx < draft.adults ? `بالغ ${idx + 1}` : `طفل ${idx - draft.adults + 1}`}
+                        {typeLabel} {idx + 1}
                       </strong>
                       {done ? (
                         <p className="shop-hint" style={{ margin: 0 }}>
@@ -521,23 +526,19 @@ function FlightCheckout({
               );
             })}
 
-            <div className="shop-flight-baggage-block">
-              <strong>في كل رحلة</strong>
-              <div className="shop-flight-baggage-row">
-                <span>حقيبة شخصية</span>
-                <em>{baggage.personal || "مشمولة"}</em>
-              </div>
-              <div className="shop-flight-baggage-row">
-                <span>حقيبة مقصورة</span>
-                <em>{baggage.cabin || "مشمولة"}</em>
-              </div>
-              {baggage.checked ? (
-                <div className="shop-flight-baggage-row">
-                  <span>حقيبة مسجّلة</span>
-                  <em>{baggage.checked}</em>
-                </div>
-              ) : null}
-            </div>
+            <p className="shop-hint">
+              الأمتعة المشمولة تظهر في تفاصيل الرحلة كما وردت من العرض. لا نفترض أوزانًا غير موجودة.
+            </p>
+          </section>
+
+          <section className="shop-flight-checkout-card">
+            <h2>الإضافات</h2>
+            <FlightExtrasPicker
+              extras={availableExtras}
+              selected={extras}
+              travelers={travelers}
+              onChange={setExtras}
+            />
           </section>
 
           <section className="shop-flight-checkout-card">
@@ -546,6 +547,7 @@ function FlightCheckout({
               <label>
                 الاسم للتواصل
                 <input value={name} onChange={(e) => setName(e.target.value)} />
+                {fieldErrors.contactName ? <small className="shop-field-error">{fieldErrors.contactName}</small> : null}
               </label>
               <label>
                 البريد الإلكتروني
@@ -555,22 +557,24 @@ function FlightCheckout({
                   onChange={(e) => setEmail(e.target.value)}
                 />
                 <small>سنرسل تأكيد الرحلة إلى هذا البريد</small>
+                {fieldErrors.email ? <small className="shop-field-error">{fieldErrors.email}</small> : null}
               </label>
               <label>
-                رقم الجوال <small>(اختياري)</small>
+                رقم الجوال <small>(اختياري — الحجز كضيف متاح)</small>
                 <input
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   placeholder="+965"
                 />
+                {fieldErrors.phone ? <small className="shop-field-error">{fieldErrors.phone}</small> : null}
               </label>
             </div>
           </section>
 
           <div className="shop-flight-checkout-nav">
-            <Link href="/">‹ رجوع</Link>
+            <Link href="/book/review">‹ رجوع للتفاصيل</Link>
             <button type="button" disabled={submitting} onClick={onSubmit}>
-              {submitting ? "جارٍ الحفظ..." : "التالي"}
+              {submitting ? "جارٍ الحفظ..." : "مراجعة والدفع"}
             </button>
           </div>
         </div>
@@ -578,17 +582,21 @@ function FlightCheckout({
         <aside className="shop-flight-price-card">
           <h3>تفاصيل السعر</h3>
           <div className="shop-flight-price-line">
-            <span>
-              رحلة · بالغ ({draft.adults})
-            </span>
+            <span>التذاكر</span>
             <span>
               {formatMoneyMinor(draft.flight.sellAmountMinor, draft.flight.currency)}
             </span>
           </div>
+          {extrasMinor ? (
+            <div className="shop-flight-price-line">
+              <span>الإضافات</span>
+              <span>{formatMoneyMinor(extrasMinor, draft.flight.currency)}</span>
+            </div>
+          ) : null}
           <div className="shop-flight-price-total">
             <span>الإجمالي</span>
             <span>
-              {formatMoneyMinor(draft.flight.sellAmountMinor, draft.flight.currency)}
+              {formatMoneyMinor(draft.flight.sellAmountMinor + extrasMinor, draft.flight.currency)}
             </span>
           </div>
           <p className="shop-hint" style={{ margin: 0 }}>
@@ -623,7 +631,7 @@ function FlightCheckout({
               <div className="shop-traveler-modal-title">
                 <h3>
                   المسافر {editIndex + 1}:{" "}
-                  {editIndex < draft.adults ? "بالغ" : "طفل"}
+                  {editing.type === "infant" ? "رضيع" : editing.type === "child" ? "طفل" : "بالغ"}
                 </h3>
                 <span>* مطلوب</span>
               </div>
@@ -692,7 +700,7 @@ function FlightCheckout({
             </label>
 
             <p className="shop-traveler-field-hint shop-traveler-id-hint">
-              * يجب أن يطابق الاسم وثيقة الهوية الرسمية حرفًا بحرف
+              الاسم بالإنجليزية كما في وثيقة السفر، حرفًا بحرف.
             </p>
 
             <fieldset className="shop-traveler-title-field">
@@ -737,9 +745,12 @@ function FlightCheckout({
                 <input
                   value={editing.firstName}
                   onChange={(e) => updateEditing({ firstName: e.target.value })}
-                  placeholder="كما في الجواز"
+                  placeholder="AHMED"
                   autoComplete="given-name"
                 />
+                {fieldErrors[`pax${editIndex}.firstName`] ? (
+                  <small className="shop-field-error">{fieldErrors[`pax${editIndex}.firstName`]}</small>
+                ) : null}
               </label>
               <label>
                 الاسم الأوسط
@@ -755,9 +766,12 @@ function FlightCheckout({
                 <input
                   value={editing.lastName}
                   onChange={(e) => updateEditing({ lastName: e.target.value })}
-                  placeholder="كما في الجواز"
+                  placeholder="ALI"
                   autoComplete="family-name"
                 />
+                {fieldErrors[`pax${editIndex}.lastName`] ? (
+                  <small className="shop-field-error">{fieldErrors[`pax${editIndex}.lastName`]}</small>
+                ) : null}
               </label>
             </div>
 
@@ -769,6 +783,9 @@ function FlightCheckout({
                   onChange={(part) => updateDatePart("dob", part)}
                   labels={{ month: "الشهر*", day: "اليوم*", year: "السنة*" }}
                 />
+                {fieldErrors[`pax${editIndex}.birthDate`] ? (
+                  <small className="shop-field-error">{fieldErrors[`pax${editIndex}.birthDate`]}</small>
+                ) : null}
               </label>
               <fieldset className="shop-traveler-title-field shop-traveler-gender-field">
                 <legend>الجنس*</legend>
@@ -802,7 +819,9 @@ function FlightCheckout({
             </div>
 
             <div className="shop-traveler-section">
-              <h4 className="shop-traveler-section-title">بيانات الجواز</h4>
+              <h4 className="shop-traveler-section-title">
+                بيانات الجواز{needPassport ? "*" : " (غير مطلوبة لهذا العرض)"}
+              </h4>
               <div className="shop-traveler-passport-row">
                 <label>
                   رقم الجواز*
@@ -913,6 +932,8 @@ export default function PublicBookPage() {
   const router = useRouter();
   const [draft, setDraft] = useState<BookingDraft | null>(null);
   const [travelers, setTravelers] = useState<Traveler[]>([emptyTraveler()]);
+  const [flightExtras, setFlightExtras] = useState<FlightExtraDraft[]>([]);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [roomGuests, setRoomGuests] = useState<HotelRoomGuestDraft[]>([]);
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -945,11 +966,19 @@ export default function PublicBookPage() {
         setEmail(stored.contactEmail || "");
         setPhone(stored.contactPhone || "");
       }
-      const count =
-        stored.serviceType === "activity"
-          ? Math.max(1, stored.adults)
-          : Math.max(1, stored.adults + stored.children);
-      setTravelers(Array.from({ length: count }, emptyTraveler));
+      if (stored.serviceType === "flight") {
+        setTravelers(buildFlightTravelers(stored));
+        setFlightExtras(stored.extras || []);
+        setName(stored.contactName || name);
+        setEmail(stored.contactEmail || email);
+        setPhone(stored.contactPhone || phone);
+      } else {
+        const count =
+          stored.serviceType === "activity"
+            ? Math.max(1, stored.adults)
+            : Math.max(1, stored.adults + stored.children);
+        setTravelers(Array.from({ length: count }, emptyTraveler));
+      }
       if (stored.serviceType === "hotel") {
         setSpecialRequests(stored.specialRequests || "");
         setPaymentMethod(stored.paymentMethod || null);
@@ -972,11 +1001,19 @@ export default function PublicBookPage() {
         ? stored.contactPhone
         : session.customer.phone,
     );
-    const count =
-      stored.serviceType === "activity"
-        ? Math.max(1, stored.adults)
-        : Math.max(1, stored.adults + stored.children);
-    setTravelers(Array.from({ length: count }, emptyTraveler));
+    if (stored.serviceType === "flight") {
+      setTravelers(buildFlightTravelers(stored));
+      setFlightExtras(stored.extras || []);
+      if (stored.contactName) setName(stored.contactName);
+      if (stored.contactEmail) setEmail(stored.contactEmail);
+      if (stored.contactPhone) setPhone(stored.contactPhone);
+    } else {
+      const count =
+        stored.serviceType === "activity"
+          ? Math.max(1, stored.adults)
+          : Math.max(1, stored.adults + stored.children);
+      setTravelers(Array.from({ length: count }, emptyTraveler));
+    }
     if (stored.serviceType === "hotel") {
       setSpecialRequests(stored.specialRequests || "");
       setPaymentMethod(stored.paymentMethod || null);
@@ -1041,6 +1078,19 @@ export default function PublicBookPage() {
       .catch(() => undefined);
   }, [router]);
 
+  useEffect(() => {
+    if (!draft || draft.serviceType !== "flight") return;
+    const { serviceType: _s, ...payload } = draft;
+    saveFlightDraft({
+      ...payload,
+      travelers,
+      extras: flightExtras,
+      contactName: name,
+      contactEmail: email,
+      contactPhone: phone,
+    });
+  }, [draft, travelers, flightExtras, name, email, phone]);
+
   async function unlock(e: FormEvent) {
     e.preventDefault();
     setSubmitting(true);
@@ -1103,11 +1153,33 @@ export default function PublicBookPage() {
       return;
     }
     if (draft.serviceType === "flight") {
-      const incomplete = travelers.some((t) => !travelerComplete(t));
-      if (incomplete) {
-        setError("أكمل بيانات جميع المسافرين قبل المتابعة");
+      const needPassport = passportRequiredForOffer(draft.flight.details);
+      const nextErrors: Record<string, string> = {};
+      travelers.forEach((t, i) => {
+        const errs = validateFlightTraveler(t, draft.departDate, needPassport);
+        Object.entries(errs).forEach(([k, v]) => {
+          if (v) nextErrors[`pax${i}.${k}`] = v;
+        });
+      });
+      Object.entries(validateFlightContact({ name, email, phone })).forEach(([k, v]) => {
+        if (v) nextErrors[k] = v;
+      });
+      setFieldErrors(nextErrors);
+      if (Object.keys(nextErrors).length) {
+        setError("أكمل بيانات المسافرين والتواصل كما يطلبها العرض");
         return;
       }
+      const { serviceType: _s, ...payload } = draft;
+      saveFlightDraft({
+        ...payload,
+        travelers,
+        extras: flightExtras,
+        contactName: name,
+        contactEmail: email,
+        contactPhone: phone,
+      });
+      router.push("/book/pay");
+      return;
     }
     setSubmitting(true);
     setError("");
@@ -1133,34 +1205,7 @@ export default function PublicBookPage() {
         });
       }
       const payload =
-        draft.serviceType === "flight"
-          ? {
-              serviceType: "flight" as const,
-              inquiryId: draft.inquiryId,
-              quoteItemId: draft.quoteItemId,
-              offer: {
-                id: draft.flight.id,
-                description: draft.flight.description,
-                sellAmountMinor: draft.flight.sellAmountMinor,
-                currency: draft.flight.currency,
-                details: draft.flight.details,
-                providerOfferRef: draft.flight.id,
-              },
-              route: {
-                origin: draft.origin,
-                destination: draft.destination,
-                originLabel: draft.originLabel,
-                destinationLabel: draft.destinationLabel,
-                departDate: draft.departDate,
-                returnDate: draft.returnDate,
-                tripType: draft.tripType,
-                cabinClass: draft.cabinClass,
-              },
-              travelers,
-              adults: draft.adults,
-              children: draft.children,
-            }
-          : draft.serviceType === "hotel"
+        draft.serviceType === "hotel"
             ? {
                 serviceType: "hotel" as const,
                 inquiryId: draft.inquiryId,
@@ -1340,12 +1385,15 @@ export default function PublicBookPage() {
           draft={draft}
           travelers={travelers}
           setTravelers={setTravelers}
+          extras={flightExtras}
+          setExtras={setFlightExtras}
           email={email}
           setEmail={setEmail}
           phone={phone}
           setPhone={setPhone}
           name={name}
           setName={setName}
+          fieldErrors={fieldErrors}
           error={error}
           submitting={submitting}
           onSubmit={() => void submit()}

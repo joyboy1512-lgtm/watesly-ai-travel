@@ -6338,6 +6338,197 @@ html body .shop-root .shop-flight-edit-bar .exp-ac-field .exp-ac-menu {
   }
 }
 
+.shop-flight-flow-steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  list-style: none;
+  margin: 0 0 1rem;
+  padding: 0;
+}
+
+.shop-flight-flow-steps li {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--exp-muted);
+  font-size: 0.8rem;
+}
+
+.shop-flight-flow-steps li i {
+  width: 1.4rem;
+  height: 1.4rem;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: #e2e8f0;
+  font-style: normal;
+  font-weight: 800;
+}
+
+.shop-flight-flow-steps li.on,
+.shop-flight-flow-steps li.done {
+  color: var(--exp-navy);
+  font-weight: 700;
+}
+
+.shop-flight-flow-steps li.on i,
+.shop-flight-flow-steps li.done i {
+  background: var(--exp-navy);
+  color: #fff;
+}
+
+.shop-flight-itin-meta,
+.shop-flight-itin-seg {
+  margin: 0.35rem 0;
+}
+
+.shop-flight-itin-flag {
+  margin: 0.3rem 0 0;
+  font-size: 0.8rem;
+  color: #0f766e;
+}
+
+.shop-flight-itin-flag.warn {
+  color: #9a6700;
+}
+
+.shop-flight-itin-bags ul {
+  list-style: none;
+  margin: 0.4rem 0 0;
+  padding: 0;
+}
+
+.shop-flight-itin-bags li,
+.shop-flight-extra-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.shop-flight-itin-bags em[data-status="unknown"] {
+  color: var(--exp-muted);
+}
+
+.shop-flight-itin-bags em[data-status="not_included"] {
+  color: #b45309;
+}
+
+.shop-flight-price-change {
+  background: #fff7e6;
+  border: 1px solid #fcd34d;
+  border-radius: 12px;
+  padding: 0.85rem 1rem;
+  margin: 0 0 1rem;
+}
+
+.shop-flight-extra-row {
+  border: 1px solid var(--exp-border);
+  border-radius: 10px;
+  padding: 0.65rem 0.75rem;
+  margin: 0.45rem 0;
+}
+
+.shop-flight-extra-row.on {
+  border-color: var(--exp-navy);
+}
+
+.shop-flight-extra-row small {
+  display: block;
+  color: var(--exp-muted);
+}
+
+.shop-field-error {
+  display: block;
+  color: #b91c1c;
+  font-size: 0.78rem;
+}
+
+.shop-flight-pay-pax {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.4rem;
+}
+
+.shop-flight-pay-methods,
+.shop-flight-terms {
+  display: grid;
+  gap: 0.4rem;
+  margin: 0.75rem 0;
+}
+
+.shop-flight-pay-bar {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  align-items: center;
+  justify-content: space-between;
+  background: #fff;
+  border-top: 1px solid var(--exp-border);
+  padding: 0.75rem 0 0;
+  margin-top: 1rem;
+}
+
+.shop-flight-pay-bar button {
+  border: 0;
+  background: var(--exp-navy);
+  color: #fff;
+  border-radius: 999px;
+  padding: 0.7rem 1.1rem;
+  font: inherit;
+  font-weight: 800;
+  min-height: 44px;
+  cursor: pointer;
+}
+
+.shop-flight-pay-bar button.ghost,
+.shop-flight-pay-bar a {
+  background: #fff;
+  color: var(--exp-navy);
+  border: 1px solid var(--exp-border);
+}
+
+.shop-flight-status-pill {
+  display: inline-block;
+  border-radius: 999px;
+  padding: 0.25rem 0.7rem;
+  font-weight: 800;
+  background: #e2e8f0;
+}
+
+.shop-flight-status-pill.ticketed {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.shop-flight-status-pill.needs_followup,
+.shop-flight-status-pill.failed {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.shop-flight-status-list {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  gap: 0.35rem;
+}
+
+@media (max-width: 720px) {
+  .shop-flight-pay-bar {
+    position: sticky;
+    bottom: 0;
+    z-index: 5;
+    padding: 0.75rem;
+    box-shadow: 0 -8px 24px rgb(15 23 42 / 8%);
+  }
+}
+
 /* —— Flight card v2 + polish —— */
 .shop-flight-results-h1 {
   width: auto;

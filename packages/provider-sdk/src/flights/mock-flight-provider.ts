@@ -555,6 +555,20 @@ export class MockFlightProvider implements FlightProviderAdapter {
       };
     }
 
+    const checked = String((offer.raw as { baggage?: { checked?: string } } | undefined)?.baggage?.checked || "");
+    const extras =
+      /اختياري|رسوم/.test(checked)
+        ? [
+            {
+              id: "bag-23-extra",
+              kind: "bag",
+              labelAr: "حقيبة مشحونة إضافية 23 كجم",
+              amountMinor: 4500,
+              currency: offer.currency,
+            },
+          ]
+        : [];
+
     return {
       available: true,
       priceChanged: false,
@@ -562,13 +576,18 @@ export class MockFlightProvider implements FlightProviderAdapter {
       offer: {
         ...offer,
         expiresAt: new Date(Date.now() + 20 * 60 * 1000).toISOString(),
+        raw: {
+          ...offer.raw,
+          holdGuaranteed: false,
+          ...(extras.length ? { availableExtras: extras } : {}),
+        },
       },
     };
   }
 
   async createBooking(
     offer: FlightOffer,
-    _passengers?: unknown,
+    passengers?: unknown,
   ): Promise<ProviderBookingResult> {
     const scenario =
       scenarioFromOfferRef(offer.providerOfferRef) ||
@@ -587,9 +606,21 @@ export class MockFlightProvider implements FlightProviderAdapter {
       );
     }
 
+    const pnr = `PNR-MOCK-${offer.providerOfferRef.replace(/[^A-Z0-9]/gi, "").slice(-6) || "000000"}`;
+    const rows = Array.isArray(passengers) ? passengers : [];
+    const tickets = rows.map((row, idx) => {
+      const rec = row && typeof row === "object" ? (row as Record<string, unknown>) : {};
+      const name = [rec.firstName, rec.lastName].filter(Boolean).join(" ").trim();
+      return {
+        passengerName: name || `PAX${idx + 1}`,
+        ticketNumber: `176-${pnr.slice(-6)}${String(idx + 1).padStart(2, "0")}`,
+      };
+    });
+
     return {
-      providerBookingRef: `PNR-MOCK-${offer.providerOfferRef.replace(/[^A-Z0-9]/gi, "").slice(-6) || "000000"}`,
+      providerBookingRef: pnr,
       status: "confirmed",
+      tickets: tickets.length ? tickets : [{ ticketNumber: `176-${pnr.slice(-6)}01` }],
     };
   }
 }

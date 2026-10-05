@@ -1,5 +1,6 @@
 export * from "./aggregation";
 export * from "./flight-fare-family";
+export * from "./flight-booking";
 export * from "./hotel-mapping";
 export * from "./constants";
 export * from "./currency";

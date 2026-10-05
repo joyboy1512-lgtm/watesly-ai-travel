@@ -428,6 +428,7 @@ export class ShopController {
       seatPref?: string;
       idempotencyKey?: string;
       priceChangeConsent?: boolean;
+      checkToken?: string;
     },
   ) {
     return this.shop.book(customer, body);

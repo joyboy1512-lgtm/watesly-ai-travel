@@ -56,9 +56,25 @@ import {
   isShopHotelQuotaError,
   mapQuoteItemsToHotelRows,
 } from "./hotel-search-stale";
+import {
+  issueFlightCheckToken,
+  readFlightCheckToken,
+  type FlightCheckClaims,
+} from "./flight-check-token";
 
 function asJson(value: unknown): Prisma.InputJsonValue {
   return value as Prisma.InputJsonValue;
+}
+
+/** Search results carry the engine under `details.provider`; never let a live offer fall back to mock. */
+function flightOfferProviderKey(
+  explicit: string | undefined,
+  details: Record<string, unknown>,
+): string | undefined {
+  const key = String(explicit || details.providerKey || details.provider || "")
+    .trim()
+    .toLowerCase();
+  return key || undefined;
 }
 
 export function normalizeShopPhone(raw: string): string {
@@ -1078,18 +1094,36 @@ export class ShopService {
       throw new BadRequestException("بيانات عرض الطيران غير مكتملة");
     }
     const raw = (body.offer.raw || body.offer.details || {}) as Record<string, unknown>;
-    return this.bookings.checkFlightOffer({
+    const providerKey = flightOfferProviderKey(body.offer.providerKey, raw);
+    const ref =
+      body.offer.providerOfferRef ||
+      String(raw.originalOfferId || raw.selectedFareOfferId || "");
+    const { verified, ...result } = await this.bookings.checkFlightOffer({
       organizationId: org.id,
       offer: {
         ...body.offer,
-        providerOfferRef:
-          body.offer.providerOfferRef ||
-          String(raw.originalOfferId || raw.selectedFareOfferId || ""),
+        providerKey,
+        providerOfferRef: ref,
         raw,
       },
       companionOffer: body.companionOffer,
       previousSellAmountMinor: body.previousSellAmountMinor ?? body.offer.sellAmountMinor,
     });
+    if (!result.available) return result;
+    const { token } = issueFlightCheckToken({
+      ref,
+      companionRef: body.companionOffer?.providerOfferRef || undefined,
+      providerKey: result.offer.providerKey || providerKey || "mock",
+      costAmountMinor: verified.costAmountMinor,
+      sellAmountMinor: result.sellAmountMinor,
+      previousSellAmountMinor: result.previousSellAmountMinor,
+      pricingRuleId: verified.pricingRuleId,
+      currency: result.currency,
+      priceChanged: result.priceChanged,
+      extras: result.extras.map((row) => ({ id: row.id, amountMinor: row.amountMinor })),
+      validatedAt: result.validatedAt,
+    });
+    return { ...result, checkToken: token };
   }
 
   private customerTokenTtl(): `${number}${"s" | "m" | "h" | "d"}` {
@@ -1788,6 +1822,7 @@ export class ShopService {
       seatPref?: string;
       idempotencyKey?: string;
       priceChangeConsent?: boolean;
+      checkToken?: string;
     },
   ) {
     if (!body?.offer?.description || body.offer.sellAmountMinor == null) {
@@ -1825,42 +1860,66 @@ export class ShopService {
 
     let sellAmountMinor = Math.round(Number(body.offer.sellAmountMinor));
     let selectedExtras: Array<Record<string, unknown>> = [];
+    let verifiedFlight: FlightCheckClaims | null = null;
     if (body.serviceType === "flight") {
       const details = (body.offer.details || {}) as Record<string, unknown>;
       const extras = (body.extras || {}) as Record<string, unknown>;
-      const validatedAt = String(
-        details.validatedAt || extras.validatedAt || "",
+      verifiedFlight = readFlightCheckToken(body.checkToken);
+      const offerRefs = new Set(
+        [
+          body.offer.providerOfferRef,
+          details.originalOfferId,
+          details.selectedFareOfferId,
+          body.offer.id,
+        ]
+          .map((value) => String(value || "").trim())
+          .filter(Boolean),
       );
-      if (!isRecentValidation(validatedAt) && !body.quoteItemId) {
+      if (
+        !verifiedFlight ||
+        !isRecentValidation(verifiedFlight.validatedAt) ||
+        !offerRefs.has(verifiedFlight.ref) ||
+        verifiedFlight.currency !== String(body.offer.currency || "").toUpperCase()
+      ) {
         throw new BadRequestException(
           "يجب التحقق من السعر والتوافر قبل تأكيد حجز الطيران. ارجع لتفاصيل الرحلة وأعد التحقق.",
         );
       }
-      if (details.priceChanged === true && extras.priceChangeConsent !== true && !body.priceChangeConsent) {
+      if (verifiedFlight.priceChanged && extras.priceChangeConsent !== true && !body.priceChangeConsent) {
         throw new BadRequestException(
           "تغيّر السعر بعد التحقق — أكّد السعر الجديد قبل المتابعة",
         );
       }
-      const allowed = listOfferExtras(
-        (details.availableExtras
-          ? { availableExtras: details.availableExtras }
-          : details) as Record<string, unknown>,
-        body.offer.currency,
+      const labels = new Map(
+        listOfferExtras(
+          (details.availableExtras
+            ? { availableExtras: details.availableExtras }
+            : details) as Record<string, unknown>,
+          verifiedFlight.currency,
+        ).map((row) => [row.id, row]),
       );
       const requested = Array.isArray(extras.selectedExtras)
         ? extras.selectedExtras
         : [];
-      selectedExtras = requested.filter((row) => {
+      const seen = new Set<string>();
+      for (const row of requested) {
         const rec = row && typeof row === "object" ? (row as Record<string, unknown>) : {};
-        return allowed.some(
-          (item) => item.id === String(rec.id || "") && item.amountMinor === Number(rec.amountMinor),
-        );
-      });
-      sellAmountMinor += extrasTotalMinor(
-        selectedExtras.map((row) => ({
-          amountMinor: Number((row as { amountMinor?: number }).amountMinor),
-        })),
-      );
+        const id = String(rec.id || "");
+        const verifiedExtra = verifiedFlight.extras.find((item) => item.id === id);
+        if (!verifiedExtra || seen.has(id)) continue;
+        seen.add(id);
+        selectedExtras.push({
+          ...(labels.get(id) || {}),
+          id,
+          kind: labels.get(id)?.kind || rec.kind,
+          labelAr: labels.get(id)?.labelAr || rec.labelAr,
+          amountMinor: verifiedExtra.amountMinor,
+          currency: verifiedFlight.currency,
+          seatConfirmed: false,
+        });
+      }
+      sellAmountMinor =
+        verifiedFlight.sellAmountMinor + extrasTotalMinor(selectedExtras as Array<{ amountMinor?: number }>);
     }
 
     const result = await this.bookings.createFromDraft({
@@ -1869,11 +1928,23 @@ export class ShopService {
       canManagePayments: false,
       serviceType: body.serviceType,
       inquiryId: body.inquiryId,
-      quoteItemId: body.quoteItemId,
+      // Verified flights are priced from the signed check (fare + extras), not the stale search quote item.
+      quoteItemId: verifiedFlight ? undefined : body.quoteItemId,
       offer: {
         ...body.offer,
+        providerKey: verifiedFlight ? verifiedFlight.providerKey : body.offer.providerKey,
+        providerOfferRef: verifiedFlight ? verifiedFlight.ref : body.offer.providerOfferRef,
         sellAmountMinor,
       },
+      verifiedPricing: verifiedFlight
+        ? {
+            costAmountMinor:
+              verifiedFlight.costAmountMinor +
+              extrasTotalMinor(selectedExtras as Array<{ amountMinor?: number }>),
+            sellAmountMinor,
+            pricingRuleId: verifiedFlight.pricingRuleId ?? undefined,
+          }
+        : undefined,
       route: body.route as never,
       stay: body.stay as never,
       travelers: body.travelers,
@@ -1909,6 +1980,9 @@ export class ShopService {
           weekendgateRef: wgRef,
           shopIdempotencyKey: idempotencyKey || prevDetails.shopIdempotencyKey,
           shopLifecycle: body.serviceType === "flight" ? "paying" : prevDetails.shopLifecycle,
+          ...(verifiedFlight?.companionRef
+            ? { mixedLegsCompanionRef: verifiedFlight.companionRef }
+            : {}),
         } as Prisma.InputJsonValue,
       },
     });
@@ -2107,7 +2181,14 @@ export class ShopService {
     );
     const gateway = getPaymentGateway();
     const payload = rawBody && rawBody.length ? rawBody : JSON.stringify(body || {});
-    const event = await gateway.verifyAndParseWebhook(headers, payload);
+    let event: Awaited<ReturnType<typeof gateway.verifyAndParseWebhook>>;
+    try {
+      event = await gateway.verifyAndParseWebhook(headers, payload);
+    } catch (error) {
+      throw new UnauthorizedException(
+        error instanceof Error ? error.message : "توقيع Webhook غير صالح",
+      );
+    }
 
     const intent = await gateway.getIntent(event.intentId);
     if (!intent?.bookingId) {
@@ -2310,15 +2391,52 @@ export class ShopService {
     if (booking.status === "ticketed" && booking.providerBookingRef) {
       return this.shopBookingDetail(booking);
     }
-    await this.prisma.booking.update({
-      where: { id: booking.id },
-      data: {
-        passengerDetails: {
-          ...pd,
-          shopLifecycle: "issuing",
-        } as Prisma.InputJsonValue,
-      },
-    });
+    // An earlier attempt whose outcome is unknown must be reconciled by staff, not re-sent to the provider.
+    if (pd.shopLifecycle === "issuing") {
+      const startedMs = Date.parse(String(pd.issuingAt || ""));
+      if (Number.isFinite(startedMs) && Date.now() - startedMs < 5 * 60 * 1000) {
+        return { ...this.shopBookingDetail(booking), inProgress: true };
+      }
+      await this.prisma.booking.update({
+        where: { id: booking.id },
+        data: {
+          passengerDetails: {
+            ...pd,
+            shopLifecycle: "needs_followup",
+            issueError: "انقطع الاتصال أثناء الإصدار — سيتحقق الفريق من حالة الحجز لدى المزود قبل أي إعادة محاولة",
+          } as Prisma.InputJsonValue,
+        },
+      });
+      return this.shopBookingDetail(await this.requireCustomerBooking(customer, bookingId));
+    }
+    if (pd.shopLifecycle === "needs_followup" || pd.shopLifecycle === "ticketed") {
+      return this.shopBookingDetail(booking);
+    }
+    if (pd.mixedLegsCompanionRef) {
+      await this.prisma.booking.update({
+        where: { id: booking.id },
+        data: {
+          passengerDetails: {
+            ...pd,
+            shopLifecycle: "needs_followup",
+            issueError:
+              "رحلة الذهاب والعودة من عرضين مختلفين — تم استلام الدفع وسيصدر الفريق التذكرتين يدويًا ويؤكد لك الأرقام",
+          } as Prisma.InputJsonValue,
+        },
+      });
+      return this.shopBookingDetail(await this.requireCustomerBooking(customer, bookingId));
+    }
+    const claimed = await this.prisma.$executeRaw`
+      UPDATE "Booking"
+      SET "passengerDetails" = COALESCE("passengerDetails", '{}'::jsonb)
+        || jsonb_build_object('shopLifecycle', 'issuing', 'issuingAt', ${new Date().toISOString()}::text)
+      WHERE id = ${booking.id}
+        AND COALESCE("passengerDetails"->>'shopLifecycle', '') NOT IN ('issuing', 'needs_followup', 'ticketed')
+    `;
+    if (!claimed) {
+      const current = await this.requireCustomerBooking(customer, bookingId);
+      return { ...this.shopBookingDetail(current), inProgress: true };
+    }
     try {
       await this.bookings.issue({
         organizationId: customer.organizationId,
@@ -2329,10 +2447,25 @@ export class ShopService {
         onProviderFailure: "needs_followup",
       });
     } catch (error) {
-      const fresh = await this.requireCustomerBooking(customer, bookingId);
+      const message = error instanceof Error ? error.message : "تعذّر الإصدار";
+      let fresh = await this.requireCustomerBooking(customer, bookingId);
+      const freshPd = (fresh.passengerDetails as Record<string, unknown> | null) || {};
+      if (freshPd.shopLifecycle === "issuing") {
+        await this.prisma.booking.update({
+          where: { id: fresh.id },
+          data: {
+            passengerDetails: {
+              ...freshPd,
+              shopLifecycle: "needs_followup",
+              issueError: message,
+            } as Prisma.InputJsonValue,
+          },
+        });
+        fresh = await this.requireCustomerBooking(customer, bookingId);
+      }
       return {
         ...this.shopBookingDetail(fresh),
-        issueError: error instanceof Error ? error.message : "تعذّر الإصدار",
+        issueError: message,
       };
     }
     const fresh = await this.requireCustomerBooking(customer, bookingId);
@@ -2353,7 +2486,7 @@ export class ShopService {
       {
         organizationId: customer.organizationId,
         customerId: customer.id,
-        type: "tickets_ready",
+        type: "booking_confirmed",
         title: "تذاكر WeekendGate",
         body: `رقم الطلب ${detail.weekendgateRef} — ${detail.providerRef || ""}`,
         href: `/book/status?id=${encodeURIComponent(booking.id)}`,

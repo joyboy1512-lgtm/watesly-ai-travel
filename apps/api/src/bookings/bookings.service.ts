@@ -9,6 +9,7 @@ import {
 import {
   getFlightProvider,
   getHotelProvider,
+  resolveFlightProviderKey,
   revalidatePricedOffer,
 } from "@watesly-travel/travel-core";
 import {
@@ -74,6 +75,12 @@ export type CreateFromDraftInput = {
   ticketType?: string;
   seatPref?: string;
   payment?: { method: string; status?: string };
+  /** Server-verified amounts (e.g. signed flight check); bypasses client-supplied price fields. */
+  verifiedPricing?: {
+    costAmountMinor: number;
+    sellAmountMinor: number;
+    pricingRuleId?: string;
+  };
 };
 
 @Injectable()
@@ -385,11 +392,30 @@ export class BookingsService {
 
     let providerRef = `PNR-${Date.now()}`;
     let issuedTickets: Array<{ passengerName?: string; ticketNumber: string }> = [];
+    // Customer-facing issuance must come from a real provider booking — no synthetic PNRs.
+    const requireProviderTicket = Boolean(input.markTicketed) && item?.serviceType !== "hotel";
+    const failIssue = async (message: string): Promise<never> => {
+      await this.markIssueFailure(input, message);
+      throw new BadRequestException(message);
+    };
+    if (requireProviderTicket && !item) {
+      await failIssue("لا يوجد عرض مزود مرتبط بهذا الحجز — يحتاج متابعة من الفريق");
+    }
     if (item) {
       const isHotel = item.serviceType === "hotel";
-      const provider = isHotel
-        ? getHotelProvider(item.providerKey)
-        : getFlightProvider(item.providerKey);
+      let provider: ReturnType<typeof getFlightProvider> | ReturnType<typeof getHotelProvider>;
+      try {
+        provider = isHotel
+          ? getHotelProvider(item.providerKey)
+          : getFlightProvider(item.providerKey);
+      } catch (error) {
+        if (!requireProviderTicket) throw error;
+        return failIssue(
+          `مزود الطيران (${item.providerKey}) غير مهيأ للإصدار: ${
+            error instanceof Error ? error.message : "خطأ غير معروف"
+          }`,
+        );
+      }
       const offer: FlightOffer = {
         providerKey: item.providerKey,
         providerOfferRef: item.providerOfferRef,
@@ -437,15 +463,21 @@ export class BookingsService {
         throw new BadRequestException(
           "إصدار Duffel الحقيقي غير مفعّل بعد — استخدم المزود التجريبي أو فعّل createBooking",
         );
+      } else if (requireProviderTicket) {
+        await failIssue(
+          `الإصدار التلقائي غير مدعوم لدى مزود ${item.providerKey} — تم استلام الدفع وسيتابع الفريق الإصدار يدويًا`,
+        );
       }
     }
+
+    const ticketsPending = requireProviderTicket && issuedTickets.length === 0;
 
     const prevDetails =
       (booking.passengerDetails as Record<string, unknown> | null) || {};
     const updated = await this.prisma.booking.update({
       where: { id: input.bookingId },
       data: {
-        status: input.markTicketed ? "ticketed" : "confirmed",
+        status: input.markTicketed && !ticketsPending ? "ticketed" : "confirmed",
         providerBookingRef: providerRef,
         issuedByUserId: input.actorUserId || undefined,
         issuedAt: new Date(),
@@ -455,7 +487,14 @@ export class BookingsService {
           ...prevDetails,
           providerBookingRef: providerRef,
           tickets: issuedTickets,
-          shopLifecycle: input.markTicketed ? "ticketed" : prevDetails.shopLifecycle,
+          shopLifecycle: ticketsPending
+            ? "needs_followup"
+            : input.markTicketed
+              ? "ticketed"
+              : prevDetails.shopLifecycle,
+          ...(ticketsPending
+            ? { issueError: "تم إنشاء الحجز لدى شركة الطيران وأرقام التذاكر قيد الإصدار — سيتابع الفريق" }
+            : {}),
         }),
       },
     });
@@ -644,6 +683,15 @@ export class BookingsService {
   }
 
   private async resolveMinimalPricing(input: CreateFromDraftInput) {
+    if (input.verifiedPricing) {
+      const { costAmountMinor, sellAmountMinor, pricingRuleId } = input.verifiedPricing;
+      return {
+        costAmount: Math.round(costAmountMinor),
+        sellAmount: Math.round(sellAmountMinor),
+        profitAmount: Math.max(0, Math.round(sellAmountMinor - costAmountMinor)),
+        pricingRuleId,
+      };
+    }
     const currency = input.offer.currency || "KWD";
     const details = (input.offer.details || {}) as Record<string, unknown>;
     const serviceType =
@@ -974,10 +1022,10 @@ export class BookingsService {
   }) {
     const expiredAlready =
       Boolean(input.offer.expiresAt) &&
-      Date.parse(input.offer.expiresAt) < Date.now() - 1000;
+      Date.parse(input.offer.expiresAt ?? "") < Date.now() - 1000;
     const rules = await this.loadActiveRules(input.organizationId);
     const offer: FlightOffer = {
-      providerKey: input.offer.providerKey || "mock",
+      providerKey: input.offer.providerKey || resolveFlightProviderKey(),
       providerOfferRef: input.offer.providerOfferRef || "",
       description: input.offer.description || "",
       costAmountMinor: Number(input.offer.costAmountMinor || 0),
@@ -995,6 +1043,7 @@ export class BookingsService {
     });
 
     let companionUnavailable = false;
+    let companionPricing: { sellAmountMinor: number; costAmountMinor: number } | null = null;
     if (input.companionOffer?.providerOfferRef) {
       const companion: FlightOffer = {
         providerKey: input.companionOffer.providerKey || offer.providerKey,
@@ -1015,13 +1064,31 @@ export class BookingsService {
         providerKey: companion.providerKey,
       });
       companionUnavailable = !companionResult.available;
+      companionPricing = {
+        sellAmountMinor: companionResult.pricing.sellAmountMinor,
+        costAmountMinor: companionResult.pricing.costAmountMinor,
+      };
     }
 
-    const available = primary.available && !companionUnavailable;
+    const pricedSell = companionPricing
+      ? primary.pricing.sellAmountMinor > 0 && companionPricing.sellAmountMinor > 0
+      : primary.pricing.sellAmountMinor > 0;
+    const available =
+      !expiredAlready && primary.available && !companionUnavailable && pricedSell;
     const previousSell = Math.round(
       Number(input.previousSellAmountMinor ?? input.offer.sellAmountMinor ?? 0),
     );
-    const nextSell = Math.round(primary.pricing.sellAmountMinor);
+    // Mixed legs reuse the results page split (outbound share of offer A + return share of offer B).
+    const OUTBOUND_SHARE = 0.52;
+    const legShare = (amount: number, share: number) => Math.round(amount * share);
+    const nextSell = companionPricing
+      ? legShare(primary.pricing.sellAmountMinor, OUTBOUND_SHARE) +
+        legShare(companionPricing.sellAmountMinor, 1 - OUTBOUND_SHARE)
+      : Math.round(primary.pricing.sellAmountMinor);
+    const nextCost = companionPricing
+      ? legShare(primary.pricing.costAmountMinor, OUTBOUND_SHARE) +
+        legShare(companionPricing.costAmountMinor, 1 - OUTBOUND_SHARE)
+      : Math.round(primary.pricing.costAmountMinor);
     const priceChanged = available && previousSell > 0 && nextSell !== previousSell;
     const raw = (primary.offer.raw || {}) as Record<string, unknown>;
     const hold = holdTimerFromOffer(raw);
@@ -1049,6 +1116,11 @@ export class BookingsService {
       extras,
       extrasTotalMinor: extrasTotalMinor(extras),
       validatedAt: new Date().toISOString(),
+      mixedLegs: Boolean(companionPricing),
+      verified: {
+        costAmountMinor: nextCost,
+        pricingRuleId: primary.pricing.pricingRuleId ?? null,
+      },
       offer: {
         providerKey: primary.offer.providerKey,
         providerOfferRef: primary.offer.providerOfferRef,

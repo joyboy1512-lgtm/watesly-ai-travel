@@ -125,7 +125,7 @@ const FUNCTION_TOOLS: Extract<AiToolDefinition, { type: "function" }>[] = [
     type: "function",
     name: "search_flights_travelport",
     description:
-      "Travelport TripServices Catalog Search. Returns branded fare families (Flex/Saver/Comfort) when TRAVELPORT_* OAuth credentials are set. Never invent inventory.",
+      "Travelport GDS flight search. Returns {disabled:true} until TRAVELPORT_* credentials are set. Never invent inventory.",
     parameters: {
       type: "object",
       properties: {
@@ -193,17 +193,14 @@ export function listToolAvailability(): ToolAvailability[] {
       ? { enabled: false, reason: "OPENAI_WEB_SEARCH=false" }
       : { enabled: Boolean(process.env.OPENAI_API_KEY) };
   const vector = process.env.OPENAI_VECTOR_STORE_ID?.trim();
+  const flightsLive = Boolean(
+    process.env.DUFFEL_ACCESS_TOKEN ||
+      (process.env.AMADEUS_CLIENT_ID && process.env.AMADEUS_CLIENT_SECRET),
+  );
   const travelportLive = Boolean(
     process.env.TRAVELPORT_USER &&
       process.env.TRAVELPORT_PASSWORD &&
-      process.env.TRAVELPORT_CLIENT_ID &&
-      process.env.TRAVELPORT_CLIENT_SECRET &&
-      (process.env.TRAVELPORT_TARGET_BRANCH || process.env.TRAVELPORT_ACCESS_GROUP),
-  );
-  const flightsLive = Boolean(
-    process.env.DUFFEL_ACCESS_TOKEN ||
-      (process.env.AMADEUS_CLIENT_ID && process.env.AMADEUS_CLIENT_SECRET) ||
-      travelportLive,
+      process.env.TRAVELPORT_TARGET_BRANCH,
   );
   const travelfusionLive = Boolean(
     process.env.TRAVELFUSION_USERNAME && process.env.TRAVELFUSION_PASSWORD,
@@ -229,7 +226,7 @@ export function listToolAvailability(): ToolAvailability[] {
       enabled: flightsLive,
       reason: flightsLive
         ? undefined
-        : "يتطلب DUFFEL_ACCESS_TOKEN أو AMADEUS_CLIENT_ID/SECRET أو مفاتيح Travelport",
+        : "يتطلب DUFFEL_ACCESS_TOKEN أو AMADEUS_CLIENT_ID/SECRET",
     },
     {
       name: "search_hotels",
@@ -254,10 +251,10 @@ export function listToolAvailability(): ToolAvailability[] {
     },
     {
       name: "search_flights_travelport",
-      enabled: travelportLive,
+      enabled: false,
       reason: travelportLive
-        ? undefined
-        : "يتطلب TRAVELPORT_USER و TRAVELPORT_PASSWORD و TRAVELPORT_CLIENT_ID و TRAVELPORT_CLIENT_SECRET و TRAVELPORT_TARGET_BRANCH أو TRAVELPORT_ACCESS_GROUP",
+        ? "المفاتيح موجودة لكن بحث Travelport XML غير مكتمل بعد"
+        : "يتطلب TRAVELPORT_USER و TRAVELPORT_PASSWORD و TRAVELPORT_TARGET_BRANCH",
     },
     {
       name: "search_flights_travelfusion",

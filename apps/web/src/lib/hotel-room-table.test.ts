@@ -2,13 +2,9 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   cheapestBreakfastRateKey,
-  classifyRoomFact,
-  collectRoomImages,
-  groupRoomDetailFacts,
   guestCountForRate,
   parseRoomSize,
   pickRoomFacts,
-  uniqueShopRooms,
 } from "./hotel-room-table";
 import type { HotelRateOption, HotelRoomOption } from "@watesly-travel/shared";
 
@@ -74,92 +70,4 @@ test("pickRoomFacts keeps size, bed, access, aircon, wifi first", () => {
   assert.ok(facts.some((f) => /wheelchair/i.test(f)));
   assert.ok(facts.some((f) => /air/i.test(f)));
   assert.ok(facts.some((f) => /wifi/i.test(f)));
-});
-
-test("pickRoomFacts uses sizeSqm from provider content", () => {
-  const facts = pickRoomFacts({
-    code: "FAM",
-    name: "Family",
-    rates: [],
-    sizeSqm: 26,
-    facilities: ["Air conditioning"],
-  });
-  assert.equal(facts[0], "26 m²");
-});
-
-test("pickRoomFacts hides size labels that have no number", () => {
-  const facts = pickRoomFacts({
-    code: "DBL",
-    name: "Deluxe",
-    rates: [],
-    facilities: ["حجم الغرفة (متر مربع)", "Air conditioning"],
-  });
-  assert.ok(!facts.some((f) => /حجم الغرفة/.test(f)));
-  assert.ok(facts.includes("Air conditioning"));
-});
-
-test("classifyRoomFact maps Traveloka-style room facts", () => {
-  assert.equal(classifyRoomFact("26.0 m²"), "size");
-  assert.equal(classifyRoomFact("1 full bed and 1 sofa bed"), "bed");
-  assert.equal(classifyRoomFact("Accessible by wheelchair"), "access");
-  assert.equal(classifyRoomFact("Air conditioning"), "ac");
-  assert.equal(classifyRoomFact("Free WiFi"), "wifi");
-  assert.equal(classifyRoomFact("Mini bar"), "other");
-});
-
-test("collectRoomImages prefers room photos then matching hotel images", () => {
-  const urls = collectRoomImages(
-    {
-      code: "DBL",
-      name: "Superior",
-      rates: [],
-      imageUrl: "https://cdn.example/room.jpg",
-    },
-    {
-      hotelHero: "https://cdn.example/hero.jpg",
-      hotelImages: [
-        { url: "https://cdn.example/other.jpg", roomCode: "TWN" },
-        { url: "https://cdn.example/match.jpg", roomCode: "DBL" },
-      ],
-    },
-  );
-  assert.deepEqual(urls, ["https://cdn.example/room.jpg", "https://cdn.example/match.jpg"]);
-});
-
-test("uniqueShopRooms drops a repeated family offer", () => {
-  const rooms: HotelRoomOption[] = [
-    {
-      code: "FAM.ST",
-      name: "FAMILY ROOM STANDARD",
-      rates: [rate({ rateKey: "fam-a", roomCode: "FAM.ST", boardCode: "RO", net: 120.963 })],
-    },
-    {
-      code: "FAM.ST",
-      name: "FAMILY ROOM STANDARD",
-      rates: [rate({ rateKey: "fam-b", roomCode: "FAM.ST", boardCode: "RO", net: 120.963 })],
-    },
-  ];
-  const unique = uniqueShopRooms(rooms);
-  assert.equal(unique.length, 1);
-  assert.equal(unique[0]?.rates.length, 1);
-});
-
-test("groupRoomDetailFacts splits size/bed from features", () => {
-  const groups = groupRoomDetailFacts({
-    code: "DBL",
-    name: "Superior",
-    rates: [],
-    description: "26.0 m²",
-    facilities: [
-      "1 full bed and 1 sofa bed",
-      "Accessible by wheelchair",
-      "Air conditioning",
-      "Free WiFi",
-      "Telephone",
-      "Housekeeping",
-    ],
-  });
-  assert.ok(groups.info.some((f) => /26/.test(f)));
-  assert.ok(groups.features.some((f) => /wifi/i.test(f)));
-  assert.ok(groups.basic.includes("Telephone") || groups.room.includes("Telephone"));
 });

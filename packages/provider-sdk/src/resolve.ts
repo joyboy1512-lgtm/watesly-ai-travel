@@ -9,7 +9,6 @@ import { TravelportFlightProvider } from "./flights/travelport-flight-provider";
 import { DuffelHotelProvider } from "./hotels/duffel-hotel-provider";
 import { HotelbedsHotelProvider } from "./hotels/hotelbeds-hotel-provider";
 import { MockHotelProvider } from "./hotels/mock-hotel-provider";
-import { ScaffoldHotelProvider, isHotelAggregatorKey } from "./hotels/scaffold-hotel-provider";
 import { HotelbedsTransferProvider } from "./transfers/hotelbeds-transfer-provider";
 import { MockTransferProvider } from "./transfers/mock-transfer-provider";
 import type {
@@ -136,7 +135,6 @@ export type FlightProviderCreds = {
   username?: string;
   password?: string;
   targetBranch?: string;
-  accessGroup?: string;
   endpoint?: string;
   loginId?: string;
 };
@@ -195,15 +193,12 @@ export function getFlightProvider(
       const provider = new TravelportFlightProvider({
         username: creds?.username,
         password: creds?.password,
-        clientId: creds?.clientId,
-        clientSecret: creds?.clientSecret,
         targetBranch: creds?.targetBranch,
-        accessGroup: creds?.accessGroup,
         endpoint: creds?.endpoint,
       });
       if (!provider.liveMode) {
         throw new Error(
-          "FLIGHT_PROVIDER=travelport يتطلب TRAVELPORT_USER و TRAVELPORT_PASSWORD و TRAVELPORT_CLIENT_ID و TRAVELPORT_CLIENT_SECRET و TRAVELPORT_TARGET_BRANCH أو TRAVELPORT_ACCESS_GROUP",
+          "FLIGHT_PROVIDER=travelport يتطلب TRAVELPORT_USER و TRAVELPORT_PASSWORD و TRAVELPORT_TARGET_BRANCH",
         );
       }
       return provider;
@@ -274,10 +269,6 @@ export function getHotelProvider(
       if (mockFallbackAllowed()) return new MockHotelProvider();
       throw err;
     }
-  }
-
-  if (isHotelAggregatorKey(key)) {
-    return new ScaffoldHotelProvider(key);
   }
 
   // Flight-only / transfer-only keys are not hotel adapters.

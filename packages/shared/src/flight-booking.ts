@@ -471,8 +471,11 @@ export function validateFlightTraveler(
   if (requirePassport) {
     if (!traveler.nationality?.trim()) errors.nationality = "أدخل الجنسية";
     if (!traveler.passportNumber?.trim()) errors.passportNumber = "رقم الجواز مطلوب لهذه الرحلة";
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(traveler.passportIssueDate || "")) {
-      errors.passportIssueDate = "تاريخ إصدار الجواز مطلوب";
+    if (
+      traveler.passportIssueDate?.trim() &&
+      !/^\d{4}-\d{2}-\d{2}$/.test(traveler.passportIssueDate)
+    ) {
+      errors.passportIssueDate = "تاريخ إصدار الجواز غير مكتمل";
     }
     if (!/^\d{4}-\d{2}-\d{2}$/.test(traveler.passportExpiry || "")) {
       errors.passportExpiry = "تاريخ انتهاء الجواز مطلوب";

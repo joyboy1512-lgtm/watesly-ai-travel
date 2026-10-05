@@ -160,6 +160,28 @@ describe("passengers", () => {
     assert.ok(contact.contactName && contact.email && contact.phone);
   });
 
+  it("needs passport number, nationality and expiry but not the issue date", () => {
+    const base = {
+      type: "adult" as const,
+      firstName: "AHMED",
+      lastName: "ALSABAH",
+      birthDate: "1988-04-12",
+      gender: "male" as const,
+      nationality: "KW",
+      passportNumber: "P1234567",
+      passportExpiry: "2030-01-01",
+    };
+    assert.deepEqual(validateFlightTraveler(base, "2026-11-20", true), {});
+    assert.ok(
+      validateFlightTraveler({ ...base, passportIssueDate: "2020-01" }, "2026-11-20", true)
+        .passportIssueDate,
+    );
+    assert.ok(
+      validateFlightTraveler({ ...base, passportExpiry: "2026-10-01" }, "2026-11-20", true)
+        .passportExpiry,
+    );
+  });
+
   it("requires a passport unless the offer says otherwise", () => {
     assert.equal(passportRequiredForOffer({}), true);
     assert.equal(passportRequiredForOffer({ requiresPassport: false }), false);

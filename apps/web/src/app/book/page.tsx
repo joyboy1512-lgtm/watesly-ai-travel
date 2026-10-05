@@ -300,6 +300,17 @@ function FlightCheckout({
     .join(" – ");
 
   const editing = editIndex != null ? travelers[editIndex] : null;
+  const paxError = (key: string) =>
+    editIndex != null ? fieldErrors[`pax${editIndex}.${key}`] : undefined;
+  const rowHasErrors = (idx: number) =>
+    Object.keys(fieldErrors).some((key) => key.startsWith(`pax${idx}.`));
+
+  useEffect(() => {
+    const first = Object.keys(fieldErrors)
+      .map((key) => /^pax(\d+)\./.exec(key)?.[1])
+      .find((value) => value != null);
+    if (first != null) setEditIndex(Number(first));
+  }, [fieldErrors]);
 
   useEffect(() => {
     if (editIndex == null) return;
@@ -513,6 +524,9 @@ function FlightCheckout({
                           {traveler.firstName} {traveler.lastName}
                         </p>
                       ) : null}
+                      {rowHasErrors(idx) ? (
+                        <small className="shop-field-error">بيانات ناقصة — افتح المسافر لإكمالها</small>
+                      ) : null}
                     </div>
                   </div>
                   <button
@@ -697,6 +711,7 @@ function FlightCheckout({
                 placeholder="name@example.com"
                 autoComplete="email"
               />
+              {fieldErrors.email ? <small className="shop-field-error">{fieldErrors.email}</small> : null}
             </label>
 
             <p className="shop-traveler-field-hint shop-traveler-id-hint">
@@ -815,6 +830,9 @@ function FlightCheckout({
                     أنثى
                   </button>
                 </div>
+                {paxError("gender") ? (
+                  <small className="shop-field-error">{paxError("gender")}</small>
+                ) : null}
               </fieldset>
             </div>
 
@@ -837,6 +855,9 @@ function FlightCheckout({
                     placeholder="كما في الجواز"
                     autoCapitalize="characters"
                   />
+                  {paxError("passportNumber") ? (
+                    <small className="shop-field-error">{paxError("passportNumber")}</small>
+                  ) : null}
                 </label>
                 <label>
                   دولة الإصدار*
@@ -880,13 +901,19 @@ function FlightCheckout({
                   />
                 </label>
               ) : null}
+              {paxError("nationality") ? (
+                <small className="shop-field-error">{paxError("nationality")}</small>
+              ) : null}
               <label className="shop-traveler-dob-field">
-                تاريخ الإصدار*
+                تاريخ الإصدار <small>(اختياري)</small>
                 <DatePartsRow
                   value={issueDraft}
                   onChange={(part) => updateDatePart("issue", part)}
-                  labels={{ month: "الشهر*", day: "اليوم*", year: "السنة*" }}
+                  labels={{ month: "الشهر", day: "اليوم", year: "السنة" }}
                 />
+                {paxError("passportIssueDate") ? (
+                  <small className="shop-field-error">{paxError("passportIssueDate")}</small>
+                ) : null}
               </label>
               <label className="shop-traveler-dob-field">
                 تاريخ الانتهاء*
@@ -895,6 +922,9 @@ function FlightCheckout({
                   onChange={(part) => updateDatePart("expiry", part)}
                   labels={{ month: "الشهر*", day: "اليوم*", year: "السنة*" }}
                 />
+                {paxError("passportExpiry") ? (
+                  <small className="shop-field-error">{paxError("passportExpiry")}</small>
+                ) : null}
               </label>
             </div>
 

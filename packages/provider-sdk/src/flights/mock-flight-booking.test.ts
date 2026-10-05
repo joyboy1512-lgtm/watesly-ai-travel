@@ -35,6 +35,20 @@ describe("MockFlightProvider booking stages", () => {
     assert.ok(result.offer.costAmountMinor > 50000);
   });
 
+  it("prices a recheck from the issued fare, not the client-sent cost", async () => {
+    const results = await provider.searchFlights({
+      origin: "KWI",
+      destination: "DXB",
+      departDate: "2026-11-20",
+      adults: 1,
+    } as never);
+    const pricier = [...results]
+      .filter((row) => !/PRICE-CHANGE|SOLD-OUT|PROVIDER-FAIL/.test(row.providerOfferRef))
+      .sort((a, b) => b.costAmountMinor - a.costAmountMinor)[0]!;
+    const result = await provider.revalidateOffer({ ...pricier, costAmountMinor: 1 });
+    assert.equal(result.offer.costAmountMinor, pricier.costAmountMinor);
+  });
+
   it("blocks a sold-out offer", async () => {
     const result = await provider.revalidateOffer(
       offer("MOCK-SOLD-OUT", { scenario: "sold_out" }),

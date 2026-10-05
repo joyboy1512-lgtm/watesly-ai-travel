@@ -6168,6 +6168,27 @@ html body .shop-root .shop-flight-edit-bar .exp-ac-field .exp-ac-menu {
   color: var(--exp-navy);
 }
 
+.shop-flight-pay-pax {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.shop-flight-pay-pax li {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.75rem;
+}
+
+.shop-flight-pay-pax li span {
+  color: var(--exp-muted, #64748b);
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
 .shop-flight-review-route {
   margin: 0;
   font-weight: 800;

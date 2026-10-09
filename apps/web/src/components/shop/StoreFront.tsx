@@ -299,80 +299,96 @@ function StoreFrontInner({
               </div>
             </div>
 
-            <div className={`wg-topbar-mobile${menuOpen ? " open" : ""}`}>
-              <a
-                href={`tel:${COMPANY_LEGAL.phoneE164}`}
-                className="wg-topbar-mobile-phone"
-              >
-                {t("callUs")} · {COMPANY_LEGAL.phoneDisplay}
-              </a>
-              <a
-                href={COMPANY_LEGAL.whatsappUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="wg-topbar-mobile-whatsapp"
-              >
-                {t("whatsapp")} · {COMPANY_LEGAL.phoneDisplay}
-              </a>
-              <Link href="/chat">AI</Link>
+            {menuOpen ? (
               <button
                 type="button"
-                className="wg-topbar-mobile-lang"
-                onClick={() => setLocale(locale === "ar" ? "en" : "ar")}
-              >
-                {t("language")} · {locale === "ar" ? "EN" : "العربية"}
-              </button>
-              <label className="wg-header-menu-currency wg-topbar-mobile-currency">
-                <span>{t("currency")}</span>
-                <select
-                  aria-label={t("currency")}
-                  value={currency}
-                  onChange={(e) => setCurrency(e.target.value as ShopCurrency)}
+                className="wg-topbar-mobile-backdrop"
+                aria-label={t("navMenu")}
+                onClick={() => setMenuOpen(false)}
+              />
+            ) : null}
+            <div className={`wg-topbar-mobile${menuOpen ? " open" : ""}`}>
+              <div className="wg-topbar-mobile-prefs">
+                <button
+                  type="button"
+                  className="wg-topbar-mobile-lang"
+                  onClick={() => setLocale(locale === "ar" ? "en" : "ar")}
                 >
-                  {currencies.map((code) => (
-                    <option key={code} value={code}>
-                      {code}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              {customer ? (
-                <>
-                  <Link href="/account">{t("navMyData")}</Link>
-                  <Link href="/bookings/manage">{t("navMyBookings")}</Link>
-                  <label className="wg-header-menu-currency">
-                    <span>{t("currency")}</span>
-                    <select
-                      aria-label={t("currency")}
-                      value={currency}
-                      onChange={(e) => setCurrency(e.target.value as ShopCurrency)}
-                    >
-                      {currencies.map((code) => (
-                        <option key={code} value={code}>
-                          {code}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <button type="button" onClick={logout}>
-                    {t("navLogout")}
-                  </button>
-                </>
-              ) : (
-                <>
-                  <Link href="/account/login">{t("navSignIn")}</Link>
-                </>
-              )}
-              {platformEnabled() ? (
-                <>
-                  <Link href="/deals">{t("navDeals")}</Link>
-                  <Link href="/destinations">{t("navDestinations")}</Link>
-                  <Link href="/catalog">{locale === "en" ? "Catalog" : "الكتالوج"}</Link>
-                  <Link href="/trip-builder">{t("navTripBuilder")}</Link>
-                </>
-              ) : null}
-              <Link href="/booking-policy">{t("navPolicy")}</Link>
-              <Link href="/faq">{t("navFaq")}</Link>
+                  <IconGlobe size={18} />
+                  <span>{locale === "ar" ? "English" : "العربية"}</span>
+                </button>
+                <label className="wg-header-menu-currency wg-topbar-mobile-currency">
+                  <span>{t("currency")}</span>
+                  <select
+                    aria-label={t("currency")}
+                    value={currency}
+                    onChange={(e) => setCurrency(e.target.value as ShopCurrency)}
+                  >
+                    {currencies.map((code) => (
+                      <option key={code} value={code}>
+                        {code}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+
+              <div className="wg-topbar-mobile-section">
+                {customer ? (
+                  <>
+                    <strong className="wg-topbar-mobile-title">
+                      <IconUser size={16} />
+                      {customer.name || customer.phone}
+                    </strong>
+                    <Link href="/account">{t("navMyData")}</Link>
+                    <Link href="/bookings/manage">{t("navMyBookings")}</Link>
+                    <Link href="/account/saved">{t("wishlistNav")}</Link>
+                    <Link href="/account/alerts">{t("priceAlertsNav")}</Link>
+                    <button type="button" className="wg-topbar-mobile-logout" onClick={logout}>
+                      {t("navLogout")}
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <Link href="/account/login" className="wg-topbar-mobile-signin">
+                      <IconUser size={18} />
+                      {t("navSignIn")}
+                    </Link>
+                    <Link href="/bookings/manage">{t("manageBooking")}</Link>
+                  </>
+                )}
+              </div>
+
+              <div className="wg-topbar-mobile-section">
+                <strong className="wg-topbar-mobile-title">{t("explore")}</strong>
+                {platformEnabled() ? (
+                  <>
+                    <Link href="/deals">{t("navDeals")}</Link>
+                    <Link href="/destinations">{t("navDestinations")}</Link>
+                    <Link href="/catalog">{locale === "en" ? "Catalog" : "الكتالوج"}</Link>
+                    <Link href="/trip-builder">{t("navTripBuilder")}</Link>
+                  </>
+                ) : null}
+                <Link href="/chat">{t("aiAssistant")}</Link>
+                <Link href="/booking-policy">{t("navPolicy")}</Link>
+                <Link href="/faq">{t("navFaq")}</Link>
+              </div>
+
+              <div className="wg-topbar-mobile-contact">
+                <a href={`tel:${COMPANY_LEGAL.phoneE164}`} className="wg-topbar-mobile-phone">
+                  <IconPhone size={18} />
+                  <span>{t("callUs")}</span>
+                </a>
+                <a
+                  href={COMPANY_LEGAL.whatsappUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="wg-topbar-mobile-whatsapp"
+                >
+                  <IconWhatsApp size={18} />
+                  <span>{t("whatsapp")}</span>
+                </a>
+              </div>
             </div>
           </div>
         ) : (

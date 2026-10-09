@@ -1,0 +1,54 @@
+/* Staff dashboard phone fixes (≤767px only; desktop layouts untouched). */
+
+@media (max-width: 767px) {
+  /* Inquiry search engine: the desktop grid has a 920px floor that pushes cells off-screen. */
+  html body .flight-search .fs-grid:not(.car-hire-grid),
+  html body .flight-search .fs-grid.stays:not(.car-hire-grid),
+  html body .flight-search .fs-grid.stays.activities {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    min-width: 0 !important;
+    width: 100%;
+  }
+
+  html body .flight-search .fs-grid:not(.car-hire-grid) > .exp-ac-field,
+  html body .flight-search .fs-grid:not(.car-hire-grid) > .fs-cell:not(.fs-date-cell):not(.fs-cell-empty),
+  html body .flight-search .fs-grid:not(.car-hire-grid) > .flight-explore,
+  html body .flight-search .fs-grid:not(.car-hire-grid) > .flight-swap {
+    grid-column: 1 / -1;
+  }
+
+  html body .flight-search .fs-grid > * {
+    min-width: 0 !important;
+  }
+
+  html body .flight-search .fs-grid > .flight-swap {
+    width: 100% !important;
+    min-height: 2.4rem !important;
+  }
+
+  html body .flight-search .fs-grid > .flight-explore {
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 3rem !important;
+  }
+
+  /* Bookings desk filters: pair the short fields instead of ten stacked rows. */
+  html body .bk-filter-row-search {
+    grid-template-columns: 1fr;
+  }
+
+  html body .bk-filter-row-meta,
+  html body .bk-filter-row-dates,
+  html body .bk-filter-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  html body .bk-filter-grid .field.span-2 {
+    grid-column: 1 / -1;
+  }
+
+  html body .bk-filters .field input,
+  html body .bk-filters .field select {
+    font-size: 16px;
+  }
+}

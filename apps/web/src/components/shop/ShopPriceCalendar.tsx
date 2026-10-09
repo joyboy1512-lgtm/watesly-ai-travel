@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { formatDay } from "@/lib/flight-search";
 import {
   flexibleDateCells,
@@ -167,6 +167,23 @@ export function ShopPriceCalendar({
     });
   }, [search.departDate, currentCheapestMinor, currentCurrency]);
 
+  const rowRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => {
+      const row = rowRef.current;
+      if (!row || row.scrollWidth <= row.clientWidth + 1) return;
+      const selected = row.querySelector<HTMLElement>(".shop-price-calendar-cell.on");
+      if (!selected) return;
+      const rowBox = row.getBoundingClientRect();
+      const cellBox = selected.getBoundingClientRect();
+      row.scrollBy({
+        left: cellBox.left + cellBox.width / 2 - (rowBox.left + rowBox.width / 2),
+        behavior: "auto",
+      });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [cells, search.departDate]);
+
   if (search.tripType === "multicity" || !search.departDate) return null;
 
   const priced = Object.values(prices).filter((c) => c.priceMinor && c.priceMinor > 0);
@@ -190,7 +207,7 @@ export function ShopPriceCalendar({
         >
           ‹
         </button>
-        <div className="shop-price-calendar-row" role="list">
+        <div className="shop-price-calendar-row" role="list" ref={rowRef}>
           {cells.map((cell) => {
             const state: CellState = prices[cell.departDate] ?? {
               ...cell,

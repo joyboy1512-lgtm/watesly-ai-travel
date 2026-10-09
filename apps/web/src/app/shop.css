@@ -2,6 +2,7 @@
 @import url("https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400;1,700&family=Cairo:wght@400;600;700&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500;1,600&display=swap");
 @import "./wg-new-ui.css";
 @import "./travela-skin.css";
+@import "./mobile-polish.css";
 
 .sr-only {
   position: absolute;
@@ -5388,6 +5389,10 @@ html body .shop-root .shop-flight-edit-bar .exp-ac-field .exp-ac-menu {
   padding: 2rem 1.5rem;
 }
 
+.shop-flight-results-error > strong {
+  display: block;
+}
+
 .shop-flight-spinner {
   width: 42px;
   height: 42px;
@@ -9639,12 +9644,20 @@ html body .wg-hero-search-panel .exp-occupancy-panel select option {
   opacity: 0.7;
   cursor: wait;
 }
+.shop-root input.shop-passport-file-input,
 .shop-passport-file-input {
-  position: absolute;
-  width: 1px;
-  height: 1px;
+  position: absolute !important;
+  inset-inline-start: 0;
+  top: 0;
+  width: 1px !important;
+  min-width: 0 !important;
+  max-width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  border: 0 !important;
   overflow: hidden;
   clip: rect(0, 0, 0, 0);
+  clip-path: inset(50%);
 }
 .shop-passport-scan-hint {
   flex: 1 1 100%;
@@ -10007,5 +10020,126 @@ html body .wg-travela-hero .wg-travela-dots {
 @media (prefers-reduced-motion: reduce) {
   html body .wg-travela-hero .wg-airline-ticker-track {
     animation: none;
+  }
+}
+
+/* —— Manage booking —— */
+.shop-root .shop-manage-booking {
+  width: min(720px, 100%);
+  margin: 1.5rem auto 3rem;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.shop-root .shop-manage-booking h1 {
+  margin: 0 0 0.45rem;
+  color: #0f172a;
+  font-size: clamp(1.4rem, 3vw, 1.9rem);
+}
+
+.shop-root .shop-manage-booking > p {
+  margin: 0 0 1.1rem;
+  color: #475569;
+  line-height: 1.75;
+}
+
+.shop-root .shop-manage-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  align-items: end;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(15, 35, 70, 0.06);
+}
+
+.shop-root .shop-manage-form label {
+  display: grid;
+  gap: 0.35rem;
+  color: #334155;
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+.shop-root .shop-manage-form input {
+  min-height: 48px;
+  padding: 0 0.85rem;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 12px;
+  background: #fff;
+  color: #0f172a;
+  font: inherit;
+  font-size: 16px;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.shop-root .shop-manage-form input:focus {
+  outline: none;
+  border-color: #1565c0;
+  box-shadow: 0 0 0 3px rgba(21, 101, 192, 0.15);
+}
+
+.shop-root .shop-manage-form button {
+  min-height: 48px;
+  padding: 0 1.4rem;
+  border: 0;
+  border-radius: 12px;
+  background: #1565c0;
+  color: #fff;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.shop-root .shop-manage-form button:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+
+.shop-root .shop-manage-result {
+  margin-top: 1rem;
+  padding: 1rem 1.1rem;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+}
+
+.shop-root .shop-manage-result h2 {
+  margin: 0 0 0.6rem;
+  color: #1565c0;
+  font-size: 1.15rem;
+}
+
+.shop-root .shop-manage-result ul,
+.shop-root .shop-manage-result ol {
+  margin: 0 0 0.85rem;
+  padding-inline-start: 1.1rem;
+  line-height: 1.8;
+  overflow-wrap: anywhere;
+}
+
+.shop-root .shop-manage-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+@media (max-width: 640px) {
+  .shop-root .shop-manage-booking {
+    margin-top: 1rem;
+  }
+
+  .shop-root .shop-manage-form {
+    grid-template-columns: 1fr;
+  }
+
+  .shop-root .shop-manage-form button,
+  .shop-root .shop-manage-actions .shop-btn {
+    width: 100%;
+    justify-content: center;
+    text-align: center;
   }
 }

@@ -94,6 +94,9 @@ export function ShopFlightResultsClient() {
   const [sortKey, setSortKey] = useState<FlightSortKey>("price_asc");
   const [draft, setDraft] = useState<FlightResultsSearchParams>(params);
   const [travelersOpen, setTravelersOpen] = useState(false);
+  const [mobileEditOpen, setMobileEditOpen] = useState(
+    () => !params.origin || !params.destination || !params.departDate,
+  );
   const travelersRef = useRef<HTMLDivElement | null>(null);
 
   const [selectedOutboundKey, setSelectedOutboundKey] = useState<string | null>(null);
@@ -550,12 +553,21 @@ export function ShopFlightResultsClient() {
             </span>
             {params.directOnly ? <span className="shop-flight-chip">مباشر فقط</span> : null}
           </div>
+          <button
+            type="button"
+            className="shop-flight-edit-toggle"
+            aria-expanded={mobileEditOpen}
+            onClick={() => setMobileEditOpen((v) => !v)}
+          >
+            {mobileEditOpen ? "إخفاء" : "تعديل البحث"}
+          </button>
         </div>
 
         <form
-          className="shop-flight-edit-bar"
+          className={`shop-flight-edit-bar${mobileEditOpen ? "" : " is-mobile-collapsed"}`}
           onSubmit={(e) => {
             setTravelersOpen(false);
+            setMobileEditOpen(false);
             applyEdit(e);
           }}
         >

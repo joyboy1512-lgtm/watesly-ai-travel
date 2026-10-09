@@ -3,6 +3,7 @@
 import "../app/topbar-user-menu.css";
 import "../app/brand-topbar.css";
 import "../app/dashboard-dir.css";
+import "../app/dashboard-mobile.css";
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";

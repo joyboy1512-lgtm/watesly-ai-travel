@@ -127,6 +127,8 @@
 
   html body .shop-root.wg-new-ui .shop-header .wg-topbar .wg-topbar-end {
     order: 3;
+    position: relative;
+    z-index: 91;
   }
 
   html body .shop-root.wg-new-ui .shop-header .wg-topbar .wg-topbar-menu-btn {

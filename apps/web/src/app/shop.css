@@ -5389,6 +5389,10 @@ html body .shop-root .shop-flight-edit-bar .exp-ac-field .exp-ac-menu {
   padding: 2rem 1.5rem;
 }
 
+.shop-flight-results-error > strong {
+  display: block;
+}
+
 .shop-flight-spinner {
   width: 42px;
   height: 42px;
@@ -9640,12 +9644,20 @@ html body .wg-hero-search-panel .exp-occupancy-panel select option {
   opacity: 0.7;
   cursor: wait;
 }
+.shop-root input.shop-passport-file-input,
 .shop-passport-file-input {
-  position: absolute;
-  width: 1px;
-  height: 1px;
+  position: absolute !important;
+  inset-inline-start: 0;
+  top: 0;
+  width: 1px !important;
+  min-width: 0 !important;
+  max-width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  border: 0 !important;
   overflow: hidden;
   clip: rect(0, 0, 0, 0);
+  clip-path: inset(50%);
 }
 .shop-passport-scan-hint {
   flex: 1 1 100%;

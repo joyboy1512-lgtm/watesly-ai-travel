@@ -1617,23 +1617,9 @@ html body #search.wg-simple-search .prc-suggest button strong {
   #search.wg-simple-search .wg-search-btn { width: auto !important; margin-inline-end: 0 !important; justify-content: center !important; }
 }
 @media (min-width: 721px) {
-  html body .shop-root .shop-header.wg-header-blue,
-  html body .shop-root.wg-new-ui .exp-header-hero-overlay.wg-header-blue {
-    top: 10.4rem !important;
-    min-height: 0 !important;
-    z-index: 40 !important;
-  }
-  html body .wg-travela-hero .wg-hero-blue-strip {
-    display: none !important;
-  }
-  html body .wg-travela-hero .wg-travela-caption {
-    padding-top: 17.5rem !important;
-  }
+  /* Keep the original place. Paint the card above the header so the top half is not covered. */
   #search.wg-simple-search {
-    top: 0.85rem !important;
-    bottom: auto !important;
-    transform: translateX(-50%) !important;
-    z-index: 70 !important;
+    z-index: 90 !important;
   }
   #search.wg-simple-search .wg-simple-card {
     border-radius: 8px !important;

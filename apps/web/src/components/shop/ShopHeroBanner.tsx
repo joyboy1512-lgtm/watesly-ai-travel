@@ -1619,22 +1619,21 @@ html body #search.wg-simple-search .prc-suggest button strong {
 @media (min-width: 721px) {
   html body .shop-root .shop-header.wg-header-blue,
   html body .shop-root.wg-new-ui .exp-header-hero-overlay.wg-header-blue {
-    min-height: 8.8rem !important;
+    top: 10.4rem !important;
+    min-height: 0 !important;
+    z-index: 40 !important;
   }
   html body .wg-travela-hero .wg-hero-blue-strip {
-    display: block !important;
-    height: 8.8rem !important;
-    background: #1565c0 !important;
-    z-index: 2 !important;
+    display: none !important;
   }
   html body .wg-travela-hero .wg-travela-caption {
-    padding-top: 15.2rem !important;
+    padding-top: 17.5rem !important;
   }
   #search.wg-simple-search {
-    top: 8.8rem !important;
+    top: 0.85rem !important;
     bottom: auto !important;
-    transform: translateX(-50%) translateY(-50%) !important;
-    z-index: 55 !important;
+    transform: translateX(-50%) !important;
+    z-index: 70 !important;
   }
   #search.wg-simple-search .wg-simple-card {
     border-radius: 8px !important;

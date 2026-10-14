@@ -36,6 +36,7 @@ import {
   parseFlightResultsSearch,
   type FlightResultsSearchParams,
 } from "@/lib/flight-results-url";
+import { HOTEL_SEARCH_DEFAULT_BACKDROP } from "@/lib/hotel-search-backdrop";
 import {
   loadFlightResultsSession,
   saveFlightResultsSession,
@@ -536,8 +537,20 @@ export function ShopFlightResultsClient() {
 
   return (
     <div className="shop-flight-results-page">
+      <section className="shop-flight-hero">
+      <div className="shop-flight-hero-vista" aria-hidden="true">
+        <img src={HOTEL_SEARCH_DEFAULT_BACKDROP} alt="" />
+      </div>
       <div className="shop-flight-results-title-row">
-        <h1 className="shop-flight-results-h1">نتائج البحث عن رحلات الطيران</h1>
+        <h1 className="shop-flight-results-h1">
+          <svg className="shop-flight-hero-plane" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+            <path
+              fill="currentColor"
+              d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"
+            />
+          </svg>
+          نتائج البحث عن الطيران
+        </h1>
         <Link href="/#search" className="shop-flight-home-link">
           الصفحة الرئيسية
         </Link>
@@ -598,6 +611,28 @@ export function ShopFlightResultsClient() {
               }}
             />
           </div>
+          <button
+            type="button"
+            className="shop-flight-edit-swap"
+            aria-label="تبديل الاتجاه"
+            onClick={() => {
+              setTravelersOpen(false);
+              setDraft((d) => ({
+                ...d,
+                origin: d.destination,
+                originLabel: d.destinationLabel,
+                destination: d.origin,
+                destinationLabel: d.originLabel,
+              }));
+            }}
+          >
+            <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden>
+              <path
+                fill="currentColor"
+                d="M6.99 11 3 15l3.99 4v-3H14v-2H6.99v-3zM21 9l-3.99-4v3H10v2h7.01v3L21 9z"
+              />
+            </svg>
+          </button>
           <div className="shop-flight-edit-ac">
             <ShopAutocomplete
               inline
@@ -788,11 +823,16 @@ export function ShopFlightResultsClient() {
             />
             تواريخ مرنة
           </label>
-          <button type="submit" className="shop-flight-search-again">
-            تعديل البحث
+          <button type="submit" className="shop-flight-search-again" aria-label="تعديل البحث">
+            <svg className="shop-flight-search-again-icon" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+              <circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" strokeWidth="2.4" />
+              <path d="m20 20-4-4" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
+            </svg>
+            <span className="shop-flight-search-again-text">ابحث</span>
           </button>
         </form>
       </div>
+      </section>
 
       {loading ? (
         <div className="shop-flight-results-loading">

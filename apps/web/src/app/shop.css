@@ -3,6 +3,7 @@
 @import "./wg-new-ui.css";
 @import "./travela-skin.css";
 @import "./mobile-polish.css";
+@import "./flight-results-hero.css";
 
 .sr-only {
   position: absolute;

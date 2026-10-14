@@ -976,6 +976,7 @@ export function ShopHeroBanner(props: Props) {
           <style
             dangerouslySetInnerHTML={{
               __html: `
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap");
 #search.wg-simple-search {
   width: min(calc(1120px + 4cm), calc(100% - 1.15rem)) !important;
   max-width: calc(1120px + 4cm) !important;
@@ -1615,12 +1616,126 @@ html body #search.wg-simple-search .prc-suggest button strong {
   #search.wg-simple-search .wg-cell-dates { flex: 1 1 100% !important; width: auto !important; }
   #search.wg-simple-search .wg-search-btn { width: auto !important; margin-inline-end: 0 !important; justify-content: center !important; }
 }
+@media (min-width: 721px) {
+  html body .wg-travela-hero .wg-hero-blue-strip {
+    background: #eef1f6 !important;
+    height: 15.5rem !important;
+  }
+  html body .wg-travela-hero .wg-travela-caption {
+    padding-top: 17.4rem !important;
+  }
+  #search.wg-simple-search .wg-simple-card {
+    border-radius: 8px !important;
+    padding: 10px 12px 12px !important;
+    box-shadow: 0 8px 24px rgba(15, 41, 77, 0.12) !important;
+    font-family: Inter, Cairo, "Segoe UI", sans-serif !important;
+    gap: 6px !important;
+  }
+  #search.wg-simple-search .wg-options-flight {
+    gap: 2px 22px !important;
+    padding: 2px 6px 0 !important;
+  }
+  #search.wg-simple-search .wg-options-flight .wg-check {
+    font-size: 14px !important;
+    font-weight: 400 !important;
+    color: #0f294d !important;
+    -webkit-text-fill-color: #0f294d !important;
+    gap: 8px !important;
+  }
+  #search.wg-simple-search .wg-options-flight .wg-check input {
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    width: 16px !important;
+    height: 16px !important;
+    border: 1.5px solid #8592a6 !important;
+    border-radius: 50% !important;
+    background: #fff !important;
+    accent-color: transparent !important;
+  }
+  #search.wg-simple-search .wg-options-flight .wg-check input:checked {
+    border-color: #3264ff !important;
+    background: radial-gradient(circle, #3264ff 42%, #fff 48%) !important;
+  }
+  #search.wg-simple-search .wg-simple-fields {
+    min-height: 52px !important;
+    align-items: center !important;
+  }
+  #search.wg-simple-search .wg-simple-cell,
+  #search.wg-simple-search .wg-cell-origin,
+  #search.wg-simple-search .wg-cell-dest,
+  #search.wg-simple-search .wg-cell-dates,
+  #search.wg-simple-search .wg-cell-nights,
+  #search.wg-simple-search .wg-cell-travelers,
+  #search.wg-simple-search .wg-cell-time,
+  #search.wg-simple-search .wg-simple-fields > .wg-simple-cell:first-child {
+    border: 0 !important;
+    border-radius: 0 !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    min-height: 48px !important;
+    padding: 0 12px !important;
+    border-inline-start: 1px solid #e7eaf0 !important;
+  }
+  #search.wg-simple-search .wg-simple-fields > .wg-cell-origin,
+  #search.wg-simple-search .wg-simple-fields > .wg-simple-cell:first-child {
+    border-inline-start: 0 !important;
+  }
+  #search.wg-simple-search .wg-field-ico,
+  #search.wg-simple-search .wg-field-ico svg,
+  #search.wg-simple-search .wg-field-ico img {
+    width: 18px !important;
+    height: 18px !important;
+    color: #455873 !important;
+  }
+  #search.wg-simple-search .wg-simple-cell .shop-ac-inline input,
+  #search.wg-simple-search .wg-simple-cell .exp-date-btn,
+  #search.wg-simple-search .wg-simple-cell .shop-date-range-trigger,
+  #search.wg-simple-search .wg-cell-dates .shop-date-range-trigger,
+  #search.wg-simple-search .wg-cell-dates .exp-date-btn,
+  #search.wg-simple-search .wg-traveler-count,
+  #search.wg-simple-search .wg-traveler-sep,
+  #search.wg-simple-search .wg-cabin-chip,
+  #search.wg-simple-search .wg-simple-cell .exp-travelers-trigger strong {
+    font-family: Inter, Cairo, "Segoe UI", sans-serif !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    color: #0f294d !important;
+    -webkit-text-fill-color: #0f294d !important;
+  }
+  #search.wg-simple-search .wg-swap {
+    width: 28px !important;
+    height: 28px !important;
+    margin-inline: -10px !important;
+    border: 1px solid #d5dbe3 !important;
+    border-radius: 50% !important;
+    background: #fff !important;
+    color: #455873 !important;
+    position: relative !important;
+    z-index: 3 !important;
+  }
+  #search.wg-simple-search .wg-search-btn {
+    height: 48px !important;
+    min-height: 48px !important;
+    border-radius: 6px !important;
+    background: #3264ff !important;
+    box-shadow: none !important;
+    font-family: Inter, Cairo, "Segoe UI", sans-serif !important;
+    font-size: 16px !important;
+    font-weight: 500 !important;
+    padding: 0 18px !important;
+    margin-inline-start: 8px !important;
+  }
+  #search.wg-simple-search .wg-search-btn:hover:not(:disabled) {
+    background: #2547d0 !important;
+  }
+}
 `,
             }}
           />
           <div className="wg-simple-card">
             {props.mode === "flights" ? (
-              <div className="wg-options" role="group" aria-label={t("tripType")}>
+              <div className="wg-options wg-options-flight" role="group" aria-label={t("tripType")}>
                 <label className="wg-check">
                   <input
                     type="checkbox"

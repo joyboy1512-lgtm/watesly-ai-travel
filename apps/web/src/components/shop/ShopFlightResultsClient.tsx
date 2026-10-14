@@ -806,7 +806,7 @@ export function ShopFlightResultsClient() {
               <circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" strokeWidth="2.4" />
               <path d="m20 20-4-4" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
             </svg>
-            <span className="shop-flight-search-again-text">تعديل البحث</span>
+            <span className="shop-flight-search-again-text">ابحث</span>
           </button>
         </form>
       </div>

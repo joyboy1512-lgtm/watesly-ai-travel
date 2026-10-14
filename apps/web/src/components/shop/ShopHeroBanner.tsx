@@ -228,7 +228,7 @@ function IconSwap() {
     <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden>
       <path
         fill="currentColor"
-        d="M16 17.01V10h-2v7.01h-3L15 21l4-3.99h-3zM9 3 5 6.99h3V14h2V6.99h3L9 3z"
+        d="M6.99 11 3 15l3.99 4v-3H14v-2H6.99v-3zM21 9l-3.99-4v3H10v2h7.01v3L21 9z"
       />
     </svg>
   );
@@ -1617,29 +1617,45 @@ html body #search.wg-simple-search .prc-suggest button strong {
   #search.wg-simple-search .wg-search-btn { width: auto !important; margin-inline-end: 0 !important; justify-content: center !important; }
 }
 @media (min-width: 721px) {
+  html body .wg-travela-hero,
+  html body .wg-travela-carousel {
+    min-height: 78vh !important;
+    height: 78vh !important;
+  }
+  html body .wg-travela-hero {
+    margin-bottom: 4.6rem !important;
+  }
   html body .wg-travela-hero .wg-hero-blue-strip {
-    background: #eef1f6 !important;
-    height: 15.5rem !important;
+    display: none !important;
   }
   html body .wg-travela-hero .wg-travela-caption {
-    padding-top: 17.4rem !important;
+    padding-top: 14vh !important;
+  }
+  html body .wg-travela-hero .wg-airline-ticker {
+    bottom: -4.5rem !important;
+  }
+  #search.wg-simple-search {
+    top: auto !important;
+    bottom: 0 !important;
+    transform: translateX(-50%) translateY(50%) !important;
   }
   #search.wg-simple-search .wg-simple-card {
     border-radius: 8px !important;
-    padding: 10px 12px 12px !important;
-    box-shadow: 0 8px 24px rgba(15, 41, 77, 0.12) !important;
+    padding: 14px 14px 16px !important;
+    border: 1px solid rgba(0, 0, 0, 0.28) !important;
+    box-shadow: 0 10px 28px rgba(15, 41, 77, 0.16) !important;
     font-family: Inter, Cairo, "Segoe UI", sans-serif !important;
-    gap: 6px !important;
+    gap: 10px !important;
   }
   #search.wg-simple-search .wg-options-flight {
     gap: 2px 22px !important;
     padding: 2px 6px 0 !important;
   }
   #search.wg-simple-search .wg-options-flight .wg-check {
-    font-size: 14px !important;
-    font-weight: 400 !important;
-    color: #0f294d !important;
-    -webkit-text-fill-color: #0f294d !important;
+    font-size: 15px !important;
+    font-weight: 700 !important;
+    color: #111 !important;
+    -webkit-text-fill-color: #111 !important;
     gap: 8px !important;
   }
   #search.wg-simple-search .wg-options-flight .wg-check input {
@@ -1657,8 +1673,9 @@ html body #search.wg-simple-search .prc-suggest button strong {
     background: radial-gradient(circle, #3264ff 42%, #fff 48%) !important;
   }
   #search.wg-simple-search .wg-simple-fields {
-    min-height: 52px !important;
+    min-height: 64px !important;
     align-items: center !important;
+    gap: 8px !important;
   }
   #search.wg-simple-search .wg-simple-cell,
   #search.wg-simple-search .wg-cell-origin,
@@ -1668,18 +1685,14 @@ html body #search.wg-simple-search .prc-suggest button strong {
   #search.wg-simple-search .wg-cell-travelers,
   #search.wg-simple-search .wg-cell-time,
   #search.wg-simple-search .wg-simple-fields > .wg-simple-cell:first-child {
-    border: 0 !important;
-    border-radius: 0 !important;
+    border: 1px solid rgba(0, 0, 0, 0.45) !important;
+    border-radius: 8px !important;
     margin: 0 !important;
     box-shadow: none !important;
-    background: transparent !important;
-    min-height: 48px !important;
+    background: #fff !important;
+    min-height: 58px !important;
     padding: 0 12px !important;
-    border-inline-start: 1px solid #e7eaf0 !important;
-  }
-  #search.wg-simple-search .wg-simple-fields > .wg-cell-origin,
-  #search.wg-simple-search .wg-simple-fields > .wg-simple-cell:first-child {
-    border-inline-start: 0 !important;
+    border-inline-start: 1px solid rgba(0, 0, 0, 0.45) !important;
   }
   #search.wg-simple-search .wg-field-ico,
   #search.wg-simple-search .wg-field-ico svg,
@@ -1698,25 +1711,30 @@ html body #search.wg-simple-search .prc-suggest button strong {
   #search.wg-simple-search .wg-cabin-chip,
   #search.wg-simple-search .wg-simple-cell .exp-travelers-trigger strong {
     font-family: Inter, Cairo, "Segoe UI", sans-serif !important;
-    font-size: 14px !important;
-    font-weight: 500 !important;
-    color: #0f294d !important;
-    -webkit-text-fill-color: #0f294d !important;
+    font-size: 16px !important;
+    font-weight: 700 !important;
+    color: #111 !important;
+    -webkit-text-fill-color: #111 !important;
   }
   #search.wg-simple-search .wg-swap {
-    width: 28px !important;
-    height: 28px !important;
-    margin-inline: -10px !important;
-    border: 1px solid #d5dbe3 !important;
+    width: 42px !important;
+    height: 42px !important;
+    margin-inline: -18px !important;
+    border: 1px solid rgba(0, 0, 0, 0.55) !important;
     border-radius: 50% !important;
     background: #fff !important;
-    color: #455873 !important;
+    color: #111 !important;
     position: relative !important;
-    z-index: 3 !important;
+    z-index: 4 !important;
+    flex: 0 0 auto !important;
+  }
+  #search.wg-simple-search .wg-swap svg {
+    width: 22px !important;
+    height: 22px !important;
   }
   #search.wg-simple-search .wg-search-btn {
-    height: 48px !important;
-    min-height: 48px !important;
+    height: 58px !important;
+    min-height: 58px !important;
     border-radius: 6px !important;
     background: #3264ff !important;
     box-shadow: none !important;

@@ -1617,27 +1617,24 @@ html body #search.wg-simple-search .prc-suggest button strong {
   #search.wg-simple-search .wg-search-btn { width: auto !important; margin-inline-end: 0 !important; justify-content: center !important; }
 }
 @media (min-width: 721px) {
-  html body .wg-travela-hero,
-  html body .wg-travela-carousel {
-    min-height: 78vh !important;
-    height: 78vh !important;
-  }
-  html body .wg-travela-hero {
-    margin-bottom: 4.6rem !important;
+  html body .shop-root .shop-header.wg-header-blue,
+  html body .shop-root.wg-new-ui .exp-header-hero-overlay.wg-header-blue {
+    min-height: 8.8rem !important;
   }
   html body .wg-travela-hero .wg-hero-blue-strip {
-    display: none !important;
+    display: block !important;
+    height: 8.8rem !important;
+    background: #1565c0 !important;
+    z-index: 2 !important;
   }
   html body .wg-travela-hero .wg-travela-caption {
-    padding-top: 14vh !important;
-  }
-  html body .wg-travela-hero .wg-airline-ticker {
-    bottom: -4.5rem !important;
+    padding-top: 15.2rem !important;
   }
   #search.wg-simple-search {
-    top: auto !important;
-    bottom: 0 !important;
-    transform: translateX(-50%) translateY(50%) !important;
+    top: 8.8rem !important;
+    bottom: auto !important;
+    transform: translateX(-50%) translateY(-50%) !important;
+    z-index: 55 !important;
   }
   #search.wg-simple-search .wg-simple-card {
     border-radius: 8px !important;

@@ -1,12 +1,16 @@
 /* Flight results — compact search card matching the homepage hero (desktop / tablet). */
 
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap");
 
 .shop-flight-hero-vista,
 .shop-flight-hero-plane,
 .shop-flight-search-again-icon,
 .shop-flight-edit-swap {
   display: none;
+}
+
+.shop-flight-edit-flags {
+  display: contents;
 }
 
 @media (max-width: 767px) {
@@ -21,30 +25,52 @@
     --fh-ink: #0f294d;
     --fh-muted: #455873;
     --fh-line: #e7eaf0;
-    --fh-width: min(1120px, calc(100% - 2rem));
+    --fh-width: min(1120px, calc(100% - 2.5rem));
     position: relative;
     z-index: 70;
     display: block;
-    padding: 16.5rem 0 0;
-    margin: 0 calc(50% - 50vw) 1.25rem;
+    padding: 8px 0 10px;
+    margin: 0 calc(50% - 50vw) 8px;
     background: transparent;
-    isolation: isolate;
-    font-family: Inter, Cairo, "Segoe UI", sans-serif;
+    overflow: visible;
+    font-family: "IBM Plex Sans Arabic", Inter, Cairo, "Segoe UI", sans-serif;
   }
 
   html body .shop-root .shop-flight-hero-vista {
     display: block;
     position: absolute;
-    top: 0;
-    right: 0;
-    left: 0;
-    height: 24rem;
-    z-index: -1;
+    inset: 0;
+    height: auto;
+    overflow: hidden;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  html body .shop-root .shop-flight-hero-vista img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center 48%;
+    display: block;
+  }
+
+  html body .shop-root .shop-flight-hero-vista::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      180deg,
+      rgba(0, 27, 53, 0.28) 0%,
+      rgba(0, 27, 53, 0.1) 55%,
+      rgba(0, 27, 53, 0.2) 100%
+    );
   }
 
   html body .shop-root .shop-flight-hero .shop-flight-results-title-row {
+    position: relative;
+    z-index: 1;
     width: var(--fh-width);
-    margin: 0 auto 0.7rem;
+    margin: 0 auto 6px;
     align-items: center;
   }
 
@@ -84,6 +110,7 @@
 
   html body .shop-root .shop-flight-hero .shop-flight-results-topbar {
     position: relative;
+    z-index: 1;
     top: auto;
     margin: 0;
     background: transparent;
@@ -98,66 +125,95 @@
   }
 
   html body .shop-root .shop-flight-hero .shop-flight-edit-bar {
+    position: relative;
+    z-index: 1;
     width: var(--fh-width);
     margin: 0 auto;
-    padding: 8px 10px 10px;
+    padding: 0;
     display: grid;
     grid-template-columns:
-      minmax(0, 1.35fr) 42px minmax(0, 1.35fr) minmax(0, 1.05fr) minmax(0, 1.05fr) minmax(0, 1.15fr) auto;
-    grid-template-rows: auto auto;
-    gap: 8px;
-    align-items: center;
+      minmax(0, 1.35fr) 0 minmax(0, 1.35fr) minmax(0, 1.05fr) minmax(0, 1.05fr) minmax(0, 0.95fr) max-content 72px;
+    grid-template-rows: auto;
+    gap: 0;
+    align-items: stretch;
     min-height: 0;
-    background: #fff;
+    background: transparent;
     border: 0;
-    border-radius: 8px;
-    box-shadow: 0 8px 24px rgba(15, 41, 77, 0.12);
-    font-family: Inter, Cairo, "Segoe UI", sans-serif;
+    border-radius: 0;
+    box-shadow: none;
+    overflow: visible;
+    font-family: "IBM Plex Sans Arabic", Inter, Cairo, "Segoe UI", sans-serif;
+  }
+
+  html body .shop-root .shop-flight-hero .shop-flight-edit-bar::before {
+    content: "";
+    grid-column: 1 / -1;
+    grid-row: 1;
+    background: #fff;
+    border: 1px solid #e8edf1;
+    border-radius: 16px;
+    box-shadow: 0 8px 24px rgba(37, 42, 49, 0.08);
+    z-index: 0;
+    pointer-events: none;
   }
 
   html body .shop-root .shop-flight-hero .shop-flight-edit-ac,
   html body .shop-root .shop-flight-hero .shop-flight-edit-date,
   html body .shop-root .shop-flight-hero .shop-flight-edit-travelers {
-    grid-row: 2;
+    position: relative;
+    z-index: 1;
+    grid-row: 1;
     display: flex;
-    flex-direction: row;
-    align-items: center;
-    gap: 0.35rem;
+    flex-direction: column;
+    justify-content: center;
+    align-items: stretch;
+    gap: 2px;
     min-width: 0;
-    padding: 0 12px;
-    border: 1px solid rgba(0, 0, 0, 0.45);
-    border-radius: 8px;
-    background: #fff;
-    color: #111;
-    font-size: 16px;
-    font-weight: 700;
+    min-height: 72px;
+    padding: 8px 14px 10px;
+    border: 0;
+    border-inline-start: 1px solid #e8edf1;
+    border-radius: 0;
+    background: transparent;
+    color: #687176;
+    font-size: 0.7rem;
+    font-weight: 600;
   }
 
   html body .shop-root .shop-flight-hero .shop-flight-edit-ac:nth-child(1) {
     grid-column: 1;
+    border-inline-start: 0;
+    padding-inline-end: 22px;
   }
 
   html body .shop-root .shop-flight-hero .shop-flight-edit-ac:nth-child(3) {
     grid-column: 3;
+    padding-inline-start: 22px;
   }
 
   html body .shop-root .shop-flight-hero .shop-flight-edit-swap {
     display: grid;
     place-items: center;
     grid-column: 2;
-    grid-row: 2;
-    align-self: center;
+    grid-row: 1;
+    align-self: end;
     justify-self: center;
-    width: 42px;
-    height: 42px;
-    margin-inline: -12px;
+    width: 32px;
+    height: 32px;
+    margin: 0 0 16px;
     padding: 0;
-    border: 1px solid rgba(0, 0, 0, 0.55);
+    border: 1px solid #e8edf1;
     border-radius: 50%;
     background: #fff;
-    color: #111;
+    color: #687176;
+    box-shadow: 0 1px 4px rgba(37, 42, 49, 0.08);
     z-index: 3;
     cursor: pointer;
+  }
+
+  html body .shop-root .shop-flight-hero .shop-flight-edit-swap svg {
+    width: 16px;
+    height: 16px;
   }
 
   html body .shop-root .shop-flight-hero .shop-flight-edit-date:nth-child(4) {
@@ -172,25 +228,22 @@
     grid-column: 6;
   }
 
-  html body .shop-root .shop-flight-hero .shop-flight-edit-ac:focus-within,
-  html body .shop-root .shop-flight-hero .shop-flight-edit-date:focus-within,
-  html body .shop-root .shop-flight-hero .shop-flight-edit-travelers:focus-within {
-    background: #f7f9fc;
-  }
-
   html body .shop-root .shop-flight-hero .shop-flight-edit-bar .shop-ac-inline {
-    gap: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 2px;
     min-width: 0;
+    width: 100%;
   }
 
   html body .shop-root .shop-flight-hero .shop-flight-edit-bar .shop-ac-inline .exp-cell-label,
   html body .shop-root .shop-flight-hero .shop-flight-edit-field-label {
-    display: none;
-  }
-
-  /* The date caption is a text node; collapse it and keep the input readable. */
-  html body .shop-root .shop-flight-hero .shop-flight-edit-date {
-    font-size: 0;
+    display: block;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #687176;
+    line-height: 1.2;
   }
 
   html body .shop-root .shop-flight-hero .shop-flight-edit-bar .shop-ac-inline input,
@@ -199,14 +252,24 @@
     border: 0;
     border-radius: 0;
     padding: 0;
-    min-height: 58px;
+    min-height: 0;
+    height: auto;
     background: transparent;
     box-shadow: none;
-    color: var(--fh-ink);
-    font-family: Inter, Cairo, "Segoe UI", sans-serif;
-    font-size: 16px;
-    font-weight: 700;
-    color: #111;
+    color: #252a31;
+    font-family: "IBM Plex Sans Arabic", Inter, Cairo, "Segoe UI", sans-serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    line-height: 1.3;
+  }
+
+  html body .shop-root .shop-flight-hero .shop-flight-edit-bar input[type="date"]::-webkit-calendar-picker-indicator {
+    opacity: 0;
+    position: absolute;
+    inset: 0;
+    width: auto;
+    height: auto;
+    cursor: pointer;
   }
 
   html body .shop-root .shop-flight-hero .shop-flight-edit-bar .shop-ac-inline input {
@@ -222,16 +285,18 @@
   }
 
   html body .shop-root .shop-flight-hero .shop-flight-edit-ac:nth-child(1) .shop-ac-inline input {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23455873' d='M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23687176' d='M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z'/%3E%3C/svg%3E");
   }
 
   html body .shop-root .shop-flight-hero .shop-flight-edit-ac:nth-child(3) .shop-ac-inline input {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23455873' d='M2.5 19h19v2h-19zM21 8.5 13 11V3.5a1.5 1.5 0 0 0-3 0V11L2 8.5V11l8 2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8-2.5z'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23687176' d='M2.5 19h19v2h-19zM21 8.5 13 11V3.5a1.5 1.5 0 0 0-3 0V11L2 8.5V11l8 2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8-2.5z'/%3E%3C/svg%3E");
   }
 
   html body .shop-root .shop-flight-hero .shop-flight-edit-date input[type="date"] {
+    position: relative;
+    width: 100%;
     padding-inline-start: 1.45rem;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23455873' d='M7 2h2v2h6V2h2v2h3a1 1 0 0 1 1 1v15a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h3zm12 8H5v9h14z'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23687176' d='M7 2h2v2h6V2h2v2h3a1 1 0 0 1 1 1v15a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h3zm12 8H5v9h14z'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
     background-size: 16px;
     background-position: right 0 center;
@@ -248,7 +313,7 @@
     overflow: hidden;
     text-overflow: ellipsis;
     padding-inline-start: 1.45rem;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23455873' d='M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4zm0 2c-4 0-8 2-8 4v2h16v-2c0-2-4-4-8-4z'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23687176' d='M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4zm0 2c-4 0-8 2-8 4v2h16v-2c0-2-4-4-8-4z'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
     background-size: 16px;
     background-position: right 0 center;
@@ -264,38 +329,44 @@
     cursor: not-allowed;
   }
 
-  html body .shop-root .shop-flight-hero .shop-flight-edit-check {
-    grid-row: 1;
+  html body .shop-root .shop-flight-hero .shop-flight-edit-flags {
     display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 6px;
+    grid-column: 7;
+    grid-row: 1;
+    z-index: 1;
+    min-width: max-content;
+    padding: 8px 12px;
+    border-inline-start: 1px solid #e8edf1;
+  }
+
+  html body .shop-root .shop-flight-hero .shop-flight-edit-check {
+    display: flex !important;
     align-items: center;
-    gap: 8px;
-    padding: 4px 8px 8px;
+    gap: 6px;
+    width: max-content;
+    margin: 0;
+    padding: 0;
     border: 0;
-    color: var(--fh-ink);
-    font-size: 15px;
-    font-weight: 700;
-    color: #111;
+    background: transparent;
+    color: #252a31 !important;
+    font-size: 0.78rem;
+    font-weight: 600 !important;
+    line-height: 1.2;
     white-space: nowrap;
     cursor: pointer;
-  }
-
-  html body .shop-root .shop-flight-hero .shop-flight-edit-check:nth-child(7),
-  html body .shop-root .shop-flight-hero .shop-flight-edit-check:nth-child(8) {
-    grid-column: 1;
-    justify-content: flex-start;
-    width: max-content;
-  }
-
-  html body .shop-root .shop-flight-hero .shop-flight-edit-check:nth-child(8) {
-    margin-inline-start: 9.2rem;
   }
 
   html body .shop-root .shop-flight-hero .shop-flight-edit-check input {
     appearance: none;
     -webkit-appearance: none;
-    width: 16px;
-    height: 16px;
+    width: 14px;
+    height: 14px;
     margin: 0;
+    flex: 0 0 auto;
     border: 1.5px solid #8592a6;
     border-radius: 50%;
     background: #fff;
@@ -303,51 +374,1194 @@
   }
 
   html body .shop-root .shop-flight-hero .shop-flight-edit-check input:checked {
-    border-color: #3264ff;
-    background: radial-gradient(circle, #3264ff 42%, #fff 48%);
+    border-color: #ff5e1f;
+    background: radial-gradient(circle, #ff5e1f 42%, #fff 48%);
   }
 
   html body .shop-root .shop-flight-hero .shop-flight-search-again {
-    grid-column: 7;
-    grid-row: 2;
+    position: relative;
+    z-index: 1;
+    grid-column: 8;
+    grid-row: 1;
     align-self: center;
     justify-self: center;
-    width: auto;
-    min-width: 6.2rem;
-    height: 58px;
-    min-height: 58px;
-    margin: 4px 6px;
-    padding: 0 16px;
+    width: 52px;
+    min-width: 52px;
+    height: 52px;
+    min-height: 52px;
+    margin: 10px;
+    padding: 0;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 6px;
-    border-radius: 6px;
-    background: #3264ff;
+    gap: 0;
+    border: 0;
+    border-radius: 50%;
+    background: #ff5e1f;
     color: #fff;
-    box-shadow: none;
-    font-family: Inter, Cairo, "Segoe UI", sans-serif;
-    font-size: 16px;
-    font-weight: 500;
+    box-shadow: 0 6px 14px rgba(255, 94, 31, 0.28);
+    cursor: pointer;
   }
 
   html body .shop-root .shop-flight-hero .shop-flight-search-again:hover {
-    background: #2547d0;
+    background: #e04e14;
   }
 
   html body .shop-root .shop-flight-hero .shop-flight-search-again-icon {
     display: block;
-    width: 18px;
-    height: 18px;
+    width: 22px;
+    height: 22px;
   }
 
   html body .shop-root .shop-flight-hero .shop-flight-search-again-text {
-    position: static;
-    width: auto;
-    height: auto;
-    overflow: visible;
-    clip-path: none;
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
     white-space: nowrap;
+    border: 0;
+  }
+}
+
+/* Compact Trip-style price strip and the price-table dialog. */
+html body .shop-root .shop-price-calendar {
+  width: min(1400px, calc(100% - 1.25rem));
+  margin: 0 auto 0.5rem;
+  padding: 0;
+  background: #fff;
+  border: 1px solid #e6e8ee;
+  border-radius: 8px;
+  box-shadow: none;
+  overflow: hidden;
+}
+
+html body .shop-root .shop-price-calendar-head {
+  display: none;
+}
+
+html body .shop-root .shop-price-calendar-nav {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  margin: 0;
+  min-height: 68px;
+}
+
+html body .shop-root .shop-price-calendar-arrow {
+  width: 36px;
+  flex: 0 0 36px;
+  border: 0;
+  border-radius: 0;
+  background: #3264ff;
+  color: #fff;
+  font-size: 22px;
+  font-weight: 600;
+}
+
+html body .shop-root .shop-price-calendar-arrow:hover {
+  background: #2547d0;
+  color: #fff;
+  border-color: transparent;
+}
+
+html body .shop-root .shop-price-calendar-row {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  gap: 0;
+}
+
+html body .shop-root .shop-price-calendar-row::-webkit-scrollbar {
+  display: none;
+}
+
+html body .shop-root .shop-price-calendar-cell,
+html body .shop-root .shop-price-calendar-cell:last-child {
+  flex: 1 0 auto;
+  min-width: max-content;
+  min-height: 0;
+  height: auto;
+  padding: 10px 10px 12px;
+  border: 0;
+  border-inline-end: 1px solid #eef0f3;
+  border-radius: 0;
+  background: #fff;
+  box-shadow: none;
+  scroll-snap-align: none;
+  gap: 1px;
+}
+
+html body .shop-root .shop-price-calendar-cell:hover {
+  background: #f7f9fc;
+}
+
+html body .shop-root .shop-price-calendar-cell.on,
+html body .shop-root .shop-price-calendar-cell.on.cheap {
+  background: #fff;
+  box-shadow: inset 0 -2px 0 #0f294d;
+}
+
+html body .shop-root .shop-price-calendar-day,
+html body .shop-root .shop-price-calendar-cell.on .shop-price-calendar-day {
+  font-size: 14px;
+  font-weight: 600;
+  color: #455873;
+  line-height: 1.25;
+  white-space: nowrap;
+}
+
+html body .shop-root .shop-price-calendar-cell strong,
+html body .shop-root .shop-price-calendar-cell.on strong,
+html body .shop-root .shop-price-calendar-cell.on.cheap strong {
+  font-size: 16px;
+  font-weight: 700;
+  color: #0f294d;
+}
+
+html body .shop-root .shop-price-calendar-cell.cheap strong {
+  color: #0f766e;
+}
+
+html body .shop-root .shop-price-calendar-table {
+  flex: 0 0 92px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  border: 0;
+  border-inline-start: 1px solid #eef0f3;
+  background: #fff;
+  color: #3264ff;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.25;
+  cursor: pointer;
+  padding: 6px 8px;
+}
+
+html body .shop-root .shop-price-calendar-table:hover {
+  background: #f5f8ff;
+}
+
+.shop-price-table-back {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: rgba(15, 23, 42, 0.45);
+  display: grid;
+  place-items: center;
+  padding: 24px 16px;
+}
+
+.shop-price-table {
+  width: min(920px, 100%);
+  max-height: min(86vh, 720px);
+  overflow: auto;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 18px 50px rgba(15, 23, 42, 0.22);
+  color: #0f294d;
+  font-family: "IBM Plex Sans Arabic", Inter, Cairo, "Segoe UI", sans-serif;
+}
+
+.shop-price-table-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 18px 8px;
+}
+
+.shop-price-table-head h2 {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.shop-price-table-head h2 b {
+  font-weight: 500;
+  color: #5b6573;
+}
+
+.shop-price-table-x {
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: #334155;
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.shop-price-table-scroll {
+  overflow-x: auto;
+  padding: 0 12px 8px;
+}
+
+.shop-price-table table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 640px;
+}
+
+.shop-price-table th,
+.shop-price-table td {
+  border: 1px solid #e6e8ee;
+  text-align: center;
+  vertical-align: middle;
+  padding: 0;
+  font-weight: 500;
+}
+
+.shop-price-table th {
+  background: #f8fafc;
+  padding: 8px 6px;
+  min-width: 84px;
+}
+
+.shop-price-table th b,
+.shop-price-table th i {
+  display: block;
+  font-style: normal;
+}
+
+.shop-price-table th b {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.shop-price-table th i {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.shop-price-table th.on {
+  background: #e8f1ff;
+}
+
+.shop-price-table-corner {
+  text-align: start;
+  min-width: 108px;
+}
+
+.shop-price-table-corner span,
+.shop-price-table-shift {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.shop-price-table-shift button,
+.shop-price-table-return-nav button {
+  width: 22px;
+  height: 22px;
+  border: 0;
+  background: transparent;
+  color: #3264ff;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.shop-price-table td button {
+  width: 100%;
+  min-height: 52px;
+  border: 0;
+  background: transparent;
+  color: #0f294d;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 6px 4px;
+}
+
+.shop-price-table td button small {
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.shop-price-table td button.on {
+  background: #3264ff;
+  color: #fff;
+}
+
+.shop-price-table-return-nav {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 18px 8px;
+  color: #455873;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.shop-price-table-foot {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 8px 18px 16px;
+  border-top: 1px solid #eef0f3;
+}
+
+.shop-price-table-foot p {
+  margin: 0;
+  max-width: 28rem;
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.shop-price-table-foot div {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.shop-price-table-go {
+  border: 0;
+  border-radius: 4px;
+  background: #3264ff;
+  color: #fff;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 8px 16px;
+  cursor: pointer;
+}
+
+.shop-price-table-go:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+/* Blue sort bar above the flight cards: cheapest / best / fastest + price alert. */
+html body .shop-root .shop-flight-sort-tabs {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  width: 100%;
+  margin: 0 0 0.85rem;
+  padding: 0;
+  min-height: 68px;
+  background: #3264ff;
+  border: 0;
+  border-radius: 8px;
+  box-shadow: none;
+  color: #fff;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+html body .shop-root .shop-flight-sort-tabs-main {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+html body .shop-root .shop-flight-sort-tab {
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  margin: 0;
+  min-width: 0;
+  padding: 10px 12px 12px;
+  background: transparent;
+  border: 0;
+  border-inline-end: 1px solid #fff;
+  border-radius: 0;
+  box-shadow: none;
+  color: #fff;
+  text-align: center;
+  cursor: pointer;
+  font: inherit;
+}
+
+html body .shop-root .shop-flight-sort-tab:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: transparent;
+  color: #fff;
+  box-shadow: none;
+}
+
+html body .shop-root .shop-flight-sort-tab.on,
+html body .shop-root .shop-flight-sort-tab.on:hover {
+  background: transparent;
+  border-color: transparent;
+  border-inline-end-color: #fff;
+  color: #fff;
+  box-shadow: inset 0 -3px 0 #fff;
+}
+
+html body .shop-root .shop-flight-sort-tab-label,
+html body .shop-root .shop-flight-sort-tab.on .shop-flight-sort-tab-label {
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
+  text-align: center;
+  width: auto;
+}
+
+html body .shop-root .shop-flight-sort-tab-price,
+html body .shop-root .shop-flight-sort-tab.on .shop-flight-sort-tab-price {
+  font-size: 14px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.92);
+  text-align: center;
+}
+
+html body .shop-root .shop-flight-sort-tab-meta,
+html body .shop-root .shop-flight-sort-tab.on .shop-flight-sort-tab-meta,
+html body .shop-root .shop-flight-sort-tab-why,
+html body .shop-root .shop-flight-sort-tab.on .shop-flight-sort-tab-why {
+  display: none;
+}
+
+html body .shop-root .shop-flight-sort-alert {
+  margin: 0;
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 0;
+}
+
+html body .shop-root .shop-watch-price.is-compact {
+  margin: 0;
+  gap: 0;
+  width: 100%;
+}
+
+html body .shop-root .shop-watch-price.is-compact .shop-watch-price-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  min-height: 68px;
+  background: transparent;
+  color: #fff;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 10px 12px;
+  font-size: 15px;
+  font-weight: 700;
+  white-space: normal;
+  text-align: center;
+  line-height: 1.3;
+}
+
+html body .shop-root .shop-watch-price.is-compact .shop-watch-price-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+html body .shop-root .shop-watch-price.is-compact .shop-watch-price-btn.on {
+  background: transparent;
+  color: #fff;
+  border: 0;
+}
+
+html body .shop-root .shop-watch-price.is-compact .shop-error {
+  margin: 0;
+  color: #fff;
+  font-size: 12px;
+  white-space: normal;
+}
+
+@media (max-width: 767px) {
+  html body .shop-root .shop-price-calendar {
+    width: calc(100% - 1rem);
+  }
+
+  html body .shop-root .shop-price-calendar-nav {
+    min-height: 62px;
+  }
+
+  html body .shop-root .shop-price-calendar-cell,
+  html body .shop-root .shop-price-calendar-cell:last-child {
+    flex-basis: 7.2rem;
+    padding: 8px 6px 10px;
+  }
+
+  html body .shop-root .shop-price-calendar-day,
+  html body .shop-root .shop-price-calendar-cell.on .shop-price-calendar-day {
+    font-size: 13px;
+  }
+
+  html body .shop-root .shop-price-calendar-cell strong,
+  html body .shop-root .shop-price-calendar-cell.on strong,
+  html body .shop-root .shop-price-calendar-cell.on.cheap strong {
+    font-size: 15px;
+  }
+
+  html body .shop-root .shop-price-calendar-table {
+    flex-basis: 76px;
+    font-size: 12px;
+  }
+
+  html body .shop-root .shop-flight-sort-tabs {
+    display: flex !important;
+    flex-wrap: wrap;
+    width: calc(100% - 1rem);
+    margin-inline: auto;
+    min-height: 0;
+    padding: 4px 8px 6px;
+    gap: 0;
+  }
+
+  html body .shop-root .shop-flight-sort-tabs-main {
+    flex: 1 1 100%;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  html body .shop-root .shop-flight-sort-tab {
+    padding: 8px 12px 10px;
+  }
+
+  html body .shop-root .shop-flight-sort-alert {
+    margin-inline-start: 0;
+    padding: 2px 4px 6px;
+  }
+
+  .shop-price-table-foot {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .shop-price-table-foot div {
+    align-items: stretch;
+  }
+}
+
+/* Desktop: the sort bar sits only above the flight cards, level with the filter column. */
+@media (min-width: 901px) {
+  html body .shop-root .shop-flight-results.kayak {
+    display: grid;
+    grid-template-columns: minmax(340px, 380px) minmax(0, 1fr);
+    grid-template-areas:
+      ". count"
+      "filters sort"
+      "filters cards";
+    column-gap: 1rem;
+    row-gap: 0;
+    align-items: start;
+  }
+
+  html body .shop-root .shop-flight-results.kayak .shop-flight-results-count {
+    grid-area: count;
+    margin-bottom: 0.65rem;
+  }
+
+  html body .shop-root .shop-flight-results.kayak .shop-flight-sort-tabs {
+    grid-area: sort;
+    width: auto;
+    min-width: 0;
+    margin: 0 0 10px;
+  }
+
+  html body .shop-root .shop-flight-results.kayak .shop-flight-results-layout,
+  html body .shop-root .shop-flight-results.kayak .shop-flight-results-main {
+    display: contents;
+  }
+
+  html body .shop-root .shop-flight-results.kayak .shop-flight-filters-desktop {
+    grid-area: filters;
+    width: auto;
+    min-width: 0;
+    margin: 0;
+  }
+
+  html body .shop-root .shop-flight-results.kayak .shop-ticket-list {
+    grid-area: cards;
+    min-width: 0;
+  }
+}
+
+@media (min-width: 768px) {
+  html body .shop-root .shop-flight-sort-tabs {
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0;
+    padding: 0;
+  }
+
+  html body .shop-root .shop-flight-sort-tabs-main {
+    display: contents;
+  }
+}
+
+.shop-price-alert-back {
+  position: fixed;
+  inset: 0;
+  z-index: 220;
+  background: rgba(15, 23, 42, 0.45);
+  display: grid;
+  place-items: center;
+  padding: 24px 16px;
+}
+
+.shop-price-alert {
+  width: min(560px, 100%);
+  background: #fff;
+  color: #0f294d;
+  border-radius: 14px;
+  box-shadow: 0 18px 50px rgba(15, 23, 42, 0.22);
+  padding: 22px 26px 24px;
+  font-family: "IBM Plex Sans Arabic", Inter, Cairo, "Segoe UI", sans-serif;
+}
+
+.shop-price-alert-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.shop-price-alert-head h2 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.shop-price-alert-route {
+  margin: 6px 0 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #0f294d;
+}
+
+.shop-price-alert-route b {
+  font-weight: 800;
+}
+
+.shop-price-alert-x {
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: #334155;
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.shop-price-alert-dates {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border: 1px solid #dbe3ee;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+
+.shop-price-alert-dates label {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 6px;
+  min-height: 72px;
+  padding: 12px 16px;
+  min-width: 0;
+  cursor: pointer;
+}
+
+.shop-price-alert-dates label + label {
+  border-inline-start: 1px solid #dbe3ee;
+}
+
+.shop-price-alert-dates span {
+  font-size: 12px;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.shop-price-alert-dates strong {
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1.3;
+}
+
+.shop-price-alert-dates input {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: transparent;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.shop-price-alert-dates input::-webkit-calendar-picker-indicator {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.shop-price-alert-dates input::-webkit-datetime-edit,
+.shop-price-alert-dates input::-webkit-datetime-edit-fields-wrapper,
+.shop-price-alert-dates input::-webkit-datetime-edit-text,
+.shop-price-alert-dates input::-webkit-datetime-edit-month-field,
+.shop-price-alert-dates input::-webkit-datetime-edit-day-field,
+.shop-price-alert-dates input::-webkit-datetime-edit-year-field {
+  color: transparent;
+  background: transparent;
+}
+
+.shop-price-alert-lead {
+  margin: 4px 0 10px;
+  font-size: 17px;
+  line-height: 1.55;
+}
+
+.shop-price-alert-chance {
+  margin: 0 0 2px;
+  color: #0f766e;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.shop-price-alert-slider input[type="range"] {
+  width: 100%;
+  margin: 8px 0 4px;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.shop-price-alert-slider input[type="range"]::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #e11d48, #f59e0b 58%, #84cc16);
+}
+
+.shop-price-alert-slider input[type="range"]::-webkit-slider-thumb {
+  appearance: none;
+  width: 22px;
+  height: 22px;
+  margin-top: -8px;
+  border-radius: 50%;
+  background: #f5b942;
+  border: 3px solid #fff;
+  box-shadow: 0 0 0 1px #e2b15a;
+}
+
+.shop-price-alert-slider input[type="range"]::-moz-range-track {
+  height: 6px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #e11d48, #f59e0b 58%, #84cc16);
+}
+
+.shop-price-alert-slider input[type="range"]::-moz-range-thumb {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #f5b942;
+  border: 3px solid #fff;
+  box-shadow: 0 0 0 1px #e2b15a;
+}
+
+.shop-price-alert-scale {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 14px;
+}
+
+.shop-price-alert-mail {
+  display: grid;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid #e6e8ee;
+}
+
+.shop-price-alert-mail strong {
+  font-size: 14px;
+}
+
+.shop-price-alert-mail label {
+  display: grid;
+  gap: 4px;
+}
+
+.shop-price-alert-mail span {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.shop-price-alert-mail input {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #dbe3ee;
+  border-radius: 8px;
+  padding: 12px 14px;
+  font: inherit;
+  font-size: 16px;
+  color: #0f294d;
+}
+
+.shop-price-alert-direct {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 14px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.shop-price-alert-direct input {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: #3264ff;
+}
+
+.shop-price-alert-error {
+  margin: 10px 0 0;
+  color: #b91c1c;
+  font-size: 13px;
+}
+
+.shop-price-alert-go {
+  width: 100%;
+  margin-top: 14px;
+  border: 0;
+  border-radius: 8px;
+  background: #3264ff;
+  color: #fff;
+  font: inherit;
+  font-size: 17px;
+  font-weight: 700;
+  padding: 14px 16px;
+  cursor: pointer;
+}
+
+.shop-price-alert-go:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* Flight search waiting card — logo, slogan, and the trip. */
+html body .shop-root .shop-flight-search-stage {
+  width: min(760px, calc(100% - 1.5rem));
+  margin: 0.85rem auto 2.5rem;
+  padding: 28px 32px 22px;
+  background:
+    linear-gradient(90deg, #3264ff, #5b8cff 55%, #f5b942) top / 100% 3px no-repeat,
+    #fff;
+  border: 1px solid #e6eaf2;
+  border-radius: 20px;
+  box-shadow: 0 18px 44px rgba(15, 41, 77, 0.08);
+  text-align: center;
+  font-family: "IBM Plex Sans Arabic", Inter, Cairo, "Segoe UI", sans-serif;
+}
+
+html body .shop-root .shop-flight-search-brand {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+}
+
+html body .shop-root .shop-flight-search-brand .wg-logo-lockup-img {
+  height: 54px;
+  width: auto;
+  animation: shop-flight-logo-float 2.8s ease-in-out infinite;
+}
+
+html body .shop-root .shop-flight-search-brand p {
+  margin: 2px 0 0;
+  color: #3264ff;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+html body .shop-root .shop-flight-search-brand p::after {
+  content: "";
+  display: block;
+  width: 132px;
+  height: 3px;
+  margin: 12px auto 0;
+  border-radius: 999px;
+  background: linear-gradient(90deg, transparent, #3264ff 35%, #f5b942 70%, transparent);
+  background-size: 220% 100%;
+  animation: shop-flight-slogan-sweep 1.8s linear infinite;
+}
+
+html body .shop-root .shop-flight-search-route {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(150px, 240px) minmax(0, 1fr);
+  align-items: center;
+  gap: 14px;
+  margin-top: 22px;
+  padding-top: 20px;
+  border-top: 1px solid #eef1f6;
+}
+
+html body .shop-root .shop-flight-search-place {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+html body .shop-root .shop-flight-search-place strong {
+  color: #0f294d;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+html body .shop-root .shop-flight-search-place span {
+  color: #3264ff;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+}
+
+html body .shop-root .shop-flight-search-track {
+  position: relative;
+  height: 28px;
+  direction: ltr;
+  container-type: inline-size;
+}
+
+html body .shop-root .shop-flight-search-track i {
+  position: absolute;
+  top: 50%;
+  left: 8px;
+  right: 8px;
+  height: 0;
+  border-top: 2px dashed #c5d4ee;
+  transform: translateY(-50%);
+}
+
+html body .shop-root .shop-flight-search-track em {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  width: 28px;
+  height: 28px;
+  margin: 0;
+  font-size: 0;
+  color: transparent;
+  border-radius: 50%;
+  background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cg transform='rotate(45 12 12)'%3E%3Cpath fill='%233264ff' d='M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z'/%3E%3C/g%3E%3C/svg%3E") center / 22px 22px no-repeat;
+  animation: shop-flight-plane-rtl 2.6s ease-in-out infinite;
+}
+
+html[dir="ltr"] body .shop-root .shop-flight-search-track em {
+  right: auto;
+  left: 0;
+  animation-name: shop-flight-plane-ltr;
+}
+
+html body .shop-root .shop-flight-search-facts {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 20px;
+}
+
+html body .shop-root .shop-flight-search-facts span {
+  background: #f3f6ff;
+  color: #0f294d;
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-size: 13.5px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+html body .shop-root .shop-flight-search-legs {
+  list-style: none;
+  margin: 22px 0 0;
+  padding: 16px 0 0;
+  border-top: 1px solid #eef1f6;
+  display: grid;
+  gap: 8px;
+  text-align: start;
+}
+
+html body .shop-root .shop-flight-search-legs li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  grid-template-areas: "from arrow to" "date date date";
+  align-items: center;
+  gap: 8px 10px;
+  padding: 12px 14px;
+  background: #f7f9fc;
+  border-radius: 12px;
+}
+
+html body .shop-root .shop-flight-search-legs b {
+  color: #0f294d;
+  font-size: 15px;
+  min-width: 0;
+}
+
+html body .shop-root .shop-flight-search-legs b:first-of-type {
+  grid-area: from;
+}
+
+html body .shop-root .shop-flight-search-legs span {
+  grid-area: arrow;
+  color: #3264ff;
+  font-weight: 700;
+}
+
+html body .shop-root .shop-flight-search-legs b:last-of-type {
+  grid-area: to;
+}
+
+html body .shop-root .shop-flight-search-legs small {
+  grid-area: date;
+  color: #64748b;
+  font-size: 12.5px;
+}
+
+@keyframes shop-flight-logo-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+@keyframes shop-flight-slogan-sweep {
+  from {
+    background-position: 120% 0;
+  }
+  to {
+    background-position: -120% 0;
+  }
+}
+
+@keyframes shop-flight-plane-rtl {
+  0% {
+    transform: translate(0, -50%) scaleX(-1);
+    opacity: 0;
+  }
+  14% {
+    opacity: 1;
+  }
+  82% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(calc(-100cqw + 28px), -50%) scaleX(-1);
+    opacity: 0;
+  }
+}
+
+@keyframes shop-flight-plane-ltr {
+  0% {
+    transform: translate(0, -50%);
+    opacity: 0;
+  }
+  14% {
+    opacity: 1;
+  }
+  82% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(calc(100cqw - 28px), -50%);
+    opacity: 0;
+  }
+}
+
+@media (max-width: 640px) {
+  html body .shop-root .shop-flight-search-stage {
+    padding: 22px 16px 18px;
+    border-radius: 16px;
+  }
+
+  html body .shop-root .shop-flight-search-brand .wg-logo-lockup-img {
+    height: 44px;
+  }
+
+  html body .shop-root .shop-flight-search-brand p {
+    font-size: 17px;
+  }
+
+  html body .shop-root .shop-flight-search-route {
+    grid-template-columns: minmax(0, 1fr) 64px minmax(0, 1fr);
+    gap: 8px;
+  }
+
+  html body .shop-root .shop-flight-search-place strong {
+    font-size: 16px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html body .shop-root .shop-flight-search-brand .wg-logo-lockup-img,
+  html body .shop-root .shop-flight-search-brand p::after,
+  html body .shop-root .shop-flight-search-track em {
+    animation: none;
+  }
+
+  html body .shop-root .shop-flight-search-track em {
+    right: auto;
+    left: 50%;
+    opacity: 1;
+    transform: translate(-50%, -50%) scaleX(-1);
+  }
+
+  html[dir="ltr"] body .shop-root .shop-flight-search-track em {
+    transform: translate(-50%, -50%);
   }
 }
 

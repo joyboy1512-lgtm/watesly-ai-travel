@@ -47,8 +47,8 @@ import { shopFetch } from "@/lib/shop-session";
 import { trackFunnel } from "@/lib/funnel-analytics";
 import { ShopPriceCalendar } from "@/components/shop/ShopPriceCalendar";
 import { ShopWatchPrice } from "@/components/shop/ShopWatchPrice";
-import { ShopWishlistButton } from "@/components/shop/ShopWishlistButton";
 import { ShopAutocomplete, type SuggestItem } from "@/components/shop/ShopAutocomplete";
+import { WeekendGateLogo } from "@/components/shop/WeekendGateLogo";
 
 type QuoteItem = { id: string; providerOfferRef: string; serviceType: string };
 
@@ -87,7 +87,7 @@ export function ShopFlightResultsClient() {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [message, setMessage] = useState("");
+  const [, setMessage] = useState("");
   const [flightsRaw, setFlightsRaw] = useState<FlightOfferRow[]>([]);
   const [inquiryId, setInquiryId] = useState("");
   const [quoteItems, setQuoteItems] = useState<QuoteItem[]>([]);
@@ -807,22 +807,24 @@ export function ShopFlightResultsClient() {
               </div>
             ) : null}
           </div>
-          <label className="shop-flight-edit-check">
-            <input
-              type="checkbox"
-              checked={draft.directOnly}
-              onChange={(e) => setDraft((d) => ({ ...d, directOnly: e.target.checked }))}
-            />
-            مباشر فقط
-          </label>
-          <label className="shop-flight-edit-check">
-            <input
-              type="checkbox"
-              checked={draft.flexibleDates}
-              onChange={(e) => setDraft((d) => ({ ...d, flexibleDates: e.target.checked }))}
-            />
-            تواريخ مرنة
-          </label>
+          <div className="shop-flight-edit-flags">
+            <label className="shop-flight-edit-check">
+              <input
+                type="checkbox"
+                checked={draft.directOnly}
+                onChange={(e) => setDraft((d) => ({ ...d, directOnly: e.target.checked }))}
+              />
+              مباشر فقط
+            </label>
+            <label className="shop-flight-edit-check">
+              <input
+                type="checkbox"
+                checked={draft.flexibleDates}
+                onChange={(e) => setDraft((d) => ({ ...d, flexibleDates: e.target.checked }))}
+              />
+              تواريخ مرنة
+            </label>
+          </div>
           <button type="submit" className="shop-flight-search-again" aria-label="تعديل البحث">
             <svg className="shop-flight-search-again-icon" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
               <circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" strokeWidth="2.4" />
@@ -835,14 +837,46 @@ export function ShopFlightResultsClient() {
       </section>
 
       {loading ? (
-        <div className="shop-flight-results-loading">
-          <div className="shop-flight-spinner" aria-hidden />
-          <p>جاري البحث عن أفضل رحلات الطيران…</p>
-          <small>
-            {params.origin || "—"} → {params.destination || "—"}
-            {params.departDate ? ` · ${formatDay(params.departDate)}` : ""}
-            {isRoundTrip && params.returnDate ? ` – ${formatDay(params.returnDate)}` : ""}
-          </small>
+        <div className="shop-flight-search-stage" role="status" aria-live="polite">
+          <div className="shop-flight-search-brand">
+            <WeekendGateLogo />
+            <p>عطلتك تبدأ من هنا</p>
+            <span className="sr-only">جاري البحث عن الرحلات</span>
+          </div>
+          {params.tripType === "multicity" && params.legs.length > 1 ? (
+            <ol className="shop-flight-search-legs">
+              {params.legs.map((leg, index) => (
+                <li key={`${leg.origin}-${leg.destination}-${leg.departDate}-${index}`}>
+                  <b>{leg.originLabel || leg.origin}</b>
+                  <span aria-hidden="true">←</span>
+                  <b>{leg.destinationLabel || leg.destination}</b>
+                  <small>{formatDay(leg.departDate)}</small>
+                </li>
+              ))}
+            </ol>
+          ) : (
+            <div className="shop-flight-search-route">
+              <div className="shop-flight-search-place">
+                <strong>{params.originLabel || params.origin || "—"}</strong>
+                <span>{params.origin}</span>
+              </div>
+              <div className="shop-flight-search-track" aria-hidden="true">
+                <i />
+                <em>✈</em>
+              </div>
+              <div className="shop-flight-search-place">
+                <strong>{params.destinationLabel || params.destination || "—"}</strong>
+                <span>{params.destination}</span>
+              </div>
+            </div>
+          )}
+          <div className="shop-flight-search-facts">
+            {params.departDate ? <span>ذهاب · {formatDay(params.departDate)}</span> : null}
+            {isRoundTrip && params.returnDate ? <span>عودة · {formatDay(params.returnDate)}</span> : null}
+            <span>
+              {passengers} مسافر · {cabinLabel(params.cabinClass)}
+            </span>
+          </div>
         </div>
       ) : null}
 
@@ -858,15 +892,6 @@ export function ShopFlightResultsClient() {
 
       {!loading && !error ? (
         <>
-          <div className="shop-flight-mock-banner" role="status">
-            <strong>نتائج تجريبية</strong>
-            <span>
-              الأسعار والرحلات المعروضة للاختبار فقط — سيتم استبدالها بعروض حية عند ربط
-              مزوّد الطيران.
-            </span>
-          </div>
-          {message ? <p className="shop-flight-results-status">{message}</p> : null}
-
           {params.tripType !== "multicity" ? (
             <ShopPriceCalendar
               search={params}
@@ -885,35 +910,26 @@ export function ShopFlightResultsClient() {
             />
           ) : null}
 
-          {cheapestFlight ? (
-            <div className="shop-flight-watch-row">
-              <ShopWatchPrice
-                origin={params.origin}
-                destination={params.destination}
-                departDate={params.departDate}
-                returnDate={params.tripType === "roundtrip" ? params.returnDate : undefined}
-                currentPriceMinor={cheapestFlight.sellAmountMinor}
-                currency={cheapestFlight.currency}
-              />
-              <ShopWishlistButton
-                item={{
-                  id: `flight:${params.origin}-${params.destination}-${params.departDate}`,
-                  kind: "flight",
-                  title: `${params.originLabel || params.origin} → ${params.destinationLabel || params.destination}`,
-                  href: resultsHref,
-                  subtitle: summary.dates,
-                  priceMinor: cheapestFlight.sellAmountMinor,
-                  currency: cheapestFlight.currency,
-                }}
-              />
-            </div>
-          ) : null}
-
           <ShopFlightResults
             flights={flights}
             totalCount={flightsRaw.length}
             filters={filters}
             facets={facets}
+            alertSlot={
+              cheapestFlight ? (
+                <ShopWatchPrice
+                  compact
+                  origin={params.origin}
+                  destination={params.destination}
+                  originLabel={params.originLabel}
+                  destinationLabel={params.destinationLabel}
+                  departDate={params.departDate}
+                  returnDate={params.tripType === "roundtrip" ? params.returnDate : undefined}
+                  currentPriceMinor={cheapestFlight.sellAmountMinor}
+                  currency={cheapestFlight.currency}
+                />
+              ) : null
+            }
             sortKey={sortKey}
             origin={params.origin}
             destination={params.destination}

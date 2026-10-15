@@ -1289,3 +1289,278 @@ html body .shop-root .shop-watch-price.is-compact .shop-error {
   cursor: default;
 }
 
+/* Flight search waiting card — logo, slogan, and the trip. */
+html body .shop-root .shop-flight-search-stage {
+  width: min(760px, calc(100% - 1.5rem));
+  margin: 0.85rem auto 2.5rem;
+  padding: 28px 32px 22px;
+  background:
+    linear-gradient(90deg, #3264ff, #5b8cff 55%, #f5b942) top / 100% 3px no-repeat,
+    #fff;
+  border: 1px solid #e6eaf2;
+  border-radius: 20px;
+  box-shadow: 0 18px 44px rgba(15, 41, 77, 0.08);
+  text-align: center;
+  font-family: "IBM Plex Sans Arabic", Inter, Cairo, "Segoe UI", sans-serif;
+}
+
+html body .shop-root .shop-flight-search-brand {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+}
+
+html body .shop-root .shop-flight-search-brand .wg-logo-lockup-img {
+  height: 54px;
+  width: auto;
+  animation: shop-flight-logo-float 2.8s ease-in-out infinite;
+}
+
+html body .shop-root .shop-flight-search-brand p {
+  margin: 2px 0 0;
+  color: #3264ff;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+html body .shop-root .shop-flight-search-brand p::after {
+  content: "";
+  display: block;
+  width: 132px;
+  height: 3px;
+  margin: 12px auto 0;
+  border-radius: 999px;
+  background: linear-gradient(90deg, transparent, #3264ff 35%, #f5b942 70%, transparent);
+  background-size: 220% 100%;
+  animation: shop-flight-slogan-sweep 1.8s linear infinite;
+}
+
+html body .shop-root .shop-flight-search-route {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(150px, 240px) minmax(0, 1fr);
+  align-items: center;
+  gap: 14px;
+  margin-top: 22px;
+  padding-top: 20px;
+  border-top: 1px solid #eef1f6;
+}
+
+html body .shop-root .shop-flight-search-place {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+html body .shop-root .shop-flight-search-place strong {
+  color: #0f294d;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+html body .shop-root .shop-flight-search-place span {
+  color: #3264ff;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+}
+
+html body .shop-root .shop-flight-search-track {
+  position: relative;
+  height: 28px;
+  direction: ltr;
+  container-type: inline-size;
+}
+
+html body .shop-root .shop-flight-search-track i {
+  position: absolute;
+  top: 50%;
+  left: 8px;
+  right: 8px;
+  height: 0;
+  border-top: 2px dashed #c5d4ee;
+  transform: translateY(-50%);
+}
+
+html body .shop-root .shop-flight-search-track em {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  width: 22px;
+  height: 22px;
+  margin: 0;
+  font-size: 0;
+  color: transparent;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%233264ff' d='M21 12 2.5 4.5v6L15 12 2.5 13.5v6z'/%3E%3C/svg%3E") center / 22px 22px no-repeat;
+  animation: shop-flight-plane-rtl 2.6s ease-in-out infinite;
+}
+
+html[dir="ltr"] body .shop-root .shop-flight-search-track em {
+  right: auto;
+  left: 0;
+  animation-name: shop-flight-plane-ltr;
+}
+
+html body .shop-root .shop-flight-search-facts {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 20px;
+}
+
+html body .shop-root .shop-flight-search-facts span {
+  background: #f3f6ff;
+  color: #0f294d;
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-size: 13.5px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+html body .shop-root .shop-flight-search-legs {
+  list-style: none;
+  margin: 22px 0 0;
+  padding: 16px 0 0;
+  border-top: 1px solid #eef1f6;
+  display: grid;
+  gap: 8px;
+  text-align: start;
+}
+
+html body .shop-root .shop-flight-search-legs li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  grid-template-areas: "from arrow to" "date date date";
+  align-items: center;
+  gap: 8px 10px;
+  padding: 12px 14px;
+  background: #f7f9fc;
+  border-radius: 12px;
+}
+
+html body .shop-root .shop-flight-search-legs b {
+  color: #0f294d;
+  font-size: 15px;
+  min-width: 0;
+}
+
+html body .shop-root .shop-flight-search-legs b:first-of-type {
+  grid-area: from;
+}
+
+html body .shop-root .shop-flight-search-legs span {
+  grid-area: arrow;
+  color: #3264ff;
+  font-weight: 700;
+}
+
+html body .shop-root .shop-flight-search-legs b:last-of-type {
+  grid-area: to;
+}
+
+html body .shop-root .shop-flight-search-legs small {
+  grid-area: date;
+  color: #64748b;
+  font-size: 12.5px;
+}
+
+@keyframes shop-flight-logo-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+@keyframes shop-flight-slogan-sweep {
+  from {
+    background-position: 120% 0;
+  }
+  to {
+    background-position: -120% 0;
+  }
+}
+
+@keyframes shop-flight-plane-rtl {
+  0% {
+    transform: translate(0, -50%) scaleX(-1);
+    opacity: 0;
+  }
+  14% {
+    opacity: 1;
+  }
+  82% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(calc(-100cqw + 22px), -50%) scaleX(-1);
+    opacity: 0;
+  }
+}
+
+@keyframes shop-flight-plane-ltr {
+  0% {
+    transform: translate(0, -50%);
+    opacity: 0;
+  }
+  14% {
+    opacity: 1;
+  }
+  82% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(calc(100cqw - 22px), -50%);
+    opacity: 0;
+  }
+}
+
+@media (max-width: 640px) {
+  html body .shop-root .shop-flight-search-stage {
+    padding: 22px 16px 18px;
+    border-radius: 16px;
+  }
+
+  html body .shop-root .shop-flight-search-brand .wg-logo-lockup-img {
+    height: 44px;
+  }
+
+  html body .shop-root .shop-flight-search-brand p {
+    font-size: 17px;
+  }
+
+  html body .shop-root .shop-flight-search-route {
+    grid-template-columns: minmax(0, 1fr) 64px minmax(0, 1fr);
+    gap: 8px;
+  }
+
+  html body .shop-root .shop-flight-search-place strong {
+    font-size: 16px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html body .shop-root .shop-flight-search-brand .wg-logo-lockup-img,
+  html body .shop-root .shop-flight-search-brand p::after,
+  html body .shop-root .shop-flight-search-track em {
+    animation: none;
+  }
+
+  html body .shop-root .shop-flight-search-track em {
+    right: auto;
+    left: 50%;
+    opacity: 1;
+    transform: translate(-50%, -50%) scaleX(-1);
+  }
+
+  html[dir="ltr"] body .shop-root .shop-flight-search-track em {
+    transform: translate(-50%, -50%);
+  }
+}
+

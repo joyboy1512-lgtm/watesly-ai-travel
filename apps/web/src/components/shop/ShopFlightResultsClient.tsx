@@ -48,6 +48,7 @@ import { trackFunnel } from "@/lib/funnel-analytics";
 import { ShopPriceCalendar } from "@/components/shop/ShopPriceCalendar";
 import { ShopWatchPrice } from "@/components/shop/ShopWatchPrice";
 import { ShopAutocomplete, type SuggestItem } from "@/components/shop/ShopAutocomplete";
+import { WeekendGateLogo } from "@/components/shop/WeekendGateLogo";
 
 type QuoteItem = { id: string; providerOfferRef: string; serviceType: string };
 
@@ -836,14 +837,46 @@ export function ShopFlightResultsClient() {
       </section>
 
       {loading ? (
-        <div className="shop-flight-results-loading">
-          <div className="shop-flight-spinner" aria-hidden />
-          <p>جاري البحث عن أفضل رحلات الطيران…</p>
-          <small>
-            {params.origin || "—"} → {params.destination || "—"}
-            {params.departDate ? ` · ${formatDay(params.departDate)}` : ""}
-            {isRoundTrip && params.returnDate ? ` – ${formatDay(params.returnDate)}` : ""}
-          </small>
+        <div className="shop-flight-search-stage" role="status" aria-live="polite">
+          <div className="shop-flight-search-brand">
+            <WeekendGateLogo />
+            <p>عطلتك تبدأ من هنا</p>
+            <span className="sr-only">جاري البحث عن الرحلات</span>
+          </div>
+          {params.tripType === "multicity" && params.legs.length > 1 ? (
+            <ol className="shop-flight-search-legs">
+              {params.legs.map((leg, index) => (
+                <li key={`${leg.origin}-${leg.destination}-${leg.departDate}-${index}`}>
+                  <b>{leg.originLabel || leg.origin}</b>
+                  <span aria-hidden="true">←</span>
+                  <b>{leg.destinationLabel || leg.destination}</b>
+                  <small>{formatDay(leg.departDate)}</small>
+                </li>
+              ))}
+            </ol>
+          ) : (
+            <div className="shop-flight-search-route">
+              <div className="shop-flight-search-place">
+                <strong>{params.originLabel || params.origin || "—"}</strong>
+                <span>{params.origin}</span>
+              </div>
+              <div className="shop-flight-search-track" aria-hidden="true">
+                <i />
+                <em>✈</em>
+              </div>
+              <div className="shop-flight-search-place">
+                <strong>{params.destinationLabel || params.destination || "—"}</strong>
+                <span>{params.destination}</span>
+              </div>
+            </div>
+          )}
+          <div className="shop-flight-search-facts">
+            {params.departDate ? <span>ذهاب · {formatDay(params.departDate)}</span> : null}
+            {isRoundTrip && params.returnDate ? <span>عودة · {formatDay(params.returnDate)}</span> : null}
+            <span>
+              {passengers} مسافر · {cabinLabel(params.cabinClass)}
+            </span>
+          </div>
         </div>
       ) : null}
 

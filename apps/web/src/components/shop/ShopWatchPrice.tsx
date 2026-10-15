@@ -11,12 +11,25 @@ import { useShopI18n } from "@/components/shop/ShopI18nProvider";
 type Props = {
   origin: string;
   destination: string;
+  originLabel?: string;
+  destinationLabel?: string;
   departDate?: string;
   returnDate?: string;
   currentPriceMinor: number;
   currency: string;
   compact?: boolean;
 };
+
+function formatTripDate(iso: string) {
+  if (!iso) return "اختر التاريخ";
+  const date = new Date(`${iso}T12:00:00`);
+  if (Number.isNaN(date.getTime())) return iso;
+  return new Intl.DateTimeFormat("ar", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+  }).format(date);
+}
 
 function chanceLabel(target: number, current: number) {
   const ratio = current > 0 ? target / current : 1;
@@ -35,6 +48,7 @@ export function ShopWatchPrice(props: Props) {
   const [depart, setDepart] = useState(props.departDate || "");
   const [ret, setRet] = useState(props.returnDate || "");
   const [email, setEmail] = useState("");
+  const [directOnly, setDirectOnly] = useState(false);
   const [target, setTarget] = useState(props.currentPriceMinor);
 
   const factor = currencyMinorFactor(props.currency || "KWD");
@@ -102,6 +116,7 @@ export function ShopWatchPrice(props: Props) {
         currency: props.currency,
         departDate: depart,
         returnDate: ret || undefined,
+        directOnly,
       });
       setDone(true);
       setOpen(false);
@@ -124,7 +139,14 @@ export function ShopWatchPrice(props: Props) {
               onClick={(e) => e.stopPropagation()}
             >
               <div className="shop-price-alert-head">
-                <h2 id="shop-price-alert-title">تنبيه السعر</h2>
+                <div>
+                  <h2 id="shop-price-alert-title">تنبيه السعر</h2>
+                  <p className="shop-price-alert-route">
+                    من <b>{props.originLabel || props.origin}</b>
+                    <span aria-hidden="true"> ← </span>
+                    إلى <b>{props.destinationLabel || props.destination}</b>
+                  </p>
+                </div>
                 <button type="button" className="shop-price-alert-x" onClick={() => setOpen(false)} aria-label="إغلاق">
                   ×
                 </button>
@@ -133,11 +155,18 @@ export function ShopWatchPrice(props: Props) {
               <div className="shop-price-alert-dates">
                 <label>
                   <span>الذهاب</span>
+                  <strong>{formatTripDate(depart)}</strong>
                   <input type="date" value={depart} onChange={(e) => setDepart(e.target.value)} />
                 </label>
                 <label>
                   <span>العودة</span>
-                  <input type="date" value={ret} min={depart || undefined} onChange={(e) => setRet(e.target.value)} />
+                  <strong>{formatTripDate(ret)}</strong>
+                  <input
+                    type="date"
+                    value={ret}
+                    min={depart || undefined}
+                    onChange={(e) => setRet(e.target.value)}
+                  />
                 </label>
               </div>
 
@@ -177,6 +206,15 @@ export function ShopWatchPrice(props: Props) {
                   />
                 </label>
               </div>
+
+              <label className="shop-price-alert-direct">
+                <input
+                  type="checkbox"
+                  checked={directOnly}
+                  onChange={(e) => setDirectOnly(e.target.checked)}
+                />
+                رحلات مباشرة فقط
+              </label>
 
               {error ? <p className="shop-price-alert-error">{error}</p> : null}
 

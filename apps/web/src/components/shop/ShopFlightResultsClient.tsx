@@ -47,7 +47,6 @@ import { shopFetch } from "@/lib/shop-session";
 import { trackFunnel } from "@/lib/funnel-analytics";
 import { ShopPriceCalendar } from "@/components/shop/ShopPriceCalendar";
 import { ShopWatchPrice } from "@/components/shop/ShopWatchPrice";
-import { ShopWishlistButton } from "@/components/shop/ShopWishlistButton";
 import { ShopAutocomplete, type SuggestItem } from "@/components/shop/ShopAutocomplete";
 
 type QuoteItem = { id: string; providerOfferRef: string; serviceType: string };
@@ -87,7 +86,7 @@ export function ShopFlightResultsClient() {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [message, setMessage] = useState("");
+  const [, setMessage] = useState("");
   const [flightsRaw, setFlightsRaw] = useState<FlightOfferRow[]>([]);
   const [inquiryId, setInquiryId] = useState("");
   const [quoteItems, setQuoteItems] = useState<QuoteItem[]>([]);
@@ -860,15 +859,6 @@ export function ShopFlightResultsClient() {
 
       {!loading && !error ? (
         <>
-          <div className="shop-flight-mock-banner" role="status">
-            <strong>نتائج تجريبية</strong>
-            <span>
-              الأسعار والرحلات المعروضة للاختبار فقط — سيتم استبدالها بعروض حية عند ربط
-              مزوّد الطيران.
-            </span>
-          </div>
-          {message ? <p className="shop-flight-results-status">{message}</p> : null}
-
           {params.tripType !== "multicity" ? (
             <ShopPriceCalendar
               search={params}
@@ -887,22 +877,6 @@ export function ShopFlightResultsClient() {
             />
           ) : null}
 
-          {cheapestFlight ? (
-            <div className="shop-flight-watch-row">
-              <ShopWishlistButton
-                item={{
-                  id: `flight:${params.origin}-${params.destination}-${params.departDate}`,
-                  kind: "flight",
-                  title: `${params.originLabel || params.origin} → ${params.destinationLabel || params.destination}`,
-                  href: resultsHref,
-                  subtitle: summary.dates,
-                  priceMinor: cheapestFlight.sellAmountMinor,
-                  currency: cheapestFlight.currency,
-                }}
-              />
-            </div>
-          ) : null}
-
           <ShopFlightResults
             flights={flights}
             totalCount={flightsRaw.length}
@@ -914,6 +888,8 @@ export function ShopFlightResultsClient() {
                   compact
                   origin={params.origin}
                   destination={params.destination}
+                  originLabel={params.originLabel}
+                  destinationLabel={params.destinationLabel}
                   departDate={params.departDate}
                   returnDate={params.tripType === "roundtrip" ? params.returnDate : undefined}
                   currentPriceMinor={cheapestFlight.sellAmountMinor}

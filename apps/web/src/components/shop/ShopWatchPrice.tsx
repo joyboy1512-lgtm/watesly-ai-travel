@@ -20,6 +20,18 @@ type Props = {
   compact?: boolean;
 };
 
+function openDatePicker(input: HTMLInputElement) {
+  input.focus();
+  if (typeof input.showPicker === "function") {
+    try {
+      input.showPicker();
+      return;
+    } catch {
+      /* The browser opens the picker from the click itself. */
+    }
+  }
+}
+
 function formatTripDate(iso: string) {
   if (!iso) return "اختر التاريخ";
   const date = new Date(`${iso}T12:00:00`);
@@ -156,7 +168,13 @@ export function ShopWatchPrice(props: Props) {
                 <label>
                   <span>الذهاب</span>
                   <strong>{formatTripDate(depart)}</strong>
-                  <input type="date" value={depart} onChange={(e) => setDepart(e.target.value)} />
+                  <input
+                    type="date"
+                    value={depart}
+                    aria-label="تاريخ الذهاب"
+                    onClick={(e) => openDatePicker(e.currentTarget)}
+                    onChange={(e) => setDepart(e.target.value)}
+                  />
                 </label>
                 <label>
                   <span>العودة</span>
@@ -165,6 +183,8 @@ export function ShopWatchPrice(props: Props) {
                     type="date"
                     value={ret}
                     min={depart || undefined}
+                    aria-label="تاريخ العودة"
+                    onClick={(e) => openDatePicker(e.currentTarget)}
                     onChange={(e) => setRet(e.target.value)}
                   />
                 </label>

@@ -435,6 +435,7 @@ html body .shop-root .shop-price-calendar {
   border: 1px solid #e6e8ee;
   border-radius: 8px;
   box-shadow: none;
+  overflow: hidden;
 }
 
 html body .shop-root .shop-price-calendar-head {
@@ -450,19 +451,19 @@ html body .shop-root .shop-price-calendar-nav {
 }
 
 html body .shop-root .shop-price-calendar-arrow {
-  width: 28px;
-  flex: 0 0 28px;
+  width: 36px;
+  flex: 0 0 36px;
   border: 0;
   border-radius: 0;
-  background: transparent;
-  color: #8b93a7;
-  font-size: 18px;
-  font-weight: 500;
+  background: #3264ff;
+  color: #fff;
+  font-size: 22px;
+  font-weight: 600;
 }
 
 html body .shop-root .shop-price-calendar-arrow:hover {
-  background: #f7f8fa;
-  color: #0f294d;
+  background: #2547d0;
+  color: #fff;
   border-color: transparent;
 }
 

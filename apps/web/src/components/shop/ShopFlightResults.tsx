@@ -49,6 +49,8 @@ type Props = {
   enableMixMatch?: boolean;
   /** Sticky / pinned custom trip summary above the list */
   customTripSlot?: ReactNode;
+  /** Price-alert control shown on the sort bar */
+  alertSlot?: ReactNode;
 };
 
 export function ShopFlightResults(props: Props) {
@@ -90,6 +92,7 @@ export function ShopFlightResults(props: Props) {
   return (
     <section className="shop-flight-results kayak">
       <div className="shop-flight-sort-tabs" role="tablist" aria-label="ترتيب النتائج">
+        <div className="shop-flight-sort-tabs-main">
         {sortTabs.map((tab) => {
           const why =
             tab.key === "best"
@@ -124,6 +127,8 @@ export function ShopFlightResults(props: Props) {
             </button>
           );
         })}
+        </div>
+        {props.alertSlot ? <div className="shop-flight-sort-alert">{props.alertSlot}</div> : null}
       </div>
 
       <div className="shop-flight-results-count">

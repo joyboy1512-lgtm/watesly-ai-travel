@@ -446,7 +446,7 @@ html body .shop-root .shop-price-calendar-nav {
   align-items: stretch;
   gap: 0;
   margin: 0;
-  min-height: 52px;
+  min-height: 68px;
 }
 
 html body .shop-root .shop-price-calendar-arrow {
@@ -484,10 +484,10 @@ html body .shop-root .shop-price-calendar-row::-webkit-scrollbar {
 
 html body .shop-root .shop-price-calendar-cell,
 html body .shop-root .shop-price-calendar-cell:last-child {
-  flex: 1 0 7.2rem;
+  flex: 1 0 8.4rem;
   min-height: 0;
   height: auto;
-  padding: 7px 8px 8px;
+  padding: 10px 10px 12px;
   border: 0;
   border-inline-end: 1px solid #eef0f3;
   border-radius: 0;
@@ -509,16 +509,16 @@ html body .shop-root .shop-price-calendar-cell.on.cheap {
 
 html body .shop-root .shop-price-calendar-day,
 html body .shop-root .shop-price-calendar-cell.on .shop-price-calendar-day {
-  font-size: 12px;
-  font-weight: 500;
+  font-size: 14px;
+  font-weight: 600;
   color: #455873;
-  line-height: 1.2;
+  line-height: 1.25;
 }
 
 html body .shop-root .shop-price-calendar-cell strong,
 html body .shop-root .shop-price-calendar-cell.on strong,
 html body .shop-root .shop-price-calendar-cell.on.cheap strong {
-  font-size: 13px;
+  font-size: 16px;
   font-weight: 700;
   color: #0f294d;
 }
@@ -528,22 +528,22 @@ html body .shop-root .shop-price-calendar-cell.cheap strong {
 }
 
 html body .shop-root .shop-price-calendar-table {
-  flex: 0 0 76px;
+  flex: 0 0 92px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2px;
+  gap: 4px;
   border: 0;
   border-inline-start: 1px solid #eef0f3;
   background: #fff;
   color: #3264ff;
   font: inherit;
-  font-size: 11px;
-  font-weight: 600;
-  line-height: 1.2;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.25;
   cursor: pointer;
-  padding: 4px 6px;
+  padding: 6px 8px;
 }
 
 html body .shop-root .shop-price-calendar-table:hover {
@@ -755,20 +755,187 @@ html body .shop-root .shop-price-calendar-table:hover {
   cursor: default;
 }
 
+/* Blue sort bar above the flight cards: cheapest / best / fastest + price alert. */
+html body .shop-root .shop-flight-sort-tabs {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+  width: 100%;
+  margin: 0 0 0.85rem;
+  padding: 0 10px;
+  min-height: 68px;
+  background: #3264ff;
+  border: 0;
+  border-radius: 8px;
+  box-shadow: none;
+  color: #fff;
+  box-sizing: border-box;
+}
+
+html body .shop-root .shop-flight-sort-tabs-main {
+  display: flex;
+  align-items: stretch;
+  gap: 2px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+html body .shop-root .shop-flight-sort-tab {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 2px;
+  margin: 0;
+  padding: 10px 16px 12px;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  color: #fff;
+  text-align: start;
+  cursor: pointer;
+  font: inherit;
+}
+
+html body .shop-root .shop-flight-sort-tab:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: transparent;
+  color: #fff;
+  box-shadow: none;
+}
+
+html body .shop-root .shop-flight-sort-tab.on,
+html body .shop-root .shop-flight-sort-tab.on:hover {
+  background: transparent;
+  border-color: transparent;
+  color: #fff;
+  box-shadow: inset 0 -3px 0 #fff;
+}
+
+html body .shop-root .shop-flight-sort-tab-label,
+html body .shop-root .shop-flight-sort-tab.on .shop-flight-sort-tab-label {
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
+  text-align: start;
+  width: auto;
+}
+
+html body .shop-root .shop-flight-sort-tab-price,
+html body .shop-root .shop-flight-sort-tab.on .shop-flight-sort-tab-price {
+  font-size: 14px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.92);
+  text-align: start;
+}
+
+html body .shop-root .shop-flight-sort-tab-meta,
+html body .shop-root .shop-flight-sort-tab.on .shop-flight-sort-tab-meta,
+html body .shop-root .shop-flight-sort-tab-why,
+html body .shop-root .shop-flight-sort-tab.on .shop-flight-sort-tab-why {
+  display: none;
+}
+
+html body .shop-root .shop-flight-sort-alert {
+  margin-inline-start: auto;
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+  padding-inline: 4px;
+}
+
+html body .shop-root .shop-watch-price.is-compact {
+  margin: 0;
+  gap: 0;
+}
+
+html body .shop-root .shop-watch-price.is-compact .shop-watch-price-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  color: #fff;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 8px 6px;
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+html body .shop-root .shop-watch-price.is-compact .shop-watch-price-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+html body .shop-root .shop-watch-price.is-compact .shop-watch-price-btn.on {
+  background: transparent;
+  color: #fff;
+  border: 0;
+}
+
+html body .shop-root .shop-watch-price.is-compact .shop-error {
+  margin: 0;
+  color: #fff;
+  font-size: 12px;
+  white-space: normal;
+}
+
 @media (max-width: 767px) {
   html body .shop-root .shop-price-calendar {
     width: calc(100% - 1rem);
   }
 
+  html body .shop-root .shop-price-calendar-nav {
+    min-height: 62px;
+  }
+
   html body .shop-root .shop-price-calendar-cell,
   html body .shop-root .shop-price-calendar-cell:last-child {
-    flex-basis: 6.4rem;
-    padding: 6px;
+    flex-basis: 7.2rem;
+    padding: 8px 6px 10px;
+  }
+
+  html body .shop-root .shop-price-calendar-day,
+  html body .shop-root .shop-price-calendar-cell.on .shop-price-calendar-day {
+    font-size: 13px;
+  }
+
+  html body .shop-root .shop-price-calendar-cell strong,
+  html body .shop-root .shop-price-calendar-cell.on strong,
+  html body .shop-root .shop-price-calendar-cell.on.cheap strong {
+    font-size: 15px;
   }
 
   html body .shop-root .shop-price-calendar-table {
-    flex-basis: 64px;
-    font-size: 10px;
+    flex-basis: 76px;
+    font-size: 12px;
+  }
+
+  html body .shop-root .shop-flight-sort-tabs {
+    flex-wrap: wrap;
+    width: calc(100% - 1rem);
+    margin-inline: auto;
+    min-height: 0;
+    padding: 4px 8px 6px;
+    gap: 0;
+  }
+
+  html body .shop-root .shop-flight-sort-tabs-main {
+    flex: 1 1 100%;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  html body .shop-root .shop-flight-sort-tab {
+    padding: 8px 12px 10px;
+  }
+
+  html body .shop-root .shop-flight-sort-alert {
+    margin-inline-start: 0;
+    padding: 2px 4px 6px;
   }
 
   .shop-price-table-foot {

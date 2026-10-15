@@ -889,14 +889,6 @@ export function ShopFlightResultsClient() {
 
           {cheapestFlight ? (
             <div className="shop-flight-watch-row">
-              <ShopWatchPrice
-                origin={params.origin}
-                destination={params.destination}
-                departDate={params.departDate}
-                returnDate={params.tripType === "roundtrip" ? params.returnDate : undefined}
-                currentPriceMinor={cheapestFlight.sellAmountMinor}
-                currency={cheapestFlight.currency}
-              />
               <ShopWishlistButton
                 item={{
                   id: `flight:${params.origin}-${params.destination}-${params.departDate}`,
@@ -916,6 +908,19 @@ export function ShopFlightResultsClient() {
             totalCount={flightsRaw.length}
             filters={filters}
             facets={facets}
+            alertSlot={
+              cheapestFlight ? (
+                <ShopWatchPrice
+                  compact
+                  origin={params.origin}
+                  destination={params.destination}
+                  departDate={params.departDate}
+                  returnDate={params.tripType === "roundtrip" ? params.returnDate : undefined}
+                  currentPriceMinor={cheapestFlight.sellAmountMinor}
+                  currency={cheapestFlight.currency}
+                />
+              ) : null
+            }
             sortKey={sortKey}
             origin={params.origin}
             destination={params.destination}

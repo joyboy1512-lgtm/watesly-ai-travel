@@ -13,6 +13,7 @@ type Props = {
   returnDate?: string;
   currentPriceMinor: number;
   currency: string;
+  compact?: boolean;
 };
 
 export function ShopWatchPrice(props: Props) {
@@ -54,16 +55,24 @@ export function ShopWatchPrice(props: Props) {
   }
 
   return (
-    <div className="shop-watch-price">
+    <div className={`shop-watch-price${props.compact ? " is-compact" : ""}`}>
       <button
         type="button"
         className={`shop-btn-ghost shop-watch-price-btn${done ? " on" : ""}`}
         disabled={busy || done}
         onClick={() => void watch()}
       >
-        {done ? t("watchPriceDone") : t("watchPrice")}
+        {props.compact ? (
+          <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+            <path
+              fill="currentColor"
+              d="M12 22a2.2 2.2 0 0 0 2.2-2.2h-4.4A2.2 2.2 0 0 0 12 22zm7-6V11a7 7 0 0 0-5-6.7V3.5a2 2 0 1 0-4 0v.8A7 7 0 0 0 5 11v5l-2 2v1h18v-1l-2-2z"
+            />
+          </svg>
+        ) : null}
+        {done ? t("watchPriceDone") : props.compact ? "نبّهني إذا زاد السعر" : t("watchPrice")}
       </button>
-      <span className="shop-hint">{t("watchPriceHint")}</span>
+      {props.compact ? null : <span className="shop-hint">{t("watchPriceHint")}</span>}
       {error ? <p className="shop-error">{error}</p> : null}
     </div>
   );

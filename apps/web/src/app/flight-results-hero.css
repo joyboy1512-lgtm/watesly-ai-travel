@@ -1,6 +1,6 @@
 /* Flight results — compact search card matching the homepage hero (desktop / tablet). */
 
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap");
 
 .shop-flight-hero-vista,
 .shop-flight-hero-plane,
@@ -21,7 +21,7 @@
     --fh-ink: #0f294d;
     --fh-muted: #455873;
     --fh-line: #e7eaf0;
-    --fh-width: min(1120px, calc(100% - 2rem));
+    --fh-width: min(1120px, calc(100% - 2.5rem));
     position: relative;
     z-index: 70;
     display: block;
@@ -29,7 +29,7 @@
     margin: 0 calc(50% - 50vw) 18px;
     background: transparent;
     overflow: visible;
-    font-family: Inter, Cairo, "Segoe UI", sans-serif;
+    font-family: "IBM Plex Sans Arabic", Inter, Cairo, "Segoe UI", sans-serif;
   }
 
   html body .shop-root .shop-flight-hero-vista {
@@ -125,37 +125,59 @@
     z-index: 1;
     width: var(--fh-width);
     margin: 0 auto;
-    padding: 8px 10px 10px;
+    padding: 0;
     display: grid;
     grid-template-columns:
-      minmax(0, 1.35fr) 42px minmax(0, 1.35fr) minmax(0, 1.05fr) minmax(0, 1.05fr) minmax(0, 1.15fr) auto;
+      minmax(0, 1.35fr) 0 minmax(0, 1.35fr) minmax(0, 1.15fr) minmax(0, 1.15fr) minmax(0, 1.1fr) 72px;
     grid-template-rows: auto auto;
-    gap: 8px;
-    align-items: center;
+    gap: 12px 0;
+    align-items: stretch;
     min-height: 0;
-    background: #fff;
+    background: transparent;
     border: 0;
-    border-radius: 8px;
-    box-shadow: 0 8px 24px rgba(15, 41, 77, 0.12);
-    font-family: Inter, Cairo, "Segoe UI", sans-serif;
+    border-radius: 0;
+    box-shadow: none;
+    overflow: visible;
+    font-family: "IBM Plex Sans Arabic", Inter, Cairo, "Segoe UI", sans-serif;
+  }
+
+  html body .shop-root .shop-flight-hero .shop-flight-edit-bar::before {
+    content: "";
+    grid-column: 1 / -1;
+    grid-row: 2;
+    background: #fff;
+    border: 1px solid #e8edf1;
+    border-radius: 16px;
+    box-shadow: 0 8px 24px rgba(37, 42, 49, 0.08);
+    z-index: 0;
+    pointer-events: none;
   }
 
   html body .shop-root .shop-flight-hero .shop-flight-edit-ac,
   html body .shop-root .shop-flight-hero .shop-flight-edit-date,
   html body .shop-root .shop-flight-hero .shop-flight-edit-travelers {
+    position: relative;
+    z-index: 1;
     grid-row: 2;
     display: flex;
-    flex-direction: row;
-    align-items: center;
-    gap: 0.35rem;
+    flex-direction: column;
+    justify-content: center;
+    align-items: stretch;
+    gap: 2px;
     min-width: 0;
-    padding: 0 12px;
-    border: 1px solid rgba(0, 0, 0, 0.45);
-    border-radius: 8px;
-    background: #fff;
-    color: #111;
-    font-size: 16px;
-    font-weight: 700;
+    min-height: 72px;
+    padding: 8px 14px 10px;
+    border: 0;
+    border-inline-start: 1px solid #e8edf1;
+    border-radius: 0;
+    background: transparent;
+    color: #687176;
+    font-size: 0.7rem;
+    font-weight: 600;
+  }
+
+  html body .shop-root .shop-flight-hero .shop-flight-edit-ac:nth-child(1) {
+    border-inline-start: 0;
   }
 
   html body .shop-root .shop-flight-hero .shop-flight-edit-ac:nth-child(1) {
@@ -173,16 +195,22 @@
     grid-row: 2;
     align-self: center;
     justify-self: center;
-    width: 42px;
-    height: 42px;
-    margin-inline: -12px;
+    width: 32px;
+    height: 32px;
+    margin: 0;
     padding: 0;
-    border: 1px solid rgba(0, 0, 0, 0.55);
+    border: 1px solid #e8edf1;
     border-radius: 50%;
     background: #fff;
-    color: #111;
+    color: #687176;
+    box-shadow: 0 1px 4px rgba(37, 42, 49, 0.08);
     z-index: 3;
     cursor: pointer;
+  }
+
+  html body .shop-root .shop-flight-hero .shop-flight-edit-swap svg {
+    width: 16px;
+    height: 16px;
   }
 
   html body .shop-root .shop-flight-hero .shop-flight-edit-date:nth-child(4) {
@@ -197,25 +225,22 @@
     grid-column: 6;
   }
 
-  html body .shop-root .shop-flight-hero .shop-flight-edit-ac:focus-within,
-  html body .shop-root .shop-flight-hero .shop-flight-edit-date:focus-within,
-  html body .shop-root .shop-flight-hero .shop-flight-edit-travelers:focus-within {
-    background: #f7f9fc;
-  }
-
   html body .shop-root .shop-flight-hero .shop-flight-edit-bar .shop-ac-inline {
-    gap: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 2px;
     min-width: 0;
+    width: 100%;
   }
 
   html body .shop-root .shop-flight-hero .shop-flight-edit-bar .shop-ac-inline .exp-cell-label,
   html body .shop-root .shop-flight-hero .shop-flight-edit-field-label {
-    display: none;
-  }
-
-  /* The date caption is a text node; collapse it and keep the input readable. */
-  html body .shop-root .shop-flight-hero .shop-flight-edit-date {
-    font-size: 0;
+    display: block;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #687176;
+    line-height: 1.2;
   }
 
   html body .shop-root .shop-flight-hero .shop-flight-edit-bar .shop-ac-inline input,
@@ -224,14 +249,24 @@
     border: 0;
     border-radius: 0;
     padding: 0;
-    min-height: 58px;
+    min-height: 0;
+    height: auto;
     background: transparent;
     box-shadow: none;
-    color: var(--fh-ink);
-    font-family: Inter, Cairo, "Segoe UI", sans-serif;
-    font-size: 16px;
-    font-weight: 700;
-    color: #111;
+    color: #252a31;
+    font-family: "IBM Plex Sans Arabic", Inter, Cairo, "Segoe UI", sans-serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    line-height: 1.3;
+  }
+
+  html body .shop-root .shop-flight-hero .shop-flight-edit-bar input[type="date"]::-webkit-calendar-picker-indicator {
+    opacity: 0;
+    position: absolute;
+    inset: 0;
+    width: auto;
+    height: auto;
+    cursor: pointer;
   }
 
   html body .shop-root .shop-flight-hero .shop-flight-edit-bar .shop-ac-inline input {
@@ -247,16 +282,18 @@
   }
 
   html body .shop-root .shop-flight-hero .shop-flight-edit-ac:nth-child(1) .shop-ac-inline input {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23455873' d='M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23687176' d='M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z'/%3E%3C/svg%3E");
   }
 
   html body .shop-root .shop-flight-hero .shop-flight-edit-ac:nth-child(3) .shop-ac-inline input {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23455873' d='M2.5 19h19v2h-19zM21 8.5 13 11V3.5a1.5 1.5 0 0 0-3 0V11L2 8.5V11l8 2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8-2.5z'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23687176' d='M2.5 19h19v2h-19zM21 8.5 13 11V3.5a1.5 1.5 0 0 0-3 0V11L2 8.5V11l8 2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8-2.5z'/%3E%3C/svg%3E");
   }
 
   html body .shop-root .shop-flight-hero .shop-flight-edit-date input[type="date"] {
+    position: relative;
+    width: 100%;
     padding-inline-start: 1.45rem;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23455873' d='M7 2h2v2h6V2h2v2h3a1 1 0 0 1 1 1v15a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h3zm12 8H5v9h14z'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23687176' d='M7 2h2v2h6V2h2v2h3a1 1 0 0 1 1 1v15a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h3zm12 8H5v9h14z'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
     background-size: 16px;
     background-position: right 0 center;
@@ -273,7 +310,7 @@
     overflow: hidden;
     text-overflow: ellipsis;
     padding-inline-start: 1.45rem;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23455873' d='M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4zm0 2c-4 0-8 2-8 4v2h16v-2c0-2-4-4-8-4z'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23687176' d='M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4zm0 2c-4 0-8 2-8 4v2h16v-2c0-2-4-4-8-4z'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
     background-size: 16px;
     background-position: right 0 center;
@@ -291,88 +328,101 @@
 
   html body .shop-root .shop-flight-hero .shop-flight-edit-check {
     grid-row: 1;
-    display: flex;
+    display: flex !important;
     align-items: center;
-    gap: 8px;
-    padding: 4px 8px 8px;
+    align-self: end;
+    gap: 6px;
+    width: max-content;
+    margin: 0;
+    padding: 6px 10px 8px;
     border: 0;
-    color: var(--fh-ink);
-    font-size: 15px;
-    font-weight: 700;
-    color: #111;
+    border-bottom: 2px solid transparent;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.88) !important;
+    font-size: 0.9rem;
+    font-weight: 600 !important;
     white-space: nowrap;
     cursor: pointer;
   }
 
-  html body .shop-root .shop-flight-hero .shop-flight-edit-check:nth-child(7),
-  html body .shop-root .shop-flight-hero .shop-flight-edit-check:nth-child(8) {
-    grid-column: 1;
+  html body .shop-root .shop-flight-hero .shop-flight-edit-check:nth-child(7) {
+    grid-column: 1 / 3;
     justify-content: flex-start;
-    width: max-content;
   }
 
   html body .shop-root .shop-flight-hero .shop-flight-edit-check:nth-child(8) {
-    margin-inline-start: 9.2rem;
+    grid-column: 3 / 5;
+    justify-content: flex-start;
+    margin-inline-start: 0;
+  }
+
+  html body .shop-root .shop-flight-hero .shop-flight-edit-check:has(input:checked) {
+    color: #fff !important;
+    border-bottom-color: #fff;
   }
 
   html body .shop-root .shop-flight-hero .shop-flight-edit-check input {
     appearance: none;
     -webkit-appearance: none;
-    width: 16px;
-    height: 16px;
+    width: 14px;
+    height: 14px;
     margin: 0;
-    border: 1.5px solid #8592a6;
+    border: 1.5px solid rgba(255, 255, 255, 0.85);
     border-radius: 50%;
-    background: #fff;
+    background: transparent;
     accent-color: transparent;
   }
 
   html body .shop-root .shop-flight-hero .shop-flight-edit-check input:checked {
-    border-color: #3264ff;
-    background: radial-gradient(circle, #3264ff 42%, #fff 48%);
+    border-color: #fff;
+    background: radial-gradient(circle, #fff 42%, transparent 48%);
   }
 
   html body .shop-root .shop-flight-hero .shop-flight-search-again {
+    position: relative;
+    z-index: 1;
     grid-column: 7;
     grid-row: 2;
     align-self: center;
     justify-self: center;
-    width: auto;
-    min-width: 6.2rem;
-    height: 58px;
-    min-height: 58px;
-    margin: 4px 6px;
-    padding: 0 16px;
+    width: 52px;
+    min-width: 52px;
+    height: 52px;
+    min-height: 52px;
+    margin: 10px;
+    padding: 0;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 6px;
-    border-radius: 6px;
-    background: #3264ff;
+    gap: 0;
+    border: 0;
+    border-radius: 50%;
+    background: #ff5e1f;
     color: #fff;
-    box-shadow: none;
-    font-family: Inter, Cairo, "Segoe UI", sans-serif;
-    font-size: 16px;
-    font-weight: 500;
+    box-shadow: 0 6px 14px rgba(255, 94, 31, 0.28);
+    cursor: pointer;
   }
 
   html body .shop-root .shop-flight-hero .shop-flight-search-again:hover {
-    background: #2547d0;
+    background: #e04e14;
   }
 
   html body .shop-root .shop-flight-hero .shop-flight-search-again-icon {
     display: block;
-    width: 18px;
-    height: 18px;
+    width: 22px;
+    height: 22px;
   }
 
   html body .shop-root .shop-flight-hero .shop-flight-search-again-text {
-    position: static;
-    width: auto;
-    height: auto;
-    overflow: visible;
-    clip-path: none;
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
     white-space: nowrap;
+    border: 0;
   }
 }
 

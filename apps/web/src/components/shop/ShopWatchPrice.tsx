@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { currencyMinorFactor } from "@watesly-travel/shared";
@@ -42,11 +42,6 @@ export function ShopWatchPrice(props: Props) {
   const min = Math.max(factor, Math.round(current * 0.7));
   const max = Math.max(min, current);
   const step = Math.max(1, Math.round(factor / 20));
-
-  const thumb = useMemo(() => {
-    if (max <= min) return 100;
-    return Math.round(((target - min) / (max - min)) * 100);
-  }, [target, min, max]);
 
   useEffect(() => {
     if (!open) return;
@@ -150,9 +145,7 @@ export function ShopWatchPrice(props: Props) {
                 تبي سعراً أفضل؟ نعلمك إذا نزل السعر تحت{" "}
                 <strong>{formatMoneyCompact(target, props.currency)}</strong>
               </p>
-              <p className="shop-price-alert-chance" style={{ marginInlineStart: `${Math.min(78, Math.max(8, thumb - 12))}%` }}>
-                {chanceLabel(target, current)}
-              </p>
+              <p className="shop-price-alert-chance">{chanceLabel(target, current)}</p>
 
               <div className="shop-price-alert-slider" dir="ltr">
                 <input

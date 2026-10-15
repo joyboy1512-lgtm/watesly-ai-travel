@@ -177,15 +177,14 @@
   }
 
   html body .shop-root .shop-flight-hero .shop-flight-edit-ac:nth-child(1) {
-    border-inline-start: 0;
-  }
-
-  html body .shop-root .shop-flight-hero .shop-flight-edit-ac:nth-child(1) {
     grid-column: 1;
+    border-inline-start: 0;
+    padding-inline-end: 22px;
   }
 
   html body .shop-root .shop-flight-hero .shop-flight-edit-ac:nth-child(3) {
     grid-column: 3;
+    padding-inline-start: 22px;
   }
 
   html body .shop-root .shop-flight-hero .shop-flight-edit-swap {
@@ -193,11 +192,11 @@
     place-items: center;
     grid-column: 2;
     grid-row: 2;
-    align-self: center;
+    align-self: end;
     justify-self: center;
     width: 32px;
     height: 32px;
-    margin: 0;
+    margin: 0 0 16px;
     padding: 0;
     border: 1px solid #e8edf1;
     border-radius: 50%;

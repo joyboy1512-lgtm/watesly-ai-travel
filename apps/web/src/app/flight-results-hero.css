@@ -1142,6 +1142,16 @@ html body .shop-root .shop-watch-price.is-compact .shop-error {
   pointer-events: none;
 }
 
+.shop-price-alert-dates input::-webkit-datetime-edit,
+.shop-price-alert-dates input::-webkit-datetime-edit-fields-wrapper,
+.shop-price-alert-dates input::-webkit-datetime-edit-text,
+.shop-price-alert-dates input::-webkit-datetime-edit-month-field,
+.shop-price-alert-dates input::-webkit-datetime-edit-day-field,
+.shop-price-alert-dates input::-webkit-datetime-edit-year-field {
+  color: transparent;
+  background: transparent;
+}
+
 .shop-price-alert-lead {
   margin: 4px 0 10px;
   font-size: 17px;

@@ -807,22 +807,24 @@ export function ShopFlightResultsClient() {
               </div>
             ) : null}
           </div>
-          <label className="shop-flight-edit-check">
-            <input
-              type="checkbox"
-              checked={draft.directOnly}
-              onChange={(e) => setDraft((d) => ({ ...d, directOnly: e.target.checked }))}
-            />
-            مباشر فقط
-          </label>
-          <label className="shop-flight-edit-check">
-            <input
-              type="checkbox"
-              checked={draft.flexibleDates}
-              onChange={(e) => setDraft((d) => ({ ...d, flexibleDates: e.target.checked }))}
-            />
-            تواريخ مرنة
-          </label>
+          <div className="shop-flight-edit-flags">
+            <label className="shop-flight-edit-check">
+              <input
+                type="checkbox"
+                checked={draft.directOnly}
+                onChange={(e) => setDraft((d) => ({ ...d, directOnly: e.target.checked }))}
+              />
+              مباشر فقط
+            </label>
+            <label className="shop-flight-edit-check">
+              <input
+                type="checkbox"
+                checked={draft.flexibleDates}
+                onChange={(e) => setDraft((d) => ({ ...d, flexibleDates: e.target.checked }))}
+              />
+              تواريخ مرنة
+            </label>
+          </div>
           <button type="submit" className="shop-flight-search-again" aria-label="تعديل البحث">
             <svg className="shop-flight-search-again-icon" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
               <circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" strokeWidth="2.4" />

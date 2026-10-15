@@ -996,18 +996,19 @@ export function ShopHeroBanner(props: Props) {
   left: 0 !important;
   right: 0 !important;
   height: calc(5.35rem + 4rem) !important;
-  background: #1565c0 !important;
+  background: #3264ff !important;
   z-index: 3 !important;
   pointer-events: none !important;
 }
-.wg-travela-carousel-btn {
-  background: #1565c0 !important;
+html body .shop-root.wg-new-ui .wg-travela-carousel-btn,
+html body .wg-travela-carousel-btn {
+  background: #3264ff !important;
   color: #fff !important;
 }
 html body .shop-root .shop-header.wg-header-blue,
 html body .shop-root.wg-new-ui .exp-header-hero-overlay.wg-header-blue {
-  background: #1565c0 !important;
-  background-color: #1565c0 !important;
+  background: #3264ff !important;
+  background-color: #3264ff !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
   border-bottom: 0 !important;
@@ -1614,7 +1615,8 @@ html body #search.wg-simple-search .prc-suggest button strong {
   #search.wg-simple-search .wg-simple-fields { flex-wrap: wrap !important; }
   #search.wg-simple-search .wg-simple-cell { flex: 1 1 100% !important; border: 1.5px solid #1565c0 !important; }
   #search.wg-simple-search .wg-cell-dates { flex: 1 1 100% !important; width: auto !important; }
-  #search.wg-simple-search .wg-search-btn { width: auto !important; margin-inline-end: 0 !important; justify-content: center !important; }
+  #search.wg-simple-search .wg-search-btn { width: auto !important; margin-inline-end: 0 !important; justify-content: center !important; background: #3264ff !important; }
+  #search.wg-simple-search .wg-search-btn:hover:not(:disabled) { background: #2547d0 !important; }
 }
 @media (min-width: 721px) {
   /* Keep the original place. Paint the card above the header so the top half is not covered. */

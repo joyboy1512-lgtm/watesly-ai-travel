@@ -954,7 +954,7 @@ html body .shop-root .shop-watch-price.is-compact .shop-error {
     display: grid;
     grid-template-columns: minmax(340px, 380px) minmax(0, 1fr);
     grid-template-areas:
-      "count count"
+      ". count"
       "filters sort"
       "filters cards";
     column-gap: 1rem;

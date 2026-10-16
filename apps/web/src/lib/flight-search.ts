@@ -1,5 +1,5 @@
 import { currencyMinorFactor } from "@watesly-travel/shared";
-import { airlineNameAr, normalizeAirlineCode } from "./flight-airlines";
+import { airlineName, airlineNameAr, normalizeAirlineCode } from "./flight-airlines";
 
 export type FlightOfferRow = {
   id: string;
@@ -161,10 +161,18 @@ export function flightAirlineNameAr(
   details: Record<string, unknown>,
   seg?: FlightSeg | null,
   leg: "out" | "return" = "out",
+  locale: "ar" | "en" = "ar",
 ): string {
   const packageCode = String(details.airlineCode || "");
   const code = segmentAirlineCode(seg, packageCode);
   const segName = seg?.airline;
+  if (locale === "en") {
+    const fallback =
+      leg === "out"
+        ? String(details.airlineEn || details.airline || segName || code)
+        : String(details.returnAirlineEn || segName || details.airline || code);
+    return airlineName(code, fallback, "en");
+  }
   if (leg === "out") {
     return airlineNameAr(code, String(details.airlineAr || details.airline || segName || code));
   }
@@ -227,18 +235,23 @@ export function minorToMajor(minor: number, currency: string) {
   return minor / currencyMinorFactor(currency);
 }
 
-export function cabinLabel(cabin?: string | null) {
-  const map: Record<string, string> = {
-    economy: "اقتصادية",
-    premium_economy: "اقتصادية مميزة",
-    business: "رجال أعمال",
-    first: "الدرجة الأولى",
+export function cabinLabel(cabin?: string | null, locale: "ar" | "en" = "ar") {
+  const map: Record<string, Record<"ar" | "en", string>> = {
+    economy: { ar: "اقتصادية", en: "Economy" },
+    premium_economy: { ar: "اقتصادية مميزة", en: "Premium Economy" },
+    business: { ar: "رجال أعمال", en: "Business" },
+    first: { ar: "الدرجة الأولى", en: "First" },
   };
-  if (!cabin) return "اقتصادية";
-  return map[cabin] || cabin;
+  if (!cabin) return map.economy[locale];
+  return map[cabin]?.[locale] || cabin;
 }
 
-export function stopsLabel(stops: number) {
+export function stopsLabel(stops: number, locale: "ar" | "en" = "ar") {
+  if (locale === "en") {
+    if (stops <= 0) return "Direct";
+    if (stops === 1) return "1 stop";
+    return `${stops} stops`;
+  }
   if (stops <= 0) return "مباشر";
   if (stops === 1) return "توقف واحد";
   return `${stops} توقفات`;
@@ -256,10 +269,16 @@ export function durationMinutes(raw: unknown) {
   return Number.MAX_SAFE_INTEGER;
 }
 
-export function formatMinutesLabel(mins: number) {
+export function formatMinutesLabel(mins: number, locale: "ar" | "en" = "ar") {
   const total = Math.max(0, Math.round(mins));
   const h = Math.floor(total / 60);
   const m = total % 60;
+  if (locale === "en") {
+    const parts: string[] = [];
+    if (h > 0) parts.push(`${h}h`);
+    if (m > 0 || h === 0) parts.push(`${m}m`);
+    return parts.join(" ");
+  }
   // Isolate each unit so RTL pages never reorder "4س 25د" into "س 4د25".
   const parts: string[] = [];
   if (h > 0) parts.push(`\u2066${h}س\u2069`);
@@ -634,13 +653,18 @@ export type FlightSortTabSummary = {
 export function summarizeFlightSortTabs(
   flights: FlightOfferRow[],
   mode: "full" | "outbound" | "return" = "full",
+  locale: "ar" | "en" = "ar",
 ): FlightSortTabSummary[] {
   const currency = flights[0]?.currency || "KWD";
+  const labels =
+    locale === "en"
+      ? { cheapest: "Cheapest", best: "Best", fastest: "Fastest" }
+      : { cheapest: "الأرخص", best: "الأفضل", fastest: "الأسرع" };
   if (!flights.length) {
     return [
-      { key: "price_asc", label: "الأرخص", priceMinor: null, durationMins: null, currency },
-      { key: "best", label: "الأفضل", priceMinor: null, durationMins: null, currency },
-      { key: "duration_asc", label: "الأسرع", priceMinor: null, durationMins: null, currency },
+      { key: "price_asc", label: labels.cheapest, priceMinor: null, durationMins: null, currency },
+      { key: "best", label: labels.best, priceMinor: null, durationMins: null, currency },
+      { key: "duration_asc", label: labels.fastest, priceMinor: null, durationMins: null, currency },
     ];
   }
 
@@ -672,7 +696,7 @@ export function summarizeFlightSortTabs(
   return [
     {
       key: "price_asc",
-      label: "الأرخص",
+      label: labels.cheapest,
       priceMinor: byPrice.sellAmountMinor,
       durationMins: durationOf(byPrice),
       currency: byPrice.currency,
@@ -680,7 +704,7 @@ export function summarizeFlightSortTabs(
     },
     {
       key: "best",
-      label: "الأفضل",
+      label: labels.best,
       priceMinor: byBest.sellAmountMinor,
       durationMins: durationOf(byBest),
       currency: byBest.currency,
@@ -688,7 +712,7 @@ export function summarizeFlightSortTabs(
     },
     {
       key: "duration_asc",
-      label: "الأسرع",
+      label: labels.fastest,
       priceMinor: bySpeed.sellAmountMinor,
       durationMins: durationOf(bySpeed),
       currency: bySpeed.currency,

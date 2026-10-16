@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useShopCopy } from "@/components/shop/ShopI18nProvider";
 
 function formatFetchedTime(iso: string) {
   const d = new Date(iso);
@@ -9,8 +10,8 @@ function formatFetchedTime(iso: string) {
   return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
-function formatRemaining(ms: number) {
-  if (ms <= 0) return "انتهى";
+function formatRemaining(ms: number, locale: "ar" | "en") {
+  if (ms <= 0) return locale === "en" ? "Expired" : "انتهى";
   const totalSec = Math.floor(ms / 1000);
   const min = Math.floor(totalSec / 60);
   const sec = totalSec % 60;
@@ -34,6 +35,7 @@ export function HotelLiveBadge({
   expiresAt,
   compact,
 }: Props) {
+  const { locale } = useShopCopy();
   const [now, setNow] = useState(() => Date.now());
   const labelLooksSandbox =
     Boolean(sourceLabel) &&
@@ -54,11 +56,24 @@ export function HotelLiveBadge({
   if (isSandbox) {
     return (
       <div className={`hotel-live-badge is-sandbox${compact ? " is-compact" : ""}`}>
-        <strong>نتيجة تجريبية من Hotelbeds Sandbox</strong>
-        {fetchedLabel ? <span>جُلب {fetchedLabel}</span> : null}
+        <strong>
+          {locale === "en"
+            ? "Sample result from Hotelbeds Sandbox"
+            : "نتيجة تجريبية من Hotelbeds Sandbox"}
+        </strong>
+        {fetchedLabel ? (
+          <span>{locale === "en" ? "Fetched" : "جُلب"} {fetchedLabel}</span>
+        ) : null}
         {remaining != null ? (
           <em suppressHydrationWarning>
-            {expired ? "انتهت صلاحية السعر — أعد البحث" : `يتبقى ${formatRemaining(remaining)}`}
+            {expired
+              ? locale === "en"
+                ? "Fare expired — search again"
+                : "انتهت صلاحية السعر — أعد البحث"
+              : `${locale === "en" ? "Remaining" : "يتبقى"} ${formatRemaining(
+                  remaining,
+                  locale,
+                )}`}
           </em>
         ) : null}
       </div>
@@ -69,12 +84,21 @@ export function HotelLiveBadge({
     <div
       className={`hotel-live-badge${expired ? " is-expired" : ""}${compact ? " is-compact" : ""}`}
     >
-      <strong>عرض حي</strong>
+      <strong>{locale === "en" ? "Live offer" : "عرض حي"}</strong>
       {sourceLabel ? <span>{sourceLabel}</span> : null}
-      {fetchedLabel ? <span>جُلب {fetchedLabel}</span> : null}
+      {fetchedLabel ? (
+        <span>{locale === "en" ? "Fetched" : "جُلب"} {fetchedLabel}</span>
+      ) : null}
       {remaining != null ? (
         <em suppressHydrationWarning>
-          {expired ? "انتهت صلاحية السعر — أعد البحث" : `يتبقى ${formatRemaining(remaining)}`}
+          {expired
+            ? locale === "en"
+              ? "Fare expired — search again"
+              : "انتهت صلاحية السعر — أعد البحث"
+            : `${locale === "en" ? "Remaining" : "يتبقى"} ${formatRemaining(
+                remaining,
+                locale,
+              )}`}
         </em>
       ) : null}
     </div>

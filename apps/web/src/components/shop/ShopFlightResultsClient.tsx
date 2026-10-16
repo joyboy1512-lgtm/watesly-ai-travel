@@ -47,19 +47,27 @@ import { shopFetch } from "@/lib/shop-session";
 import { trackFunnel } from "@/lib/funnel-analytics";
 import { ShopPriceCalendar } from "@/components/shop/ShopPriceCalendar";
 import { ShopWatchPrice } from "@/components/shop/ShopWatchPrice";
-import { ShopWishlistButton } from "@/components/shop/ShopWishlistButton";
 import { ShopAutocomplete, type SuggestItem } from "@/components/shop/ShopAutocomplete";
+import { WeekendGateLogo } from "@/components/shop/WeekendGateLogo";
+import { useShopCopy } from "@/components/shop/ShopI18nProvider";
+import { airportPlaceLabel } from "@/lib/airport-cities";
 
 type QuoteItem = { id: string; providerOfferRef: string; serviceType: string };
 
-async function searchAirports(q: string): Promise<SuggestItem[]> {
+async function searchAirports(
+  q: string,
+  locale: "ar" | "en" = "ar",
+): Promise<SuggestItem[]> {
   const rows = await shopFetch<
     Array<{
       id: string;
       iataCode?: string | null;
       name: string;
+      nameEn?: string | null;
       city?: string | null;
+      cityEn?: string | null;
       country?: string | null;
+      countryEn?: string | null;
     }>
   >(`/shop/airports?q=${encodeURIComponent(q)}&limit=40`);
   return rows.map((a) => {
@@ -67,13 +75,26 @@ async function searchAirports(q: string): Promise<SuggestItem[]> {
     return {
       id: a.id,
       code,
-      title: code ? `${code} — ${a.city || a.name}` : a.city || a.name,
-      subtitle: `${a.name}${a.country ? ` · ${a.country}` : ""}`,
+      title:
+        locale === "en"
+          ? code
+            ? airportPlaceLabel(code, "en")
+            : a.cityEn || a.nameEn || a.city || a.name
+          : code
+            ? `${code} — ${a.city || a.name}`
+            : a.city || a.name,
+      subtitle:
+        locale === "en"
+          ? `${a.nameEn || airportPlaceLabel(code, "en")}${
+              a.countryEn ? ` · ${a.countryEn}` : ""
+            }`
+          : `${a.name}${a.country ? ` · ${a.country}` : ""}`,
     };
   });
 }
 
 export function ShopFlightResultsClient() {
+  const { locale, t } = useShopCopy();
   const router = useRouter();
   const searchParams = useSearchParams();
   const params = useMemo(
@@ -87,7 +108,7 @@ export function ShopFlightResultsClient() {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [message, setMessage] = useState("");
+  const [, setMessage] = useState("");
   const [flightsRaw, setFlightsRaw] = useState<FlightOfferRow[]>([]);
   const [inquiryId, setInquiryId] = useState("");
   const [quoteItems, setQuoteItems] = useState<QuoteItem[]>([]);
@@ -220,9 +241,13 @@ export function ShopFlightResultsClient() {
 
     try {
       if (search.tripType === "multicity") {
-        if (!search.legs.length) throw new Error("أدخل مسارات الرحلات المتعددة");
+        if (!search.legs.length) {
+          throw new Error(
+            locale === "en" ? "Add at least one flight leg" : "أدخل مسارات الرحلات المتعددة",
+          );
+        }
         const combined: FlightOfferRow[] = [];
-        let providerName = "المزوّد";
+        let providerName = locale === "en" ? "provider" : "المزوّد";
         for (let i = 0; i < search.legs.length; i += 1) {
           const leg = search.legs[i]!;
           const result = await shopFetch<{
@@ -258,7 +283,7 @@ export function ShopFlightResultsClient() {
                 ...row.details,
                 originalOfferId: row.id,
                 legIndex: i + 1,
-                legLabel: `الرحلة ${i + 1}`,
+                legLabel: `${locale === "en" ? "Flight" : "الرحلة"} ${i + 1}`,
                 legOrigin: leg.origin,
                 legDestination: leg.destination,
                 legDepartDate: leg.departDate,
@@ -277,7 +302,11 @@ export function ShopFlightResultsClient() {
         });
       } else {
         if (!search.origin || !search.destination || !search.departDate) {
-          throw new Error("أدخل المغادرة والوجهة والتاريخ");
+          throw new Error(
+            locale === "en"
+              ? "Enter the departure, destination, and date"
+              : "أدخل المغادرة والوجهة والتاريخ",
+          );
         }
         const result = await shopFetch<{
           inquiryId: string;
@@ -323,7 +352,12 @@ export function ShopFlightResultsClient() {
       }
     } catch (err) {
       if (gen !== searchGenRef.current || controller.signal.aborted) return;
-      setError(err instanceof Error ? err.message : "فشل البحث");
+      const rawError = err instanceof Error ? err.message : "";
+      setError(
+        locale === "en" && /[\u0600-\u06FF]/.test(rawError)
+          ? "Could not complete the flight search. Please try again."
+          : rawError || (locale === "en" ? "Search failed" : "فشل البحث"),
+      );
       trackFunnel({
         event: "search_failed",
         service: "flight",
@@ -333,7 +367,7 @@ export function ShopFlightResultsClient() {
     } finally {
       if (gen === searchGenRef.current) setLoading(false);
     }
-  }, []);
+  }, [locale]);
 
   useEffect(() => {
     void runSearch(params);
@@ -549,22 +583,41 @@ export function ShopFlightResultsClient() {
               d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"
             />
           </svg>
-          نتائج البحث عن الطيران
+          {locale === "en" ? "Flight search results" : "نتائج البحث عن الطيران"}
         </h1>
         <Link href="/#search" className="shop-flight-home-link">
-          الصفحة الرئيسية
+          {locale === "en" ? "Home" : "الصفحة الرئيسية"}
         </Link>
       </div>
 
       <div className="shop-flight-results-topbar">
         <div className="shop-flight-results-topbar-inner">
           <div className="shop-flight-results-summary">
-            <strong>{summary.route}</strong>
+            <strong>
+              {params.tripType === "multicity" && params.legs.length
+                ? locale === "en"
+                  ? `${params.legs.length} flights`
+                  : `${params.legs.length} رحلات`
+                : `${airportPlaceLabel(params.origin, locale)} → ${airportPlaceLabel(
+                    params.destination,
+                    locale,
+                  )}`}
+            </strong>
             <span>{summary.dates || "—"}</span>
             <span>
-              {summary.travelers} مسافر · {cabinLabel(params.cabinClass)}
+              {summary.travelers}{" "}
+              {locale === "en"
+                ? summary.travelers === 1
+                  ? "traveler"
+                  : "travelers"
+                : "مسافر"}{" "}
+              · {cabinLabel(params.cabinClass, locale)}
             </span>
-            {params.directOnly ? <span className="shop-flight-chip">مباشر فقط</span> : null}
+            {params.directOnly ? (
+              <span className="shop-flight-chip">
+                {locale === "en" ? "Direct only" : "مباشر فقط"}
+              </span>
+            ) : null}
           </div>
           <button
             type="button"
@@ -572,7 +625,13 @@ export function ShopFlightResultsClient() {
             aria-expanded={mobileEditOpen}
             onClick={() => setMobileEditOpen((v) => !v)}
           >
-            {mobileEditOpen ? "إخفاء" : "تعديل البحث"}
+            {mobileEditOpen
+              ? locale === "en"
+                ? "Hide"
+                : "إخفاء"
+              : locale === "en"
+                ? "Edit search"
+                : "تعديل البحث"}
           </button>
         </div>
 
@@ -587,12 +646,16 @@ export function ShopFlightResultsClient() {
           <div className="shop-flight-edit-ac">
             <ShopAutocomplete
               inline
-              label="من"
+              label={locale === "en" ? "From" : "من"}
               value={draft.origin}
-              display={draft.originLabel || draft.origin}
-              placeholder="مطار أو مدينة"
+              display={
+                locale === "en"
+                  ? airportPlaceLabel(draft.origin, "en")
+                  : draft.originLabel || draft.origin
+              }
+              placeholder={locale === "en" ? "Airport or city" : "مطار أو مدينة"}
               minChars={2}
-              onQuery={searchAirports}
+              onQuery={(q) => searchAirports(q, locale)}
               onClearText={(text) => {
                 setTravelersOpen(false);
                 setDraft((d) => ({
@@ -614,7 +677,7 @@ export function ShopFlightResultsClient() {
           <button
             type="button"
             className="shop-flight-edit-swap"
-            aria-label="تبديل الاتجاه"
+            aria-label={locale === "en" ? "Swap route" : "تبديل الاتجاه"}
             onClick={() => {
               setTravelersOpen(false);
               setDraft((d) => ({
@@ -636,12 +699,16 @@ export function ShopFlightResultsClient() {
           <div className="shop-flight-edit-ac">
             <ShopAutocomplete
               inline
-              label="إلى"
+              label={locale === "en" ? "To" : "إلى"}
               value={draft.destination}
-              display={draft.destinationLabel || draft.destination}
-              placeholder="مطار أو مدينة"
+              display={
+                locale === "en"
+                  ? airportPlaceLabel(draft.destination, "en")
+                  : draft.destinationLabel || draft.destination
+              }
+              placeholder={locale === "en" ? "Airport or city" : "مطار أو مدينة"}
               minChars={2}
-              onQuery={searchAirports}
+              onQuery={(q) => searchAirports(q, locale)}
               onClearText={(text) => {
                 setTravelersOpen(false);
                 setDraft((d) => ({
@@ -669,7 +736,7 @@ export function ShopFlightResultsClient() {
               );
             }}
           >
-            المغادرة
+            {t("departure")}
             <input
               type="date"
               value={draft.departDate}
@@ -688,7 +755,7 @@ export function ShopFlightResultsClient() {
               );
               }}
             >
-              العودة
+              {locale === "en" ? "Return" : "العودة"}
               <input
                 type="date"
                 value={draft.returnDate}
@@ -698,33 +765,41 @@ export function ShopFlightResultsClient() {
             </label>
           ) : (
             <label className="shop-flight-edit-date">
-              العودة
+              {locale === "en" ? "Return" : "العودة"}
               <input type="date" value="" disabled />
             </label>
           )}
           <div className="shop-flight-edit-travelers" ref={travelersRef}>
-            <span className="shop-flight-edit-field-label">المسافرون</span>
+            <span className="shop-flight-edit-field-label">{t("travelers")}</span>
             <button
               type="button"
               className="shop-flight-edit-travelers-toggle"
               aria-expanded={travelersOpen}
               onClick={() => setTravelersOpen((v) => !v)}
             >
-              {draft.adults} بالغ
-              {draft.children > 0 ? ` · ${draft.children} طفل` : ""}
-              {draft.infants > 0 ? ` · ${draft.infants} رضيع` : ""}
+              {draft.adults} {locale === "en" ? "adult" : "بالغ"}
+              {draft.children > 0
+                ? ` · ${draft.children} ${locale === "en" ? "child" : "طفل"}`
+                : ""}
+              {draft.infants > 0
+                ? ` · ${draft.infants} ${locale === "en" ? "infant" : "رضيع"}`
+                : ""}
             </button>
             {travelersOpen ? (
-              <div className="shop-flight-edit-travelers-panel" role="dialog" aria-label="المسافرون">
+              <div
+                className="shop-flight-edit-travelers-panel"
+                role="dialog"
+                aria-label={t("travelers")}
+              >
                 <div className="shop-flight-edit-traveler-row">
                   <span>
-                    بالغ
-                    <small>12+ سنة</small>
+                    {locale === "en" ? "Adult" : "بالغ"}
+                    <small>{locale === "en" ? "12+ years" : "12+ سنة"}</small>
                   </span>
                   <div className="shop-flight-edit-stepper">
                     <button
                       type="button"
-                      aria-label="تقليل البالغين"
+                      aria-label={locale === "en" ? "Decrease adults" : "تقليل البالغين"}
                       onClick={() =>
                         setDraft((d) => ({
                           ...d,
@@ -738,7 +813,7 @@ export function ShopFlightResultsClient() {
                     <strong>{draft.adults}</strong>
                     <button
                       type="button"
-                      aria-label="زيادة البالغين"
+                      aria-label={locale === "en" ? "Increase adults" : "زيادة البالغين"}
                       onClick={() =>
                         setDraft((d) => ({ ...d, adults: Math.min(9, d.adults + 1) }))
                       }
@@ -749,13 +824,13 @@ export function ShopFlightResultsClient() {
                 </div>
                 <div className="shop-flight-edit-traveler-row">
                   <span>
-                    طفل
-                    <small>2–11 سنة</small>
+                    {locale === "en" ? "Child" : "طفل"}
+                    <small>{locale === "en" ? "2–11 years" : "2–11 سنة"}</small>
                   </span>
                   <div className="shop-flight-edit-stepper">
                     <button
                       type="button"
-                      aria-label="تقليل الأطفال"
+                      aria-label={locale === "en" ? "Decrease children" : "تقليل الأطفال"}
                       onClick={() =>
                         setDraft((d) => ({ ...d, children: Math.max(0, d.children - 1) }))
                       }
@@ -765,7 +840,7 @@ export function ShopFlightResultsClient() {
                     <strong>{draft.children}</strong>
                     <button
                       type="button"
-                      aria-label="زيادة الأطفال"
+                      aria-label={locale === "en" ? "Increase children" : "زيادة الأطفال"}
                       onClick={() =>
                         setDraft((d) => ({ ...d, children: Math.min(8, d.children + 1) }))
                       }
@@ -776,13 +851,13 @@ export function ShopFlightResultsClient() {
                 </div>
                 <div className="shop-flight-edit-traveler-row">
                   <span>
-                    رضيع
-                    <small>أقل من سنتين</small>
+                    {locale === "en" ? "Infant" : "رضيع"}
+                    <small>{locale === "en" ? "Under 2 years" : "أقل من سنتين"}</small>
                   </span>
                   <div className="shop-flight-edit-stepper">
                     <button
                       type="button"
-                      aria-label="تقليل الرضع"
+                      aria-label={locale === "en" ? "Decrease infants" : "تقليل الرضع"}
                       onClick={() =>
                         setDraft((d) => ({ ...d, infants: Math.max(0, d.infants - 1) }))
                       }
@@ -792,7 +867,7 @@ export function ShopFlightResultsClient() {
                     <strong>{draft.infants}</strong>
                     <button
                       type="button"
-                      aria-label="زيادة الرضع"
+                      aria-label={locale === "en" ? "Increase infants" : "زيادة الرضع"}
                       onClick={() =>
                         setDraft((d) => ({
                           ...d,
@@ -807,66 +882,125 @@ export function ShopFlightResultsClient() {
               </div>
             ) : null}
           </div>
-          <label className="shop-flight-edit-check">
-            <input
-              type="checkbox"
-              checked={draft.directOnly}
-              onChange={(e) => setDraft((d) => ({ ...d, directOnly: e.target.checked }))}
-            />
-            مباشر فقط
-          </label>
-          <label className="shop-flight-edit-check">
-            <input
-              type="checkbox"
-              checked={draft.flexibleDates}
-              onChange={(e) => setDraft((d) => ({ ...d, flexibleDates: e.target.checked }))}
-            />
-            تواريخ مرنة
-          </label>
-          <button type="submit" className="shop-flight-search-again" aria-label="تعديل البحث">
+          <div className="shop-flight-edit-flags">
+            <label className="shop-flight-edit-check">
+              <input
+                type="checkbox"
+                checked={draft.directOnly}
+                onChange={(e) => setDraft((d) => ({ ...d, directOnly: e.target.checked }))}
+              />
+              {locale === "en" ? "Direct only" : "مباشر فقط"}
+            </label>
+            <label className="shop-flight-edit-check">
+              <input
+                type="checkbox"
+                checked={draft.flexibleDates}
+                onChange={(e) => setDraft((d) => ({ ...d, flexibleDates: e.target.checked }))}
+              />
+              {t("flexibleDates")}
+            </label>
+          </div>
+          <button
+            type="submit"
+            className="shop-flight-search-again"
+            aria-label={locale === "en" ? "Edit search" : "تعديل البحث"}
+          >
             <svg className="shop-flight-search-again-icon" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
               <circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" strokeWidth="2.4" />
               <path d="m20 20-4-4" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
             </svg>
-            <span className="shop-flight-search-again-text">ابحث</span>
+            <span className="shop-flight-search-again-text">{t("search")}</span>
           </button>
         </form>
       </div>
       </section>
 
       {loading ? (
-        <div className="shop-flight-results-loading">
-          <div className="shop-flight-spinner" aria-hidden />
-          <p>جاري البحث عن أفضل رحلات الطيران…</p>
-          <small>
-            {params.origin || "—"} → {params.destination || "—"}
-            {params.departDate ? ` · ${formatDay(params.departDate)}` : ""}
-            {isRoundTrip && params.returnDate ? ` – ${formatDay(params.returnDate)}` : ""}
-          </small>
+        <div className="shop-flight-search-stage" role="status" aria-live="polite">
+          <div className="shop-flight-search-brand">
+            <WeekendGateLogo />
+            <p>{locale === "en" ? "Your holiday starts here" : "عطلتك تبدأ من هنا"}</p>
+            <span className="sr-only">
+              {locale === "en" ? "Searching for flights" : "جاري البحث عن الرحلات"}
+            </span>
+          </div>
+          {params.tripType === "multicity" && params.legs.length > 1 ? (
+            <ol className="shop-flight-search-legs">
+              {params.legs.map((leg, index) => (
+                <li key={`${leg.origin}-${leg.destination}-${leg.departDate}-${index}`}>
+                  <b>
+                    {locale === "en"
+                      ? airportPlaceLabel(leg.origin, "en")
+                      : leg.originLabel || leg.origin}
+                  </b>
+                  <span aria-hidden="true">←</span>
+                  <b>
+                    {locale === "en"
+                      ? airportPlaceLabel(leg.destination, "en")
+                      : leg.destinationLabel || leg.destination}
+                  </b>
+                  <small>{formatDay(leg.departDate, locale)}</small>
+                </li>
+              ))}
+            </ol>
+          ) : (
+            <div className="shop-flight-search-route">
+              <div className="shop-flight-search-place">
+                <strong>
+                  {locale === "en"
+                    ? airportPlaceLabel(params.origin, "en")
+                    : params.originLabel || params.origin || "—"}
+                </strong>
+                <span>{params.origin}</span>
+              </div>
+              <div className="shop-flight-search-track" aria-hidden="true">
+                <i />
+                <em>✈</em>
+              </div>
+              <div className="shop-flight-search-place">
+                <strong>
+                  {locale === "en"
+                    ? airportPlaceLabel(params.destination, "en")
+                    : params.destinationLabel || params.destination || "—"}
+                </strong>
+                <span>{params.destination}</span>
+              </div>
+            </div>
+          )}
+          <div className="shop-flight-search-facts">
+            {params.departDate ? (
+              <span>
+                {locale === "en" ? "Outbound" : "ذهاب"} ·{" "}
+                {formatDay(params.departDate, locale)}
+              </span>
+            ) : null}
+            {isRoundTrip && params.returnDate ? (
+              <span>
+                {locale === "en" ? "Return" : "عودة"} ·{" "}
+                {formatDay(params.returnDate, locale)}
+              </span>
+            ) : null}
+            <span>
+              {passengers}{" "}
+              {locale === "en" ? (passengers === 1 ? "traveler" : "travelers") : "مسافر"}{" "}
+              · {cabinLabel(params.cabinClass, locale)}
+            </span>
+          </div>
         </div>
       ) : null}
 
       {!loading && error ? (
         <div className="shop-flight-results-error">
-          <strong>تعذّر إكمال البحث</strong>
+          <strong>{locale === "en" ? "Could not complete the search" : "تعذّر إكمال البحث"}</strong>
           <p>{error}</p>
           <button type="button" onClick={() => void runSearch(params)}>
-            إعادة المحاولة
+            {locale === "en" ? "Try again" : "إعادة المحاولة"}
           </button>
         </div>
       ) : null}
 
       {!loading && !error ? (
         <>
-          <div className="shop-flight-mock-banner" role="status">
-            <strong>نتائج تجريبية</strong>
-            <span>
-              الأسعار والرحلات المعروضة للاختبار فقط — سيتم استبدالها بعروض حية عند ربط
-              مزوّد الطيران.
-            </span>
-          </div>
-          {message ? <p className="shop-flight-results-status">{message}</p> : null}
-
           {params.tripType !== "multicity" ? (
             <ShopPriceCalendar
               search={params}
@@ -885,40 +1019,43 @@ export function ShopFlightResultsClient() {
             />
           ) : null}
 
-          {cheapestFlight ? (
-            <div className="shop-flight-watch-row">
-              <ShopWatchPrice
-                origin={params.origin}
-                destination={params.destination}
-                departDate={params.departDate}
-                returnDate={params.tripType === "roundtrip" ? params.returnDate : undefined}
-                currentPriceMinor={cheapestFlight.sellAmountMinor}
-                currency={cheapestFlight.currency}
-              />
-              <ShopWishlistButton
-                item={{
-                  id: `flight:${params.origin}-${params.destination}-${params.departDate}`,
-                  kind: "flight",
-                  title: `${params.originLabel || params.origin} → ${params.destinationLabel || params.destination}`,
-                  href: resultsHref,
-                  subtitle: summary.dates,
-                  priceMinor: cheapestFlight.sellAmountMinor,
-                  currency: cheapestFlight.currency,
-                }}
-              />
-            </div>
-          ) : null}
-
           <ShopFlightResults
             flights={flights}
             totalCount={flightsRaw.length}
             filters={filters}
             facets={facets}
+            alertSlot={
+              cheapestFlight ? (
+                <ShopWatchPrice
+                  compact
+                  origin={params.origin}
+                  destination={params.destination}
+                  originLabel={
+                    locale === "en" ? airportPlaceLabel(params.origin, "en") : params.originLabel
+                  }
+                  destinationLabel={
+                    locale === "en"
+                      ? airportPlaceLabel(params.destination, "en")
+                      : params.destinationLabel
+                  }
+                  departDate={params.departDate}
+                  returnDate={params.tripType === "roundtrip" ? params.returnDate : undefined}
+                  currentPriceMinor={cheapestFlight.sellAmountMinor}
+                  currency={cheapestFlight.currency}
+                />
+              ) : null
+            }
             sortKey={sortKey}
             origin={params.origin}
             destination={params.destination}
-            originLabel={params.originLabel}
-            destinationLabel={params.destinationLabel}
+            originLabel={
+              locale === "en" ? airportPlaceLabel(params.origin, "en") : params.originLabel
+            }
+            destinationLabel={
+              locale === "en"
+                ? airportPlaceLabel(params.destination, "en")
+                : params.destinationLabel
+            }
             passengers={passengers}
             onFiltersChange={setFilters}
             onSortChange={setSortKey}
@@ -932,7 +1069,13 @@ export function ShopFlightResultsClient() {
             expandedTripId={expandedTripId}
             loadingFlightId={loadingFlightId}
             pickStep="single"
-            stepTitle={isRoundTrip ? "عروض الذهاب والعودة" : undefined}
+            stepTitle={
+              isRoundTrip
+                ? locale === "en"
+                  ? "Round-trip offers"
+                  : "عروض الذهاب والعودة"
+                : undefined
+            }
             enableMixMatch={isRoundTrip}
             customTripSlot={
               isRoundTrip && selectionBarTrip && (selectedOutboundKey || selectedReturnKey) ? (
@@ -963,8 +1106,14 @@ export function ShopFlightResultsClient() {
           flight={detailsFlight}
           origin={params.origin}
           destination={params.destination}
-          originLabel={params.originLabel}
-          destinationLabel={params.destinationLabel}
+          originLabel={
+            locale === "en" ? airportPlaceLabel(params.origin, "en") : params.originLabel
+          }
+          destinationLabel={
+            locale === "en"
+              ? airportPlaceLabel(params.destination, "en")
+              : params.destinationLabel
+          }
           cabinClass={params.cabinClass}
           onClose={() => setDetailsFlight(null)}
           onContinue={() => {
@@ -982,8 +1131,14 @@ export function ShopFlightResultsClient() {
           cabinClass={params.cabinClass}
           departDate={params.departDate}
           returnDate={params.returnDate}
-          originLabel={params.originLabel}
-          destinationLabel={params.destinationLabel}
+          originLabel={
+            locale === "en" ? airportPlaceLabel(params.origin, "en") : params.originLabel
+          }
+          destinationLabel={
+            locale === "en"
+              ? airportPlaceLabel(params.destination, "en")
+              : params.destinationLabel
+          }
           onClose={() => setExpandedTrip(null)}
           onContinueReview={handleContinueReview}
         />

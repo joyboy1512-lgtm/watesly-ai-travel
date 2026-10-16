@@ -106,10 +106,31 @@ export function ShopI18nProvider({
     }
     function onLang(ev: Event) {
       const next = (ev as CustomEvent<string>).detail;
-      if (next === "en" || next === "ar") setLocaleState(next);
+      if (next === "en" || next === "ar") {
+        setLocaleState(next);
+        if (manageDocument) {
+          document.documentElement.lang = next;
+          document.documentElement.dir = localeDir(next);
+        }
+      }
+    }
+    function onStorage(ev: StorageEvent) {
+      if (ev.key !== DASH_LANG_KEY && ev.key !== LOCALE_KEY) return;
+      const next = ev.newValue;
+      if (next === "en" || next === "ar") {
+        setLocaleState(next);
+        if (manageDocument) {
+          document.documentElement.lang = next;
+          document.documentElement.dir = localeDir(next);
+        }
+      }
     }
     window.addEventListener(DASH_LANG_EVENT, onLang);
-    return () => window.removeEventListener(DASH_LANG_EVENT, onLang);
+    window.addEventListener("storage", onStorage);
+    return () => {
+      window.removeEventListener(DASH_LANG_EVENT, onLang);
+      window.removeEventListener("storage", onStorage);
+    };
   }, [manageDocument]);
 
   useEffect(() => {
@@ -169,6 +190,7 @@ export function ShopI18nProvider({
       document.documentElement.lang = next;
       document.documentElement.dir = localeDir(next);
     }
+    window.dispatchEvent(new CustomEvent(DASH_LANG_EVENT, { detail: next }));
   }, [manageDocument]);
 
   const setCurrency = useCallback((next: ShopCurrency) => {

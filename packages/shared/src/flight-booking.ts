@@ -305,7 +305,7 @@ export function analyzeFarePolicy(details: Record<string, unknown> | null | unde
             status: "included",
             labelAr:
               policies.changeFeeKwd != null
-                ? `يمكن التعديل مقابل ${policies.changeFeeKwd} د.ك`
+                ? `يمكن التعديل مقابل ${policies.changeFeeKwd} KWD`
                 : "يمكن التعديل",
           }
         : changeable === false
@@ -317,7 +317,7 @@ export function analyzeFarePolicy(details: Record<string, unknown> | null | unde
             status: "included",
             labelAr:
               policies.cancelFeeKwd != null
-                ? `يمكن الإلغاء مقابل ${policies.cancelFeeKwd} د.ك`
+                ? `يمكن الإلغاء مقابل ${policies.cancelFeeKwd} KWD`
                 : "يمكن الإلغاء",
           }
         : refundable === false

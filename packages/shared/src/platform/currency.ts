@@ -36,14 +36,14 @@ export const CURRENCY_FRACTION: Record<ShopCurrency, number> = {
 };
 
 export const CURRENCY_SYMBOL: Record<ShopCurrency, string> = {
-  KWD: "د.ك",
-  USD: "$",
-  EUR: "€",
-  SAR: "ر.س",
-  AED: "د.إ",
-  BHD: "د.ب",
-  OMR: "ر.ع",
-  QAR: "ر.ق",
+  KWD: "KWD",
+  USD: "USD",
+  EUR: "EUR",
+  SAR: "SAR",
+  AED: "AED",
+  BHD: "BHD",
+  OMR: "OMR",
+  QAR: "QAR",
 };
 
 /** WeekendGate stores money as fils (1/1000 KWD). */
@@ -60,16 +60,17 @@ export function convertKwdMinorTo(
 export function formatMoneyMinor(
   amountMinor: number,
   currency: ShopCurrency,
-  locale: "ar" | "en" = "ar",
+  _locale: "ar" | "en" = "ar",
 ): string {
   const frac = CURRENCY_FRACTION[currency];
   const major = amountMinor / 10 ** frac;
-  const formatted = major.toLocaleString(locale === "ar" ? "ar-KW" : "en-US", {
+  const formatted = major.toLocaleString("en-US", {
     minimumFractionDigits: frac,
     maximumFractionDigits: frac,
+    numberingSystem: "latn",
   });
   const sym = CURRENCY_SYMBOL[currency];
-  return locale === "ar" ? `${formatted} ${sym}` : `${sym}${formatted}`;
+  return `${formatted} ${sym}`;
 }
 
 export function formatFromKwdMinor(

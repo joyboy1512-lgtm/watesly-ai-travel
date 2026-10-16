@@ -57,6 +57,20 @@ function inferHotelDestinationCode(destination: string): string {
   return "";
 }
 
+function hotelDestinationLabel(
+  destination: string,
+  label: string | undefined,
+  locale: "ar" | "en",
+) {
+  const current = label || destination;
+  if (locale === "ar" || !/[\u0600-\u06FF]/.test(current)) return current;
+  const code = inferHotelDestinationCode(destination || current);
+  if (code === "DXB") return "Dubai";
+  if (code === "SHJ") return "Sharjah";
+  if (code === "AUH") return "Abu Dhabi";
+  return destination || current;
+}
+
 type QuoteItem = { id: string; providerOfferRef: string; serviceType: string };
 
 type HotelRow = HotelOfferRow & {
@@ -65,7 +79,7 @@ type HotelRow = HotelOfferRow & {
 };
 
 export function ShopHotelResultsClient() {
-  const { t } = useShopI18n();
+  const { t, locale } = useShopI18n();
   const router = useRouter();
   const searchParams = useSearchParams();
   const params = useMemo(() => parseHotelResultsSearch(searchParams), [searchParams]);
@@ -91,8 +105,15 @@ export function ShopHotelResultsClient() {
   const searchGenRef = useRef(0);
 
   useEffect(() => {
-    setDraft(params);
-  }, [params]);
+    setDraft({
+      ...params,
+      destinationLabel: hotelDestinationLabel(
+        params.destination,
+        params.destinationLabel,
+        locale,
+      ),
+    });
+  }, [params, locale]);
 
   const facets = useMemo(() => collectFilterFacets(hotelsRaw), [hotelsRaw]);
   const hotels = useMemo(
@@ -168,14 +189,22 @@ export function ShopHotelResultsClient() {
           })),
         );
         setHotelsRaw(cached!.hotels as HotelOfferRow[]);
-        setMessage(`عرض ${cached!.hotels.length} نتيجة محفوظة مؤقتًا`);
+        setMessage(
+          locale === "en"
+            ? `Showing ${cached!.hotels.length} cached results`
+            : `عرض ${cached!.hotels.length} نتيجة محفوظة مؤقتًا`,
+        );
         setLoading(false);
         return;
       }
 
       try {
         if (!search.destination.trim() || !search.checkIn || !search.checkOut) {
-          throw new Error("أدخل الوجهة وتواريخ الإقامة");
+          throw new Error(
+            locale === "en"
+              ? "Enter the destination and stay dates"
+              : "أدخل الوجهة وتواريخ الإقامة",
+          );
         }
         if (search.children > 0) {
           const occ = occupancyFromSearchParams(search);
@@ -187,7 +216,11 @@ export function ShopHotelResultsClient() {
             .map((p) => p.trim())
             .filter(Boolean);
           if (ages.length < search.children) {
-            throw new Error("حدد عمر كل طفل قبل البحث");
+            throw new Error(
+              locale === "en"
+                ? "Choose an age for every child before searching"
+                : "حدد عمر كل طفل قبل البحث",
+            );
           }
           // Ensure ages flow into preferences even if URL omitted childrenAges
           search = {
@@ -252,7 +285,9 @@ export function ShopHotelResultsClient() {
           providerName: result.providerName,
         });
         setMessage(
-          `تم جلب ${result.hotels?.length || 0} إقامة عبر ${result.providerName || "المزوّد"}`,
+          locale === "en"
+            ? `Found ${result.hotels?.length || 0} stays via ${result.providerName || "provider"}`
+            : `تم جلب ${result.hotels?.length || 0} إقامة عبر ${result.providerName || "المزوّد"}`,
         );
         trackFunnel({
           event: "results_loaded",
@@ -263,7 +298,8 @@ export function ShopHotelResultsClient() {
       } catch (err) {
         if (gen !== searchGenRef.current) return;
         if (controller.signal.aborted) return;
-        const raw = err instanceof Error ? err.message : "فشل البحث";
+        const raw =
+          err instanceof Error ? err.message : locale === "en" ? "Search failed" : "فشل البحث";
         trackFunnel({ event: "search_failed", service: "hotel", errorCode: "SEARCH" });
         // Prefer stale session results when provider quota is exhausted
         if (
@@ -281,18 +317,25 @@ export function ShopHotelResultsClient() {
           );
           setHotelsRaw(cached!.hotels as HotelOfferRow[]);
           setMessage(
-            `عرض ${cached!.hotels.length} نتيجة محفوظة (مزود الفنادق بلغ حد الطلبات مؤقتًا)`,
+            locale === "en"
+              ? `Showing ${cached!.hotels.length} cached results (the hotel provider is temporarily rate-limited)`
+              : `عرض ${cached!.hotels.length} نتيجة محفوظة (مزود الفنادق بلغ حد الطلبات مؤقتًا)`,
           );
           setError("");
         } else {
-          setError(humanizeHotelSearchError(raw));
+          const humanized = humanizeHotelSearchError(raw);
+          setError(
+            locale === "en" && /[\u0600-\u06FF]/.test(humanized)
+              ? "Could not complete the hotel search. Please try again."
+              : humanized,
+          );
           setMessage("");
         }
       } finally {
         if (gen === searchGenRef.current) setLoading(false);
       }
     },
-    [],
+    [locale, t],
   );
 
   useEffect(() => {
@@ -343,7 +386,9 @@ export function ShopHotelResultsClient() {
         title: c.label || c.city || q,
         subtitle:
           c.subtitle ||
-          (kind === "hotel" ? `فندق · ${c.country || ""}` : c.country || undefined),
+          (kind === "hotel"
+            ? `${locale === "en" ? "Hotel" : "فندق"} · ${c.country || ""}`
+            : c.country || undefined),
         kind,
         badge: hotelSuggestBadge(c.label || c.city || q, kind),
       };
@@ -368,7 +413,11 @@ export function ShopHotelResultsClient() {
             id: `hotel-${h.code}`,
             code: h.code,
             title: h.name,
-            subtitle: h.city ? `فندق · ${h.city}` : "فندق",
+            subtitle: h.city
+              ? `${locale === "en" ? "Hotel" : "فندق"} · ${h.city}`
+              : locale === "en"
+                ? "Hotel"
+                : "فندق",
             kind: "hotel",
             badge: hotelSuggestBadge(h.name, "hotel"),
           });
@@ -518,20 +567,24 @@ export function ShopHotelResultsClient() {
       {loading ? (
         <div className="shop-flight-results-loading">
           <div className="shop-flight-spinner" aria-hidden />
-          <p>جاري البحث عن الإقامات…</p>
+          <p>{locale === "en" ? "Searching for stays…" : "جاري البحث عن الإقامات…"}</p>
         </div>
       ) : error ? (
         <div className="shop-flight-results-error">
           <p>{error}</p>
           <Link href="/#search" className="shop-btn">
-            العودة للبحث
+            {locale === "en" ? "Back to search" : "العودة للبحث"}
           </Link>
         </div>
       ) : (
         <>
           {message ? <p className="shop-flight-results-msg">{message}</p> : null}
           <ShopHotelResults
-            destination={params.destinationLabel || params.destination}
+            destination={hotelDestinationLabel(
+              params.destination,
+              params.destinationLabel,
+              locale,
+            )}
             stayQuery={params.destination}
             departDate={params.checkIn}
             returnDate={params.checkOut}

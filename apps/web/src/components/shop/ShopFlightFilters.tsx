@@ -9,6 +9,7 @@ import {
 } from "@/lib/flight-search";
 import { useShopI18n } from "@/components/shop/ShopI18nProvider";
 import type { ShopUiKey } from "@watesly-travel/shared";
+import { airlineName } from "@/lib/flight-airlines";
 
 type Facets = {
   stops: {
@@ -69,7 +70,7 @@ export function ShopFlightFilters({
   destinationLabel,
   onChange,
 }: Props) {
-  const { t, currency: displayCurrency, formatMoney } = useShopI18n();
+  const { t, locale, currency: displayCurrency, formatMoney } = useShopI18n();
   const fromWord = t("fromPrice");
   const resolvedOrigin = originLabel || t("departure");
   const resolvedDestination = destinationLabel || t("destination");
@@ -178,7 +179,7 @@ export function ShopFlightFilters({
                   {moneyOrEmpty(a.minPrice, a.currency, fromWord, formatMoney)}
                 </em>
                 <span>
-                  {a.name} ({a.count})
+                  {airlineName(a.code, a.name, locale)} ({a.count})
                 </span>
                 <input
                   type="checkbox"

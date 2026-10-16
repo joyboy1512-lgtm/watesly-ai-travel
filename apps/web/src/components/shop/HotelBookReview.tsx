@@ -24,19 +24,26 @@ type Props = {
   booking: HotelBookingDraft;
 };
 
-function formatCancelPolicy(rate: NonNullable<HotelBookingDraft["selectedRate"]>) {
+function formatCancelPolicy(
+  rate: NonNullable<HotelBookingDraft["selectedRate"]>,
+  locale: "ar" | "en",
+) {
   if (rate.freeCancellation) {
     if (rate.cancellationFrom) {
-      const d = formatHotelDay(rate.cancellationFrom.slice(0, 10));
-      return `إلغاء مجاني حتى ${d || rate.cancellationFrom} (توقيت الكويت)`;
+      const d = formatHotelDay(rate.cancellationFrom.slice(0, 10), locale);
+      return locale === "en"
+        ? `Free cancellation until ${d || rate.cancellationFrom} (Kuwait time)`
+        : `إلغاء مجاني حتى ${d || rate.cancellationFrom} (توقيت الكويت)`;
     }
-    return "إلغاء مجاني*";
+    return locale === "en" ? "Free cancellation*" : "إلغاء مجاني*";
   }
   if (rate.cancellationFrom) {
-    const d = formatHotelDay(rate.cancellationFrom.slice(0, 10));
-    return `هذا الحجز غير قابل للاسترداد من تاريخ ${d || rate.cancellationFrom}`;
+    const d = formatHotelDay(rate.cancellationFrom.slice(0, 10), locale);
+    return locale === "en"
+      ? `This booking is non-refundable from ${d || rate.cancellationFrom}`
+      : `هذا الحجز غير قابل للاسترداد من تاريخ ${d || rate.cancellationFrom}`;
   }
-  return "غير قابل للاسترداد";
+  return locale === "en" ? "Non-refundable" : "غير قابل للاسترداد";
 }
 
 export function HotelBookReview({ booking }: Props) {
@@ -61,6 +68,22 @@ export function HotelBookReview({ booking }: Props) {
       ? translated.original || rate?.roomName || t("roomWord")
       : translated.ar
     : t("roomWord");
+  const boardLabel = (boardCode?: string, boardName?: string) => {
+    if (locale === "ar") return boardName || "";
+    const labels: Record<string, string> = {
+      RO: "Room only",
+      BB: "Breakfast included",
+      HB: "Half board",
+      FB: "Full board",
+      AI: "All inclusive",
+      SC: "Self catering",
+      DB: "Breakfast and dinner",
+    };
+    return (
+      labels[String(boardCode || "").toUpperCase()] ||
+      (boardName && !/[\u0600-\u06FF]/.test(boardName) ? boardName : "Room only")
+    );
+  };
   const adultsLabel = shopAdultCount(locale, booking.adults);
   const childrenLabel = shopChildCount(locale, booking.children);
   const guestsLabel = [adultsLabel, childrenLabel].filter(Boolean).join(" · ");
@@ -80,22 +103,29 @@ export function HotelBookReview({ booking }: Props) {
       <ShopMockBanner kind="hotel" />
       <header className="shop-flight-review-head">
         <h1>{t("reviewStayTitle")}</h1>
-        <p>تأكّد من تفاصيل الإقامة والسعر قبل إدخال بيانات الضيوف</p>
+        <p>
+          {locale === "en"
+            ? "Check the stay details and price before entering guest details"
+            : "تأكّد من تفاصيل الإقامة والسعر قبل إدخال بيانات الضيوف"}
+        </p>
       </header>
 
       <div className="shop-flight-review-grid">
         <section className="shop-flight-review-card">
-          <h2>ملخص الإقامة</h2>
+          <h2>{locale === "en" ? "Stay summary" : "ملخص الإقامة"}</h2>
           <p className="shop-flight-review-route">{hotelName}</p>
           {stars > 0 ? (
-            <p className="shop-hotel-review-stars" aria-label={`${stars} نجوم`}>
+            <p
+              className="shop-hotel-review-stars"
+              aria-label={`${stars} ${locale === "en" ? "stars" : "نجوم"}`}
+            >
               {"★".repeat(Math.min(5, stars))}
             </p>
           ) : null}
           <p className="shop-flight-review-dates">
-            {formatHotelDay(booking.checkIn)}
+            {formatHotelDay(booking.checkIn, locale)}
             {" – "}
-            {formatHotelDay(booking.checkOut)}
+            {formatHotelDay(booking.checkOut, locale)}
             {" · "}
             {shopNightCount(locale, nights)}
             {" · "}
@@ -109,7 +139,13 @@ export function HotelBookReview({ booking }: Props) {
 
           {rates.length ? (
             <article className="shop-hotel-review-room">
-              <h3>{rates.length > 1 ? t("roomsAndPrices") : "الغرفة المختارة"}</h3>
+              <h3>
+                {rates.length > 1
+                  ? t("roomsAndPrices")
+                  : locale === "en"
+                    ? "Selected room"
+                    : "الغرفة المختارة"}
+              </h3>
               {rates.map((row, i) => {
                 const names = translateRoomNameAr(row.roomName);
                 const label = locale === "en" ? names.original || row.roomName : names.ar;
@@ -119,9 +155,9 @@ export function HotelBookReview({ booking }: Props) {
                       {t("chooseRoomSlot", { n: i + 1 })} · {label}
                     </strong>
                     {" · "}
-                    {row.boardName}
+                    {boardLabel(row.boardCode, row.boardName)}
                     <br />
-                    <small>{formatCancelPolicy(row)}</small>
+                    <small>{formatCancelPolicy(row, locale)}</small>
                   </p>
                 );
               })}
@@ -130,22 +166,23 @@ export function HotelBookReview({ booking }: Props) {
 
           {booking.priceChanged && booking.previousTotalMinor ? (
             <p className="shop-hotel-review-price-change">
-              تغيّر السعر بعد التحقق: من{" "}
-              {formatMoneyMinor(booking.previousTotalMinor, currency)} إلى{" "}
+              {locale === "en" ? "The price changed after verification: from " : "تغيّر السعر بعد التحقق: من "}
+              {formatMoneyMinor(booking.previousTotalMinor, currency)}{" "}
+              {locale === "en" ? "to" : "إلى"}{" "}
               {formatMoneyMinor(payNow, currency)}
             </p>
           ) : null}
         </section>
 
         <section className="shop-flight-review-card">
-          <h2>تفاصيل السعر</h2>
+          <h2>{locale === "en" ? "Price details" : "تفاصيل السعر"}</h2>
           {bd ? (
             <HotelPricePanel
               currency={currency}
               nights={nights}
               breakdown={bd}
               roomLabel={roomLabel}
-              boardLabel={rate?.boardName}
+              boardLabel={boardLabel(rate?.boardCode, rate?.boardName)}
               variant="full"
             />
           ) : (
@@ -160,11 +197,15 @@ export function HotelBookReview({ booking }: Props) {
                 nights,
               })}
               roomLabel={roomLabel}
-              boardLabel={rate?.boardName}
+              boardLabel={boardLabel(rate?.boardCode, rate?.boardName)}
             />
           )}
           <p className="shop-flight-review-pax">{guestsLabel}</p>
-          <p className="shop-hotel-review-note">الأسعار تجريبية — لا يُخصم مبلغ فعلي في هذه المرحلة</p>
+          <p className="shop-hotel-review-note">
+            {locale === "en"
+              ? "Sample prices — no real amount is charged at this stage"
+              : "الأسعار تجريبية — لا يُخصم مبلغ فعلي في هذه المرحلة"}
+          </p>
         </section>
       </div>
 
@@ -183,7 +224,7 @@ export function HotelBookReview({ booking }: Props) {
             router.push("/");
           }}
         >
-          إلغاء
+          {locale === "en" ? "Cancel" : "إلغاء"}
         </button>
       </footer>
     </div>

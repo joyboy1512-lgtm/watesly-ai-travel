@@ -21,9 +21,9 @@ type Props = {
 };
 
 export function TransferSearchCard({ item, from, to, onBook }: Props) {
-  const { currency: displayCurrency, formatMoney } = useShopCopy();
+  const { locale, currency: displayCurrency, formatMoney } = useShopCopy();
   const d = item.extra || {};
-  const typeLabel = String(d.transferTypeLabel || "نقل");
+  const typeLabel = String(d.transferTypeLabel || (locale === "en" ? "Transfer" : "نقل"));
   const vehicle = String(d.vehicleName || "");
   const maxPax = d.maxPax != null ? Number(d.maxPax) : null;
   const imageUrl = typeof d.imageUrl === "string" ? d.imageUrl : "";
@@ -46,7 +46,9 @@ export function TransferSearchCard({ item, from, to, onBook }: Props) {
             <h3>{vehicle || item.name}</h3>
             <p>
               {typeLabel}
-              {maxPax ? ` · حتى ${maxPax} ركاب` : ""}
+              {maxPax
+                ? ` · ${locale === "en" ? `Up to ${maxPax} passengers` : `حتى ${maxPax} ركاب`}`
+                : ""}
             </p>
           </div>
           <HotelLiveBadge
@@ -63,21 +65,27 @@ export function TransferSearchCard({ item, from, to, onBook }: Props) {
         </p>
         {item.details ? <p className="transfer-search-card-desc">{item.details}</p> : null}
         <p className="transfer-search-card-policy">
-          {freeCancel ? "إلغاء مجاني*" : "راجع سياسة الإلغاء عند التأكيد"}
+          {freeCancel
+            ? locale === "en"
+              ? "Free cancellation*"
+              : "إلغاء مجاني*"
+            : locale === "en"
+              ? "Review the cancellation policy at confirmation"
+              : "راجع سياسة الإلغاء عند التأكيد"}
         </p>
       </div>
       <div className="transfer-search-card-action">
         <strong data-display-currency={displayCurrency}>
           {formatMoney(item.price, item.currency)}
         </strong>
-        <small>إجمالي النقل</small>
+        <small>{locale === "en" ? "Transfer total" : "إجمالي النقل"}</small>
         {onBook ? (
           <button
             type="button"
             className="btn hotel-search-card-cta"
             onClick={onBook}
           >
-            احجز
+            {locale === "en" ? "Book" : "احجز"}
           </button>
         ) : null}
       </div>

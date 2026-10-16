@@ -8,7 +8,7 @@ import {
   pickDefaultFareOption,
   type FlightFareOption,
 } from "@watesly-travel/shared";
-import { airlineNameAr } from "@/lib/flight-airlines";
+import { airlineName } from "@/lib/flight-airlines";
 import {
   airlineLogo,
   cabinLabel,
@@ -44,12 +44,14 @@ function SegmentTimeline({
   to,
   fallbackDate,
   packageCode,
+  locale,
 }: {
   segs: FlightSeg[];
   from: string;
   to: string;
   fallbackDate?: string;
   packageCode: string;
+  locale: "ar" | "en";
 }) {
   if (!segs.length) {
     return (
@@ -58,7 +60,7 @@ function SegmentTimeline({
           <i />
           <div>
             <strong>{from}</strong>
-            <p>مغادرة</p>
+            <p>{locale === "en" ? "Departure" : "مغادرة"}</p>
           </div>
         </div>
         <div className="shop-flight-timeline-line" />
@@ -66,7 +68,7 @@ function SegmentTimeline({
           <i />
           <div>
             <strong>{to}</strong>
-            <p>وصول</p>
+            <p>{locale === "en" ? "Arrival" : "وصول"}</p>
           </div>
         </div>
       </div>
@@ -86,7 +88,7 @@ function SegmentTimeline({
           : null;
         const code = segmentAirlineCode(seg, packageCode);
         const logo = airlineLogo(code, 64);
-        const name = airlineNameAr(code, seg.airline);
+        const name = airlineName(code, seg.airline, locale);
 
         return (
           <div key={idx} className="shop-flight-timeline-segment">
@@ -100,7 +102,9 @@ function SegmentTimeline({
               <div>
                 <strong>{name}</strong>
                 <span>
-                  {seg.flightNumber ? `رحلة ${seg.flightNumber}` : code}
+                  {seg.flightNumber
+                    ? `${locale === "en" ? "Flight" : "رحلة"} ${seg.flightNumber}`
+                    : code}
                   {seg.aircraft ? ` · ${seg.aircraft}` : ""}
                 </span>
               </div>
@@ -109,9 +113,10 @@ function SegmentTimeline({
               <i />
               <div>
                 <strong>
-                  {formatDay(segDepAt || seg.date || fallbackDate)} · {formatClock(segDepAt)}
+                  {formatDay(segDepAt || seg.date || fallbackDate, locale)} ·{" "}
+                  {formatClock(segDepAt)}
                 </strong>
-                <p>{segFrom} · مغادرة</p>
+                <p>{segFrom} · {locale === "en" ? "Departure" : "مغادرة"}</p>
               </div>
             </div>
             <div className="shop-flight-timeline-line" />
@@ -119,14 +124,18 @@ function SegmentTimeline({
               <i />
               <div>
                 <strong>{formatClock(segArrAt)}</strong>
-                <p>{segTo} · وصول</p>
+                <p>{segTo} · {locale === "en" ? "Arrival" : "وصول"}</p>
               </div>
             </div>
             {nextSeg ? (
               <div className="shop-flight-timeline-layover">
-                ترانزيت في {segTo}
-                {layover ? ` · ${formatMinutesLabel(layover)}` : ""}
-                {nextSeg.from && nextSeg.from !== segTo ? " · تغيير مطار" : ""}
+                {locale === "en" ? "Layover in" : "ترانزيت في"} {segTo}
+                {layover ? ` · ${formatMinutesLabel(layover, locale)}` : ""}
+                {nextSeg.from && nextSeg.from !== segTo
+                  ? locale === "en"
+                    ? " · Airport change"
+                    : " · تغيير مطار"
+                  : ""}
               </div>
             ) : null}
           </div>
@@ -141,11 +150,13 @@ function LegSection({
   title,
   fallbackDate,
   packageCode,
+  locale,
 }: {
   leg: SelectedLeg;
   title: string;
   fallbackDate?: string;
   packageCode: string;
+  locale: "ar" | "en";
 }) {
   const logo = airlineLogo(leg.airlineCode, 64);
   const bag = leg.baggage;
@@ -166,7 +177,11 @@ function LegSection({
             <div className="shop-ticket-logo-fallback">{leg.airlineCode || "✈"}</div>
           )}
           <span>
-            {leg.airlineName} · {stopsLabel(leg.stops)} · {leg.durationLabel}
+            {airlineName(leg.airlineCode, leg.airlineName, locale)} ·{" "}
+            {stopsLabel(leg.stops, locale)} ·{" "}
+            {locale === "en"
+              ? leg.durationLabel.replace(/(\d+)\s*س/g, "$1h").replace(/(\d+)\s*د/g, "$1m")
+              : leg.durationLabel}
           </span>
         </div>
       </header>
@@ -176,14 +191,34 @@ function LegSection({
         to={leg.to}
         fallbackDate={fallbackDate}
         packageCode={packageCode}
+        locale={locale}
       />
       <ul className="shop-flight-leg-baggage">
-        <li>🎒 {bag.cabin || bag.personal || "حقيبة مقصورة حسب الفئة"}</li>
-        <li>🧳 {bag.checked || "الأمتعة المسجّلة حسب الفئة المختارة"}</li>
+        <li>
+          🎒{" "}
+          {locale === "en"
+            ? bag.cabin || bag.personal
+              ? String(bag.cabin || bag.personal).replace("كجم", "kg")
+              : "Cabin baggage depends on the fare"
+            : bag.cabin || bag.personal || "حقيبة مقصورة حسب الفئة"}
+        </li>
+        <li>
+          🧳{" "}
+          {locale === "en"
+            ? bag.checked
+              ? String(bag.checked).replace("كجم", "kg")
+              : "Checked baggage depends on the selected fare"
+            : bag.checked || "الأمتعة المسجّلة حسب الفئة المختارة"}
+        </li>
       </ul>
       <footer className="shop-flight-expanded-leg-foot">
         <span>{leg.flightNumbers || "—"}</span>
-        <span>إجمالي مدة الرحلة {leg.durationLabel}</span>
+        <span>
+          {locale === "en" ? "Total flight duration" : "إجمالي مدة الرحلة"}{" "}
+          {locale === "en"
+            ? leg.durationLabel.replace(/(\d+)\s*س/g, "$1h").replace(/(\d+)\s*د/g, "$1m")
+            : leg.durationLabel}
+        </span>
       </footer>
     </section>
   );
@@ -198,7 +233,7 @@ export function ShopFlightExpandedPanel({
   onClose,
   onContinueReview,
 }: Props) {
-  const { currency: displayCurrency, formatMoney } = useShopCopy();
+  const { locale, currency: displayCurrency, formatMoney } = useShopCopy();
   const packageCode = trip.outbound.airlineCode;
   const fareOptions = useMemo(
     () => listFareOptionsFromDetails(trip.sourcePackage?.details),
@@ -249,16 +284,28 @@ export function ShopFlightExpandedPanel({
       >
         <header className="shop-flight-expanded-head">
           <div>
-            <h2 id="shop-flight-expanded-title">تفاصيل الرحلة · {titleRoute}</h2>
+            <h2 id="shop-flight-expanded-title">
+              {locale === "en" ? "Flight details" : "تفاصيل الرحلة"} · {titleRoute}
+            </h2>
             <p>
-              {formatDay(departDate)}
-              {returnDate ? ` – ${formatDay(returnDate)}` : ""}
+              {formatDay(departDate, locale)}
+              {returnDate ? ` – ${formatDay(returnDate, locale)}` : ""}
               {" · "}
-              {passengers} مسافر · {cabinLabel(cabinClass)}
-              {trip.isMixMatch ? " · تركيبة مخصصة" : ""}
+              {passengers} {locale === "en" ? (passengers === 1 ? "traveler" : "travelers") : "مسافر"}{" "}
+              · {cabinLabel(cabinClass, locale)}
+              {trip.isMixMatch
+                ? locale === "en"
+                  ? " · Custom combination"
+                  : " · تركيبة مخصصة"
+                : ""}
             </p>
           </div>
-          <button type="button" className="shop-flight-modal-close" aria-label="إغلاق" onClick={onClose}>
+          <button
+            type="button"
+            className="shop-flight-modal-close"
+            aria-label={locale === "en" ? "Close" : "إغلاق"}
+            onClick={onClose}
+          >
             ×
           </button>
         </header>
@@ -266,25 +313,28 @@ export function ShopFlightExpandedPanel({
         <div className="shop-flight-expanded-body">
           <LegSection
             leg={trip.outbound}
-            title="رحلة الذهاب"
+            title={locale === "en" ? "Outbound flight" : "رحلة الذهاب"}
             fallbackDate={departDate}
             packageCode={packageCode}
+            locale={locale}
           />
           {trip.return ? (
             <LegSection
               leg={trip.return}
-              title="رحلة العودة"
+              title={locale === "en" ? "Return flight" : "رحلة العودة"}
               fallbackDate={returnDate}
               packageCode={trip.return.airlineCode || packageCode}
+              locale={locale}
             />
           ) : null}
 
           {fareOptions.length > 1 ? (
             <section className="shop-flight-fare-families">
-              <h3>فئات التذكرة</h3>
+              <h3>{locale === "en" ? "Fare options" : "فئات التذكرة"}</h3>
               <p className="shop-flight-fare-families-hint">
-                فئات شركة الطيران لهذه الرحلة — مثل Economy / Flex / Comfort أو Saver / Flexi /
-                Business Saver حسب ما يتوفر
+                {locale === "en"
+                  ? "Available airline fare options for this flight, such as Economy, Flex, Comfort, Saver, Flexi, or Business Saver."
+                  : "فئات شركة الطيران لهذه الرحلة — مثل Economy / Flex / Comfort أو Saver / Flexi / Business Saver حسب ما يتوفر"}
               </p>
               <div className="shop-flight-fare-family-grid">
                 {fareOptions.map((fare) => {
@@ -302,21 +352,37 @@ export function ShopFlightExpandedPanel({
                       <header>
                         <strong>{fare.brandName}</strong>
                         <span>
-                          {arHint}
-                          {arHint !== fare.cabinLabelAr ? ` · ${fare.cabinLabelAr}` : ""}
+                          {locale === "en" ? cabinLabel(fare.cabin, "en") : arHint}
+                          {locale === "ar" && arHint !== fare.cabinLabelAr
+                            ? ` · ${fare.cabinLabelAr}`
+                            : ""}
                         </span>
                       </header>
                       <em data-display-currency={displayCurrency}>
                         {formatMoney(fare.sellAmountMinor, fare.currency || trip.currency)}
                       </em>
                       <ul>
-                        {fare.cabinBag ? <li>🎒 {fare.cabinBag}</li> : null}
-                        {fare.checkedBag ? <li>🧳 {fare.checkedBag}</li> : null}
-                        {fare.changeNoteAr ? <li>{fare.changeNoteAr}</li> : null}
-                        {fare.refundNoteAr ? <li>{fare.refundNoteAr}</li> : null}
-                        {fare.noteAr ? <li>{fare.noteAr}</li> : null}
+                        {fare.cabinBag ? (
+                          <li>🎒 {locale === "en" ? fare.cabinBag.replace("كجم", "kg") : fare.cabinBag}</li>
+                        ) : null}
+                        {fare.checkedBag ? (
+                          <li>🧳 {locale === "en" ? fare.checkedBag.replace("كجم", "kg") : fare.checkedBag}</li>
+                        ) : null}
+                        {locale === "ar" && fare.changeNoteAr ? <li>{fare.changeNoteAr}</li> : null}
+                        {locale === "ar" && fare.refundNoteAr ? <li>{fare.refundNoteAr}</li> : null}
+                        {locale === "ar" && fare.noteAr ? <li>{fare.noteAr}</li> : null}
+                        {locale === "en" && fare.changeable != null ? (
+                          <li>{fare.changeable ? "Changes permitted" : "Changes not permitted"}</li>
+                        ) : null}
+                        {locale === "en" && fare.refundable != null ? (
+                          <li>{fare.refundable ? "Refundable" : "Non-refundable"}</li>
+                        ) : null}
                         {fare.refundable == null && fare.changeable == null && !fare.changeNoteAr ? (
-                          <li>شروط التذكرة حسب شركة الطيران</li>
+                          <li>
+                            {locale === "en"
+                              ? "Fare conditions are set by the airline"
+                              : "شروط التذكرة حسب شركة الطيران"}
+                          </li>
                         ) : null}
                       </ul>
                     </button>
@@ -331,8 +397,10 @@ export function ShopFlightExpandedPanel({
           <div className="shop-flight-expanded-foot-breakdown">
             <div className="total">
               <span>
-                الإجمالي
-                {selectedFare ? ` · ${selectedFare.brandNameAr}` : ""}
+                {locale === "en" ? "Total" : "الإجمالي"}
+                {selectedFare
+                  ? ` · ${locale === "en" ? selectedFare.brandName : selectedFare.brandNameAr}`
+                  : ""}
               </span>
               <strong data-display-currency={displayCurrency}>
                 {formatMoney(sellPriceMinor, trip.currency)}
@@ -350,7 +418,10 @@ export function ShopFlightExpandedPanel({
               })
             }
           >
-            {`متابعة — ${formatMoney(sellPriceMinor, trip.currency)}`}
+            {`${locale === "en" ? "Continue" : "متابعة"} — ${formatMoney(
+              sellPriceMinor,
+              trip.currency,
+            )}`}
           </button>
         </footer>
       </div>

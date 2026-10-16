@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { type SuggestItem } from "@/components/shop/ShopAutocomplete";
@@ -25,6 +25,8 @@ import {
   type HotelOccupancyState,
 } from "@/lib/hotel-occupancy";
 import { TripBuilderProvider, useTripBuilder } from "@/components/trip-builder/TripBuilderProvider";
+import { useShopCopy } from "@/components/shop/ShopI18nProvider";
+import { airportPlaceLabel } from "@/lib/airport-cities";
 
 const RuheltiBoardingModal = dynamic(
   () =>
@@ -78,6 +80,7 @@ export function ShopHomeClient() {
 
 function ShopHomeInner() {
   const router = useRouter();
+  const { locale } = useShopCopy();
   const { openBoarding, boardingOpen } = useTripBuilder();
   const [boardingMounted, setBoardingMounted] = useState(false);
   const [mode, setMode] = useState<Mode>("flights");
@@ -130,6 +133,64 @@ function ShopHomeInner() {
   const [directOnly, setDirectOnly] = useState(false);
   const [flexibleDates, setFlexibleDates] = useState(false);
 
+  useEffect(() => {
+    if (locale === "en") {
+      setOriginLabel((value) =>
+        /[\u0600-\u06FF]/.test(value) ? airportPlaceLabel(origin, "en") : value,
+      );
+      setDestinationLabel((value) =>
+        /[\u0600-\u06FF]/.test(value) ? airportPlaceLabel(destination, "en") : value,
+      );
+      setFlightLegs((legs) =>
+        legs.map((leg) => ({
+          ...leg,
+          originLabel: /[\u0600-\u06FF]/.test(leg.originLabel)
+            ? airportPlaceLabel(leg.origin, "en")
+            : leg.originLabel,
+          destinationLabel: /[\u0600-\u06FF]/.test(leg.destinationLabel)
+            ? airportPlaceLabel(leg.destination, "en")
+            : leg.destinationLabel,
+        })),
+      );
+      setStayQuery((value) => (value === "دبي" ? "Dubai" : value));
+      setActivityLabel((value) => (value === "دبي" ? "Dubai" : value));
+      setTransferDropoff((value) => (value === "الكويت" ? "Kuwait" : value));
+      setTransferDropoffLabel((value) => (value === "الكويت" ? "Kuwait" : value));
+    } else {
+      setOriginLabel((value) =>
+        !/[\u0600-\u06FF]/.test(value) && origin === "KWI"
+          ? "KWI · الكويت"
+          : value,
+      );
+      setDestinationLabel((value) =>
+        !/[\u0600-\u06FF]/.test(value) && destination === "DXB"
+          ? "DXB · دبي، الإمارات"
+          : value,
+      );
+      setFlightLegs((legs) =>
+        legs.map((leg) => ({
+          ...leg,
+          originLabel:
+            leg.origin === "KWI"
+              ? "KWI · الكويت"
+              : leg.origin === "DXB"
+                ? "DXB · دبي، الإمارات"
+                : leg.originLabel,
+          destinationLabel:
+            leg.destination === "KWI"
+              ? "KWI · الكويت"
+              : leg.destination === "DXB"
+                ? "DXB · دبي، الإمارات"
+                : leg.destinationLabel,
+        })),
+      );
+      setStayQuery((value) => (value === "Dubai" ? "دبي" : value));
+      setActivityLabel((value) => (value === "Dubai" ? "دبي" : value));
+      setTransferDropoff((value) => (value === "Kuwait" ? "الكويت" : value));
+      setTransferDropoffLabel((value) => (value === "Kuwait" ? "الكويت" : value));
+    }
+  }, [locale, origin, destination]);
+
   async function searchAirports(q: string): Promise<SuggestItem[]> {
     const rows = await shopFetch<
       Array<{
@@ -145,8 +206,14 @@ function ShopHomeInner() {
       return {
         id: a.id,
         code,
-        title: formatAirportChoiceLabel(a),
-        subtitle: `${a.name}${a.country ? ` — ${localizeCountryName(a.country)}` : ""}`,
+        title:
+          locale === "en"
+            ? airportPlaceLabel(code, "en")
+            : formatAirportChoiceLabel(a),
+        subtitle:
+          locale === "en"
+            ? code || a.name
+            : `${a.name}${a.country ? ` — ${localizeCountryName(a.country)}` : ""}`,
       };
     });
   }
@@ -168,12 +235,20 @@ function ShopHomeInner() {
       const label = c.label || c.city || q;
       const kindLabel =
         kind === "country"
-          ? "دولة"
+          ? locale === "en"
+            ? "Country"
+            : "دولة"
           : kind === "hotel"
-            ? "فندق"
+            ? locale === "en"
+              ? "Hotel"
+              : "فندق"
             : kind === "place"
-              ? "مكان"
-              : "مدينة";
+              ? locale === "en"
+                ? "Place"
+                : "مكان"
+              : locale === "en"
+                ? "City"
+                : "مدينة";
       return {
         id: `${kind}-${c.city}-${c.iataCode || idx}`,
         code: c.iataCode || c.city || q,
@@ -199,7 +274,11 @@ function ShopHomeInner() {
           id: `hotel-${h.code}`,
           code: h.code,
           title: h.name,
-          subtitle: h.city ? `فندق · ${h.city}` : "فندق",
+          subtitle: h.city
+            ? `${locale === "en" ? "Hotel" : "فندق"} · ${h.city}`
+            : locale === "en"
+              ? "Hotel"
+              : "فندق",
         }));
         const seen = new Set(cityItems.map((i) => i.title.toLowerCase()));
         for (const h of hotels) {
@@ -294,7 +373,11 @@ function ShopHomeInner() {
         if (tripType === "multicity") {
           flightLegs.forEach((leg, i) => {
             if (!leg?.origin || !leg.destination || !leg.departDate) {
-              throw new Error(`أكمل بيانات الرحلة ${i + 1}`);
+              throw new Error(
+                locale === "en"
+                  ? `Complete flight ${i + 1} details`
+                  : `أكمل بيانات الرحلة ${i + 1}`,
+              );
             }
           });
           router.push(
@@ -317,7 +400,11 @@ function ShopHomeInner() {
           return;
         }
         if (!origin || !destination || !departDate) {
-          throw new Error("أدخل المغادرة والوجهة والتاريخ");
+          throw new Error(
+            locale === "en"
+              ? "Enter the departure, destination, and date"
+              : "أدخل المغادرة والوجهة والتاريخ",
+          );
         }
         router.push(
           buildFlightResultsHref({
@@ -338,7 +425,13 @@ function ShopHomeInner() {
         );
         return;
       } catch (err) {
-        setError(err instanceof Error ? err.message : "فشل البحث");
+        setError(
+          err instanceof Error
+            ? err.message
+            : locale === "en"
+              ? "Search failed"
+              : "فشل البحث",
+        );
         return;
       }
     }
@@ -346,7 +439,11 @@ function ShopHomeInner() {
     if (mode === "stays") {
       try {
         if (!stayQuery.trim() || !departDate || !returnDate) {
-          throw new Error("أدخل الوجهة وتواريخ الإقامة");
+          throw new Error(
+            locale === "en"
+              ? "Enter the destination and stay dates"
+              : "أدخل الوجهة وتواريخ الإقامة",
+          );
         }
         const occErr = validateOccupancy(stayOccupancy);
         if (occErr) throw new Error(occErr);
@@ -366,7 +463,13 @@ function ShopHomeInner() {
           }),
         );
       } catch (err) {
-        setError(err instanceof Error ? err.message : "فشل البحث");
+        setError(
+          err instanceof Error
+            ? err.message
+            : locale === "en"
+              ? "Search failed"
+              : "فشل البحث",
+        );
       }
       return;
     }
@@ -377,16 +480,24 @@ function ShopHomeInner() {
     try {
       if (mode === "cars") {
         if (!transferAirport && !transferCarRental) {
-          throw new Error("اختر نوع النقل: نقل المطار أو تأجير سيارة");
+          throw new Error(
+            locale === "en"
+              ? "Choose a transfer type: airport transfer or car rental"
+              : "اختر نوع النقل: نقل المطار أو تأجير سيارة",
+          );
         }
         if (transferCarRental && !transferAirport) {
-          throw new Error("تأجير السيارات قريباً — فعّل نقل المطار حالياً");
+          throw new Error(
+            locale === "en"
+              ? "Car rental is coming soon — choose airport transfer for now"
+              : "تأجير السيارات قريباً — فعّل نقل المطار حالياً",
+          );
         }
         if (!origin) {
-          throw new Error("اختر مطار الوصول");
+          throw new Error(locale === "en" ? "Choose the arrival airport" : "اختر مطار الوصول");
         }
         if (!transferDropoff.trim()) {
-          throw new Error("أدخل الفندق أو العنوان");
+          throw new Error(locale === "en" ? "Enter the hotel or address" : "أدخل الفندق أو العنوان");
         }
         router.push(
           buildTransferResultsHref({
@@ -407,7 +518,7 @@ function ShopHomeInner() {
         return;
       }
       if (!activityDest && !stayQuery) {
-        throw new Error("أدخل الوجهة");
+        throw new Error(locale === "en" ? "Enter the destination" : "أدخل الوجهة");
       }
       router.push(
         buildActivityResultsHref({
@@ -420,7 +531,13 @@ function ShopHomeInner() {
         }),
       );
     } catch (err) {
-      setError(err instanceof Error ? err.message : "فشل البحث");
+      setError(
+        err instanceof Error
+          ? err.message
+          : locale === "en"
+            ? "Search failed"
+            : "فشل البحث",
+      );
     } finally {
       setLoading(false);
     }
@@ -433,7 +550,7 @@ function ShopHomeInner() {
   function applyDestination(dest: ShopDestination) {
     setMode("flights");
     setOrigin("KWI");
-    setOriginLabel("KWI · الكويت");
+    setOriginLabel(locale === "en" ? airportPlaceLabel("KWI", "en") : "KWI · الكويت");
     setDestination(dest.code);
     setDestinationLabel(`${dest.code} · ${dest.name}`);
     setStayQuery(dest.name);
@@ -450,20 +567,20 @@ function ShopHomeInner() {
     setMessage("");
     if (offer.mode === "flights") {
       setOrigin("KWI");
-      setOriginLabel("KWI · الكويت");
+      setOriginLabel(locale === "en" ? airportPlaceLabel("KWI", "en") : "KWI · الكويت");
       setDestination(offer.code || "DXB");
       setDestinationLabel(`${offer.code || "DXB"} · ${offer.destination || ""}`);
     }
     if (offer.mode === "stays" || offer.mode === "cars") {
-      setStayQuery(offer.destination || "دبي");
+      setStayQuery(offer.destination || (locale === "en" ? "Dubai" : "دبي"));
     }
     if (offer.mode === "cars") {
-      setTransferDropoff(offer.destination || "الكويت");
-      setTransferDropoffLabel(offer.destination || "الكويت");
+      setTransferDropoff(offer.destination || (locale === "en" ? "Kuwait" : "الكويت"));
+      setTransferDropoffLabel(offer.destination || (locale === "en" ? "Kuwait" : "الكويت"));
     }
     if (offer.mode === "activities") {
       setActivityDest(offer.code || "DXB");
-      setActivityLabel(offer.destination || "دبي");
+      setActivityLabel(offer.destination || (locale === "en" ? "Dubai" : "دبي"));
     }
     scrollToSearch();
   }

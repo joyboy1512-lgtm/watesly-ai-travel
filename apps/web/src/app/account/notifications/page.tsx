@@ -51,7 +51,8 @@ export default function CustomerNotificationsPage() {
                 <strong>{n.title}</strong>
                 <p style={{ margin: 0 }}>{n.body}</p>
                 <small style={{ color: "#64748b" }}>
-                  {new Date(n.createdAt).toLocaleString("ar-KW")} · {n.channels.join(", ")}
+                  {new Date(n.createdAt).toLocaleString("ar-KW-u-nu-latn")} ·{" "}
+                  {n.channels.join(", ")}
                 </small>
                 <div style={{ display: "flex", gap: "0.45rem" }}>
                   {!n.read ? (

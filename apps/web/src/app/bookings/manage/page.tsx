@@ -12,15 +12,12 @@ type LookupResult = {
   weekendgateRef?: string;
   providerRef?: string;
   status: string;
-  lifecycle?: string;
   paymentStatus?: string;
   paymentMethod?: string;
   description: string;
   totalSellAmount: number;
   currency: string;
   createdAt: string;
-  tickets?: Array<{ passengerName?: string; ticketNumber?: string }>;
-  issueError?: string;
   timeline?: Array<{ at: string; label: string }>;
 };
 
@@ -111,19 +108,6 @@ export default function ManageBookingPage() {
                 {normalizePaymentStatusAr(row.paymentStatus || "PENDING").ar}
                 {row.paymentMethod ? ` · ${row.paymentMethod}` : ""}
               </li>
-              {row.tickets?.length ? (
-                <li>
-                  <strong>التذاكر:</strong>{" "}
-                  {row.tickets
-                    .map((t) => `${t.passengerName || ""} ${t.ticketNumber || ""}`.trim())
-                    .join(" · ")}
-                </li>
-              ) : null}
-              {row.issueError ? (
-                <li>
-                  <strong>متابعة:</strong> {row.issueError}
-                </li>
-              ) : null}
             </ul>
             {row.timeline?.length ? (
               <div>
@@ -131,7 +115,7 @@ export default function ManageBookingPage() {
                 <ol>
                   {row.timeline.map((t) => (
                     <li key={`${t.at}-${t.label}`}>
-                      {t.label} — {new Date(t.at).toLocaleString("ar")}
+                      {t.label} — {new Date(t.at).toLocaleString("ar-KW-u-nu-latn")}
                     </li>
                   ))}
                 </ol>

@@ -217,7 +217,7 @@ export default function CurrencyPage() {
             {data?.settings.lastAutoSyncAt ? (
               <p style={{ margin: 0, color: "#5c7078", fontSize: "0.82rem" }}>
                 آخر مزامنة:{" "}
-                {new Date(data.settings.lastAutoSyncAt).toLocaleString("ar")}
+                {new Date(data.settings.lastAutoSyncAt).toLocaleString("ar-KW-u-nu-latn")}
               </p>
             ) : null}
 

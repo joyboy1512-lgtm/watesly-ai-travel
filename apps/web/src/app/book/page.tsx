@@ -202,7 +202,6 @@ function DatePartsRow({
   labels: { month: string; day: string; year: string };
   locale: "ar" | "en";
 }) {
-  const { locale } = useShopCopy();
   return (
     <div className="shop-traveler-dob">
       <select
@@ -264,6 +263,7 @@ function FlightCheckout({
   submitting: boolean;
   onSubmit: () => void;
 }) {
+  const { locale } = useShopCopy();
   const [editIndex, setEditIndex] = useState<number | null>(null);
   const [dobDraft, setDobDraft] = useState({ y: "", m: "", d: "" });
   const [issueDraft, setIssueDraft] = useState({ y: "", m: "", d: "" });

@@ -274,7 +274,7 @@ function InboxIdleChat() {
                 <strong>✈️ الكويت → دبي</strong>
                 <span>🗓️ الخميس 21 أغسطس · 10:40 ص</span>
                 <span>💼 سياحية · أمتعة 23 كجم</span>
-                <span className="wi-offer-price">💰 86 د.ك للشخص</span>
+                <span className="wi-offer-price">💰 86 KWD للشخص</span>
               </div>
               <p className="wi-offer-cta">هل تريد تثبيت هذا الخيار أم ترسل تواريخ أدق؟</p>
             </div>
@@ -306,7 +306,7 @@ function InboxIdleChat() {
               <div className="wi-offer-card">
                 <span>🛏 غرفة مزدوجة مع إفطار</span>
                 <span>📍 على بُعد 8 دقائق من برج خليفة</span>
-                <span className="wi-offer-price">💰 42 د.ك / الليلة</span>
+                <span className="wi-offer-price">💰 42 KWD / الليلة</span>
               </div>
               <p className="wi-offer-cta">أرفق جواز السفر من الزر 📎 بالأسفل متى ما جهزت الحجز.</p>
             </div>

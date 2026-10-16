@@ -13,7 +13,7 @@ export function formatMoneyMinor(
   return formatMoneyMinorShared(amountMinor, currency);
 }
 
-/** One-line price for cards: "12.500 د.ك" */
+/** One-line price for cards: "12.500 KWD" */
 export function formatMoneyMinorCompact(
   amountMinor?: number | null,
   currency: string = DEFAULT_CURRENCY,

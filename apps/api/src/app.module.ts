@@ -24,6 +24,7 @@ import { AuditService } from "./common/audit.service";
 import { TravelMetaModule } from "./travel-meta/travel-meta.module";
 import { AiModule } from "./ai/ai.module";
 import { AssistantModule } from "./assistant/assistant.module";
+import { ShopModule } from "./shop/shop.module";
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { AssistantModule } from "./assistant/assistant.module";
     OrganizationsModule,
     AiModule,
     AssistantModule,
+    ShopModule,
     PipelineModule,
     WhatsappModule,
     ContactsModule,

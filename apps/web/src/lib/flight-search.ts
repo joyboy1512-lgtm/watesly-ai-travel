@@ -242,7 +242,7 @@ export function cabinLabel(cabin?: string | null, locale: "ar" | "en" = "ar") {
     business: { ar: "رجال أعمال", en: "Business" },
     first: { ar: "الدرجة الأولى", en: "First" },
   };
-  if (!cabin) return map.economy[locale];
+  if (!cabin) return map.economy![locale];
   return map[cabin]?.[locale] || cabin;
 }
 

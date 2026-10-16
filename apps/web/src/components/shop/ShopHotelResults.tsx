@@ -144,15 +144,36 @@ export function ShopHotelResults(props: Props) {
       <div
         className={`shop-hotel-results-layout${mapOpen && mapPins.length ? " has-map" : ""}`}
       >
-        <ShopHotelFilters
-          filters={props.filters}
-          facets={props.facets}
-          onChange={props.onFiltersChange}
-          mobileOpen={filtersOpen}
-          onMobileToggle={() => setFiltersOpen((v) => !v)}
-          searchDestinationCode={props.searchDestinationCode}
-          searchDestinationLabel={props.destination}
-        />
+        <div className="shop-hotel-results-side">
+          {mapOpen && mapPins.length ? (
+            <aside className="shop-hotel-results-mapcol is-open">
+              <HotelResultsMap
+                variant="sidebar"
+                pins={mapPins}
+                selectedId={mapHotelId}
+                onSelect={(id) => {
+                  setMapHotelId(id);
+                  if (!id) return;
+                  const el = document.getElementById(`hotel-card-${id}`);
+                  el?.scrollIntoView({ behavior: "smooth", block: "center" });
+                }}
+                onOpen={(id) => {
+                  const hotel = props.hotels.find((h) => h.id === id);
+                  if (hotel) props.onOpenHotel(hotel);
+                }}
+              />
+            </aside>
+          ) : null}
+          <ShopHotelFilters
+            filters={props.filters}
+            facets={props.facets}
+            onChange={props.onFiltersChange}
+            mobileOpen={filtersOpen}
+            onMobileToggle={() => setFiltersOpen((v) => !v)}
+            searchDestinationCode={props.searchDestinationCode}
+            searchDestinationLabel={props.destination}
+          />
+        </div>
 
         <div className="shop-hotel-results-list">
           <div className="shop-hotel-results-sort">
@@ -246,26 +267,6 @@ export function ShopHotelResults(props: Props) {
             <p className="shop-hotel-results-empty">{t("noHotels")}</p>
           ) : null}
         </div>
-
-        {mapOpen && mapPins.length ? (
-          <aside className="shop-hotel-results-mapcol is-open">
-            <HotelResultsMap
-              variant="sidebar"
-              pins={mapPins}
-              selectedId={mapHotelId}
-              onSelect={(id) => {
-                setMapHotelId(id);
-                if (!id) return;
-                const el = document.getElementById(`hotel-card-${id}`);
-                el?.scrollIntoView({ behavior: "smooth", block: "center" });
-              }}
-              onOpen={(id) => {
-                const hotel = props.hotels.find((h) => h.id === id);
-                if (hotel) props.onOpenHotel(hotel);
-              }}
-            />
-          </aside>
-        ) : null}
       </div>
     </section>
   );

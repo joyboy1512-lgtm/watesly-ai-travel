@@ -43,6 +43,18 @@ const BOARD_EN: Record<string, string> = {
   DB: "Breakfast and dinner",
 };
 
+function isGenericRoomLabel(value: string): boolean {
+  const v = value.trim().toLowerCase();
+  return (
+    v === "room" ||
+    v === "غرفة" ||
+    v === "غرفه" ||
+    v === "room only" ||
+    v === "غرفة فقط" ||
+    v === "غرفه فقط"
+  );
+}
+
 /** Only show guest ratings when an explicit trusted source is present. */
 function guestRatingOf(details: Record<string, unknown>): {
   score: string;
@@ -181,6 +193,15 @@ export function HotelSearchCard({
         (!/[\u0600-\u06FF]/.test(cheapest.boardName || "") ? cheapest.boardName : "Room only")
       : cheapest.boardName
     : "";
+  const roomKey = roomNameLabel.trim().toLowerCase();
+  const boardKey = boardNameLabel.trim().toLowerCase();
+  const showBoard = Boolean(boardNameLabel);
+  const showRoom =
+    Boolean(roomNameLabel) &&
+    roomKey !== boardKey &&
+    !(isGenericRoomLabel(roomNameLabel) && showBoard);
+  const boardSaysBreakfast = /^(BB|HB|FB|AI)/i.test(String(cheapest?.boardCode || ""));
+  const scarceRooms = allotment != null && allotment > 0 && allotment <= 5;
   const taxesNote =
     cheapest?.taxes?.allIncluded === false ? t("taxesExcluded") : t("taxesIncluded");
   const priceBreakdown =
@@ -294,7 +315,7 @@ export function HotelSearchCard({
           {cheapest?.freeCancellation ? (
             <span className="hotel-chip good">{t("freeCancel")}</span>
           ) : null}
-          {cheapest && /^(BB|HB|FB|AI)/i.test(String(cheapest.boardCode || "")) ? (
+          {boardSaysBreakfast && !showBoard ? (
             <span className="hotel-chip">{t("breakfastIncl")}</span>
           ) : null}
           {allotment != null && allotment > 0 && allotment <= 5 ? (
@@ -332,10 +353,11 @@ export function HotelSearchCard({
           </a>
         ) : null}
 
-        {!soldOut && cheapest ? (
+        {!soldOut && cheapest && (showRoom || showBoard) ? (
           <p className="hotel-search-card-offer-line">
-            <strong>{roomNameLabel}</strong>
-            {boardNameLabel ? ` · ${boardNameLabel}` : ""}
+            {showRoom ? <strong>{roomNameLabel}</strong> : null}
+            {showRoom && showBoard ? " · " : ""}
+            {showBoard ? <span>{boardNameLabel}</span> : null}
           </p>
         ) : null}
       </div>
@@ -382,12 +404,14 @@ export function HotelSearchCard({
                   )}
                 </>
               )}
-              <span className="hotel-rooms-left">{availabilityLabel}</span>
-              {cheapest?.freeCancellation ? (
+              {!scarceRooms || !isShop ? (
+                <span className="hotel-rooms-left">{availabilityLabel}</span>
+              ) : null}
+              {cheapest?.freeCancellation && !isShop ? (
                 <span className="hotel-rooms-left">{t("freeCancel")}</span>
               ) : null}
             </div>
-            {cheapest ? (
+            {cheapest && !isShop ? (
               <p className="hotel-search-card-room-below-price">
                 <strong>{roomNameLabel}</strong>
                 {cheapest.roomName && cheapest.roomName !== roomNameLabel ? (

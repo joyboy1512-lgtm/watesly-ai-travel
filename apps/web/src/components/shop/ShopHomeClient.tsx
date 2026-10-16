@@ -26,6 +26,7 @@ import {
   saveTransferDraft,
 } from "@/lib/booking-draft";
 import { shopFetch } from "@/lib/shop-session";
+import { formatAirportChoiceLabel, localizeCountryName } from "@/lib/airport-label";
 import { ShopLanding } from "@/components/shop/ShopLanding";
 import { ShopHeroBanner, type FlightLeg, type FlightTripType } from "@/components/shop/ShopHeroBanner";
 import type { ShopDestination, ShopOffer } from "@/lib/shop-content";
@@ -130,13 +131,13 @@ export function ShopHomeClient() {
       origin: "KWI",
       originLabel: "KWI · الكويت",
       destination: "DXB",
-      destinationLabel: "DXB · دبي",
+      destinationLabel: "DXB · دبي، الإمارات",
       departDate: plusDays(14),
     }),
     createFlightLeg({
       id: "leg-2",
       origin: "DXB",
-      originLabel: "DXB · دبي",
+      originLabel: "DXB · دبي، الإمارات",
       destination: "",
       destinationLabel: "",
       departDate: plusDays(18),
@@ -153,7 +154,7 @@ export function ShopHomeClient() {
   const [origin, setOrigin] = useState("KWI");
   const [originLabel, setOriginLabel] = useState("KWI · الكويت");
   const [destination, setDestination] = useState("DXB");
-  const [destinationLabel, setDestinationLabel] = useState("DXB · دبي");
+  const [destinationLabel, setDestinationLabel] = useState("DXB · دبي، الإمارات");
   const [stayQuery, setStayQuery] = useState("دبي");
   const [activityDest, setActivityDest] = useState("DXB");
   const [activityLabel, setActivityLabel] = useState("دبي");
@@ -228,8 +229,8 @@ export function ShopHomeClient() {
     return rows.map((a) => ({
       id: a.id,
       code: (a.iataCode || "").toUpperCase(),
-      title: `${a.iataCode || "—"} · ${a.city || a.name}`,
-      subtitle: `${a.name}${a.country ? ` — ${a.country}` : ""}`,
+      title: formatAirportChoiceLabel(a),
+      subtitle: `${a.name}${a.country ? ` — ${localizeCountryName(a.country)}` : ""}`,
     }));
   }
 
@@ -237,12 +238,16 @@ export function ShopHomeClient() {
     const rows = await shopFetch<
       Array<{ city: string | null; country: string | null; iataCode?: string | null }>
     >(`/shop/cities?q=${encodeURIComponent(q)}`);
-    return rows.map((c, idx) => ({
-      id: `${c.city}-${idx}`,
-      code: c.iataCode || c.city || q,
-      title: c.city || q,
-      subtitle: c.country || undefined,
-    }));
+    return rows.map((c, idx) => {
+      const city = c.city || q;
+      const country = localizeCountryName(c.country);
+      return {
+        id: `${c.city}-${idx}`,
+        code: c.iataCode || c.city || q,
+        title: country && country !== city ? `${city}، ${country}` : city,
+        subtitle: country || undefined,
+      };
+    });
   }
 
   function handleTripTypeChange(next: FlightTripType) {

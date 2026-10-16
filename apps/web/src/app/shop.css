@@ -235,6 +235,294 @@
   flex: 1;
 }
 
+.exp-home-content.wg-simple-hero {
+  width: min(1120px, calc(100% - 1.5rem));
+  gap: 1rem;
+}
+
+.wg-svc-tabs {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.15rem 1.35rem;
+  flex-wrap: wrap;
+  padding: 0 0.25rem;
+}
+
+.wg-svc-tab {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: #fff;
+  font: inherit;
+  font-size: 0.95rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.15rem 0.55rem;
+  cursor: pointer;
+  text-decoration: none;
+  border-bottom: 2px solid transparent;
+  opacity: 0.88;
+}
+
+.wg-svc-tab:hover {
+  opacity: 1;
+}
+
+.wg-svc-tab.on {
+  opacity: 1;
+  border-bottom-color: #fff;
+}
+
+.wg-svc-tab-icon {
+  display: grid;
+  place-items: center;
+  line-height: 0;
+}
+
+.wg-svc-tab-link {
+  color: #fff;
+}
+
+.wg-simple-card {
+  background: #fff;
+  border-radius: 22px;
+  padding: 0.85rem 1.1rem 1rem;
+  box-shadow: 0 10px 36px rgba(8, 18, 38, 0.18);
+  display: grid;
+  gap: 0.7rem;
+  overflow: visible;
+}
+
+.wg-options {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  gap: 0.35rem 1.15rem;
+  padding: 0.1rem 0.15rem 0.15rem;
+}
+
+.wg-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: #5c6478;
+  font-size: 0.86rem;
+  font-weight: 500;
+  cursor: pointer;
+  user-select: none;
+}
+
+.wg-check input {
+  width: 0.95rem;
+  height: 0.95rem;
+  margin: 0;
+  accent-color: #8b93a7;
+  cursor: pointer;
+}
+
+.wg-check.on {
+  color: #2b3346;
+}
+
+.wg-simple-fields {
+  display: flex;
+  align-items: stretch;
+  min-height: 56px;
+  border: 1px solid #e6e8ee;
+  border-radius: 16px;
+  background: #fff;
+  overflow: visible;
+}
+
+.wg-simple-fields-leg,
+.wg-simple-fields-footer {
+  min-height: 52px;
+}
+
+.wg-simple-cell {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.35rem 0.75rem;
+  color: #8b93a7;
+  position: relative;
+  border-inline-start: 1px solid #eef0f4;
+}
+
+.wg-simple-fields > .wg-simple-cell:first-child,
+.wg-simple-fields-leg > .wg-simple-cell:first-of-type {
+  border-inline-start: 0;
+}
+
+.wg-cell-grow {
+  flex: 1.25 1 0;
+}
+
+.wg-cell-dates {
+  flex: 1.2 1 0;
+}
+
+.wg-cell-travelers {
+  flex: 0.95 1 0;
+}
+
+.wg-cell-time {
+  flex: 0.55 1 0;
+  max-width: 6.2rem;
+}
+
+.wg-simple-cell .exp-cell-label,
+.wg-simple-cell .shop-ac-inline > span:first-child {
+  display: none;
+}
+
+.wg-simple-cell .shop-ac-inline,
+.wg-simple-cell .shop-ac-inline input,
+.wg-simple-cell .exp-date-btn,
+.wg-simple-cell .exp-travelers-trigger,
+.wg-simple-cell .exp-time-select {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  width: 100%;
+  min-width: 0;
+}
+
+.wg-simple-cell .shop-ac-inline {
+  flex: 1;
+  position: relative;
+}
+
+.wg-simple-cell .shop-ac-inline input {
+  border: 0 !important;
+  outline: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  padding: 0 !important;
+}
+
+.wg-simple-cell .prc-suggest,
+.wg-simple-cell .exp-ac-menu {
+  z-index: 80;
+}
+
+.wg-simple-cell .shop-ac-inline input,
+.wg-simple-cell .exp-date-btn,
+.wg-simple-cell .exp-travelers-trigger strong,
+.wg-simple-cell .exp-time-select {
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: #2b3346;
+  text-align: start;
+}
+
+.wg-simple-cell .exp-date-btn,
+.wg-simple-cell .exp-travelers-trigger {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0;
+  min-height: 44px;
+  cursor: pointer;
+  color: #2b3346;
+}
+
+.wg-simple-cell .exp-travelers-trigger {
+  width: 100%;
+}
+
+.wg-simple-cell .exp-travelers-trigger strong {
+  font-weight: 600;
+}
+
+.wg-swap {
+  flex: 0 0 auto;
+  align-self: center;
+  width: 1.7rem;
+  height: 1.7rem;
+  margin: 0 0.15rem;
+  border: 0;
+  background: transparent;
+  color: #8b93a7;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+}
+
+.wg-search-btn {
+  flex: 0 0 auto;
+  align-self: center;
+  margin: 0.35rem 0.4rem 0.35rem 0.5rem;
+  min-height: 44px;
+  padding: 0 1.15rem;
+  border: 0;
+  border-radius: 12px;
+  background: #f25c6e;
+  color: #fff;
+  font: inherit;
+  font-size: 0.95rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  cursor: pointer;
+  box-shadow: none;
+}
+
+.wg-search-btn:hover:not(:disabled) {
+  background: #e34b5e;
+}
+
+.wg-search-btn:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+
+.wg-leg-badge {
+  align-self: center;
+  margin-inline-start: 0.65rem;
+  color: #5c6478;
+  font-size: 0.78rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.wg-add-leg {
+  justify-self: start;
+  width: fit-content;
+  border: 0;
+  background: transparent;
+  color: #5c6478;
+  font: inherit;
+  font-size: 0.86rem;
+  font-weight: 600;
+  padding: 0.2rem 0.15rem;
+  cursor: pointer;
+}
+
+.wg-cabin-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.35rem 0;
+  color: #2b3346;
+  font-size: 0.86rem;
+}
+
+.wg-cabin-row select {
+  border: 1px solid #e6e8ee;
+  border-radius: 8px;
+  background: #fff;
+  font: inherit;
+  padding: 0.25rem 0.45rem;
+}
+
 
 .exp-home-tagline {
   margin: 0.15rem 0 0;
@@ -1397,6 +1685,60 @@
 }
 
 @media (max-width: 720px) {
+  .exp-home-content.wg-simple-hero {
+    width: calc(100% - 1rem);
+  }
+
+  .wg-svc-tabs {
+    gap: 0.15rem 0.85rem;
+  }
+
+  .wg-svc-tab {
+    font-size: 0.82rem;
+  }
+
+  .wg-simple-card {
+    padding: 0.75rem 0.7rem 0.85rem;
+    border-radius: 16px;
+  }
+
+  .wg-simple-fields,
+  .wg-simple-fields-leg,
+  .wg-simple-fields-footer {
+    flex-wrap: wrap;
+    min-height: 0;
+  }
+
+  .wg-simple-cell,
+  .wg-cell-grow,
+  .wg-cell-dates,
+  .wg-cell-travelers {
+    flex: 1 1 100%;
+    border-inline-start: 0;
+    border-top: 1px solid #eef0f4;
+  }
+
+  .wg-simple-fields > .wg-simple-cell:first-child {
+    border-top: 0;
+  }
+
+  .wg-cell-time {
+    flex: 1 1 45%;
+    max-width: none;
+  }
+
+  .wg-swap {
+    width: 100%;
+    height: 1.4rem;
+    margin: 0;
+  }
+
+  .wg-search-btn {
+    width: calc(100% - 0.8rem);
+    justify-content: center;
+    margin: 0.45rem 0.4rem 0.5rem;
+  }
+
   .exp-util-nav {
     display: none;
     position: absolute;

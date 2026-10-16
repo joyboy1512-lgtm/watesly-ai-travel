@@ -63,6 +63,7 @@ export function ShopHotelResultsBar(props: Props) {
               props.onDepartDateChange(checkIn);
               props.onReturnDateChange(checkOut);
             }}
+            showNights
           />
         </div>
 

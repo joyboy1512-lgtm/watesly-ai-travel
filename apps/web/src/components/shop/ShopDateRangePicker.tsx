@@ -11,6 +11,7 @@ type Props = {
   startLabel?: string;
   endLabel?: string;
   placeholder?: string;
+  showNights?: boolean;
 };
 
 function toIso(d: Date) {
@@ -32,10 +33,13 @@ function addDays(iso: string, days: number) {
   return toIso(d);
 }
 
+const WEEKDAY_SHORT_AR = ["أحد", "اثنين", "ثلاثاء", "أربعاء", "خميس", "جمعة", "سبت"];
+
 function formatShort(iso: string) {
   const d = parseIso(iso);
   if (!d) return "—";
-  return d.toLocaleDateString("ar-KW", { weekday: "short", day: "numeric", month: "short" });
+  const rest = d.toLocaleDateString("ar-KW", { day: "numeric", month: "short" });
+  return `${WEEKDAY_SHORT_AR[d.getDay()]} ${rest}`;
 }
 
 function monthLabel(year: number, month: number) {
@@ -240,9 +244,8 @@ export function ShopDateRangePicker({
       aria-modal={isMobile ? true : undefined}
       aria-label="اختيار التواريخ"
     >
-      <div className="shop-date-range-pop-head">
-        <p className="shop-date-range-phase">{phase === "checkin" ? startLabel : endLabel}</p>
-        {isMobile ? (
+      {isMobile ? (
+        <div className="shop-date-range-pop-head">
           <button
             type="button"
             className="shop-date-range-close"
@@ -251,8 +254,8 @@ export function ShopDateRangePicker({
           >
             ×
           </button>
-        ) : null}
-      </div>
+        </div>
+      ) : null}
       <div className="shop-date-range-nav">
         <button type="button" onClick={() => shiftMonth(-1)} aria-label="الشهر السابق">
           ‹
@@ -280,9 +283,6 @@ export function ShopDateRangePicker({
         />
       </div>
       <div className="shop-date-range-footer">
-        <span>
-          {formatShort(draftIn)} → {formatShort(draftOut)}
-        </span>
         <button
           type="button"
           className="exp-pop-done"
@@ -295,6 +295,9 @@ export function ShopDateRangePicker({
         >
           تم
         </button>
+        <span className="shop-date-range-footer-dates">
+          {formatShort(draftIn)} → {formatShort(draftOut)}
+        </span>
       </div>
     </div>
   );
@@ -326,7 +329,7 @@ export function ShopDateRangePicker({
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
       >
-        {summary}
+        <span className="shop-date-range-summary">{summary}</span>
       </button>
       {open && !isMobile ? panel : null}
       {mobileOverlay}

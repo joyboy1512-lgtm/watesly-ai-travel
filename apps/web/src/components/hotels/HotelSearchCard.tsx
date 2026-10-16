@@ -118,15 +118,16 @@ export function HotelSearchCard({
   const poiDistances = Array.isArray(hotel.details.poiDistances)
     ? (hotel.details.poiDistances as Array<{ label?: string; distanceKm?: number }>)
     : [];
-  const landmarkLabel = poiDistances[0]?.label
+  const firstPoi = poiDistances[0];
+  const landmarkLabel = firstPoi?.label
     ? locale === "en"
-      ? String(poiDistances[0].label).replace(/كم/g, "km")
-      : String(poiDistances[0].label)
+      ? String(firstPoi.label).replace(/كم/g, "km")
+      : String(firstPoi.label)
     : "";
   const landmarkHint = landmarkLabel
     ? `${landmarkLabel}${
-        poiDistances[0].distanceKm != null
-          ? ` · ${Number(poiDistances[0].distanceKm).toFixed(1)} ${t("kmShort")}`
+        firstPoi?.distanceKm != null
+          ? ` · ${Number(firstPoi.distanceKm).toFixed(1)} ${t("kmShort")}`
           : ""
       }`
     : "";

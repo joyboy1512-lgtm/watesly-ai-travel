@@ -41,7 +41,7 @@ export default function PointsPage() {
           </p>
           {rules ? (
             <p style={{ margin: 0, color: "#64748b", fontSize: "0.85rem" }}>
-              كل 1 د.ك ≈ {rules.earnPerKwdMinor} نقطة · الحد الأدنى للاستبدال {rules.minRedeemPoints}
+              كل 1 KWD ≈ {rules.earnPerKwdMinor} نقطة · الحد الأدنى للاستبدال {rules.minRedeemPoints}
             </p>
           ) : null}
         </div>
@@ -50,7 +50,8 @@ export default function PointsPage() {
           {(account?.entries || []).slice(0, 20).map((e) => (
             <li key={e.id}>
               {e.delta > 0 ? "+" : ""}
-              {e.delta} · {e.reason} · {new Date(e.createdAt).toLocaleString("ar-KW")}
+              {e.delta} · {e.reason} ·{" "}
+              {new Date(e.createdAt).toLocaleString("ar-KW-u-nu-latn")}
             </li>
           ))}
         </ul>

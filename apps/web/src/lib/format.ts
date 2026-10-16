@@ -30,7 +30,7 @@ export function formatAmountMinor(
   return full.replace(/\s+[A-Za-z]{3}$/, "").trim() || full;
 }
 
-/** One-line price for cards: "12.500 د.ك" */
+/** One-line price for cards: "12.500 KWD" */
 export function formatMoneyMinorCompact(
   amountMinor?: number | null,
   currency: string = DEFAULT_CURRENCY,
@@ -52,5 +52,5 @@ export function formatDate(value?: string | Date | null) {
   if (!value) return "—";
   const d = typeof value === "string" ? new Date(value) : value;
   if (Number.isNaN(d.getTime())) return "—";
-  return d.toLocaleString("ar-KW");
+  return d.toLocaleString("ar-KW-u-nu-latn");
 }

@@ -8,6 +8,7 @@ import {
   formatClock,
   formatDay,
   formatMinutesLabel,
+  flightAirlineNameAr,
   getReturnSegments,
   getSegments,
   layoverMinutes,
@@ -34,6 +35,7 @@ function Timeline({
   fallbackDate,
   fromLabel,
   toLabel,
+  locale,
 }: {
   segs: FlightSeg[];
   from: string;
@@ -41,6 +43,7 @@ function Timeline({
   fallbackDate?: string;
   fromLabel?: string;
   toLabel?: string;
+  locale: "ar" | "en";
 }) {
   if (!segs.length) {
     return (
@@ -49,7 +52,7 @@ function Timeline({
           <i />
           <div>
             <strong>{from}</strong>
-            <p>{fromLabel || "مغادرة"}</p>
+            <p>{fromLabel || (locale === "en" ? "Departure" : "مغادرة")}</p>
           </div>
         </div>
         <div className="shop-flight-timeline-line" />
@@ -57,7 +60,7 @@ function Timeline({
           <i />
           <div>
             <strong>{to}</strong>
-            <p>{toLabel || "وصول"}</p>
+            <p>{toLabel || (locale === "en" ? "Arrival" : "وصول")}</p>
           </div>
         </div>
       </div>
@@ -72,7 +75,7 @@ function Timeline({
           <i />
           <div>
             <strong>
-              {formatDay(seg.departAt || seg.date || fallbackDate)} ·{" "}
+              {formatDay(seg.departAt || seg.date || fallbackDate, locale)} ·{" "}
               {formatClock(seg.departAt || seg.departTime)}
             </strong>
             <p>
@@ -86,7 +89,7 @@ function Timeline({
           <i />
           <div>
             <strong>
-              {formatDay(seg.arriveAt || seg.date || fallbackDate)} ·{" "}
+              {formatDay(seg.arriveAt || seg.date || fallbackDate, locale)} ·{" "}
               {formatClock(seg.arriveAt || seg.arriveTime)}
             </strong>
             <p>
@@ -116,11 +119,14 @@ function Timeline({
               <i />
               <div>
                 <strong>
-                  {formatDay(segDepAt || seg.date || fallbackDate)} · {formatClock(segDepAt)}
+                  {formatDay(segDepAt || seg.date || fallbackDate, locale)} ·{" "}
+                  {formatClock(segDepAt)}
                 </strong>
                 <p>
-                  {segFrom} · مغادرة
-                  {seg.flightNumber ? ` · رحلة ${seg.flightNumber}` : ""}
+                  {segFrom} · {locale === "en" ? "Departure" : "مغادرة"}
+                  {seg.flightNumber
+                    ? ` · ${locale === "en" ? "Flight" : "رحلة"} ${seg.flightNumber}`
+                    : ""}
                 </p>
               </div>
             </div>
@@ -129,13 +135,13 @@ function Timeline({
               <i />
               <div>
                 <strong>{formatClock(segArrAt)}</strong>
-                <p>{segTo} · وصول</p>
+                <p>{segTo} · {locale === "en" ? "Arrival" : "وصول"}</p>
               </div>
             </div>
             {nextSeg ? (
               <div className="shop-flight-timeline-layover">
-                توقف في {segTo}
-                {layover ? ` · ${formatMinutesLabel(layover)}` : ""}
+                {locale === "en" ? "Layover in" : "توقف في"} {segTo}
+                {layover ? ` · ${formatMinutesLabel(layover, locale)}` : ""}
               </div>
             ) : null}
           </div>
@@ -155,7 +161,7 @@ export function ShopFlightDetailModal({
   onClose,
   onContinue,
 }: Props) {
-  const { currency: displayCurrency, formatMoney } = useShopCopy();
+  const { locale, currency: displayCurrency, formatMoney } = useShopCopy();
   const segs = getSegments(flight.details);
   const returnSegs = getReturnSegments(flight.details);
   const first = segs[0];
@@ -183,6 +189,25 @@ export function ShopFlightDetailModal({
   );
   const baggage = (flight.details.baggage || {}) as Record<string, string>;
   const policies = (flight.details.policies || {}) as Record<string, unknown>;
+  const airlineName = flightAirlineNameAr(flight.details, first, "out", locale);
+  const returnAirlineName = flightAirlineNameAr(
+    flight.details,
+    retFirst,
+    "return",
+    locale,
+  );
+  const localizedBag = (value: string | undefined, fallbackAr: string, fallbackEn: string) => {
+    if (locale === "ar") return value || fallbackAr;
+    if (!value || /[\u0600-\u06FF]/.test(value)) {
+      const weight = value?.match(/\d+(?:\.\d+)?/)?.[0];
+      return weight ? `${weight} kg` : fallbackEn;
+    }
+    return value;
+  };
+  const localizedDuration = (value: string) =>
+    locale === "en"
+      ? value.replace(/(\d+)\s*س/g, "$1h").replace(/(\d+)\s*د/g, "$1m")
+      : value;
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -208,20 +233,30 @@ export function ShopFlightDetailModal({
       >
         <header className="shop-flight-modal-head">
           <div>
-            <h2 id="shop-flight-modal-title">تفاصيل الرحلة · {from} → {to}</h2>
+            <h2 id="shop-flight-modal-title">
+              {locale === "en" ? "Flight details" : "تفاصيل الرحلة"} · {from} → {to}
+            </h2>
             <div className="shop-flight-modal-actions">
-              <button type="button" className="shop-flight-modal-share" aria-label="حفظ">
-                ♡ حفظ
+              <button
+                type="button"
+                className="shop-flight-modal-share"
+                aria-label={locale === "en" ? "Save" : "حفظ"}
+              >
+                ♡ {locale === "en" ? "Save" : "حفظ"}
               </button>
-              <button type="button" className="shop-flight-modal-share" aria-label="مشاركة">
-                ↗ مشاركة
+              <button
+                type="button"
+                className="shop-flight-modal-share"
+                aria-label={locale === "en" ? "Share" : "مشاركة"}
+              >
+                ↗ {locale === "en" ? "Share" : "مشاركة"}
               </button>
             </div>
           </div>
           <button
             type="button"
             className="shop-flight-modal-close"
-            aria-label="إغلاق"
+            aria-label={locale === "en" ? "Close" : "إغلاق"}
             onClick={onClose}
           >
             ×
@@ -232,7 +267,7 @@ export function ShopFlightDetailModal({
           <h3>
             {from} → {to}
             <span>
-              {stopsLabel(stops)} · {duration}
+              {stopsLabel(stops, locale)} · {localizedDuration(duration)}
             </span>
           </h3>
           <div className="shop-flight-modal-itinerary">
@@ -242,6 +277,7 @@ export function ShopFlightDetailModal({
               to={to}
               fromLabel={originLabel}
               toLabel={destinationLabel}
+              locale={locale}
             />
             <div className="shop-flight-modal-carrier">
               {logo ? (
@@ -250,13 +286,14 @@ export function ShopFlightDetailModal({
               ) : (
                 <div className="shop-ticket-logo-fallback">{code || "✈"}</div>
               )}
-              <strong>
-                {String(flight.details.airlineAr || flight.details.airline || "شركة طيران")}
-              </strong>
+              <strong>{airlineName}</strong>
               <span>
-                {flightNo} · {cabinLabel(cabin)}
+                {flightNo} · {cabinLabel(cabin, locale)}
               </span>
-              <span>مدة الرحلة {duration}</span>
+              <span>
+                {locale === "en" ? "Flight duration" : "مدة الرحلة"}{" "}
+                {localizedDuration(duration)}
+              </span>
             </div>
           </div>
         </section>
@@ -266,7 +303,7 @@ export function ShopFlightDetailModal({
             <h3>
               {String(retFirst?.from || to)} → {String(retLast?.to || from)}
               <span>
-                {stopsLabel(returnStops)} · {returnDuration}
+                {stopsLabel(returnStops, locale)} · {localizedDuration(returnDuration)}
               </span>
             </h3>
             <div className="shop-flight-modal-itinerary">
@@ -276,6 +313,7 @@ export function ShopFlightDetailModal({
                 to={String(retLast?.to || from)}
                 fromLabel={destinationLabel}
                 toLabel={originLabel}
+                locale={locale}
               />
               <div className="shop-flight-modal-carrier">
                 {logo ? (
@@ -284,18 +322,14 @@ export function ShopFlightDetailModal({
                 ) : (
                   <div className="shop-ticket-logo-fallback">{code || "✈"}</div>
                 )}
-                <strong>
-                  {String(
-                    retFirst?.airline ||
-                      flight.details.airlineAr ||
-                      flight.details.airline ||
-                      "شركة طيران",
-                  )}
-                </strong>
+                <strong>{returnAirlineName}</strong>
                 <span>
-                  {returnFlightNo} · {cabinLabel(cabin)}
+                  {returnFlightNo} · {cabinLabel(cabin, locale)}
                 </span>
-                <span>مدة الرحلة {returnDuration}</span>
+                <span>
+                  {locale === "en" ? "Flight duration" : "مدة الرحلة"}{" "}
+                  {localizedDuration(returnDuration)}
+                </span>
               </div>
             </div>
           </section>
@@ -303,41 +337,57 @@ export function ShopFlightDetailModal({
 
         <section className="shop-flight-modal-section split">
           <div>
-            <h3>الأمتعة</h3>
-            <p>إجمالي الأمتعة المشمولة في السعر</p>
+            <h3>{locale === "en" ? "Baggage" : "الأمتعة"}</h3>
+            <p>
+              {locale === "en"
+                ? "Total baggage included in the price"
+                : "إجمالي الأمتعة المشمولة في السعر"}
+            </p>
           </div>
           <ul className="shop-flight-modal-list">
             <li>
-              <span>حقيبة شخصية</span>
-              <em>{baggage.personal || "مشمولة"}</em>
+              <span>{locale === "en" ? "Personal item" : "حقيبة شخصية"}</span>
+              <em>{localizedBag(baggage.personal, "مشمولة", "Included")}</em>
             </li>
             <li>
-              <span>حقيبة مقصورة</span>
-              <em>{baggage.cabin || "مشمولة"}</em>
+              <span>{locale === "en" ? "Cabin bag" : "حقيبة مقصورة"}</span>
+              <em>{localizedBag(baggage.cabin, "مشمولة", "Included")}</em>
             </li>
             <li>
-              <span>حقيبة مسجّلة</span>
-              <em>{baggage.checked || "متاحة لاحقاً مقابل رسوم"}</em>
+              <span>{locale === "en" ? "Checked bag" : "حقيبة مسجّلة"}</span>
+              <em>
+                {localizedBag(
+                  baggage.checked,
+                  "متاحة لاحقاً مقابل رسوم",
+                  "Available later for a fee",
+                )}
+              </em>
             </li>
           </ul>
         </section>
 
         <section className="shop-flight-modal-section split">
           <div>
-            <h3>قواعد التذكرة</h3>
-            <p>معلومات مفيدة عن السياسة</p>
+            <h3>{locale === "en" ? "Fare rules" : "قواعد التذكرة"}</h3>
+            <p>
+              {locale === "en" ? "Useful policy information" : "معلومات مفيدة عن السياسة"}
+            </p>
           </div>
           <ul className="shop-flight-modal-list soft">
             <li>
               <span>
                 {policies.changeable
-                  ? "يمكنك تغيير هذه الرحلة مقابل رسوم"
-                  : "تغيير الرحلة قد يكون محدوداً حسب قواعد الأجرة"}
+                  ? locale === "en"
+                    ? "You can change this flight for a fee"
+                    : "يمكنك تغيير هذه الرحلة مقابل رسوم"
+                  : locale === "en"
+                    ? "Changes may be limited by the fare rules"
+                    : "تغيير الرحلة قد يكون محدوداً حسب قواعد الأجرة"}
               </span>
             </li>
-            {policies.noteAr ? (
+            {(locale === "en" ? policies.noteEn : policies.noteAr) ? (
               <li>
-                <span>{String(policies.noteAr)}</span>
+                <span>{String(locale === "en" ? policies.noteEn : policies.noteAr)}</span>
               </li>
             ) : null}
           </ul>
@@ -345,17 +395,17 @@ export function ShopFlightDetailModal({
 
         <section className="shop-flight-modal-section split">
           <div>
-            <h3>إضافات قد تعجبك</h3>
-            <p>يمكن إضافتها مقابل رسوم</p>
+            <h3>{locale === "en" ? "Optional extras" : "إضافات قد تعجبك"}</h3>
+            <p>{locale === "en" ? "Available for an additional fee" : "يمكن إضافتها مقابل رسوم"}</p>
           </div>
           <ul className="shop-flight-modal-list soft">
             <li>
-              <span>حقيبة مسجّلة</span>
-              <em>متاحة في الخطوات التالية</em>
+              <span>{locale === "en" ? "Checked bag" : "حقيبة مسجّلة"}</span>
+              <em>{locale === "en" ? "Available in the next steps" : "متاحة في الخطوات التالية"}</em>
             </li>
             <li>
-              <span>تذكرة مرنة</span>
-              <em>متاحة في الخطوات التالية</em>
+              <span>{locale === "en" ? "Flexible ticket" : "تذكرة مرنة"}</span>
+              <em>{locale === "en" ? "Available in the next steps" : "متاحة في الخطوات التالية"}</em>
             </li>
           </ul>
         </section>
@@ -365,7 +415,7 @@ export function ShopFlightDetailModal({
             {formatMoney(flight.sellAmountMinor, flight.currency)}
           </strong>
           <button type="button" className="shop-flight-continue-btn" onClick={onContinue}>
-            اختيار هذه الرحلة
+            {locale === "en" ? "Select this flight" : "اختيار هذه الرحلة"}
           </button>
         </footer>
       </div>

@@ -21,6 +21,11 @@ type Props = {
   onClearReturn?: () => void;
 };
 
+function localizedDuration(raw: string | undefined, locale: "ar" | "en") {
+  if (!raw || locale === "ar") return raw || "—";
+  return raw.replace(/(\d+)\s*س/g, "$1h").replace(/(\d+)\s*د/g, "$1m");
+}
+
 function CustomLeg({
   label,
   airlineCode,
@@ -48,9 +53,10 @@ function CustomLeg({
   emptyText?: string;
   onClear?: () => void;
 }) {
+  const { locale } = useShopCopy();
   const logo = airlineLogo(airlineCode, 64);
-  const fromPlace = airportPlaceLabel(from || "");
-  const toPlace = airportPlaceLabel(to || "");
+  const fromPlace = airportPlaceLabel(from || "", locale);
+  const toPlace = airportPlaceLabel(to || "", locale);
 
   if (empty) {
     return (
@@ -67,7 +73,12 @@ function CustomLeg({
     <div className="shop-ticket-leg-v2 kayak-leg shop-custom-trip-leg" dir="ltr">
       <div className="shop-ticket-kayak-check">
         {onClear ? (
-          <button type="button" className="shop-custom-trip-x" onClick={onClear} aria-label="إزالة">
+          <button
+            type="button"
+            className="shop-custom-trip-x"
+            onClick={onClear}
+            aria-label={locale === "en" ? "Remove" : "إزالة"}
+          >
             ×
           </button>
         ) : (
@@ -92,13 +103,14 @@ function CustomLeg({
 
       <div className="shop-ticket-od dep">
         <strong className="shop-ticket-clock">{formatClock(departAt)}</strong>
-        <small className="shop-ticket-day">{formatDay(departAt) || " "}</small>
+        <small className="shop-ticket-day">{formatDay(departAt, locale) || " "}</small>
         <span className="shop-ticket-iata">{fromPlace || from}</span>
       </div>
 
       <div className="shop-ticket-path">
         <span className="shop-ticket-meta-duration">
-          المدة: <bdi>{durationLabel || "—"}</bdi>
+          {locale === "en" ? "Duration" : "المدة"}:{" "}
+          <bdi>{localizedDuration(durationLabel, locale)}</bdi>
         </span>
         <div className="shop-ticket-route" aria-hidden>
           <span className="shop-ticket-route-line" />
@@ -107,14 +119,14 @@ function CustomLeg({
           <span
             className={`shop-ticket-meta-stops${stops === 0 ? " direct" : ""}`}
           >
-            {typeof stops === "number" ? stopsLabel(stops) : "—"}
+            {typeof stops === "number" ? stopsLabel(stops, locale) : "—"}
           </span>
         </div>
       </div>
 
       <div className="shop-ticket-od arr">
         <strong className="shop-ticket-clock">{formatClock(arriveAt)}</strong>
-        <small className="shop-ticket-day">{formatDay(arriveAt) || " "}</small>
+        <small className="shop-ticket-day">{formatDay(arriveAt, locale) || " "}</small>
         <span className="shop-ticket-iata">{toPlace || to}</span>
       </div>
     </div>
@@ -132,26 +144,28 @@ export function ShopFlightSelectionBar({
   onClearOutbound,
   onClearReturn,
 }: Props) {
-  const { currency: displayCurrency, formatMoney } = useShopCopy();
+  const { locale, currency: displayCurrency, formatMoney } = useShopCopy();
   const missingReturn = isRoundTrip && !trip.return;
 
   return (
     <article
       className="shop-ticket-card shop-ticket-card-v2 shop-ticket-card-bp shop-custom-trip-card"
       role="region"
-      aria-label="رحلة مخصصة"
+      aria-label={locale === "en" ? "Custom trip" : "رحلة مخصصة"}
     >
       <div className="shop-ticket-badges shop-custom-trip-badges">
-        <span className="shop-ticket-badge shop-custom-trip-title">رحلة مخصصة</span>
+        <span className="shop-ticket-badge shop-custom-trip-title">
+          {locale === "en" ? "Custom trip" : "رحلة مخصصة"}
+        </span>
         <button type="button" className="shop-custom-trip-clear" onClick={onClear}>
-          مسح الاختيار
+          {locale === "en" ? "Clear selection" : "مسح الاختيار"}
         </button>
       </div>
 
       <div className="shop-ticket-body-v2">
         <div className="shop-ticket-legs-v2">
           <CustomLeg
-            label="ذهاب"
+            label={locale === "en" ? "Outbound" : "ذهاب"}
             airlineCode={trip.outbound.airlineCode}
             airlineName={trip.outbound.airlineName}
             from={trip.outbound.from}
@@ -165,7 +179,7 @@ export function ShopFlightSelectionBar({
           {isRoundTrip ? (
             trip.return ? (
               <CustomLeg
-                label="عودة"
+                label={locale === "en" ? "Return" : "عودة"}
                 airlineCode={trip.return.airlineCode}
                 airlineName={trip.return.airlineName}
                 from={trip.return.from}
@@ -178,9 +192,13 @@ export function ShopFlightSelectionBar({
               />
             ) : (
               <CustomLeg
-                label="عودة"
+                label={locale === "en" ? "Return" : "عودة"}
                 empty
-                emptyText="اختر رحلة العودة ✓ من البطاقات أدناه"
+                emptyText={
+                  locale === "en"
+                    ? "Select a return flight ✓ from the cards below"
+                    : "اختر رحلة العودة ✓ من البطاقات أدناه"
+                }
               />
             )
           ) : null}
@@ -194,8 +212,8 @@ export function ShopFlightSelectionBar({
           </strong>
         </div>
         <div className="shop-ticket-stub-totals">
-          <span>السعر الإجمالي للرحلة</span>
-          <span>شامل الضرائب</span>
+          <span>{locale === "en" ? "Total trip price" : "السعر الإجمالي للرحلة"}</span>
+          <span>{locale === "en" ? "Taxes included" : "شامل الضرائب"}</span>
         </div>
         <div className="shop-ticket-cta-group">
           <button
@@ -206,12 +224,13 @@ export function ShopFlightSelectionBar({
           >
             {loading ? (
               <span className="shop-flight-btn-loading">
-                <span className="shop-flight-spinner small" aria-hidden /> جاري التحميل…
+                <span className="shop-flight-spinner small" aria-hidden />{" "}
+                {locale === "en" ? "Loading…" : "جاري التحميل…"}
               </span>
             ) : missingReturn ? (
-              "أكمل اختيار العودة"
+              locale === "en" ? "Complete return selection" : "أكمل اختيار العودة"
             ) : (
-              "اختيار هذه الرحلة"
+              locale === "en" ? "Select this flight" : "اختيار هذه الرحلة"
             )}
           </button>
           <button
@@ -220,7 +239,7 @@ export function ShopFlightSelectionBar({
             disabled={!canProceed || missingReturn}
             onClick={onSelectTrip}
           >
-            التفاصيل والشروط
+            {locale === "en" ? "Details and conditions" : "التفاصيل والشروط"}
           </button>
         </div>
       </aside>

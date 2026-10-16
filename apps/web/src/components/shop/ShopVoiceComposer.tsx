@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { getShopToken } from "@/lib/shop-session";
+import { useShopCopy } from "@/components/shop/ShopI18nProvider";
 
 export type VoiceUiStatus =
   | "idle"
@@ -42,6 +43,7 @@ const API_BASE = () => {
 };
 
 export function ShopVoiceComposer({ disabled, onTranscriptReady, onError }: Props) {
+  const { locale } = useShopCopy();
   const [status, setStatus] = useState<VoiceUiStatus>("idle");
   const [blob, setBlob] = useState<Blob | null>(null);
   const [objectUrl, setObjectUrl] = useState<string | null>(null);
@@ -70,19 +72,21 @@ export function ShopVoiceComposer({ disabled, onTranscriptReady, onError }: Prop
   function statusLabel(): string {
     switch (status) {
       case "recording":
-        return "جاري التسجيل…";
+        return locale === "en" ? "Recording…" : "جاري التسجيل…";
       case "uploading":
-        return "جاري رفع الرسالة…";
+        return locale === "en" ? "Uploading message…" : "جاري رفع الرسالة…";
       case "transcribing":
-        return "جاري تحويل الصوت…";
+        return locale === "en" ? "Transcribing audio…" : "جاري تحويل الصوت…";
       case "understood":
-        return "تم فهم الرسالة";
+        return locale === "en" ? "Message understood" : "تم فهم الرسالة";
       case "unclear":
-        return "الصوت غير واضح، حاول مرة أخرى";
+        return locale === "en"
+          ? "The audio is unclear. Try again."
+          : "الصوت غير واضح، حاول مرة أخرى";
       case "failed":
-        return "تعذر معالجة التسجيل";
+        return locale === "en" ? "Could not process the recording" : "تعذر معالجة التسجيل";
       case "review":
-        return "راجع التسجيل قبل الإرسال";
+        return locale === "en" ? "Review the recording before sending" : "راجع التسجيل قبل الإرسال";
       default:
         return "";
     }
@@ -124,7 +128,7 @@ export function ShopVoiceComposer({ disabled, onTranscriptReady, onError }: Prop
       }, 200);
       stopTimerRef.current = window.setTimeout(() => stopRecording(), MAX_MS);
     } catch {
-      onError("تعذر الوصول إلى الميكروفون");
+      onError(locale === "en" ? "Could not access the microphone" : "تعذر الوصول إلى الميكروفون");
       setStatus("failed");
     }
   }
@@ -156,7 +160,7 @@ export function ShopVoiceComposer({ disabled, onTranscriptReady, onError }: Prop
     if (!blob || disabled) return;
     const token = getShopToken();
     if (!token) {
-      onError("سجّل الدخول للمساعد أولاً");
+      onError(locale === "en" ? "Sign in to the assistant first" : "سجّل الدخول للمساعد أولاً");
       return;
     }
     setStatus("uploading");
@@ -184,12 +188,21 @@ export function ShopVoiceComposer({ disabled, onTranscriptReady, onError }: Prop
       };
       if (!res.ok) {
         setStatus(res.status === 413 ? "failed" : "failed");
-        onError(data.message || data.messageAr || "تعذر معالجة التسجيل");
+        const raw = data.message || data.messageAr || "";
+        onError(
+          locale === "en" && /[\u0600-\u06FF]/.test(raw)
+            ? "Could not process the recording"
+            : raw || (locale === "en" ? "Could not process the recording" : "تعذر معالجة التسجيل"),
+        );
         return;
       }
       if (data.status === "unclear") {
         setStatus("unclear");
-        onError(data.messageAr || "الصوت غير واضح، حاول مرة أخرى");
+        onError(
+          locale === "en"
+            ? "The audio is unclear. Try again."
+            : data.messageAr || "الصوت غير واضح، حاول مرة أخرى",
+        );
         return;
       }
       setStatus("understood");
@@ -197,7 +210,7 @@ export function ShopVoiceComposer({ disabled, onTranscriptReady, onError }: Prop
       discard();
     } catch {
       setStatus("failed");
-      onError("تعذر معالجة التسجيل");
+      onError(locale === "en" ? "Could not process the recording" : "تعذر معالجة التسجيل");
     }
   }
 
@@ -214,15 +227,16 @@ export function ShopVoiceComposer({ disabled, onTranscriptReady, onError }: Prop
             disabled={disabled || status === "uploading" || status === "transcribing"}
             onClick={() => void startRecording()}
           >
-            تسجيل صوتي
+            {locale === "en" ? "Record voice" : "تسجيل صوتي"}
           </button>
         ) : (
           <button type="button" className="shop-voice-btn danger" onClick={stopRecording}>
-            إيقاف ({seconds}ث / 60)
+            {locale === "en" ? "Stop" : "إيقاف"} ({seconds}
+            {locale === "en" ? "s" : "ث"} / 60)
           </button>
         )}
         <label className="shop-voice-btn ghost">
-          رفع ملف
+          {locale === "en" ? "Upload file" : "رفع ملف"}
           <input
             type="file"
             accept="audio/*,.mp3,.m4a,.wav,.ogg,.webm,.opus"
@@ -240,14 +254,16 @@ export function ShopVoiceComposer({ disabled, onTranscriptReady, onError }: Prop
           ) : null}
           <div className="shop-voice-review-actions">
             <button type="button" className="shop-btn" onClick={() => void sendAudio()}>
-              إرسال الصوت
+              {locale === "en" ? "Send audio" : "إرسال الصوت"}
             </button>
             <button type="button" className="shop-btn ghost" onClick={discard}>
-              حذف
+              {locale === "en" ? "Delete" : "حذف"}
             </button>
           </div>
           <p className="shop-hint">
-            لا نحتفظ بالتسجيلات بشكل دائم. بعد التحويل إلى نص يُحذف الملف من المعالجة.
+            {locale === "en"
+              ? "Recordings are not stored permanently. The file is deleted after transcription."
+              : "لا نحتفظ بالتسجيلات بشكل دائم. بعد التحويل إلى نص يُحذف الملف من المعالجة."}
           </p>
         </div>
       ) : null}

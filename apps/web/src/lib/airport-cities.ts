@@ -67,6 +67,74 @@ const AIRPORT_CITY_AR: Record<string, string> = {
   ATL: "أتلانتا",
 };
 
+const AIRPORT_CITY_EN: Record<string, string> = {
+  KWI: "Kuwait",
+  DXB: "Dubai",
+  AUH: "Abu Dhabi",
+  SHJ: "Sharjah",
+  DOH: "Doha",
+  BAH: "Manama",
+  MCT: "Muscat",
+  RUH: "Riyadh",
+  JED: "Jeddah",
+  DMM: "Dammam",
+  MED: "Madinah",
+  AHB: "Abha",
+  TIF: "Taif",
+  ELQ: "Qassim",
+  GIZ: "Jazan",
+  TUU: "Tabuk",
+  HAS: "Hail",
+  CAI: "Cairo",
+  HBE: "Alexandria",
+  IST: "Istanbul",
+  SAW: "Istanbul",
+  AYT: "Antalya",
+  ADB: "Izmir",
+  ESB: "Ankara",
+  AMM: "Amman",
+  BEY: "Beirut",
+  LHR: "London",
+  LGW: "London",
+  STN: "London",
+  CDG: "Paris",
+  ORY: "Paris",
+  FRA: "Frankfurt",
+  MUC: "Munich",
+  AMS: "Amsterdam",
+  FCO: "Rome",
+  MXP: "Milan",
+  BCN: "Barcelona",
+  MAD: "Madrid",
+  JFK: "New York",
+  EWR: "New York",
+  LAX: "Los Angeles",
+  ORD: "Chicago",
+  IAD: "Washington",
+  SFO: "San Francisco",
+  BOS: "Boston",
+  MIA: "Miami",
+  DEL: "Delhi",
+  BOM: "Mumbai",
+  BKK: "Bangkok",
+  SIN: "Singapore",
+  KUL: "Kuala Lumpur",
+  CGK: "Jakarta",
+  HKG: "Hong Kong",
+  NRT: "Tokyo",
+  HND: "Tokyo",
+  ICN: "Seoul",
+  SYD: "Sydney",
+  MEL: "Melbourne",
+  CMB: "Colombo",
+  DAC: "Dhaka",
+  ISB: "Islamabad",
+  LHE: "Lahore",
+  KHI: "Karachi",
+  CLT: "Charlotte",
+  ATL: "Atlanta",
+};
+
 export function airportCityAr(code?: string | null): string {
   const c = String(code || "")
     .trim()
@@ -76,11 +144,14 @@ export function airportCityAr(code?: string | null): string {
 }
 
 /** e.g. "دبي (DXB)" or just "DXB" when city unknown */
-export function airportPlaceLabel(code?: string | null): string {
+export function airportPlaceLabel(
+  code?: string | null,
+  locale: "ar" | "en" = "ar",
+): string {
   const c = String(code || "")
     .trim()
     .toUpperCase();
   if (!c) return "—";
-  const city = airportCityAr(c);
+  const city = locale === "en" ? AIRPORT_CITY_EN[c] || "" : airportCityAr(c);
   return city ? `${city} (${c})` : c;
 }

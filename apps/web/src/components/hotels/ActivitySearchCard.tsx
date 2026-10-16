@@ -20,10 +20,10 @@ type Props = {
 };
 
 export function ActivitySearchCard({ item, destination, onBook }: Props) {
-  const { currency: displayCurrency, formatMoney } = useShopCopy();
+  const { locale, currency: displayCurrency, formatMoney } = useShopCopy();
   const d = item.extra || {};
   const title = String(d.activityName || item.name);
-  const typeLabel = String(d.activityTypeLabel || "نشاط");
+  const typeLabel = String(d.activityTypeLabel || (locale === "en" ? "Activity" : "نشاط"));
   const duration = typeof d.durationLabel === "string" ? d.durationLabel : "";
   const imageUrl = typeof d.imageUrl === "string" ? d.imageUrl : "";
   const dest = String(d.destinationName || destination);
@@ -65,21 +65,27 @@ export function ActivitySearchCard({ item, destination, onBook }: Props) {
           </p>
         ) : null}
         <p className="transfer-search-card-policy">
-          {freeCancel ? "إلغاء مجاني*" : "راجع سياسة الإلغاء عند التأكيد"}
+          {freeCancel
+            ? locale === "en"
+              ? "Free cancellation*"
+              : "إلغاء مجاني*"
+            : locale === "en"
+              ? "Review the cancellation policy at confirmation"
+              : "راجع سياسة الإلغاء عند التأكيد"}
         </p>
       </div>
       <div className="transfer-search-card-action">
         <strong data-display-currency={displayCurrency}>
           {formatMoney(item.price, item.currency)}
         </strong>
-        <small>إجمالي النشاط</small>
+        <small>{locale === "en" ? "Activity total" : "إجمالي النشاط"}</small>
         {onBook ? (
           <button
             type="button"
             className="btn hotel-search-card-cta"
             onClick={onBook}
           >
-            احجز
+            {locale === "en" ? "Book" : "احجز"}
           </button>
         ) : null}
       </div>

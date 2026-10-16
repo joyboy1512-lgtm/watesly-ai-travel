@@ -33,6 +33,16 @@ type Props = {
   onOpen: () => void;
 };
 
+const BOARD_EN: Record<string, string> = {
+  RO: "Room only",
+  BB: "Breakfast included",
+  HB: "Half board",
+  FB: "Full board",
+  AI: "All inclusive",
+  SC: "Self catering",
+  DB: "Breakfast and dinner",
+};
+
 /** Only show guest ratings when an explicit trusted source is present. */
 function guestRatingOf(details: Record<string, unknown>): {
   score: string;
@@ -63,16 +73,28 @@ export function HotelSearchCard({
   onOpen,
 }: Props) {
   const { t, locale, currency: displayCurrency, formatMoney } = useShopCopy();
-  const name = String(hotel.details.name || t("hotelFallback"));
+  const name = String(
+    (locale === "en" ? hotel.details.nameEn : hotel.details.name) ||
+      hotel.details.name ||
+      t("hotelFallback"),
+  );
   const stars = Number(hotel.details.stars || 0);
   const guest = guestRatingOf(hotel.details);
   const cheapest = hotel.matchingRates[0];
-  const city = String(
-    hotel.details.destinationName || hotel.details.location || "",
+  const cityRaw = String(
+    (locale === "en" ? hotel.details.destinationNameEn : hotel.details.destinationName) ||
+      hotel.details.destinationName ||
+      hotel.details.location ||
+      "",
   ).trim();
-  const zone = String(
-    hotel.details.zoneName || hotel.details.neighborhood || "",
+  const zoneRaw = String(
+    (locale === "en" ? hotel.details.zoneNameEn : hotel.details.zoneName) ||
+      hotel.details.zoneName ||
+      hotel.details.neighborhood ||
+      "",
   ).trim();
+  const city = locale === "en" && /[\u0600-\u06FF]/.test(cityRaw) ? "" : cityRaw;
+  const zone = locale === "en" && /[\u0600-\u06FF]/.test(zoneRaw) ? "" : zoneRaw;
   const locationParts = [city, zone].filter(Boolean);
   const location =
     locationParts.length > 0
@@ -86,16 +108,26 @@ export function HotelSearchCard({
       : Number.isFinite(lat) && Number.isFinite(lng)
         ? `https://www.google.com/maps?q=${lat},${lng}`
         : "";
-  const distanceLabel = hotel.details.distanceToCenterLabel
+  const distanceLabelRaw = hotel.details.distanceToCenterLabel
     ? String(hotel.details.distanceToCenterLabel)
     : "";
+  const distanceLabel =
+    locale === "en" && /[\u0600-\u06FF]/.test(distanceLabelRaw)
+      ? `${distanceLabelRaw.match(/\d+(?:\.\d+)?/)?.[0] || ""} km`.trim()
+      : distanceLabelRaw;
   const poiDistances = Array.isArray(hotel.details.poiDistances)
     ? (hotel.details.poiDistances as Array<{ label?: string; distanceKm?: number }>)
     : [];
-  const landmarkHint = poiDistances[0]?.label
-    ? `${poiDistances[0].label}${
-        poiDistances[0].distanceKm != null
-          ? ` · ${Number(poiDistances[0].distanceKm).toFixed(1)} ${t("kmShort")}`
+  const firstPoi = poiDistances[0];
+  const landmarkLabel = firstPoi?.label
+    ? locale === "en"
+      ? String(firstPoi.label).replace(/كم/g, "km")
+      : String(firstPoi.label)
+    : "";
+  const landmarkHint = landmarkLabel
+    ? `${landmarkLabel}${
+        firstPoi?.distanceKm != null
+          ? ` · ${Number(firstPoi.distanceKm).toFixed(1)} ${t("kmShort")}`
           : ""
       }`
     : "";
@@ -115,6 +147,7 @@ export function HotelSearchCard({
       ? (hotel.details.facilityLabels as string[])
       : [],
     4,
+    locale,
   );
   const soldOut =
     Number(hotel.details.roomsAvailable) === 0 ||
@@ -142,6 +175,12 @@ export function HotelSearchCard({
       ? translated.original || cheapest?.roomName || t("roomWord")
       : translated.ar
     : t("roomWord");
+  const boardNameLabel = cheapest
+    ? locale === "en"
+      ? BOARD_EN[String(cheapest.boardCode || "").toUpperCase()] ||
+        (!/[\u0600-\u06FF]/.test(cheapest.boardName || "") ? cheapest.boardName : "Room only")
+      : cheapest.boardName
+    : "";
   const taxesNote =
     cheapest?.taxes?.allIncluded === false ? t("taxesExcluded") : t("taxesIncluded");
   const priceBreakdown =
@@ -296,7 +335,7 @@ export function HotelSearchCard({
         {!soldOut && cheapest ? (
           <p className="hotel-search-card-offer-line">
             <strong>{roomNameLabel}</strong>
-            {cheapest.boardName ? ` · ${cheapest.boardName}` : ""}
+            {boardNameLabel ? ` · ${boardNameLabel}` : ""}
           </p>
         ) : null}
       </div>
@@ -354,7 +393,7 @@ export function HotelSearchCard({
                 {cheapest.roomName && cheapest.roomName !== roomNameLabel ? (
                   <small> ({cheapest.roomName})</small>
                 ) : null}{" "}
-                · {cheapest.boardName}
+                · {boardNameLabel}
               </p>
             ) : null}
             <button type="button" className="btn hotel-search-card-cta" onClick={onOpen}>

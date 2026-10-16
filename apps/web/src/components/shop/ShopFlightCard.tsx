@@ -44,16 +44,16 @@ type Props = {
   onToggleReturn?: () => void;
 };
 
-const BADGE_LABEL: Record<"best" | "cheapest" | "fastest", string> = {
-  best: "الأفضل",
-  cheapest: "الأرخص",
-  fastest: "الأسرع",
+const BADGE_LABEL: Record<"best" | "cheapest" | "fastest", Record<"ar" | "en", string>> = {
+  best: { ar: "الأفضل", en: "Best" },
+  cheapest: { ar: "الأرخص", en: "Cheapest" },
+  fastest: { ar: "الأسرع", en: "Fastest" },
 };
 
-const BADGE_WHY: Record<"best" | "cheapest" | "fastest", string> = {
-  best: "توازن بين السعر والمدة وعدد التوقفات",
-  cheapest: "أقل سعر إجمالي لهذه البحث",
-  fastest: "أقصر مدة إجمالية للرحلة",
+const BADGE_WHY: Record<"best" | "cheapest" | "fastest", Record<"ar" | "en", string>> = {
+  best: { ar: "توازن بين السعر والمدة وعدد التوقفات", en: "Best balance of price, duration, and stops" },
+  cheapest: { ar: "أقل سعر إجمالي لهذه البحث", en: "Lowest total price for this search" },
+  fastest: { ar: "أقصر مدة إجمالية للرحلة", en: "Shortest total journey time" },
 };
 
 function dayOffsetDays(departAt?: string, arriveAt?: string): number {
@@ -67,23 +67,31 @@ function dayOffsetDays(departAt?: string, arriveAt?: string): number {
   return diff > 0 ? diff : 0;
 }
 
-function legDurationLabel(segs: FlightSeg[], fallbackRaw: unknown) {
+function legDurationLabel(
+  segs: FlightSeg[],
+  fallbackRaw: unknown,
+  locale: "ar" | "en",
+) {
   const mins = computeLegDurationMinutes(segs, fallbackRaw);
-  if (mins > 0) return formatMinutesLabel(mins);
+  if (mins > 0) return formatMinutesLabel(mins, locale);
   if (typeof fallbackRaw === "string") {
     const fromColon = durationMinutes(fallbackRaw);
     if (fromColon !== Number.MAX_SAFE_INTEGER && fromColon > 0) {
-      return formatMinutesLabel(fromColon);
+      return formatMinutesLabel(fromColon, locale);
     }
     if (fallbackRaw.trim()) return fallbackRaw;
   }
   if (typeof fallbackRaw === "number" && fallbackRaw > 0) {
-    return formatMinutesLabel(fallbackRaw);
+    return formatMinutesLabel(fallbackRaw, locale);
   }
   return "—";
 }
 
-function codeshareNote(segs: FlightSeg[], packageCode: string): string | null {
+function codeshareNote(
+  segs: FlightSeg[],
+  packageCode: string,
+  locale: "ar" | "en",
+): string | null {
   for (const seg of segs) {
     const marketing = segmentAirlineCode(seg, packageCode);
     const operating = String(
@@ -92,34 +100,34 @@ function codeshareNote(segs: FlightSeg[], packageCode: string): string | null {
     if (!operating) continue;
     const opCode = operating.length === 2 ? operating.toUpperCase() : "";
     if (opCode && opCode !== marketing) {
-      return `تشغيل فعلي: ${seg.operatingAirlineName || opCode}`;
+      return `${locale === "en" ? "Operated by" : "تشغيل فعلي:"} ${seg.operatingAirlineName || opCode}`;
     }
     if (!opCode && seg.operatingAirlineName) {
-      return `تشغيل فعلي: ${seg.operatingAirlineName}`;
+      return `${locale === "en" ? "Operated by" : "تشغيل فعلي:"} ${seg.operatingAirlineName}`;
     }
   }
   return null;
 }
 
-function airportChangeNote(segs: FlightSeg[]): string | null {
+function airportChangeNote(segs: FlightSeg[], locale: "ar" | "en"): string | null {
   for (let i = 0; i < segs.length - 1; i += 1) {
     const cur = segs[i]!;
     const next = segs[i + 1]!;
     const arr = String(cur.to || "");
     const dep = String(next.from || "");
     if (arr && dep && arr !== dep) {
-      return `تغيير مطار: ${arr} → ${dep}`;
+      return `${locale === "en" ? "Airport change" : "تغيير مطار"}: ${arr} → ${dep}`;
     }
     const arrT = String(cur.arrivalTerminal || "").trim();
     const depT = String(next.departureTerminal || "").trim();
     if (arrT && depT && arrT !== depT) {
-      return `تغيير صالة: ${arrT} → ${depT}`;
+      return `${locale === "en" ? "Terminal change" : "تغيير صالة"}: ${arrT} → ${depT}`;
     }
   }
   return null;
 }
 
-function stopDurationHint(segs: FlightSeg[]): string | null {
+function stopDurationHint(segs: FlightSeg[], locale: "ar" | "en"): string | null {
   if (segs.length < 2) return null;
   const parts: string[] = [];
   for (let i = 0; i < segs.length - 1; i += 1) {
@@ -132,7 +140,7 @@ function stopDurationHint(segs: FlightSeg[]): string | null {
     const code = String(cur.to || "").trim().toUpperCase();
     if (!code) continue;
     if (mins != null && mins > 0) {
-      parts.push(`(${code}) ${formatMinutesLabel(mins)}`);
+      parts.push(`(${code}) ${formatMinutesLabel(mins, locale)}`);
     } else {
       parts.push(`(${code})`);
     }
@@ -144,13 +152,14 @@ function transitLabel(
   stops: number,
   stopHint: string | null,
   stopCodes: string[],
+  locale: "ar" | "en",
 ): string {
-  if (stops <= 0) return stopsLabel(0);
+  if (stops <= 0) return stopsLabel(0, locale);
   // One clear line: airport + duration, or stop count once — never both duplicated
   if (stopHint) return stopHint;
-  if (stopCodes.length === 1) return `(${stopCodes[0]}) — ${stopsLabel(1)}`;
-  if (stopCodes.length > 1) return `(${stopCodes.join(", ")}) — ${stopsLabel(stops)}`;
-  return stopsLabel(stops);
+  if (stopCodes.length === 1) return `(${stopCodes[0]}) — ${stopsLabel(1, locale)}`;
+  if (stopCodes.length > 1) return `(${stopCodes.join(", ")}) — ${stopsLabel(stops, locale)}`;
+  return stopsLabel(stops, locale);
 }
 
 function stopAirportCodes(segs: FlightSeg[]): string[] {
@@ -191,28 +200,40 @@ function LegBlock({
   legSelected?: boolean;
   onPickLeg?: () => void;
 }) {
+  const { locale } = useShopCopy();
   const first = segs[0];
   const code = segmentAirlineCode(first, packageCode);
   const logo = airlineLogo(code, 128);
-  const name = flightAirlineNameAr(details, first, isReturn ? "return" : "out");
+  const name = flightAirlineNameAr(
+    details,
+    first,
+    isReturn ? "return" : "out",
+    locale,
+  );
   const flightNo = segs
     .map((s) => s.flightNumber)
     .filter(Boolean)
     .join(" · ");
-  const duration = legDurationLabel(segs, durationRaw);
+  const duration = legDurationLabel(segs, durationRaw, locale);
   const offsetDays = dayOffsetDays(
     depRaw.includes("T") ? depRaw : undefined,
     arrRaw.includes("T") ? arrRaw : undefined,
   );
-  const codeshare = codeshareNote(segs, packageCode);
-  const airportChange = airportChangeNote(segs);
-  const stopHint = stopDurationHint(segs);
+  const codeshare = codeshareNote(segs, packageCode, locale);
+  const airportChange = airportChangeNote(segs, locale);
+  const stopHint = stopDurationHint(segs, locale);
   const stopCodes = stopAirportCodes(segs);
-  const depDay = formatDay(depRaw.includes("T") ? depRaw.slice(0, 10) : depRaw);
-  const arrDay = formatDay(arrRaw.includes("T") ? arrRaw.slice(0, 10) : arrRaw);
+  const depDay = formatDay(
+    depRaw.includes("T") ? depRaw.slice(0, 10) : depRaw,
+    locale,
+  );
+  const arrDay = formatDay(
+    arrRaw.includes("T") ? arrRaw.slice(0, 10) : arrRaw,
+    locale,
+  );
   const stopNodes = Math.min(Math.max(stops, stopCodes.length), 3);
-  const fromPlace = airportPlaceLabel(from);
-  const toPlace = airportPlaceLabel(to);
+  const fromPlace = airportPlaceLabel(from, locale);
+  const toPlace = airportPlaceLabel(to, locale);
 
   return (
     <div
@@ -227,7 +248,15 @@ function LegBlock({
             type="checkbox"
             checked={Boolean(legSelected)}
             onChange={() => onPickLeg?.()}
-            aria-label={isReturn ? "اختيار رحلة العودة" : "اختيار رحلة الذهاب"}
+            aria-label={
+              locale === "en"
+                ? isReturn
+                  ? "Select return flight"
+                  : "Select outbound flight"
+                : isReturn
+                  ? "اختيار رحلة العودة"
+                  : "اختيار رحلة الذهاب"
+            }
           />
         </label>
       ) : null}
@@ -260,7 +289,7 @@ function LegBlock({
 
       <div className="shop-ticket-path">
         <strong className="shop-ticket-meta-duration">
-          المدة: <bdi>{duration}</bdi>
+          {locale === "en" ? "Duration" : "المدة"}: <bdi>{duration}</bdi>
         </strong>
         <div className="shop-ticket-route" aria-hidden>
           <span className="shop-ticket-route-line" />
@@ -280,7 +309,11 @@ function LegBlock({
           <span
             className={`shop-ticket-meta-stops${stops === 0 ? " direct" : ""}`}
           >
-            {stops > 0 ? <bdi>{transitLabel(stops, stopHint, stopCodes)}</bdi> : transitLabel(stops, stopHint, stopCodes)}
+            {stops > 0 ? (
+              <bdi>{transitLabel(stops, stopHint, stopCodes, locale)}</bdi>
+            ) : (
+              transitLabel(stops, stopHint, stopCodes, locale)
+            )}
           </span>
           {airportChange ? (
             <small className="shop-ticket-airport-change">{airportChange}</small>
@@ -293,7 +326,14 @@ function LegBlock({
           {formatClock(arrRaw)}
           {offsetDays > 0 ? (
             <span className="shop-ticket-day-offset">
-              +{offsetDays} {offsetDays === 1 ? "يوم" : "أيام"}
+              +{offsetDays}{" "}
+              {locale === "en"
+                ? offsetDays === 1
+                  ? "day"
+                  : "days"
+                : offsetDays === 1
+                  ? "يوم"
+                  : "أيام"}
             </span>
           ) : null}
         </strong>
@@ -320,7 +360,7 @@ export function ShopFlightCard({
   isExpanded = false,
   selectLoading = false,
   isHighlighted = false,
-  selectLabel = "اختيار هذه الرحلة",
+  selectLabel,
   enableMixMatch = false,
   outboundKey,
   returnKey,
@@ -330,7 +370,7 @@ export function ShopFlightCard({
   onToggleReturn,
 }: Props) {
   // Prices come from context formatMoney so currency changes re-render immediately.
-  const { currency: displayCurrency, formatMoney } = useShopCopy();
+  const { locale, currency: displayCurrency, formatMoney } = useShopCopy();
   const segs = getSegments(flight.details);
   const returnSegs = getReturnSegments(flight.details);
   const first = segs[0];
@@ -363,7 +403,15 @@ export function ShopFlightCard({
 
   const pax = Math.max(1, passengers);
   const totalPriceLine =
-    pax > 1 ? `السعر الإجمالي لـ ${pax} مسافرين` : "السعر الإجمالي لمسافر واحد";
+    locale === "en"
+      ? pax > 1
+        ? `Total price for ${pax} travelers`
+        : "Total price for 1 traveler"
+      : pax > 1
+        ? `السعر الإجمالي لـ ${pax} مسافرين`
+        : "السعر الإجمالي لمسافر واحد";
+  const effectiveSelectLabel =
+    selectLabel || (locale === "en" ? "Select this flight" : "اختيار هذه الرحلة");
 
   return (
     <article
@@ -377,9 +425,9 @@ export function ShopFlightCard({
             <span
               key={b}
               className={`shop-ticket-badge shop-ticket-badge-${b}`}
-              title={BADGE_WHY[b]}
+              title={BADGE_WHY[b][locale]}
             >
-              {BADGE_LABEL[b]}
+              {BADGE_LABEL[b][locale]}
             </span>
           ))}
         </div>
@@ -433,9 +481,13 @@ export function ShopFlightCard({
 
         <div className="shop-ticket-stub-totals">
           <span>{totalPriceLine}</span>
-          <span>شامل الضرائب</span>
+          <span>{locale === "en" ? "Taxes included" : "شامل الضرائب"}</span>
           {Number(flight.details.fareOptionCount) > 1 ? (
-            <span>{Number(flight.details.fareOptionCount)} فئات تذكرة</span>
+            <span>
+              {locale === "en"
+                ? `${Number(flight.details.fareOptionCount)} fare options`
+                : `${Number(flight.details.fareOptionCount)} فئات تذكرة`}
+            </span>
           ) : null}
         </div>
 
@@ -451,7 +503,7 @@ export function ShopFlightCard({
                 <span className="shop-flight-spinner small" aria-hidden />
               </span>
             ) : (
-              selectLabel
+              effectiveSelectLabel
             )}
           </button>
           <button
@@ -459,7 +511,7 @@ export function ShopFlightCard({
             className="shop-ticket-details-link"
             onClick={onViewDetails}
           >
-            التفاصيل والشروط
+            {locale === "en" ? "Details and conditions" : "التفاصيل والشروط"}
           </button>
         </div>
       </aside>

@@ -16,15 +16,15 @@ export const DEFAULT_CURRENCY = "KWD" as const;
 export const DEFAULT_TIMEZONE = "Asia/Kuwait" as const;
 
 export const SUPPORTED_CURRENCIES = [
-  { code: "KWD", label: "دينار كويتي", symbol: "د.ك" },
-  { code: "SAR", label: "ريال سعودي", symbol: "ر.س" },
-  { code: "AED", label: "درهم إماراتي", symbol: "د.إ" },
-  { code: "QAR", label: "ريال قطري", symbol: "ر.ق" },
-  { code: "BHD", label: "دينار بحريني", symbol: "د.ب" },
-  { code: "OMR", label: "ريال عماني", symbol: "ر.ع" },
-  { code: "EGP", label: "جنيه مصري", symbol: "ج.م" },
-  { code: "USD", label: "دولار أمريكي", symbol: "$" },
-  { code: "EUR", label: "يورو", symbol: "€" },
+  { code: "KWD", label: "دينار كويتي", symbol: "KWD" },
+  { code: "SAR", label: "ريال سعودي", symbol: "SAR" },
+  { code: "AED", label: "درهم إماراتي", symbol: "AED" },
+  { code: "QAR", label: "ريال قطري", symbol: "QAR" },
+  { code: "BHD", label: "دينار بحريني", symbol: "BHD" },
+  { code: "OMR", label: "ريال عماني", symbol: "OMR" },
+  { code: "EGP", label: "جنيه مصري", symbol: "EGP" },
+  { code: "USD", label: "دولار أمريكي", symbol: "USD" },
+  { code: "EUR", label: "يورو", symbol: "EUR" },
 ] as const;
 
 export type SupportedCurrencyCode =

@@ -49,10 +49,12 @@ type Props = {
   enableMixMatch?: boolean;
   /** Sticky / pinned custom trip summary above the list */
   customTripSlot?: ReactNode;
+  /** Price-alert control shown on the sort bar */
+  alertSlot?: ReactNode;
 };
 
 export function ShopFlightResults(props: Props) {
-  const { currency: displayCurrency, formatMoneyCompact } = useShopCopy();
+  const { locale, currency: displayCurrency, formatMoneyCompact } = useShopCopy();
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [visibleCount, setVisibleCount] = useState(10);
   const active = flightFiltersActive(props.filters);
@@ -67,8 +69,9 @@ export function ShopFlightResults(props: Props) {
       summarizeFlightSortTabs(
         props.flights,
         pickStep === "outbound" ? "outbound" : pickStep === "return" ? "return" : "full",
+        locale,
       ),
-    [props.flights, pickStep],
+    [props.flights, pickStep, locale],
   );
   const displayLeg: FlightCardDisplayLeg =
     pickStep === "outbound" ? "outbound" : pickStep === "return" ? "return" : "both";
@@ -82,21 +85,38 @@ export function ShopFlightResults(props: Props) {
   const selectLabel =
     props.selectLabel ||
     (pickStep === "outbound"
-      ? "اختيار الذهاب"
+      ? locale === "en"
+        ? "Select outbound"
+        : "اختيار الذهاب"
       : pickStep === "return"
-        ? "اختيار العودة"
-        : "اختيار هذه الرحلة");
+        ? locale === "en"
+          ? "Select return"
+          : "اختيار العودة"
+        : locale === "en"
+          ? "Select this flight"
+          : "اختيار هذه الرحلة");
 
   return (
     <section className="shop-flight-results kayak">
-      <div className="shop-flight-sort-tabs" role="tablist" aria-label="ترتيب النتائج">
+      <div
+        className="shop-flight-sort-tabs"
+        role="tablist"
+        aria-label={locale === "en" ? "Sort results" : "ترتيب النتائج"}
+      >
+        <div className="shop-flight-sort-tabs-main">
         {sortTabs.map((tab) => {
           const why =
             tab.key === "best"
-              ? "توازن بين السعر والمدة وعدد التوقفات"
+              ? locale === "en"
+                ? "Best balance of price, duration, and stops"
+                : "توازن بين السعر والمدة وعدد التوقفات"
               : tab.key === "price_asc"
-                ? "أقل سعر إجمالي لهذه البحث"
-                : "أقصر مدة إجمالية للرحلة";
+                ? locale === "en"
+                  ? "Lowest total price for this search"
+                  : "أقل سعر إجمالي لهذه البحث"
+                : locale === "en"
+                  ? "Shortest total journey time"
+                  : "أقصر مدة إجمالية للرحلة";
           return (
             <button
               key={tab.key}
@@ -117,26 +137,30 @@ export function ShopFlightResults(props: Props) {
               </strong>
               <span className="shop-flight-sort-tab-meta">
                 {tab.durationMins != null && tab.durationMins < Number.MAX_SAFE_INTEGER
-                  ? formatMinutesLabel(tab.durationMins)
+                  ? formatMinutesLabel(tab.durationMins, locale)
                   : "—"}
               </span>
               <em className="shop-flight-sort-tab-why">{why}</em>
             </button>
           );
         })}
+        </div>
+        {props.alertSlot ? <div className="shop-flight-sort-alert">{props.alertSlot}</div> : null}
       </div>
 
       <div className="shop-flight-results-count">
         {props.stepTitle ? <strong>{props.stepTitle} · </strong> : null}
-        عرض {Math.min(visibleCount, props.flights.length)} من {props.totalCount}
-        {active ? " · فلاتر مفعّلة" : ""}
+        {locale === "en"
+          ? `Showing ${Math.min(visibleCount, props.flights.length)} of ${props.totalCount}`
+          : `عرض ${Math.min(visibleCount, props.flights.length)} من ${props.totalCount}`}
+        {active ? (locale === "en" ? " · Filters active" : " · فلاتر مفعّلة") : ""}
       </div>
 
       {filtersOpen ? (
         <button
           type="button"
           className="shop-filters-sheet-backdrop"
-          aria-label="إغلاق الفلاتر"
+          aria-label={locale === "en" ? "Close filters" : "إغلاق الفلاتر"}
           onClick={() => setFiltersOpen(false)}
         />
       ) : null}
@@ -146,7 +170,13 @@ export function ShopFlightResults(props: Props) {
         className="shop-flight-filters-mobile-toggle"
         onClick={() => setFiltersOpen((v) => !v)}
       >
-        {filtersOpen ? "إخفاء الفلاتر" : "الفلاتر"}
+        {filtersOpen
+          ? locale === "en"
+            ? "Hide filters"
+            : "إخفاء الفلاتر"
+          : locale === "en"
+            ? "Filters"
+            : "الفلاتر"}
         {filterCount > 0 ? (
           <span className="shop-filters-count-badge">{filterCount}</span>
         ) : null}
@@ -157,9 +187,9 @@ export function ShopFlightResults(props: Props) {
           className={`shop-flight-filters-desktop shop-filters-sheet${filtersOpen ? " open" : ""}`}
         >
           <div className="shop-filters-sheet-head">
-            <strong>الفلاتر</strong>
+            <strong>{locale === "en" ? "Filters" : "الفلاتر"}</strong>
             <button type="button" onClick={() => setFiltersOpen(false)}>
-              تم
+              {locale === "en" ? "Done" : "تم"}
             </button>
           </div>
           <ShopFlightFilters
@@ -220,20 +250,29 @@ export function ShopFlightResults(props: Props) {
                 className="shop-flight-show-more"
                 onClick={() => setVisibleCount((n) => n + 10)}
               >
-                إظهار المزيد ({props.flights.length - visibleCount})
+                {locale === "en" ? "Show more" : "إظهار المزيد"} (
+                {props.flights.length - visibleCount})
               </button>
             ) : null}
             {props.flights.length === 0 ? (
               <div className="shop-ticket-empty">
-                <strong>لا توجد رحلات مطابقة للفلاتر الحالية</strong>
+                <strong>
+                  {locale === "en"
+                    ? "No flights match the current filters"
+                    : "لا توجد رحلات مطابقة للفلاتر الحالية"}
+                </strong>
                 <p>
                   {active
-                    ? "جرّب إزالة بعض الفلاتر أو توسيع نطاق السعر والمدة."
-                    : "لا توجد نتائج متاحة لهذا البحث. غيّر التواريخ أو المسار وحاول مرة أخرى."}
+                    ? locale === "en"
+                      ? "Remove some filters or widen the price and duration ranges."
+                      : "جرّب إزالة بعض الفلاتر أو توسيع نطاق السعر والمدة."
+                    : locale === "en"
+                      ? "No results are available for this search. Change the dates or route and try again."
+                      : "لا توجد نتائج متاحة لهذا البحث. غيّر التواريخ أو المسار وحاول مرة أخرى."}
                 </p>
                 {active ? (
                   <button type="button" onClick={props.onResetFilters}>
-                    إعادة ضبط الفلاتر
+                    {locale === "en" ? "Reset filters" : "إعادة ضبط الفلاتر"}
                   </button>
                 ) : null}
               </div>

@@ -8,20 +8,9 @@ import { StoreFront } from "@/components/shop/StoreFront";
 import {
   clearBookingDraft,
   getBookingDraft,
-  saveFlightDraft,
   type BookingDraft,
   type FlightBookingDraft,
-  type FlightExtraDraft,
-  type FlightTravelerDraft,
 } from "@/lib/booking-draft";
-import { FlightBookingSteps } from "@/components/shop/FlightBookingSteps";
-import { FlightExtrasPicker } from "@/components/shop/FlightExtrasPicker";
-import {
-  extrasTotalMinor,
-  passportRequiredForOffer,
-  validateFlightContact,
-  validateFlightTraveler,
-} from "@watesly-travel/shared";
 import { formatDay } from "@/lib/flight-search";
 import { formatMoneyMinor } from "@/lib/format";
 import { ShopMockBanner } from "@/components/shop/ShopMockBanner";
@@ -36,6 +25,8 @@ import type { HotelBookingDraft, HotelRoomGuestDraft } from "@/lib/booking-draft
 import { compressPassportImage } from "@/lib/compress-passport-image";
 import { FamilyTravelerPicker } from "@/components/shop/FamilyTravelerPicker";
 import { loadFamilySelection } from "@/lib/family-travelers";
+import { useShopCopy } from "@/components/shop/ShopI18nProvider";
+import { airportPlaceLabel } from "@/lib/airport-cities";
 
 function buildHotelRoomGuests(draft: HotelBookingDraft): HotelRoomGuestDraft[] {
   if (draft.roomGuests?.length) return draft.roomGuests;
@@ -77,12 +68,22 @@ function buildHotelRoomGuests(draft: HotelBookingDraft): HotelRoomGuestDraft[] {
     : [{ roomIndex: 0, isLead: true, title: "mr", firstName: "", lastName: "", type: "adult" }];
 }
 
-type Traveler = FlightTravelerDraft & { middleName: string };
+type Traveler = {
+  title: string;
+  firstName: string;
+  middleName: string;
+  lastName: string;
+  birthDate: string;
+  nationality: string;
+  passportNumber: string;
+  passportIssueDate: string;
+  passportExpiry: string;
+  gender: string;
+};
 
-function emptyTraveler(type: Traveler["type"] = "adult"): Traveler {
+function emptyTraveler(): Traveler {
   return {
-    type,
-    title: type === "adult" ? "mr" : "miss",
+    title: "mr",
     firstName: "",
     middleName: "",
     lastName: "",
@@ -91,7 +92,7 @@ function emptyTraveler(type: Traveler["type"] = "adult"): Traveler {
     passportNumber: "",
     passportIssueDate: "",
     passportExpiry: "",
-    gender: type === "adult" ? "male" : "female",
+    gender: "male",
   };
 }
 
@@ -126,23 +127,17 @@ function draftTitle(draft: BookingDraft) {
   return draft.activity.description;
 }
 
-function travelerComplete(t: Traveler, travelDate: string, requirePassport: boolean) {
-  return Object.keys(validateFlightTraveler(t, travelDate, requirePassport)).length === 0;
-}
-
-function buildFlightTravelers(draft: FlightBookingDraft): Traveler[] {
-  if (draft.travelers?.length) {
-    return draft.travelers.map((t) => ({
-      ...emptyTraveler(t.type),
-      ...t,
-      middleName: t.middleName || "",
-    }));
-  }
-  const rows: Traveler[] = [];
-  for (let i = 0; i < Math.max(0, draft.adults); i += 1) rows.push(emptyTraveler("adult"));
-  for (let i = 0; i < Math.max(0, draft.children); i += 1) rows.push(emptyTraveler("child"));
-  for (let i = 0; i < Math.max(0, draft.infants || 0); i += 1) rows.push(emptyTraveler("infant"));
-  return rows.length ? rows : [emptyTraveler("adult")];
+function travelerComplete(t: Traveler) {
+  return Boolean(
+    t.firstName.trim() &&
+      t.lastName.trim() &&
+      t.gender &&
+      t.birthDate &&
+      t.nationality.trim() &&
+      t.passportNumber.trim() &&
+      t.passportIssueDate &&
+      t.passportExpiry,
+  );
 }
 
 function splitBirthDate(iso: string) {
@@ -163,48 +158,51 @@ function joinBirthDate(y: string, m: string, d: string) {
 }
 
 const MONTHS = [
-  { v: "01", l: "يناير" },
-  { v: "02", l: "فبراير" },
-  { v: "03", l: "مارس" },
-  { v: "04", l: "أبريل" },
-  { v: "05", l: "مايو" },
-  { v: "06", l: "يونيو" },
-  { v: "07", l: "يوليو" },
-  { v: "08", l: "أغسطس" },
-  { v: "09", l: "سبتمبر" },
-  { v: "10", l: "أكتوبر" },
-  { v: "11", l: "نوفمبر" },
-  { v: "12", l: "ديسمبر" },
+  { v: "01", ar: "يناير", en: "January" },
+  { v: "02", ar: "فبراير", en: "February" },
+  { v: "03", ar: "مارس", en: "March" },
+  { v: "04", ar: "أبريل", en: "April" },
+  { v: "05", ar: "مايو", en: "May" },
+  { v: "06", ar: "يونيو", en: "June" },
+  { v: "07", ar: "يوليو", en: "July" },
+  { v: "08", ar: "أغسطس", en: "August" },
+  { v: "09", ar: "سبتمبر", en: "September" },
+  { v: "10", ar: "أكتوبر", en: "October" },
+  { v: "11", ar: "نوفمبر", en: "November" },
+  { v: "12", ar: "ديسمبر", en: "December" },
 ];
 
 const PASSPORT_COUNTRIES = [
-  { code: "KW", label: "الكويت" },
-  { code: "SA", label: "السعودية" },
-  { code: "AE", label: "الإمارات" },
-  { code: "BH", label: "البحرين" },
-  { code: "QA", label: "قطر" },
-  { code: "OM", label: "عمان" },
-  { code: "EG", label: "مصر" },
-  { code: "JO", label: "الأردن" },
-  { code: "LB", label: "لبنان" },
-  { code: "IQ", label: "العراق" },
-  { code: "IN", label: "الهند" },
-  { code: "PK", label: "باكستان" },
-  { code: "PH", label: "الفلبين" },
-  { code: "GB", label: "المملكة المتحدة" },
-  { code: "US", label: "الولايات المتحدة" },
-  { code: "OTHER", label: "أخرى" },
+  { code: "KW", ar: "الكويت", en: "Kuwait" },
+  { code: "SA", ar: "السعودية", en: "Saudi Arabia" },
+  { code: "AE", ar: "الإمارات", en: "United Arab Emirates" },
+  { code: "BH", ar: "البحرين", en: "Bahrain" },
+  { code: "QA", ar: "قطر", en: "Qatar" },
+  { code: "OM", ar: "عمان", en: "Oman" },
+  { code: "EG", ar: "مصر", en: "Egypt" },
+  { code: "JO", ar: "الأردن", en: "Jordan" },
+  { code: "LB", ar: "لبنان", en: "Lebanon" },
+  { code: "IQ", ar: "العراق", en: "Iraq" },
+  { code: "IN", ar: "الهند", en: "India" },
+  { code: "PK", ar: "باكستان", en: "Pakistan" },
+  { code: "PH", ar: "الفلبين", en: "Philippines" },
+  { code: "GB", ar: "المملكة المتحدة", en: "United Kingdom" },
+  { code: "US", ar: "الولايات المتحدة", en: "United States" },
+  { code: "OTHER", ar: "أخرى", en: "Other" },
 ];
 
 function DatePartsRow({
   value,
   onChange,
   labels,
+  locale,
 }: {
   value: { y: string; m: string; d: string };
   onChange: (part: Partial<{ y: string; m: string; d: string }>) => void;
   labels: { month: string; day: string; year: string };
+  locale: "ar" | "en";
 }) {
+  const { locale } = useShopCopy();
   return (
     <div className="shop-traveler-dob">
       <select
@@ -215,13 +213,13 @@ function DatePartsRow({
         <option value="">{labels.month}</option>
         {MONTHS.map((m) => (
           <option key={m.v} value={m.v}>
-            {m.l}
+            {m[locale]}
           </option>
         ))}
       </select>
       <input
         inputMode="numeric"
-        placeholder="يوم"
+        placeholder={locale === "en" ? "Day" : "يوم"}
         aria-label={labels.day}
         maxLength={2}
         value={value.d}
@@ -229,7 +227,7 @@ function DatePartsRow({
       />
       <input
         inputMode="numeric"
-        placeholder="سنة"
+        placeholder={locale === "en" ? "Year" : "سنة"}
         aria-label={labels.year}
         maxLength={4}
         value={value.y}
@@ -243,15 +241,12 @@ function FlightCheckout({
   draft,
   travelers,
   setTravelers,
-  extras,
-  setExtras,
   email,
   setEmail,
   phone,
   setPhone,
   name,
   setName,
-  fieldErrors,
   error,
   submitting,
   onSubmit,
@@ -259,15 +254,12 @@ function FlightCheckout({
   draft: FlightBookingDraft;
   travelers: Traveler[];
   setTravelers: Dispatch<SetStateAction<Traveler[]>>;
-  extras: FlightExtraDraft[];
-  setExtras: Dispatch<SetStateAction<FlightExtraDraft[]>>;
   email: string;
   setEmail: (v: string) => void;
   phone: string;
   setPhone: (v: string) => void;
   name: string;
   setName: (v: string) => void;
-  fieldErrors: Record<string, string>;
   error: string;
   submitting: boolean;
   onSubmit: () => void;
@@ -282,35 +274,28 @@ function FlightCheckout({
   const passportInputRef = useRef<HTMLInputElement | null>(null);
   const scanTargetRef = useRef<number>(0);
   const ignoreBackdropCloseRef = useRef(false);
-  const needPassport = passportRequiredForOffer(draft.flight.details);
+  const baggage = (draft.flight.details.baggage || {}) as Record<string, string>;
   const tripLabel =
     draft.tripType === "roundtrip"
-      ? "ذهاب وعودة"
+      ? locale === "en"
+        ? "Round trip"
+        : "ذهاب وعودة"
       : draft.tripType === "multicity"
-        ? "وجهات متعددة"
-        : "اتجاه واحد";
-  const pax = draft.adults + draft.children + (draft.infants || 0);
-  const extrasMinor = extrasTotalMinor(extras);
-  const availableExtras = draft.availableExtras || [];
+        ? locale === "en"
+          ? "Multi-city"
+          : "وجهات متعددة"
+        : locale === "en"
+          ? "One way"
+          : "اتجاه واحد";
+  const pax = draft.adults + draft.children;
   const dateLabel = [
-    formatDay(draft.departDate),
-    draft.returnDate ? formatDay(draft.returnDate) : "",
+    formatDay(draft.departDate, locale),
+    draft.returnDate ? formatDay(draft.returnDate, locale) : "",
   ]
     .filter(Boolean)
     .join(" – ");
 
   const editing = editIndex != null ? travelers[editIndex] : null;
-  const paxError = (key: string) =>
-    editIndex != null ? fieldErrors[`pax${editIndex}.${key}`] : undefined;
-  const rowHasErrors = (idx: number) =>
-    Object.keys(fieldErrors).some((key) => key.startsWith(`pax${idx}.`));
-
-  useEffect(() => {
-    const first = Object.keys(fieldErrors)
-      .map((key) => /^pax(\d+)\./.exec(key)?.[1])
-      .find((value) => value != null);
-    if (first != null) setEditIndex(Number(first));
-  }, [fieldErrors]);
 
   useEffect(() => {
     if (editIndex == null) return;
@@ -373,22 +358,30 @@ function FlightCheckout({
       /\.(jpe?g|png|webp|heic|heif)$/i.test(file.name || "");
     if (!looksImage) {
       setEditIndex(targetIndex);
-      setScanHint("اختر صورة جواز سفر (JPG أو PNG)");
+      setScanHint(
+        locale === "en"
+          ? "Choose a passport image (JPG or PNG)"
+          : "اختر صورة جواز سفر (JPG أو PNG)",
+      );
       return;
     }
     if (file.size > 6 * 1024 * 1024) {
       setEditIndex(targetIndex);
-      setScanHint("حجم الصورة كبير. استخدم صورة أصغر من 6MB");
+      setScanHint(
+        locale === "en"
+          ? "The image is too large. Use an image smaller than 6 MB"
+          : "حجم الصورة كبير. استخدم صورة أصغر من 6MB",
+      );
       return;
     }
 
     // Keep modal open while scanning (file dialog may have closed it).
     setEditIndex(targetIndex);
     setScanning(true);
-    setScanHint("جارٍ ضغط الصورة...");
+    setScanHint(locale === "en" ? "Compressing image…" : "جارٍ ضغط الصورة...");
     try {
       const { base64: imageBase64, mimeType } = await compressPassportImage(file);
-      setScanHint("جارٍ تحليل صورة الجواز...");
+      setScanHint(locale === "en" ? "Analyzing passport image…" : "جارٍ تحليل صورة الجواز...");
       const result = await shopFetch<{
         fields: Partial<Traveler & { title?: string }>;
         confidence: number;
@@ -409,8 +402,10 @@ function FlightCheckout({
       setEditIndex(targetIndex);
       if (!filled) {
         setScanHint(
-          result.notes ||
-            "تعذر قراءة بيانات كافية من الصورة. جرّب صورة أوضح لصفحة الجواز (الوجه الأمامي مع السطر السفلي).",
+          locale === "en"
+            ? "Could not read enough data from the image. Try a clearer passport photo page."
+            : result.notes ||
+              "تعذر قراءة بيانات كافية من الصورة. جرّب صورة أوضح لصفحة الجواز (الوجه الأمامي مع السطر السفلي).",
         );
         return;
       }
@@ -468,12 +463,19 @@ function FlightCheckout({
       if (nextExpiry) setExpiryDraft(splitBirthDate(nextExpiry));
       const pct = Math.round((result.confidence || 0) * 100);
       setScanHint(
-        result.notes ||
-          `تم ملء البيانات من الصورة${pct ? ` · ثقة تقريبية ${pct}%` : ""}. راجعها قبل الحفظ.`,
+        locale === "en"
+          ? `Details filled from the image${pct ? ` · Approximate confidence ${pct}%` : ""}. Review them before saving.`
+          : result.notes ||
+            `تم ملء البيانات من الصورة${pct ? ` · ثقة تقريبية ${pct}%` : ""}. راجعها قبل الحفظ.`,
       );
     } catch (err) {
       setEditIndex(targetIndex);
-      setScanHint(err instanceof Error ? err.message : "فشل مسح الجواز");
+      const raw = err instanceof Error ? err.message : "";
+      setScanHint(
+        locale === "en" && /[\u0600-\u06FF]/.test(raw)
+          ? "Passport scan failed"
+          : raw || (locale === "en" ? "Passport scan failed" : "فشل مسح الجواز"),
+      );
     } finally {
       setScanning(false);
       ignoreBackdropCloseRef.current = false;
@@ -484,15 +486,36 @@ function FlightCheckout({
   return (
     <div className="shop-flight-checkout">
       <ShopMockBanner compact />
-      <FlightBookingSteps current={2} />
+      <div
+        className="shop-flight-checkout-steps"
+        aria-label={locale === "en" ? "Booking steps" : "خطوات الحجز"}
+      >
+        {(locale === "en"
+          ? ["Your details", "Fare type", "Extras", "Seat selection", "Review and payment"]
+          : ["بياناتك", "نوع التذكرة", "إضافات", "اختيار المقعد", "المراجعة والدفع"]
+        ).map((label, idx) => (
+          <span
+            key={label}
+            className={`shop-flight-checkout-step${idx === 0 ? " on" : ""}`}
+          >
+            <i>{idx + 1}</i>
+            {label}
+          </span>
+        ))}
+      </div>
 
       <div className="shop-flight-checkout-summary">
         <p>
-          {tripLabel} · {pax} مسافر · {dateLabel}
+          {tripLabel} · {pax} {locale === "en" ? (pax === 1 ? "traveler" : "travelers") : "مسافر"} · {dateLabel}
         </p>
         <h1>
-          {draft.originLabel || draft.origin} إلى{" "}
-          {draft.destinationLabel || draft.destination}
+          {locale === "en"
+            ? airportPlaceLabel(draft.origin, "en")
+            : draft.originLabel || draft.origin}{" "}
+          {locale === "en" ? "to" : "إلى"}{" "}
+          {locale === "en"
+            ? airportPlaceLabel(draft.destination, "en")
+            : draft.destinationLabel || draft.destination}
         </h1>
       </div>
 
@@ -501,31 +524,26 @@ function FlightCheckout({
       <div className="shop-flight-checkout-layout">
         <div className="shop-flight-checkout-main">
           <section className="shop-flight-checkout-card">
-            <h2>أدخل بياناتك</h2>
+            <h2>{locale === "en" ? "Enter your details" : "أدخل بياناتك"}</h2>
             {travelers.map((traveler, idx) => {
-              const done = travelerComplete(traveler, draft.departDate, needPassport);
-              const typeLabel =
-                traveler.type === "infant"
-                  ? "رضيع"
-                  : traveler.type === "child"
-                    ? "طفل"
-                    : "بالغ";
+              const done = travelerComplete(traveler);
               return (
                 <div key={idx} className="shop-traveler-row">
                   <div className="shop-traveler-meta">
                     <i>👤</i>
                     <div>
                       <strong>
-                        {typeLabel} {idx + 1}
+                        {idx < draft.adults
+                          ? `${locale === "en" ? "Adult" : "بالغ"} ${idx + 1}`
+                          : `${locale === "en" ? "Child" : "طفل"} ${
+                              idx - draft.adults + 1
+                            }`}
                       </strong>
                       {done ? (
                         <p className="shop-hint" style={{ margin: 0 }}>
                           {titleLabel(traveler.title, traveler.gender)}{" "}
                           {traveler.firstName} {traveler.lastName}
                         </p>
-                      ) : null}
-                      {rowHasErrors(idx) ? (
-                        <small className="shop-field-error">بيانات ناقصة — افتح المسافر لإكمالها</small>
                       ) : null}
                     </div>
                   </div>
@@ -534,89 +552,108 @@ function FlightCheckout({
                     className={`shop-traveler-add${done ? " filled" : ""}`}
                     onClick={() => setEditIndex(idx)}
                   >
-                    {done ? "تعديل بيانات المسافر" : "أضف بيانات هذا المسافر"}
+                    {done
+                      ? locale === "en"
+                        ? "Edit traveler details"
+                        : "تعديل بيانات المسافر"
+                      : locale === "en"
+                        ? "Add traveler details"
+                        : "أضف بيانات هذا المسافر"}
                   </button>
                 </div>
               );
             })}
 
-            <p className="shop-hint">
-              الأمتعة المشمولة تظهر في تفاصيل الرحلة كما وردت من العرض. لا نفترض أوزانًا غير موجودة.
-            </p>
+            <div className="shop-flight-baggage-block">
+              <strong>{locale === "en" ? "On every flight" : "في كل رحلة"}</strong>
+              <div className="shop-flight-baggage-row">
+                <span>{locale === "en" ? "Personal item" : "حقيبة شخصية"}</span>
+                <em>{baggage.personal || (locale === "en" ? "Included" : "مشمولة")}</em>
+              </div>
+              <div className="shop-flight-baggage-row">
+                <span>{locale === "en" ? "Cabin bag" : "حقيبة مقصورة"}</span>
+                <em>{baggage.cabin || (locale === "en" ? "Included" : "مشمولة")}</em>
+              </div>
+              {baggage.checked ? (
+                <div className="shop-flight-baggage-row">
+                  <span>{locale === "en" ? "Checked bag" : "حقيبة مسجّلة"}</span>
+                  <em>{baggage.checked}</em>
+                </div>
+              ) : null}
+            </div>
           </section>
 
           <section className="shop-flight-checkout-card">
-            <h2>الإضافات</h2>
-            <FlightExtrasPicker
-              extras={availableExtras}
-              selected={extras}
-              travelers={travelers}
-              onChange={setExtras}
-            />
-          </section>
-
-          <section className="shop-flight-checkout-card">
-            <h2>بيانات التواصل</h2>
+            <h2>{locale === "en" ? "Contact details" : "بيانات التواصل"}</h2>
             <div className="shop-flight-contact-grid">
               <label>
-                الاسم للتواصل
+                {locale === "en" ? "Contact name" : "الاسم للتواصل"}
                 <input value={name} onChange={(e) => setName(e.target.value)} />
-                {fieldErrors.contactName ? <small className="shop-field-error">{fieldErrors.contactName}</small> : null}
               </label>
               <label>
-                البريد الإلكتروني
+                {locale === "en" ? "Email address" : "البريد الإلكتروني"}
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                 />
-                <small>سنرسل تأكيد الرحلة إلى هذا البريد</small>
-                {fieldErrors.email ? <small className="shop-field-error">{fieldErrors.email}</small> : null}
+                <small>
+                  {locale === "en"
+                    ? "We will send the flight confirmation to this email"
+                    : "سنرسل تأكيد الرحلة إلى هذا البريد"}
+                </small>
               </label>
               <label>
-                رقم الجوال <small>(اختياري — الحجز كضيف متاح)</small>
+                {locale === "en" ? "Mobile number" : "رقم الجوال"}{" "}
+                <small>{locale === "en" ? "(optional)" : "(اختياري)"}</small>
                 <input
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   placeholder="+965"
                 />
-                {fieldErrors.phone ? <small className="shop-field-error">{fieldErrors.phone}</small> : null}
               </label>
             </div>
           </section>
 
           <div className="shop-flight-checkout-nav">
-            <Link href="/book/review">‹ رجوع للتفاصيل</Link>
+            <Link href="/">‹ {locale === "en" ? "Back" : "رجوع"}</Link>
             <button type="button" disabled={submitting} onClick={onSubmit}>
-              {submitting ? "جارٍ الحفظ..." : "مراجعة والدفع"}
+              {submitting
+                ? locale === "en"
+                  ? "Saving…"
+                  : "جارٍ الحفظ..."
+                : locale === "en"
+                  ? "Next"
+                  : "التالي"}
             </button>
           </div>
         </div>
 
         <aside className="shop-flight-price-card">
-          <h3>تفاصيل السعر</h3>
+          <h3>{locale === "en" ? "Price details" : "تفاصيل السعر"}</h3>
           <div className="shop-flight-price-line">
-            <span>التذاكر</span>
+            <span>
+              {locale === "en" ? "Flight · Adult" : "رحلة · بالغ"} ({draft.adults})
+            </span>
             <span>
               {formatMoneyMinor(draft.flight.sellAmountMinor, draft.flight.currency)}
             </span>
           </div>
-          {extrasMinor ? (
-            <div className="shop-flight-price-line">
-              <span>الإضافات</span>
-              <span>{formatMoneyMinor(extrasMinor, draft.flight.currency)}</span>
-            </div>
-          ) : null}
           <div className="shop-flight-price-total">
-            <span>الإجمالي</span>
+            <span>{locale === "en" ? "Total" : "الإجمالي"}</span>
             <span>
-              {formatMoneyMinor(draft.flight.sellAmountMinor + extrasMinor, draft.flight.currency)}
+              {formatMoneyMinor(draft.flight.sellAmountMinor, draft.flight.currency)}
             </span>
           </div>
           <p className="shop-hint" style={{ margin: 0 }}>
-            يشمل الضرائب والرسوم
+            {locale === "en" ? "Includes taxes and fees" : "يشمل الضرائب والرسوم"}
           </p>
-          <p className="shop-flight-price-note">✓ لا رسوم خفية — تابع السعر في كل خطوة</p>
+          <p className="shop-flight-price-note">
+            ✓{" "}
+            {locale === "en"
+              ? "No hidden fees — follow the price at every step"
+              : "لا رسوم خفية — تابع السعر في كل خطوة"}
+          </p>
         </aside>
       </div>
 
@@ -644,15 +681,21 @@ function FlightCheckout({
             <div className="shop-traveler-modal-head">
               <div className="shop-traveler-modal-title">
                 <h3>
-                  المسافر {editIndex + 1}:{" "}
-                  {editing.type === "infant" ? "رضيع" : editing.type === "child" ? "طفل" : "بالغ"}
+                  {locale === "en" ? "Traveler" : "المسافر"} {editIndex + 1}:{" "}
+                  {editIndex < draft.adults
+                    ? locale === "en"
+                      ? "Adult"
+                      : "بالغ"
+                    : locale === "en"
+                      ? "Child"
+                      : "طفل"}
                 </h3>
-                <span>* مطلوب</span>
+                <span>* {locale === "en" ? "Required" : "مطلوب"}</span>
               </div>
               <button
                 type="button"
                 className="shop-flight-modal-close"
-                aria-label="إغلاق"
+                aria-label={locale === "en" ? "Close" : "إغلاق"}
                 onClick={() => setEditIndex(null)}
               >
                 ×
@@ -661,10 +704,15 @@ function FlightCheckout({
 
             <div className="shop-passport-scan-banner">
               <div>
-                <strong>مسح جواز السفر بالصورة</strong>
+                <strong>
+                  {locale === "en"
+                    ? "Scan passport from an image"
+                    : "مسح جواز السفر بالصورة"}
+                </strong>
                 <p>
-                  ارفع صورة واضحة لصفحة الجواز لملء الاسم وتاريخ الميلاد والجنسية
-                  وبيانات الجواز تلقائيًا.
+                  {locale === "en"
+                    ? "Upload a clear passport photo page to fill the name, date of birth, nationality, and passport details automatically."
+                    : "ارفع صورة واضحة لصفحة الجواز لملء الاسم وتاريخ الميلاد والجنسية وبيانات الجواز تلقائيًا."}
                 </p>
               </div>
               <button
@@ -673,7 +721,13 @@ function FlightCheckout({
                 onClick={openPassportPicker}
                 disabled={scanning}
               >
-                {scanning ? "جارٍ التحليل..." : "رفع صورة الجواز"}
+                {scanning
+                  ? locale === "en"
+                    ? "Analyzing…"
+                    : "جارٍ التحليل..."
+                  : locale === "en"
+                    ? "Upload passport image"
+                    : "رفع صورة الجواز"}
               </button>
             </div>
             {scanHint ? <p className="shop-passport-scan-hint">{scanHint}</p> : null}
@@ -703,7 +757,7 @@ function FlightCheckout({
 
 
             <label>
-              البريد الإلكتروني*
+              {locale === "en" ? "Email address" : "البريد الإلكتروني"}*
               <input
                 type="email"
                 value={email}
@@ -711,16 +765,22 @@ function FlightCheckout({
                 placeholder="name@example.com"
                 autoComplete="email"
               />
-              {fieldErrors.email ? <small className="shop-field-error">{fieldErrors.email}</small> : null}
             </label>
 
             <p className="shop-traveler-field-hint shop-traveler-id-hint">
-              الاسم بالإنجليزية كما في وثيقة السفر، حرفًا بحرف.
+              *{" "}
+              {locale === "en"
+                ? "The name must match the official identity document exactly"
+                : "يجب أن يطابق الاسم وثيقة الهوية الرسمية حرفًا بحرف"}
             </p>
 
             <fieldset className="shop-traveler-title-field">
-              <legend>اللقب*</legend>
-              <div className="shop-traveler-title-seg" role="radiogroup" aria-label="اللقب">
+              <legend>{locale === "en" ? "Title" : "اللقب"}*</legend>
+              <div
+                className="shop-traveler-title-seg"
+                role="radiogroup"
+                aria-label={locale === "en" ? "Title" : "اللقب"}
+              >
                 <button
                   type="button"
                   role="radio"
@@ -756,58 +816,54 @@ function FlightCheckout({
 
             <div className="shop-traveler-name-row shop-traveler-name-triple">
               <label>
-                الاسم الأول*
+                {locale === "en" ? "First name" : "الاسم الأول"}*
                 <input
                   value={editing.firstName}
                   onChange={(e) => updateEditing({ firstName: e.target.value })}
-                  placeholder="AHMED"
+                  placeholder={locale === "en" ? "As shown in passport" : "كما في الجواز"}
                   autoComplete="given-name"
                 />
-                {fieldErrors[`pax${editIndex}.firstName`] ? (
-                  <small className="shop-field-error">{fieldErrors[`pax${editIndex}.firstName`]}</small>
-                ) : null}
               </label>
               <label>
-                الاسم الأوسط
+                {locale === "en" ? "Middle name" : "الاسم الأوسط"}
                 <input
                   value={editing.middleName}
                   onChange={(e) => updateEditing({ middleName: e.target.value })}
-                  placeholder="اختياري"
+                  placeholder={locale === "en" ? "Optional" : "اختياري"}
                   autoComplete="additional-name"
                 />
               </label>
               <label>
-                اسم العائلة*
+                {locale === "en" ? "Last name" : "اسم العائلة"}*
                 <input
                   value={editing.lastName}
                   onChange={(e) => updateEditing({ lastName: e.target.value })}
-                  placeholder="ALI"
+                  placeholder={locale === "en" ? "As shown in passport" : "كما في الجواز"}
                   autoComplete="family-name"
                 />
-                {fieldErrors[`pax${editIndex}.lastName`] ? (
-                  <small className="shop-field-error">{fieldErrors[`pax${editIndex}.lastName`]}</small>
-                ) : null}
               </label>
             </div>
 
             <div className="shop-traveler-vital-row">
               <label className="shop-traveler-dob-field">
-                تاريخ الميلاد*
+                {locale === "en" ? "Date of birth" : "تاريخ الميلاد"}*
                 <DatePartsRow
                   value={dobDraft}
                   onChange={(part) => updateDatePart("dob", part)}
-                  labels={{ month: "الشهر*", day: "اليوم*", year: "السنة*" }}
+                  labels={
+                    locale === "en"
+                      ? { month: "Month*", day: "Day*", year: "Year*" }
+                      : { month: "الشهر*", day: "اليوم*", year: "السنة*" }
+                  }
+                  locale={locale}
                 />
-                {fieldErrors[`pax${editIndex}.birthDate`] ? (
-                  <small className="shop-field-error">{fieldErrors[`pax${editIndex}.birthDate`]}</small>
-                ) : null}
               </label>
               <fieldset className="shop-traveler-title-field shop-traveler-gender-field">
-                <legend>الجنس*</legend>
+                <legend>{locale === "en" ? "Gender" : "الجنس"}*</legend>
                 <div
                   className="shop-traveler-title-seg"
                   role="radiogroup"
-                  aria-label="الجنس"
+                  aria-label={locale === "en" ? "Gender" : "الجنس"}
                 >
                   <button
                     type="button"
@@ -816,7 +872,7 @@ function FlightCheckout({
                     className={editing.gender === "male" ? "on" : ""}
                     onClick={() => updateEditing({ gender: "male", title: "mr" })}
                   >
-                    ذكر
+                    {locale === "en" ? "Male" : "ذكر"}
                   </button>
                   <button
                     type="button"
@@ -827,22 +883,19 @@ function FlightCheckout({
                       updateEditing({ gender: "female", title: "mrs" })
                     }
                   >
-                    أنثى
+                    {locale === "en" ? "Female" : "أنثى"}
                   </button>
                 </div>
-                {paxError("gender") ? (
-                  <small className="shop-field-error">{paxError("gender")}</small>
-                ) : null}
               </fieldset>
             </div>
 
             <div className="shop-traveler-section">
               <h4 className="shop-traveler-section-title">
-                بيانات الجواز{needPassport ? "*" : " (غير مطلوبة لهذا العرض)"}
+                {locale === "en" ? "Passport details" : "بيانات الجواز"}
               </h4>
               <div className="shop-traveler-passport-row">
                 <label>
-                  رقم الجواز*
+                  {locale === "en" ? "Passport number" : "رقم الجواز"}*
                   <input
                     value={editing.passportNumber}
                     onChange={(e) =>
@@ -852,15 +905,12 @@ function FlightCheckout({
                           .toUpperCase(),
                       })
                     }
-                    placeholder="كما في الجواز"
+                    placeholder={locale === "en" ? "As shown in passport" : "كما في الجواز"}
                     autoCapitalize="characters"
                   />
-                  {paxError("passportNumber") ? (
-                    <small className="shop-field-error">{paxError("passportNumber")}</small>
-                  ) : null}
                 </label>
                 <label>
-                  دولة الإصدار*
+                  {locale === "en" ? "Issuing country" : "دولة الإصدار"}*
                   <select
                     value={
                       PASSPORT_COUNTRIES.some((c) => c.code === editing.nationality)
@@ -876,7 +926,7 @@ function FlightCheckout({
                   >
                     {PASSPORT_COUNTRIES.map((c) => (
                       <option key={c.code} value={c.code}>
-                        {c.label}
+                        {c[locale]}
                       </option>
                     ))}
                   </select>
@@ -885,7 +935,7 @@ function FlightCheckout({
               {!PASSPORT_COUNTRIES.some((c) => c.code === editing.nationality) ||
               editing.nationality === "" ? (
                 <label>
-                  رمز الدولة (ISO)
+                  {locale === "en" ? "Country code (ISO)" : "رمز الدولة (ISO)"}
                   <input
                     value={editing.nationality}
                     onChange={(e) =>
@@ -896,35 +946,36 @@ function FlightCheckout({
                           .slice(0, 3),
                       })
                     }
-                    placeholder="مثال: KW"
+                    placeholder={locale === "en" ? "Example: KW" : "مثال: KW"}
                     maxLength={3}
                   />
                 </label>
               ) : null}
-              {paxError("nationality") ? (
-                <small className="shop-field-error">{paxError("nationality")}</small>
-              ) : null}
               <label className="shop-traveler-dob-field">
-                تاريخ الإصدار <small>(اختياري)</small>
+                {locale === "en" ? "Issue date" : "تاريخ الإصدار"}*
                 <DatePartsRow
                   value={issueDraft}
                   onChange={(part) => updateDatePart("issue", part)}
-                  labels={{ month: "الشهر", day: "اليوم", year: "السنة" }}
+                  labels={
+                    locale === "en"
+                      ? { month: "Month*", day: "Day*", year: "Year*" }
+                      : { month: "الشهر*", day: "اليوم*", year: "السنة*" }
+                  }
+                  locale={locale}
                 />
-                {paxError("passportIssueDate") ? (
-                  <small className="shop-field-error">{paxError("passportIssueDate")}</small>
-                ) : null}
               </label>
               <label className="shop-traveler-dob-field">
-                تاريخ الانتهاء*
+                {locale === "en" ? "Expiry date" : "تاريخ الانتهاء"}*
                 <DatePartsRow
                   value={expiryDraft}
                   onChange={(part) => updateDatePart("expiry", part)}
-                  labels={{ month: "الشهر*", day: "اليوم*", year: "السنة*" }}
+                  labels={
+                    locale === "en"
+                      ? { month: "Month*", day: "Day*", year: "Year*" }
+                      : { month: "الشهر*", day: "اليوم*", year: "السنة*" }
+                  }
+                  locale={locale}
                 />
-                {paxError("passportExpiry") ? (
-                  <small className="shop-field-error">{paxError("passportExpiry")}</small>
-                ) : null}
               </label>
             </div>
 
@@ -935,20 +986,25 @@ function FlightCheckout({
                 aria-expanded={showOptional}
                 onClick={() => setShowOptional((v) => !v)}
               >
-                <span>برامج الولاء والطلبات الاختيارية</span>
+                <span>
+                  {locale === "en"
+                    ? "Loyalty programs and optional requests"
+                    : "برامج الولاء والطلبات الاختيارية"}
+                </span>
                 <i aria-hidden="true">{showOptional ? "▾" : "◂"}</i>
               </button>
               {showOptional ? (
                 <p className="shop-traveler-field-hint" style={{ marginTop: "0.5rem" }}>
-                  يمكن إضافة رقم المسافر الدائم والطلبات الخاصة في خطوة لاحقة عند
-                  توفرها من مزوّد التذاكر.
+                  {locale === "en"
+                    ? "Frequent-flyer numbers and special requests can be added later when supported by the ticket provider."
+                    : "يمكن إضافة رقم المسافر الدائم والطلبات الخاصة في خطوة لاحقة عند توفرها من مزوّد التذاكر."}
                 </p>
               ) : null}
             </div>
 
             <div className="shop-traveler-modal-foot">
               <button type="button" onClick={() => setEditIndex(null)}>
-                تم
+                {locale === "en" ? "Done" : "تم"}
               </button>
             </div>
           </div>
@@ -958,12 +1014,11 @@ function FlightCheckout({
   );
 }
 
-export default function PublicBookPage() {
+function PublicBookPageContent() {
   const router = useRouter();
+  const { locale } = useShopCopy();
   const [draft, setDraft] = useState<BookingDraft | null>(null);
   const [travelers, setTravelers] = useState<Traveler[]>([emptyTraveler()]);
-  const [flightExtras, setFlightExtras] = useState<FlightExtraDraft[]>([]);
-  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [roomGuests, setRoomGuests] = useState<HotelRoomGuestDraft[]>([]);
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -996,19 +1051,11 @@ export default function PublicBookPage() {
         setEmail(stored.contactEmail || "");
         setPhone(stored.contactPhone || "");
       }
-      if (stored.serviceType === "flight") {
-        setTravelers(buildFlightTravelers(stored));
-        setFlightExtras(stored.extras || []);
-        setName(stored.contactName || name);
-        setEmail(stored.contactEmail || email);
-        setPhone(stored.contactPhone || phone);
-      } else {
-        const count =
-          stored.serviceType === "activity"
-            ? Math.max(1, stored.adults)
-            : Math.max(1, stored.adults + stored.children);
-        setTravelers(Array.from({ length: count }, emptyTraveler));
-      }
+      const count =
+        stored.serviceType === "activity"
+          ? Math.max(1, stored.adults)
+          : Math.max(1, stored.adults + stored.children);
+      setTravelers(Array.from({ length: count }, emptyTraveler));
       if (stored.serviceType === "hotel") {
         setSpecialRequests(stored.specialRequests || "");
         setPaymentMethod(stored.paymentMethod || null);
@@ -1031,19 +1078,11 @@ export default function PublicBookPage() {
         ? stored.contactPhone
         : session.customer.phone,
     );
-    if (stored.serviceType === "flight") {
-      setTravelers(buildFlightTravelers(stored));
-      setFlightExtras(stored.extras || []);
-      if (stored.contactName) setName(stored.contactName);
-      if (stored.contactEmail) setEmail(stored.contactEmail);
-      if (stored.contactPhone) setPhone(stored.contactPhone);
-    } else {
-      const count =
-        stored.serviceType === "activity"
-          ? Math.max(1, stored.adults)
-          : Math.max(1, stored.adults + stored.children);
-      setTravelers(Array.from({ length: count }, emptyTraveler));
-    }
+    const count =
+      stored.serviceType === "activity"
+        ? Math.max(1, stored.adults)
+        : Math.max(1, stored.adults + stored.children);
+    setTravelers(Array.from({ length: count }, emptyTraveler));
     if (stored.serviceType === "hotel") {
       setSpecialRequests(stored.specialRequests || "");
       setPaymentMethod(stored.paymentMethod || null);
@@ -1108,19 +1147,6 @@ export default function PublicBookPage() {
       .catch(() => undefined);
   }, [router]);
 
-  useEffect(() => {
-    if (!draft || draft.serviceType !== "flight") return;
-    const { serviceType: _s, ...payload } = draft;
-    saveFlightDraft({
-      ...payload,
-      travelers,
-      extras: flightExtras,
-      contactName: name,
-      contactEmail: email,
-      contactPhone: phone,
-    });
-  }, [draft, travelers, flightExtras, name, email, phone]);
-
   async function unlock(e: FormEvent) {
     e.preventDefault();
     setSubmitting(true);
@@ -1155,7 +1181,12 @@ export default function PublicBookPage() {
       setNeedLogin(false);
       setPhone(result.customer.phone);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "تعذر تسجيل الدخول");
+      const raw = err instanceof Error ? err.message : "";
+      setError(
+        locale === "en" && /[\u0600-\u06FF]/.test(raw)
+          ? "Could not sign in"
+          : raw || (locale === "en" ? "Could not sign in" : "تعذر تسجيل الدخول"),
+      );
     } finally {
       setSubmitting(false);
     }
@@ -1175,41 +1206,27 @@ export default function PublicBookPage() {
         roomGuests,
       });
       if (Object.keys(errors).length) {
-        setError("أكمل الحقول المطلوبة في نموذج الضيوف");
+        setError(
+          locale === "en"
+            ? "Complete the required fields in the guest form"
+            : "أكمل الحقول المطلوبة في نموذج الضيوف",
+        );
         return;
       }
     } else if (!name.trim()) {
-      setError("أدخل الاسم للتواصل");
+      setError(locale === "en" ? "Enter a contact name" : "أدخل الاسم للتواصل");
       return;
     }
     if (draft.serviceType === "flight") {
-      const needPassport = passportRequiredForOffer(draft.flight.details);
-      const nextErrors: Record<string, string> = {};
-      travelers.forEach((t, i) => {
-        const errs = validateFlightTraveler(t, draft.departDate, needPassport);
-        Object.entries(errs).forEach(([k, v]) => {
-          if (v) nextErrors[`pax${i}.${k}`] = v;
-        });
-      });
-      Object.entries(validateFlightContact({ name, email, phone })).forEach(([k, v]) => {
-        if (v) nextErrors[k] = v;
-      });
-      setFieldErrors(nextErrors);
-      if (Object.keys(nextErrors).length) {
-        setError("أكمل بيانات المسافرين والتواصل كما يطلبها العرض");
+      const incomplete = travelers.some((t) => !travelerComplete(t));
+      if (incomplete) {
+        setError(
+          locale === "en"
+            ? "Complete all traveler details before continuing"
+            : "أكمل بيانات جميع المسافرين قبل المتابعة",
+        );
         return;
       }
-      const { serviceType: _s, ...payload } = draft;
-      saveFlightDraft({
-        ...payload,
-        travelers,
-        extras: flightExtras,
-        contactName: name,
-        contactEmail: email,
-        contactPhone: phone,
-      });
-      router.push("/book/pay");
-      return;
     }
     setSubmitting(true);
     setError("");
@@ -1225,7 +1242,11 @@ export default function PublicBookPage() {
           setNeedLogin(true);
           setNeedsUnlockCode(true);
           if (guestResult.debugCode) setUnlockCode(guestResult.debugCode);
-          setError("أدخل رمز التحقق للمتابعة، أو اترك الجوال فارغاً للمتابعة كضيف");
+          setError(
+            locale === "en"
+              ? "Enter the verification code to continue, or leave the mobile number empty to continue as a guest"
+              : "أدخل رمز التحقق للمتابعة، أو اترك الجوال فارغاً للمتابعة كضيف",
+          );
           setSubmitting(false);
           return;
         }
@@ -1235,7 +1256,34 @@ export default function PublicBookPage() {
         });
       }
       const payload =
-        draft.serviceType === "hotel"
+        draft.serviceType === "flight"
+          ? {
+              serviceType: "flight" as const,
+              inquiryId: draft.inquiryId,
+              quoteItemId: draft.quoteItemId,
+              offer: {
+                id: draft.flight.id,
+                description: draft.flight.description,
+                sellAmountMinor: draft.flight.sellAmountMinor,
+                currency: draft.flight.currency,
+                details: draft.flight.details,
+                providerOfferRef: draft.flight.id,
+              },
+              route: {
+                origin: draft.origin,
+                destination: draft.destination,
+                originLabel: draft.originLabel,
+                destinationLabel: draft.destinationLabel,
+                departDate: draft.departDate,
+                returnDate: draft.returnDate,
+                tripType: draft.tripType,
+                cabinClass: draft.cabinClass,
+              },
+              travelers,
+              adults: draft.adults,
+              children: draft.children,
+            }
+          : draft.serviceType === "hotel"
             ? {
                 serviceType: "hotel" as const,
                 inquiryId: draft.inquiryId,
@@ -1341,7 +1389,12 @@ export default function PublicBookPage() {
       clearBookingDraft();
       setBookingId(result.booking.id);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "تعذر حفظ الطلب");
+      const raw = err instanceof Error ? err.message : "";
+      setError(
+        locale === "en" && /[\u0600-\u06FF]/.test(raw)
+          ? "Could not save the booking request"
+          : raw || (locale === "en" ? "Could not save the booking request" : "تعذر حفظ الطلب"),
+      );
     } finally {
       setSubmitting(false);
     }
@@ -1353,34 +1406,39 @@ export default function PublicBookPage() {
   if (!draft) return null;
 
   return (
-    <StoreFront>
+    <>
       {bookingId ? (
         <section className="shop-panel">
           <ShopMockBanner compact />
-          <h1>تم حفظ طلبك</h1>
-          <p>رقم الطلب: {bookingId}</p>
+          <h1>{locale === "en" ? "Your request was saved" : "تم حفظ طلبك"}</h1>
+          <p>{locale === "en" ? "Request number" : "رقم الطلب"}: {bookingId}</p>
           <p className="shop-hint">
-            هذه مرحلة اختبار — لم يُخصم أي مبلغ. سيتواصل فريق WeekendGate لتأكيد
-            الطلب عند تفعيل الحجز الحقيقي.
+            {locale === "en"
+              ? "This is a test stage — no amount was charged. The WeekendGate team will contact you to confirm the request when live booking is enabled."
+              : "هذه مرحلة اختبار — لم يُخصم أي مبلغ. سيتواصل فريق WeekendGate لتأكيد الطلب عند تفعيل الحجز الحقيقي."}
           </p>
           <Link className="shop-btn" href="/account">
-            عرض رحلاتي
+            {locale === "en" ? "View my trips" : "عرض رحلاتي"}
           </Link>
         </section>
       ) : needLogin ? (
         <section className="shop-panel">
           <ShopMockBanner compact />
-          <h1>إتمام الطلب</h1>
+          <h1>{locale === "en" ? "Complete request" : "إتمام الطلب"}</h1>
           <p>{draftTitle(draft)}</p>
           {error ? <p className="shop-error">{error}</p> : null}
           <form className="shop-form" onSubmit={unlock}>
-            <p>أدخل جوالك لحفظ الطلب على حسابك.</p>
+            <p>
+              {locale === "en"
+                ? "Enter your mobile number to save the request to your account."
+                : "أدخل جوالك لحفظ الطلب على حسابك."}
+            </p>
             <label>
-              الاسم
+              {locale === "en" ? "Name" : "الاسم"}
               <input value={name} onChange={(e) => setName(e.target.value)} />
             </label>
             <label>
-              الجوال
+              {locale === "en" ? "Mobile" : "الجوال"}
               <input
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
@@ -1389,24 +1447,32 @@ export default function PublicBookPage() {
               />
             </label>
             <label>
-              البريد
+              {locale === "en" ? "Email" : "البريد"}
               <input value={email} onChange={(e) => setEmail(e.target.value)} />
             </label>
             {needsUnlockCode ? (
               <label>
-                رمز التحقق
+                {locale === "en" ? "Verification code" : "رمز التحقق"}
                 <input
                   value={unlockCode}
                   onChange={(e) => setUnlockCode(e.target.value)}
                   required
                   inputMode="numeric"
                   autoComplete="one-time-code"
-                  placeholder="6 أرقام"
+                  placeholder={locale === "en" ? "6 digits" : "6 أرقام"}
                 />
               </label>
             ) : null}
             <button className="shop-btn" type="submit" disabled={submitting}>
-              {submitting ? "..." : needsUnlockCode ? "تأكيد الرمز" : "متابعة"}
+              {submitting
+                ? "..."
+                : needsUnlockCode
+                  ? locale === "en"
+                    ? "Confirm code"
+                    : "تأكيد الرمز"
+                  : locale === "en"
+                    ? "Continue"
+                    : "متابعة"}
             </button>
           </form>
         </section>
@@ -1415,15 +1481,12 @@ export default function PublicBookPage() {
           draft={draft}
           travelers={travelers}
           setTravelers={setTravelers}
-          extras={flightExtras}
-          setExtras={setFlightExtras}
           email={email}
           setEmail={setEmail}
           phone={phone}
           setPhone={setPhone}
           name={name}
           setName={setName}
-          fieldErrors={fieldErrors}
           error={error}
           submitting={submitting}
           onSubmit={() => void submit()}
@@ -1456,7 +1519,7 @@ export default function PublicBookPage() {
       ) : (
         <section className="shop-panel">
           <ShopMockBanner compact />
-          <h1>إتمام الطلب</h1>
+          <h1>{locale === "en" ? "Complete request" : "إتمام الطلب"}</h1>
           <p>{draftTitle(draft)}</p>
           <p>
             <strong>{formatMoneyMinor(draftPrice(draft), draftCurrency(draft))}</strong>
@@ -1464,15 +1527,15 @@ export default function PublicBookPage() {
           {error ? <p className="shop-error">{error}</p> : null}
           <div className="shop-form">
             <label>
-              الاسم للتواصل
+              {locale === "en" ? "Contact name" : "الاسم للتواصل"}
               <input value={name} onChange={(e) => setName(e.target.value)} />
             </label>
             <label>
-              الجوال
+              {locale === "en" ? "Mobile" : "الجوال"}
               <input value={phone} onChange={(e) => setPhone(e.target.value)} />
             </label>
             <label>
-              البريد
+              {locale === "en" ? "Email" : "البريد"}
               <input value={email} onChange={(e) => setEmail(e.target.value)} />
             </label>
             <button
@@ -1481,11 +1544,25 @@ export default function PublicBookPage() {
               disabled={submitting}
               onClick={() => void submit()}
             >
-              {submitting ? "جارٍ الحفظ..." : "إتمام الحجز"}
+              {submitting
+                ? locale === "en"
+                  ? "Saving…"
+                  : "جارٍ الحفظ..."
+                : locale === "en"
+                  ? "Complete booking"
+                  : "إتمام الحجز"}
             </button>
           </div>
         </section>
       )}
+    </>
+  );
+}
+
+export default function PublicBookPage() {
+  return (
+    <StoreFront>
+      <PublicBookPageContent />
     </StoreFront>
   );
 }

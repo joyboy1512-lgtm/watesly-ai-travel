@@ -48,7 +48,7 @@ export const SHOP_DESTINATIONS: ShopDestination[] = [
     tag: "الأكثر طلباً",
     image:
       "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&w=900&q=80",
-    fromPrice: "من 89 د.ك",
+    fromPrice: "من 89 KWD",
     rating: 4.9,
     reviews: 1240,
   },
@@ -60,7 +60,7 @@ export const SHOP_DESTINATIONS: ShopDestination[] = [
     tag: "ثقافة وتاريخ",
     image:
       "https://images.unsplash.com/photo-1524231757912-21f4fe3a7200?auto=format&fit=crop&w=900&q=80",
-    fromPrice: "من 72 د.ك",
+    fromPrice: "من 72 KWD",
     rating: 4.8,
     reviews: 980,
   },
@@ -72,7 +72,7 @@ export const SHOP_DESTINATIONS: ShopDestination[] = [
     tag: "شاطئ واسترخاء",
     image:
       "https://images.unsplash.com/photo-1514282401047-d79ba59a82fa?auto=format&fit=crop&w=900&q=80",
-    fromPrice: "من 210 د.ك",
+    fromPrice: "من 210 KWD",
     rating: 5,
     reviews: 640,
   },
@@ -84,7 +84,7 @@ export const SHOP_DESTINATIONS: ShopDestination[] = [
     tag: "عائلات",
     image:
       "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?auto=format&fit=crop&w=900&q=80",
-    fromPrice: "من 145 د.ك",
+    fromPrice: "من 145 KWD",
     rating: 4.7,
     reviews: 720,
   },
@@ -96,7 +96,7 @@ export const SHOP_DESTINATIONS: ShopDestination[] = [
     tag: "رومانسية",
     image:
       "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=900&q=80",
-    fromPrice: "من 138 د.ك",
+    fromPrice: "من 138 KWD",
     rating: 4.8,
     reviews: 860,
   },
@@ -108,7 +108,7 @@ export const SHOP_DESTINATIONS: ShopDestination[] = [
     tag: "قريبة من الكويت",
     image:
       "https://images.unsplash.com/photo-1580418827493-f2b062c0a640?auto=format&fit=crop&w=900&q=80",
-    fromPrice: "من 45 د.ك",
+    fromPrice: "من 45 KWD",
     rating: 4.9,
     reviews: 510,
   },
@@ -122,7 +122,7 @@ export const SHOP_OFFERS: ShopOffer[] = [
     badge: "عرض فندقي",
     image:
       "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=900&q=80",
-    priceLabel: "من 185 د.ك",
+    priceLabel: "من 185 KWD",
     mode: "stays",
     destination: "دبي",
   },
@@ -133,7 +133,7 @@ export const SHOP_OFFERS: ShopOffer[] = [
     badge: "طيران",
     image:
       "https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&w=900&q=80",
-    priceLabel: "من 89 د.ك",
+    priceLabel: "من 89 KWD",
     mode: "flights",
     code: "DXB",
     destination: "دبي",
@@ -145,7 +145,7 @@ export const SHOP_OFFERS: ShopOffer[] = [
     badge: "نقل",
     image:
       "https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?auto=format&fit=crop&w=900&q=80",
-    priceLabel: "من 18 د.ك",
+    priceLabel: "من 18 KWD",
     mode: "cars",
     destination: "الكويت",
   },
@@ -156,7 +156,7 @@ export const SHOP_OFFERS: ShopOffer[] = [
     badge: "نشاط",
     image:
       "https://images.unsplash.com/photo-1544551763-77a415ccc845?auto=format&fit=crop&w=900&q=80",
-    priceLabel: "من 32 د.ك",
+    priceLabel: "من 32 KWD",
     mode: "activities",
     code: "DXB",
     destination: "دبي",

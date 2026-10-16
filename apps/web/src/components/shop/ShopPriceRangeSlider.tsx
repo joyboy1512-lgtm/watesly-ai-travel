@@ -16,9 +16,9 @@ export function ShopPriceRangeSlider({ min, max, value, onChange, label }: Props
     <div className="shop-price-range">
       {label ? <strong>{label}</strong> : null}
       <div className="shop-price-range-values">
-        <span>{min} د.ك</span>
+        <span>{min} KWD</span>
         <span className="shop-price-range-current">
-          حتى {current >= safeMax ? `${safeMax}+` : current} د.ك
+          حتى {current >= safeMax ? `${safeMax}+` : current} KWD
         </span>
       </div>
       <input

@@ -3429,7 +3429,7 @@ export default function InquiriesPage() {
                                         policies.changeFeeKwd === 0
                                           ? " مجانًا"
                                           : policies.changeFeeKwd
-                                            ? ` · رسوم تقريبية ${policies.changeFeeKwd} د.ك`
+                                            ? ` · رسوم تقريبية ${policies.changeFeeKwd} KWD`
                                             : " برسوم"
                                       }`
                                     : "لا يمكن تغيير هذه التذكرة"}
@@ -3440,11 +3440,11 @@ export default function InquiriesPage() {
                                   {policies.refundable
                                     ? `قابلة للاسترداد${
                                         policies.cancelFeeKwd
-                                          ? ` · رسوم إلغاء تقريبية ${policies.cancelFeeKwd} د.ك`
+                                          ? ` · رسوم إلغاء تقريبية ${policies.cancelFeeKwd} KWD`
                                           : ""
                                       }`
                                     : policies.cancelFeeKwd
-                                      ? `إلغاء برسوم تقريبية ${policies.cancelFeeKwd} د.ك`
+                                      ? `إلغاء برسوم تقريبية ${policies.cancelFeeKwd} KWD`
                                       : "غير قابلة للاسترداد"}
                                 </span>
                               </li>

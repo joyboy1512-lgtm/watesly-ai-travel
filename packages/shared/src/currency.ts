@@ -16,7 +16,7 @@ export const DEFAULT_CURRENCY = "KWD" as const;
 export const DEFAULT_TIMEZONE = "Asia/Kuwait" as const;
 
 export const SUPPORTED_CURRENCIES = [
-  { code: "KWD", label: "دينار كويتي", symbol: "د.ك" },
+  { code: "KWD", label: "دينار كويتي", symbol: "KWD" },
   { code: "SAR", label: "ريال سعودي", symbol: "ر.س" },
   { code: "AED", label: "درهم إماراتي", symbol: "د.إ" },
   { code: "QAR", label: "ريال قطري", symbol: "ر.ق" },

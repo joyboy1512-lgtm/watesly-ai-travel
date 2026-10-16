@@ -172,7 +172,7 @@ function FiltersPanel({
         />
       </FilterSection>
 
-      <FilterSection title="نطاق السعر (د.ك)">
+      <FilterSection title="نطاق السعر (KWD)">
         <ShopPriceRangeSlider
           min={0}
           max={facets.priceMaxMajor}

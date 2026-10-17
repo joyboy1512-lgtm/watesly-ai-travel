@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}{{ booking.reference }} · WeekendGate{% endblock %}
+{% block content %}
+<section class="py-wrap">
+  <article class="py-panel">
+    <h1>{{ c.confirmed }}</h1>
+    <p>{{ c.reference }} <strong dir="ltr">{{ booking.reference }}</strong></p>
+    <p>{{ booking.title }}</p>
+    <p>{{ booking.guest_name }} · <span dir="ltr">{{ booking.phone }}</span></p>
+    <p dir="ltr">{{ booking.created_at }}</p>
+    <table class="py-table">
+      <thead><tr><th>{{ c.item }}</th><th>{{ c.qty }}</th><th>{{ c.amount }}</th></tr></thead>
+      <tbody>
+        {% for line in details.lines %}
+        <tr>
+          <td>{{ line.item }}</td>
+          <td dir="ltr">{{ line.qty }}</td>
+          <td dir="ltr">{{ money(line.amount) }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <p><strong>{{ c.total }}</strong> <span dir="ltr">{{ money(booking.total_kwd) }}</span> · {{ c.status_confirmed }}</p>
+    <button class="py-btn" type="button" onclick="window.print()">{{ c.print }}</button>
+  </article>
+</section>
+{% endblock %}

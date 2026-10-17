@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+{% block title %}{{ c.nav_hotels }} · WeekendGate{% endblock %}
+{% block content %}
+<div class="tvlk-hotel">
+  <section class="shop-hotel-results">
+    <div class="shop-hotel-results-head">
+      <h2>{{ c.nav_hotels }}{% if place %} — {{ place }}{% endif %}</h2>
+      <p class="py-note">{{ c.catalog_note }}</p>
+    </div>
+    {% if not filters.destination %}
+    <p>{{ c.need_destination }}</p>
+    {% else %}
+    <div class="shop-hotel-results-layout has-map">
+      <div class="shop-hotel-results-side">
+        <aside class="shop-hotel-results-mapcol is-open" aria-label="{{ c.map }}">
+          <div class="shop-hotel-map shop-hotel-map-sidebar">
+            <div class="shop-hotel-map-canvas py-map">
+              {% for pin in pins %}
+              <a class="py-pin" style="left:{{ pin.x }}%;top:{{ pin.y }}%" href="#hotel-{{ pin.id }}" dir="ltr">{{ money(pin.stay_kwd) }}</a>
+              {% endfor %}
+            </div>
+          </div>
+        </aside>
+        <form class="shop-hotel-filters" action="/hotels/results" method="get">
+          <input type="hidden" name="destination" value="{{ filters.destination }}">
+          <input type="hidden" name="check_in" value="{{ filters.check_in }}">
+          <input type="hidden" name="check_out" value="{{ filters.check_out }}">
+          <input type="hidden" name="rooms" value="{{ filters.rooms }}">
+          <input type="hidden" name="adults" value="{{ filters.adults }}">
+          <input type="hidden" name="sort" value="{{ filters.sort or 'best' }}">
+          <div class="shop-hotel-filters-desktop">
+            <aside class="shop-hotel-filters-panel">
+              <div class="shop-hotel-filters-title-row">
+                <h3 class="shop-hotel-filters-title">{{ c.filters }}</h3>
+                <a class="shop-hotel-filters-clear" href="/hotels/results?destination={{ filters.destination }}&check_in={{ filters.check_in }}&check_out={{ filters.check_out }}">{{ c.clear }}</a>
+              </div>
+              <label class="shop-hotel-filter-search">{{ c.hotel_name }}
+                <input name="q" value="{{ filters.q or '' }}">
+              </label>
+              <div class="shop-hotel-filter-block">
+                <strong>{{ c.stars }}</strong>
+                {% for level in ['5', '4', '3'] %}
+                <label class="shop-hotel-filter-check shop-hotel-filter-row">
+                  <input type="checkbox" name="stars" value="{{ level }}" {% if level in filters.stars %}checked{% endif %}>
+                  <span class="shop-hotel-filter-label" dir="ltr">{{ level }}</span>
+                  <span class="shop-hotel-filter-count" dir="ltr">{{ facets.stars[level] if facets else 0 }}</span>
+                </label>
+                {% endfor %}
+              </div>
+              <div class="shop-hotel-filter-block">
+                <label class="shop-hotel-filter-check shop-hotel-filter-row">
+                  <input type="checkbox" name="free_cancel" value="1" {% if filters.free_cancel %}checked{% endif %}>
+                  <span class="shop-hotel-filter-label">{{ c.free_cancel }}</span>
+                  <span class="shop-hotel-filter-count" dir="ltr">{{ facets.free_cancel if facets else 0 }}</span>
+                </label>
+                <label class="shop-hotel-filter-check shop-hotel-filter-row">
+                  <input type="checkbox" name="breakfast" value="1" {% if filters.breakfast %}checked{% endif %}>
+                  <span class="shop-hotel-filter-label">{{ c.breakfast }}</span>
+                  <span class="shop-hotel-filter-count" dir="ltr">{{ facets.breakfast if facets else 0 }}</span>
+                </label>
+              </div>
+              <div class="shop-hotel-filter-block">
+                <strong>{{ c.facilities }}</strong>
+                {% for key in ['pool', 'wifi', 'parking', 'gym', 'spa', 'restaurant', 'shuttle'] %}
+                <label class="shop-hotel-filter-check shop-hotel-filter-row">
+                  <input type="checkbox" name="facility" value="{{ key }}" {% if key in filters.facility %}checked{% endif %}>
+                  <span class="shop-hotel-filter-label">{{ c.get(key) }}</span>
+                  <span class="shop-hotel-filter-count" dir="ltr">{{ facets.facilities[key] if facets else 0 }}</span>
+                </label>
+                {% endfor %}
+              </div>
+              <div class="shop-hotel-filter-block">
+                <strong>{{ c.property }}</strong>
+                {% for key in ['hotel', 'apartment', 'resort', 'guest_house'] %}
+                <label class="shop-hotel-filter-check shop-hotel-filter-row">
+                  <input type="checkbox" name="property" value="{{ key }}" {% if key in filters.property %}checked{% endif %}>
+                  <span class="shop-hotel-filter-label">{{ c.get(key) }}</span>
+                </label>
+                {% endfor %}
+              </div>
+              <label class="shop-hotel-filter-search">{{ c.max_price }}
+                <input name="max_price" inputmode="decimal" dir="ltr" value="{{ filters.max_price or '' }}" placeholder="{{ facets.max_night if facets else '' }}">
+              </label>
+              <label class="shop-hotel-filter-search">{{ c.distance }}
+                <input name="max_km" inputmode="decimal" dir="ltr" value="{{ filters.max_km or '' }}">
+              </label>
+              <button class="py-btn" type="submit">{{ c.apply }}</button>
+            </aside>
+          </div>
+        </form>
+      </div>
+      <div class="shop-hotel-results-list">
+        <div class="shop-hotel-results-sort">
+          {% for key, label in [('best', c.sort_best), ('price', c.sort_price), ('price_desc', c.sort_price_desc), ('rating', c.sort_rating), ('distance', c.sort_distance)] %}
+          <a class="{% if (filters.sort or 'best') == key %}on{% endif %}" href="{{ href(sort=key) }}">{{ label }}</a>
+          {% endfor %}
+          <span dir="ltr">{{ rows|length }}</span>
+        </div>
+        {% if not rows %}
+        <p class="shop-hotel-results-empty">{{ c.no_results }}</p>
+        {% endif %}
+        {% for row in rows %}
+        {% set hotel = row.hotel %}
+        <article class="hotel-search-card hotel-search-card-shop" id="hotel-{{ hotel.id }}">
+          <a class="hotel-search-card-media" href="{{ detail_href(hotel.id) }}">
+            <img class="hotel-search-card-photo" src="{{ hotel.image }}" alt="">
+            {% if row.highlight %}
+            <span class="hotel-search-card-highlight">{{ c.get(row.highlight) }}</span>
+            {% endif %}
+          </a>
+          <div class="hotel-search-card-main">
+            <div class="hotel-search-card-head">
+              <div class="hotel-search-card-title-row">
+                <h3><a href="{{ detail_href(hotel.id) }}">{{ hotel.name_ar if lang == 'ar' else hotel.name_en }}</a></h3>
+                <div class="hotel-search-card-stars" dir="ltr">{% for _ in range(hotel.stars) %}★{% endfor %}</div>
+              </div>
+            </div>
+            <div class="hotel-search-card-score hotel-search-card-score-inline">
+              <strong class="tvlk-score-pill" dir="ltr">{{ '%.1f'|format(hotel.review) }}</strong>
+              <span>{{ c.score }}</span>
+              <small dir="ltr">{{ hotel.reviews }}</small>
+            </div>
+            <p class="hotel-search-card-location">{{ hotel.zone_ar if lang == 'ar' else hotel.zone_en }} · <span dir="ltr">{{ '%.1f'|format(hotel.distance_km) }} {{ c.km }}</span></p>
+            <div class="hotel-search-card-badges">
+              {% if row.rate.refundable %}<span class="hotel-chip good">{{ c.free_cancel }}</span>{% endif %}
+              {% if row.rate.board in ['BB', 'HB', 'FB', 'AI'] %}<span class="hotel-chip">{{ c.breakfast }}</span>{% endif %}
+            </div>
+            <ul class="hotel-search-card-poi">
+              {% for facility in hotel.facilities[:4] %}
+              <li>{{ c.get(facility) }}</li>
+              {% endfor %}
+            </ul>
+          </div>
+          <div class="hotel-search-card-action">
+            <div class="hotel-search-card-price">
+              <div class="tvlk-night-price tvlk-stay-price">
+                <em>{{ c.per_stay }} · <span dir="ltr">{{ row.nights }}</span> {{ c.nights }}</em>
+                <strong dir="ltr">{{ money(row.stay_kwd) }}</strong>
+              </div>
+              <span class="hotel-rooms-left" dir="ltr">{{ row.rate.allotment }} {{ c.rooms_left }}</span>
+              <p class="hotel-search-card-room-below-price">{{ row.room.name_ar if lang == 'ar' else row.room.name_en }}</p>
+            </div>
+            <a class="btn hotel-search-card-cta" href="{{ detail_href(hotel.id) }}">{{ c.details }}</a>
+          </div>
+        </article>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

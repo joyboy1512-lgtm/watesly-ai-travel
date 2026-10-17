@@ -1,0 +1,583 @@
+/*
+ * Phone layout pass for the customer storefront.
+ * Everything is scoped to max-width: 767px so desktop rendering is untouched.
+ * Selectors are intentionally heavy: they must beat the inline <style> blocks
+ * and the layered !important rules in travela-skin.css / shop.css.
+ */
+
+.shop-root .wg-topbar-mobile-backdrop,
+.shop-root .shop-flight-edit-toggle {
+  display: none;
+}
+
+/* The base .shop-main reserves 6cm of gutter, which leaves ~160px of text on phones. */
+@media (max-width: 1023px) {
+  html body .shop-root .shop-main:not(.shop-main-wide) {
+    width: min(1120px, calc(100% - 1.5rem));
+  }
+}
+
+@media (max-width: 767px) {
+  html body .shop-root .shop-main:not(.shop-main-wide) {
+    width: 100%;
+    padding-inline: 0.75rem;
+  }
+
+  html body .shop-root.wg-new-ui .shop-footer {
+    padding-bottom: calc(6.5rem + env(safe-area-inset-bottom, 0px)) !important;
+  }
+
+  html body .shop-root .shop-footer .shop-footer-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 1.25rem 1rem !important;
+  }
+
+  html body .shop-root .shop-footer .shop-footer-grid > :first-child,
+  html body .shop-root .shop-footer .shop-footer-grid > :last-child {
+    grid-column: 1 / -1;
+  }
+
+  html body .shop-root.wg-new-ui .wg-bottom-nav {
+    bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+    left: 10px;
+    right: 10px;
+    padding: 0.4rem 0.35rem;
+  }
+
+  html body .shop-root.wg-new-ui .wg-bottom-nav a {
+    flex: 1 1 0;
+    min-width: 0;
+    min-height: 2.9rem;
+    justify-content: center;
+    font-size: 0.68rem;
+    white-space: nowrap;
+  }
+
+  /* The floating bottom nav (z-index 60) would otherwise cover sheet footers and CTAs. */
+  html body:has(.shop-flight-expanded-backdrop) .wg-bottom-nav,
+  html body:has(.shop-flight-modal-backdrop) .wg-bottom-nav,
+  html body:has(.shop-filters-sheet-backdrop) .wg-bottom-nav,
+  html body:has(.shop-traveler-modal-backdrop) .wg-bottom-nav,
+  html body:has(.shop-date-range-backdrop) .wg-bottom-nav,
+  html body:has(.wg-topbar-mobile.open) .wg-bottom-nav,
+  html body:has(.hotel-modal-live) .wg-bottom-nav {
+    display: none !important;
+  }
+
+  html body .shop-root .shop-main > .shop-panel:first-child {
+    margin-top: 1rem;
+  }
+
+  html body .shop-root .shop-legal-page .shop-legal-body,
+  html body .shop-root .shop-legal-page .shop-legal-back {
+    width: 100%;
+  }
+
+  html body .shop-root .shop-legal-page .shop-legal-body {
+    margin-top: 1rem;
+    padding: 1rem 1.05rem;
+    line-height: 1.85;
+  }
+}
+
+@media (max-width: 767px) {
+  /* ---------- Header: one compact row + scrollable service tabs ---------- */
+  html body .shop-root.wg-new-ui .shop-header .wg-topbar.shop-header-inner {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0.55rem 0.9rem !important;
+    min-height: 3.5rem;
+    flex-wrap: wrap !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: 0.35rem 0.5rem !important;
+  }
+
+  html body .shop-root.wg-new-ui .shop-header.wg-header-blue .wg-topbar .wg-topbar-start {
+    display: contents !important;
+  }
+
+  html body .shop-root.wg-new-ui .shop-header .wg-topbar .wg-topbar-logo {
+    order: 1;
+    margin-inline-end: auto;
+  }
+
+  html body .shop-root.wg-new-ui .shop-header .wg-topbar .wg-topbar-logo .wg-logo-lockup-img {
+    height: 1.9rem !important;
+  }
+
+  html body .shop-root.wg-new-ui .shop-header .wg-topbar .wg-hero-ai-btn {
+    order: 2;
+    flex: 0 0 auto;
+    width: 2.5rem !important;
+    height: 2.5rem !important;
+    min-width: 2.5rem !important;
+    padding: 0 !important;
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px !important;
+  }
+
+  html body .shop-root.wg-new-ui .shop-header .wg-topbar .wg-hero-ai-btn span {
+    display: none !important;
+  }
+
+  html body .shop-root.wg-new-ui .shop-header .wg-topbar .wg-topbar-end {
+    order: 3;
+    position: relative;
+    z-index: 91;
+  }
+
+  html body .shop-root.wg-new-ui .shop-header .wg-topbar .wg-topbar-menu-btn {
+    display: inline-flex !important;
+    width: 2.5rem !important;
+    height: 2.5rem !important;
+    border-radius: 12px !important;
+    font-size: 1.2rem !important;
+    color: #fff !important;
+    border: 1px solid rgba(255, 255, 255, 0.5) !important;
+    background: rgba(255, 255, 255, 0.14) !important;
+  }
+
+  html body .shop-root.wg-new-ui .shop-header .wg-topbar .wg-topbar-menu-btn[aria-expanded="true"] {
+    background: #fff !important;
+    color: #1565c0 !important;
+  }
+
+  html body .shop-root.wg-new-ui .shop-header .wg-topbar #wg-header-services.wg-header-services {
+    order: 4;
+    flex: 1 1 100% !important;
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    margin: 0 -0.9rem !important;
+    padding: 0 0.9rem !important;
+    gap: 0.25rem !important;
+    justify-content: flex-start !important;
+    overflow-x: auto !important;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x proximity;
+    -webkit-mask-image: linear-gradient(to left, transparent 0, #000 0.9rem, #000 calc(100% - 0.9rem), transparent 100%);
+    mask-image: linear-gradient(to left, transparent 0, #000 0.9rem, #000 calc(100% - 0.9rem), transparent 100%);
+  }
+
+  html body .shop-root.wg-new-ui .shop-header .wg-topbar #wg-header-services .wg-svc-tab {
+    flex: 0 0 auto !important;
+    font-size: 0.95rem !important;
+    font-weight: 800 !important;
+    gap: 0.35rem !important;
+    padding: 0.4rem 0.7rem 0.5rem !important;
+    scroll-snap-align: start;
+  }
+
+  html body .shop-root.wg-new-ui .shop-header .wg-topbar #wg-header-services .wg-svc-tab svg {
+    width: 19px !important;
+    height: 19px !important;
+  }
+
+  /* ---------- Mobile menu: anchored sheet with sections ---------- */
+  html body .shop-root.wg-new-ui .wg-topbar-mobile-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 85;
+    border: 0;
+    padding: 0;
+    background: rgba(8, 18, 38, 0.38);
+    cursor: default;
+  }
+
+  html body .shop-root.wg-new-ui .shop-header .wg-topbar-mobile {
+    position: absolute !important;
+    top: calc(100% + 0.35rem) !important;
+    inset-inline: 0.6rem !important;
+    left: 0.6rem !important;
+    right: 0.6rem !important;
+    width: auto !important;
+    margin: 0 !important;
+    max-height: calc(100dvh - 9.5rem);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 0.75rem !important;
+    gap: 0.6rem !important;
+    border-radius: 18px !important;
+    z-index: 90 !important;
+    box-shadow: 0 18px 48px rgba(8, 18, 38, 0.28) !important;
+  }
+
+  html body .shop-root.wg-new-ui .shop-header .wg-topbar-mobile a,
+  html body .shop-root.wg-new-ui .shop-header .wg-topbar-mobile button:not(.wg-topbar-mobile-lang) {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-height: 2.75rem;
+    padding: 0.55rem 0.75rem;
+    font-size: 0.95rem;
+    color: #0f172a;
+    border-radius: 12px;
+  }
+
+  html body .shop-root.wg-new-ui .wg-topbar-mobile-prefs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+  }
+
+  html body .shop-root.wg-new-ui .shop-header .wg-topbar-mobile .wg-topbar-mobile-lang,
+  html body .shop-root.wg-new-ui .wg-topbar-mobile-prefs .wg-topbar-mobile-currency {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    min-height: 2.75rem;
+    margin: 0;
+    padding: 0.4rem 0.6rem;
+    border: 1px solid #dbe3ef;
+    border-radius: 12px;
+    background: #f8fafc;
+    color: #0f172a;
+    font: inherit;
+    font-size: 0.92rem;
+    font-weight: 700;
+  }
+
+  html body .shop-root.wg-new-ui .wg-topbar-mobile-prefs .wg-topbar-mobile-currency select {
+    min-height: 2rem;
+    padding: 0.15rem 0.4rem;
+  }
+
+  html body .shop-root.wg-new-ui .wg-topbar-mobile-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    padding-top: 0.55rem;
+    border-top: 1px solid #edf1f7;
+  }
+
+  html body .shop-root.wg-new-ui .wg-topbar-mobile-title {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0 0.75rem 0.2rem;
+    font-size: 0.78rem;
+    font-weight: 800;
+    color: #64748b;
+  }
+
+  html body .shop-root.wg-new-ui .shop-header .wg-topbar-mobile a.wg-topbar-mobile-signin {
+    justify-content: center;
+    background: #1565c0;
+    color: #fff;
+    font-weight: 800;
+  }
+
+  html body .shop-root.wg-new-ui .shop-header .wg-topbar-mobile .wg-topbar-mobile-logout {
+    color: #b91c1c;
+  }
+
+  html body .shop-root.wg-new-ui .wg-topbar-mobile-contact {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+    padding-top: 0.6rem;
+    border-top: 1px solid #edf1f7;
+  }
+
+  html body .shop-root.wg-new-ui .shop-header .wg-topbar-mobile .wg-topbar-mobile-contact a {
+    justify-content: center;
+    border: 1px solid #dbe3ef;
+    background: #f8fafc;
+    font-weight: 700;
+  }
+
+  html body .shop-root.wg-new-ui .shop-header .wg-topbar-mobile .wg-topbar-mobile-whatsapp {
+    color: #128c7e;
+  }
+
+  /* ---------- Home hero search card ---------- */
+  html body .shop-root .wg-travela-hero .wg-hero-blue-strip {
+    height: 6.85rem !important;
+  }
+
+  html body .shop-root .wg-travela-hero .wg-travela-caption {
+    padding-top: 8.6rem !important;
+  }
+
+  html body .shop-root.wg-new-ui #search.wg-simple-search.wg-hero-search-panel {
+    width: auto !important;
+    max-width: none !important;
+    left: 0.75rem !important;
+    right: 0.75rem !important;
+    inset-inline: 0.75rem !important;
+    transform: none !important;
+  }
+
+  html body .shop-root.wg-new-ui #search.wg-simple-search .wg-simple-card {
+    padding: 0.85rem 0.8rem 0.9rem !important;
+    border-radius: 20px !important;
+  }
+
+  html body .shop-root.wg-new-ui #search.wg-simple-search .wg-search-btn {
+    width: 100% !important;
+    min-height: 50px !important;
+    margin: 0.15rem 0 0 !important;
+    justify-content: center !important;
+  }
+}
+
+@media (max-width: 767px) {
+  /* ---------- Home sections: swipeable rows instead of endless stacked cards ---------- */
+  html body .shop-root .shop-landing .shop-dest-grid,
+  html body .shop-root .shop-landing .shop-section-soft .shop-offer-grid,
+  html body .shop-root .shop-landing .shop-review-grid {
+    display: grid !important;
+    grid-auto-flow: column;
+    grid-auto-columns: 78%;
+    grid-template-columns: none !important;
+    gap: 0.75rem !important;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory;
+    scroll-padding-inline: 0.25rem;
+    padding: 0.25rem 0.25rem 0.75rem;
+    scrollbar-width: none;
+  }
+
+  html body .shop-root .shop-landing .shop-dest-grid::-webkit-scrollbar,
+  html body .shop-root .shop-landing .shop-section-soft .shop-offer-grid::-webkit-scrollbar,
+  html body .shop-root .shop-landing .shop-review-grid::-webkit-scrollbar {
+    display: none;
+  }
+
+  html body .shop-root .shop-landing .shop-dest-grid > *,
+  html body .shop-root .shop-landing .shop-section-soft .shop-offer-grid > *,
+  html body .shop-root .shop-landing .shop-review-grid > * {
+    scroll-snap-align: start;
+    min-width: 0;
+  }
+
+  html body .shop-root .shop-landing .shop-feature-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 0.6rem !important;
+  }
+
+  html body .shop-root .shop-landing .shop-feature-grid > * {
+    padding: 0.9rem 0.7rem !important;
+  }
+
+  html body .shop-root .shop-landing .shop-section-head {
+    gap: 0.5rem;
+  }
+
+  /* ---------- Flight results ---------- */
+  html body .shop-root .shop-flight-results-title-row {
+    width: calc(100% - 1.5rem);
+    margin: 0.75rem auto 0.5rem;
+    gap: 0.5rem;
+    flex-wrap: nowrap;
+  }
+
+  html body .shop-root .shop-flight-results-h1 {
+    font-size: 1.12rem;
+    margin: 0;
+    line-height: 1.35;
+  }
+
+  html body .shop-root .shop-flight-home-link {
+    font-size: 0.8rem;
+    padding: 0.3rem 0.65rem;
+  }
+
+  html body .shop-root .shop-flight-results-topbar {
+    top: 3.6rem;
+    margin-bottom: 0.75rem;
+  }
+
+  html body .shop-root .shop-flight-results-topbar-inner {
+    width: calc(100% - 1.5rem);
+    padding: 0.55rem 0;
+    flex-wrap: nowrap;
+    gap: 0.6rem;
+  }
+
+  html body .shop-root .shop-flight-results-summary {
+    flex: 1 1 auto;
+    min-width: 0;
+    gap: 0.1rem 0.6rem;
+    font-size: 0.8rem;
+    line-height: 1.4;
+  }
+
+  html body .shop-root .shop-flight-results-summary strong {
+    flex: 1 1 100%;
+    font-size: 0.95rem;
+  }
+
+  html body .shop-root .shop-flight-edit-toggle {
+    display: inline-flex;
+    align-items: center;
+    flex: 0 0 auto;
+    min-height: 2.4rem;
+    padding: 0.4rem 0.9rem;
+    border: 1.5px solid #1565c0;
+    border-radius: 999px;
+    background: #fff;
+    color: #1565c0;
+    font: inherit;
+    font-size: 0.85rem;
+    font-weight: 800;
+    cursor: pointer;
+  }
+
+  html body .shop-root .shop-flight-edit-toggle[aria-expanded="true"] {
+    background: #1565c0;
+    color: #fff;
+  }
+
+  html body .shop-root .shop-flight-edit-bar.is-mobile-collapsed {
+    display: none !important;
+  }
+
+  html body .shop-root .shop-flight-edit-bar {
+    width: calc(100% - 1.5rem);
+    max-height: calc(100dvh - 12rem);
+    overflow-y: auto;
+  }
+
+  html body .shop-root .shop-flight-mock-banner,
+  html body .shop-root .shop-flight-results-status {
+    width: calc(100% - 1.5rem);
+    margin-inline: auto;
+    box-sizing: border-box;
+  }
+
+  html body .shop-root .shop-flight-watch-row {
+    width: calc(100% - 1.5rem);
+    flex-wrap: nowrap;
+    justify-content: space-between;
+    gap: 0.5rem;
+  }
+
+  html body .shop-root .shop-flight-watch-row > * {
+    min-width: 0;
+  }
+
+  /* Price calendar: one swipeable strip instead of a crushed grid */
+  html body .shop-root .shop-price-calendar {
+    width: calc(100% - 1.5rem);
+    padding: 0.75rem 0.75rem 0.85rem;
+    border-width: 1px;
+    box-sizing: border-box;
+  }
+
+  html body .shop-root .shop-price-calendar-head strong {
+    font-size: 0.98rem;
+  }
+
+  html body .shop-root .shop-price-calendar-nav {
+    grid-template-columns: 2rem minmax(0, 1fr) 2rem;
+    gap: 0.35rem;
+  }
+
+  html body .shop-root .shop-price-calendar-arrow {
+    width: 2rem;
+    font-size: 1.3rem;
+  }
+
+  html body .shop-root .shop-price-calendar-row {
+    display: flex;
+    gap: 0.4rem;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+  }
+
+  html body .shop-root .shop-price-calendar-row::-webkit-scrollbar {
+    display: none;
+  }
+
+  html body .shop-root .shop-price-calendar-cell {
+    flex: 0 0 5.6rem;
+    min-height: 4.6rem;
+    padding: 0.5rem 0.3rem;
+    border: 1px solid #dbe3ee;
+    border-radius: 12px;
+    scroll-snap-align: start;
+  }
+
+  html body .shop-root .shop-price-calendar-cell:last-child {
+    border-inline-end: 1px solid #dbe3ee;
+  }
+
+  html body .shop-root .shop-price-calendar-cell strong {
+    font-size: 0.85rem;
+    white-space: nowrap;
+  }
+
+  html body .shop-root .shop-price-calendar-day {
+    font-size: 0.7rem;
+  }
+
+  /* Flight card: tighter legs and a stub that reads as part of the card */
+  html body .shop-root .shop-ticket-card .shop-ticket-airline-logo {
+    width: 2.9rem !important;
+    height: 2.9rem !important;
+    min-height: 0 !important;
+  }
+
+  html body .shop-root .shop-ticket-card .shop-ticket-airline-logo img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+  }
+
+  html body .shop-root .shop-ticket-card .shop-ticket-stub {
+    border-radius: 0 0 14px 14px;
+    overflow: hidden;
+  }
+
+  html body .shop-root .shop-ticket-card .shop-ticket-stub-totals {
+    padding-block: 0.45rem !important;
+    gap: 0.1rem !important;
+    font-size: 0.78rem;
+  }
+
+  html body .shop-root .shop-ticket-card .shop-ticket-cta-group {
+    padding: 0.55rem 0.75rem 0.75rem !important;
+    gap: 0.6rem !important;
+  }
+
+  /* ---------- Hotel results ---------- */
+  html body .shop-root .shop-hotel-results-sort {
+    flex-wrap: nowrap !important;
+    overflow-x: auto;
+    scrollbar-width: none;
+    gap: 0.4rem !important;
+    padding: 0.55rem 0.6rem !important;
+  }
+
+  html body .shop-root .shop-hotel-results-sort::-webkit-scrollbar {
+    display: none;
+  }
+
+  html body .shop-root .shop-hotel-results-sort > * {
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+
+  html body .shop-root .hotel-search-card-shop .hotel-search-card-media {
+    height: 12rem !important;
+    min-height: 0 !important;
+    max-height: 12rem !important;
+  }
+
+  html body .shop-root .hotel-search-card-shop .hotel-search-card-media img {
+    height: 100% !important;
+  }
+}

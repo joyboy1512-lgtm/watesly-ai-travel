@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}{{ c.assistant }} · WeekendGate{% endblock %}
+{% block content %}
+<section class="py-wrap">
+  <h1>{{ c.assistant }}</h1>
+  <form class="py-panel" action="/assistant" method="get">
+    <label class="py-field">{{ c.ask }}<input name="q" value="{{ q }}" required></label>
+    <button class="py-btn" type="submit">{{ c.send }}</button>
+  </form>
+  {% if answer %}
+  <article class="py-panel">
+    <p>{{ answer.text }}</p>
+    {% if answer.href %}<a class="py-btn" href="{{ answer.href }}">{{ answer.label }}</a>{% endif %}
+  </article>
+  {% endif %}
+</section>
+{% endblock %}

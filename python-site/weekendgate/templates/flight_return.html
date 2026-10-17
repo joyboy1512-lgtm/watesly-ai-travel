@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}{{ c.pick_return }} · WeekendGate{% endblock %}
+{% block content %}
+<section class="py-wrap">
+  <h1>{{ c.pick_return }}</h1>
+  <article class="py-panel">
+    <strong>{{ c.outbound }}</strong>
+    <div class="py-times"><span>{{ outbound.depart }}</span><span>{{ outbound.arrive }}</span></div>
+    <div dir="ltr">{{ outbound.origin }} → {{ outbound.destination }} · {{ money(outbound.total_kwd) }}</div>
+  </article>
+  {% if not rows %}<p>{{ c.no_results }}</p>{% endif %}
+  {% for row in rows %}
+  <article class="py-flight">
+    <div>
+      <strong>{{ row.airline_ar if lang == 'ar' else row.airline_en }}</strong>
+      <div class="py-times"><span>{{ row.depart }}</span><span>{{ row.arrive }}</span></div>
+      <div dir="ltr">{{ row.origin }} → {{ row.destination }}</div>
+    </div>
+    <div>{% if row.stops == 0 %}{{ c.direct }}{% else %}{{ c.stop }}{% endif %}</div>
+    <div class="py-price">
+      <strong dir="ltr">{{ money(outbound.total_kwd + row.total_kwd) }}</strong>
+      <form action="/select" method="post">
+        <input type="hidden" name="kind" value="flight">
+        <input type="hidden" name="outbound_id" value="{{ outbound.id }}">
+        <input type="hidden" name="return_id" value="{{ row.id }}">
+        <input type="hidden" name="cabin" value="{{ filters.cabin }}">
+        <input type="hidden" name="adults" value="{{ filters.adults }}">
+        <input type="hidden" name="children" value="{{ filters.children }}">
+        <input type="hidden" name="origin" value="{{ outbound.origin }}">
+        <input type="hidden" name="destination" value="{{ outbound.destination }}">
+        <button class="py-btn" type="submit">{{ c.select }}</button>
+      </form>
+    </div>
+  </article>
+  {% endfor %}
+</section>
+{% endblock %}

@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}{{ c.nav_account }} · WeekendGate{% endblock %}
+{% block content %}
+<section class="py-wrap">
+  <h1>{{ c.nav_account }}</h1>
+  {% if saved %}<p class="py-note">{{ c.saved }}</p>{% endif %}
+  <form class="py-panel" method="post" action="/account">
+    <label class="py-field">{{ c.name }}<input name="name" value="{{ customer.name }}"></label>
+    <label class="py-field">{{ c.email }}<input value="{{ customer.email }}" dir="ltr" disabled></label>
+    <label class="py-field">{{ c.phone }}<input name="phone" value="{{ customer.phone or '' }}" dir="ltr"></label>
+    <button class="py-btn" type="submit">{{ c.save }}</button>
+  </form>
+  <form method="post" action="/account/logout"><button class="py-btn" type="submit">{{ c.nav_logout }}</button></form>
+  <h2>{{ c.nav_bookings }}</h2>
+  {% if not bookings %}<p>{{ c.empty_bookings }}</p>{% endif %}
+  <table class="py-table">
+    {% for row in bookings %}
+    <tr>
+      <td dir="ltr"><a href="/book/confirmation/{{ row.reference }}">{{ row.reference }}</a></td>
+      <td>{{ row.title }}</td>
+      <td dir="ltr">{{ money(row.total_kwd) }}</td>
+      <td>{{ c.status_confirmed }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+  <h2>{{ c.nav_travelers }}</h2>
+  <ul>
+    {% for person in travelers %}
+    <li>{{ person.full_name }} · <span dir="ltr">{{ person.passport }}</span> · <span dir="ltr">{{ person.dob }}</span> · {{ person.nationality }}</li>
+    {% endfor %}
+  </ul>
+  <form class="py-panel py-fields" method="post" action="/account/travelers">
+    <label>{{ c.name }}<input name="full_name" required></label>
+    <label>{{ c.passport }}<input name="passport" dir="ltr"></label>
+    <label>{{ c.dob }}<input name="dob" type="date" dir="ltr"></label>
+    <label>{{ c.nationality }}<input name="nationality"></label>
+    <button class="py-btn" type="submit">{{ c.add_traveler }}</button>
+  </form>
+</section>
+{% endblock %}

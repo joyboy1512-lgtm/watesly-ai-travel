@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}{{ hotel.name_ar if lang == 'ar' else hotel.name_en }} · WeekendGate{% endblock %}
+{% block content %}
+<div class="tvlk-hotel py-wrap">
+  <p><a href="/hotels/results?destination={{ hotel.destination }}&check_in={{ filters.check_in }}&check_out={{ filters.check_out }}&rooms={{ filters.rooms }}">{{ c.back }}</a></p>
+  <article class="py-panel">
+    <img src="{{ hotel.image }}" alt="" style="width:100%;max-height:320px;object-fit:cover;border-radius:12px">
+    <h1>{{ hotel.name_ar if lang == 'ar' else hotel.name_en }}</h1>
+    <p>
+      <strong class="tvlk-score-pill" dir="ltr">{{ '%.1f'|format(hotel.review) }}</strong>
+      {{ place }} · {{ hotel.zone_ar if lang == 'ar' else hotel.zone_en }}
+      · <span dir="ltr">{{ '%.1f'|format(hotel.distance_km) }} {{ c.km }}</span>
+    </p>
+    <p>{% for facility in hotel.facilities %}<span class="hotel-chip">{{ c.get(facility) }}</span> {% endfor %}</p>
+    <h2>{{ c.room_rates }}</h2>
+    <p dir="ltr">{{ filters.check_in }} → {{ filters.check_out }} · {{ nights }} {{ c.nights }} · {{ rooms }} {{ c.rooms }}</p>
+    {% for room in hotel.rooms %}
+      {% for rate in room.rates %}
+      <div class="py-room">
+        <div>
+          <strong>{{ room.name_ar if lang == 'ar' else room.name_en }}</strong>
+          <div>{{ c.get('board_' + rate.board) }}</div>
+          <div>{% if rate.refundable %}{{ c.free_cancel }}{% else %}{{ c.nonrefundable }}{% endif %} · {% if rate.payment == 'AT_HOTEL' %}{{ c.pay_hotel }}{% else %}{{ c.pay_now }}{% endif %}</div>
+        </div>
+        <div class="py-price">
+          <strong dir="ltr">{{ money(rate.price * nights * rooms) }}</strong>
+          <form action="/select" method="post">
+            <input type="hidden" name="kind" value="hotel">
+            <input type="hidden" name="hotel_id" value="{{ hotel.id }}">
+            <input type="hidden" name="rate_id" value="{{ rate.id }}">
+            <input type="hidden" name="check_in" value="{{ filters.check_in }}">
+            <input type="hidden" name="check_out" value="{{ filters.check_out }}">
+            <input type="hidden" name="rooms" value="{{ rooms }}">
+            <input type="hidden" name="adults" value="{{ filters.adults }}">
+            <button class="py-btn" type="submit">{{ c.select }}</button>
+          </form>
+        </div>
+      </div>
+      {% endfor %}
+    {% endfor %}
+  </article>
+</div>
+{% endblock %}

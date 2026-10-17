@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="{{ lang }}" dir="{{ dir }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}WeekendGate{% endblock %}</title>
+  <link rel="stylesheet" href="/static/css/shop.css">
+  <link rel="stylesheet" href="/static/css/tvlk-hotel.css">
+  <link rel="stylesheet" href="/static/css/hotel-rich.css">
+  <link rel="stylesheet" href="/static/css/staff-login.css">
+  <link rel="stylesheet" href="/static/css/py-bridge.css">
+</head>
+<body>
+  <div class="shop-root exp-theme wg-new-ui{% if home %} shop-home-layout{% endif %}" lang="{{ lang }}" dir="{{ dir }}">
+    <header class="shop-header exp-header wg-header-blue{% if home %} exp-header-hero-overlay{% else %} shop-header-inner-blue{% endif %}">
+      <div class="shop-header-inner exp-header-inner wg-topbar">
+        <a class="wg-brand" href="/" aria-label="WeekendGate">
+          <img src="/brand/wg-lockup.png" alt="WeekendGate" height="36">
+        </a>
+        <nav class="wg-nav" id="wg-nav">
+          <a href="/">{{ c.nav_home }}</a>
+          <a href="/flights/results?origin=KWI&destination=DXB">{{ c.nav_flights }}</a>
+          <a href="/hotels/results?destination=DXB">{{ c.nav_hotels }}</a>
+          <a href="/activities/results?destination=DXB">{{ c.nav_activities }}</a>
+          <a href="/transfers/results?destination=DXB">{{ c.nav_transfers }}</a>
+          <a href="/offers">{{ c.nav_offers }}</a>
+          <a href="/destinations">{{ c.nav_destinations }}</a>
+          <a href="/assistant">{{ c.nav_assistant }}</a>
+        </nav>
+        <div class="wg-tools">
+          <form action="/preferences" method="get">
+            <input type="hidden" name="next" value="{{ request.url.path }}{% if request.url.query %}?{{ request.url.query }}{% endif %}">
+            <label class="sr-only" for="lang">{{ c.language }}</label>
+            <select id="lang" name="lang" onchange="this.form.submit()">
+              <option value="ar" {% if lang == 'ar' %}selected{% endif %}>العربية</option>
+              <option value="en" {% if lang == 'en' %}selected{% endif %}>English</option>
+            </select>
+          </form>
+          <form action="/preferences" method="get">
+            <input type="hidden" name="next" value="{{ request.url.path }}{% if request.url.query %}?{{ request.url.query }}{% endif %}">
+            <label class="sr-only" for="currency">{{ c.currency }}</label>
+            <select id="currency" name="currency" onchange="this.form.submit()" dir="ltr">
+              {% for code in currencies %}
+              <option value="{{ code }}" {% if currency == code %}selected{% endif %}>{{ code }}</option>
+              {% endfor %}
+            </select>
+          </form>
+          <a href="tel:+96590053224" dir="ltr">90053224</a>
+          {% if customer %}
+          <a href="/account">{{ c.nav_account }}</a>
+          {% else %}
+          <a href="/account/login">{{ c.nav_login }}</a>
+          {% endif %}
+          {% if staff %}
+          <a href="/dashboard">{{ c.nav_dashboard }}</a>
+          {% endif %}
+          <button type="button" class="wg-menu" onclick="document.getElementById('wg-nav').classList.toggle('is-open')" aria-label="{{ c.nav_home }}">☰</button>
+        </div>
+      </div>
+    </header>
+    <main class="exp-main shop-main">
+      {% block content %}{% endblock %}
+    </main>
+    <footer class="shop-footer">
+      <div class="shop-footer-inner shop-footer-grid">
+        <div>
+          <strong>WeekendGate</strong>
+          <p>{{ c.legal_ar }}</p>
+          <p>{{ c.license }} 2015/2587</p>
+          <p>{{ c.footer_note }}</p>
+        </div>
+        <div>
+          <a href="/about">{{ c.about }}</a><br>
+          <a href="/faq">{{ c.faq }}</a><br>
+          <a href="/policy">{{ c.policy }}</a><br>
+          <a href="/terms">{{ c.terms }}</a><br>
+          <a href="/privacy">{{ c.privacy }}</a><br>
+          <a href="/contact">{{ c.contact }}</a>
+        </div>
+        <div>
+          <div dir="ltr">90053224</div>
+          <a href="https://wa.me/96590053224">{{ c.whatsapp }}</a>
+          <div>info@travelzone.tours</div>
+          <div>© {{ year }} WeekendGate</div>
+        </div>
+      </div>
+    </footer>
+  </div>
+</body>
+</html>

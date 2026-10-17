@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}{{ c.nav_transfers }} · WeekendGate{% endblock %}
+{% block content %}
+<section class="py-wrap">
+  <h1>{{ c.nav_transfers }}</h1>
+  {% for row in rows %}
+  <article class="py-flight">
+    <div>
+      <strong>{{ row.name_ar if lang == 'ar' else row.name_en }}</strong>
+      <div>{{ c.vehicle }} · <span dir="ltr">{{ row.seats }} {{ c.pax }}</span></div>
+      <div>{{ row.place.city_ar if lang == 'ar' else row.place.city_en }}</div>
+    </div>
+    <div dir="ltr">× {{ row.cars }}</div>
+    <div class="py-price">
+      <strong dir="ltr">{{ money(row.total_kwd) }}</strong>
+      <form action="/select" method="post">
+        <input type="hidden" name="kind" value="transfer">
+        <input type="hidden" name="transfer_id" value="{{ row.id }}">
+        <input type="hidden" name="destination" value="{{ row.place.code }}">
+        <input type="hidden" name="adults" value="{{ filters.adults }}">
+        <button class="py-btn" type="submit">{{ c.select }}</button>
+      </form>
+    </div>
+  </article>
+  {% endfor %}
+</section>
+{% endblock %}

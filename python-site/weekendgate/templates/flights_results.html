@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% block title %}{{ c.nav_flights }} · WeekendGate{% endblock %}
+{% block content %}
+<section class="py-wrap">
+  <h1>{{ c.nav_flights }}{% if origin_label %} — {{ origin_label }} → {{ dest_label }}{% endif %}</h1>
+  <p class="py-note">{{ c.catalog_note }}</p>
+  {% if filters.origin and filters.destination %}
+  <form class="py-panel py-fields" action="/flights/results" method="get">
+    <input type="hidden" name="origin" value="{{ filters.origin }}">
+    <input type="hidden" name="destination" value="{{ filters.destination }}">
+    <input type="hidden" name="depart" value="{{ filters.depart or filters.check_in }}">
+    <input type="hidden" name="return_on" value="{{ filters.return_on or '' }}">
+    <input type="hidden" name="trip" value="{{ filters.trip }}">
+    <input type="hidden" name="adults" value="{{ filters.adults }}">
+    <input type="hidden" name="children" value="{{ filters.children }}">
+    <label>{{ c.cabin }}
+      <select name="cabin">
+        {% for key in ['economy', 'premium', 'business', 'first'] %}
+        <option value="{{ key }}" {% if filters.cabin == key %}selected{% endif %}>{{ c.get(key) }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>{{ c.stops }}
+      <select name="stops">
+        <option value="any">{{ c.any }}</option>
+        <option value="0" {% if filters.stops == '0' %}selected{% endif %}>{{ c.direct }}</option>
+        <option value="1" {% if filters.stops == '1' %}selected{% endif %}>{{ c.stop }}</option>
+      </select>
+    </label>
+    <label>{{ c.airline }}
+      <select name="airline">
+        <option value="">{{ c.any }}</option>
+        {% for code in airlines %}
+        <option value="{{ code }}" {% if filters.airline == code %}selected{% endif %}>{{ code }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>{{ c.sort }}
+      <select name="sort">
+        <option value="price">{{ c.sort_price }}</option>
+        <option value="duration" {% if filters.sort == 'duration' %}selected{% endif %}>{{ c.sort_duration }}</option>
+        <option value="depart" {% if filters.sort == 'depart' %}selected{% endif %}>{{ c.sort_depart }}</option>
+      </select>
+    </label>
+    <button class="py-btn" type="submit">{{ c.apply }}</button>
+  </form>
+  <p dir="ltr">{{ rows|length }}</p>
+  {% if not rows %}<p>{{ c.no_results }}</p>{% endif %}
+  {% for row in rows %}
+  <article class="py-flight shop-ticket-card-v2">
+    <div>
+      <strong>{{ row.airline_ar if lang == 'ar' else row.airline_en }}</strong>
+      <span dir="ltr">{{ row.airline }}</span>
+      <div class="py-times"><span>{{ row.depart }}</span><span>{{ row.arrive }}</span></div>
+      <div>{{ row.origin }} → {{ row.destination }} · <span dir="ltr">{{ row.minutes }}</span> {{ c.duration }}</div>
+    </div>
+    <div>
+      {% if row.stops == 0 %}{{ c.direct }}{% else %}{{ c.stop }}{% endif %}
+      · {{ c.baggage }} <span dir="ltr">{{ row.baggage }}</span>
+      · {{ c.get(row.cabin) }}
+      · {% if row.refundable %}{{ c.refundable }}{% else %}{{ c.nonrefundable }}{% endif %}
+    </div>
+    <div class="py-price">
+      <strong dir="ltr">{{ money(row.total_kwd) }}</strong>
+      <small>{{ c.per_person }}</small>
+      {% if filters.trip == 'round' %}
+      <form action="/flights/return" method="get">
+        <input type="hidden" name="outbound_id" value="{{ row.id }}">
+        <input type="hidden" name="origin" value="{{ filters.origin }}">
+        <input type="hidden" name="destination" value="{{ filters.destination }}">
+        <input type="hidden" name="cabin" value="{{ filters.cabin }}">
+        <input type="hidden" name="adults" value="{{ filters.adults }}">
+        <input type="hidden" name="children" value="{{ filters.children }}">
+        <input type="hidden" name="trip" value="round">
+        <button class="py-btn" type="submit">{{ c.pick_return }}</button>
+      </form>
+      {% else %}
+      <form action="/select" method="post">
+        <input type="hidden" name="kind" value="flight">
+        <input type="hidden" name="outbound_id" value="{{ row.id }}">
+        <input type="hidden" name="cabin" value="{{ filters.cabin }}">
+        <input type="hidden" name="adults" value="{{ filters.adults }}">
+        <input type="hidden" name="children" value="{{ filters.children }}">
+        <input type="hidden" name="origin" value="{{ row.origin }}">
+        <input type="hidden" name="destination" value="{{ row.destination }}">
+        <button class="py-btn" type="submit">{{ c.select }}</button>
+      </form>
+      {% endif %}
+    </div>
+  </article>
+  {% endfor %}
+  {% else %}
+  <p>{{ c.need_destination }}</p>
+  {% endif %}
+</section>
+{% endblock %}

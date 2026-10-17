@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}{{ c.nav_activities }} · WeekendGate{% endblock %}
+{% block content %}
+<section class="py-wrap">
+  <h1>{{ c.nav_activities }}{% if place %} — {{ place.city_ar if lang == 'ar' else place.city_en }}{% endif %}</h1>
+  <div class="py-card-grid">
+    {% for row in rows %}
+    <article class="py-card">
+      <img src="{{ row.image }}" alt="">
+      <strong>{{ row.name_ar if lang == 'ar' else row.name_en }}</strong>
+      <p dir="ltr">{{ row.hours }} · {{ money(row.price) }} {{ c.per_person }}</p>
+      <form action="/select" method="post">
+        <input type="hidden" name="kind" value="activity">
+        <input type="hidden" name="activity_id" value="{{ row.id }}">
+        <input type="hidden" name="destination" value="{{ row.destination }}">
+        <input type="hidden" name="adults" value="{{ filters.adults }}">
+        <button class="py-btn" type="submit">{{ c.select }}</button>
+      </form>
+    </article>
+    {% endfor %}
+    {% if not rows %}<p>{{ c.no_results }}</p>{% endif %}
+  </div>
+</section>
+{% endblock %}

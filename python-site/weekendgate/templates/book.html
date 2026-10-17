@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}{{ c.book }} · WeekendGate{% endblock %}
+{% block content %}
+<section class="py-wrap py-book">
+  <h1>{{ c.book }}</h1>
+  {% if not quote %}
+  <p>{{ c.need_destination }}</p>
+  <a class="py-btn" href="/">{{ c.nav_home }}</a>
+  {% else %}
+  <article class="py-panel">
+    <h2>{{ quote.title }}</h2>
+    <table class="py-table">
+      <thead><tr><th>{{ c.item }}</th><th>{{ c.qty }}</th><th>{{ c.amount }}</th></tr></thead>
+      <tbody>
+        {% for line in quote.lines %}
+        <tr>
+          <td>{{ line.item }}</td>
+          <td dir="ltr">{{ line.qty }}</td>
+          <td dir="ltr">{{ money(line.amount) }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <p><strong>{{ c.total }}</strong> <span dir="ltr">{{ money(quote.total_kwd) }}</span></p>
+    <p>{{ c.includes_tax }}</p>
+  </article>
+  {% if error %}<p class="py-note">{{ c.required }}</p>{% endif %}
+  <form class="py-panel" method="post" action="/book">
+    <label class="py-field">{{ c.guest_name }}<input name="guest_name" required value="{{ prefill.name if prefill else '' }}"></label>
+    <label class="py-field">{{ c.email }}<input name="email" type="email" required dir="ltr" value="{{ prefill.email if prefill else '' }}"></label>
+    <label class="py-field">{{ c.phone }}<input name="phone" required dir="ltr" value="{{ prefill.phone if prefill else '' }}"></label>
+    <label class="py-field">{{ c.passport }}<input name="passport" dir="ltr" {% if quote.kind == 'flight' %}required minlength="5"{% endif %}></label>
+    <label class="py-field">{{ c.notes }}<textarea name="notes"></textarea></label>
+    <button class="py-btn" type="submit">{{ c.confirm }}</button>
+  </form>
+  {% endif %}
+</section>
+{% endblock %}

@@ -75,7 +75,7 @@ html body .shop-root.wg-new-ui .shop-main.shop-main-wide:has(.tvlk-hotel.shop-ho
 }
 
 .tvlk-hotel-results-body {
-  width: min(1640px, calc(100% - 40px));
+  width: min(1120px, calc(100% - 32px));
   margin-inline: auto;
 }
 
@@ -576,8 +576,8 @@ html body .shop-root.wg-new-ui .shop-main.shop-main-wide:has(.tvlk-hotel.shop-ho
 .tvlk-hotel .shop-hotel-results-layout,
 .tvlk-hotel .shop-hotel-results-layout.has-map {
   display: grid;
-  grid-template-columns: 300px minmax(0, 1fr);
-  gap: 16px;
+  grid-template-columns: 292px minmax(0, 1fr);
+  gap: 14px;
   align-items: start;
 }
 
@@ -947,7 +947,7 @@ html body .shop-root.wg-new-ui .shop-main.shop-main-wide:has(.tvlk-hotel.shop-ho
 .tvlk-hotel .shop-hotel-results .hotel-search-card-shop,
 .tvlk-hotel .hotel-search-card-shop {
   display: grid;
-  grid-template-columns: 260px minmax(0, 1fr) 228px;
+  grid-template-columns: 188px minmax(0, 1fr) 168px;
   gap: 0;
   align-items: stretch;
   background: var(--tvlk-card);
@@ -956,7 +956,6 @@ html body .shop-root.wg-new-ui .shop-main.shop-main-wide:has(.tvlk-hotel.shop-ho
   box-shadow: none;
   overflow: hidden;
   padding: 0;
-  min-height: 228px;
   width: 100%;
 }
 
@@ -981,7 +980,7 @@ html body .shop-root.wg-new-ui .shop-main.shop-main-wide:has(.tvlk-hotel.shop-ho
 .tvlk-hotel .shop-hotel-results .hotel-search-card-shop .hotel-search-card-media,
 .tvlk-hotel .hotel-search-card-shop .hotel-search-card-media {
   order: 1;
-  min-height: 228px;
+  min-height: 168px;
   height: 100%;
   border-radius: 0;
 }
@@ -990,7 +989,7 @@ html body .shop-root.wg-new-ui .shop-main.shop-main-wide:has(.tvlk-hotel.shop-ho
 .tvlk-hotel .hotel-search-card-shop .hotel-search-card-photo {
   width: 100%;
   height: 100%;
-  min-height: 228px;
+  min-height: 168px;
   object-fit: cover;
 }
 
@@ -1004,8 +1003,8 @@ html body .shop-root.wg-new-ui .shop-main.shop-main-wide:has(.tvlk-hotel.shop-ho
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 6px;
-  padding: 18px 22px;
+  gap: 8px;
+  padding: 12px 14px;
   min-width: 0;
 }
 
@@ -1029,15 +1028,14 @@ html body .shop-root.wg-new-ui .shop-main.shop-main-wide:has(.tvlk-hotel.shop-ho
   margin: 0;
   width: 100%;
   max-width: 100%;
-  font-size: 1.28rem;
+  font-size: 1.08rem;
   font-weight: 800;
   color: var(--tvlk-ink);
   line-height: 1.35;
   white-space: normal;
   overflow: visible;
   text-overflow: unset;
-  overflow-wrap: anywhere;
-  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 .tvlk-hotel .hotel-search-card-stars {
@@ -1049,10 +1047,11 @@ html body .shop-root.wg-new-ui .shop-main.shop-main-wide:has(.tvlk-hotel.shop-ho
 .tvlk-hotel .hotel-search-card-location,
 .tvlk-hotel .hotel-search-card-agg,
 .tvlk-hotel .hotel-live-badge {
+  margin: 0;
   color: #111111;
-  font-size: 0.95rem;
+  font-size: 0.86rem;
   font-weight: 600;
-  line-height: 1.5;
+  line-height: 1.4;
 }
 
 .tvlk-hotel .hotel-search-card-shop .hotel-live-badge,
@@ -1072,7 +1071,7 @@ html body .shop-root.wg-new-ui .shop-main.shop-main-wide:has(.tvlk-hotel.shop-ho
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
-  margin: 8px 0 4px;
+  margin: 0;
 }
 
 .tvlk-hotel .hotel-chip {
@@ -1089,22 +1088,22 @@ html body .shop-root.wg-new-ui .shop-main.shop-main-wide:has(.tvlk-hotel.shop-ho
 .tvlk-hotel .hotel-search-card-poi {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px 12px;
-  margin: 2px 0 0;
+  gap: 4px 10px;
+  margin: 0;
   padding: 0;
   list-style: none;
   color: #111111;
-  font-size: 0.9rem;
+  font-size: 0.84rem;
   font-weight: 600;
-  line-height: 1.45;
+  line-height: 1.4;
 }
 
 .tvlk-hotel .hotel-search-card-offer-line {
-  margin: 4px 0 0;
+  margin: 0;
   color: #111111;
-  font-size: 0.95rem;
+  font-size: 0.86rem;
   font-weight: 650;
-  line-height: 1.45;
+  line-height: 1.4;
 }
 
 .tvlk-hotel .hotel-search-card-room-below-price {
@@ -1128,7 +1127,7 @@ html body .shop-root.wg-new-ui .shop-main.shop-main-wide:has(.tvlk-hotel.shop-ho
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  margin: 8px 0 0;
+  margin: 0;
   text-align: start;
 }
 
@@ -1169,8 +1168,8 @@ html body .shop-root.wg-new-ui .shop-main.shop-main-wide:has(.tvlk-hotel.shop-ho
   flex-direction: column;
   align-items: stretch;
   justify-content: center;
-  gap: 10px;
-  padding: 14px 16px;
+  gap: 8px;
+  padding: 12px;
   border-inline-start: 1px solid var(--tvlk-line);
   text-align: end;
   min-width: 0;
@@ -1180,8 +1179,9 @@ html body .shop-root.wg-new-ui .shop-main.shop-main-wide:has(.tvlk-hotel.shop-ho
 .tvlk-hotel .tvlk-price-note {
   display: block;
   color: #111111;
-  font-size: 0.82rem;
-  font-weight: 650;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.35;
 }
 
 .tvlk-hotel .hotel-search-card-shop .hotel-price-panel-card,
@@ -1189,7 +1189,7 @@ html body .shop-root.wg-new-ui .shop-main.shop-main-wide:has(.tvlk-hotel.shop-ho
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 2px;
+  gap: 4px;
 }
 
 .tvlk-hotel .hotel-search-card-shop .tvlk-stay-price {
@@ -1197,23 +1197,23 @@ html body .shop-root.wg-new-ui .shop-main.shop-main-wide:has(.tvlk-hotel.shop-ho
   box-sizing: border-box;
   background: #e7f3fc;
   border: 1px solid #8ec8ef;
-  border-radius: 12px;
-  padding: 12px 12px 10px;
+  border-radius: 10px;
+  padding: 8px 10px;
 }
 
 .tvlk-hotel .tvlk-night-price strong,
 .tvlk-hotel .hotel-search-card-shop .hotel-price-panel-total {
   color: #013e6b;
-  font-size: 1.45rem;
+  font-size: 1.12rem;
   font-weight: 800;
-  line-height: 1.15;
+  line-height: 1.2;
 }
 
 .tvlk-hotel .tvlk-stay-price em {
   display: block;
   color: #111111;
-  font-size: 0.88rem;
-  font-weight: 700;
+  font-size: 0.75rem;
+  font-weight: 650;
   font-style: normal;
   line-height: 1.35;
 }
@@ -1483,7 +1483,7 @@ html body .shop-root.wg-new-ui .shop-main.shop-main-wide:has(.tvlk-hotel.shop-ho
 
   .tvlk-hotel .shop-hotel-results .hotel-search-card-shop,
   .tvlk-hotel .hotel-search-card-shop {
-    grid-template-columns: 220px minmax(0, 1fr) 196px;
+    grid-template-columns: 168px minmax(0, 1fr) 156px;
   }
 
   .tvlk-hotel .shop-hotel-results-mapcol {

@@ -83,6 +83,8 @@ h2.section { width: min(1180px, calc(100% - 28px)); margin: 22px auto 0; }
 .dash nav a { color: #fff; font-weight: 800; text-decoration: none; }
 .dash main, .page { width: min(860px, calc(100% - 28px)); margin: 18px auto; }
 .field { display: grid; gap: 4px; font-weight: 800; margin-bottom: 10px; }
+.table form { margin: 0; }
+.btn.small { padding: 6px 10px; }
 .foot { background: var(--navy); color: #fff; margin-top: 28px; padding: 28px 0 36px; }
 .foot-in { display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 16px; }
 .foot a { color: #fff; }

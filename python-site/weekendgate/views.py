@@ -5,7 +5,9 @@ from __future__ import annotations
 from urllib.parse import quote
 
 from weekendgate.catalog import DESTINATIONS
+from weekendgate.inventory import available, hotel_key
 from weekendgate.markup import esc
+from weekendgate.pricing import CHILD_NIGHT_KWD, apply_markup, quote_stay
 
 
 def _name(row: dict, lang: str, ar="name_ar", en="name_en") -> str:
@@ -101,6 +103,20 @@ def _field(label: str, control: str) -> str:
     return f'<label>{esc(label)}{control}</label>'
 
 
+def _csrf(ctx: dict) -> str:
+    return f'<input type="hidden" name="csrf" value="{esc(ctx.get("csrf") or "")}">'
+
+
+def _status(c, status: str) -> str:
+    key = {
+        "confirmed": "status_confirmed",
+        "pending": "status_pending",
+        "cancelled": "status_cancelled",
+        "pay_at_hotel": "status_pay_hotel",
+    }.get(status or "", "status_pending")
+    return c.get(key)
+
+
 def home_page(ctx, destinations, offers, check_in, check_out, return_on) -> str:
     c = ctx["c"]
     lang = ctx["lang"]
@@ -181,7 +197,7 @@ def hotels_page(ctx, filters, rows, facets, pins, place) -> str:
         return _shell(ctx, f'<div class="page"><p>{esc(c.need_destination)}</p></div>', c.nav_hotels)
     hidden = "".join(
         f'<input type="hidden" name="{key}" value="{esc(filters.get(key) or "")}">'
-        for key in ("destination", "check_in", "check_out", "rooms", "adults")
+        for key in ("destination", "check_in", "check_out", "rooms", "adults", "children")
     )
     hidden += f'<input type="hidden" name="sort" value="{esc(filters.get("sort") or "best")}">'
     stars = []
@@ -304,11 +320,16 @@ def hotel_detail_page(ctx, hotel, filters, nights, rooms, place) -> str:
             room_name = room["name_en"] if lang == "en" else room["name_ar"]
             pay = c.pay_hotel if rate["payment"] == "AT_HOTEL" else c.pay_now
             cancel = c.free_cancel if rate["refundable"] else c.nonrefundable
-            rates.append(f"""
-            <div class="flight">
-              <div><strong>{esc(room_name)}</strong><div>{esc(c.get("board_" + rate["board"]))}</div><div>{esc(cancel)} · {esc(pay)}</div></div>
-              <div class="stay"><strong dir="ltr">{esc(ctx["money"](rate["price"] * nights * rooms))}</strong>
+            children = int(filters.get("children") or 0)
+            live = available(hotel_key(hotel["id"], rate["id"]))
+            qty = rate["allotment"] if live is None else live
+            amount = quote_stay(rate["price"], nights, rooms, children)
+            if qty < rooms:
+                action = f'<p class="note">{esc(c.sold_out)}</p>'
+            else:
+                action = f"""
                 <form action="/select" method="post">
+                  {_csrf(ctx)}
                   <input type="hidden" name="kind" value="hotel">
                   <input type="hidden" name="hotel_id" value="{esc(hotel["id"])}">
                   <input type="hidden" name="rate_id" value="{esc(rate["id"])}">
@@ -316,8 +337,16 @@ def hotel_detail_page(ctx, hotel, filters, nights, rooms, place) -> str:
                   <input type="hidden" name="check_out" value="{esc(filters["check_out"])}">
                   <input type="hidden" name="rooms" value="{rooms}">
                   <input type="hidden" name="adults" value="{esc(filters["adults"])}">
+                  <input type="hidden" name="children" value="{children}">
                   <button class="btn" type="submit">{esc(c.select)}</button>
-                </form>
+                </form>"""
+            child_note = f'<div>{esc(c.child_fee)} <span dir="ltr">{CHILD_NIGHT_KWD:.3f} KWD</span></div>' if children else ""
+            rates.append(f"""
+            <div class="flight">
+              <div><strong>{esc(room_name)}</strong><div>{esc(c.get("board_" + rate["board"]))}</div><div>{esc(cancel)} · {esc(pay)}</div><div dir="ltr">{qty} {esc(c.rooms_left)}</div></div>
+              <div class="stay"><strong dir="ltr">{esc(ctx["money"](amount))}</strong>
+                {child_note}
+                {action}
               </div>
             </div>""")
     facilities = " ".join(f'<span class="chip">{esc(c.get(item))}</span>' for item in hotel["facilities"])
@@ -368,6 +397,7 @@ def flights_page(ctx, filters, rows, airlines, origin_label, dest_label) -> str:
         else:
             action = f"""
             <form action="/select" method="post">
+              {_csrf(ctx)}
               <input type="hidden" name="kind" value="flight">
               <input type="hidden" name="outbound_id" value="{esc(row["id"])}">
               <input type="hidden" name="cabin" value="{esc(filters["cabin"])}">
@@ -423,6 +453,7 @@ def return_page(ctx, filters, outbound, rows) -> str:
           <div>{esc(c.direct if row["stops"] == 0 else c.stop)}</div>
           <div class="stay"><strong dir="ltr">{esc(ctx["money"](outbound["total_kwd"] + row["total_kwd"]))}</strong>
             <form action="/select" method="post">
+              {_csrf(ctx)}
               <input type="hidden" name="kind" value="flight">
               <input type="hidden" name="outbound_id" value="{esc(outbound["id"])}">
               <input type="hidden" name="return_id" value="{esc(row["id"])}">
@@ -453,8 +484,9 @@ def activities_page(ctx, filters, rows, place) -> str:
     for row in rows:
         cards.append(f"""
         <article class="tile"><img src="{esc(row["image"])}" alt=""><strong>{esc(_name(row, lang))}</strong>
-          <p dir="ltr">{esc(row["hours"])} · {esc(ctx["money"](row["price"]))} {esc(c.per_person)}</p>
+          <p dir="ltr">{esc(row["hours"])} · {esc(ctx["money"](apply_markup(row["price"])))} {esc(c.per_person)}</p>
           <form action="/select" method="post" style="margin:0 12px 12px">
+            {_csrf(ctx)}
             <input type="hidden" name="kind" value="activity">
             <input type="hidden" name="activity_id" value="{esc(row["id"])}">
             <input type="hidden" name="destination" value="{esc(row["destination"])}">
@@ -477,6 +509,7 @@ def transfers_page(ctx, filters, rows) -> str:
           <div dir="ltr">× {row["cars"]}</div>
           <div class="stay"><strong dir="ltr">{esc(ctx["money"](row["total_kwd"]))}</strong>
             <form action="/select" method="post">
+              {_csrf(ctx)}
               <input type="hidden" name="kind" value="transfer">
               <input type="hidden" name="transfer_id" value="{esc(row["id"])}">
               <input type="hidden" name="destination" value="{esc(row["place"]["code"])}">
@@ -497,7 +530,7 @@ def _lines(ctx, lines) -> str:
     return f'<table class="table"><thead><tr><th>{esc(c.item)}</th><th>{esc(c.qty)}</th><th>{esc(c.amount)}</th></tr></thead><tbody>{rows}</tbody></table>'
 
 
-def book_page(ctx, quote, error, prefill) -> str:
+def book_page(ctx, quote, error, prefill, travelers=None) -> str:
     c = ctx["c"]
     if not quote:
         return _shell(ctx, f'<div class="page"><p>{esc(c.need_destination)}</p><a class="btn" href="/">{esc(c.nav_home)}</a></div>', c.book)
@@ -505,13 +538,38 @@ def book_page(ctx, quote, error, prefill) -> str:
     email = prefill["email"] if prefill else ""
     phone = prefill["phone"] if prefill else ""
     passport = " required minlength=\"5\"" if quote["kind"] == "flight" else ""
-    err = f'<p class="note">{esc(c.required)}</p>' if error else ""
+    messages = {"required": c.required, "sold_out": c.sold_out, "forbidden": c.forbidden}
+    err = f'<p class="note">{esc(messages.get(error, c.required))}</p>' if error else ""
+    options = ""
+    for person in travelers or []:
+        options += (
+            f'<option value="{esc(person["full_name"])}" data-passport="{esc(person["passport"] or "")}">'
+            f'{esc(person["full_name"])}</option>'
+        )
+    picker = ""
+    if options:
+        picker = f"""
+        <label class="field">{esc(c.saved_travelers)}
+          <select id="traveler-pick"><option value="">{esc(c.any)}</option>{options}</select>
+        </label>
+        <script>
+          document.getElementById("traveler-pick").addEventListener("change", function (event) {{
+            var option = event.target.selectedOptions[0];
+            if (!option || !option.value) return;
+            var name = document.querySelector("[name=guest_name]");
+            var passport = document.querySelector("[name=passport]");
+            if (name) name.value = option.value;
+            if (passport && option.dataset.passport) passport.value = option.dataset.passport;
+          }});
+        </script>"""
     body = f"""
     <section class="page">
       <h1>{esc(c.book)}</h1>
       <article class="panel"><h2>{esc(quote["title"])}</h2>{_lines(ctx, quote["lines"])}<p><strong>{esc(c.total)}</strong> <span dir="ltr">{esc(ctx["money"](quote["total_kwd"]))}</span></p><p>{esc(c.includes_tax)}</p></article>
       {err}
       <form class="panel" method="post" action="/book">
+        {_csrf(ctx)}
+        {picker}
         <label class="field">{esc(c.guest_name)}<input name="guest_name" required value="{esc(name)}"></label>
         <label class="field">{esc(c.email)}<input name="email" type="email" required dir="ltr" value="{esc(email)}"></label>
         <label class="field">{esc(c.phone)}<input name="phone" required dir="ltr" value="{esc(phone)}"></label>
@@ -524,17 +582,38 @@ def book_page(ctx, quote, error, prefill) -> str:
     return _shell(ctx, body, c.book)
 
 
-def confirmation_page(ctx, booking, details) -> str:
+def confirmation_page(ctx, booking, details, access_key: str = "") -> str:
     c = ctx["c"]
+    status = booking["status"]
+    heading = c.confirmed if status in ("confirmed", "pay_at_hotel") else _status(c, status)
+    pay = ""
+    if status == "pending":
+        pay = f"""
+        <p class="note">{esc(c.payment_note)}</p>
+        <form method="post" action="/book/pay/{esc(booking["reference"])}">
+          {_csrf(ctx)}
+          <input type="hidden" name="key" value="{esc(access_key)}">
+          <button class="btn" type="submit">{esc(c.record_payment)}</button>
+        </form>"""
+    cancel = ""
+    if status != "cancelled":
+        cancel = f"""
+        <form method="post" action="/book/cancel/{esc(booking["reference"])}">
+          {_csrf(ctx)}
+          <input type="hidden" name="key" value="{esc(access_key)}">
+          <button class="btn small" type="submit">{esc(c.cancel_booking)}</button>
+        </form>"""
     body = f"""
     <article class="page panel">
-      <h1>{esc(c.confirmed)}</h1>
+      <h1>{esc(heading)}</h1>
       <p>{esc(c.reference)} <strong dir="ltr">{esc(booking["reference"])}</strong></p>
       <p>{esc(booking["title"])}</p>
       <p>{esc(booking["guest_name"])} · <span dir="ltr">{esc(booking["phone"])}</span></p>
       <p dir="ltr">{esc(booking["created_at"])}</p>
       {_lines(ctx, details["lines"])}
-      <p><strong>{esc(c.total)}</strong> <span dir="ltr">{esc(ctx["money"](booking["total_kwd"]))}</span> · {esc(c.status_confirmed)}</p>
+      <p><strong>{esc(c.total)}</strong> <span dir="ltr">{esc(ctx["money"](booking["total_kwd"]))}</span> · {esc(_status(c, status))}</p>
+      {pay}
+      {cancel}
       <button class="btn" type="button" onclick="window.print()">{esc(c.print)}</button>
     </article>
     """
@@ -569,6 +648,7 @@ def auth_page(ctx, mode, error) -> str:
     <section class="page panel">
       <h1>{esc(heading)}</h1>{extra}{err}
       <form method="post" action="{action}">
+        {_csrf(ctx)}
         {fields}
         <label class="field">{esc(c.email)}<input name="email" type="email" required dir="ltr"></label>
         <label class="field">{esc(c.password)}<input name="password" type="password" required></label>
@@ -584,10 +664,17 @@ def account_page(ctx, bookings, travelers, saved) -> str:
     c = ctx["c"]
     customer = ctx["customer"]
     saved_note = f'<p class="note">{esc(c.saved)}</p>' if saved else ""
-    booking_rows = "".join(
-        f'<tr><td dir="ltr"><a href="/book/confirmation/{esc(row["reference"])}">{esc(row["reference"])}</a></td><td>{esc(row["title"])}</td><td dir="ltr">{esc(ctx["money"](row["total_kwd"]))}</td><td>{esc(c.status_confirmed)}</td></tr>'
-        for row in bookings
-    ) or f"<tr><td>{esc(c.empty_bookings)}</td></tr>"
+    booking_rows = []
+    for row in bookings:
+        key = row["access_key"] or ""
+        href = f"/book/confirmation/{row['reference']}" + (f"?key={quote(key)}" if key else "")
+        cancel = ""
+        if row["status"] != "cancelled":
+            cancel = f'<form method="post" action="/account/bookings/{esc(row["reference"])}/cancel">{_csrf(ctx)}<button class="btn small" type="submit">{esc(c.cancel_booking)}</button></form>'
+        booking_rows.append(
+            f'<tr><td dir="ltr"><a href="{esc(href)}">{esc(row["reference"])}</a></td><td>{esc(row["title"])}</td><td dir="ltr">{esc(ctx["money"](row["total_kwd"]))}</td><td>{esc(_status(c, row["status"]))}</td><td>{cancel}</td></tr>'
+        )
+    booking_html = "".join(booking_rows) or f"<tr><td>{esc(c.empty_bookings)}</td></tr>"
     people = "".join(
         f'<li>{esc(person["full_name"])} · <span dir="ltr">{esc(person["passport"])}</span> · <span dir="ltr">{esc(person["dob"])}</span> · {esc(person["nationality"])}</li>'
         for person in travelers
@@ -596,17 +683,19 @@ def account_page(ctx, bookings, travelers, saved) -> str:
     <section class="page">
       <h1>{esc(c.nav_account)}</h1>{saved_note}
       <form class="panel" method="post" action="/account">
+        {_csrf(ctx)}
         <label class="field">{esc(c.name)}<input name="name" value="{esc(customer["name"])}"></label>
         <label class="field">{esc(c.email)}<input value="{esc(customer["email"])}" dir="ltr" disabled></label>
         <label class="field">{esc(c.phone)}<input name="phone" value="{esc(customer["phone"] or "")}" dir="ltr"></label>
         <button class="btn" type="submit">{esc(c.save)}</button>
       </form>
-      <form method="post" action="/account/logout"><button class="btn" type="submit">{esc(c.nav_logout)}</button></form>
+      <form method="post" action="/account/logout">{_csrf(ctx)}<button class="btn" type="submit">{esc(c.nav_logout)}</button></form>
       <h2>{esc(c.nav_bookings)}</h2>
-      <table class="table">{booking_rows}</table>
+      <table class="table">{booking_html}</table>
       <h2>{esc(c.nav_travelers)}</h2>
       <ul>{people}</ul>
       <form class="panel" method="post" action="/account/travelers">
+        {_csrf(ctx)}
         <label class="field">{esc(c.name)}<input name="full_name" required></label>
         <label class="field">{esc(c.passport)}<input name="passport" dir="ltr"></label>
         <label class="field">{esc(c.dob)}<input name="dob" type="date" dir="ltr"></label>
@@ -618,22 +707,44 @@ def account_page(ctx, bookings, travelers, saved) -> str:
     return _shell(ctx, body, c.nav_account)
 
 
-def dashboard_page(ctx, panel, bookings, customers, hotel_count, flight_count) -> str:
+def dashboard_page(ctx, panel, bookings, customers, hotel_count, flight_count, markup: str = "0", lows=None, source=None) -> str:
     c = ctx["c"]
     staff = ctx["staff"]
     if panel == "bookings":
-        rows = "".join(
-            f'<tr><td dir="ltr">{esc(row["reference"])}</td><td>{esc(row["title"])}</td><td dir="ltr">{esc(row["customer_email"])}</td><td dir="ltr">{esc(ctx["money"](row["total_kwd"]))}</td><td>{esc(row["created_at"])}</td></tr>'
-            for row in bookings
-        )
-        main = f'<h1>{esc(c.nav_bookings)}</h1><table class="table">{rows or esc(c.empty_bookings)}</table>'
+        lines = []
+        for row in bookings:
+            cancel = ""
+            if row["status"] != "cancelled":
+                cancel = f'<form method="post" action="/dashboard/bookings/{esc(row["reference"])}/cancel">{_csrf(ctx)}<button class="btn small" type="submit">{esc(c.cancel_booking)}</button></form>'
+            lines.append(
+                f'<tr><td dir="ltr">{esc(row["reference"])}</td><td>{esc(row["title"])}</td><td dir="ltr">{esc(row["customer_email"])}</td><td dir="ltr">{esc(ctx["money"](row["total_kwd"]))}</td><td>{esc(_status(c, row["status"]))}</td><td>{esc(row["created_at"])}</td><td>{cancel}</td></tr>'
+            )
+        main = f'<h1>{esc(c.nav_bookings)}</h1><table class="table">{"".join(lines) or esc(c.empty_bookings)}</table>'
     elif panel == "customers":
         rows = "".join(f'<tr><td>{esc(row["name"])}</td><td dir="ltr">{esc(row["email"])}</td><td dir="ltr">{esc(row["phone"])}</td></tr>' for row in customers)
         main = f'<h1>{esc(c.customers)}</h1><table class="table">{rows}</table>'
     elif panel == "providers":
-        main = f'<h1>{esc(c.providers)}</h1><article class="panel"><strong>Hotelbeds</strong><p>{esc(c.catalog_note)}</p></article><article class="panel"><strong>Duffel</strong><p>{esc(c.catalog_note)}</p></article>'
+        label = ""
+        state = ""
+        if source:
+            label = source.label_en if ctx["lang"] == "en" else source.label_ar
+            state = c.connected if source.connected() else ""
+        low_rows = "".join(
+            f'<li dir="ltr">{esc(item["item_key"])} · {esc(item["qty"])}</li>' for item in (lows or [])
+        ) or f"<li>{esc(c.any)}</li>"
+        main = f"""<h1>{esc(c.providers)}</h1>
+        <article class="panel"><strong>{esc(c.source)}</strong><p>{esc(label)}</p><p>{esc(state)}</p><p>{esc(c.catalog_note)}</p></article>
+        <article class="panel"><strong>{esc(c.low_stock)}</strong><ul>{low_rows}</ul></article>"""
     elif panel == "pricing":
-        main = f'<h1>{esc(c.pricing)}</h1><p>{esc(c.role_note)}</p><ul><li dir="ltr">1 KWD = 3.26 USD</li><li dir="ltr">1 KWD = 12.23 SAR</li><li dir="ltr">1 KWD = 11.97 AED</li></ul><p dir="ltr">{esc(ctx["money"](45))}</p>'
+        main = f"""<h1>{esc(c.pricing)}</h1>
+        <form class="panel" method="post" action="/dashboard/pricing">
+          {_csrf(ctx)}
+          <label class="field">{esc(c.markup_percent)}<input name="markup_percent" dir="ltr" value="{esc(markup)}"></label>
+          <button class="btn" type="submit">{esc(c.save)}</button>
+        </form>
+        <p>{esc(c.child_fee)} <span dir="ltr">{CHILD_NIGHT_KWD:.3f} KWD</span></p>
+        <ul><li dir="ltr">1 KWD = 3.26 USD</li><li dir="ltr">1 KWD = 12.23 SAR</li><li dir="ltr">1 KWD = 11.97 AED</li></ul>
+        <p dir="ltr">{esc(ctx["money"](45))}</p>"""
     else:
         main = f"""<h1>{esc(c.overview)}</h1><div class="grid">
           <article class="tile"><strong dir="ltr">{len(bookings)}</strong><p>{esc(c.nav_bookings)}</p></article>
@@ -650,7 +761,7 @@ def dashboard_page(ctx, panel, bookings, customers, hotel_count, flight_count) -
         <a href="/dashboard/customers">{esc(c.customers)}</a>
         <a href="/dashboard/providers">{esc(c.providers)}</a>
         <a href="/dashboard/pricing">{esc(c.pricing)}</a>
-        <form method="post" action="/dashboard/logout"><button class="btn" type="submit">{esc(c.nav_logout)}</button></form>
+        <form method="post" action="/dashboard/logout">{_csrf(ctx)}<button class="btn" type="submit">{esc(c.nav_logout)}</button></form>
       </nav>
       <main><p>{esc(staff["name"])} · {esc(staff["role"])}</p>{main}</main>
     </div>

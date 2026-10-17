@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import secrets
 import sqlite3
 from datetime import datetime, timezone
 from pathlib import Path
@@ -13,7 +14,7 @@ DB_PATH = ROOT / "data" / "weekendgate.sqlite"
 
 
 def hash_password(password: str, salt: bytes | None = None) -> str:
-    salt = salt or hashlib.sha256(password.encode("utf-8")).digest()[:16]
+    salt = salt or secrets.token_bytes(16)
     digest = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt, 120_000)
     return f"{salt.hex()}:{digest.hex()}"
 
@@ -25,7 +26,9 @@ def verify_password(password: str, stored: str) -> bool:
         return False
     salt = bytes.fromhex(salt_hex)
     digest = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt, 120_000)
-    return digest.hex() == digest_hex
+    if len(digest.hex()) != len(digest_hex):
+        return False
+    return secrets.compare_digest(digest.hex(), digest_hex)
 
 
 def connect() -> sqlite3.Connection:
@@ -74,8 +77,18 @@ def init_db() -> None:
               status TEXT NOT NULL,
               created_at TEXT NOT NULL
             );
+            CREATE TABLE IF NOT EXISTS settings (
+              key TEXT PRIMARY KEY,
+              value TEXT NOT NULL
+            );
+            CREATE TABLE IF NOT EXISTS stock (
+              item_key TEXT PRIMARY KEY,
+              qty INTEGER NOT NULL
+            );
             """
         )
+        _add_column(conn, "bookings", "access_key", "TEXT")
+        _add_column(conn, "bookings", "payment_method", "TEXT")
         if not conn.execute("SELECT 1 FROM staff WHERE email = ?", ("demo@watesly.travel",)).fetchone():
             conn.execute(
                 "INSERT INTO staff (name, email, role, password_hash) VALUES (?, ?, ?, ?)",
@@ -142,24 +155,133 @@ def travelers_for(customer_id: int):
         ).fetchall()
 
 
-def next_reference(conn: sqlite3.Connection) -> str:
-    row = conn.execute("SELECT COUNT(*) AS n FROM bookings").fetchone()
-    return f"WG-{1001 + int(row['n'])}"
+def _add_column(conn: sqlite3.Connection, table: str, name: str, declaration: str) -> None:
+    have = {row["name"] for row in conn.execute(f"PRAGMA table_info({table})")}
+    if name not in have:
+        conn.execute(f"ALTER TABLE {table} ADD COLUMN {name} {declaration}")
 
 
-def create_booking(guest_name: str, email: str, phone: str, kind: str, title: str, details: dict, total_kwd: float):
-    created = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+def get_setting(key: str, default: str = "") -> str:
+    try:
+        with connect() as conn:
+            row = conn.execute("SELECT value FROM settings WHERE key = ?", (key,)).fetchone()
+    except sqlite3.OperationalError:
+        return default
+    if not row:
+        return default
+    return str(row["value"])
+
+
+def set_setting(key: str, value: str) -> None:
     with connect() as conn:
-        reference = next_reference(conn)
+        conn.execute(
+            "INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value",
+            (key, str(value)),
+        )
+
+
+def _reference(conn: sqlite3.Connection) -> str | None:
+    for _ in range(8):
+        candidate = f"WG-{secrets.token_hex(3).upper()}"
+        if not conn.execute("SELECT 1 FROM bookings WHERE reference = ?", (candidate,)).fetchone():
+            return candidate
+    return None
+
+
+def create_booking(
+    guest_name: str,
+    email: str,
+    phone: str,
+    kind: str,
+    title: str,
+    details: dict,
+    total_kwd: float,
+    payment_method: str = "AT_WEB",
+    stock: list[tuple[str, int]] | None = None,
+):
+    from weekendgate.inventory import reserve
+
+    created = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+    access_key = secrets.token_urlsafe(18)
+    status = "pay_at_hotel" if payment_method == "AT_HOTEL" else "pending"
+    payload = dict(details)
+    payload["stock"] = [[key, int(qty)] for key, qty in (stock or []) if int(qty) > 0]
+    payload["payment_method"] = payment_method
+    conn = connect()
+    try:
+        conn.execute("BEGIN IMMEDIATE")
+        if payload["stock"] and not reserve(conn, [(key, qty) for key, qty in payload["stock"]]):
+            conn.rollback()
+            return None
+        reference = _reference(conn)
+        if not reference:
+            conn.rollback()
+            return None
         conn.execute(
             """
             INSERT INTO bookings
-              (reference, customer_email, guest_name, phone, kind, title, details_json, total_kwd, status, created_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'confirmed', ?)
+              (reference, customer_email, guest_name, phone, kind, title, details_json, total_kwd, status, created_at, access_key, payment_method)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
-            (reference, email.casefold().strip(), guest_name.strip(), phone.strip(), kind, title, json.dumps(details, ensure_ascii=False), total_kwd, created),
+            (
+                reference,
+                email.casefold().strip(),
+                guest_name.strip(),
+                phone.strip(),
+                kind,
+                title,
+                json.dumps(payload, ensure_ascii=False),
+                total_kwd,
+                status,
+                created,
+                access_key,
+                payment_method,
+            ),
         )
-        return conn.execute("SELECT * FROM bookings WHERE reference = ?", (reference,)).fetchone()
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+    return booking_by_reference(reference)
+
+
+def pay_booking(reference: str) -> bool:
+    with connect() as conn:
+        row = conn.execute("SELECT status FROM bookings WHERE reference = ?", (reference,)).fetchone()
+        if not row or row["status"] != "pending":
+            return False
+        conn.execute("UPDATE bookings SET status = 'confirmed' WHERE reference = ?", (reference,))
+    return True
+
+
+def cancel_booking(reference: str) -> bool:
+    from weekendgate.inventory import release
+
+    conn = connect()
+    try:
+        conn.execute("BEGIN IMMEDIATE")
+        row = conn.execute("SELECT status, details_json FROM bookings WHERE reference = ?", (reference,)).fetchone()
+        if not row or row["status"] == "cancelled":
+            conn.rollback()
+            return False
+        details = json.loads(row["details_json"])
+        items = [(item[0], int(item[1])) for item in details.get("stock") or [] if len(item) == 2]
+        if items:
+            release(conn, items)
+        details["stock"] = []
+        conn.execute(
+            "UPDATE bookings SET status = 'cancelled', details_json = ? WHERE reference = ?",
+            (json.dumps(details, ensure_ascii=False), reference),
+        )
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+    return True
 
 
 def booking_by_reference(reference: str):

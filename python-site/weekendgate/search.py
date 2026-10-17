@@ -14,6 +14,8 @@ from weekendgate.catalog import (
     destination_by_code,
     resolve_place,
 )
+from weekendgate.inventory import available, flight_key, hotel_key
+from weekendgate.pricing import apply_markup, quote_stay
 
 BREAKFAST = {"BB", "HB", "FB", "AI"}
 CABIN_FACTOR = {"economy": 1.0, "premium": 1.55, "business": 2.7, "first": 4.1}
@@ -150,20 +152,42 @@ def _highlight(hotel: dict, per_night: float) -> str | None:
     return None
 
 
+def _count(value, default: int) -> int:
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def _sellable(rate: dict, key: str, needed: int) -> dict | None:
+    live = available(key)
+    qty = rate["allotment"] if live is None else live
+    if qty < needed:
+        return None
+    shown = dict(rate)
+    shown["allotment"] = qty
+    return shown
+
+
 def search_hotels(filters: dict | None = None) -> list[dict]:
     filters = dict(filters or {})
     stay_nights = nights_between(filters.get("check_in"), filters.get("check_out"))
-    rooms_count = max(1, int(filters.get("rooms") or 1))
+    rooms_count = max(1, _count(filters.get("rooms"), 1))
+    children = max(0, _count(filters.get("children"), 0))
     rows = []
     for hotel in HOTELS:
         if not hotel_passes(hotel, filters):
             continue
-        rates = matching_rates(hotel, filters)
+        rates = []
+        for room, rate in matching_rates(hotel, filters):
+            shown = _sellable(rate, hotel_key(hotel["id"], rate["id"]), rooms_count)
+            if shown:
+                rates.append((room, shown))
         if not rates:
             continue
         room, rate = rates[0]
         per_night = rate["price"]
-        stay = per_night * stay_nights * rooms_count
+        stay = quote_stay(per_night, stay_nights, rooms_count, children)
         rows.append(
             {
                 "hotel": hotel,
@@ -171,6 +195,7 @@ def search_hotels(filters: dict | None = None) -> list[dict]:
                 "rate": rate,
                 "nights": stay_nights,
                 "rooms": rooms_count,
+                "children": children,
                 "per_night_kwd": per_night,
                 "stay_kwd": stay,
                 "highlight": _highlight(hotel, per_night),
@@ -252,7 +277,7 @@ def find_rate(hotel: dict, rate_id: str):
     return None, None
 
 
-def stay_price(hotel_id: str, rate_id: str, check_in: str, check_out: str, rooms: int) -> dict | None:
+def stay_price(hotel_id: str, rate_id: str, check_in: str, check_out: str, rooms: int, children: int = 0) -> dict | None:
     hotel = find_hotel(hotel_id)
     if not hotel:
         return None
@@ -261,13 +286,16 @@ def stay_price(hotel_id: str, rate_id: str, check_in: str, check_out: str, rooms
         return None
     stay_nights = nights_between(check_in, check_out)
     room_count = max(1, int(rooms or 1))
+    child_count = max(0, int(children or 0))
+    shown = _sellable(rate, hotel_key(hotel_id, rate["id"]), room_count) or dict(rate)
     return {
         "hotel": hotel,
         "room": room,
-        "rate": rate,
+        "rate": shown,
         "nights": stay_nights,
         "rooms": room_count,
-        "stay_kwd": rate["price"] * stay_nights * room_count,
+        "children": child_count,
+        "stay_kwd": quote_stay(rate["price"], stay_nights, room_count, child_count),
         "per_night_kwd": rate["price"],
     }
 
@@ -319,14 +347,18 @@ def search_flights(filters: dict | None = None) -> list[dict]:
                 pass
         if airline and flight["airline"] != airline:
             continue
+        seats = available(flight_key(flight["id"]))
+        if seats is not None and seats < passengers:
+            continue
         unit = flight["price"] * factor
         rows.append(
             {
                 **flight,
                 "cabin": cabin,
                 "passengers": passengers,
+                "seats_left": flight.get("seats_left") if seats is None else seats,
                 "unit_kwd": unit,
-                "total_kwd": unit * passengers,
+                "total_kwd": apply_markup(unit * passengers),
             }
         )
     sort = filters.get("sort") or "price"
@@ -350,7 +382,7 @@ def flight_price(flight_id: str, cabin: str, adults: int, children: int) -> dict
     factor = CABIN_FACTOR.get(cabin or "economy", 1.0)
     passengers = max(1, int(adults or 1)) + max(0, int(children or 0))
     unit = flight["price"] * factor
-    return {**flight, "cabin": cabin or "economy", "passengers": passengers, "unit_kwd": unit, "total_kwd": unit * passengers}
+    return {**flight, "cabin": cabin or "economy", "passengers": passengers, "unit_kwd": unit, "total_kwd": apply_markup(unit * passengers)}
 
 
 def search_activities(destination: str | None):
@@ -369,7 +401,7 @@ def transfer_quote(destination: str | None, passengers: int, vehicle_id: str | N
     quotes = []
     for vehicle in vehicles:
         cars = math.ceil(pax / vehicle["seats"])
-        quotes.append({**vehicle, "cars": cars, "passengers": pax, "total_kwd": vehicle["price"] * cars, "place": place})
+        quotes.append({**vehicle, "cars": cars, "passengers": pax, "total_kwd": apply_markup(vehicle["price"] * cars), "place": place})
     return quotes
 
 

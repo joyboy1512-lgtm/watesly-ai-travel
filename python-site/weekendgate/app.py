@@ -2,18 +2,26 @@
 
 from __future__ import annotations
 
+import json
+import secrets
 from datetime import date, timedelta
 from pathlib import Path
+from urllib.parse import quote
+
 from fastapi import FastAPI, Form, Request
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 from itsdangerous import BadSignature, URLSafeSerializer
+from starlette.middleware.base import BaseHTTPMiddleware
 
 from weekendgate import views
 from weekendgate.assistant import reply as assistant_reply
 from weekendgate.catalog import DESTINATIONS, OFFERS, suggest_places
 from weekendgate.i18n import copy_for
+from weekendgate.inventory import activity_key, flight_key, hotel_key, low_stock, seed_stock, transfer_key
 from weekendgate.money import CURRENCIES, format_kwd
+from weekendgate.pricing import apply_markup
+from weekendgate.providers import active_source
 from weekendgate.search import (
     find_hotel,
     flight_price,
@@ -36,23 +44,56 @@ from weekendgate.store import (
     authenticate_staff,
     booking_by_reference,
     bookings_for_email,
+    cancel_booking,
     create_booking,
     customer_by_id,
+    get_setting,
     init_db,
+    pay_booking,
     register_customer,
+    set_setting,
     travelers_for,
     update_customer,
 )
 
 ROOT = Path(__file__).resolve().parent
-signer = URLSafeSerializer("weekendgate-python-local-demo")
 MULTI = {"facility", "stars", "property", "meals"}
 
+
+def _load_secret() -> str:
+    path = ROOT / "data" / "secret"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    if path.exists():
+        text = path.read_text(encoding="utf-8").strip()
+        if text:
+            return text
+    text = secrets.token_hex(32)
+    path.write_text(text, encoding="utf-8")
+    return text
+
+
+signer = URLSafeSerializer(_load_secret())
+
+
+class CsrfIssue(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        token = request.cookies.get("wg_csrf") or ""
+        if len(token) < 16:
+            token = secrets.token_urlsafe(24)
+        request.state.csrf = token
+        response = await call_next(request)
+        if request.cookies.get("wg_csrf") != token:
+            response.set_cookie("wg_csrf", token, max_age=60 * 60 * 24 * 14, httponly=True, samesite="lax")
+        return response
+
+
 app = FastAPI(title="WeekendGate Python", docs_url=None, redoc_url=None)
+app.add_middleware(CsrfIssue)
 app.mount("/static", StaticFiles(directory=str(ROOT / "static")), name="static")
 app.mount("/brand", StaticFiles(directory=str(ROOT / "static" / "brand")), name="brand")
 app.mount("/media", StaticFiles(directory=str(ROOT / "static" / "media")), name="media")
 init_db()
+seed_stock()
 
 
 def _dump(payload: dict) -> str:
@@ -108,6 +149,7 @@ def _ctx(request: Request, **extra):
         "home": False,
         "money": lambda amount: format_kwd(float(amount or 0), currency),
         "year": date.today().year,
+        "csrf": getattr(request.state, "csrf", ""),
     }
     data.update(extra)
     return data
@@ -151,34 +193,60 @@ def _set_cookie(response: RedirectResponse, key: str, value: str) -> None:
     response.set_cookie(key, value, max_age=60 * 60 * 24 * 30, httponly=True, samesite="lax")
 
 
+def _same(left: str, right: str) -> bool:
+    if not left or not right or len(left) != len(right):
+        return False
+    return secrets.compare_digest(left, right)
+
+
+async def _csrf_ok(request: Request) -> bool:
+    form = await request.form()
+    sent = str(form.get("csrf") or "")
+    expected = getattr(request.state, "csrf", "") or ""
+    return _same(sent, expected)
+
+
 def _quote(draft: dict, lang: str) -> dict | None:
     kind = draft.get("kind")
     if kind == "hotel":
-        priced = stay_price(draft.get("hotel_id"), draft.get("rate_id"), draft.get("check_in"), draft.get("check_out"), int(draft.get("rooms") or 1))
+        priced = stay_price(
+            draft.get("hotel_id"),
+            draft.get("rate_id"),
+            draft.get("check_in"),
+            draft.get("check_out"),
+            int(draft.get("rooms") or 1),
+            int(draft.get("children") or 0),
+        )
         if not priced:
             return None
         hotel = priced["hotel"]
         name = hotel["name_en"] if lang == "en" else hotel["name_ar"]
         room = priced["room"]["name_en"] if lang == "en" else priced["room"]["name_ar"]
         board = copy_for(lang).get(f"board_{priced['rate']['board']}")
+        kids = priced["children"]
+        item = f"{room} · {board}"
+        if kids:
+            item += f" · {kids}"
         return {
             "kind": "hotel",
             "title": name,
             "total_kwd": priced["stay_kwd"],
             "lines": [
-                {"item": f"{room} · {board}", "qty": f"{priced['rooms']} × {priced['nights']}", "amount": priced["stay_kwd"]},
+                {"item": item, "qty": f"{priced['rooms']} × {priced['nights']}", "amount": priced["stay_kwd"]},
             ],
             "meta": priced,
         }
     if kind == "flight":
-        outbound = flight_price(draft.get("outbound_id"), draft.get("cabin") or "economy", int(draft.get("adults") or 1), int(draft.get("children") or 0))
+        adults = int(draft.get("adults") or 1)
+        children = int(draft.get("children") or 0)
+        outbound = flight_price(draft.get("outbound_id"), draft.get("cabin") or "economy", adults, children)
         if not outbound:
             return None
         total = outbound["total_kwd"]
         lines = [{"item": f"{outbound['origin']} → {outbound['destination']} {outbound['depart']}", "qty": outbound["passengers"], "amount": outbound["total_kwd"]}]
         back = None
         if draft.get("return_id"):
-            back = flight_price(draft.get("return_id"), draft.get("cabin") or "economy", int(draft.get("adults") or 1), int(draft.get("children") or 0))
+            back = flight_price(draft.get("return_id"), draft.get("cabin") or "economy", adults, children)
             if not back:
                 return None
             total += back["total_kwd"]
@@ -192,7 +260,8 @@ def _quote(draft: dict, lang: str) -> dict | None:
             return None
         pax = max(1, int(draft.get("adults") or 1))
         name = activity["name_en"] if lang == "en" else activity["name_ar"]
-        return {"kind": "activity", "title": name, "total_kwd": activity["price"] * pax, "lines": [{"item": name, "qty": pax, "amount": activity["price"] * pax}], "meta": activity}
+        total = apply_markup(activity["price"] * pax)
+        return {"kind": "activity", "title": name, "total_kwd": total, "lines": [{"item": name, "qty": pax, "amount": total}], "meta": activity}
     if kind == "transfer":
         quotes = transfer_quote(draft.get("destination"), int(draft.get("adults") or 1), draft.get("transfer_id"))
         if not quotes:
@@ -201,6 +270,40 @@ def _quote(draft: dict, lang: str) -> dict | None:
         name = quote["name_en"] if lang == "en" else quote["name_ar"]
         return {"kind": "transfer", "title": name, "total_kwd": quote["total_kwd"], "lines": [{"item": name, "qty": quote["cars"], "amount": quote["total_kwd"]}], "meta": quote}
     return None
+
+
+def _stock_for(draft: dict, quote: dict) -> list[tuple[str, int]]:
+    kind = quote["kind"]
+    if kind == "hotel":
+        return [(hotel_key(draft.get("hotel_id") or "", draft.get("rate_id") or ""), max(1, int(draft.get("rooms") or 1)))]
+    if kind == "flight":
+        pax = max(1, int(draft.get("adults") or 1) + int(draft.get("children") or 0))
+        items = [(flight_key(draft.get("outbound_id") or ""), pax)]
+        if draft.get("return_id"):
+            items.append((flight_key(draft["return_id"]), pax))
+        return items
+    if kind == "activity":
+        return [(activity_key(draft.get("activity_id") or ""), max(1, int(draft.get("adults") or 1)))]
+    if kind == "transfer":
+        return [(transfer_key(draft.get("transfer_id") or ""), int(quote["meta"]["cars"]))]
+    return []
+
+
+def _can_view(request: Request, row, key: str) -> bool:
+    if _staff(request):
+        return True
+    stored = row["access_key"] or ""
+    if _same(key, stored):
+        return True
+    customer = _customer(request)
+    email = (row["customer_email"] or "").casefold()
+    return bool(customer and customer["email"].casefold() == email)
+
+
+def _confirmation_target(reference: str, key: str) -> str:
+    if not key:
+        return f"/book/confirmation/{reference}"
+    return f"/book/confirmation/{reference}?key={quote(key)}"
 
 
 @app.get("/health")
@@ -328,6 +431,8 @@ def transfers_results(request: Request):
 
 @app.post("/select")
 async def select_trip(request: Request):
+    if not await _csrf_ok(request):
+        return Response("forbidden", status_code=403)
     form = await request.form()
     draft = {key: str(form.get(key) or "") for key in (
         "kind", "hotel_id", "rate_id", "check_in", "check_out", "rooms", "adults", "children",
@@ -345,7 +450,14 @@ def book_form(request: Request, error: str = ""):
     draft = _load(request.cookies.get("wg_draft"))
     quote = _quote(draft, _lang(request)) if draft else None
     customer = _customer(request)
-    return HTMLResponse(views.book_page(_ctx(request), quote, error, customer))
+    people = travelers_for(customer["id"]) if customer else []
+    return HTMLResponse(views.book_page(_ctx(request), quote, error, customer, people))
+
+
+def _book_again(request: Request, quote, error: str, status: int):
+    customer = _customer(request)
+    people = travelers_for(customer["id"]) if customer else []
+    return HTMLResponse(views.book_page(_ctx(request), quote, error, customer, people), status_code=status)
 
 
 @app.post("/book")
@@ -357,28 +469,73 @@ async def book_submit(
     passport: str = Form(""),
     notes: str = Form(""),
 ):
+    if not await _csrf_ok(request):
+        return Response("forbidden", status_code=403)
     draft = _load(request.cookies.get("wg_draft"))
     lang = _lang(request)
     quote = _quote(draft, lang) if draft else None
     if not quote or not guest_name.strip() or "@" not in email or not phone.strip():
-        return HTMLResponse(views.book_page(_ctx(request), quote, "required", _customer(request)), status_code=400)
+        return _book_again(request, quote, "required", 400)
     if quote["kind"] == "flight" and len(passport.strip()) < 5:
-        return HTMLResponse(views.book_page(_ctx(request), quote, "required", _customer(request)), status_code=400)
+        return _book_again(request, quote, "required", 400)
+    payment = "AT_WEB"
+    if quote["kind"] == "hotel":
+        payment = quote["meta"]["rate"]["payment"]
     details = {"lines": quote["lines"], "passport": passport.strip(), "notes": notes.strip(), "draft": draft}
-    row = create_booking(guest_name, email, phone, quote["kind"], quote["title"], details, quote["total_kwd"])
-    response = RedirectResponse(f"/book/confirmation/{row['reference']}", status_code=303)
+    row = create_booking(
+        guest_name,
+        email,
+        phone,
+        quote["kind"],
+        quote["title"],
+        details,
+        quote["total_kwd"],
+        payment_method=payment,
+        stock=_stock_for(draft, quote),
+    )
+    if not row:
+        return _book_again(request, quote, "sold_out", 409)
+    response = RedirectResponse(_confirmation_target(row["reference"], row["access_key"] or ""), status_code=303)
     response.delete_cookie("wg_draft")
     return response
 
 
 @app.get("/book/confirmation/{reference}", response_class=HTMLResponse)
-def confirmation(request: Request, reference: str):
+def confirmation(request: Request, reference: str, key: str = ""):
     row = booking_by_reference(reference)
     if not row:
         return RedirectResponse("/", status_code=303)
-    import json
+    if not _can_view(request, row, key):
+        page = copy_for(_lang(request))
+        return HTMLResponse(views.text_page(_ctx(request), page.forbidden, [page.forbidden]), status_code=403)
     details = json.loads(row["details_json"])
-    return HTMLResponse(views.confirmation_page(_ctx(request), row, details))
+    return HTMLResponse(views.confirmation_page(_ctx(request), row, details, key or (row["access_key"] or "")))
+
+
+@app.post("/book/pay/{reference}")
+async def book_pay(request: Request, reference: str):
+    if not await _csrf_ok(request):
+        return Response("forbidden", status_code=403)
+    form = await request.form()
+    key = str(form.get("key") or "")
+    row = booking_by_reference(reference)
+    if not row or not _can_view(request, row, key):
+        return RedirectResponse("/", status_code=303)
+    pay_booking(reference)
+    return RedirectResponse(_confirmation_target(reference, key or (row["access_key"] or "")), status_code=303)
+
+
+@app.post("/book/cancel/{reference}")
+async def book_cancel(request: Request, reference: str):
+    if not await _csrf_ok(request):
+        return Response("forbidden", status_code=403)
+    form = await request.form()
+    key = str(form.get("key") or "")
+    row = booking_by_reference(reference)
+    if not row or not _can_view(request, row, key):
+        return RedirectResponse("/", status_code=303)
+    cancel_booking(reference)
+    return RedirectResponse(_confirmation_target(reference, key or (row["access_key"] or "")), status_code=303)
 
 
 @app.get("/account/login", response_class=HTMLResponse)
@@ -387,7 +544,9 @@ def login_form(request: Request, error: str = ""):
 
 
 @app.post("/account/login")
-def login_submit(email: str = Form(""), password: str = Form("")):
+async def login_submit(request: Request, email: str = Form(""), password: str = Form("")):
+    if not await _csrf_ok(request):
+        return Response("forbidden", status_code=403)
     row = authenticate_customer(email, password)
     if not row:
         return RedirectResponse("/account/login?error=1", status_code=303)
@@ -402,7 +561,9 @@ def register_form(request: Request, error: str = ""):
 
 
 @app.post("/account/register")
-def register_submit(name: str = Form(""), email: str = Form(""), phone: str = Form(""), password: str = Form("")):
+async def register_submit(request: Request, name: str = Form(""), email: str = Form(""), phone: str = Form(""), password: str = Form("")):
+    if not await _csrf_ok(request):
+        return Response("forbidden", status_code=403)
     if not name.strip() or "@" not in email or len(password) < 8:
         return RedirectResponse("/account/register?error=1", status_code=303)
     try:
@@ -415,7 +576,9 @@ def register_submit(name: str = Form(""), email: str = Form(""), phone: str = Fo
 
 
 @app.post("/account/logout")
-def account_logout():
+async def account_logout(request: Request):
+    if not await _csrf_ok(request):
+        return Response("forbidden", status_code=403)
     response = RedirectResponse("/", status_code=303)
     response.delete_cookie("wg_customer")
     return response
@@ -438,6 +601,8 @@ def account(request: Request, saved: str = ""):
 
 @app.post("/account")
 async def account_save(request: Request, name: str = Form(""), phone: str = Form("")):
+    if not await _csrf_ok(request):
+        return Response("forbidden", status_code=403)
     customer = _customer(request)
     if not customer:
         return RedirectResponse("/account/login", status_code=303)
@@ -447,11 +612,25 @@ async def account_save(request: Request, name: str = Form(""), phone: str = Form
 
 @app.post("/account/travelers")
 async def account_traveler(request: Request, full_name: str = Form(""), passport: str = Form(""), dob: str = Form(""), nationality: str = Form("")):
+    if not await _csrf_ok(request):
+        return Response("forbidden", status_code=403)
     customer = _customer(request)
     if not customer:
         return RedirectResponse("/account/login", status_code=303)
     if full_name.strip():
         add_traveler(customer["id"], full_name, passport, dob, nationality)
+    return RedirectResponse("/account", status_code=303)
+
+
+@app.post("/account/bookings/{reference}/cancel")
+async def account_cancel(request: Request, reference: str):
+    if not await _csrf_ok(request):
+        return Response("forbidden", status_code=403)
+    customer = _customer(request)
+    row = booking_by_reference(reference)
+    if not customer or not row or (row["customer_email"] or "").casefold() != customer["email"].casefold():
+        return RedirectResponse("/account/login", status_code=303)
+    cancel_booking(reference)
     return RedirectResponse("/account", status_code=303)
 
 
@@ -461,7 +640,9 @@ def staff_login_form(request: Request, error: str = ""):
 
 
 @app.post("/dashboard/login")
-def staff_login_submit(email: str = Form(""), password: str = Form("")):
+async def staff_login_submit(request: Request, email: str = Form(""), password: str = Form("")):
+    if not await _csrf_ok(request):
+        return Response("forbidden", status_code=403)
     row = authenticate_staff(email, password)
     if not row:
         return RedirectResponse("/dashboard/login?error=1", status_code=303)
@@ -471,7 +652,9 @@ def staff_login_submit(email: str = Form(""), password: str = Form("")):
 
 
 @app.post("/dashboard/logout")
-def staff_logout():
+async def staff_logout(request: Request):
+    if not await _csrf_ok(request):
+        return Response("forbidden", status_code=403)
     response = RedirectResponse("/", status_code=303)
     response.delete_cookie("wg_staff")
     return response
@@ -493,8 +676,36 @@ def dashboard(request: Request, panel: str = "overview"):
             all_customers(),
             len(search_hotels({"destination": "DXB"})),
             len(search_flights({"origin": "KWI", "destination": "DXB"})),
+            get_setting("markup_percent", "0"),
+            low_stock(),
+            active_source(),
         )
     )
+
+
+@app.post("/dashboard/pricing")
+async def dashboard_markup(request: Request, markup_percent: str = Form("0")):
+    if not await _csrf_ok(request):
+        return Response("forbidden", status_code=403)
+    if not _staff(request):
+        return RedirectResponse("/dashboard/login", status_code=303)
+    try:
+        value = float(markup_percent)
+    except (TypeError, ValueError):
+        value = 0.0
+    value = min(100.0, max(0.0, value))
+    set_setting("markup_percent", f"{value:g}")
+    return RedirectResponse("/dashboard/pricing", status_code=303)
+
+
+@app.post("/dashboard/bookings/{reference}/cancel")
+async def dashboard_cancel(request: Request, reference: str):
+    if not await _csrf_ok(request):
+        return Response("forbidden", status_code=403)
+    if not _staff(request):
+        return RedirectResponse("/dashboard/login", status_code=303)
+    cancel_booking(reference)
+    return RedirectResponse("/dashboard/bookings", status_code=303)
 
 
 @app.get("/assistant", response_class=HTMLResponse)

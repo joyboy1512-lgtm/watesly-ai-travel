@@ -4,14 +4,12 @@ from __future__ import annotations
 
 from datetime import date, timedelta
 from pathlib import Path
-from urllib.parse import urlencode
-
 from fastapi import FastAPI, Form, Request
-from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
 from itsdangerous import BadSignature, URLSafeSerializer
 
+from weekendgate import views
 from weekendgate.assistant import reply as assistant_reply
 from weekendgate.catalog import DESTINATIONS, OFFERS, suggest_places
 from weekendgate.i18n import copy_for
@@ -29,6 +27,7 @@ from weekendgate.search import (
     stay_price,
     transfer_quote,
 )
+from weekendgate.theme import THEME
 from weekendgate.store import (
     add_traveler,
     all_bookings,
@@ -47,7 +46,6 @@ from weekendgate.store import (
 
 ROOT = Path(__file__).resolve().parent
 signer = URLSafeSerializer("weekendgate-python-local-demo")
-templates = Jinja2Templates(directory=str(ROOT / "templates"))
 MULTI = {"facility", "stars", "property", "meals"}
 
 app = FastAPI(title="WeekendGate Python", docs_url=None, redoc_url=None)
@@ -143,23 +141,6 @@ def _default_dates() -> tuple[str, str]:
     return start.isoformat(), end.isoformat()
 
 
-def _href(path: str, filters: dict, **updates) -> str:
-    merged = dict(filters)
-    merged.update(updates)
-    pairs = []
-    for key, value in merged.items():
-        if value in (None, "", False, "False"):
-            continue
-        if isinstance(value, list):
-            for item in value:
-                if item:
-                    pairs.append((key, item))
-        else:
-            pairs.append((key, value))
-    query = urlencode(pairs)
-    return f"{path}?{query}" if query else path
-
-
 def _safe_next(value: str | None) -> str:
     if not value or not value.startswith("/") or value.startswith("//"):
         return "/"
@@ -224,7 +205,12 @@ def _quote(draft: dict, lang: str) -> dict | None:
 
 @app.get("/health")
 def health():
-    return {"ok": True, "edition": "python", "live_site": False}
+    return {"ok": True, "edition": "python", "design": "python", "live_site": False}
+
+
+@app.get("/theme.css")
+def theme_css():
+    return Response(THEME, media_type="text/css")
 
 
 @app.get("/api/suggest")
@@ -248,18 +234,15 @@ def preferences(request: Request, lang: str = "", currency: str = "", next: str 
 @app.get("/", response_class=HTMLResponse)
 def home(request: Request):
     check_in, check_out = _default_dates()
-    return templates.TemplateResponse(
-        request,
-        "home.html",
-        _ctx(
-            request,
-            home=True,
-            destinations=DESTINATIONS,
-            offers=OFFERS,
-            check_in=check_in,
-            check_out=check_out,
-            return_on=(date.fromisoformat(check_in) + timedelta(days=3)).isoformat(),
-        ),
+    return HTMLResponse(
+        views.home_page(
+            _ctx(request, home=True),
+            DESTINATIONS,
+            OFFERS,
+            check_in,
+            check_out,
+            (date.fromisoformat(check_in) + timedelta(days=3)).isoformat(),
+        )
     )
 
 
@@ -267,19 +250,15 @@ def home(request: Request):
 def hotels_results(request: Request):
     filters = _filters(request)
     rows = search_hotels(filters) if filters.get("destination") else []
-    return templates.TemplateResponse(
-        request,
-        "hotels_results.html",
-        _ctx(
-            request,
-            filters=filters,
-            rows=rows,
-            facets=hotel_facets(filters) if filters.get("destination") else None,
-            pins=map_pins(rows),
-            place=place_label(filters.get("destination", ""), _lang(request)) if filters.get("destination") else "",
-            href=lambda **updates: _href("/hotels/results", filters, **updates),
-            detail_href=lambda hotel_id: _href(f"/hotels/{hotel_id}", filters),
-        ),
+    return HTMLResponse(
+        views.hotels_page(
+            _ctx(request),
+            filters,
+            rows,
+            hotel_facets(filters) if filters.get("destination") else None,
+            map_pins(rows),
+            place_label(filters.get("destination", ""), _lang(request)) if filters.get("destination") else "",
+        )
     )
 
 
@@ -291,10 +270,15 @@ def hotel_detail(request: Request, hotel_id: str):
     filters = _filters(request)
     nights = nights_between(filters.get("check_in"), filters.get("check_out"))
     rooms = max(1, int(filters.get("rooms") or 1))
-    return templates.TemplateResponse(
-        request,
-        "hotel_detail.html",
-        _ctx(request, hotel=hotel, filters=filters, nights=nights, rooms=rooms, place=place_label(hotel["destination"], _lang(request))),
+    return HTMLResponse(
+        views.hotel_detail_page(
+            _ctx(request),
+            hotel,
+            filters,
+            nights,
+            rooms,
+            place_label(hotel["destination"], _lang(request)),
+        )
     )
 
 
@@ -303,18 +287,15 @@ def flights_results(request: Request):
     filters = _filters(request)
     rows = search_flights(filters) if filters.get("origin") and filters.get("destination") else []
     airlines = sorted({row["airline"] for row in search_flights({**filters, "airline": ""})}) if rows or filters.get("origin") else []
-    return templates.TemplateResponse(
-        request,
-        "flights_results.html",
-        _ctx(
-            request,
-            filters=filters,
-            rows=rows,
-            airlines=airlines,
-            origin_label=place_label(filters.get("origin", ""), _lang(request)),
-            dest_label=place_label(filters.get("destination", ""), _lang(request)),
-            href=lambda **updates: _href("/flights/results", filters, **updates),
-        ),
+    return HTMLResponse(
+        views.flights_page(
+            _ctx(request),
+            filters,
+            rows,
+            airlines,
+            place_label(filters.get("origin", ""), _lang(request)),
+            place_label(filters.get("destination", ""), _lang(request)),
+        )
     )
 
 
@@ -328,25 +309,21 @@ def flights_return(request: Request, outbound_id: str):
     back_filters["origin"] = outbound["destination"]
     back_filters["destination"] = outbound["origin"]
     rows = search_flights(back_filters)
-    return templates.TemplateResponse(
-        request,
-        "flight_return.html",
-        _ctx(request, filters=filters, outbound=outbound, rows=rows),
-    )
+    return HTMLResponse(views.return_page(_ctx(request), filters, outbound, rows))
 
 
 @app.get("/activities/results", response_class=HTMLResponse)
 def activities_results(request: Request):
     filters = _filters(request)
     rows, place = search_activities(filters.get("destination"))
-    return templates.TemplateResponse(request, "activities_results.html", _ctx(request, filters=filters, rows=rows, place=place))
+    return HTMLResponse(views.activities_page(_ctx(request), filters, rows, place))
 
 
 @app.get("/transfers/results", response_class=HTMLResponse)
 def transfers_results(request: Request):
     filters = _filters(request)
     rows = transfer_quote(filters.get("destination"), int(filters.get("adults") or 1))
-    return templates.TemplateResponse(request, "transfers_results.html", _ctx(request, filters=filters, rows=rows))
+    return HTMLResponse(views.transfers_page(_ctx(request), filters, rows))
 
 
 @app.post("/select")
@@ -368,11 +345,7 @@ def book_form(request: Request, error: str = ""):
     draft = _load(request.cookies.get("wg_draft"))
     quote = _quote(draft, _lang(request)) if draft else None
     customer = _customer(request)
-    return templates.TemplateResponse(
-        request,
-        "book.html",
-        _ctx(request, quote=quote, error=error, prefill=customer),
-    )
+    return HTMLResponse(views.book_page(_ctx(request), quote, error, customer))
 
 
 @app.post("/book")
@@ -388,19 +361,9 @@ async def book_submit(
     lang = _lang(request)
     quote = _quote(draft, lang) if draft else None
     if not quote or not guest_name.strip() or "@" not in email or not phone.strip():
-        return templates.TemplateResponse(
-            request,
-            "book.html",
-            _ctx(request, quote=quote, error="required", prefill=_customer(request)),
-            status_code=400,
-        )
+        return HTMLResponse(views.book_page(_ctx(request), quote, "required", _customer(request)), status_code=400)
     if quote["kind"] == "flight" and len(passport.strip()) < 5:
-        return templates.TemplateResponse(
-            request,
-            "book.html",
-            _ctx(request, quote=quote, error="required", prefill=_customer(request)),
-            status_code=400,
-        )
+        return HTMLResponse(views.book_page(_ctx(request), quote, "required", _customer(request)), status_code=400)
     details = {"lines": quote["lines"], "passport": passport.strip(), "notes": notes.strip(), "draft": draft}
     row = create_booking(guest_name, email, phone, quote["kind"], quote["title"], details, quote["total_kwd"])
     response = RedirectResponse(f"/book/confirmation/{row['reference']}", status_code=303)
@@ -415,12 +378,12 @@ def confirmation(request: Request, reference: str):
         return RedirectResponse("/", status_code=303)
     import json
     details = json.loads(row["details_json"])
-    return templates.TemplateResponse(request, "confirmation.html", _ctx(request, booking=row, details=details))
+    return HTMLResponse(views.confirmation_page(_ctx(request), row, details))
 
 
 @app.get("/account/login", response_class=HTMLResponse)
 def login_form(request: Request, error: str = ""):
-    return templates.TemplateResponse(request, "auth.html", _ctx(request, mode="login", error=error))
+    return HTMLResponse(views.auth_page(_ctx(request), "login", error))
 
 
 @app.post("/account/login")
@@ -435,7 +398,7 @@ def login_submit(email: str = Form(""), password: str = Form("")):
 
 @app.get("/account/register", response_class=HTMLResponse)
 def register_form(request: Request, error: str = ""):
-    return templates.TemplateResponse(request, "auth.html", _ctx(request, mode="register", error=error))
+    return HTMLResponse(views.auth_page(_ctx(request), "register", error))
 
 
 @app.post("/account/register")
@@ -463,10 +426,13 @@ def account(request: Request, saved: str = ""):
     customer = _customer(request)
     if not customer:
         return RedirectResponse("/account/login", status_code=303)
-    return templates.TemplateResponse(
-        request,
-        "account.html",
-        _ctx(request, bookings=bookings_for_email(customer["email"]), travelers=travelers_for(customer["id"]), saved=saved),
+    return HTMLResponse(
+        views.account_page(
+            _ctx(request),
+            bookings_for_email(customer["email"]),
+            travelers_for(customer["id"]),
+            saved,
+        )
     )
 
 
@@ -491,7 +457,7 @@ async def account_traveler(request: Request, full_name: str = Form(""), passport
 
 @app.get("/dashboard/login", response_class=HTMLResponse)
 def staff_login_form(request: Request, error: str = ""):
-    return templates.TemplateResponse(request, "auth.html", _ctx(request, mode="staff", error=error))
+    return HTMLResponse(views.auth_page(_ctx(request), "staff", error))
 
 
 @app.post("/dashboard/login")
@@ -519,34 +485,32 @@ def dashboard(request: Request, panel: str = "overview"):
     if panel not in ("overview", "bookings", "customers", "providers", "pricing"):
         panel = "overview"
     bookings = all_bookings()
-    return templates.TemplateResponse(
-        request,
-        "dashboard.html",
-        _ctx(
-            request,
-            panel=panel,
-            bookings=bookings,
-            customers=all_customers(),
-            hotel_count=len(search_hotels({"destination": "DXB"})),
-            flight_count=len(search_flights({"origin": "KWI", "destination": "DXB"})),
-        ),
+    return HTMLResponse(
+        views.dashboard_page(
+            _ctx(request),
+            panel,
+            bookings,
+            all_customers(),
+            len(search_hotels({"destination": "DXB"})),
+            len(search_flights({"origin": "KWI", "destination": "DXB"})),
+        )
     )
 
 
 @app.get("/assistant", response_class=HTMLResponse)
 def assistant_page(request: Request, q: str = ""):
     answer = assistant_reply(_lang(request), q) if q else None
-    return templates.TemplateResponse(request, "assistant.html", _ctx(request, q=q, answer=answer))
+    return HTMLResponse(views.assistant_page(_ctx(request), q, answer))
 
 
 @app.get("/offers", response_class=HTMLResponse)
 def offers_page(request: Request):
-    return templates.TemplateResponse(request, "offers.html", _ctx(request, offers=OFFERS))
+    return HTMLResponse(views.offers_page(_ctx(request), OFFERS))
 
 
 @app.get("/destinations", response_class=HTMLResponse)
 def destinations_page(request: Request):
-    return templates.TemplateResponse(request, "destinations.html", _ctx(request, destinations=DESTINATIONS))
+    return HTMLResponse(views.destinations_page(_ctx(request), DESTINATIONS))
 
 
 PAGES = {
@@ -634,8 +598,4 @@ def static_page(request: Request, page_name: str):
         return RedirectResponse("/", status_code=303)
     lang = _lang(request)
     paragraphs = page["en"] if lang == "en" else page["ar"]
-    return templates.TemplateResponse(
-        request,
-        "page.html",
-        _ctx(request, title=copy_for(lang).get(page["title"]), paragraphs=paragraphs),
-    )
+    return HTMLResponse(views.text_page(_ctx(request), copy_for(lang).get(page["title"]), paragraphs))

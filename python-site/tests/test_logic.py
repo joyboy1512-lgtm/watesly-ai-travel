@@ -66,6 +66,11 @@ class ShopFlowTests(unittest.TestCase):
         self.assertEqual(home.status_code, 200)
         self.assertIn("WeekendGate", home.text)
         self.assertIn("سافر في نهاية الأسبوع", home.text)
+        self.assertIn('href="/theme.css"', home.text)
+        self.assertNotIn("shop.css", home.text)
+        theme = client.get("/theme.css")
+        self.assertEqual(theme.status_code, 200)
+        self.assertIn("--navy: #001b35", theme.text)
 
         english = client.get("/", cookies={"wg_lang": "en"})
         self.assertIn("Leave this weekend", english.text)

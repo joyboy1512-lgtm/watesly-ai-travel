@@ -75,7 +75,7 @@ html body .shop-root.wg-new-ui .shop-main.shop-main-wide:has(.tvlk-hotel.shop-ho
 }
 
 .tvlk-hotel-results-body {
-  width: min(1136px, calc(100% - 28px));
+  width: min(1240px, calc(100% - 28px));
   margin-inline: auto;
 }
 
@@ -626,7 +626,7 @@ html body .shop-root.wg-new-ui .shop-main.shop-main-wide:has(.tvlk-hotel.shop-ho
 .tvlk-hotel .shop-hotel-results-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 12px;
   min-width: 0;
 }
 
@@ -947,7 +947,7 @@ html body .shop-root.wg-new-ui .shop-main.shop-main-wide:has(.tvlk-hotel.shop-ho
 .tvlk-hotel .shop-hotel-results .hotel-search-card-shop,
 .tvlk-hotel .hotel-search-card-shop {
   display: grid;
-  grid-template-columns: 176px minmax(0, 1fr) 248px;
+  grid-template-columns: 220px minmax(0, 1fr) 270px;
   gap: 0;
   align-items: stretch;
   background: var(--tvlk-card);
@@ -980,7 +980,7 @@ html body .shop-root.wg-new-ui .shop-main.shop-main-wide:has(.tvlk-hotel.shop-ho
 .tvlk-hotel .shop-hotel-results .hotel-search-card-shop .hotel-search-card-media,
 .tvlk-hotel .hotel-search-card-shop .hotel-search-card-media {
   order: 1;
-  min-height: 176px;
+  min-height: 272px;
   height: 100%;
   border-radius: 0;
 }
@@ -989,7 +989,7 @@ html body .shop-root.wg-new-ui .shop-main.shop-main-wide:has(.tvlk-hotel.shop-ho
 .tvlk-hotel .hotel-search-card-shop .hotel-search-card-photo {
   width: 100%;
   height: 100%;
-  min-height: 176px;
+  min-height: 272px;
   object-fit: cover;
 }
 
@@ -1003,8 +1003,8 @@ html body .shop-root.wg-new-ui .shop-main.shop-main-wide:has(.tvlk-hotel.shop-ho
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 8px;
-  padding: 14px 16px;
+  gap: 10px;
+  padding: 16px 18px;
   min-width: 0;
 }
 
@@ -1028,7 +1028,7 @@ html body .shop-root.wg-new-ui .shop-main.shop-main-wide:has(.tvlk-hotel.shop-ho
   margin: 0;
   width: 100%;
   max-width: 100%;
-  font-size: 1.18rem;
+  font-size: 1.32rem;
   font-weight: 800;
   color: var(--tvlk-ink);
   line-height: 1.35;
@@ -1049,9 +1049,9 @@ html body .shop-root.wg-new-ui .shop-main.shop-main-wide:has(.tvlk-hotel.shop-ho
 .tvlk-hotel .hotel-live-badge {
   margin: 0;
   color: #111111;
-  font-size: 0.92rem;
+  font-size: 1rem;
   font-weight: 600;
-  line-height: 1.4;
+  line-height: 1.45;
 }
 
 .tvlk-hotel .hotel-search-card-shop .hotel-live-badge,
@@ -1101,7 +1101,7 @@ html body .shop-root.wg-new-ui .shop-main.shop-main-wide:has(.tvlk-hotel.shop-ho
 .tvlk-hotel .hotel-search-card-offer-line {
   margin: 0;
   color: #111111;
-  font-size: 0.92rem;
+  font-size: 1rem;
   font-weight: 650;
   line-height: 1.4;
 }
@@ -1168,8 +1168,8 @@ html body .shop-root.wg-new-ui .shop-main.shop-main-wide:has(.tvlk-hotel.shop-ho
   flex-direction: column;
   align-items: stretch;
   justify-content: center;
-  gap: 8px;
-  padding: 10px 8px;
+  gap: 10px;
+  padding: 14px 12px;
   border-inline-start: 1px solid var(--tvlk-line);
   text-align: end;
   min-width: 0;
@@ -1179,9 +1179,9 @@ html body .shop-root.wg-new-ui .shop-main.shop-main-wide:has(.tvlk-hotel.shop-ho
 .tvlk-hotel .tvlk-price-note {
   display: block;
   color: #111111;
-  font-size: 0.75rem;
+  font-size: 0.82rem;
   font-weight: 600;
-  line-height: 1.35;
+  line-height: 1.4;
 }
 
 .tvlk-hotel .hotel-search-card-shop .hotel-price-panel-card,
@@ -1189,7 +1189,7 @@ html body .shop-root.wg-new-ui .shop-main.shop-main-wide:has(.tvlk-hotel.shop-ho
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 4px;
+  gap: 6px;
 }
 
 .tvlk-hotel .hotel-search-card-shop .tvlk-stay-price {
@@ -1198,14 +1198,14 @@ html body .shop-root.wg-new-ui .shop-main.shop-main-wide:has(.tvlk-hotel.shop-ho
   background: #e7f3fc;
   border: 1px solid #8ec8ef;
   border-radius: 10px;
-  padding: 8px;
+  padding: 12px 12px;
   text-wrap: pretty;
 }
 
 .tvlk-hotel .tvlk-night-price strong,
 .tvlk-hotel .hotel-search-card-shop .hotel-price-panel-total {
   color: #013e6b;
-  font-size: 1.24rem;
+  font-size: 1.4rem;
   font-weight: 800;
   line-height: 1.2;
 }
@@ -1213,7 +1213,7 @@ html body .shop-root.wg-new-ui .shop-main.shop-main-wide:has(.tvlk-hotel.shop-ho
 .tvlk-hotel .tvlk-stay-price em {
   display: block;
   color: #111111;
-  font-size: 0.75rem;
+  font-size: 0.84rem;
   font-weight: 650;
   font-style: normal;
   line-height: 1.35;
@@ -1234,7 +1234,7 @@ html body .shop-root.wg-new-ui .shop-main.shop-main-wide:has(.tvlk-hotel.shop-ho
   color: #fff;
   border-radius: 8px;
   font-weight: 800;
-  padding: 10px 12px;
+  padding: 12px 14px;
 }
 
 .tvlk-hotel .hotel-search-card-shop .hotel-search-card-cta:hover {
@@ -1484,7 +1484,7 @@ html body .shop-root.wg-new-ui .shop-main.shop-main-wide:has(.tvlk-hotel.shop-ho
 
   .tvlk-hotel .shop-hotel-results .hotel-search-card-shop,
   .tvlk-hotel .hotel-search-card-shop {
-    grid-template-columns: 160px minmax(0, 1fr) 228px;
+    grid-template-columns: 190px minmax(0, 1fr) 248px;
   }
 
   .tvlk-hotel .shop-hotel-results-mapcol {

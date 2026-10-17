@@ -75,7 +75,7 @@ html body .shop-root.wg-new-ui .shop-main.shop-main-wide:has(.tvlk-hotel.shop-ho
 }
 
 .tvlk-hotel-results-body {
-  width: min(1640px, calc(100% - 40px));
+  width: min(1240px, calc(100% - 28px));
   margin-inline: auto;
 }
 
@@ -572,16 +572,46 @@ html body .shop-root.wg-new-ui .shop-main.shop-main-wide:has(.tvlk-hotel.shop-ho
   color: var(--tvlk-blue);
 }
 
-/* —— Layout: filters | cards | map —— */
-.tvlk-hotel .shop-hotel-results-layout {
+/* —— Layout: compact map + filters | wider cards —— */
+.tvlk-hotel .shop-hotel-results-layout,
+.tvlk-hotel .shop-hotel-results-layout.has-map {
   display: grid;
-  grid-template-columns: 300px minmax(0, 1fr);
-  gap: 16px;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: 12px;
   align-items: start;
 }
 
-.tvlk-hotel .shop-hotel-results-layout.has-map {
-  grid-template-columns: 280px minmax(0, 1fr) 450px;
+.tvlk-hotel .shop-hotel-results-side {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  width: 100%;
+  position: sticky;
+  top: 12px;
+  align-self: start;
+  max-height: calc(100dvh - 24px);
+}
+
+@media (min-width: 861px) {
+  .tvlk-hotel .shop-hotel-results-side .shop-hotel-filters,
+  .tvlk-hotel .shop-hotel-results-side .shop-hotel-filters-desktop {
+    min-height: 0;
+    min-width: 0;
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+}
+
+.tvlk-hotel .shop-hotel-results-side .shop-hotel-filters-panel {
+  position: static;
+  top: auto;
+  max-height: none;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
 }
 
 .tvlk-hotel .shop-hotel-filters {
@@ -596,7 +626,7 @@ html body .shop-root.wg-new-ui .shop-main.shop-main-wide:has(.tvlk-hotel.shop-ho
 .tvlk-hotel .shop-hotel-results-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 12px;
   min-width: 0;
 }
 
@@ -609,16 +639,20 @@ html body .shop-root.wg-new-ui .shop-main.shop-main-wide:has(.tvlk-hotel.shop-ho
 
 .tvlk-hotel .shop-hotel-results-mapcol {
   display: block;
-  position: sticky;
-  top: 12px;
-  align-self: start;
+  position: relative;
+  flex: 0 0 auto;
+  align-self: stretch;
+  box-sizing: border-box;
   width: 100%;
+  max-width: 100%;
+  height: 4.5cm;
+  min-height: 4.5cm;
+  max-height: 4.5cm;
   background: var(--tvlk-card);
   border: 1px solid var(--tvlk-line);
   border-radius: var(--tvlk-radius);
   overflow: hidden;
   box-shadow: var(--tvlk-shadow);
-  min-height: 520px;
 }
 
 .tvlk-hotel .shop-hotel-results-mapcol .shop-hotel-map,
@@ -632,10 +666,21 @@ html body .shop-root.wg-new-ui .shop-main.shop-main-wide:has(.tvlk-hotel.shop-ho
   border-radius: 0;
 }
 
+.tvlk-hotel .shop-hotel-map-sidebar,
+.tvlk-hotel .shop-hotel-results-mapcol .shop-hotel-map {
+  height: 100%;
+  max-height: 100%;
+}
+
 .tvlk-hotel .shop-hotel-map-sidebar .shop-hotel-map-canvas {
   width: 100%;
-  height: 520px;
-  min-height: 520px;
+  height: 100%;
+  min-height: 0;
+  max-height: 100%;
+}
+
+.tvlk-hotel .shop-hotel-results-mapcol .shop-hotel-map-expand {
+  display: none;
 }
 
 .tvlk-hotel .shop-hotel-map-sidebar .shop-hotel-map-pins {
@@ -743,12 +788,19 @@ html body .shop-root.wg-new-ui .shop-main.shop-main-wide:has(.tvlk-hotel.shop-ho
   cursor: pointer;
 }
 
+.tvlk-hotel .shop-hotel-map.is-expanded,
+.tvlk-hotel .shop-hotel-map-sidebar.is-expanded {
+  height: 100vh;
+  max-height: none;
+}
+
 .tvlk-hotel .shop-hotel-map.is-expanded .shop-hotel-map-canvas,
 .tvlk-hotel .shop-hotel-map-sidebar.is-expanded .shop-hotel-map-canvas {
   flex: 1;
   width: 100%;
   height: auto;
   min-height: 0;
+  max-height: none;
 }
 
 .tvlk-hotel .shop-hotel-map.is-expanded .shop-hotel-map-pins {
@@ -895,7 +947,7 @@ html body .shop-root.wg-new-ui .shop-main.shop-main-wide:has(.tvlk-hotel.shop-ho
 .tvlk-hotel .shop-hotel-results .hotel-search-card-shop,
 .tvlk-hotel .hotel-search-card-shop {
   display: grid;
-  grid-template-columns: 240px minmax(320px, 1fr) 168px;
+  grid-template-columns: 220px minmax(0, 1fr) 270px;
   gap: 0;
   align-items: stretch;
   background: var(--tvlk-card);
@@ -904,7 +956,7 @@ html body .shop-root.wg-new-ui .shop-main.shop-main-wide:has(.tvlk-hotel.shop-ho
   box-shadow: none;
   overflow: hidden;
   padding: 0;
-  min-height: 228px;
+  width: 100%;
 }
 
 .tvlk-hotel .hotel-search-card-shop .hotel-search-card-highlight {
@@ -928,7 +980,7 @@ html body .shop-root.wg-new-ui .shop-main.shop-main-wide:has(.tvlk-hotel.shop-ho
 .tvlk-hotel .shop-hotel-results .hotel-search-card-shop .hotel-search-card-media,
 .tvlk-hotel .hotel-search-card-shop .hotel-search-card-media {
   order: 1;
-  min-height: 228px;
+  min-height: 272px;
   height: 100%;
   border-radius: 0;
 }
@@ -937,7 +989,7 @@ html body .shop-root.wg-new-ui .shop-main.shop-main-wide:has(.tvlk-hotel.shop-ho
 .tvlk-hotel .hotel-search-card-shop .hotel-search-card-photo {
   width: 100%;
   height: 100%;
-  min-height: 228px;
+  min-height: 272px;
   object-fit: cover;
 }
 
@@ -948,7 +1000,11 @@ html body .shop-root.wg-new-ui .shop-main.shop-main-wide:has(.tvlk-hotel.shop-ho
 .tvlk-hotel .shop-hotel-results .hotel-search-card-shop .hotel-search-card-main,
 .tvlk-hotel .hotel-search-card-shop .hotel-search-card-main {
   order: 2;
-  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 10px;
+  padding: 16px 18px;
   min-width: 0;
 }
 
@@ -972,15 +1028,14 @@ html body .shop-root.wg-new-ui .shop-main.shop-main-wide:has(.tvlk-hotel.shop-ho
   margin: 0;
   width: 100%;
   max-width: 100%;
-  font-size: 1.28rem;
+  font-size: 1.32rem;
   font-weight: 800;
   color: var(--tvlk-ink);
   line-height: 1.35;
   white-space: normal;
   overflow: visible;
   text-overflow: unset;
-  overflow-wrap: anywhere;
-  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 .tvlk-hotel .hotel-search-card-stars {
@@ -992,8 +1047,10 @@ html body .shop-root.wg-new-ui .shop-main.shop-main-wide:has(.tvlk-hotel.shop-ho
 .tvlk-hotel .hotel-search-card-location,
 .tvlk-hotel .hotel-search-card-agg,
 .tvlk-hotel .hotel-live-badge {
-  color: var(--tvlk-muted);
-  font-size: 0.88rem;
+  margin: 0;
+  color: #111111;
+  font-size: 1rem;
+  font-weight: 600;
   line-height: 1.45;
 }
 
@@ -1014,7 +1071,7 @@ html body .shop-root.wg-new-ui .shop-main.shop-main-wide:has(.tvlk-hotel.shop-ho
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
-  margin: 8px 0 4px;
+  margin: 0;
 }
 
 .tvlk-hotel .hotel-chip {
@@ -1031,18 +1088,22 @@ html body .shop-root.wg-new-ui .shop-main.shop-main-wide:has(.tvlk-hotel.shop-ho
 .tvlk-hotel .hotel-search-card-poi {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px 10px;
-  margin: 6px 0 0;
+  gap: 4px 10px;
+  margin: 0;
   padding: 0;
   list-style: none;
-  color: var(--tvlk-muted);
-  font-size: 0.78rem;
+  color: #111111;
+  font-size: 0.84rem;
+  font-weight: 600;
+  line-height: 1.4;
 }
 
 .tvlk-hotel .hotel-search-card-offer-line {
-  margin: 6px 0 0;
-  color: var(--tvlk-ink);
-  font-size: 0.8rem;
+  margin: 0;
+  color: #111111;
+  font-size: 1rem;
+  font-weight: 650;
+  line-height: 1.4;
 }
 
 .tvlk-hotel .hotel-search-card-room-below-price {
@@ -1066,7 +1127,7 @@ html body .shop-root.wg-new-ui .shop-main.shop-main-wide:has(.tvlk-hotel.shop-ho
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  margin: 8px 0 0;
+  margin: 0;
   text-align: start;
 }
 
@@ -1087,15 +1148,17 @@ html body .shop-root.wg-new-ui .shop-main.shop-main-wide:has(.tvlk-hotel.shop-ho
   font-weight: 800;
 }
 
+.tvlk-hotel .shop-hotel-results .hotel-search-card-shop .hotel-search-card-score-inline span,
 .tvlk-hotel .hotel-search-card-score-inline span {
-  color: var(--tvlk-ink);
-  font-size: 0.82rem;
-  font-weight: 600;
+  color: #111111;
+  font-size: 0.9rem;
+  font-weight: 700;
 }
 
+.tvlk-hotel .shop-hotel-results .hotel-search-card-shop .hotel-search-card-score-inline small,
 .tvlk-hotel .hotel-search-card-score-inline small {
-  color: var(--tvlk-muted);
-  font-weight: 500;
+  color: #111111;
+  font-weight: 600;
 }
 
 .tvlk-hotel .shop-hotel-results .hotel-search-card-shop .hotel-search-card-action,
@@ -1106,7 +1169,7 @@ html body .shop-root.wg-new-ui .shop-main.shop-main-wide:has(.tvlk-hotel.shop-ho
   align-items: stretch;
   justify-content: center;
   gap: 10px;
-  padding: 14px 16px;
+  padding: 14px 12px;
   border-inline-start: 1px solid var(--tvlk-line);
   text-align: end;
   min-width: 0;
@@ -1115,9 +1178,10 @@ html body .shop-root.wg-new-ui .shop-main.shop-main-wide:has(.tvlk-hotel.shop-ho
 .tvlk-hotel .hotel-search-card-shop .hotel-search-card-price small,
 .tvlk-hotel .tvlk-price-note {
   display: block;
-  color: var(--tvlk-muted);
-  font-size: 0.75rem;
-  font-weight: 500;
+  color: #111111;
+  font-size: 0.82rem;
+  font-weight: 600;
+  line-height: 1.4;
 }
 
 .tvlk-hotel .hotel-search-card-shop .hotel-price-panel-card,
@@ -1125,24 +1189,34 @@ html body .shop-root.wg-new-ui .shop-main.shop-main-wide:has(.tvlk-hotel.shop-ho
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 2px;
+  gap: 6px;
+}
+
+.tvlk-hotel .hotel-search-card-shop .tvlk-stay-price {
+  width: 100%;
+  box-sizing: border-box;
+  background: #e7f3fc;
+  border: 1px solid #8ec8ef;
+  border-radius: 10px;
+  padding: 12px 12px;
+  text-wrap: pretty;
 }
 
 .tvlk-hotel .tvlk-night-price strong,
 .tvlk-hotel .hotel-search-card-shop .hotel-price-panel-total {
-  color: var(--tvlk-ink);
-  font-size: 1.15rem;
+  color: #013e6b;
+  font-size: 1.4rem;
   font-weight: 800;
-  line-height: 1.15;
+  line-height: 1.2;
 }
 
 .tvlk-hotel .tvlk-stay-price em {
   display: block;
-  color: var(--tvlk-ink);
-  font-size: 0.86rem;
+  color: #111111;
+  font-size: 0.84rem;
   font-weight: 650;
   font-style: normal;
-  line-height: 1.3;
+  line-height: 1.35;
 }
 
 .tvlk-hotel .hotel-search-card-shop .hotel-rooms-left {
@@ -1160,7 +1234,7 @@ html body .shop-root.wg-new-ui .shop-main.shop-main-wide:has(.tvlk-hotel.shop-ho
   color: #fff;
   border-radius: 8px;
   font-weight: 800;
-  padding: 10px 12px;
+  padding: 12px 14px;
 }
 
 .tvlk-hotel .hotel-search-card-shop .hotel-search-card-cta:hover {
@@ -1408,10 +1482,17 @@ html body .shop-root.wg-new-ui .shop-main.shop-main-wide:has(.tvlk-hotel.shop-ho
     grid-template-columns: 260px minmax(0, 1fr);
   }
 
+  .tvlk-hotel .shop-hotel-results .hotel-search-card-shop,
+  .tvlk-hotel .hotel-search-card-shop {
+    grid-template-columns: 190px minmax(0, 1fr) 248px;
+  }
+
   .tvlk-hotel .shop-hotel-results-mapcol {
-    grid-column: 1 / -1;
-    position: static;
-    min-height: 360px;
+    grid-column: auto;
+    position: relative;
+    height: 4.5cm;
+    min-height: 4.5cm;
+    max-height: 4.5cm;
   }
 }
 
@@ -1459,8 +1540,29 @@ html body .shop-root.wg-new-ui .shop-main.shop-main-wide:has(.tvlk-hotel.shop-ho
     grid-template-columns: 1fr;
   }
 
+  .tvlk-hotel .shop-hotel-results-side {
+    position: static;
+    max-height: none;
+    overflow: visible;
+  }
+
+  .tvlk-hotel .shop-hotel-results-side .shop-hotel-filters {
+    display: block;
+    overflow: visible;
+    flex: none;
+    max-height: none;
+  }
+
+  .tvlk-hotel .shop-hotel-results-side .shop-hotel-filters-desktop {
+    display: none;
+  }
+
   .tvlk-hotel .shop-hotel-results-mapcol {
     grid-column: auto;
+    width: 100%;
+    height: 4.5cm;
+    min-height: 4.5cm;
+    max-height: 4.5cm;
   }
 
   .tvlk-hotel .shop-hotel-filters-mobile-toggle {

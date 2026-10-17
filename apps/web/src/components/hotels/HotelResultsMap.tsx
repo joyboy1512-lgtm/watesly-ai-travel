@@ -41,8 +41,8 @@ type Props = {
 
 const VIEW_W = 640;
 const VIEW_H = 360;
-const SIDEBAR_VIEW_W = 450;
-const SIDEBAR_VIEW_H = 520;
+const SIDEBAR_VIEW_W = 300;
+const SIDEBAR_VIEW_H = 170;
 
 function tileUrl(x: number, y: number, z: number) {
   const n = 2 ** z;

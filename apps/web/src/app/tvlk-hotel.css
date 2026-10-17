@@ -75,7 +75,7 @@ html body .shop-root.wg-new-ui .shop-main.shop-main-wide:has(.tvlk-hotel.shop-ho
 }
 
 .tvlk-hotel-results-body {
-  width: min(1120px, calc(100% - 32px));
+  width: min(1040px, calc(100% - 28px));
   margin-inline: auto;
 }
 
@@ -576,8 +576,8 @@ html body .shop-root.wg-new-ui .shop-main.shop-main-wide:has(.tvlk-hotel.shop-ho
 .tvlk-hotel .shop-hotel-results-layout,
 .tvlk-hotel .shop-hotel-results-layout.has-map {
   display: grid;
-  grid-template-columns: 292px minmax(0, 1fr);
-  gap: 14px;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: 12px;
   align-items: start;
 }
 
@@ -947,7 +947,7 @@ html body .shop-root.wg-new-ui .shop-main.shop-main-wide:has(.tvlk-hotel.shop-ho
 .tvlk-hotel .shop-hotel-results .hotel-search-card-shop,
 .tvlk-hotel .hotel-search-card-shop {
   display: grid;
-  grid-template-columns: 188px minmax(0, 1fr) 168px;
+  grid-template-columns: 164px minmax(0, 1fr) 208px;
   gap: 0;
   align-items: stretch;
   background: var(--tvlk-card);
@@ -980,7 +980,7 @@ html body .shop-root.wg-new-ui .shop-main.shop-main-wide:has(.tvlk-hotel.shop-ho
 .tvlk-hotel .shop-hotel-results .hotel-search-card-shop .hotel-search-card-media,
 .tvlk-hotel .hotel-search-card-shop .hotel-search-card-media {
   order: 1;
-  min-height: 168px;
+  min-height: 156px;
   height: 100%;
   border-radius: 0;
 }
@@ -989,7 +989,7 @@ html body .shop-root.wg-new-ui .shop-main.shop-main-wide:has(.tvlk-hotel.shop-ho
 .tvlk-hotel .hotel-search-card-shop .hotel-search-card-photo {
   width: 100%;
   height: 100%;
-  min-height: 168px;
+  min-height: 156px;
   object-fit: cover;
 }
 
@@ -1169,7 +1169,7 @@ html body .shop-root.wg-new-ui .shop-main.shop-main-wide:has(.tvlk-hotel.shop-ho
   align-items: stretch;
   justify-content: center;
   gap: 8px;
-  padding: 12px;
+  padding: 10px 12px;
   border-inline-start: 1px solid var(--tvlk-line);
   text-align: end;
   min-width: 0;
@@ -1199,6 +1199,7 @@ html body .shop-root.wg-new-ui .shop-main.shop-main-wide:has(.tvlk-hotel.shop-ho
   border: 1px solid #8ec8ef;
   border-radius: 10px;
   padding: 8px 10px;
+  text-wrap: pretty;
 }
 
 .tvlk-hotel .tvlk-night-price strong,
@@ -1483,7 +1484,7 @@ html body .shop-root.wg-new-ui .shop-main.shop-main-wide:has(.tvlk-hotel.shop-ho
 
   .tvlk-hotel .shop-hotel-results .hotel-search-card-shop,
   .tvlk-hotel .hotel-search-card-shop {
-    grid-template-columns: 168px minmax(0, 1fr) 156px;
+    grid-template-columns: 148px minmax(0, 1fr) 188px;
   }
 
   .tvlk-hotel .shop-hotel-results-mapcol {

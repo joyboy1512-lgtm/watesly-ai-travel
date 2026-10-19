@@ -470,6 +470,11 @@ export class ShopController {
     return this.shop.emailShopTickets(customer, id);
   }
 
+  @Get("assistant/access")
+  assistantAccess() {
+    return this.shop.assistantAccess();
+  }
+
   @Post("assistant/chat")
   @UseGuards(CustomerAuthGuard)
   assistantChat(

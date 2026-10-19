@@ -21,6 +21,8 @@ type Bubble = {
   audioMime?: string;
 };
 
+type AssistantAccess = { enabled: boolean; otpDelivery: boolean };
+
 export function ShopAssistant() {
   const { t, locale } = useShopI18n();
   const [open, setOpen] = useState(false);
@@ -34,6 +36,7 @@ export function ShopAssistant() {
   const [error, setError] = useState("");
   const [pendingTranscript, setPendingTranscript] = useState<string | null>(null);
   const [pendingHint, setPendingHint] = useState("");
+  const [access, setAccess] = useState<AssistantAccess | null>(null);
   const [messages, setMessages] = useState<Bubble[]>([
     {
       id: "welcome",
@@ -41,6 +44,17 @@ export function ShopAssistant() {
             content: t("assistantWelcome"),
     },
   ]);
+
+  useEffect(() => {
+    shopFetch<AssistantAccess>("/shop/assistant/access", { auth: false })
+      .then((row) =>
+        setAccess({
+          enabled: row.enabled !== false,
+          otpDelivery: Boolean(row.otpDelivery),
+        }),
+      )
+      .catch(() => setAccess({ enabled: true, otpDelivery: false }));
+  }, []);
 
   useEffect(() => {
     const session = getShopSession();
@@ -89,6 +103,31 @@ export function ShopAssistant() {
     window.addEventListener("wg-open-assistant", onOpen);
     return () => window.removeEventListener("wg-open-assistant", onOpen);
   }, []);
+
+  async function startDirect(e: FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    setError("");
+    try {
+      const result = await unlockShopCustomer({ name, guest: true });
+      saveShopSession({
+        accessToken: result.accessToken,
+        customer: result.customer,
+      });
+      setUnlocked(true);
+      setMessages([
+        {
+          id: "welcome-unlocked",
+          role: "assistant",
+          content: t("assistantUnlocked"),
+        },
+      ]);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "تعذر فتح المساعد");
+    } finally {
+      setBusy(false);
+    }
+  }
 
   async function unlock(e: FormEvent) {
     e.preventDefault();
@@ -355,8 +394,14 @@ export function ShopAssistant() {
             </span>
             <div>
               <strong>{t("aiAssistant")}</strong>
-              {!unlocked ? (
-                <p className="shop-assist-head-hint">{t("assistantGateHint")}</p>
+              {access == null ? (
+                <p className="shop-assist-head-hint">{t("assistantLoading")}</p>
+              ) : !access.enabled ? (
+                <p className="shop-assist-head-hint">{t("assistantOff")}</p>
+              ) : !unlocked ? (
+                <p className="shop-assist-head-hint">
+                  {access.otpDelivery ? t("assistantGateHint") : t("assistantDirect")}
+                </p>
               ) : (
                 <p className="shop-assist-head-hint">{locale === "en" ? "Online" : "متصل"}</p>
               )}
@@ -371,7 +416,26 @@ export function ShopAssistant() {
             </button>
           </header>
           {error ? <p className="shop-error">{error}</p> : null}
-          {!unlocked ? (
+          {access == null ? (
+            <p className="shop-assist-head-hint">{t("assistantLoading")}</p>
+          ) : !access.enabled ? (
+            <p className="shop-error">{t("assistantOff")}</p>
+          ) : !unlocked && !access.otpDelivery ? (
+            <form className="shop-assist-gate" onSubmit={startDirect}>
+              <p className="shop-assist-head-hint">{t("assistantDirect")}</p>
+              <label>
+                {t("name")}
+                <input
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder={t("name")}
+                />
+              </label>
+              <button className="shop-btn" type="submit" disabled={busy}>
+                {busy ? "..." : t("assistantStart")}
+              </button>
+            </form>
+          ) : !unlocked ? (
             <form className="shop-assist-gate" onSubmit={unlock}>
               <label>
                 {t("name")}

@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { BadRequestException, Injectable } from "@nestjs/common";
 import { Prisma } from "@watesly-travel/database";
 import {
   addUsage,
@@ -18,12 +18,14 @@ import {
   TravelfusionFlightProvider,
   TravelportFlightProvider,
 } from "@watesly-travel/provider-sdk";
+import { otpDeliveryConfigured } from "../common/security-env";
 import { PrismaService } from "../prisma/prisma.service";
 import {
   getFlightProviderForOrg,
   getHotelProviderForOrg,
   getTransferProviderForOrg,
 } from "../common/provider-runtime";
+import { mergeOrgAiSettings, readOrgAiSettings, type OrgAiSettings } from "./org-ai-settings";
 import { hotelCatalogEntry, serializeHotelDetailsForAi, serializeSearchResult } from "./tool-result-serializers";
 import { applyAiSellPrices, loadActivePricingRules } from "./apply-ai-sell-prices";
 import type { HotelOffer } from "@watesly-travel/shared";
@@ -107,10 +109,6 @@ export type TravelAiTurnResult = {
   remainingUsd?: number | null;
 };
 
-type OrgAiSettings = {
-  defaultThreadCreditUsd?: number | null;
-};
-
 function money(value: unknown): number {
   const n = Number(value);
   return Number.isFinite(n) ? n : 0;
@@ -138,42 +136,6 @@ function computeBudget(thread: {
   const limit = roundUsd(money(thread.creditLimitUsd));
   const remaining = roundUsd(Math.max(0, limit - spent));
   return { spent, limit, remaining, exhausted: remaining <= 0 };
-}
-
-function readOrgAiSettings(settings: unknown): OrgAiSettings {
-  if (!settings || typeof settings !== "object") return {};
-  const ai = (settings as { ai?: unknown }).ai;
-  if (!ai || typeof ai !== "object") return {};
-  const raw = (ai as { defaultThreadCreditUsd?: unknown }).defaultThreadCreditUsd;
-  if (raw == null || raw === "") return { defaultThreadCreditUsd: null };
-  const n = Number(raw);
-  return {
-    defaultThreadCreditUsd: Number.isFinite(n) && n >= 0 ? roundUsd(n) : null,
-  };
-}
-
-function mergeOrgAiSettings(
-  existing: unknown,
-  ai: OrgAiSettings,
-): Prisma.InputJsonValue {
-  const base =
-    existing && typeof existing === "object" && !Array.isArray(existing)
-      ? { ...(existing as Record<string, unknown>) }
-      : {};
-  const prevAi =
-    base.ai && typeof base.ai === "object" && !Array.isArray(base.ai)
-      ? { ...(base.ai as Record<string, unknown>) }
-      : {};
-  if (ai.defaultThreadCreditUsd === undefined) {
-    base.ai = prevAi;
-  } else if (ai.defaultThreadCreditUsd == null) {
-    delete prevAi.defaultThreadCreditUsd;
-    base.ai = prevAi;
-  } else {
-    prevAi.defaultThreadCreditUsd = ai.defaultThreadCreditUsd;
-    base.ai = prevAi;
-  }
-  return asJson(base);
 }
 
 function reportWindow(period?: string, from?: string, to?: string) {
@@ -247,6 +209,9 @@ export class TravelAiService {
   constructor(private readonly prisma: PrismaService) {}
 
   async turn(input: TravelAiTurnInput): Promise<TravelAiTurnResult> {
+    if (input.channel === "web_chat") {
+      await this.assertWebAssistantOpen(input.organizationId);
+    }
     const thread = await this.resolveThread(input);
     await this.prisma.aiMessage.create({
       data: {
@@ -686,19 +651,24 @@ export class TravelAiService {
   }
 
   async getAiSettings(organizationId: string) {
-    const org = await this.prisma.organization.findUnique({
-      where: { id: organizationId },
-      select: { settings: true },
-    });
+    const parsed = await this.orgAiSettings(organizationId);
     return {
-      defaultThreadCreditUsd:
-        readOrgAiSettings(org?.settings).defaultThreadCreditUsd ?? null,
+      defaultThreadCreditUsd: parsed.defaultThreadCreditUsd ?? null,
+      assistantEnabled: parsed.assistantEnabled !== false,
+      otpDelivery: otpDeliveryConfigured(),
     };
+  }
+
+  async assertWebAssistantOpen(organizationId: string) {
+    const parsed = await this.orgAiSettings(organizationId);
+    if (parsed.assistantEnabled === false) {
+      throw new BadRequestException("المساعد متوقف من لوحة التشغيل");
+    }
   }
 
   async setAiSettings(
     organizationId: string,
-    input: { defaultThreadCreditUsd?: number | null },
+    input: { defaultThreadCreditUsd?: number | null; assistantEnabled?: boolean },
   ) {
     const org = await this.prisma.organization.findUnique({
       where: { id: organizationId },
@@ -706,6 +676,7 @@ export class TravelAiService {
     });
     const next = mergeOrgAiSettings(org?.settings, {
       defaultThreadCreditUsd: input.defaultThreadCreditUsd,
+      assistantEnabled: input.assistantEnabled,
     });
     await this.prisma.organization.update({
       where: { id: organizationId },

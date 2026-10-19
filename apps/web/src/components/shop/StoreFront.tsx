@@ -108,6 +108,7 @@ function StoreFrontInner({
   const [menuOpen, setMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [bootstrap, setBootstrap] = useState<ShopBootstrap | null>(null);
+  const [assistantOn, setAssistantOn] = useState(true);
 
   useEffect(() => {
     setCustomer(getShopSession()?.customer || null);
@@ -131,6 +132,9 @@ function StoreFrontInner({
     shopFetch<ShopBootstrap>("/shop/bootstrap", { auth: false })
       .then(setBootstrap)
       .catch(() => undefined);
+    shopFetch<{ enabled?: boolean }>("/shop/assistant/access", { auth: false })
+      .then((row) => setAssistantOn(row.enabled !== false))
+      .catch(() => setAssistantOn(true));
   }, []);
 
   function logout() {
@@ -172,7 +176,7 @@ function StoreFrontInner({
                   aria-label={locale === "en" ? "Booking services" : "خدمات الحجز"}
                 />
               ) : null}
-              {isHome ? (
+              {isHome && assistantOn ? (
                 <button
                   type="button"
                   className="wg-hero-ai-btn"
@@ -406,7 +410,7 @@ function StoreFrontInner({
                 aria-label={locale === "en" ? "Booking services" : "خدمات الحجز"}
               />
             ) : null}
-            {isHome ? (
+            {isHome && assistantOn ? (
               <button
                 type="button"
                 className="wg-hero-ai-btn"

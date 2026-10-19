@@ -2628,6 +2628,15 @@ export class ShopService {
     };
   }
 
+  async assistantAccess() {
+    const org = await this.orgs.resolve();
+    const settings = await this.assistant.getAiSettings(org.id);
+    return {
+      enabled: settings.assistantEnabled,
+      otpDelivery: settings.otpDelivery,
+    };
+  }
+
   async assistantChat(customer: ShopCustomer, body: { message?: string }) {
     const text = String(body.message || "").trim();
     if (!text) throw new BadRequestException("نص الرسالة مطلوب");
@@ -2654,6 +2663,7 @@ export class ShopService {
     file: { buffer: Buffer; originalname?: string; mimetype?: string },
     durationSec?: number,
   ) {
+    await this.assistant.assertWebAssistantOpen(customer.organizationId);
     return this.voice.transcribeUpload({
       organizationId: customer.organizationId,
       customerKey: customer.id,

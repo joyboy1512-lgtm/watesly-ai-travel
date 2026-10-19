@@ -34,6 +34,20 @@ export default function PublicChatPage() {
   const logRef = useRef<HTMLDivElement>(null);
 
   const [pendingTranscript, setPendingTranscript] = useState<string | null>(null);
+  const [access, setAccess] = useState<{ enabled: boolean; otpDelivery: boolean } | null>(null);
+
+  useEffect(() => {
+    shopFetch<{ enabled?: boolean; otpDelivery?: boolean }>("/shop/assistant/access", {
+      auth: false,
+    })
+      .then((row) =>
+        setAccess({
+          enabled: row.enabled !== false,
+          otpDelivery: Boolean(row.otpDelivery),
+        }),
+      )
+      .catch(() => setAccess({ enabled: true, otpDelivery: false }));
+  }, []);
 
   useEffect(() => {
     const session = getShopSession();
@@ -60,6 +74,31 @@ export default function PublicChatPage() {
   useEffect(() => {
     logRef.current?.scrollTo({ top: logRef.current.scrollHeight });
   }, [messages, busy]);
+
+  async function startDirect(e: FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    setError("");
+    try {
+      const result = await unlockShopCustomer({ name, guest: true });
+      saveShopSession({
+        accessToken: result.accessToken,
+        customer: result.customer,
+      });
+      setUnlocked(true);
+      setMessages([
+        {
+          id: "welcome-unlocked",
+          role: "assistant",
+          content: "مرحباً! كيف يمكنني مساعدتك في تخطيط رحلتك؟",
+        },
+      ]);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "تعذر فتح المساعد");
+    } finally {
+      setBusy(false);
+    }
+  }
 
   async function unlock(e: FormEvent) {
     e.preventDefault();
@@ -161,10 +200,30 @@ export default function PublicChatPage() {
       <section className="shop-panel">
         <h1>مساعد السفر</h1>
         <p className="shop-hint">
-          المساعد يعمل بعد إدخال رقم الجوال، ويرتبط بحسابك فقط.
+          {access == null
+            ? "جارٍ التحميل..."
+            : !access.enabled
+              ? "المساعد متوقف حالياً من لوحة التشغيل."
+              : !access.otpDelivery
+                ? "يمكنك بدء المحادثة مباشرة. التحقق برمز الجوال غير مفعّل."
+                : "المساعد يعمل بعد إدخال رقم الجوال، ويرتبط بحسابك فقط."}
         </p>
         {error ? <p className="shop-error">{error}</p> : null}
-        {!unlocked ? (
+        {access == null ? (
+          <p className="shop-hint">جارٍ التحميل...</p>
+        ) : !access.enabled ? (
+          <p className="shop-error">المساعد متوقف حالياً من لوحة التشغيل.</p>
+        ) : !unlocked && !access.otpDelivery ? (
+          <form className="shop-form" onSubmit={startDirect}>
+            <label>
+              الاسم
+              <input value={name} onChange={(e) => setName(e.target.value)} />
+            </label>
+            <button className="shop-btn" type="submit" disabled={busy}>
+              {busy ? "..." : "ابدأ المحادثة"}
+            </button>
+          </form>
+        ) : !unlocked ? (
           <form className="shop-form" onSubmit={unlock}>
             <label>
               الاسم

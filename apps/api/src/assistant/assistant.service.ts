@@ -76,9 +76,13 @@ export class AssistantService {
 
   setAiSettings(
     organizationId: string,
-    input: { defaultThreadCreditUsd?: number | null },
+    input: { defaultThreadCreditUsd?: number | null; assistantEnabled?: boolean },
   ) {
     return this.travelAi.setAiSettings(organizationId, input);
+  }
+
+  assertWebAssistantOpen(organizationId: string) {
+    return this.travelAi.assertWebAssistantOpen(organizationId);
   }
 
   status() {

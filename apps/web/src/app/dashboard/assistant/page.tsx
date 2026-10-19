@@ -73,7 +73,11 @@ type UsageReport = {
   byDay: Array<{ date: string; costUsd: number; turns: number }>;
 };
 
-type AiSettings = { defaultThreadCreditUsd: number | null };
+type AiSettings = {
+  defaultThreadCreditUsd: number | null;
+  assistantEnabled?: boolean;
+  otpDelivery?: boolean;
+};
 
 const CHANNEL_LABEL: Record<string, string> = {
   dashboard: "لوحة التحكم",
@@ -380,6 +384,23 @@ function AssistantPageInner() {
       await loadThreads();
     } catch (err) {
       setError(err instanceof Error ? err.message : "تعذر حفظ حد الرصيد");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function saveAssistantEnabled(next: boolean) {
+    setBusy(true);
+    setError("");
+    try {
+      const cfg = await apiFetch<AiSettings>("/assistant/settings", {
+        method: "PATCH",
+        body: JSON.stringify({ assistantEnabled: next }),
+      });
+      setSettings(cfg);
+      setOrgLimit(limitInputValue(cfg.defaultThreadCreditUsd));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "تعذر حفظ تشغيل المساعد");
     } finally {
       setBusy(false);
     }
@@ -790,6 +811,24 @@ function AssistantPageInner() {
 
           {sideTab === "credit" ? (
             <div className="ta-side-body">
+              <section>
+                <h4>تشغيل المساعد على الموقع</h4>
+                <label className="ta-field">
+                  <input
+                    type="checkbox"
+                    checked={settings?.assistantEnabled !== false}
+                    disabled={busy || !settings}
+                    onChange={(e) => void saveAssistantEnabled(e.target.checked)}
+                  />{" "}
+                  تشغيل المساعد على الموقع
+                </label>
+                <p className="ta-hint">
+                  {settings?.otpDelivery
+                    ? "الزبون يدخل رقم الجوال ورمز التحقق قبل المحادثة."
+                    : "التحقق بالرمز غير مفعّل، لذلك يبدأ الزبون المحادثة مباشرة دون رقم جوال."}{" "}
+                  إيقاف الخيار يخفي المساعد عن الموقع ويبقي تجربة اللوحة متاحة.
+                </p>
+              </section>
               <section>
                 <h4>حد هذه المحادثة</h4>
                 <p>عند نفاد الرصيد يُحوّل الرد تلقائياً إلى موظف.</p>

@@ -175,10 +175,11 @@ export class AssistantController {
   @RequirePermissions("conversations.read")
   patchSettings(
     @CurrentUser() user: AuthUser,
-    @Body() body: { defaultThreadCreditUsd?: number | null },
+    @Body() body: { defaultThreadCreditUsd?: number | null; assistantEnabled?: boolean },
   ) {
     return this.assistant.setAiSettings(user.organizationId, {
       defaultThreadCreditUsd: body.defaultThreadCreditUsd,
+      assistantEnabled: body.assistantEnabled,
     });
   }
 

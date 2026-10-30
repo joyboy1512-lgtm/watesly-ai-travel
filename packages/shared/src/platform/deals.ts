@@ -118,7 +118,7 @@ export const WEEKEND_DEALS: WeekendDeal[] = [
     titleEn: "Muscat Weekend",
     countryFlag: "🇴🇲",
     city: "مسقط",
-    image: "/media/destinations/muscat.jpg?v=2",
+    image: "/media/destinations/muscat.jpg?v=3",
     includes: ["flight", "hotel"],
     originalPriceMinor: 169_000,
     salePriceMinor: 149_000,

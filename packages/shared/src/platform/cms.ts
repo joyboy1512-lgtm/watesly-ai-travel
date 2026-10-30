@@ -509,11 +509,11 @@ export const DEFAULT_CMS_REVIEWS: CmsReview[] = [
 export const DEFAULT_CMS_FEATURES: CmsFeature[] = [
   {
     id: "feat-search",
-    icon: "🌊",
+    icon: "🧭",
     titleAr: "بحث موحّد",
     titleEn: "Unified search",
-    textAr: "طيران وفنادق ونقل وأنشطة في تجربة واحدة — مع نتائج تجريبية حتى اكتمال الربط الحي.",
-    textEn: "Flights, hotels, transfers, and activities in one experience.",
+    textAr: "طيران وفنادق ونقل وأنشطة من الكويت في تجربة واحدة.",
+    textEn: "Flights, hotels, transfers, and activities from Kuwait in one search.",
   },
   {
     id: "feat-safe",
@@ -528,8 +528,8 @@ export const DEFAULT_CMS_FEATURES: CmsFeature[] = [
     icon: "💬",
     titleAr: "مساعد ذكي",
     titleEn: "AI assistant",
-    textAr: "خطط رحلتك بالمحادثة بعد إدخال جوالك — بدون ازدحام.",
-    textEn: "Plan by chat after entering your mobile — without the clutter.",
+    textAr: "خطط رحلتك بالمحادثة بالعربية أو الإنجليزية من الصفحة مباشرة.",
+    textEn: "Plan your trip by chat in Arabic or English, right from this page.",
   },
   {
     id: "feat-one",
@@ -553,16 +553,18 @@ export const DEFAULT_CMS_HOME_COPY: CmsHomeCopy = {
   destKickerEn: "Featured destinations",
   destTitleAr: "اكتشف العالم بطريقتك",
   destTitleEn: "Discover the world your way",
-  destLeadAr: "وجهات مختارة بصور حقيقية وتقييمات مسافرين — اضغط على أي وجهة لملء البحث فوراً.",
-  destLeadEn: "Hand-picked destinations with real photos — tap any destination to fill the search.",
-  offersKickerAr: "عروض الأسبوع",
-  offersKickerEn: "This week’s offers",
+  destLeadAr:
+    "ست وجهات من الكويت. افتح الصفحة لمعرفة أفضل وقت وما يشمله السعر التقريبي، أو املأ البحث مباشرة.",
+  destLeadEn:
+    "Six destinations from Kuwait. Open a guide for the best time and a guide price, or fill the search.",
+  offersKickerAr: "هذا الأسبوع",
+  offersKickerEn: "This week",
   offersTitleAr: "باقات جاهزة بأسعار تبدأ من",
   offersTitleEn: "Ready packages starting from",
   whyKickerAr: "لماذا WeekendGate؟",
   whyKickerEn: "Why WeekendGate?",
-  whyTitleAr: "تجربة حجز كاملة بلمسة بحرية هادئة",
-  whyTitleEn: "A complete booking experience",
+  whyTitleAr: "عطلة أوضح، من البحث حتى المتابعة",
+  whyTitleEn: "A clearer trip, from search to follow-up",
   reviewsKickerAr: "آراء المسافرين",
   reviewsKickerEn: "Traveler reviews",
   reviewsHeadingAr: "نماذج تقييمات توضيحية",
@@ -573,8 +575,8 @@ export const DEFAULT_CMS_HOME_COPY: CmsHomeCopy = {
   ctaKickerEn: "Ready to go?",
   ctaTitleAr: "خطّط رحلتك مع مساعد WeekendGate",
   ctaTitleEn: "Plan your trip with the WeekendGate assistant",
-  ctaLeadAr: "أدخل جوالك وابدأ محادثة ذكية — أو ابحث مباشرة من الأعلى.",
-  ctaLeadEn: "Enter your mobile number to chat — or search from the top.",
+  ctaLeadAr: "استخدم محرك البحث أعلاه ثم اضغط «ابدأ بناء رحلتي»، أو تصفّح الوجهات والعروض.",
+  ctaLeadEn: "Use the search above, then start building your trip — or browse destinations and deals.",
 };
 
 export const DEFAULT_CMS_SITE_PAGES: CmsSitePages = {

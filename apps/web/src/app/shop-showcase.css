@@ -1,0 +1,366 @@
+/* Homepage showcase under the hero. Does not style the header or hero. */
+
+.shop-root .shop-landing {
+  width: min(1120px, calc(100% - 2rem));
+  margin: 0 auto;
+  padding: 2.75rem 0 2.5rem;
+  background: #fff;
+}
+
+.shop-root .shop-landing .shop-section {
+  scroll-margin-top: 5.5rem;
+}
+
+.shop-root .shop-landing .shop-section-head h2 {
+  color: #001b35;
+  font-size: clamp(1.55rem, 2.5vw, 2.05rem);
+  letter-spacing: -0.02em;
+}
+
+.shop-root .shop-landing .shop-kicker {
+  display: block;
+  padding-inline: 0;
+  text-transform: none;
+  letter-spacing: 0;
+  color: #1565c0;
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.shop-root .shop-landing .shop-kicker::before,
+.shop-root .shop-landing .shop-kicker::after {
+  content: none;
+}
+
+.shop-root .shop-landing .shop-lead {
+  max-width: 38rem;
+  color: #3d4d63;
+}
+
+.shop-root .shop-landing .shop-section-head .shop-btn-ghost {
+  border-color: #001b35;
+  color: #001b35;
+  border-radius: 999px;
+  background: #fff;
+}
+
+.shop-root .shop-landing .shop-section-soft {
+  background: #f6f8fb;
+  border: 1px solid rgba(0, 27, 53, 0.06);
+  box-shadow: none;
+}
+
+.shop-root .shop-landing .wg-show-card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  border-radius: 22px;
+  background: #fff;
+  border: 1px solid rgba(0, 27, 53, 0.08);
+  box-shadow: 0 16px 36px rgba(0, 27, 53, 0.06);
+  font: inherit;
+  color: inherit;
+  text-align: start;
+  text-decoration: none;
+}
+
+.shop-root .shop-landing .wg-show-link {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  color: inherit;
+  text-decoration: none;
+}
+
+.shop-root .shop-landing .wg-show-media {
+  position: relative;
+  display: block;
+}
+
+.shop-root .shop-landing .wg-show-media img {
+  height: 188px;
+}
+
+.shop-root .shop-landing .wg-show-code {
+  position: absolute;
+  top: 0.85rem;
+  inset-inline-end: 0.85rem;
+  background: #001b35;
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  padding: 0.28rem 0.55rem;
+  border-radius: 999px;
+}
+
+.shop-root .shop-landing .wg-show-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+}
+
+.shop-root .shop-landing .wg-show-body h3 {
+  color: #001b35;
+}
+
+.shop-root .shop-landing .wg-show-why {
+  color: #3d4d63;
+  line-height: 1.55;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.shop-root .shop-landing .wg-show-when {
+  margin: 0.65rem 0 0;
+  color: #001b35;
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+.shop-root .shop-landing .wg-show-when span {
+  display: block;
+  margin-bottom: 0.1rem;
+  color: #1565c0;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.shop-root .shop-landing .wg-show-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  list-style: none;
+  padding: 0;
+  margin: 0.75rem 0 0;
+}
+
+.shop-root .shop-landing .wg-show-chips li {
+  background: #f4f7fb;
+  color: #001b35;
+  border-radius: 999px;
+  padding: 0.18rem 0.55rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.shop-root .shop-landing .wg-show-price,
+.shop-root .shop-landing .wg-show-price-row {
+  margin-top: auto;
+  padding-top: 0.85rem;
+}
+
+.shop-root .shop-landing .wg-show-price {
+  display: block;
+  color: #001b35;
+  font-size: 1.02rem;
+}
+
+.shop-root .shop-landing .wg-show-actions {
+  padding: 0 1rem 1rem;
+}
+
+.shop-root .shop-landing .wg-show-actions .shop-btn {
+  width: 100%;
+  min-height: 44px;
+  border-radius: 999px;
+  background: #001b35;
+  color: #fff;
+  box-shadow: none;
+}
+
+.shop-root .shop-landing .wg-show-actions .shop-btn:hover {
+  background: #0c3358;
+  box-shadow: none;
+}
+
+.shop-root .shop-landing .wg-show-deals {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.shop-root .shop-landing .wg-show-save {
+  position: absolute;
+  bottom: 0.85rem;
+  inset-inline-start: 0.85rem;
+  background: #d99a3e;
+  color: #001b35;
+  font-weight: 800;
+  font-size: 0.75rem;
+  padding: 0.28rem 0.6rem;
+  border-radius: 999px;
+}
+
+.shop-root .shop-landing .wg-show-price-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.55rem;
+}
+
+.shop-root .shop-landing .wg-show-price-row strong {
+  margin: 0;
+  color: #001b35;
+  font-size: 1.2rem;
+}
+
+.shop-root .shop-landing .wg-show-price-row s {
+  color: #8b97a8;
+  font-size: 0.85rem;
+}
+
+.shop-root .shop-landing .wg-show-feature {
+  text-align: start;
+  border-radius: 20px;
+  border: 1px solid rgba(0, 27, 53, 0.08);
+  box-shadow: none;
+  background: #fff;
+}
+
+.shop-root .shop-landing .wg-show-feature .shop-feature-icon {
+  width: 2.6rem;
+  height: 2.6rem;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  background: #f3f7fc;
+  margin-bottom: 0.45rem;
+}
+
+.shop-root .shop-landing .wg-show-feature h3 {
+  color: #001b35;
+}
+
+.shop-root .shop-landing .wg-show-note {
+  margin: 0 0 1rem;
+  max-width: none;
+  padding: 0.8rem 0.95rem;
+  border-radius: 14px;
+  background: #f8f4ea;
+  border: 1px solid rgba(217, 154, 62, 0.45);
+  color: #001b35;
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.shop-root .shop-landing .shop-review-card {
+  position: relative;
+  border: 1px solid rgba(0, 27, 53, 0.08);
+  border-radius: 20px;
+  box-shadow: none;
+  overflow: hidden;
+}
+
+.shop-root .shop-landing .shop-review-card p {
+  color: #1c2b3a;
+}
+
+.shop-root .shop-landing .shop-review-card small {
+  color: #1565c0;
+}
+
+.shop-root .shop-landing .shop-review-card::before {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  height: 3px;
+  background: #d99a3e;
+}
+
+.shop-root .shop-landing .shop-cta-banner.wg-show-cta {
+  background: linear-gradient(135deg, #001b35 0%, #0c3358 70%, #1565c0 140%);
+  border-radius: 28px;
+  box-shadow: 0 18px 40px rgba(0, 27, 53, 0.18);
+}
+
+.shop-root .shop-landing .wg-show-cta .shop-kicker {
+  color: #d99a3e;
+}
+
+.shop-root .shop-landing .wg-show-cta h2,
+.shop-root .shop-landing .wg-show-cta p {
+  color: #fff;
+}
+
+.shop-root .shop-landing .wg-show-cta .shop-btn-light {
+  background: #d99a3e;
+  color: #001b35;
+  border-radius: 999px;
+  box-shadow: none;
+}
+
+.shop-root .shop-landing .wg-show-cta .shop-btn-light:hover {
+  background: #e5b15a;
+  color: #001b35;
+}
+
+.shop-root .shop-landing .wg-show-cta .shop-btn-ghost-light {
+  border-radius: 999px;
+  border-color: rgba(255, 255, 255, 0.55);
+  color: #fff;
+}
+
+.shop-root .shop-landing .wg-show-stats {
+  max-width: 640px;
+}
+
+.shop-root .shop-landing .wg-show-stats .shop-stat {
+  border-color: rgba(0, 27, 53, 0.08);
+  box-shadow: none;
+}
+
+.shop-root .shop-landing .wg-show-stats .shop-stat strong {
+  color: #001b35;
+}
+
+.shop-root .shop-landing .wg-show-banners {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.shop-root .shop-landing .wg-show-banner {
+  display: grid;
+  grid-template-columns: 148px 1fr;
+  min-height: 96px;
+  overflow: hidden;
+  border-radius: 18px;
+  text-decoration: none;
+  color: #001b35;
+  background: #fff;
+  border: 1px solid rgba(0, 27, 53, 0.08);
+}
+
+.shop-root .shop-landing .wg-show-banner img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.shop-root .shop-landing .wg-show-banner span {
+  display: grid;
+  align-content: center;
+  gap: 0.2rem;
+  padding: 0.85rem 1rem;
+}
+
+.shop-root .shop-landing .wg-show-banner small {
+  color: #1565c0;
+  font-weight: 800;
+}
+
+.shop-root .shop-landing .wg-show-banner strong {
+  font-size: 1.05rem;
+}
+
+@media (max-width: 1024px) {
+  .shop-root .shop-landing .wg-show-deals {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .shop-root .shop-landing .wg-show-banner {
+    grid-template-columns: 112px 1fr;
+  }
+}

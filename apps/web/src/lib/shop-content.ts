@@ -359,7 +359,7 @@ export function heroSlidesFor(locale: ShopLocale) {
 export function shopFeaturesFor(locale: ShopLocale) {
   return [
     {
-      icon: "🌊",
+      icon: "🧭",
       title: tShop(locale, "featureSearchTitle"),
       text: tShop(locale, "featureSearchText"),
     },

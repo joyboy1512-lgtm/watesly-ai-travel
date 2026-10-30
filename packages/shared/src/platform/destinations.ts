@@ -164,7 +164,7 @@ export const DESTINATION_GUIDES: DestinationGuide[] = [
     airportCode: "MCT",
     countryAr: "عُمان",
     countryEn: "Oman",
-    image: "/media/destinations/muscat.jpg?v=2",
+    image: "/media/destinations/muscat.jpg?v=3",
     whyAr: "طبيعة هادئة وشواطئ وجبال قريبة.",
     whyEn: "Calm nature, beaches, and nearby mountains.",
     bestTimeAr: "أكتوبر إلى أبريل.",

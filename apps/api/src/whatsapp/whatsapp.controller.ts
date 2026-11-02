@@ -76,6 +76,12 @@ export class WhatsappController {
     }
   }
 
+  @Get("setup")
+  @RequirePermissions("whatsapp.manage")
+  setup() {
+    return this.whatsapp.webhookSetup();
+  }
+
   @Get("accounts")
   @RequirePermissions("whatsapp.manage")
   list(

@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Injectable,
   NotFoundException,
+  type OnModuleInit,
 } from "@nestjs/common";
 import { Prisma } from "@watesly-travel/database";
 import {
@@ -9,10 +10,13 @@ import {
   fetchWabaSubscribedApps,
   formatTierHint,
   inspectCommerceCatalog,
+  listWabaPhoneNumbers,
+  matchWabaPhoneNumber,
   parseInboundWebhook,
   parseMetaMessagingWebhook,
   parseStatusWebhook,
   parseTelegramUpdate,
+  phoneNumberIdsMatch,
   prefixChannelId,
   probeChannel,
   formatPeerId,
@@ -46,14 +50,48 @@ function asJsonRecord(value: unknown): Record<string, unknown> {
   return {};
 }
 
+function preferInboundAccount<
+  T extends { status: string; isDefault: boolean; updatedAt: Date },
+>(rows: T[]): T | null {
+  if (!rows.length) return null;
+  const rank = (status: string) =>
+    status === "connected" ? 0 : status === "pending" ? 1 : 2;
+  return (
+    [...rows].sort(
+      (a, b) =>
+        rank(a.status) - rank(b.status) ||
+        Number(b.isDefault) - Number(a.isDefault) ||
+        b.updatedAt.getTime() - a.updatedAt.getTime(),
+    )[0] ?? null
+  );
+}
+
 @Injectable()
-export class WhatsappService {
+export class WhatsappService implements OnModuleInit {
   constructor(
     private readonly prisma: PrismaService,
     private readonly pipeline: BotPipelineService,
     private readonly audit: AuditService,
     private readonly bookings: BookingsService,
   ) {}
+
+  async onModuleInit() {
+    try {
+      await this.activateLiveReceiving();
+    } catch (error) {
+      // A missing database or a Meta outage must not stop the API.
+      // eslint-disable-next-line no-console
+      console.error("[whatsapp] activate receiving skipped", error);
+    }
+  }
+
+  webhookSetup() {
+    return {
+      webhookUrl: `${this.publicApiBase()}/whatsapp/webhook`,
+      verifyToken: process.env.WHATSAPP_VERIFY_TOKEN || "watesly_dev_verify",
+      appSecretConfigured: Boolean(process.env.WHATSAPP_APP_SECRET),
+    };
+  }
 
   verify(query: {
     "hub.mode"?: string;
@@ -157,11 +195,10 @@ export class WhatsappService {
           businessAccountId: dto.businessAccountId || null,
           displayPhone: resolved.displayPhone || dto.displayPhone || null,
           accessTokenEnc: dto.accessToken?.trim() || "mock",
-          status: dto.status || "connected",
+          status: dto.status || "pending",
           channelName: resolved.channelName || dto.channelName?.trim() || null,
           channelType,
           isDefault: shouldBeDefault,
-          webhookVerifiedAt: new Date(),
           ...(resolved.meta ? { meta: asJson(resolved.meta) } : {}),
         },
       });
@@ -451,14 +488,21 @@ export class WhatsappService {
       accessToken: account.accessTokenEnc || "",
       wabaId,
     });
+    const setup = this.webhookSetup();
     await this.prisma.whatsAppAccount.update({
       where: { id: account.id },
       data: {
-        webhookVerifiedAt: result.ok ? new Date() : account.webhookVerifiedAt,
+        status:
+          result.mock && account.status === "connected" ? "pending" : account.status,
+        webhookVerifiedAt: result.mock
+          ? null
+          : result.ok
+            ? new Date()
+            : account.webhookVerifiedAt,
         meta: asJson({
           ...prevMeta,
           webhookSet: result.ok,
-          webhookUrl: `${this.publicApiBase()}/whatsapp/webhook`,
+          webhookUrl: setup.webhookUrl,
           webhookEnsuredAt: new Date().toISOString(),
         }),
       },
@@ -467,7 +511,9 @@ export class WhatsappService {
       accountId: account.id,
       channelType,
       wabaId: wabaId || null,
-      webhookUrl: `${this.publicApiBase()}/whatsapp/webhook`,
+      webhookUrl: setup.webhookUrl,
+      verifyToken: setup.verifyToken,
+      appSecretConfigured: setup.appSecretConfigured,
       ...result,
     };
   }
@@ -485,20 +531,24 @@ export class WhatsappService {
     const nextStatus =
       account.status === "archived"
         ? "archived"
-        : health.derivedStatus === "connected"
-          ? "connected"
-          : health.derivedStatus === "suspended"
-            ? "disconnected"
-            : "disconnected";
+        : health.mock
+          ? "pending"
+          : health.derivedStatus === "connected"
+            ? "connected"
+            : health.derivedStatus === "suspended"
+              ? "disconnected"
+              : "disconnected";
     const updated = await this.prisma.whatsAppAccount.update({
       where: { id: account.id },
       data: {
         status: nextStatus,
         displayPhone: health.displayPhoneNumber || account.displayPhone,
         channelName: health.verifiedName || account.channelName,
-        webhookVerifiedAt: health.derivedStatus === "connected"
-          ? new Date()
-          : account.webhookVerifiedAt,
+        webhookVerifiedAt: health.mock
+          ? null
+          : health.derivedStatus === "connected"
+            ? new Date()
+            : account.webhookVerifiedAt,
         meta: asJson({
           ...prevMeta,
           health,
@@ -562,19 +612,116 @@ export class WhatsappService {
 
     const channelType = normalizeChannelType(account.channelType);
     const token = account.accessTokenEnc || "";
-    const probed = await probeChannel({
+    const phoneHint =
+      channelType === "whatsapp"
+        ? account.phoneNumberId.replace(/\D/g, "") || account.phoneNumberId
+        : account.phoneNumberId;
+    let probed = await probeChannel({
       channelType,
-      phoneNumberId: account.phoneNumberId,
+      phoneNumberId: phoneHint,
       accessToken: token,
     });
+    let resolvedPhoneId = probed.ok ? probed.externalId || phoneHint : "";
+
+    if (
+      channelType === "whatsapp" &&
+      probed.mode === "live" &&
+      !probed.ok &&
+      account.businessAccountId
+    ) {
+      try {
+        const listed = await listWabaPhoneNumbers({
+          accessToken: token,
+          wabaId: account.businessAccountId,
+        });
+        const match = listed.ok
+          ? matchWabaPhoneNumber(listed.phones, {
+              phoneNumberId: account.phoneNumberId,
+              displayPhone: account.displayPhone,
+            })
+          : null;
+        if (match) {
+          const again = await probeChannel({
+            channelType,
+            phoneNumberId: match.id,
+            accessToken: token,
+          });
+          if (again.ok) {
+            probed = again;
+            if (!probed.displayPhone && match.displayPhone) {
+              probed.displayPhone = match.displayPhone;
+            }
+            if (!probed.channelName && match.verifiedName) {
+              probed.channelName = match.verifiedName;
+            }
+            resolvedPhoneId = match.id;
+            probed.message = `${probed.message} — تم اعتماد معرّف الرقم من ميتا`;
+          }
+        } else if (listed.ok && listed.phones.length > 1) {
+          probed.message = `${probed.message} — يوجد أكثر من رقم. احفظ Phone Number ID الصحيح من ميتا.`;
+        } else if (!listed.ok && listed.message) {
+          probed.message = `${probed.message} — ${listed.message}`;
+        }
+      } catch {
+        probed.message = `${probed.message} — تعذر قراءة أرقام الحساب من ميتا`;
+      }
+    }
 
     const patch: {
       displayPhone?: string;
       channelName?: string;
-      webhookVerifiedAt?: Date;
+      phoneNumberId?: string;
+      webhookVerifiedAt?: Date | null;
+      status?: string;
       meta?: Prisma.InputJsonValue;
     } = {};
-    if (probed.ok) {
+    const setup = this.webhookSetup();
+    let webhookUrl: string | undefined =
+      channelType === "telegram" ? undefined : setup.webhookUrl;
+    let receiveReady = false;
+
+    if (probed.mode === "mock") {
+      if (account.status === "connected") patch.status = "pending";
+      patch.webhookVerifiedAt = null;
+    } else if (probed.ok && channelType === "whatsapp") {
+      patch.status = "connected";
+      if (probed.displayPhone) patch.displayPhone = probed.displayPhone;
+      if (probed.channelName && !account.channelName) {
+        patch.channelName = probed.channelName;
+      }
+      const canonical = (resolvedPhoneId || "").replace(/\D/g, "");
+      if (canonical && canonical !== account.phoneNumberId) {
+        const clash = await this.prisma.whatsAppAccount.findFirst({
+          where: {
+            organizationId,
+            phoneNumberId: canonical,
+            NOT: { id: account.id },
+          },
+        });
+        if (!clash) patch.phoneNumberId = canonical;
+      }
+      let subscribed: { ok: boolean; message: string };
+      try {
+        subscribed = await subscribeWabaWebhook({
+          accessToken: token,
+          wabaId: account.businessAccountId || "",
+        });
+      } catch {
+        subscribed = {
+          ok: false,
+          message: "تعذر الاشتراك في استقبال الرسائل من ميتا",
+        };
+      }
+      receiveReady = subscribed.ok;
+      if (subscribed.ok) patch.webhookVerifiedAt = new Date();
+      probed.message = `${probed.message} — ${subscribed.message}`;
+      patch.meta = asJson({
+        ...this.accountMeta(account),
+        webhookSet: subscribed.ok,
+        webhookUrl: setup.webhookUrl,
+        webhookEnsuredAt: new Date().toISOString(),
+      });
+    } else if (probed.ok && channelType === "telegram" && probed.mode === "live") {
       patch.webhookVerifiedAt = new Date();
       if (probed.displayPhone && !account.displayPhone) {
         patch.displayPhone = probed.displayPhone;
@@ -582,25 +729,25 @@ export class WhatsappService {
       if (probed.channelName && !account.channelName) {
         patch.channelName = probed.channelName;
       }
-    }
-
-    let webhookUrl: string | undefined;
-    if (probed.ok && channelType === "telegram" && probed.mode === "live") {
       webhookUrl = this.telegramWebhookUrl(account.id);
       const secret = this.telegramWebhookSecret(account.id);
       const hooked = await setTelegramWebhook(token, webhookUrl, secret);
-      const prevMeta =
-        account.meta && typeof account.meta === "object"
-          ? (account.meta as Record<string, unknown>)
-          : {};
       patch.meta = asJson({
-        ...prevMeta,
+        ...this.accountMeta(account),
         webhookUrl,
         webhookSecret: secret,
         webhookSet: hooked.ok,
       });
       if (!hooked.ok) {
         probed.message = `${probed.message} — ${hooked.message}`;
+      }
+    } else if (probed.ok) {
+      patch.webhookVerifiedAt = new Date();
+      if (probed.displayPhone && !account.displayPhone) {
+        patch.displayPhone = probed.displayPhone;
+      }
+      if (probed.channelName && !account.channelName) {
+        patch.channelName = probed.channelName;
       }
     }
 
@@ -611,15 +758,24 @@ export class WhatsappService {
       });
     }
 
+    const ready = channelType === "whatsapp" ? receiveReady : probed.ok;
+    let message = probed.message;
+    if (channelType === "whatsapp" && ready && !setup.appSecretConfigured) {
+      message = `${message} — سر تطبيق ميتا غير محفوظ على الخادم، لذلك لن تُقبل الرسائل الواردة في الإنتاج.`;
+    }
+
     return {
-      ok: probed.ok,
+      ok: ready && (channelType !== "whatsapp" || setup.appSecretConfigured),
       mode: probed.mode,
-      message: probed.message,
-      phoneNumberId: account.phoneNumberId,
-      displayPhone: probed.displayPhone || account.displayPhone,
-      status: account.status,
+      message,
+      phoneNumberId: patch.phoneNumberId || account.phoneNumberId,
+      displayPhone: probed.displayPhone || patch.displayPhone || account.displayPhone,
+      status: patch.status || account.status,
       channelType,
       webhookUrl,
+      verifyToken: channelType === "whatsapp" ? setup.verifyToken : undefined,
+      appSecretConfigured: setup.appSecretConfigured,
+      receiveReady: ready,
     };
   }
 
@@ -801,7 +957,7 @@ export class WhatsappService {
     });
     if (!account) {
       account = await this.prisma.whatsAppAccount.findFirst({
-        where: { organizationId },
+        where: { organizationId, status: { not: "archived" } },
         orderBy: [{ isDefault: "desc" }, { createdAt: "asc" }],
       });
     }
@@ -1001,28 +1157,80 @@ export class WhatsappService {
     if (!phoneNumberId) {
       throw new BadRequestException("phoneNumberId مطلوب");
     }
-    return { phoneNumberId, displayPhone, channelName, meta };
+    const digits = phoneNumberId.replace(/\D/g, "");
+    return {
+      phoneNumberId: digits || phoneNumberId,
+      displayPhone,
+      channelName,
+      meta,
+    };
+  }
+
+  private async activateLiveReceiving() {
+    const accounts = await this.prisma.whatsAppAccount.findMany({
+      where: {
+        status: "connected",
+        channelType: "whatsapp",
+        businessAccountId: { not: null },
+      },
+    });
+    const setup = this.webhookSetup();
+    for (const account of accounts) {
+      const token = account.accessTokenEnc || "";
+      if (!token || token.startsWith("mock") || !account.businessAccountId) continue;
+      try {
+        const result = await subscribeWabaWebhook({
+          accessToken: token,
+          wabaId: account.businessAccountId,
+        });
+        if (!result.ok) {
+          // eslint-disable-next-line no-console
+          console.error("[whatsapp] subscribe failed", account.id, result.message);
+          continue;
+        }
+        await this.prisma.whatsAppAccount.update({
+          where: { id: account.id },
+          data: {
+            webhookVerifiedAt: new Date(),
+            meta: asJson({
+              ...this.accountMeta(account),
+              webhookSet: true,
+              webhookUrl: setup.webhookUrl,
+              webhookEnsuredAt: new Date().toISOString(),
+            }),
+          },
+        });
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error("[whatsapp] subscribe error", account.id, error);
+      }
+    }
   }
 
   private async findConnectedAccount(channelType: string, rawId: string) {
     const type = normalizeChannelType(channelType);
     const prefixed = prefixChannelId(type, rawId);
-    return this.prisma.whatsAppAccount.findFirst({
+    const ids = [rawId, prefixed].filter(Boolean);
+    const exact = await this.prisma.whatsAppAccount.findMany({
       where: {
-        status: "connected",
+        status: { not: "archived" },
         ...(type === "whatsapp"
-          ? {
-              OR: [
-                { phoneNumberId: rawId },
-                { phoneNumberId: prefixed, channelType: "whatsapp" },
-              ],
-            }
-          : {
-              channelType: type,
-              OR: [{ phoneNumberId: prefixed }, { phoneNumberId: rawId }],
-            }),
+          ? { phoneNumberId: { in: ids } }
+          : { channelType: type, phoneNumberId: { in: ids } }),
       },
     });
+    const chosen = preferInboundAccount(exact);
+    if (chosen) return chosen;
+    if (type !== "whatsapp") return null;
+    const candidates = await this.prisma.whatsAppAccount.findMany({
+      where: {
+        status: { not: "archived" },
+        channelType: "whatsapp",
+      },
+    });
+    return preferInboundAccount(
+      candidates.filter((row) => phoneNumberIdsMatch(row.phoneNumberId, rawId)),
+    );
   }
 
   private async ingestInboundMessage(
@@ -1059,6 +1267,16 @@ export class WhatsappService {
       },
     });
 
+    const existing = await this.prisma.message.findFirst({
+      where: {
+        organizationId: account.organizationId,
+        providerMessageId: msg.messageId,
+      },
+    });
+    if (existing) {
+      return { skipped: true, messageId: existing.id };
+    }
+
     let conversation = await this.prisma.conversation.findFirst({
       where: {
         organizationId: account.organizationId,
@@ -1068,6 +1286,18 @@ export class WhatsappService {
       },
       orderBy: { updatedAt: "desc" },
     });
+
+    if (!conversation) {
+      conversation = await this.prisma.conversation.findFirst({
+        where: {
+          organizationId: account.organizationId,
+          contactId: contact.id,
+          status: "closed",
+          OR: [{ whatsappAccountId: account.id }, { whatsappAccountId: null }],
+        },
+        orderBy: { updatedAt: "desc" },
+      });
+    }
 
     if (!conversation) {
       conversation = await this.prisma.conversation.create({
@@ -1082,24 +1312,17 @@ export class WhatsappService {
         },
       });
     } else {
+      const reopen = conversation.status === "closed";
       conversation = await this.prisma.conversation.update({
         where: { id: conversation.id },
         data: {
+          // A customer message opens the 24h window. Pending human handoff stays pending.
+          status: reopen ? "open" : conversation.status,
           lastMessageAt: new Date(),
           unreadCount: { increment: 1 },
           whatsappAccountId: account.id,
         },
       });
-    }
-
-    const existing = await this.prisma.message.findFirst({
-      where: {
-        organizationId: account.organizationId,
-        providerMessageId: msg.messageId,
-      },
-    });
-    if (existing) {
-      return { skipped: true, messageId: existing.id };
     }
 
     const message = await this.prisma.message.create({
@@ -1149,6 +1372,13 @@ export class WhatsappService {
   }
 
   private presentAccount(account: Record<string, unknown> | object) {
+    const rawToken =
+      (account as { accessTokenEnc?: string | null }).accessTokenEnc || "";
+    const tokenKind = !rawToken
+      ? "empty"
+      : rawToken.startsWith("mock")
+        ? "mock"
+        : "live";
     const sanitized = sanitizeWhatsAppAccount(
       account as unknown as Record<string, unknown>,
     );
@@ -1162,6 +1392,7 @@ export class WhatsappService {
       null;
     return {
       ...sanitized,
+      tokenKind,
       health: {
         qualityRating: quality,
         qualityLabel: quality

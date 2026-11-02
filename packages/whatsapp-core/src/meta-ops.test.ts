@@ -4,12 +4,15 @@ import {
   buildMetaStatusMessage,
   buildMetaTemplateComponents,
   deriveAccountStatus,
+  fetchWabaSubscribedApps,
   formatTierHint,
   isMockToken,
+  matchWabaPhoneNumber,
   normalizeTemplateName,
   parsePhoneHealth,
   parseWabaHealth,
   resolveEffectiveNameStatus,
+  subscribeWabaWebhook,
   tierToDailyLimit,
 } from "./meta-ops";
 
@@ -84,6 +87,60 @@ describe("meta-ops health parsers", () => {
     assert.equal(isMockToken("mock_dev"), true);
     assert.equal(isMockToken("EAABxx"), false);
     assert.equal(resolveEffectiveNameStatus("DECLINED", "PENDING"), "PENDING");
+  });
+});
+
+describe("meta-ops webhook activation", () => {
+  it("does not report a mock token as a live webhook", async () => {
+    const subscribed = await subscribeWabaWebhook({
+      accessToken: "mock",
+      wabaId: "1234567890",
+    });
+    assert.equal(subscribed.ok, false);
+    assert.equal(subscribed.mock, true);
+
+    const missingWaba = await subscribeWabaWebhook({
+      accessToken: "EAABxx",
+      wabaId: "  ",
+    });
+    assert.equal(missingWaba.ok, false);
+    assert.equal(missingWaba.mock, false);
+
+    const apps = await fetchWabaSubscribedApps({
+      accessToken: "mock_dev",
+      wabaId: "1234567890",
+    });
+    assert.equal(apps.ok, false);
+    assert.equal(apps.subscribed, false);
+  });
+
+  it("matches a display number to the Meta phone number id", () => {
+    const phones = [
+      { id: "111222333444555", displayPhone: "+965 9005 3224", verifiedName: "Travel Zone" },
+      { id: "999888777666555", displayPhone: "+965 5000 0000" },
+    ];
+    assert.equal(
+      matchWabaPhoneNumber(phones, { phoneNumberId: "111222333444555" })?.id,
+      "111222333444555",
+    );
+    assert.equal(
+      matchWabaPhoneNumber(phones, {
+        phoneNumberId: "+965 9005 3224",
+        displayPhone: "90053224",
+      })?.id,
+      "111222333444555",
+    );
+    assert.equal(
+      matchWabaPhoneNumber(phones, { phoneNumberId: "123", displayPhone: "555" }),
+      null,
+    );
+    assert.equal(
+      matchWabaPhoneNumber(
+        [{ id: "111222333444555", displayPhone: "+965 9005 3224" }],
+        { phoneNumberId: "not-a-phone" },
+      )?.id,
+      "111222333444555",
+    );
   });
 });
 

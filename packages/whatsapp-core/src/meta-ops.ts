@@ -337,8 +337,8 @@ export function mockAccountHealth(input?: {
     metaNameStatus: "APPROVED",
     metaAccountReviewStatus: "APPROVED",
     metaCanSendMessage: "AVAILABLE",
-    metaStatusMessage: "متاح — وضع تجريبي (mock)",
-    derivedStatus: "connected",
+    metaStatusMessage: "تجريبي فقط — ضع توكن ميتا الحقيقي ثم اضغط مزامنة",
+    derivedStatus: "disconnected",
     mock: true,
   };
 }
@@ -405,20 +405,113 @@ export async function syncAccountHealth(input: {
   };
 }
 
+export type WabaPhoneNumber = {
+  id: string;
+  displayPhone?: string;
+  verifiedName?: string;
+};
+
+function samePhoneDigits(left: string, right: string): boolean {
+  const a = left.replace(/\D/g, "");
+  const b = right.replace(/\D/g, "");
+  if (a.length < 8 || b.length < 8) return false;
+  return a === b || a.endsWith(b) || b.endsWith(a);
+}
+
+/** Pick the Meta phone-number id for a saved account, including when staff stored the display number. */
+export function matchWabaPhoneNumber(
+  phones: WabaPhoneNumber[],
+  hints: { phoneNumberId?: string | null; displayPhone?: string | null },
+): WabaPhoneNumber | null {
+  if (!phones.length) return null;
+  const storedId = (hints.phoneNumberId || "").trim();
+  const storedDigits = storedId.replace(/\D/g, "");
+  const byId = phones.find((phone) => phone.id === storedId || phone.id === storedDigits);
+  if (byId) return byId;
+  const byDisplay = phones.find((phone) => {
+    const display = phone.displayPhone || "";
+    return (
+      samePhoneDigits(display, hints.displayPhone || "") ||
+      samePhoneDigits(display, storedId)
+    );
+  });
+  if (byDisplay) return byDisplay;
+  return phones.length === 1 ? phones[0] ?? null : null;
+}
+
+export async function listWabaPhoneNumbers(input: {
+  accessToken: string;
+  wabaId: string;
+}): Promise<{ ok: boolean; mock: boolean; message: string; phones: WabaPhoneNumber[] }> {
+  if (isMockToken(input.accessToken) || !(input.wabaId || "").trim()) {
+    return {
+      ok: false,
+      mock: isMockToken(input.accessToken),
+      message: isMockToken(input.accessToken)
+        ? "توكن تجريبي"
+        : "معرّف WABA غير محفوظ",
+      phones: [],
+    };
+  }
+  const result = await graphRequest(
+    "GET",
+    `${input.wabaId.trim()}/phone_numbers?fields=id,display_phone_number,verified_name`,
+    input.accessToken,
+  );
+  if (!result.ok) {
+    return {
+      ok: false,
+      mock: false,
+      message: result.message || "تعذر قراءة أرقام واتساب",
+      phones: [],
+    };
+  }
+  const data = Array.isArray(result.raw.data) ? result.raw.data : [];
+  const phones = data.flatMap((row) => {
+    if (!row || typeof row !== "object") return [];
+    const item = row as Record<string, unknown>;
+    if (typeof item.id !== "string" || !item.id) return [];
+    return [
+      {
+        id: item.id,
+        displayPhone:
+          typeof item.display_phone_number === "string"
+            ? item.display_phone_number
+            : undefined,
+        verifiedName:
+          typeof item.verified_name === "string" ? item.verified_name : undefined,
+      },
+    ];
+  });
+  return {
+    ok: true,
+    mock: false,
+    message: phones.length ? "تم العثور على أرقام واتساب" : "لا أرقام على حساب واتساب",
+    phones,
+  };
+}
+
 export async function subscribeWabaWebhook(input: {
   accessToken: string;
   wabaId: string;
 }): Promise<{ ok: boolean; mock: boolean; message: string; raw?: Record<string, unknown> }> {
-  if (isMockToken(input.accessToken) || !input.wabaId) {
+  if (isMockToken(input.accessToken)) {
     return {
-      ok: true,
+      ok: false,
       mock: true,
-      message: "تم تسجيل Webhook تجريبياً (mock)",
+      message: "الحساب تجريبي. ضع توكن ميتا الحقيقي لتفعيل استقبال الرسائل.",
+    };
+  }
+  if (!(input.wabaId || "").trim()) {
+    return {
+      ok: false,
+      mock: false,
+      message: "معرّف حساب واتساب للأعمال (WABA) غير محفوظ",
     };
   }
   const result = await graphRequest(
     "POST",
-    `${input.wabaId}/subscribed_apps`,
+    `${input.wabaId.trim()}/subscribed_apps`,
     input.accessToken,
     {},
   );
@@ -436,17 +529,25 @@ export async function fetchWabaSubscribedApps(input: {
   accessToken: string;
   wabaId: string;
 }): Promise<{ ok: boolean; mock: boolean; subscribed: boolean; message: string }> {
-  if (isMockToken(input.accessToken) || !input.wabaId) {
+  if (isMockToken(input.accessToken)) {
     return {
-      ok: true,
+      ok: false,
       mock: true,
-      subscribed: true,
-      message: "Webhook تجريبي جاهز",
+      subscribed: false,
+      message: "لا يوجد اشتراك حقيقي — التوكن تجريبي",
+    };
+  }
+  if (!(input.wabaId || "").trim()) {
+    return {
+      ok: false,
+      mock: false,
+      subscribed: false,
+      message: "معرّف WABA غير محفوظ",
     };
   }
   const result = await graphRequest(
     "GET",
-    `${input.wabaId}/subscribed_apps`,
+    `${input.wabaId.trim()}/subscribed_apps`,
     input.accessToken,
   );
   const data = Array.isArray(result.raw.data) ? result.raw.data : [];

@@ -132,6 +132,17 @@ function isMockToken(token?: string | null): boolean {
   return !token || token.startsWith("mock");
 }
 
+/** Match a stored Phone Number ID to Meta's id, ignoring spaces and punctuation. */
+export function phoneNumberIdsMatch(stored: string, incoming: string): boolean {
+  const left = stored.trim();
+  const right = incoming.trim();
+  if (!left || !right) return false;
+  if (left === right) return true;
+  const leftDigits = left.replace(/\D/g, "");
+  const rightDigits = right.replace(/\D/g, "");
+  return leftDigits.length >= 8 && leftDigits === rightDigits;
+}
+
 function mockSend(extra: Record<string, unknown>): SendResult {
   return {
     providerMessageId: `mock_${Date.now()}`,
@@ -269,9 +280,10 @@ export async function probeChannel(input: {
   const type = normalizeChannelType(input.channelType);
   if (isMockToken(input.accessToken)) {
     return {
-      ok: true,
+      ok: false,
       mode: "mock",
-      message: "الحساب يعمل بوضع تجريبي (mock). الإرسال المحلي ناجح دون اتصال خارجي.",
+      message:
+        "الحساب محفوظ كتجربة محلية فقط. ضع توكن ميتا الحقيقي ثم اضغط مزامنة ليفتح الإرسال والاستقبال.",
       externalId: input.phoneNumberId,
     };
   }

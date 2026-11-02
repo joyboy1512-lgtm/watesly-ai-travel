@@ -21,6 +21,7 @@ type WaAccount = {
   hasAccessToken?: boolean;
   webhookVerifiedAt?: string | null;
   webhookSet?: boolean;
+  tokenKind?: "live" | "mock" | "empty";
   health?: {
     qualityRating?: string | null;
     qualityLabel?: string | null;
@@ -41,9 +42,15 @@ const emptyForm = {
   phoneNumberId: "",
   businessAccountId: "",
   displayPhone: "",
-  accessToken: "mock",
-  status: "connected",
+  accessToken: "",
+  status: "pending",
   isDefault: true,
+};
+
+type WebhookSetup = {
+  webhookUrl: string;
+  verifyToken: string;
+  appSecretConfigured: boolean;
 };
 
 export default function WhatsAppPage() {
@@ -57,6 +64,7 @@ export default function WhatsAppPage() {
   const [busyId, setBusyId] = useState<string | null>(null);
   const [q, setQ] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [setup, setSetup] = useState<WebhookSetup | null>(null);
 
   async function load() {
     const rows = await apiFetch<WaAccount[]>("/whatsapp/accounts");
@@ -65,6 +73,9 @@ export default function WhatsAppPage() {
 
   useEffect(() => {
     load().catch((err: Error) => setError(err.message));
+    apiFetch<WebhookSetup>("/whatsapp/setup")
+      .then(setSetup)
+      .catch(() => setSetup(null));
   }, []);
 
   const stats = useMemo(() => {
@@ -168,11 +179,16 @@ export default function WhatsAppPage() {
   async function ensureWebhook(id: string) {
     setBusyId(id);
     try {
-      const result = await apiFetch<{ message: string; subscribed?: boolean }>(
-        `/whatsapp/accounts/${id}/ensure-webhook`,
-        { method: "POST" },
+      const result = await apiFetch<{
+        message: string;
+        webhookUrl?: string;
+        verifyToken?: string;
+      }>(`/whatsapp/accounts/${id}/ensure-webhook`, { method: "POST" });
+      setOk(
+        [result.message, result.webhookUrl, result.verifyToken ? `رمز التحقق: ${result.verifyToken}` : ""]
+          .filter(Boolean)
+          .join(" — "),
       );
-      setOk(result.message);
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : "فشل ضمان Webhook");
@@ -190,7 +206,7 @@ export default function WhatsAppPage() {
       setOk(
         result.valid
           ? result.mock
-            ? "التوكن تجريبي وصالح محلياً"
+            ? "التوكن تجريبي ولا يصل إلى واتساب. ضع توكن ميتا ثم اضغط مزامنة."
             : "التوكن صالح لدى ميتا"
           : result.error || "التوكن غير صالح",
       );
@@ -206,12 +222,19 @@ export default function WhatsAppPage() {
     setError("");
     setOk("");
     try {
-      const result = await apiFetch<{ ok: boolean; mode: string; message: string }>(
-        `/whatsapp/accounts/${id}/test`,
-        { method: "POST" },
-      );
-      if (result.ok) setOk(`${result.message} (${result.mode})`);
-      else setError(result.message);
+      const result = await apiFetch<{
+        ok: boolean;
+        mode: string;
+        message: string;
+        webhookUrl?: string;
+        verifyToken?: string;
+      }>(`/whatsapp/accounts/${id}/test`, { method: "POST" });
+      const where = [result.webhookUrl, result.verifyToken ? `رمز التحقق: ${result.verifyToken}` : ""]
+        .filter(Boolean)
+        .join(" — ");
+      const text = where ? `${result.message} — ${where}` : result.message;
+      if (result.ok) setOk(text);
+      else setError(text);
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : "فشل اختبار الاتصال");
@@ -270,8 +293,8 @@ export default function WhatsAppPage() {
             <p className="wa-kicker">WhatsApp Business API</p>
             <h3>واتساب Business</h3>
             <p>
-              ربط حسابات واتساب وإدارتها وتعديلها ومزامنتها — صفحة مستقلة عن
-              القنوات والقوالب والحملات.
+              رسالة العميل تُقبل وتفتح نافذة 24 ساعة للرد بنص حر. خارج النافذة
+              يلزم قالب معتمد. التوكن التجريبي لا يرسل ولا يستقبل على الهاتف.
             </p>
           </div>
           <div className="wa-hero-actions">
@@ -304,6 +327,25 @@ export default function WhatsAppPage() {
           <button type="button" className={tab === "link" ? "on" : ""} onClick={() => setTab("link")}>{editingId ? "تعديل الحساب" : "ربط حساب جديد"}</button>
         </div>
 
+        {setup ? (
+          <section className="wa-card">
+            <div className="wa-card-head">
+              <h4>استقبال رسائل العملاء</h4>
+              <p>
+                الصق العنوان ورمز التحقق في تطبيق ميتا، ثم احفظ التوكن الحقيقي
+                ومعرّف الرقم وWABA واضغط مزامنة.
+              </p>
+            </div>
+            <p>العنوان: <span className="cust-mono">{setup.webhookUrl}</span></p>
+            <p>رمز التحقق: <span className="cust-mono">{setup.verifyToken}</span></p>
+            <p>
+              {setup.appSecretConfigured
+                ? "سر تطبيق ميتا محفوظ على الخادم، فيُقبل توقيع الرسائل الواردة."
+                : "سر تطبيق ميتا غير محفوظ على الخادم، لذلك الإنتاج يرفض الرسائل الواردة حتى يُضبط."}
+            </p>
+          </section>
+        ) : null}
+
         {error ? <p className="cust-error">{error}</p> : null}
         {ok ? <p className="wa-ok">{ok}</p> : null}
 
@@ -311,14 +353,14 @@ export default function WhatsAppPage() {
           <section className="wa-card">
             <div className="wa-card-head">
               <h4>{editingId ? "تعديل حساب واتساب" : "ربط حساب واتساب"}</h4>
-              <p>أدخل بيانات Meta Business API. للتطوير المحلي استخدم التوكن mock.</p>
+              <p>Phone Number ID هو المعرّف الرقمي من ميتا، وليس رقم العرض. بعد الحفظ اضغط مزامنة.</p>
             </div>
             <div className="wa-form-grid">
               <label className="cust-field"><span>اسم الحساب / القناة</span><input value={form.channelName} onChange={(e) => setForm({ ...form, channelName: e.target.value })} placeholder="WeekendGate" /></label>
               <label className="cust-field"><span>رقم العرض</span><input value={form.displayPhone} onChange={(e) => setForm({ ...form, displayPhone: e.target.value })} placeholder="+965..." /></label>
               <label className="cust-field"><span>Phone Number ID</span><input value={form.phoneNumberId} onChange={(e) => setForm({ ...form, phoneNumberId: e.target.value })} placeholder="من Meta" /></label>
               <label className="cust-field"><span>WABA / Business Account ID</span><input value={form.businessAccountId} onChange={(e) => setForm({ ...form, businessAccountId: e.target.value })} /></label>
-              <label className="cust-field"><span>Access Token</span><input value={form.accessToken} onChange={(e) => setForm({ ...form, accessToken: e.target.value })} placeholder={editingId ? "اتركه فارغًا لعدم التغيير" : "mock أو توكن حقيقي"} /></label>
+              <label className="cust-field"><span>Access Token</span><input value={form.accessToken} onChange={(e) => setForm({ ...form, accessToken: e.target.value })} placeholder={editingId ? "اتركه فارغًا لعدم التغيير" : "توكن ميتا"} /></label>
               <label className="cust-field"><span>الحالة</span>
                 <select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}>
                   <option value="connected">متصل</option>
@@ -372,7 +414,7 @@ export default function WhatsAppPage() {
                           <span>WABA: {a.businessAccountId || "—"}</span>
                         </div>
                       </td>
-                      <td>{a.hasAccessToken ? <span className="wa-badge ok">مفعّل</span> : <span className="wa-badge warn">غير موجود</span>}</td>
+                      <td>{a.tokenKind === "live" ? <span className="wa-badge ok">مفعّل</span> : a.tokenKind === "mock" ? <span className="wa-badge warn">تجريبي</span> : <span className="wa-badge warn">غير موجود</span>}</td>
                       <td className="cust-date">{formatDate(a.webhookVerifiedAt)}</td>
                       <td>
                         <div className="wa-health">

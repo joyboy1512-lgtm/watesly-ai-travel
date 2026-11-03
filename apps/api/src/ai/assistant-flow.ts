@@ -63,6 +63,8 @@ export type AssistantState = {
   awaitingPassport: boolean;
   awaitingNameFix: boolean;
   holdBookingId?: string;
+  /** Distinct room types existed beyond the tappable list. */
+  roomsTruncated?: boolean;
   pendingLists: Array<"rooms" | "flights" | "transfers">;
 };
 
@@ -104,6 +106,7 @@ export function emptyAssistantState(): AssistantState {
     travelers: [],
     awaitingPassport: false,
     awaitingNameFix: false,
+    roomsTruncated: false,
     pendingLists: [],
   };
 }
@@ -122,6 +125,7 @@ export function readAssistantState(metadata: unknown): AssistantState {
     transfers: Array.isArray(raw.transfers) ? raw.transfers : [],
     selected: Array.isArray(raw.selected) ? raw.selected : [],
     travelers: Array.isArray(raw.travelers) ? raw.travelers : [],
+    roomsTruncated: raw.roomsTruncated === true,
     pendingLists: Array.isArray(raw.pendingLists) ? raw.pendingLists : [],
   };
 }
@@ -159,7 +163,66 @@ function scaledSell(rateMinor: number, offerCost: number, offerSell: number): nu
   return Math.max(0, Math.round((rateMinor * offerSell) / offerCost));
 }
 
+export type RoomSelection = {
+  items: HoldItem[];
+  all: HoldItem[];
+  uniqueCount: number;
+  truncated: boolean;
+};
+
+export const ROOM_LIST_BODY =
+  "اضغط على الغرفة لتسجيل طلب الحجز. التأكيد يتم من الموظف فقط.";
+
+export const ROOM_LIST_LIMIT_BODY =
+  "واتساب لا يقبل أكثر من 10 خيارات في القائمة، فهذه أرخص 10 أنواع مختلفة. نفس الغرفة مع نفس الإقامة تظهر مرة واحدة بالسعر الأقل. لنوع آخر اكتب اسم الغرفة. التأكيد يتم من الموظف فقط.";
+
+export function roomChoiceBody(truncated: boolean): string {
+  return truncated ? ROOM_LIST_LIMIT_BODY : ROOM_LIST_BODY;
+}
+
+export function hotelRoomSelection(offer: OfferLike, limit = 10): RoomSelection {
+  const all = collectHotelRooms(offer);
+  return {
+    all,
+    items: all.slice(0, limit).map((item, index) => ({
+      ...item,
+      pickId: `room:${index}`,
+    })),
+    uniqueCount: all.length,
+    truncated: all.length > limit,
+  };
+}
+
 export function hotelRoomItems(offer: OfferLike, limit = 10): HoldItem[] {
+  return hotelRoomSelection(offer, limit).items;
+}
+
+/** A typed room name selects that type when the tap list could not show it. */
+export function roomByTypedName(rooms: HoldItem[], text: string): HoldItem | null {
+  const typed = text.trim().replace(/\s+/g, " ");
+  if (typed.length < 2 || typed.length > 80) return null;
+  const hits = rooms.filter((room) => {
+    const name = String(room.snapshot.roomName || "").trim();
+    return name.length >= 2 && mentionsRoomName(typed, name);
+  });
+  if (hits.length !== 1) return null;
+  const name = String(hits[0]?.snapshot.roomName || "").trim();
+  if (typed.length > name.length + 12) return null;
+  return hits[0] || null;
+}
+
+function mentionsRoomName(typed: string, name: string): boolean {
+  const hay = typed.toLowerCase();
+  const needle = name.toLowerCase();
+  const at = hay.indexOf(needle);
+  if (at < 0) return false;
+  const next = hay[at + needle.length] || "";
+  if (!next) return true;
+  if (/\d$/.test(needle)) return !/\d/.test(next);
+  return /[\s،,.!?)]/.test(next);
+}
+
+function collectHotelRooms(offer: OfferLike): HoldItem[] {
   const raw = (offer.raw || {}) as {
     name?: string;
     hotelCode?: string;
@@ -204,7 +267,6 @@ export function hotelRoomItems(offer: OfferLike, limit = 10): HoldItem[] {
         freeCancellation: Boolean(rate.freeCancellation),
       },
     });
-    if (items.length >= limit) break;
   }
   return items;
 }

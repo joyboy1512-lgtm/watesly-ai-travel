@@ -320,7 +320,7 @@ export function serializeSearchResult(input: {
           moreHint:
             input.all || offset + items.length >= input.rows.length
               ? undefined
-              : "إذا أردت خيارات أكثر اكتب: المزيد",
+              : "القائمة الأولى قصيرة ليسهل الاختيار، وليست كل الفنادق. إذا أردت خيارات أكثر اكتب: المزيد",
         }
       : {};
 

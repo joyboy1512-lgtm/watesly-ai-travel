@@ -15,6 +15,7 @@ import {
   hotelFollowUpText,
   nextPhotoSlice,
   readAssistantState,
+  roomByTypedName,
   selectItem,
   transferFollowUpText,
   travelerFromPassport,
@@ -181,6 +182,14 @@ export class AssistantHoldService {
           ],
         },
       };
+    }
+
+    if (!input.action && input.text && state.roomsTruncated) {
+      const named = roomByTypedName(state.rooms.slice(10), input.text);
+      const index = named
+        ? state.rooms.findIndex((row) => row.pickId === named.pickId)
+        : -1;
+      if (index >= 0) input.action = { kind: "room", index };
     }
 
     if (!input.action) return null;

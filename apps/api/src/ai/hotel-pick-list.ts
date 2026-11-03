@@ -18,12 +18,25 @@ type CatalogHotel = {
   distanceToCenterLabel?: string;
 };
 
+/** Why the tappable list is shorter than the hotels that were found. */
+export type HotelPickLimit = "whatsapp" | "short" | null;
+
+export function hotelPickListBody(limit: HotelPickLimit): string {
+  if (limit === "whatsapp") {
+    return "واتساب لا يقبل أكثر من 10 خيارات في قائمة الضغط. هذه أول 10 فنادق، وللبقية اكتب اسم الفندق.";
+  }
+  if (limit === "short") {
+    return "القائمة قصيرة ليسهل الاختيار، وليست كل الفنادق المتاحة. لبقية الفنادق اكتب: المزيد";
+  }
+  return "اضغط على الفندق لعرض الغرف والسعر.";
+}
+
 /** Hotels the customer can tap: the rows just shown, capped at WhatsApp's 10. */
 export function visibleHotelPicks(input: {
   hotels?: CatalogHotel[];
   offset?: number;
   shownCount?: number;
-}): { picks: HotelPick[]; truncated: boolean } {
+}): { picks: HotelPick[]; truncated: boolean; limit: HotelPickLimit } {
   const offset = Math.max(0, input.offset || 0);
   const rows: HotelPick[] = [];
   for (const hotel of input.hotels || []) {
@@ -45,9 +58,16 @@ export function visibleHotelPicks(input: {
       ? fromOffset.length
       : Math.max(0, Math.floor(input.shownCount));
   const slice = fromOffset.slice(0, shown);
+  const limit: HotelPickLimit =
+    slice.length > WHATSAPP_HOTEL_PICK_ROWS
+      ? "whatsapp"
+      : slice.length > 0 && slice.length < fromOffset.length
+        ? "short"
+        : null;
   return {
     picks: slice.slice(0, WHATSAPP_HOTEL_PICK_ROWS),
-    truncated: slice.length > WHATSAPP_HOTEL_PICK_ROWS,
+    truncated: limit === "whatsapp",
+    limit,
   };
 }
 

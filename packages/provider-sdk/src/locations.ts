@@ -12,6 +12,7 @@ const CITY_COORDS: Record<string, GeoPoint> = {
   SHJ: { latitude: 25.3463, longitude: 55.4209, label: "الشارقة" },
   DOH: { latitude: 25.2854, longitude: 51.531, label: "الدوحة" },
   KWI: { latitude: 29.3759, longitude: 47.9774, label: "الكويت" },
+  MAK: { latitude: 21.4225, longitude: 39.8262, label: "مكة" },
   BAH: { latitude: 26.0667, longitude: 50.5577, label: "البحرين" },
   MCT: { latitude: 23.588, longitude: 58.3829, label: "مسقط" },
   CAI: { latitude: 30.0444, longitude: 31.2357, label: "القاهرة" },
@@ -52,15 +53,43 @@ const NAME_ALIASES: Record<string, string> = {
   باكو: "GYD",
   سيول: "ICN",
   الكويت: "KWI",
+  مكة: "MAK",
+  مكه: "MAK",
+  mecca: "MAK",
+  makkah: "MAK",
   برشلونة: "BCN",
   barcelona: "BCN",
   مدريد: "MAD",
   madrid: "MAD",
 };
 
+const MASJID_AL_HARAM: GeoPoint = {
+  latitude: 21.4225,
+  longitude: 39.8262,
+  label: "المسجد الحرام",
+};
+
+const PROPHETS_MOSQUE: GeoPoint = {
+  latitude: 24.4672,
+  longitude: 39.6111,
+  label: "المسجد النبوي",
+};
+
+/** Landmark point inside a free-text place, before city aliases and geocoding. */
+export function resolveLandmark(query: string): GeoPoint | null {
+  const raw = query.trim();
+  if (!raw) return null;
+  if (/الحرم النبوي|المسجد النبوي|الحرم المدني/.test(raw)) return PROPHETS_MOSQUE;
+  if (/الحرم المكي|المسجد الحرام|الحرم/.test(raw)) return MASJID_AL_HARAM;
+  return null;
+}
+
 export function resolveGeoLocation(query: string): GeoPoint | null {
   const raw = query.trim();
   if (!raw) return null;
+
+  const landmark = resolveLandmark(raw);
+  if (landmark) return landmark;
 
   const code = raw.toUpperCase();
   if (CITY_COORDS[code]) return CITY_COORDS[code];

@@ -69,7 +69,7 @@ const FUNCTION_TOOLS: Extract<AiToolDefinition, { type: "function" }>[] = [
           type: "string",
           enum: ["nearest", "cheapest"],
           description:
-            "nearest: closest to the named area first. Use when the customer asks for a hotel near a specific area, neighborhood, street, mall, or landmark, or says قريب من. cheapest: lowest price first. Use for a city-only search or when they ask for the cheapest. Repeat the same sort with offset.",
+            "nearest: hotels inside a short radius of the named place, closest first. cheapest: lowest price first inside the wider city search. Ask the customer which they want before the first search unless they already said الأقرب or الأرخص. For the Haram use location الحرم المكي or الحرم النبوي. Repeat the same sort with offset.",
         },
       },
       required: ["location", "checkInDate", "checkOutDate"],
@@ -329,9 +329,11 @@ export const TRAVEL_SYSTEM_INSTRUCTIONS = `أنت Travel AI لشركة سياح�
 
 عرض الفنادق — خطوتان إلزاميتان:
 
-ترتيب search_hotels:
-- إذا طلب العميل فندقاً قريباً من منطقة أو حي أو شارع أو مول أو معلم، أو قال «قريب من»، مرّر sort=nearest و location = اسم المكان كما قاله. القائمة ترجع الأقرب لذلك المكان أولاً.
-- إذا طلب الأرخص، أو سمّى مدينة فقط دون ذكر القرب، مرّر sort=cheapest.
+ترتيب search_hotels — اسأل قبل أول بحث:
+- إذا سمّى العميل منطقة أو معلماً أو الحرم أو مدينة مثل مكة أو المدينة، ولم يقل «الأقرب» أو «الأرخص»، لا تستدعِ البحث. اسأل سؤالاً واحداً فقط:
+  «هل تريد الأقرب إلى {المكان} أم الأرخص؟»
+- إذا اختار الأقرب، أو قال من البداية «قريب» أو «الأقرب»: sort=nearest. للحرم المكي اجعل location=«الحرم المكي»، وللحرم النبوي location=«الحرم النبوي»، وإلا فاسم المكان كما قاله.
+- إذا اختار الأرخص، أو طلب الأرخص من البداية: sort=cheapest.
 - عند «المزيد» أعد نفس التواريخ ونفس sort مع offset=nextOffset.
 - اعرض الفنادق بترتيب الأداة. لا تعِد ترتيبها.
 

@@ -53,13 +53,17 @@ function slicePolicies(rate: HotelRateOption) {
 }
 
 /** Short list row: name + starting price only. Full rooms/services come from get_hotel_details. */
-function serializeHotelListItem(row: WithSell<HotelOffer>) {
+function serializeHotelListItem(
+  row: WithSell<HotelOffer>,
+  options?: { includeDistance?: boolean },
+) {
   const raw = row.raw as HotelPropertyDetails | undefined;
   const currency = row.currency || raw?.currency || "";
   const priceFrom = Number.isFinite(sellMinor(row))
     ? sellMajor({ ...row, currency })
     : raw?.minRate;
   const priceLabel = formatMoney(priceFrom);
+  const km = Number(raw?.distanceToCenterKm);
   return {
     id: row.providerOfferRef,
     name: raw?.name || row.description,
@@ -70,6 +74,12 @@ function serializeHotelListItem(row: WithSell<HotelOffer>) {
     priceFromLabel: priceLabel
       ? `يبدأ من ${priceLabel} ${currency}`.trim()
       : undefined,
+    ...(options?.includeDistance
+      ? {
+          distanceToCenterKm: Number.isFinite(km) ? km : undefined,
+          distanceToCenterLabel: raw?.distanceToCenterLabel,
+        }
+      : {}),
   };
 }
 
@@ -262,6 +272,7 @@ export function serializeSearchResult(input: {
   kind: "flight" | "hotel" | "transfer";
   offset?: number;
   limit?: number;
+  rankedBy?: "nearest" | "cheapest";
 }): string {
   const limits = toolResultLimits();
   const offset = Math.max(0, input.offset || 0);
@@ -270,10 +281,15 @@ export function serializeSearchResult(input: {
     Math.max(1, input.limit || limits.maxItems),
   );
   const slice = input.rows.slice(offset, offset + limit);
+  const nearest = input.kind === "hotel" && input.rankedBy === "nearest";
 
   const items =
     input.kind === "hotel"
-      ? slice.map((row) => serializeHotelListItem(row as HotelOffer))
+      ? slice.map((row) =>
+          serializeHotelListItem(row as HotelOffer, {
+            includeDistance: nearest,
+          }),
+        )
       : input.kind === "transfer"
         ? slice.map((row) => serializeTransfer(row as TransferOffer))
         : slice.map((row) => serializeFlight(row as FlightOffer));
@@ -281,9 +297,11 @@ export function serializeSearchResult(input: {
   const hotelHint =
     input.kind === "hotel"
       ? {
+          rankedBy: input.rankedBy || "cheapest",
           presentAs: "short_list",
-          formatHint:
-            "اعرض فقط الاسم والنجوم والسعر يبدأ من. لا تذكر الغرف أو الخدمات.",
+          formatHint: nearest
+            ? "القائمة مرتبة من الأقرب للمنطقة المطلوبة. لكل فندق: الاسم والنجوم، ثم distanceToCenterLabel، ثم السعر يبدأ من. لا تذكر الغرف أو الخدمات."
+            : "اعرض فقط الاسم والنجوم والسعر يبدأ من. لا تذكر الغرف أو الخدمات أو المسافات.",
           selectHint: "اختر اسم الفندق لعرض الغرف والخدمات والموقع.",
           moreHint:
             offset + items.length < input.rows.length

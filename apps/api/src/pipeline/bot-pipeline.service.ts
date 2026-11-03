@@ -31,6 +31,7 @@ import {
   hotelPickDescription,
   type HotelPick,
 } from "../ai/hotel-pick-list";
+import type { HotelPhotoSet } from "../ai/hotel-photos";
 
 const FLIGHT_PROVIDER_KEYS = [
   "duffel",
@@ -116,6 +117,19 @@ export class BotPipelineService {
       });
       const accountChannel =
         conversation.whatsappAccount?.channelType || "whatsapp";
+      if (
+        accountChannel === "whatsapp" &&
+        !aiResult.handoff &&
+        aiResult.hotelPhotos?.urls.length
+      ) {
+        await this.replyWithHotelPhotos({
+          organizationId: input.organizationId,
+          conversationId: input.conversationId,
+          photos: aiResult.hotelPhotos,
+        }).catch((err) => {
+          console.error("[pipeline] hotel photos failed", err);
+        });
+      }
       if (
         accountChannel === "whatsapp" &&
         !aiResult.handoff &&
@@ -1093,6 +1107,62 @@ export class BotPipelineService {
     });
 
     return message;
+  }
+
+  private async replyWithHotelPhotos(input: {
+    organizationId: string;
+    conversationId: string;
+    photos: HotelPhotoSet;
+  }) {
+    const { conversation, account } = await this.resolveWhatsAppAccount(
+      input.conversationId,
+      input.organizationId,
+    );
+    if ((account?.channelType || "whatsapp") !== "whatsapp") return;
+    const channel = "whatsapp";
+    const caption = input.photos.name.slice(0, 200);
+    let sent = 0;
+    for (const [index, link] of input.photos.urls.entries()) {
+      const send = await sendChannelMedia({
+        channelType: channel,
+        phoneNumberId: account?.phoneNumberId || "mock_phone",
+        accessToken: account?.accessTokenEnc || "mock",
+        to: conversation.contact.waId,
+        type: "image",
+        link,
+        caption: index === 0 ? caption : undefined,
+      });
+      if (send.status === "failed") {
+        console.error(
+          "[pipeline] hotel photo rejected",
+          (send.raw as { error?: { message?: string } } | undefined)?.error?.message ||
+            "failed",
+        );
+        continue;
+      }
+      sent += 1;
+      await this.prisma.message.create({
+        data: {
+          organizationId: input.organizationId,
+          conversationId: input.conversationId,
+          direction: "outbound",
+          channel,
+          type: "image",
+          body: index === 0 ? caption : "صورة الفندق",
+          providerMessageId: send.providerMessageId || null,
+          status: send.status,
+          rawPayload: send.raw ? asJson(send.raw) : undefined,
+        },
+      });
+    }
+    if (!sent) return;
+    await this.prisma.conversation.update({
+      where: { id: input.conversationId },
+      data: {
+        lastMessageAt: new Date(),
+        ...(account ? { whatsappAccountId: account.id } : {}),
+      },
+    });
   }
 
   private async replyWithHotelPicks(input: {

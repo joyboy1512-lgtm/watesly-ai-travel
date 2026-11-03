@@ -84,7 +84,7 @@ const FUNCTION_TOOLS: Extract<AiToolDefinition, { type: "function" }>[] = [
     type: "function",
     name: "get_hotel_details",
     description:
-      "Fetch full details for ONE hotel the customer selected (by hotelId or hotelName): description, rooms and rates, facilities, address, and distances. Call this only after they pick a hotel. Never invent details.",
+      "Fetch full details for ONE hotel the customer selected (by hotelId or hotelName): description, rooms and rates, facilities, address, and distances. Also call it when they ask for photos of a hotel. Never invent details and never paste a hotel or booking website.",
     parameters: {
       type: "object",
       properties: {
@@ -378,5 +378,6 @@ export const TRAVEL_SYSTEM_INSTRUCTIONS = `أنت Travel AI لشركة سياح�
 
 اختم بسؤال: هل تريد حجز إحدى هذه الغرف؟
 
+- إذا طلب العميل صوراً: استدعِ get_hotel_details لذلك الفندق إن لم تكن تفاصيله في هذه الجولة، ثم قل إن الصور تصل الآن داخل المحادثة. الصور ملفات بلا أسعار. ممنوع لصق أي رابط، وممنوع ذكر موقع الفندق أو بوكينغ أو أي موقع حجز. إن لم تتوفر صور قل ذلك ولا تحل إلى موقع خارجي.
 - عندما يكتب العميل «المزيد» بعد الأقرب: أعد search_hotels بنفس المكان مع sort=nearest و all=true، ثم اعرض كل فنادق المنطقة.
 - لا تختلق تفاصيل غرف أو خدمات. استخدم فقط ناتج الأدوات.`;

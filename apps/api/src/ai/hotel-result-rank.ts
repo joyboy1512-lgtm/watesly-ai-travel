@@ -112,6 +112,10 @@ const AREA_HINT =
 /** Wider availability pull so a nearby hotel is not dropped for being pricier. */
 export const NEAREST_HOTEL_CANDIDATES = 100;
 
+/** Cheapest-to-last list when the customer asks for المزيد. */
+export const PRICE_LIST_HOTEL_CANDIDATES = 100;
+export const PRICE_LIST_MAX_ITEMS = 100;
+
 /**
  * Nearest searches start inside a short walk of the place, then widen only
  * when that circle has too few hotels. They never use the 25 km city radius.

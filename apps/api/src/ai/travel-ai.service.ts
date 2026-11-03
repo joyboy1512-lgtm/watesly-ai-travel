@@ -32,6 +32,7 @@ import {
   NEAREST_HOTEL_CANDIDATES,
   NEAREST_MIN_RESULTS,
   NEAREST_RADIUS_STEPS_KM,
+  PRICE_LIST_HOTEL_CANDIDATES,
   hotelsWithinRadius,
   rankHotelOffers,
   resolveHotelSearchRank,
@@ -209,9 +210,12 @@ function int(v: unknown, fallback: number): number {
 }
 
 function toolSliceArgs(args: Record<string, unknown>, defaultLimit = 5) {
-  const limit = Math.min(10, Math.max(1, int(args.limit, defaultLimit)));
-  const offset = Math.max(0, int(args.offset, 0));
-  return { limit, offset };
+  const all = args.all === true || String(args.all).toLowerCase() === "true";
+  const offset = all ? 0 : Math.max(0, int(args.offset, 0));
+  const limit = all
+    ? PRICE_LIST_HOTEL_CANDIDATES
+    : Math.min(10, Math.max(1, int(args.limit, defaultLimit)));
+  return { limit, offset, all };
 }
 
 @Injectable()
@@ -1111,8 +1115,14 @@ export class TravelAiService {
       currency: string;
     },
     rank: HotelSearchRank,
+    all = false,
   ): Promise<HotelOffer[]> {
-    if (rank !== "nearest") return provider.searchHotels(base);
+    if (rank !== "nearest") {
+      return provider.searchHotels({
+        ...base,
+        ...(all ? { maxHotels: PRICE_LIST_HOTEL_CANDIDATES } : {}),
+      });
+    }
 
     let fallback: HotelOffer[] = [];
     for (let step = 0; step < NEAREST_RADIUS_STEPS_KM.length; step += 1) {
@@ -1171,7 +1181,7 @@ export class TravelAiService {
     let rank = resolveHotelSearchRank(explicitSort, location);
     if (
       !explicitSort &&
-      sliceArgs.offset > 0 &&
+      (sliceArgs.all || sliceArgs.offset > 0) &&
       savedSearch.location === location &&
       (savedSearch.rank === "nearest" || savedSearch.rank === "cheapest")
     ) {
@@ -1188,7 +1198,12 @@ export class TravelAiService {
       rooms: Math.max(1, int(args.rooms, 1)),
       currency,
     };
-    const rows = await this.searchHotelRows(provider, searchBase, rank);
+    const rows = await this.searchHotelRows(
+      provider,
+      searchBase,
+      rank,
+      sliceArgs.all,
+    );
 
     const rules = await loadActivePricingRules(this.prisma, organizationId);
     const priced = rankHotelOffers(

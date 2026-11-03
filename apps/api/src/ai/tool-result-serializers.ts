@@ -273,12 +273,13 @@ export function serializeSearchResult(input: {
   offset?: number;
   limit?: number;
   rankedBy?: "nearest" | "cheapest";
+  all?: boolean;
 }): string {
   const limits = toolResultLimits();
   const offset = Math.max(0, input.offset || 0);
   const limit = Math.min(
-    10,
-    Math.max(1, input.limit || limits.maxItems),
+    input.all ? 100 : 10,
+    Math.max(1, input.limit || (input.all ? 100 : limits.maxItems)),
   );
   const slice = input.rows.slice(offset, offset + limit);
   const nearest = input.kind === "hotel" && input.rankedBy === "nearest";
@@ -299,14 +300,18 @@ export function serializeSearchResult(input: {
       ? {
           rankedBy: input.rankedBy || "cheapest",
           presentAs: "short_list",
-          formatHint: nearest
-            ? "القائمة مرتبة من الأقرب للمنطقة المطلوبة. لكل فندق: الاسم والنجوم، ثم distanceToCenterLabel، ثم السعر يبدأ من. لا تذكر الغرف أو الخدمات."
-            : "اعرض فقط الاسم والنجوم والسعر يبدأ من. لا تذكر الغرف أو الخدمات أو المسافات.",
+          formatHint: input.all && nearest
+            ? "اعرض كل فنادق المنطقة في items من الأقرب إلى آخر فندق. لكل فندق الاسم والنجوم وdistanceToCenterLabel والسعر. لا تتوقف عند 5."
+            : input.all
+              ? "اعرض كل الفنادق في items من الأرخص إلى آخر فندق، بالترتيب، بلا اختصار."
+              : nearest
+              ? "القائمة مرتبة من الأقرب للمنطقة المطلوبة. لكل فندق: الاسم والنجوم، ثم distanceToCenterLabel، ثم السعر يبدأ من. لا تذكر الغرف أو الخدمات."
+              : "اعرض فقط الاسم والنجوم والسعر يبدأ من. لا تذكر الغرف أو الخدمات أو المسافات.",
           selectHint: "اختر اسم الفندق لعرض الغرف والخدمات والموقع.",
           moreHint:
-            offset + items.length < input.rows.length
-              ? "إذا أردت خيارات أكثر اكتب: المزيد"
-              : undefined,
+            input.all || offset + items.length >= input.rows.length
+              ? undefined
+              : "إذا أردت خيارات أكثر اكتب: المزيد",
         }
       : {};
 
@@ -325,6 +330,6 @@ export function serializeSearchResult(input: {
       ...hotelHint,
       items,
     },
-    limits.maxJsonChars,
+    input.all ? Math.max(limits.maxJsonChars, 64000) : limits.maxJsonChars,
   );
 }

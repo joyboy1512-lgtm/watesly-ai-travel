@@ -46,7 +46,7 @@ export const DEFAULT_META_COMMERCE: MetaCommerceState = {
   catalogLeadAr: "عروض طيران وإقامة ونقل جاهزة للطلب عبر واتساب.",
   catalogLeadEn: "Flight, stay, and transfer offers ready to order on WhatsApp.",
   metaCatalogId: "",
-  whatsappPhone: "96590053224",
+  whatsappPhone: "96599502807",
   products: [
     {
       id: "prod-dubai-weekend",

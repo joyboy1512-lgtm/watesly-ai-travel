@@ -14,6 +14,7 @@ import {
   isRecentValidation,
   listOfferExtras,
   weekendgateRefFromId,
+  COMPANY_LEGAL,
 } from "@watesly-travel/shared";
 import { PrismaService } from "../prisma/prisma.service";
 import { BookingsService } from "../bookings/bookings.service";
@@ -2621,9 +2622,9 @@ export class ShopService {
       createdAt: row.createdAt,
       issuedAt: row.issuedAt,
       support: {
-        email: "info@travelzone.tours",
-        whatsapp: "https://wa.me/96590053224",
-        phone: "90053224",
+        email: COMPANY_LEGAL.supportEmail,
+        whatsapp: COMPANY_LEGAL.whatsappUrl,
+        phone: COMPANY_LEGAL.phoneDisplay,
       },
     };
   }

@@ -12,6 +12,7 @@ import {
   inspectCommerceCatalog,
   listWabaPhoneNumbers,
   matchWabaPhoneNumber,
+  parseHotelPickRowId,
   parseInboundWebhook,
   parseMetaMessagingWebhook,
   parseStatusWebhook,
@@ -825,8 +826,11 @@ export class WhatsappService implements OnModuleInit {
     contactId: string;
     messageId: string;
     text: string;
+    hotelPickId?: string;
   }) {
-    const intent = parseInboundIntent(input.text);
+    const intent = input.hotelPickId
+      ? ({ type: "chat" as const, text: input.text })
+      : parseInboundIntent(input.text);
 
     if (intent.type === "handoff") {
       await this.prisma.conversation.update({
@@ -938,6 +942,7 @@ export class WhatsappService implements OnModuleInit {
       contactId: input.contactId,
       messageId: input.messageId,
       text: intent.text,
+      hotelPickId: input.hotelPickId,
     });
   }
 
@@ -1347,6 +1352,7 @@ export class WhatsappService implements OnModuleInit {
           contactId: contact.id,
           messageId: message.id,
           text: msg.text,
+          hotelPickId: parseHotelPickRowId(msg.replyId) || undefined,
         });
       } catch (error) {
         // Never fail webhook delivery because of bot/search errors.

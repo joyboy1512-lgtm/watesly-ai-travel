@@ -4,7 +4,10 @@ import { createAiProvider } from "@watesly-travel/ai-core";
 import {
   sendChannelMedia,
   sendChannelText,
+  channelPeerId,
+  hotelPickRowId,
   sendWhatsAppCatalogCta,
+  sendWhatsAppInteractiveList,
   sendWhatsAppProductList,
   sendWhatsAppProductMessage,
   sendWhatsAppTemplate,
@@ -24,6 +27,10 @@ import {
   getHotelProviderForOrg,
 } from "../common/provider-runtime";
 import { formatMoneyMinor } from "../common/money";
+import {
+  hotelPickDescription,
+  type HotelPick,
+} from "../ai/hotel-pick-list";
 
 const FLIGHT_PROVIDER_KEYS = [
   "duffel",
@@ -68,6 +75,7 @@ export class BotPipelineService {
     contactId: string;
     messageId: string;
     text: string;
+    hotelPickId?: string;
   }) {
     const conversation = await this.prisma.conversation.findFirst({
       where: {
@@ -96,6 +104,7 @@ export class BotPipelineService {
         organizationId: input.organizationId,
         channel,
         text: input.text,
+        hotelPickId: input.hotelPickId,
         contactId: input.contactId,
         conversationId: input.conversationId,
       });
@@ -105,6 +114,22 @@ export class BotPipelineService {
         body: aiResult.message,
         skipWindowCheck: true,
       });
+      const accountChannel =
+        conversation.whatsappAccount?.channelType || "whatsapp";
+      if (
+        accountChannel === "whatsapp" &&
+        !aiResult.handoff &&
+        aiResult.hotelPicks?.length
+      ) {
+        await this.replyWithHotelPicks({
+          organizationId: input.organizationId,
+          conversationId: input.conversationId,
+          picks: aiResult.hotelPicks,
+          truncated: aiResult.hotelPicksTruncated === true,
+        }).catch((err) => {
+          console.error("[pipeline] hotel pick list failed", err);
+        });
+      }
       await this.syncInquiryFromInbound(input).catch((err) => {
         console.error("[pipeline] inquiry sync after AI", err);
       });
@@ -1068,6 +1093,70 @@ export class BotPipelineService {
     });
 
     return message;
+  }
+
+  private async replyWithHotelPicks(input: {
+    organizationId: string;
+    conversationId: string;
+    picks: HotelPick[];
+    truncated: boolean;
+  }) {
+    const { conversation, account } = await this.resolveWhatsAppAccount(
+      input.conversationId,
+      input.organizationId,
+    );
+    if ((account?.channelType || "whatsapp") !== "whatsapp") return;
+
+    const body = input.truncated
+      ? "اضغط على أحد الفنادق العشرة الأولى. لبقية القائمة اكتب اسم الفندق."
+      : "اضغط على الفندق لعرض الغرف والسعر.";
+    const rows = input.picks.map((pick) => ({
+      id: hotelPickRowId(pick.id),
+      title: pick.name,
+      description: hotelPickDescription(pick) || undefined,
+    }));
+    const send = await sendWhatsAppInteractiveList({
+      phoneNumberId: account?.phoneNumberId || "mock_phone",
+      accessToken: account?.accessTokenEnc || "mock",
+      to: channelPeerId(conversation.contact.waId),
+      header: "الفنادق",
+      body,
+      footer: "أو اكتب اسم الفندق",
+      button: "اختر الفندق",
+      sectionTitle: "النتائج",
+      rows,
+    });
+    if (send.status === "failed") {
+      const errMsg =
+        (send.raw as { error?: { message?: string } } | undefined)?.error
+          ?.message || "فشل إرسال قائمة الفنادق";
+      throw new Error(errMsg);
+    }
+
+    const stored = [
+      body,
+      ...input.picks.map((pick, index) => `${index + 1}. ${pick.name}`),
+    ].join("\n");
+    await this.prisma.message.create({
+      data: {
+        organizationId: input.organizationId,
+        conversationId: input.conversationId,
+        direction: "outbound",
+        channel: "whatsapp",
+        type: "interactive",
+        body: stored,
+        providerMessageId: send.providerMessageId || null,
+        status: send.status,
+        rawPayload: send.raw ? asJson(send.raw) : undefined,
+      },
+    });
+    await this.prisma.conversation.update({
+      where: { id: input.conversationId },
+      data: {
+        lastMessageAt: new Date(),
+        ...(account ? { whatsappAccountId: account.id } : {}),
+      },
+    });
   }
 
   async replyWithTemplate(input: {

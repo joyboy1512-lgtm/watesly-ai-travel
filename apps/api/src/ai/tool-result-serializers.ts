@@ -84,13 +84,14 @@ function serializeHotelListItem(
 }
 
 export function hotelCatalogEntry(row: HotelOffer) {
-  const item = serializeHotelListItem(row);
+  const item = serializeHotelListItem(row, { includeDistance: true });
   return {
     id: item.id,
     name: item.name,
     stars: item.stars,
     priceFrom: item.priceFrom,
     currency: item.currency,
+    distanceToCenterLabel: item.distanceToCenterLabel,
   };
 }
 
@@ -307,7 +308,8 @@ export function serializeSearchResult(input: {
               : nearest
               ? "القائمة مرتبة من الأقرب للمنطقة المطلوبة. لكل فندق: الاسم والنجوم، ثم distanceToCenterLabel، ثم السعر يبدأ من. لا تذكر الغرف أو الخدمات."
               : "اعرض فقط الاسم والنجوم والسعر يبدأ من. لا تذكر الغرف أو الخدمات أو المسافات.",
-          selectHint: "اختر اسم الفندق لعرض الغرف والخدمات والموقع.",
+          selectHint:
+            "اطلب الضغط على الفندق من القائمة، أو كتابة الاسم أو الرقم. في واتساب تُرسل قائمة الضغط تلقائياً بعد ردك.",
           moreHint:
             input.all || offset + items.length >= input.rows.length
               ? undefined

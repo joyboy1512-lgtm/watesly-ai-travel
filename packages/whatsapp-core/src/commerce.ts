@@ -114,6 +114,66 @@ export function buildMultiProductPayload(input: {
   };
 }
 
+function clipChars(value: string, max: number): string {
+  const compact = value.replace(/\s+/g, " ").trim();
+  const chars = Array.from(compact);
+  return chars.length <= max ? chars.join("") : chars.slice(0, max).join("");
+}
+
+export type InteractiveListRow = {
+  id: string;
+  title: string;
+  description?: string;
+};
+
+/** WhatsApp reply-list: at most 10 rows, title 24, description 72, button 20. */
+export function buildInteractiveListPayload(input: {
+  to: string;
+  body: string;
+  button: string;
+  sectionTitle: string;
+  rows: InteractiveListRow[];
+  header?: string;
+  footer?: string;
+}) {
+  const rows = input.rows.slice(0, 10).flatMap((row) => {
+    const id = clipChars(row.id, 200);
+    const title = clipChars(row.title, 24);
+    if (!id || !title) return [];
+    const description = row.description ? clipChars(row.description, 72) : "";
+    return [
+      {
+        id,
+        title,
+        ...(description ? { description } : {}),
+      },
+    ];
+  });
+  return {
+    to: input.to,
+    type: "interactive" as const,
+    interactive: {
+      type: "list" as const,
+      ...(input.header
+        ? { header: { type: "text" as const, text: clipChars(input.header, 60) } }
+        : {}),
+      body: { text: clipChars(input.body, 1024) || "اختر" },
+      ...(input.footer
+        ? { footer: { text: clipChars(input.footer, 60) } }
+        : {}),
+      action: {
+        button: clipChars(input.button, 20) || "اختر",
+        sections: [
+          {
+            title: clipChars(input.sectionTitle, 24) || "الخيارات",
+            rows,
+          },
+        ],
+      },
+    },
+  };
+}
+
 export function buildCatalogCtaPayload(input: {
   to: string;
   body: string;
@@ -163,6 +223,29 @@ export async function sendWhatsAppProductList(input: {
     input.accessToken,
     buildMultiProductPayload(input),
   );
+}
+
+export async function sendWhatsAppInteractiveList(input: {
+  phoneNumberId: string;
+  accessToken: string;
+  to: string;
+  body: string;
+  button: string;
+  sectionTitle: string;
+  rows: InteractiveListRow[];
+  header?: string;
+  footer?: string;
+}): Promise<SendResult> {
+  const payload = buildInteractiveListPayload(input);
+  if (!payload.interactive.action.sections[0]?.rows.length) {
+    return {
+      providerMessageId: "",
+      status: "failed",
+      mock: isMockToken(input.accessToken),
+      raw: { error: { message: "قائمة الفنادق فارغة" } },
+    };
+  }
+  return postWhatsAppMessage(input.phoneNumberId, input.accessToken, payload);
 }
 
 export async function sendWhatsAppCatalogCta(input: {

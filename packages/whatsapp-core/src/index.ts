@@ -46,6 +46,8 @@ export interface WhatsAppInboundMessage {
   timestamp?: string;
   type: string;
   text?: string;
+  /** Interactive list or button reply id, when the customer tapped a row. */
+  replyId?: string;
   channelType?: string;
   raw: Record<string, unknown>;
 }
@@ -224,6 +226,9 @@ export function parseInboundWebhook(payload: unknown): WhatsAppInboundMessage[] 
           timestamp: message.timestamp,
           type: message.type || "text",
           text: extractMessageText(message),
+          replyId:
+            message.interactive?.list_reply?.id ||
+            message.interactive?.button_reply?.id,
           raw: message as unknown as Record<string, unknown>,
         });
       }
@@ -466,14 +471,25 @@ export async function sendWhatsAppMedia(
 
 export {
   buildCatalogCtaPayload,
+  buildInteractiveListPayload,
   buildMultiProductPayload,
   buildSingleProductPayload,
   sendWhatsAppCatalogCta,
+  sendWhatsAppInteractiveList,
   sendWhatsAppProductList,
   sendWhatsAppProductMessage,
   upsertMetaCatalogProduct,
 } from "./commerce";
-export type { GraphCatalogProduct, SendProductInput } from "./commerce";
+export type {
+  GraphCatalogProduct,
+  InteractiveListRow,
+  SendProductInput,
+} from "./commerce";
+export {
+  HOTEL_PICK_ID_PREFIX,
+  hotelPickRowId,
+  parseHotelPickRowId,
+} from "./hotel-pick";
 
 export {
   GRAPH_BASE,

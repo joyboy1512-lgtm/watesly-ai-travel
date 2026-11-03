@@ -1110,7 +1110,7 @@
     white-space: nowrap;
   }
 
-  .wi-back {
+  .watesly-inbox .wi-back {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -1119,8 +1119,8 @@
     padding: 0 0.7rem;
     border: 0;
     border-radius: 999px;
-    background: rgba(15, 51, 64, 0.08);
-    color: #0f3340;
+    background: rgba(255, 255, 255, 0.14);
+    color: #f3f7f4;
     font-family: var(--wa-font);
     font-size: 0.82rem;
     font-weight: 700;

@@ -767,7 +767,7 @@ export default function InboxClient() {
 
   return (
     <AppShell title="المحادثات" dense>
-      <div className="watesly-inbox wa-like">
+      <div className={`watesly-inbox wa-like${selectedId ? " has-thread" : ""}`}>
         {/* قائمة المحادثات — يمين في RTL */}
         <aside className="wi-list">
           <div className="wi-list-head">
@@ -905,6 +905,14 @@ export default function InboxClient() {
           ) : (
             <>
               <header className="wi-thread-head">
+                <button
+                  type="button"
+                  className="wi-back"
+                  aria-label={en ? "Back to conversations" : "رجوع إلى المحادثات"}
+                  onClick={() => router.replace("/dashboard/conversations")}
+                >
+                  {en ? "Back" : "رجوع"}
+                </button>
                 <div className="wi-thread-who">
                   <div className="wi-avatar lg">
                     {initials(detail.contact.name, detail.contact.waId)}

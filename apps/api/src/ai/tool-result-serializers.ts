@@ -22,6 +22,7 @@ import type {
   HotelRateOption,
 } from "@watesly-travel/shared";
 import type { TransferServiceDetails } from "@watesly-travel/shared";
+import { pickHotelPhotoUrls } from "./hotel-photos";
 
 function intEnv(name: string, fallback: number): number {
   const n = Number(process.env[name]);
@@ -140,6 +141,7 @@ export function serializeHotelDetailsForAi(row: HotelOffer): string {
     })),
   }));
 
+  const photoCount = pickHotelPhotoUrls(raw?.images).length;
   const payload = {
     liveMode: true,
     kind: "hotel_detail",
@@ -177,6 +179,11 @@ export function serializeHotelDetailsForAi(row: HotelOffer): string {
     distanceToCenterLabel: raw?.distanceToCenterLabel,
     poiDistances: raw?.poiDistances || [],
     mapUrl: raw?.mapUrl,
+    photoCount,
+    photosHint:
+      photoCount > 0
+        ? "إذا طلب العميل صوراً قل إن الصور تصل داخل المحادثة. ممنوع أي رابط، وممنوع الإحالة إلى موقع الفندق أو أي موقع حجز."
+        : "لا توجد صور محفوظة. لا تخترع رابطاً ولا تحل العميل إلى موقع الفندق أو أي موقع حجز.",
     rateCountTotal: raw?.rateOptions?.length || rates.length,
     ratesShown: rates.length,
     rates,

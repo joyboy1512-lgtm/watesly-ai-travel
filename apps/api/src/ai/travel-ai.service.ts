@@ -32,6 +32,13 @@ import {
   visibleHotelPicks,
   type HotelPick,
 } from "./hotel-pick-list";
+import {
+  customerWantsHotelPhotos,
+  pickHotelPhotoUrls,
+  readHotelPhotoSet,
+  stripExternalLinks,
+  type HotelPhotoSet,
+} from "./hotel-photos";
 import { applyAiSellPrices, loadActivePricingRules } from "./apply-ai-sell-prices";
 import {
   NEAREST_HOTEL_CANDIDATES,
@@ -43,7 +50,7 @@ import {
   resolveHotelSearchRank,
   type HotelSearchRank,
 } from "./hotel-result-rank";
-import type { HotelOffer } from "@watesly-travel/shared";
+import type { HotelOffer, HotelPropertyDetails } from "@watesly-travel/shared";
 import { chatTextForAi, parseChatAttachments } from "@watesly-travel/shared";
 
 type HotelCatalogEntry = {
@@ -129,6 +136,7 @@ export type TravelAiTurnResult = {
   remainingUsd?: number | null;
   hotelPicks?: HotelPick[];
   hotelPicksTruncated?: boolean;
+  hotelPhotos?: HotelPhotoSet;
 };
 
 function money(value: unknown): number {
@@ -410,6 +418,32 @@ export class TravelAiService {
       await this.performHandoff(thread, input, handoffReason || "ai_handoff");
     }
 
+    let hotelPhotos: HotelPhotoSet | undefined;
+    if (!handoff && customerWantsHotelPhotos(spoken)) {
+      const fresh = await this.prisma.aiThread.findUnique({
+        where: { id: thread.id },
+        select: { metadata: true },
+      });
+      hotelPhotos = readHotelPhotoSet(fresh?.metadata);
+      if (hotelPhotos) {
+        const cleaned =
+          stripExternalLinks(text) || `هذه بعض صور ${hotelPhotos.name}.`;
+        if (cleaned !== text) {
+          text = cleaned;
+          if (lastId) {
+            await this.prisma.aiMessage.updateMany({
+              where: {
+                threadId: thread.id,
+                role: "assistant",
+                openaiResponseId: lastId,
+              },
+              data: { content: text },
+            });
+          }
+        }
+      }
+    }
+
     let hotelPicks: HotelPick[] | undefined;
     let hotelPicksTruncated = false;
     if (
@@ -438,6 +472,7 @@ export class TravelAiService {
       message: text,
       hotelPicks,
       hotelPicksTruncated,
+      hotelPhotos,
       model,
       provider: provider.name,
       usage,
@@ -1408,7 +1443,30 @@ export class TravelAiService {
       children: Math.max(0, int(args.children, saved.children ?? 0)),
       rooms: Math.max(1, int(args.rooms, saved.rooms ?? 1)),
     });
-    return serializeHotelDetailsForAi(priced || match);
+    const detailed = priced || match;
+    const rawDetails = detailed.raw as HotelPropertyDetails | undefined;
+    await this.rememberHotelPhotos(thread.id, {
+      hotelId: detailed.providerOfferRef,
+      name: rawDetails?.name || hotelName || detailed.description,
+      urls: pickHotelPhotoUrls(rawDetails?.images),
+    });
+    return serializeHotelDetailsForAi(detailed);
+  }
+
+  private async rememberHotelPhotos(threadId: string, photos: HotelPhotoSet) {
+    const existing = await this.prisma.aiThread.findUnique({
+      where: { id: threadId },
+      select: { metadata: true },
+    });
+    const meta =
+      existing?.metadata && typeof existing.metadata === "object"
+        ? { ...(existing.metadata as Record<string, unknown>) }
+        : {};
+    meta.lastHotelPhotos = photos;
+    await this.prisma.aiThread.update({
+      where: { id: threadId },
+      data: { metadata: asJson(meta) },
+    });
   }
 
   private async toolSearchTransfers(

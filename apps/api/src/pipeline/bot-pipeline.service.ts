@@ -1,12 +1,13 @@
 import { BadRequestException, Injectable } from "@nestjs/common";
 import { Prisma } from "@watesly-travel/database";
-import { createAiProvider } from "@watesly-travel/ai-core";
+import { createAiProvider, extractPassportFromImage } from "@watesly-travel/ai-core";
 import {
   sendChannelMedia,
   sendChannelText,
   channelPeerId,
   hotelPickRowId,
   sendWhatsAppCatalogCta,
+  sendWhatsAppInteractiveButtons,
   sendWhatsAppInteractiveList,
   sendWhatsAppProductList,
   sendWhatsAppProductMessage,
@@ -17,6 +18,9 @@ import { searchAndPriceTravel } from "@watesly-travel/travel-core";
 import { PrismaService } from "../prisma/prisma.service";
 import { AuditService } from "../common/audit.service";
 import { TravelAiService } from "../ai/travel-ai.service";
+import { AssistantHoldService, type AssistantUi } from "../ai/assistant-hold.service";
+import { customerWantsHotelPhotos } from "../ai/hotel-photos";
+import { parseAssistantAction } from "../ai/assistant-flow";
 import {
   formatCommercePrice,
   normalizeMetaCommerce,
@@ -68,6 +72,7 @@ export class BotPipelineService {
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,
     private readonly travelAi: TravelAiService,
+    private readonly holds: AssistantHoldService,
   ) {}
 
   async handleInboundText(input: {
@@ -77,6 +82,8 @@ export class BotPipelineService {
     messageId: string;
     text: string;
     hotelPickId?: string;
+    replyId?: string;
+    image?: { base64: string; mimeType: string; caption?: string };
   }) {
     const conversation = await this.prisma.conversation.findFirst({
       where: {
@@ -96,6 +103,15 @@ export class BotPipelineService {
         ? "telegram"
         : "whatsapp";
 
+    const early = await this.prepareAssistantTurn(input);
+    if (early?.stop) {
+      await this.deliverAssistantUi(input, early.ui);
+      return { mode: "ai" as const };
+    }
+    if (early?.ui) {
+      await this.deliverAssistantUi(input, early.ui);
+    }
+
     const aiEnabled = process.env.WHATSAPP_AI_ENABLED !== "false";
     try {
       if (!aiEnabled) {
@@ -104,7 +120,7 @@ export class BotPipelineService {
       const aiResult = await this.travelAi.turn({
         organizationId: input.organizationId,
         channel,
-        text: input.text,
+        text: early?.followUpText || input.text,
         hotelPickId: input.hotelPickId,
         contactId: input.contactId,
         conversationId: input.conversationId,
@@ -143,6 +159,31 @@ export class BotPipelineService {
         }).catch((err) => {
           console.error("[pipeline] hotel pick list failed", err);
         });
+      }
+      if (accountChannel === "whatsapp" && !aiResult.handoff) {
+        for (const list of aiResult.choiceLists || []) {
+          await this.replyWithChoiceList({
+            organizationId: input.organizationId,
+            conversationId: input.conversationId,
+            ...list,
+          }).catch((err) => console.error("[pipeline] choice list failed", err));
+        }
+        if (aiResult.choiceLists?.some((list) => list.header === "الغرف")) {
+          await this.replyWithChoiceButtons({
+            organizationId: input.organizationId,
+            conversationId: input.conversationId,
+            body: "يمكن إرسال صور الفندق هنا بلا رابط خارجي.",
+            buttons: [{ id: "photo:hotel", title: "صور الفندق" }],
+          }).catch((err) => console.error("[pipeline] photo button failed", err));
+        }
+        if (aiResult.morePhotos) {
+          await this.replyWithChoiceButtons({
+            organizationId: input.organizationId,
+            conversationId: input.conversationId,
+            body: "المزيد من صور الفندق",
+            buttons: [{ id: "photo:more", title: "صور أكثر" }],
+          }).catch((err) => console.error("[pipeline] more photos failed", err));
+        }
       }
       await this.syncInquiryFromInbound(input).catch((err) => {
         console.error("[pipeline] inquiry sync after AI", err);
@@ -1107,6 +1148,172 @@ export class BotPipelineService {
     });
 
     return message;
+  }
+
+  private async prepareAssistantTurn(input: {
+    organizationId: string;
+    conversationId: string;
+    contactId: string;
+    text: string;
+    hotelPickId?: string;
+    replyId?: string;
+    image?: { base64: string; mimeType: string; caption?: string };
+  }): Promise<{ stop: boolean; ui: AssistantUi; followUpText?: string } | null> {
+    let passport: Awaited<ReturnType<typeof extractPassportFromImage>>["fields"] | null = null;
+    let passportFailed = false;
+    if (input.image?.base64) {
+      const waiting = await this.holds.isAwaitingPassport(
+        input.organizationId,
+        input.conversationId,
+      );
+      const expects =
+        waiting || /جواز|passport/i.test(`${input.image.caption || ""} ${input.text || ""}`);
+      try {
+        const scan = await extractPassportFromImage({
+          imageBase64: input.image.base64,
+          mimeType: input.image.mimeType,
+        });
+        const useful = Boolean(
+          scan.fields.passportNumber || (scan.fields.firstName && scan.fields.lastName),
+        );
+        if (useful) passport = scan.fields;
+        else if (expects) passportFailed = true;
+      } catch (err) {
+        console.error("[pipeline] passport scan failed", err);
+        if (expects) passportFailed = true;
+      }
+    }
+    let action = input.hotelPickId ? null : parseAssistantAction(input.replyId);
+    if (
+      !action &&
+      !passport &&
+      !passportFailed &&
+      customerWantsHotelPhotos(input.text) &&
+      (await this.holds.hasGallery(input.organizationId, input.conversationId))
+    ) {
+      action = { kind: "photo", more: /المزيد/.test(input.text) };
+    }
+    const ui = await this.holds.apply({
+      organizationId: input.organizationId,
+      conversationId: input.conversationId,
+      contactId: input.contactId,
+      action: action || undefined,
+      text: input.text,
+      passport,
+      passportFailed,
+    });
+    if (!ui) return null;
+    return { stop: !ui.followUpText, ui, followUpText: ui.followUpText };
+  }
+
+  private async deliverAssistantUi(
+    input: { organizationId: string; conversationId: string },
+    ui: AssistantUi,
+  ) {
+    for (const body of ui.replies) {
+      if (!body.trim()) continue;
+      await this.replyToConversation({
+        organizationId: input.organizationId,
+        conversationId: input.conversationId,
+        body,
+        skipWindowCheck: true,
+      });
+    }
+    if (ui.photos?.urls.length) {
+      await this.replyWithHotelPhotos({
+        organizationId: input.organizationId,
+        conversationId: input.conversationId,
+        photos: { hotelId: "gallery", name: ui.photos.name, urls: ui.photos.urls },
+      }).catch((err) => console.error("[pipeline] hotel photos failed", err));
+    }
+    if (ui.list?.rows.length) {
+      await this.replyWithChoiceList({
+        organizationId: input.organizationId,
+        conversationId: input.conversationId,
+        ...ui.list,
+      }).catch((err) => console.error("[pipeline] choice list failed", err));
+    }
+    if (ui.buttons?.buttons.length) {
+      await this.replyWithChoiceButtons({
+        organizationId: input.organizationId,
+        conversationId: input.conversationId,
+        body: ui.buttons.body,
+        buttons: ui.buttons.buttons,
+      }).catch((err) => console.error("[pipeline] choice buttons failed", err));
+    }
+  }
+
+  private async replyWithChoiceList(input: {
+    organizationId: string;
+    conversationId: string;
+    header: string;
+    body: string;
+    button: string;
+    rows: Array<{ id: string; title: string; description?: string }>;
+  }) {
+    const { conversation, account } = await this.resolveWhatsAppAccount(
+      input.conversationId,
+      input.organizationId,
+    );
+    if ((account?.channelType || "whatsapp") !== "whatsapp") return;
+    const send = await sendWhatsAppInteractiveList({
+      phoneNumberId: account?.phoneNumberId || "mock_phone",
+      accessToken: account?.accessTokenEnc || "mock",
+      to: channelPeerId(conversation.contact.waId),
+      header: input.header,
+      body: input.body,
+      button: input.button,
+      sectionTitle: input.header,
+      rows: input.rows,
+    });
+    if (send.status === "failed") return;
+    await this.prisma.message.create({
+      data: {
+        organizationId: input.organizationId,
+        conversationId: input.conversationId,
+        direction: "outbound",
+        channel: "whatsapp",
+        type: "interactive",
+        body: [input.body, ...input.rows.map((row, index) => `${index + 1}. ${row.title}`)].join("\n"),
+        providerMessageId: send.providerMessageId || null,
+        status: send.status,
+        rawPayload: send.raw ? asJson(send.raw) : undefined,
+      },
+    });
+  }
+
+  private async replyWithChoiceButtons(input: {
+    organizationId: string;
+    conversationId: string;
+    body: string;
+    buttons: Array<{ id: string; title: string }>;
+  }) {
+    const { conversation, account } = await this.resolveWhatsAppAccount(
+      input.conversationId,
+      input.organizationId,
+    );
+    if ((account?.channelType || "whatsapp") !== "whatsapp") return;
+    const send = await sendWhatsAppInteractiveButtons({
+      phoneNumberId: account?.phoneNumberId || "mock_phone",
+      accessToken: account?.accessTokenEnc || "mock",
+      to: channelPeerId(conversation.contact.waId),
+      body: input.body,
+      buttons: input.buttons,
+    });
+    if (send.status === "failed") return;
+    await this.prisma.message.create({
+      data: {
+        organizationId: input.organizationId,
+        conversationId: input.conversationId,
+        direction: "outbound",
+        channel: "whatsapp",
+        type: "interactive",
+        body: input.body,
+        providerMessageId: send.providerMessageId || null,
+        status: send.status,
+        rawPayload: send.raw ? asJson(send.raw) : undefined,
+      },
+    });
   }
 
   private async replyWithHotelPhotos(input: {

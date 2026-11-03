@@ -35,10 +35,19 @@ import {
 import {
   customerWantsHotelPhotos,
   pickHotelPhotoUrls,
-  readHotelPhotoSet,
   stripExternalLinks,
   type HotelPhotoSet,
 } from "./hotel-photos";
+import {
+  choiceRows,
+  hotelRoomItems,
+  nextPhotoSlice,
+  readAssistantState,
+  transportItems,
+  tripMemoryLine,
+  type AssistantState,
+  type HoldItem,
+} from "./assistant-flow";
 import { applyAiSellPrices, loadActivePricingRules } from "./apply-ai-sell-prices";
 import {
   NEAREST_HOTEL_CANDIDATES,
@@ -137,6 +146,13 @@ export type TravelAiTurnResult = {
   hotelPicks?: HotelPick[];
   hotelPicksTruncated?: boolean;
   hotelPhotos?: HotelPhotoSet;
+  morePhotos?: boolean;
+  choiceLists?: Array<{
+    header: string;
+    body: string;
+    button: string;
+    rows: Array<{ id: string; title: string; description?: string }>;
+  }>;
 };
 
 function money(value: unknown): number {
@@ -305,7 +321,8 @@ export class TravelAiService {
     let text = "";
 
     const parsedUser = parseChatAttachments(spoken);
-    const userText = chatTextForAi(spoken) || "انظر إلى المرفق";
+    const memory = tripMemoryLine(readAssistantState(thread.metadata));
+    const userText = [memory, chatTextForAi(spoken)].filter(Boolean).join("\n") || "انظر إلى المرفق";
     const imageUrls = parsedUser.attachments
       .filter((row) => row.kind === "image")
       .map((row) => row.url);
@@ -419,28 +436,79 @@ export class TravelAiService {
     }
 
     let hotelPhotos: HotelPhotoSet | undefined;
-    if (!handoff && customerWantsHotelPhotos(spoken)) {
+    let morePhotos = false;
+    const choiceLists: NonNullable<TravelAiTurnResult["choiceLists"]> = [];
+    if (!handoff) {
       const fresh = await this.prisma.aiThread.findUnique({
         where: { id: thread.id },
         select: { metadata: true },
       });
-      hotelPhotos = readHotelPhotoSet(fresh?.metadata);
-      if (hotelPhotos) {
-        const cleaned =
-          stripExternalLinks(text) || `هذه بعض صور ${hotelPhotos.name}.`;
-        if (cleaned !== text) {
-          text = cleaned;
-          if (lastId) {
-            await this.prisma.aiMessage.updateMany({
-              where: {
-                threadId: thread.id,
-                role: "assistant",
-                openaiResponseId: lastId,
-              },
-              data: { content: text },
-            });
+      let assistant = readAssistantState(fresh?.metadata);
+      if (customerWantsHotelPhotos(spoken)) {
+        const slice = nextPhotoSlice(assistant.photos, /المزيد/.test(spoken));
+        if (slice.urls.length && assistant.photos) {
+          hotelPhotos = {
+            hotelId: assistant.photos.hotelId,
+            name: slice.name,
+            urls: slice.urls,
+          };
+          morePhotos = slice.shown < assistant.photos.urls.length;
+          assistant = {
+            ...assistant,
+            photos: { ...assistant.photos, shown: slice.shown },
+          };
+          const cleaned = stripExternalLinks(text) || `هذه صور ${slice.name}.`;
+          if (cleaned !== text) {
+            text = cleaned;
+            if (lastId) {
+              await this.prisma.aiMessage.updateMany({
+                where: {
+                  threadId: thread.id,
+                  role: "assistant",
+                  openaiResponseId: lastId,
+                },
+                data: { content: text },
+              });
+            }
           }
         }
+      }
+      const pending = new Set(assistant.pendingLists);
+      if (pending.has("rooms") && assistant.rooms.length) {
+        choiceLists.push({
+          header: "الغرف",
+          body: "اضغط على الغرفة لتسجيل طلب الحجز. التأكيد يتم من الموظف فقط.",
+          button: "اختر الغرفة",
+          rows: choiceRows(assistant.rooms),
+        });
+      }
+      if (pending.has("flights") && assistant.flights.length) {
+        choiceLists.push({
+          header: "الرحلات",
+          body: "اضغط على الرحلة. بعدها يمكن إضافة فندق لنفس التواريخ.",
+          button: "اختر الرحلة",
+          rows: choiceRows(assistant.flights),
+        });
+      }
+      if (pending.has("transfers") && assistant.transfers.length) {
+        choiceLists.push({
+          header: "التوصيل",
+          body: "اضغط على التوصيل لإضافته إلى الطلب.",
+          button: "اختر التوصيل",
+          rows: choiceRows(assistant.transfers),
+        });
+      }
+      if (assistant.pendingLists.length || hotelPhotos) {
+        assistant = { ...assistant, pendingLists: [] };
+        const meta =
+          fresh?.metadata && typeof fresh.metadata === "object"
+            ? { ...(fresh.metadata as Record<string, unknown>) }
+            : {};
+        meta.assistant = assistant;
+        await this.prisma.aiThread.update({
+          where: { id: thread.id },
+          data: { metadata: asJson(meta) },
+        });
       }
     }
 
@@ -473,6 +541,8 @@ export class TravelAiService {
       hotelPicks,
       hotelPicksTruncated,
       hotelPhotos,
+      morePhotos,
+      choiceLists,
       model,
       provider: provider.name,
       usage,
@@ -799,6 +869,20 @@ export class TravelAiService {
         orderBy: { updatedAt: "desc" },
       });
       if (byConv) return byConv;
+      const handed = await this.prisma.aiThread.findFirst({
+        where: {
+          organizationId: input.organizationId,
+          conversationId: input.conversationId,
+          status: "handed_off",
+        },
+        orderBy: { updatedAt: "desc" },
+      });
+      if (handed) {
+        return this.prisma.aiThread.update({
+          where: { id: handed.id },
+          data: { status: "open" },
+        });
+      }
     }
     if (input.externalRef) {
       const byExt = await this.prisma.aiThread.findFirst({
@@ -1036,7 +1120,7 @@ export class TravelAiService {
         });
       }
       if (name === "search_flights") {
-        return this.toolSearchFlights(ctx.organizationId, args);
+        return this.toolSearchFlights(ctx.organizationId, args, thread.id);
       }
       if (name === "search_hotels") {
         return this.toolSearchHotels(ctx.organizationId, args, thread.id);
@@ -1045,7 +1129,7 @@ export class TravelAiService {
         return this.toolGetHotelDetails(ctx.organizationId, args, thread);
       }
       if (name === "search_transfers") {
-        return this.toolSearchTransfers(ctx.organizationId, args);
+        return this.toolSearchTransfers(ctx.organizationId, args, thread.id);
       }
       if (name === "search_flights_travelport") {
         return this.toolScaffoldFlight("travelport", args);
@@ -1061,9 +1145,31 @@ export class TravelAiService {
     }
   }
 
+  private async saveAssistant(
+    threadId: string,
+    update: (state: AssistantState) => void,
+  ) {
+    const existing = await this.prisma.aiThread.findUnique({
+      where: { id: threadId },
+      select: { metadata: true },
+    });
+    const meta =
+      existing?.metadata && typeof existing.metadata === "object"
+        ? { ...(existing.metadata as Record<string, unknown>) }
+        : {};
+    const state = readAssistantState(meta);
+    update(state);
+    meta.assistant = state;
+    await this.prisma.aiThread.update({
+      where: { id: threadId },
+      data: { metadata: asJson(meta) },
+    });
+  }
+
   private async toolSearchFlights(
     organizationId: string,
     args: Record<string, unknown>,
+    threadId?: string,
   ): Promise<string> {
     const origin = str(args.origin).toUpperCase();
     const destination = str(args.destination).toUpperCase();
@@ -1101,6 +1207,24 @@ export class TravelAiService {
       adults: Math.max(1, int(args.adults, 1)),
       children: Math.max(0, int(args.children, 0)),
     });
+    if (threadId) {
+      const adults = Math.max(1, int(args.adults, 1));
+      const children = Math.max(0, int(args.children, 0));
+      const returnDate = str(args.returnDate);
+      await this.saveAssistant(threadId, (state) => {
+        state.trip = {
+          ...state.trip,
+          origin,
+          destination,
+          departDate,
+          returnDate: returnDate || state.trip.returnDate,
+          adults,
+          children,
+        };
+        state.flights = transportItems(priced, "flight", 8);
+        if (!state.pendingLists.includes("flights")) state.pendingLists.push("flights");
+      });
+    }
     return serializeSearchResult({
       liveMode: provider.liveMode,
       provider: provider.displayName,
@@ -1310,6 +1434,16 @@ export class TravelAiService {
         ),
         rank,
       };
+      const assistant = readAssistantState(meta);
+      assistant.trip = {
+        ...assistant.trip,
+        location,
+        checkInDate,
+        checkOutDate,
+        adults: Math.max(1, int(args.adults, 1)),
+        children: Math.max(0, int(args.children, 0)),
+      };
+      meta.assistant = assistant;
       await this.prisma.aiThread.update({
         where: { id: threadId },
         data: { metadata: asJson(meta) },
@@ -1445,15 +1579,28 @@ export class TravelAiService {
     });
     const detailed = priced || match;
     const rawDetails = detailed.raw as HotelPropertyDetails | undefined;
-    await this.rememberHotelPhotos(thread.id, {
+    const photoUrls = pickHotelPhotoUrls(rawDetails?.images, 16);
+    const photos: HotelPhotoSet = {
       hotelId: detailed.providerOfferRef,
       name: rawDetails?.name || hotelName || detailed.description,
-      urls: pickHotelPhotoUrls(rawDetails?.images),
+      urls: photoUrls,
+    };
+    const rooms = hotelRoomItems({
+      providerKey: detailed.providerKey,
+      providerOfferRef: detailed.providerOfferRef,
+      description: detailed.description,
+      costAmountMinor: detailed.costAmountMinor,
+      sellAmountMinor: (detailed as { sellAmountMinor?: number }).sellAmountMinor,
+      currency: detailed.currency,
+      revalidationToken: detailed.revalidationToken,
+      expiresAt: detailed.expiresAt,
+      raw: detailed.raw,
     });
+    await this.rememberHotelStay(thread.id, photos, rooms);
     return serializeHotelDetailsForAi(detailed);
   }
 
-  private async rememberHotelPhotos(threadId: string, photos: HotelPhotoSet) {
+  private async rememberHotelStay(threadId: string, photos: HotelPhotoSet, rooms: HoldItem[]) {
     const existing = await this.prisma.aiThread.findUnique({
       where: { id: threadId },
       select: { metadata: true },
@@ -1463,6 +1610,18 @@ export class TravelAiService {
         ? { ...(existing.metadata as Record<string, unknown>) }
         : {};
     meta.lastHotelPhotos = photos;
+    const assistant = readAssistantState(meta);
+    assistant.photos = {
+      hotelId: photos.hotelId,
+      name: photos.name || "الفندق",
+      urls: photos.urls,
+      shown: 0,
+    };
+    assistant.rooms = rooms;
+    if (rooms.length && !assistant.pendingLists.includes("rooms")) {
+      assistant.pendingLists.push("rooms");
+    }
+    meta.assistant = assistant;
     await this.prisma.aiThread.update({
       where: { id: threadId },
       data: { metadata: asJson(meta) },
@@ -1472,6 +1631,7 @@ export class TravelAiService {
   private async toolSearchTransfers(
     organizationId: string,
     args: Record<string, unknown>,
+    threadId?: string,
   ): Promise<string> {
     const city = str(args.city);
     const from = str(args.from);
@@ -1515,6 +1675,12 @@ export class TravelAiService {
       adults: Math.max(1, int(args.adults, 1)),
       children: Math.max(0, int(args.children, 0)),
     });
+    if (threadId) {
+      await this.saveAssistant(threadId, (state) => {
+        state.transfers = transportItems(priced, "transfer", 8);
+        if (!state.pendingLists.includes("transfers")) state.pendingLists.push("transfers");
+      });
+    }
     return serializeSearchResult({
       liveMode: provider.liveMode,
       provider: provider.displayName,

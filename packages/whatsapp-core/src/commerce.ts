@@ -225,6 +225,49 @@ export async function sendWhatsAppProductList(input: {
   );
 }
 
+export type InteractiveButton = { id: string; title: string };
+
+export function buildInteractiveButtonsPayload(input: {
+  to: string;
+  body: string;
+  buttons: InteractiveButton[];
+}) {
+  const buttons = input.buttons.slice(0, 3).flatMap((button) => {
+    const id = clipChars(button.id, 200);
+    const title = clipChars(button.title, 20);
+    if (!id || !title) return [];
+    return [{ type: "reply" as const, reply: { id, title } }];
+  });
+  return {
+    to: input.to,
+    type: "interactive" as const,
+    interactive: {
+      type: "button" as const,
+      body: { text: clipChars(input.body, 1024) || "اختر" },
+      action: { buttons },
+    },
+  };
+}
+
+export async function sendWhatsAppInteractiveButtons(input: {
+  phoneNumberId: string;
+  accessToken: string;
+  to: string;
+  body: string;
+  buttons: InteractiveButton[];
+}): Promise<SendResult> {
+  const payload = buildInteractiveButtonsPayload(input);
+  if (!payload.interactive.action.buttons.length) {
+    return {
+      providerMessageId: "",
+      status: "failed",
+      mock: isMockToken(input.accessToken),
+      raw: { error: { message: "لا توجد أزرار" } },
+    };
+  }
+  return postWhatsAppMessage(input.phoneNumberId, input.accessToken, payload);
+}
+
 export async function sendWhatsAppInteractiveList(input: {
   phoneNumberId: string;
   accessToken: string;

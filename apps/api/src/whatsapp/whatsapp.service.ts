@@ -12,6 +12,7 @@ import {
   inspectCommerceCatalog,
   listWabaPhoneNumbers,
   matchWabaPhoneNumber,
+  downloadWhatsAppMedia,
   parseHotelPickRowId,
   parseInboundWebhook,
   parseMetaMessagingWebhook,
@@ -827,6 +828,8 @@ export class WhatsappService implements OnModuleInit {
     messageId: string;
     text: string;
     hotelPickId?: string;
+    replyId?: string;
+    image?: { base64: string; mimeType: string; caption?: string };
   }) {
     const intent = input.hotelPickId
       ? ({ type: "chat" as const, text: input.text })
@@ -943,6 +946,8 @@ export class WhatsappService implements OnModuleInit {
       messageId: input.messageId,
       text: intent.text,
       hotelPickId: input.hotelPickId,
+      replyId: input.replyId,
+      image: input.image,
     });
   }
 
@@ -1243,6 +1248,7 @@ export class WhatsappService implements OnModuleInit {
       id: string;
       organizationId: string;
       channelType: string;
+      accessTokenEnc?: string | null;
     },
     msg: WhatsAppInboundMessage,
   ) {
@@ -1344,15 +1350,27 @@ export class WhatsappService implements OnModuleInit {
       },
     });
 
-    if (msg.text) {
+    if (msg.text || msg.mediaId) {
+      let image: { base64: string; mimeType: string; caption?: string } | undefined;
+      if (msg.type === "image" && msg.mediaId && account.accessTokenEnc) {
+        const downloaded = await downloadWhatsAppMedia({
+          mediaId: msg.mediaId,
+          accessToken: account.accessTokenEnc,
+        }).catch(() => null);
+        if (downloaded) {
+          image = { ...downloaded, caption: msg.text };
+        }
+      }
       try {
         await this.routeInboundText({
           organizationId: account.organizationId,
           conversationId: conversation.id,
           contactId: contact.id,
           messageId: message.id,
-          text: msg.text,
+          text: msg.text || "[صورة]",
           hotelPickId: parseHotelPickRowId(msg.replyId) || undefined,
+          replyId: msg.replyId,
+          image,
         });
       } catch (error) {
         // Never fail webhook delivery because of bot/search errors.

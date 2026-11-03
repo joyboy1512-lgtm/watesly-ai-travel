@@ -2,10 +2,12 @@ import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import {
   buildCatalogCtaPayload,
+  buildInteractiveListPayload,
   buildMultiProductPayload,
   buildSingleProductPayload,
 } from "./commerce";
 import { parseInboundWebhook } from "./index";
+import { parseHotelPickRowId } from "./hotel-pick";
 
 describe("WhatsApp commerce payloads", () => {
   it("builds a single product message", () => {
@@ -42,6 +44,71 @@ describe("WhatsApp commerce payloads", () => {
     });
     assert.equal(payload.interactive.type, "cta_url");
     assert.equal(payload.interactive.action.parameters.url, "https://www.weekendgate.com/catalog");
+  });
+
+  it("clips a tappable hotel list to WhatsApp limits", () => {
+    const longName = "فندق قريب جداً من المسجد الحرام رويال";
+    const payload = buildInteractiveListPayload({
+      to: "96590053224",
+      header: "الفنادق",
+      body: "اضغط على الفندق لعرض الغرف والسعر.",
+      button: "اختر الفندق من القائمة الآن",
+      sectionTitle: "الأقرب إلى الحرم",
+      footer: "أو اكتب اسم الفندق",
+      rows: [
+        ...Array.from({ length: 12 }, (_, i) => ({
+          id: `hotel:hb-${i + 1}`,
+          title: i === 0 ? longName : `فندق ${i + 1}`,
+          description:
+            i === 0
+              ? "0.4 كم · من 120.50 KWD · 5★ وهذه زيادة طويلة جداً يجب أن تُقص عند حد واتساب للوصف"
+              : `من ${i + 1}0 KWD`,
+        })),
+      ],
+    });
+    const rows = payload.interactive.action.sections[0]?.rows || [];
+    assert.equal(payload.interactive.type, "list");
+    assert.equal(rows.length, 10);
+    assert.equal(Array.from(rows[0]!.title).length, 24);
+    assert.equal(rows[0]!.title, Array.from(longName).slice(0, 24).join(""));
+    assert.equal(Array.from(rows[0]!.description || "").length, 72);
+    assert.equal(Array.from(payload.interactive.action.button).length, 20);
+    assert.equal(rows[0]!.id, "hotel:hb-1");
+  });
+
+  it("reads a hotel tap as the row title and keeps the hotel id", () => {
+    const messages = parseInboundWebhook({
+      entry: [
+        {
+          changes: [
+            {
+              value: {
+                metadata: { phone_number_id: "123" },
+                contacts: [{ wa_id: "96590053224", profile: { name: "عميل" } }],
+                messages: [
+                  {
+                    from: "96590053224",
+                    id: "wamid.1",
+                    type: "interactive",
+                    interactive: {
+                      type: "list_reply",
+                      list_reply: {
+                        id: "hotel:hb-99",
+                        title: "فندق الصفوة",
+                      },
+                    },
+                  },
+                ],
+              },
+            },
+          ],
+        },
+      ],
+    });
+    assert.equal(messages[0]?.text, "فندق الصفوة");
+    assert.equal(messages[0]?.replyId, "hotel:hb-99");
+    assert.equal(parseHotelPickRowId(messages[0]?.replyId), "hb-99");
+    assert.equal(parseHotelPickRowId("not-a-hotel"), null);
   });
 
   it("parses an inbound WhatsApp catalog order", () => {

@@ -27,6 +27,11 @@ import {
 } from "../common/provider-runtime";
 import { mergeOrgAiSettings, readOrgAiSettings, type OrgAiSettings } from "./org-ai-settings";
 import { hotelCatalogEntry, serializeHotelDetailsForAi, serializeSearchResult } from "./tool-result-serializers";
+import {
+  hotelPickCustomerText,
+  visibleHotelPicks,
+  type HotelPick,
+} from "./hotel-pick-list";
 import { applyAiSellPrices, loadActivePricingRules } from "./apply-ai-sell-prices";
 import {
   NEAREST_HOTEL_CANDIDATES,
@@ -47,6 +52,7 @@ type HotelCatalogEntry = {
   stars?: number;
   priceFrom?: number;
   currency?: string;
+  distanceToCenterLabel?: string;
 };
 
 type HotelSearchContext = {
@@ -59,6 +65,7 @@ type HotelSearchContext = {
   hotelIds?: string[];
   hotels?: HotelCatalogEntry[];
   lastShownOffset?: number;
+  lastShownCount?: number;
   rank?: HotelSearchRank;
 };
 
@@ -104,6 +111,8 @@ export type TravelAiTurnInput = {
   contactId?: string;
   conversationId?: string;
   externalRef?: string;
+  /** Set when the customer tapped a hotel row. The id is the catalog hotel id. */
+  hotelPickId?: string;
 };
 
 export type TravelAiTurnResult = {
@@ -118,6 +127,8 @@ export type TravelAiTurnResult = {
   spentUsd?: number;
   creditLimitUsd?: number | null;
   remainingUsd?: number | null;
+  hotelPicks?: HotelPick[];
+  hotelPicksTruncated?: boolean;
 };
 
 function money(value: unknown): number {
@@ -227,11 +238,16 @@ export class TravelAiService {
       await this.assertWebAssistantOpen(input.organizationId);
     }
     const thread = await this.resolveThread(input);
+    const spoken = hotelPickCustomerText({
+      text: input.text,
+      hotelPickId: input.hotelPickId,
+      hotels: readHotelSearchContext(thread.metadata).hotels,
+    });
     await this.prisma.aiMessage.create({
       data: {
         threadId: thread.id,
         role: "user",
-        content: input.text,
+        content: spoken,
       },
     });
     if (!thread.title) {
@@ -280,8 +296,8 @@ export class TravelAiService {
     let handoffReason = "";
     let text = "";
 
-    const parsedUser = parseChatAttachments(input.text);
-    const userText = chatTextForAi(input.text) || "انظر إلى المرفق";
+    const parsedUser = parseChatAttachments(spoken);
+    const userText = chatTextForAi(spoken) || "انظر إلى المرفق";
     const imageUrls = parsedUser.attachments
       .filter((row) => row.kind === "image")
       .map((row) => row.url);
@@ -394,9 +410,34 @@ export class TravelAiService {
       await this.performHandoff(thread, input, handoffReason || "ai_handoff");
     }
 
+    let hotelPicks: HotelPick[] | undefined;
+    let hotelPicksTruncated = false;
+    if (
+      !handoff &&
+      toolsUsed.includes("search_hotels") &&
+      !toolsUsed.includes("get_hotel_details")
+    ) {
+      const fresh = await this.prisma.aiThread.findUnique({
+        where: { id: thread.id },
+        select: { metadata: true },
+      });
+      const saved = readHotelSearchContext(fresh?.metadata);
+      const shown = visibleHotelPicks({
+        hotels: saved.hotels,
+        offset: saved.lastShownOffset,
+        shownCount: saved.lastShownCount,
+      });
+      if (shown.picks.length) {
+        hotelPicks = shown.picks;
+        hotelPicksTruncated = shown.truncated;
+      }
+    }
+
     return {
       threadId: thread.id,
       message: text,
+      hotelPicks,
+      hotelPicksTruncated,
       model,
       provider: provider.name,
       usage,
@@ -1228,6 +1269,10 @@ export class TravelAiService {
         hotelIds: catalog.map((h) => h.id),
         hotels: catalog,
         lastShownOffset: sliceArgs.offset,
+        lastShownCount: Math.min(
+          sliceArgs.limit,
+          Math.max(0, priced.length - sliceArgs.offset),
+        ),
         rank,
       };
       await this.prisma.aiThread.update({

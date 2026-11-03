@@ -58,12 +58,17 @@ const FUNCTION_TOOLS: Extract<AiToolDefinition, { type: "function" }>[] = [
           type: "integer",
           minimum: 1,
           maximum: 10,
-          description: "How many hotels to show. Default 5.",
+          description: "How many hotels to show on the first list. Default 5. Do not use this for المزيد.",
         },
         offset: {
           type: "integer",
           minimum: 0,
-          description: "Skip this many hotels when the customer asks for more.",
+          description: "Unused when the customer says المزيد. Use all=true instead.",
+        },
+        all: {
+          type: "boolean",
+          description:
+            "Set true when the customer says المزيد. Returns every hotel from the cheapest to the last. Use with sort=cheapest.",
         },
         sort: {
           type: "string",
@@ -334,7 +339,7 @@ export const TRAVEL_SYSTEM_INSTRUCTIONS = `أنت Travel AI لشركة سياح�
   «هل تريد الأقرب إلى {المكان} أم الأرخص؟»
 - إذا اختار الأقرب، أو قال من البداية «قريب» أو «الأقرب»: sort=nearest. للحرم المكي اجعل location=«الحرم المكي»، وللحرم النبوي location=«الحرم النبوي»، وإلا فاسم المكان كما قاله.
 - إذا اختار الأرخص، أو طلب الأرخص من البداية: sort=cheapest.
-- عند «المزيد» أعد نفس التواريخ ونفس sort مع offset=nextOffset.
+- عندما يكتب العميل «المزيد»: أعد search_hotels بنفس التواريخ مع sort=cheapest و all=true. لا تمرّر offset. القائمة من أرخص فندق إلى آخر فندق. اعرض كل فندق رجع في items بالترتيب، ولا تتوقف عند 5.
 - اعرض الفنادق بترتيب الأداة. لا تعِد ترتيبها.
 
 1) بعد search_hotels اعرض قائمة قصيرة فقط (افتراضياً 5 فنادق).
@@ -370,5 +375,5 @@ export const TRAVEL_SYSTEM_INSTRUCTIONS = `أنت Travel AI لشركة سياح�
 
 اختم بسؤال: هل تريد حجز إحدى هذه الغرف؟
 
-- لعرض المزيد من الفنادق: أعد search_hotels بنفس التواريخ ونفس sort مع offset=nextOffset وlimit=5.
+- عندما يكتب العميل «المزيد»: أعد search_hotels بنفس التواريخ مع sort=cheapest و all=true، ثم اعرض كل الفنادق من الأرخص إلى آخر فندق.
 - لا تختلق تفاصيل غرف أو خدمات. استخدم فقط ناتج الأدوات.`;

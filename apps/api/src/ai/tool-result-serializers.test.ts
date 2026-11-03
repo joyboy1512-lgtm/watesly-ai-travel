@@ -51,4 +51,37 @@ describe("serializeSearchResult hotel rank", () => {
     assert.equal(cheapest.rankedBy, "cheapest");
     assert.equal(cheapest.items[0].distanceToCenterLabel, undefined);
   });
+
+  it("returns every hotel from the first through the last when all is set", () => {
+    const rows = Array.from({ length: 12 }, (_, index) =>
+      offer(`Hotel ${index + 1}`, index, `${index} كم`),
+    );
+    const full = JSON.parse(
+      serializeSearchResult({
+        provider: "hotelbeds",
+        liveMode: true,
+        kind: "hotel",
+        rankedBy: "cheapest",
+        all: true,
+        limit: 100,
+        rows,
+      }),
+    );
+    assert.equal(full.countReturned, 12);
+    assert.equal(full.hasMore, false);
+    assert.equal(full.items[0].name, "Hotel 1");
+    assert.equal(full.items[11].name, "Hotel 12");
+
+    const firstPage = JSON.parse(
+      serializeSearchResult({
+        provider: "hotelbeds",
+        liveMode: true,
+        kind: "hotel",
+        rankedBy: "cheapest",
+        rows,
+      }),
+    );
+    assert.equal(firstPage.countReturned, 5);
+    assert.equal(firstPage.hasMore, true);
+  });
 });

@@ -300,9 +300,11 @@ export function serializeSearchResult(input: {
       ? {
           rankedBy: input.rankedBy || "cheapest",
           presentAs: "short_list",
-          formatHint: input.all
-            ? "اعرض كل الفنادق في items من الأرخص إلى آخر فندق، بالترتيب، بلا اختصار."
-            : nearest
+          formatHint: input.all && nearest
+            ? "اعرض كل فنادق المنطقة في items من الأقرب إلى آخر فندق. لكل فندق الاسم والنجوم وdistanceToCenterLabel والسعر. لا تتوقف عند 5."
+            : input.all
+              ? "اعرض كل الفنادق في items من الأرخص إلى آخر فندق، بالترتيب، بلا اختصار."
+              : nearest
               ? "القائمة مرتبة من الأقرب للمنطقة المطلوبة. لكل فندق: الاسم والنجوم، ثم distanceToCenterLabel، ثم السعر يبدأ من. لا تذكر الغرف أو الخدمات."
               : "اعرض فقط الاسم والنجوم والسعر يبدأ من. لا تذكر الغرف أو الخدمات أو المسافات.",
           selectHint: "اختر اسم الفندق لعرض الغرف والخدمات والموقع.",

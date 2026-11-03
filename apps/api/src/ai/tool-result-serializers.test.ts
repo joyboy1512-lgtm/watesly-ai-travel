@@ -84,4 +84,25 @@ describe("serializeSearchResult hotel rank", () => {
     assert.equal(firstPage.countReturned, 5);
     assert.equal(firstPage.hasMore, true);
   });
+
+  it("keeps every hotel in the area when المزيد follows a nearest search", () => {
+    const rows = Array.from({ length: 8 }, (_, index) =>
+      offer(`Near ${index + 1}`, index + 0.2, `${index + 0.2} كم`),
+    );
+    const area = JSON.parse(
+      serializeSearchResult({
+        provider: "hotelbeds",
+        liveMode: true,
+        kind: "hotel",
+        rankedBy: "nearest",
+        all: true,
+        limit: 100,
+        rows,
+      }),
+    );
+    assert.equal(area.countReturned, 8);
+    assert.equal(area.hasMore, false);
+    assert.equal(area.items[0].distanceToCenterLabel, "0.2 كم");
+    assert.equal(area.items[7].name, "Near 8");
+  });
 });

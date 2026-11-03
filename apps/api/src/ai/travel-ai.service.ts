@@ -1179,11 +1179,9 @@ export class TravelAiService {
       savedSearch = readHotelSearchContext(meta);
     }
     let rank = resolveHotelSearchRank(explicitSort, location);
-    if (sliceArgs.all) {
-      rank = "cheapest";
-    } else if (
+    if (
       !explicitSort &&
-      sliceArgs.offset > 0 &&
+      (sliceArgs.all || sliceArgs.offset > 0) &&
       savedSearch.location === location &&
       (savedSearch.rank === "nearest" || savedSearch.rank === "cheapest")
     ) {

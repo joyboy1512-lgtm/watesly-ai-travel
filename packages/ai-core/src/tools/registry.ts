@@ -68,7 +68,7 @@ const FUNCTION_TOOLS: Extract<AiToolDefinition, { type: "function" }>[] = [
         all: {
           type: "boolean",
           description:
-            "Set true when the customer says المزيد. Returns every hotel from the cheapest to the last. Use with sort=cheapest.",
+            "Set true when the customer says المزيد. Returns every hotel in the same search, not five. Keep sort=nearest for an area or point so the list stays everyone near that place. Use sort=cheapest only when the first list was by price.",
         },
         sort: {
           type: "string",
@@ -339,7 +339,8 @@ export const TRAVEL_SYSTEM_INSTRUCTIONS = `أنت Travel AI لشركة سياح�
   «هل تريد الأقرب إلى {المكان} أم الأرخص؟»
 - إذا اختار الأقرب، أو قال من البداية «قريب» أو «الأقرب»: sort=nearest. للحرم المكي اجعل location=«الحرم المكي»، وللحرم النبوي location=«الحرم النبوي»، وإلا فاسم المكان كما قاله.
 - إذا اختار الأرخص، أو طلب الأرخص من البداية: sort=cheapest.
-- عندما يكتب العميل «المزيد»: أعد search_hotels بنفس التواريخ مع sort=cheapest و all=true. لا تمرّر offset. القائمة من أرخص فندق إلى آخر فندق. اعرض كل فندق رجع في items بالترتيب، ولا تتوقف عند 5.
+- عندما يكتب العميل «المزيد» بعد قائمة الأقرب لنقطة أو منطقة: أعد search_hotels بنفس المكان والتواريخ مع sort=nearest و all=true. لا تغيّر الترتيب إلى الأرخص. اعرض كل فنادق المنطقة من الأقرب إلى آخر فندق، مع المسافة والسعر، ولا تتوقف عند 5.
+- عندما يكتب العميل «المزيد» بعد قائمة الأرخص: أعد search_hotels مع sort=cheapest و all=true، واعرض من الأرخص إلى آخر فندق.
 - اعرض الفنادق بترتيب الأداة. لا تعِد ترتيبها.
 
 1) بعد search_hotels اعرض قائمة قصيرة فقط (افتراضياً 5 فنادق).
@@ -375,5 +376,5 @@ export const TRAVEL_SYSTEM_INSTRUCTIONS = `أنت Travel AI لشركة سياح�
 
 اختم بسؤال: هل تريد حجز إحدى هذه الغرف؟
 
-- عندما يكتب العميل «المزيد»: أعد search_hotels بنفس التواريخ مع sort=cheapest و all=true، ثم اعرض كل الفنادق من الأرخص إلى آخر فندق.
+- عندما يكتب العميل «المزيد» بعد الأقرب: أعد search_hotels بنفس المكان مع sort=nearest و all=true، ثم اعرض كل فنادق المنطقة.
 - لا تختلق تفاصيل غرف أو خدمات. استخدم فقط ناتج الأدوات.`;

@@ -65,6 +65,12 @@ const FUNCTION_TOOLS: Extract<AiToolDefinition, { type: "function" }>[] = [
           minimum: 0,
           description: "Skip this many hotels when the customer asks for more.",
         },
+        sort: {
+          type: "string",
+          enum: ["nearest", "cheapest"],
+          description:
+            "nearest: closest to the named area first. Use when the customer asks for a hotel near a specific area, neighborhood, street, mall, or landmark, or says قريب من. cheapest: lowest price first. Use for a city-only search or when they ask for the cheapest. Repeat the same sort with offset.",
+        },
       },
       required: ["location", "checkInDate", "checkOutDate"],
     },
@@ -323,10 +329,21 @@ export const TRAVEL_SYSTEM_INSTRUCTIONS = `أنت Travel AI لشركة سياح�
 
 عرض الفنادق — خطوتان إلزاميتان:
 
-1) بعد search_hotels اعرض قائمة قصيرة فقط (افتراضياً 5 فنادق). لكل فندق سطران:
+ترتيب search_hotels:
+- إذا طلب العميل فندقاً قريباً من منطقة أو حي أو شارع أو مول أو معلم، أو قال «قريب من»، مرّر sort=nearest و location = اسم المكان كما قاله. القائمة ترجع الأقرب لذلك المكان أولاً.
+- إذا طلب الأرخص، أو سمّى مدينة فقط دون ذكر القرب، مرّر sort=cheapest.
+- عند «المزيد» أعد نفس التواريخ ونفس sort مع offset=nextOffset.
+- اعرض الفنادق بترتيب الأداة. لا تعِد ترتيبها.
+
+1) بعد search_hotels اعرض قائمة قصيرة فقط (افتراضياً 5 فنادق).
+   إن كان rankedBy=nearest فلكل فندق:
+   «N. اسم الفندق ★النجوم
+      يبعد {distanceToCenterLabel}
+      السعر يبدأ من {priceFrom} {currency}»
+   وإلا سطران فقط:
    «N. اسم الفندق ★النجوم
       السعر يبدأ من {priceFrom} {currency}»
-   ممنوع ذكر الغرف أو الخدمات أو الوصف أو المسافات في هذه الخطوة.
+   ممنوع ذكر الغرف أو الخدمات أو الوصف في هذه الخطوة، وممنوع ذكر المسافة إلا عندما يكون rankedBy=nearest.
    إن كان hasMore=true أضف في النهاية: «إذا أردت خيارات أكثر اكتب: المزيد»
    ثم اطلب اختيار اسم الفندق.
 
@@ -351,5 +368,5 @@ export const TRAVEL_SYSTEM_INSTRUCTIONS = `أنت Travel AI لشركة سياح�
 
 اختم بسؤال: هل تريد حجز إحدى هذه الغرف؟
 
-- لعرض المزيد من الفنادق: أعد search_hotels بنفس التواريخ مع offset=nextOffset وlimit=5.
+- لعرض المزيد من الفنادق: أعد search_hotels بنفس التواريخ ونفس sort مع offset=nextOffset وlimit=5.
 - لا تختلق تفاصيل غرف أو خدمات. استخدم فقط ناتج الأدوات.`;

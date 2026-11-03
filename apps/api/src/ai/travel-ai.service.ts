@@ -28,6 +28,12 @@ import {
 import { mergeOrgAiSettings, readOrgAiSettings, type OrgAiSettings } from "./org-ai-settings";
 import { hotelCatalogEntry, serializeHotelDetailsForAi, serializeSearchResult } from "./tool-result-serializers";
 import { applyAiSellPrices, loadActivePricingRules } from "./apply-ai-sell-prices";
+import {
+  NEAREST_HOTEL_CANDIDATES,
+  rankHotelOffers,
+  resolveHotelSearchRank,
+  type HotelSearchRank,
+} from "./hotel-result-rank";
 import type { HotelOffer } from "@watesly-travel/shared";
 import { chatTextForAi, parseChatAttachments } from "@watesly-travel/shared";
 
@@ -49,6 +55,7 @@ type HotelSearchContext = {
   hotelIds?: string[];
   hotels?: HotelCatalogEntry[];
   lastShownOffset?: number;
+  rank?: HotelSearchRank;
 };
 
 function readHotelSearchContext(metadata: unknown): HotelSearchContext {
@@ -1099,6 +1106,30 @@ export class TravelAiService {
         reason: "بحث الفنادق غير مفعّل — ينقص HOTELBEDS_API_KEY أو DUFFEL_ACCESS_TOKEN",
       });
     }
+    const sliceArgs = toolSliceArgs(args);
+    const explicitSort = str(args.sort);
+    let savedSearch: HotelSearchContext = {};
+    let meta: Record<string, unknown> = {};
+    if (threadId) {
+      const existing = await this.prisma.aiThread.findUnique({
+        where: { id: threadId },
+        select: { metadata: true },
+      });
+      if (existing?.metadata && typeof existing.metadata === "object") {
+        meta = { ...(existing.metadata as Record<string, unknown>) };
+      }
+      savedSearch = readHotelSearchContext(meta);
+    }
+    let rank = resolveHotelSearchRank(explicitSort, location);
+    if (
+      !explicitSort &&
+      sliceArgs.offset > 0 &&
+      savedSearch.location === location &&
+      (savedSearch.rank === "nearest" || savedSearch.rank === "cheapest")
+    ) {
+      rank = savedSearch.rank;
+    }
+
     const currency = await this.orgCurrency(organizationId);
     const rows = await provider.searchHotels({
       location,
@@ -1108,27 +1139,22 @@ export class TravelAiService {
       children: Math.max(0, int(args.children, 0)),
       rooms: Math.max(1, int(args.rooms, 1)),
       currency,
+      ...(rank === "nearest" ? { maxHotels: NEAREST_HOTEL_CANDIDATES } : {}),
     });
 
     const rules = await loadActivePricingRules(this.prisma, organizationId);
-    const priced = applyAiSellPrices(rows, rules, "hotel", {
-      city: location,
-      checkIn: checkInDate,
-      adults: Math.max(1, int(args.adults, 1)),
-      children: Math.max(0, int(args.children, 0)),
-      rooms: Math.max(1, int(args.rooms, 1)),
-    });
-    const sliceArgs = toolSliceArgs(args);
+    const priced = rankHotelOffers(
+      applyAiSellPrices(rows, rules, "hotel", {
+        city: location,
+        checkIn: checkInDate,
+        adults: Math.max(1, int(args.adults, 1)),
+        children: Math.max(0, int(args.children, 0)),
+        rooms: Math.max(1, int(args.rooms, 1)),
+      }),
+      rank,
+    );
     if (threadId) {
       const catalog = priced.map((row) => hotelCatalogEntry(row as HotelOffer));
-      const existing = await this.prisma.aiThread.findUnique({
-        where: { id: threadId },
-        select: { metadata: true },
-      });
-      const meta =
-        existing?.metadata && typeof existing.metadata === "object"
-          ? { ...(existing.metadata as Record<string, unknown>) }
-          : {};
       meta.lastHotelSearch = {
         location,
         checkInDate,
@@ -1139,6 +1165,7 @@ export class TravelAiService {
         hotelIds: catalog.map((h) => h.id),
         hotels: catalog,
         lastShownOffset: sliceArgs.offset,
+        rank,
       };
       await this.prisma.aiThread.update({
         where: { id: threadId },
@@ -1151,6 +1178,7 @@ export class TravelAiService {
       provider: provider.displayName,
       rows: priced,
       kind: "hotel",
+      rankedBy: rank,
       ...sliceArgs,
     });
   }

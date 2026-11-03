@@ -3,6 +3,7 @@ import { describe, it } from "node:test";
 import {
   hotelPickCustomerText,
   hotelPickDescription,
+  hotelPickListBody,
   visibleHotelPicks,
 } from "./hotel-pick-list";
 
@@ -27,6 +28,7 @@ describe("visible hotel picks", () => {
       ["hb-1", "hb-2", "hb-3", "hb-4", "hb-5"],
     );
     assert.equal(result.truncated, false);
+    assert.equal(result.limit, "short");
   });
 
   it("offers only the first 10 when المزيد shows the whole area", () => {
@@ -39,6 +41,7 @@ describe("visible hotel picks", () => {
     assert.equal(result.picks[0]?.id, "hb-1");
     assert.equal(result.picks[9]?.id, "hb-10");
     assert.equal(result.truncated, true);
+    assert.equal(result.limit, "whatsapp");
   });
 
   it("starts at the saved offset", () => {
@@ -75,5 +78,10 @@ describe("visible hotel picks", () => {
       hotelPickCustomerText({ text: "المزيد" }),
       "المزيد",
     );
+    assert.match(hotelPickListBody("whatsapp"), /10/);
+    assert.match(hotelPickListBody("whatsapp"), /اسم الفندق/);
+    assert.match(hotelPickListBody("short"), /ليسهل الاختيار/);
+    assert.match(hotelPickListBody("short"), /المزيد/);
+    assert.doesNotMatch(hotelPickListBody(null), /10/);
   });
 });

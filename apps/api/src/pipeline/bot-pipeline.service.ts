@@ -33,7 +33,9 @@ import {
 import { formatMoneyMinor } from "../common/money";
 import {
   hotelPickDescription,
+  hotelPickListBody,
   type HotelPick,
+  type HotelPickLimit,
 } from "../ai/hotel-pick-list";
 import type { HotelPhotoSet } from "../ai/hotel-photos";
 
@@ -155,7 +157,7 @@ export class BotPipelineService {
           organizationId: input.organizationId,
           conversationId: input.conversationId,
           picks: aiResult.hotelPicks,
-          truncated: aiResult.hotelPicksTruncated === true,
+          limit: aiResult.hotelPicksLimit ?? null,
         }).catch((err) => {
           console.error("[pipeline] hotel pick list failed", err);
         });
@@ -1376,7 +1378,7 @@ export class BotPipelineService {
     organizationId: string;
     conversationId: string;
     picks: HotelPick[];
-    truncated: boolean;
+    limit: HotelPickLimit;
   }) {
     const { conversation, account } = await this.resolveWhatsAppAccount(
       input.conversationId,
@@ -1384,9 +1386,7 @@ export class BotPipelineService {
     );
     if ((account?.channelType || "whatsapp") !== "whatsapp") return;
 
-    const body = input.truncated
-      ? "اضغط على أحد الفنادق العشرة الأولى. لبقية القائمة اكتب اسم الفندق."
-      : "اضغط على الفندق لعرض الغرف والسعر.";
+    const body = hotelPickListBody(input.limit);
     const rows = input.picks.map((pick) => ({
       id: hotelPickRowId(pick.id),
       title: pick.name,

@@ -8,6 +8,9 @@ import {
   holdBlockReason,
   holdCustomerMessage,
   hotelRoomItems,
+  hotelRoomSelection,
+  roomByTypedName,
+  roomChoiceBody,
   nextPhotoSlice,
   parseAssistantAction,
   selectItem,
@@ -43,6 +46,49 @@ describe("assistant booking flow", () => {
     assert.equal(rooms[0]?.pickId, "room:0");
     assert.equal(rooms[0]?.sellAmountMinor, 120_000);
     assert.equal(rooms[1]?.sellAmountMinor, 180_000);
+    const few = hotelRoomSelection({
+      providerKey: "hotelbeds",
+      providerOfferRef: "hb-9",
+      description: "صفوة",
+      costAmountMinor: 100_000,
+      sellAmountMinor: 120_000,
+      currency: "KWD",
+      raw: {
+        rateOptions: [
+          { roomName: "غرفة مزدوجة", boardName: "إفطار", net: 100 },
+          { roomName: "جناح", boardName: "إفطار", net: 150 },
+        ],
+      },
+    });
+    assert.equal(few.truncated, false);
+    assert.doesNotMatch(roomChoiceBody(false), /واتساب/);
+    const many = hotelRoomSelection({
+      providerKey: "hotelbeds",
+      providerOfferRef: "hb-9",
+      description: "صفوة",
+      costAmountMinor: 100_000,
+      sellAmountMinor: 120_000,
+      currency: "KWD",
+      raw: {
+        rateOptions: Array.from({ length: 12 }, (_, index) => ({
+          roomName: `غرفة ${index + 1}`,
+          boardName: "إفطار",
+          net: 100 + index,
+        })),
+      },
+    });
+    assert.equal(many.uniqueCount, 12);
+    assert.equal(many.truncated, true);
+    assert.equal(many.items.length, 10);
+    assert.equal(many.all.length, 12);
+    assert.equal(many.items[0]?.snapshot.roomName, "غرفة 1");
+    const hidden = many.all[11]!;
+    assert.equal(roomByTypedName(many.all.slice(10), "غرفة 12")?.pickId, hidden.pickId);
+    assert.equal(roomByTypedName(many.all, "غرفة 12")?.snapshot.roomName, "غرفة 12");
+    assert.equal(roomByTypedName(many.all.slice(10), "كم سعر الغرفة 12 من فضلك لو سمحت"), null);
+    assert.match(roomChoiceBody(true), /واتساب/);
+    assert.match(roomChoiceBody(true), /أرخص 10/);
+    assert.match(roomChoiceBody(true), /من الموظف/);
     assert.equal(ASSISTANT_CAN_ISSUE, false);
     assert.equal(ASSISTANT_HOLD_STATUS, "on_hold");
     assert.match(holdCustomerMessage(rooms.slice(0, 1)), /بانتظار تأكيد الموظف/);

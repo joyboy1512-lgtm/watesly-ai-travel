@@ -31,6 +31,7 @@ import {
   hotelPickCustomerText,
   visibleHotelPicks,
   type HotelPick,
+  type HotelPickLimit,
 } from "./hotel-pick-list";
 import {
   customerWantsHotelPhotos,
@@ -40,7 +41,8 @@ import {
 } from "./hotel-photos";
 import {
   choiceRows,
-  hotelRoomItems,
+  hotelRoomSelection,
+  roomChoiceBody,
   nextPhotoSlice,
   readAssistantState,
   transportItems,
@@ -144,7 +146,7 @@ export type TravelAiTurnResult = {
   creditLimitUsd?: number | null;
   remainingUsd?: number | null;
   hotelPicks?: HotelPick[];
-  hotelPicksTruncated?: boolean;
+  hotelPicksLimit?: HotelPickLimit;
   hotelPhotos?: HotelPhotoSet;
   morePhotos?: boolean;
   choiceLists?: Array<{
@@ -477,7 +479,7 @@ export class TravelAiService {
       if (pending.has("rooms") && assistant.rooms.length) {
         choiceLists.push({
           header: "الغرف",
-          body: "اضغط على الغرفة لتسجيل طلب الحجز. التأكيد يتم من الموظف فقط.",
+          body: roomChoiceBody(assistant.roomsTruncated === true),
           button: "اختر الغرفة",
           rows: choiceRows(assistant.rooms),
         });
@@ -513,7 +515,7 @@ export class TravelAiService {
     }
 
     let hotelPicks: HotelPick[] | undefined;
-    let hotelPicksTruncated = false;
+    let hotelPicksLimit: HotelPickLimit | undefined;
     if (
       !handoff &&
       toolsUsed.includes("search_hotels") &&
@@ -531,7 +533,7 @@ export class TravelAiService {
       });
       if (shown.picks.length) {
         hotelPicks = shown.picks;
-        hotelPicksTruncated = shown.truncated;
+        hotelPicksLimit = shown.limit;
       }
     }
 
@@ -539,7 +541,7 @@ export class TravelAiService {
       threadId: thread.id,
       message: text,
       hotelPicks,
-      hotelPicksTruncated,
+      hotelPicksLimit,
       hotelPhotos,
       morePhotos,
       choiceLists,
@@ -1585,7 +1587,7 @@ export class TravelAiService {
       name: rawDetails?.name || hotelName || detailed.description,
       urls: photoUrls,
     };
-    const rooms = hotelRoomItems({
+    const roomSelection = hotelRoomSelection({
       providerKey: detailed.providerKey,
       providerOfferRef: detailed.providerOfferRef,
       description: detailed.description,
@@ -1596,11 +1598,21 @@ export class TravelAiService {
       expiresAt: detailed.expiresAt,
       raw: detailed.raw,
     });
-    await this.rememberHotelStay(thread.id, photos, rooms);
+    await this.rememberHotelStay(
+      thread.id,
+      photos,
+      roomSelection.all,
+      roomSelection.truncated,
+    );
     return serializeHotelDetailsForAi(detailed);
   }
 
-  private async rememberHotelStay(threadId: string, photos: HotelPhotoSet, rooms: HoldItem[]) {
+  private async rememberHotelStay(
+    threadId: string,
+    photos: HotelPhotoSet,
+    rooms: HoldItem[],
+    roomsTruncated = false,
+  ) {
     const existing = await this.prisma.aiThread.findUnique({
       where: { id: threadId },
       select: { metadata: true },
@@ -1618,6 +1630,7 @@ export class TravelAiService {
       shown: 0,
     };
     assistant.rooms = rooms;
+    assistant.roomsTruncated = roomsTruncated;
     if (rooms.length && !assistant.pendingLists.includes("rooms")) {
       assistant.pendingLists.push("rooms");
     }

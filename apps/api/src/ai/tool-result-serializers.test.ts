@@ -83,6 +83,8 @@ describe("serializeSearchResult hotel rank", () => {
     );
     assert.equal(firstPage.countReturned, 5);
     assert.equal(firstPage.hasMore, true);
+    assert.match(firstPage.moreHint, /ليسهل الاختيار/);
+    assert.match(firstPage.moreHint, /المزيد/);
   });
 
   it("keeps every hotel in the area when المزيد follows a nearest search", () => {

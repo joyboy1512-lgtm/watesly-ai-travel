@@ -1029,25 +1029,153 @@
   }
 }
 
+.wi-back {
+  display: none;
+}
+
 @media (max-width: 900px) {
   .form-grid {
     grid-template-columns: 1fr;
   }
 
-  .watesly-inbox {
-    grid-template-columns: 1fr;
-    min-height: 75vh;
-    border-radius: 0;
+  .app-shell.dense:has(.watesly-inbox),
+  .app-shell.dense:has(.watesly-inbox) .main-dense {
+    height: 100dvh;
+    max-height: 100dvh;
+    overflow: hidden;
   }
 
-  .wi-list {
-    border-left: 0;
-    border-bottom: 1px solid var(--wa-line);
-    max-height: 42vh;
+  .app-shell.dense:has(.watesly-inbox) .main.main-dense {
+    padding: 0;
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden;
+  }
+
+  .app-shell.dense:has(.watesly-inbox) .topbar.topbar-dense {
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 0.4rem;
+    margin: 0;
+    padding: 0.4rem 0.65rem;
+  }
+
+  .app-shell.dense:has(.watesly-inbox) .topbar-actions {
+    width: auto;
+    flex-wrap: nowrap;
+  }
+
+  .app-shell.dense:has(.watesly-inbox) .meta-line {
+    display: none;
+  }
+
+  .watesly-inbox.wa-like {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr);
+    flex: 1 1 auto;
+    height: auto;
+    max-height: none;
+    min-height: 0;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .watesly-inbox .wi-details,
+  .watesly-inbox:not(.has-thread) .wi-thread,
+  .watesly-inbox.has-thread .wi-list {
+    display: none;
+  }
+
+  .watesly-inbox .wi-list,
+  .watesly-inbox .wi-thread {
+    max-height: none;
+    min-height: 0;
+    border: 0;
+  }
+
+  .wi-item {
+    grid-template-columns: 46px minmax(0, 1fr);
+    padding: 0.7rem 0.75rem;
+  }
+
+  .wi-item-main,
+  .wi-item-top {
+    min-width: 0;
+  }
+
+  .wi-item-top strong {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .watesly-inbox .wi-back {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    min-height: 2.1rem;
+    padding: 0 0.7rem;
+    border: 0;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.14);
+    color: #f3f7f4;
+    font-family: var(--wa-font);
+    font-size: 0.82rem;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .wi-thread-head {
+    padding: 0.4rem 0.5rem;
+    gap: 0.35rem 0.45rem;
+    min-height: 0;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .wi-thread-who {
+    flex: 1 1 auto;
+    min-width: 0;
+    gap: 0.45rem;
+  }
+
+  .wi-thread-who > div {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .wi-thread-who h3 {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .wi-thread-sub {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: unset;
+    line-height: 1.35;
+  }
+
+  .wi-thread-actions {
+    flex: 1 0 100%;
+    justify-content: flex-end;
+  }
+
+  .wi-thread-actions .wi-icon-btn {
+    width: 2.05rem;
+    height: 2.05rem;
+    font-size: 1rem;
   }
 
   .wi-messages {
-    padding-inline: 4%;
+    padding-inline: 0.7rem;
+  }
+
+  .wi-template-bar .wi-btn {
+    flex: 1 1 auto;
   }
 }
 
@@ -1178,6 +1306,33 @@
   background: #fff;
   border: 1px solid rgba(15, 51, 64, 0.08);
   border-radius: 10px;
+}
+
+@media (max-width: 900px) {
+  .watesly-inbox .wi-composer.wa-composer {
+    padding: 0.45rem 0.55rem max(0.5rem, env(safe-area-inset-bottom));
+  }
+
+  .watesly-inbox .wi-composer .wa-composer-tool,
+  .watesly-inbox .wa-composer-tool {
+    width: 2.6rem;
+    min-height: 2.6rem;
+    height: 2.6rem;
+    align-self: flex-end;
+  }
+
+  .watesly-inbox .wa-composer-input-wrap {
+    min-height: 0;
+    padding: 0.1rem 0.75rem;
+  }
+
+  .watesly-inbox .wa-composer-input-wrap textarea,
+  .watesly-inbox .wi-composer textarea {
+    min-height: 3.3rem;
+    height: 3.3rem;
+    max-height: 6.5rem;
+    font-size: 16px;
+  }
 }
 
 /* ===== WhatsApp channels (reuses existing theme tokens only) ===== */

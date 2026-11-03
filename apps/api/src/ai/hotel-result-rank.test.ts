@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
+  hotelsWithinRadius,
   rankHotelOffers,
   resolveHotelSearchRank,
 } from "./hotel-result-rank";
@@ -28,6 +29,7 @@ describe("resolveHotelSearchRank", () => {
     assert.equal(resolveHotelSearchRank(undefined, "دبي"), "cheapest");
     assert.equal(resolveHotelSearchRank("", "Dubai"), "cheapest");
     assert.equal(resolveHotelSearchRank(undefined, "CAI"), "cheapest");
+    assert.equal(resolveHotelSearchRank(undefined, "مكة"), "cheapest");
   });
 
   it("ranks a named area by distance", () => {
@@ -64,6 +66,16 @@ describe("rankHotelOffers", () => {
     );
     assert.equal(ranked[0]?.id, "near");
     assert.equal(ranked[1]?.id, "unknown");
+  });
+
+  it("keeps only hotels inside the requested circle", () => {
+    const near = hotel("near", 80, 1.2);
+    const far = hotel("far", 20, 18);
+    const kept = hotelsWithinRadius([far, near], 1.5);
+    assert.deepEqual(
+      kept.map((row) => row.id),
+      ["near"],
+    );
   });
 
   it("orders a city search by sell price", () => {

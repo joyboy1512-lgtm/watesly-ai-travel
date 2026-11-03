@@ -30,6 +30,9 @@ import { hotelCatalogEntry, serializeHotelDetailsForAi, serializeSearchResult } 
 import { applyAiSellPrices, loadActivePricingRules } from "./apply-ai-sell-prices";
 import {
   NEAREST_HOTEL_CANDIDATES,
+  NEAREST_MIN_RESULTS,
+  NEAREST_RADIUS_STEPS_KM,
+  hotelsWithinRadius,
   rankHotelOffers,
   resolveHotelSearchRank,
   type HotelSearchRank,
@@ -1084,6 +1087,51 @@ export class TravelAiService {
       );
   }
 
+  private async searchHotelRows(
+    provider: {
+      searchHotels: (params: {
+        location: string;
+        checkInDate: string;
+        checkOutDate: string;
+        adults: number;
+        children: number;
+        rooms: number;
+        currency: string;
+        radiusKm?: number;
+        maxHotels?: number;
+      }) => Promise<HotelOffer[]>;
+    },
+    base: {
+      location: string;
+      checkInDate: string;
+      checkOutDate: string;
+      adults: number;
+      children: number;
+      rooms: number;
+      currency: string;
+    },
+    rank: HotelSearchRank,
+  ): Promise<HotelOffer[]> {
+    if (rank !== "nearest") return provider.searchHotels(base);
+
+    let fallback: HotelOffer[] = [];
+    for (let step = 0; step < NEAREST_RADIUS_STEPS_KM.length; step += 1) {
+      const radiusKm = NEAREST_RADIUS_STEPS_KM[step]!;
+      const batch = await provider.searchHotels({
+        ...base,
+        radiusKm,
+        maxHotels: NEAREST_HOTEL_CANDIDATES,
+      });
+      const within = hotelsWithinRadius(batch, radiusKm);
+      const lastStep = step === NEAREST_RADIUS_STEPS_KM.length - 1;
+      if (within.length >= NEAREST_MIN_RESULTS || lastStep) {
+        return within.length ? within : batch;
+      }
+      fallback = within.length ? within : batch;
+    }
+    return fallback;
+  }
+
   private async toolSearchHotels(
     organizationId: string,
     args: Record<string, unknown>,
@@ -1131,7 +1179,7 @@ export class TravelAiService {
     }
 
     const currency = await this.orgCurrency(organizationId);
-    const rows = await provider.searchHotels({
+    const searchBase = {
       location,
       checkInDate,
       checkOutDate,
@@ -1139,8 +1187,8 @@ export class TravelAiService {
       children: Math.max(0, int(args.children, 0)),
       rooms: Math.max(1, int(args.rooms, 1)),
       currency,
-      ...(rank === "nearest" ? { maxHotels: NEAREST_HOTEL_CANDIDATES } : {}),
-    });
+    };
+    const rows = await this.searchHotelRows(provider, searchBase, rank);
 
     const rules = await loadActivePricingRules(this.prisma, organizationId);
     const priced = rankHotelOffers(

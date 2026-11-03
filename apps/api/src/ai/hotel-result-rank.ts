@@ -48,6 +48,13 @@ const BARE_CITIES = new Set(
     "باكو",
     "سيول",
     "الكويت",
+    "مكة",
+    "مكه",
+    "mecca",
+    "makkah",
+    "المدينة المنورة",
+    "medina",
+    "madinah",
     "برشلونة",
     "barcelona",
     "مدريد",
@@ -105,6 +112,29 @@ const AREA_HINT =
 /** Wider availability pull so a nearby hotel is not dropped for being pricier. */
 export const NEAREST_HOTEL_CANDIDATES = 100;
 
+/**
+ * Nearest searches start inside a short walk of the place, then widen only
+ * when that circle has too few hotels. They never use the 25 km city radius.
+ */
+export const NEAREST_RADIUS_STEPS_KM = [1.5, 3, 6];
+export const NEAREST_MIN_RESULTS = 5;
+
+export function hotelDistanceKm(row: { raw?: unknown }): number | null {
+  const raw = row.raw as { distanceToCenterKm?: unknown } | undefined;
+  const km = Number(raw?.distanceToCenterKm);
+  return Number.isFinite(km) ? km : null;
+}
+
+export function hotelsWithinRadius<T extends { raw?: unknown }>(
+  rows: T[],
+  radiusKm: number,
+): T[] {
+  return rows.filter((row) => {
+    const km = hotelDistanceKm(row);
+    return km != null && km <= radiusKm + 0.25;
+  });
+}
+
 export function isBareCityQuery(location: string): boolean {
   const raw = location.trim().toLowerCase();
   return raw.length > 0 && BARE_CITIES.has(raw);
@@ -146,9 +176,7 @@ function sellMinor(row: RankableHotel): number {
 }
 
 function distanceKm(row: RankableHotel): number {
-  const raw = row.raw as { distanceToCenterKm?: unknown } | undefined;
-  const km = Number(raw?.distanceToCenterKm);
-  return Number.isFinite(km) ? km : Number.POSITIVE_INFINITY;
+  return hotelDistanceKm(row) ?? Number.POSITIVE_INFINITY;
 }
 
 export function rankHotelOffers<T extends RankableHotel>(

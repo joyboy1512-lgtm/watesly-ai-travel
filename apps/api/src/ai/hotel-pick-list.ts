@@ -157,35 +157,70 @@ export function hotelResultPage(input: {
   };
 }
 
+function nightsBetween(checkIn?: string, checkOut?: string): number | null {
+  const start = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(checkIn || "").trim());
+  const end = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(checkOut || "").trim());
+  if (!start || !end) return null;
+  const from = Date.UTC(Number(start[1]), Number(start[2]) - 1, Number(start[3]));
+  const to = Date.UTC(Number(end[1]), Number(end[2]) - 1, Number(end[3]));
+  const nights = Math.round((to - from) / 86_400_000);
+  return nights > 0 ? nights : null;
+}
+
+function nightsLine(nights: number): string {
+  if (nights === 1) return "للإقامة ليلة واحدة";
+  if (nights === 2) return "للإقامة ليلتان";
+  if (nights >= 3 && nights <= 10) return `للإقامة ${nights} ليالٍ`;
+  return `للإقامة ${nights} ليلة`;
+}
+
+function boldLabel(value: string): string {
+  const clean = value.replace(/[*_~]/g, "").trim();
+  return clean ? `*${clean}*` : "";
+}
+
+function hotelBlock(pick: HotelPick, nights: number | null, includeDistance: boolean): string {
+  const stars = pick.stars ? ` ★${pick.stars}` : "";
+  const lines = [`🏨 ${boldLabel(pick.name)}${stars}`];
+  if (pick.priceFrom != null && Number.isFinite(pick.priceFrom)) {
+    const amount = pick.priceFrom.toFixed(2);
+    const money = pick.currency ? `${pick.currency} ${amount}` : amount;
+    lines.push(`💰 السعر يبدأ من ${boldLabel(money)}`);
+  }
+  if (nights) lines.push(nightsLine(nights));
+  if (includeDistance && pick.distanceToCenterLabel) {
+    lines.push(`📍 ${pick.distanceToCenterLabel}`);
+  }
+  return lines.join("\n");
+}
+
 export function hotelPickCard(input: {
   stay?: HotelStaySummary;
   picks: HotelPick[];
   hasMore: boolean;
 }): { header: string; body: string; footer?: string; button: string } {
   const stay = input.stay || {};
-  const lines: string[] = [];
+  const nights = nightsBetween(stay.checkInDate, stay.checkOutDate);
+  const intro: string[] = [];
   const location = String(stay.location || "").trim();
-  if (location) lines.push(location);
+  if (location) intro.push(`📍 ${boldLabel(location)}`);
   const checkIn = formatStayDate(stay.checkInDate);
   const checkOut = formatStayDate(stay.checkOutDate);
-  if (checkIn && checkOut) lines.push(`من ${checkIn} إلى ${checkOut}`);
-  else if (checkIn) lines.push(`الوصول ${checkIn}`);
-  lines.push(partyLabel(stay.adults, stay.children));
-  lines.push("");
-  input.picks.forEach((pick, index) => {
-    const stars = pick.stars ? ` ★${pick.stars}` : "";
-    lines.push(`${index + 1}. ${pick.name}${stars}`);
-    const detail = hotelPickDescription(pick);
-    if (detail) lines.push(detail);
-  });
-  if (input.hasMore) {
-    lines.push("");
-    lines.push("هذه 10 فنادق لأن واتساب لا يقبل أكثر من ذلك في البطاقة. اضغط زر المزيد للبقية.");
-  }
+  if (checkIn && checkOut) intro.push(`📅 من ${checkIn} إلى ${checkOut}`);
+  else if (checkIn) intro.push(`📅 الوصول ${checkIn}`);
+  intro.push(`👥 ${partyLabel(stay.adults, stay.children)}`);
+
+  const compose = (includeDistance: boolean) =>
+    [intro.join("\n"), ...input.picks.map((pick) => hotelBlock(pick, nights, includeDistance))]
+      .filter(Boolean)
+      .join("\n\n");
+  let body = compose(true);
+  if (Array.from(body).length > 1024) body = compose(false);
+
   return {
     header: "الفنادق",
-    body: lines.join("\n").trim(),
-    footer: input.hasMore ? "اضغط زر المزيد للفنادق التالية" : undefined,
+    body,
+    footer: input.hasMore ? "حد واتساب 10 فنادق. اضغط المزيد" : undefined,
     button: "اختر الفندق",
   };
 }

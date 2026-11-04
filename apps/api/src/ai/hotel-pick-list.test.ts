@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
+  distanceAnchor,
   hotelPickCard,
   hotelPickCustomerText,
   hotelPickDescription,
@@ -88,11 +89,15 @@ describe("visible hotel picks", () => {
     assert.match(hotelPickListBody("short"), /المزيد/);
     assert.doesNotMatch(hotelPickListBody(null), /10/);
     const page = hotelResultPage({ hotels, offset: 0 });
-    assert.equal(page.picks.length, 10);
+    assert.equal(page.picks.length, 9);
     assert.equal(page.hasMore, true);
-    const next = hotelResultPage({ hotels, offset: 10 });
-    assert.equal(next.picks.length, 2);
+    const next = hotelResultPage({ hotels, offset: 9 });
+    assert.equal(next.picks.length, 3);
     assert.equal(next.hasMore, false);
+    assert.equal(distanceAnchor("القاهرة"), "مركز القاهرة");
+    assert.equal(distanceAnchor("مكة"), "الحرم المكي");
+    assert.equal(distanceAnchor("الحرم المكي"), "الحرم المكي");
+    assert.equal(distanceAnchor("الأهرامات"), "الأهرامات");
     const card = hotelPickCard({
       stay: {
         location: "مكة",
@@ -122,7 +127,8 @@ describe("visible hotel picks", () => {
     assert.match(card.body, /\u200F🏨 \*فندق 1\*/);
     assert.match(card.body, /\u200F💰 السعر يبدأ من/);
     assert.match(card.body, /يبعد/);
-    assert.match(card.body, /عن مكة/);
+    assert.match(card.body, /عن الحرم المكي/);
+    assert.doesNotMatch(card.body, /عن مكة/);
     const english = hotelPickCard({
       stay: { location: "القاهرة", checkInDate: "2026-11-20", checkOutDate: "2026-11-23", adults: 2 },
       picks: [{
@@ -140,18 +146,21 @@ describe("visible hotel picks", () => {
     assert.match(english.body, /\u200F💰 السعر يبدأ من \u2066\*KWD 120\.49\*/);
     assert.match(english.body, /يبعد/);
     assert.match(english.body, /6\.5 كم/);
-    assert.match(english.body, /عن القاهرة/);
+    assert.match(english.body, /عن مركز القاهرة/);
+    assert.doesNotMatch(english.body, /عن القاهرة/);
     const full = hotelPickCard({
       stay: { location: "مكة", checkInDate: "2026-12-01", checkOutDate: "2026-12-04", adults: 2 },
       picks: page.picks,
       hasMore: true,
     });
     assert.match(full.body, /يبعد/);
-    assert.match(full.body, /عن مكة/);
-    assert.match(full.body, /🏨 \*فندق 10\* ★4/);
-    const rows = hotelPickRows(page.picks);
+    assert.match(full.body, /عن الحرم المكي/);
+    assert.match(full.body, /🏨 \*فندق 9\* ★4/);
+    const rows = hotelPickRows(page.picks, true);
     assert.equal(rows.length, 10);
-    assert.ok(rows.every((row) => row.id.startsWith("hotel:")));
+    assert.equal(rows[9]?.id, "hotels:more");
+    assert.equal(rows[9]?.title, "المزيد");
+    assert.ok(rows.slice(0, 9).every((row) => row.id.startsWith("hotel:")));
     const shortCard = hotelPickCard({
       stay: { location: "دبي", checkInDate: "2026-12-01", checkOutDate: "2026-12-02", adults: 1 },
       picks: next.picks,

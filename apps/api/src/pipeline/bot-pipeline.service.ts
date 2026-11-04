@@ -32,6 +32,7 @@ import {
 import { formatMoneyMinor } from "../common/money";
 import {
   hotelPickRows,
+  HOTEL_MORE_BUTTON_BODY,
   HOTELS_MORE_ID,
   isHotelMoreRequest,
   type HotelPick,
@@ -1329,6 +1330,13 @@ export class BotPipelineService {
       conversationId: input.conversationId,
       card: input.card,
     });
+    if (!input.card.hasMore) return;
+    await this.replyWithChoiceButtons({
+      organizationId: input.organizationId,
+      conversationId: input.conversationId,
+      body: HOTEL_MORE_BUTTON_BODY,
+      buttons: [{ id: HOTELS_MORE_ID, title: "المزيد" }],
+    });
   }
 
   private async replyWithChoiceButtons(input: {
@@ -1444,7 +1452,7 @@ export class BotPipelineService {
     );
     if ((account?.channelType || "whatsapp") !== "whatsapp") return;
 
-    const rows = hotelPickRows(input.card.picks, input.card.hasMore);
+    const rows = hotelPickRows(input.card.picks);
     const send = await sendWhatsAppInteractiveList({
       phoneNumberId: account?.phoneNumberId || "mock_phone",
       accessToken: account?.accessTokenEnc || "mock",

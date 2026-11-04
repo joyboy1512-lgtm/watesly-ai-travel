@@ -133,7 +133,6 @@ export function hotelResultPage(input: {
   pageSize?: number;
 }): { picks: HotelPick[]; offset: number; hasMore: boolean; total: number } {
   const offset = Math.max(0, Math.floor(input.offset || 0));
-  const pageSize = Math.max(1, Math.floor(input.pageSize || WHATSAPP_HOTEL_PICK_ROWS));
   const rows: HotelPick[] = [];
   for (const hotel of input.hotels || []) {
     const id = String(hotel.id || "").trim();
@@ -148,13 +147,35 @@ export function hotelResultPage(input: {
       distanceToCenterLabel: hotel.distanceToCenterLabel,
     });
   }
-  const picks = rows.slice(offset, offset + pageSize);
+  const limit = Math.max(1, Math.floor(input.pageSize || WHATSAPP_HOTEL_PICK_ROWS));
+  const remaining = rows.slice(offset);
+  const hasMore = remaining.length > limit;
+  const count = hasMore ? Math.max(1, limit - 1) : remaining.length;
+  const picks = remaining.slice(0, count);
   return {
     picks,
     offset,
     hasMore: offset + picks.length < rows.length,
     total: rows.length,
   };
+}
+
+const LRM = "\u200E";
+const RLM = "\u200F";
+const LRI = "\u2066";
+const PDI = "\u2069";
+
+function alignLine(text: string, dir: "ltr" | "rtl"): string {
+  return dir === "ltr" ? `${LRM}${text}` : `${RLM}${text}`;
+}
+
+function isolateLatin(value: string): string {
+  return /[A-Za-z]/.test(value) ? `${LRI}${value}${PDI}` : value;
+}
+
+function lineDirection(value: string): "ltr" | "rtl" {
+  const bare = value.replace(/[^\p{L}]/gu, "");
+  return /[\u0600-\u06FF]/.test(bare) ? "rtl" : "ltr";
 }
 
 function nightsBetween(checkIn?: string, checkOut?: string): number | null {
@@ -181,15 +202,17 @@ function boldLabel(value: string): string {
 
 function hotelBlock(pick: HotelPick, nights: number | null, includeDistance: boolean): string {
   const stars = pick.stars ? ` ★${pick.stars}` : "";
-  const lines = [`🏨 ${boldLabel(pick.name)}${stars}`];
+  const name = `🏨 ${boldLabel(pick.name)}${stars}`;
+  const lines = [alignLine(name, lineDirection(pick.name))];
   if (pick.priceFrom != null && Number.isFinite(pick.priceFrom)) {
     const amount = pick.priceFrom.toFixed(2);
     const money = pick.currency ? `${pick.currency} ${amount}` : amount;
-    lines.push(`💰 السعر يبدأ من ${boldLabel(money)}`);
+    lines.push(alignLine(`💰 السعر يبدأ من ${isolateLatin(boldLabel(money))}`, "rtl"));
   }
-  if (nights) lines.push(nightsLine(nights));
+  if (nights) lines.push(alignLine(nightsLine(nights), "rtl"));
   if (includeDistance && pick.distanceToCenterLabel) {
-    lines.push(`📍 ${pick.distanceToCenterLabel}`);
+    const distance = `📍 ${pick.distanceToCenterLabel}`;
+    lines.push(alignLine(distance, lineDirection(distance)));
   }
   return lines.join("\n");
 }
@@ -203,12 +226,12 @@ export function hotelPickCard(input: {
   const nights = nightsBetween(stay.checkInDate, stay.checkOutDate);
   const intro: string[] = [];
   const location = String(stay.location || "").trim();
-  if (location) intro.push(`📍 الوجهة: ${boldLabel(location)}`);
+  if (location) intro.push(alignLine(`📍 الوجهة: ${isolateLatin(boldLabel(location))}`, "rtl"));
   const checkIn = formatStayDate(stay.checkInDate);
   const checkOut = formatStayDate(stay.checkOutDate);
-  if (checkIn) intro.push(`📅 الدخول: ${checkIn}`);
-  if (checkOut) intro.push(`📅 المغادرة: ${checkOut}`);
-  intro.push(`👥 النزلاء: ${partyLabel(stay.adults, stay.children)}`);
+  if (checkIn) intro.push(alignLine(`📅 الدخول: ${checkIn}`, "rtl"));
+  if (checkOut) intro.push(alignLine(`📅 المغادرة: ${checkOut}`, "rtl"));
+  intro.push(alignLine(`👥 النزلاء: ${partyLabel(stay.adults, stay.children)}`, "rtl"));
 
   const compose = (includeDistance: boolean) =>
     [intro.join("\n"), ...input.picks.map((pick) => hotelBlock(pick, nights, includeDistance))]
@@ -220,9 +243,22 @@ export function hotelPickCard(input: {
   return {
     header: "الفنادق",
     body,
-    footer: input.hasMore ? "حد واتساب 10 فنادق. اضغط المزيد" : undefined,
     button: "اختر الفندق",
   };
+}
+
+export function hotelPickRows(
+  picks: HotelPick[],
+  hasMore: boolean,
+): Array<{ id: string; title: string; description?: string }> {
+  const room = hasMore ? WHATSAPP_HOTEL_PICK_ROWS - 1 : WHATSAPP_HOTEL_PICK_ROWS;
+  const rows = picks.slice(0, room).map((pick) => ({
+    id: `hotel:${pick.id}`,
+    title: pick.name,
+    description: hotelPickDescription(pick) || undefined,
+  }));
+  if (hasMore) rows.push({ id: HOTELS_MORE_ID, title: "المزيد" });
+  return rows;
 }
 
 export function isHotelMoreRequest(text: string): boolean {

@@ -118,6 +118,7 @@ describe("WhatsApp commerce payloads", () => {
     assert.equal(messages[0]?.replyId, "hotel:hb-99");
     assert.equal(parseHotelPickRowId(messages[0]?.replyId), "hb-99");
     assert.equal(parseHotelPickRowId("not-a-hotel"), null);
+    assert.equal(parseHotelPickRowId("hotels:more"), null);
   });
 
   it("parses an inbound WhatsApp catalog order", () => {

@@ -5,7 +5,6 @@ import {
   sendChannelMedia,
   sendChannelText,
   channelPeerId,
-  hotelPickRowId,
   sendWhatsAppCatalogCta,
   sendWhatsAppInteractiveButtons,
   sendWhatsAppInteractiveList,
@@ -32,7 +31,7 @@ import {
 } from "../common/provider-runtime";
 import { formatMoneyMinor } from "../common/money";
 import {
-  hotelPickDescription,
+  hotelPickRows,
   HOTELS_MORE_ID,
   isHotelMoreRequest,
   type HotelPick,
@@ -162,14 +161,6 @@ export class BotPipelineService {
         }).catch((err) => {
           console.error("[pipeline] hotel pick list failed", err);
         });
-        if (hotelCard.hasMore) {
-          await this.replyWithChoiceButtons({
-            organizationId: input.organizationId,
-            conversationId: input.conversationId,
-            body: "للفنادق التالية اضغط المزيد.",
-            buttons: [{ id: HOTELS_MORE_ID, title: "المزيد" }],
-          }).catch((err) => console.error("[pipeline] more hotels button failed", err));
-        }
       }
       if (accountChannel === "whatsapp" && !aiResult.handoff) {
         for (const list of aiResult.choiceLists || []) {
@@ -1239,14 +1230,6 @@ export class BotPipelineService {
           conversationId: input.conversationId,
           card: page.card,
         });
-        if (page.card.hasMore) {
-          await this.replyWithChoiceButtons({
-            organizationId: input.organizationId,
-            conversationId: input.conversationId,
-            body: "للفنادق التالية اضغط المزيد.",
-            buttons: [{ id: HOTELS_MORE_ID, title: "المزيد" }],
-          });
-        }
         return { stop: true, ui: { replies: [] } };
       }
     }
@@ -1428,6 +1411,7 @@ export class BotPipelineService {
       footer?: string;
       button: string;
       picks: HotelPick[];
+      hasMore: boolean;
     };
   }) {
     const { conversation, account } = await this.resolveWhatsAppAccount(
@@ -1436,11 +1420,7 @@ export class BotPipelineService {
     );
     if ((account?.channelType || "whatsapp") !== "whatsapp") return;
 
-    const rows = input.card.picks.map((pick) => ({
-      id: hotelPickRowId(pick.id),
-      title: pick.name,
-      description: hotelPickDescription(pick) || undefined,
-    }));
+    const rows = hotelPickRows(input.card.picks, input.card.hasMore);
     const send = await sendWhatsAppInteractiveList({
       phoneNumberId: account?.phoneNumberId || "mock_phone",
       accessToken: account?.accessTokenEnc || "mock",

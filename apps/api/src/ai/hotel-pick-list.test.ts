@@ -5,6 +5,7 @@ import {
   hotelPickCustomerText,
   hotelPickDescription,
   hotelPickListBody,
+  hotelPickRows,
   hotelResultPage,
   isHotelMoreRequest,
   visibleHotelPicks,
@@ -87,10 +88,10 @@ describe("visible hotel picks", () => {
     assert.match(hotelPickListBody("short"), /المزيد/);
     assert.doesNotMatch(hotelPickListBody(null), /10/);
     const page = hotelResultPage({ hotels, offset: 0 });
-    assert.equal(page.picks.length, 10);
+    assert.equal(page.picks.length, 9);
     assert.equal(page.hasMore, true);
-    const next = hotelResultPage({ hotels, offset: 10 });
-    assert.equal(next.picks.length, 2);
+    const next = hotelResultPage({ hotels, offset: 9 });
+    assert.equal(next.picks.length, 3);
     assert.equal(next.hasMore, false);
     const card = hotelPickCard({
       stay: {
@@ -104,23 +105,42 @@ describe("visible hotel picks", () => {
       hasMore: true,
     });
     assert.match(card.body, /📍 الوجهة: \*مكة\*/);
-    assert.match(card.body, /📅 الدخول: 1 ديسمبر 2026\n📅 المغادرة: 4 ديسمبر 2026/);
+    assert.match(card.body, /الدخول: 1 ديسمبر 2026/);
+    assert.match(card.body, /المغادرة: 4 ديسمبر 2026/);
+    const entryAt = card.body.indexOf("الدخول:");
+    const leaveAt = card.body.indexOf("المغادرة:");
+    assert.ok(entryAt >= 0 && leaveAt > entryAt);
     assert.match(card.body, /👥 النزلاء: بالغان وطفل واحد/);
     assert.match(card.body, /🏨 \*فندق 1\* ★4/);
-    assert.match(card.body, /💰 السعر يبدأ من \*KWD 20\.00\*/);
+    assert.match(card.body, /السعر يبدأ من/);
+    assert.match(card.body, /KWD 20\.00/);
     assert.match(card.body, /للإقامة 3 ليالٍ/);
     assert.doesNotMatch(card.body, /1\. فندق/);
     assert.equal(card.button, "اختر الفندق");
-    assert.ok((card.footer || "").length <= 60);
-    assert.match(card.footer || "", /المزيد/);
+    assert.equal(card.footer, undefined);
+    assert.doesNotMatch(card.body, /اضغط المزيد/);
+    assert.match(card.body, /\u200F🏨 \*فندق 1\*/);
+    assert.match(card.body, /\u200F💰 السعر يبدأ من/);
+    const english = hotelPickCard({
+      stay: { location: "القاهرة", checkInDate: "2026-11-20", checkOutDate: "2026-11-23", adults: 2 },
+      picks: [{ id: "sol", name: "Sol Pyramids Inn", stars: 4, priceFrom: 120.49, currency: "KWD" }],
+      hasMore: true,
+    });
+    assert.match(english.body, /\u200E🏨 \*Sol Pyramids Inn\*/);
+    assert.match(english.body, /\u200F💰 السعر يبدأ من \u2066\*KWD 120\.49\*/);
+    const rows = hotelPickRows(page.picks, true);
+    assert.equal(rows.length, 10);
+    assert.equal(rows[9]?.id, "hotels:more");
+    assert.equal(rows[9]?.title, "المزيد");
     const shortCard = hotelPickCard({
       stay: { location: "دبي", checkInDate: "2026-12-01", checkOutDate: "2026-12-02", adults: 1 },
       picks: next.picks,
       hasMore: false,
     });
-    assert.match(shortCard.body, /📅 الدخول: 1 ديسمبر 2026\n📅 المغادرة: 2 ديسمبر 2026/);
+    assert.match(shortCard.body, /الدخول: 1 ديسمبر 2026/);
+    assert.match(shortCard.body, /المغادرة: 2 ديسمبر 2026/);
     assert.match(shortCard.body, /👥 النزلاء: بالغ واحد/);
-    assert.match(shortCard.body, /🏨 \*فندق 11\*/);
+    assert.match(shortCard.body, /🏨 \*فندق 10\*/);
     assert.match(shortCard.body, /للإقامة ليلة واحدة/);
     assert.doesNotMatch(shortCard.body, /اكتب/);
     assert.equal(shortCard.footer, undefined);

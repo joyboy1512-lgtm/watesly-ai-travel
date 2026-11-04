@@ -243,6 +243,7 @@ export function buildInteractiveButtonsPayload(input: {
   to: string;
   body: string;
   buttons: InteractiveButton[];
+  header?: string;
 }) {
   const buttons = input.buttons.slice(0, 3).flatMap((button) => {
     const id = clipChars(button.id, 200);
@@ -250,11 +251,13 @@ export function buildInteractiveButtonsPayload(input: {
     if (!id || !title) return [];
     return [{ type: "reply" as const, reply: { id, title } }];
   });
+  const header = input.header ? clipChars(input.header, 60) : "";
   return {
     to: input.to,
     type: "interactive" as const,
     interactive: {
       type: "button" as const,
+      ...(header ? { header: { type: "text" as const, text: header } } : {}),
       body: { text: clipMultiline(input.body, 1024) || "اختر" },
       action: { buttons },
     },
@@ -267,6 +270,7 @@ export async function sendWhatsAppInteractiveButtons(input: {
   to: string;
   body: string;
   buttons: InteractiveButton[];
+  header?: string;
 }): Promise<SendResult> {
   const payload = buildInteractiveButtonsPayload(input);
   if (!payload.interactive.action.buttons.length) {

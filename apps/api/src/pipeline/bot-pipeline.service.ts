@@ -31,8 +31,9 @@ import {
 } from "../common/provider-runtime";
 import { formatMoneyMinor } from "../common/money";
 import {
+  hotelCardButtons,
   hotelPickRows,
-  HOTEL_MORE_BUTTON_BODY,
+  HOTELS_CHOOSE_ID,
   HOTELS_MORE_ID,
   isHotelMoreRequest,
   type HotelPick,
@@ -155,21 +156,13 @@ export class BotPipelineService {
         });
       }
       if (hotelCard) {
-        await this.replyWithHotelPicks({
+        await this.replyWithHotelCard({
           organizationId: input.organizationId,
           conversationId: input.conversationId,
           card: hotelCard,
         }).catch((err) => {
-          console.error("[pipeline] hotel pick list failed", err);
+          console.error("[pipeline] hotel card failed", err);
         });
-        if (hotelCard.hasMore) {
-          await this.replyWithChoiceButtons({
-            organizationId: input.organizationId,
-            conversationId: input.conversationId,
-            body: HOTEL_MORE_BUTTON_BODY,
-            buttons: [{ id: HOTELS_MORE_ID, title: "المزيد" }],
-          }).catch((err) => console.error("[pipeline] more hotels button failed", err));
-        }
       }
       if (accountChannel === "whatsapp" && !aiResult.handoff) {
         for (const list of aiResult.choiceLists || []) {
@@ -1218,6 +1211,25 @@ export class BotPipelineService {
       !input.hotelPickId &&
       !passport &&
       !passportFailed &&
+      input.replyId === HOTELS_CHOOSE_ID
+    ) {
+      const page = await this.travelAi.currentHotelPage({
+        organizationId: input.organizationId,
+        conversationId: input.conversationId,
+      });
+      if (page) {
+        await this.replyWithHotelPicks({
+          organizationId: input.organizationId,
+          conversationId: input.conversationId,
+          card: { ...page.card, body: "اختر أحد الفنادق." },
+        });
+        return { stop: true, ui: { replies: [] } };
+      }
+    }
+    if (
+      !input.hotelPickId &&
+      !passport &&
+      !passportFailed &&
       (input.replyId === HOTELS_MORE_ID || isHotelMoreRequest(input.text))
     ) {
       const page = await this.travelAi.advanceHotelPage({
@@ -1234,19 +1246,11 @@ export class BotPipelineService {
         return { stop: true, ui: { replies: [] } };
       }
       if (page) {
-        await this.replyWithHotelPicks({
+        await this.replyWithHotelCard({
           organizationId: input.organizationId,
           conversationId: input.conversationId,
           card: page.card,
         });
-        if (page.card.hasMore) {
-          await this.replyWithChoiceButtons({
-            organizationId: input.organizationId,
-            conversationId: input.conversationId,
-            body: HOTEL_MORE_BUTTON_BODY,
-            buttons: [{ id: HOTELS_MORE_ID, title: "المزيد" }],
-          });
-        }
         return { stop: true, ui: { replies: [] } };
       }
     }
@@ -1329,11 +1333,30 @@ export class BotPipelineService {
     });
   }
 
+  private async replyWithHotelCard(input: {
+    organizationId: string;
+    conversationId: string;
+    card: {
+      header: string;
+      body: string;
+      hasMore: boolean;
+    };
+  }) {
+    await this.replyWithChoiceButtons({
+      organizationId: input.organizationId,
+      conversationId: input.conversationId,
+      header: input.card.header,
+      body: input.card.body,
+      buttons: hotelCardButtons(input.card.hasMore),
+    });
+  }
+
   private async replyWithChoiceButtons(input: {
     organizationId: string;
     conversationId: string;
     body: string;
     buttons: Array<{ id: string; title: string }>;
+    header?: string;
   }) {
     const { conversation, account } = await this.resolveWhatsAppAccount(
       input.conversationId,
@@ -1344,6 +1367,7 @@ export class BotPipelineService {
       phoneNumberId: account?.phoneNumberId || "mock_phone",
       accessToken: account?.accessTokenEnc || "mock",
       to: channelPeerId(conversation.contact.waId),
+      header: input.header,
       body: input.body,
       buttons: input.buttons,
     });

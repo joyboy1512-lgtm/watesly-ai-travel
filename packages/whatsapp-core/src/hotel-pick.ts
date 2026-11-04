@@ -7,7 +7,7 @@ export function hotelPickRowId(hotelId: string): string {
 
 export function parseHotelPickRowId(id?: string): string | null {
   const raw = String(id || "").trim();
-  if (!raw.startsWith(HOTEL_PICK_ID_PREFIX)) return null;
+    if (!raw.startsWith(HOTEL_PICK_ID_PREFIX) || raw.startsWith("hotels:")) return null;
   const hotelId = raw.slice(HOTEL_PICK_ID_PREFIX.length).trim();
   if (!hotelId || hotelId.length > 180) return null;
   return hotelId;

@@ -1,3 +1,5 @@
+import { isBareCityQuery } from "./hotel-result-rank";
+
 export const WHATSAPP_HOTEL_PICK_ROWS = 10;
 export const HOTELS_MORE_ID = "hotels:more";
 
@@ -149,7 +151,9 @@ export function hotelResultPage(input: {
   }
   const limit = Math.max(1, Math.floor(input.pageSize || WHATSAPP_HOTEL_PICK_ROWS));
   const remaining = rows.slice(offset);
-  const picks = remaining.slice(0, limit);
+  const reserveMore = remaining.length > limit;
+  const count = reserveMore ? Math.max(1, limit - 1) : Math.min(limit, remaining.length);
+  const picks = remaining.slice(0, count);
   return {
     picks,
     offset,
@@ -203,10 +207,26 @@ function boldLabel(value: string): string {
   return clean ? `*${clean}*` : "";
 }
 
+/** The stored distance is to the city center or a landmark, not to the city name. */
+export function distanceAnchor(location: string): string {
+  const place = location.trim();
+  if (!place) return "";
+  if (/الحرم النبوي|المسجد النبوي|الحرم المدني/.test(place)) return "الحرم النبوي";
+  if (/الحرم المكي|المسجد الحرام|الحرم/.test(place)) return "الحرم المكي";
+  const city = place
+    .replace(/^(مدينة|مدينه)\s+/, "")
+    .replace(/\s+المكرمة$|\s+المكرمه$/i, "")
+    .trim();
+  if (/^(مكة|مكه|mecca|makkah)$/i.test(city)) return "الحرم المكي";
+  if (isBareCityQuery(place)) return `مركز ${city}`;
+  return place;
+}
+
 function distanceLine(label: string, place: string): string {
   const measure = `${LRI}${label}${PDI}`;
-  const spot = place.trim();
-  const text = spot ? `📍 يبعد ${measure} عن ${isolateLatin(spot)}` : `📍 ${measure}`;
+  const spot = distanceAnchor(place);
+  const named = spot ? isolateLatin(spot) : "";
+  const text = named ? `📍 يبعد ${measure} عن ${named}` : `📍 ${measure}`;
   return `${RLM}${text}`;
 }
 
@@ -267,12 +287,16 @@ export function hotelPickCard(input: {
 
 export function hotelPickRows(
   picks: HotelPick[],
+  hasMore = false,
 ): Array<{ id: string; title: string; description?: string }> {
-  return picks.slice(0, WHATSAPP_HOTEL_PICK_ROWS).map((pick) => ({
+  const room = hasMore ? WHATSAPP_HOTEL_PICK_ROWS - 1 : WHATSAPP_HOTEL_PICK_ROWS;
+  const rows = picks.slice(0, room).map((pick) => ({
     id: `hotel:${pick.id}`,
     title: pick.name,
     description: hotelPickDescription(pick) || undefined,
   }));
+  if (hasMore) rows.push({ id: HOTELS_MORE_ID, title: "المزيد", description: "الفنادق التالية" });
+  return rows;
 }
 
 export function isHotelMoreRequest(text: string): boolean {

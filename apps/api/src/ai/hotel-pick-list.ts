@@ -149,9 +149,7 @@ export function hotelResultPage(input: {
   }
   const limit = Math.max(1, Math.floor(input.pageSize || WHATSAPP_HOTEL_PICK_ROWS));
   const remaining = rows.slice(offset);
-  const hasMore = remaining.length > limit;
-  const count = hasMore ? Math.max(1, limit - 1) : remaining.length;
-  const picks = remaining.slice(0, count);
+  const picks = remaining.slice(0, limit);
   return {
     picks,
     offset,
@@ -247,18 +245,17 @@ export function hotelPickCard(input: {
   };
 }
 
+/** Short label above the المزيد button. No extra instruction sentence. */
+export const HOTEL_MORE_BUTTON_BODY = "المزيد";
+
 export function hotelPickRows(
   picks: HotelPick[],
-  hasMore: boolean,
 ): Array<{ id: string; title: string; description?: string }> {
-  const room = hasMore ? WHATSAPP_HOTEL_PICK_ROWS - 1 : WHATSAPP_HOTEL_PICK_ROWS;
-  const rows = picks.slice(0, room).map((pick) => ({
+  return picks.slice(0, WHATSAPP_HOTEL_PICK_ROWS).map((pick) => ({
     id: `hotel:${pick.id}`,
     title: pick.name,
     description: hotelPickDescription(pick) || undefined,
   }));
-  if (hasMore) rows.push({ id: HOTELS_MORE_ID, title: "المزيد", description: undefined });
-  return rows;
 }
 
 export function isHotelMoreRequest(text: string): boolean {

@@ -32,6 +32,7 @@ import {
 import { formatMoneyMinor } from "../common/money";
 import {
   hotelPickRows,
+  HOTEL_MORE_BUTTON_BODY,
   HOTELS_MORE_ID,
   isHotelMoreRequest,
   type HotelPick,
@@ -161,6 +162,14 @@ export class BotPipelineService {
         }).catch((err) => {
           console.error("[pipeline] hotel pick list failed", err);
         });
+        if (hotelCard.hasMore) {
+          await this.replyWithChoiceButtons({
+            organizationId: input.organizationId,
+            conversationId: input.conversationId,
+            body: HOTEL_MORE_BUTTON_BODY,
+            buttons: [{ id: HOTELS_MORE_ID, title: "المزيد" }],
+          }).catch((err) => console.error("[pipeline] more hotels button failed", err));
+        }
       }
       if (accountChannel === "whatsapp" && !aiResult.handoff) {
         for (const list of aiResult.choiceLists || []) {
@@ -1230,6 +1239,14 @@ export class BotPipelineService {
           conversationId: input.conversationId,
           card: page.card,
         });
+        if (page.card.hasMore) {
+          await this.replyWithChoiceButtons({
+            organizationId: input.organizationId,
+            conversationId: input.conversationId,
+            body: HOTEL_MORE_BUTTON_BODY,
+            buttons: [{ id: HOTELS_MORE_ID, title: "المزيد" }],
+          });
+        }
         return { stop: true, ui: { replies: [] } };
       }
     }
@@ -1420,7 +1437,7 @@ export class BotPipelineService {
     );
     if ((account?.channelType || "whatsapp") !== "whatsapp") return;
 
-    const rows = hotelPickRows(input.card.picks, input.card.hasMore);
+    const rows = hotelPickRows(input.card.picks);
     const send = await sendWhatsAppInteractiveList({
       phoneNumberId: account?.phoneNumberId || "mock_phone",
       accessToken: account?.accessTokenEnc || "mock",

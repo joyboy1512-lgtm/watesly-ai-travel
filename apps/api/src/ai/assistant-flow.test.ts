@@ -9,8 +9,10 @@ import {
   holdCustomerMessage,
   hotelRoomItems,
   hotelRoomSelection,
+  refundLabel,
   roomByTypedName,
   roomChoiceBody,
+  roomTermsText,
   nextPhotoSlice,
   parseAssistantAction,
   selectItem,
@@ -147,5 +149,57 @@ describe("assistant booking flow", () => {
     });
     assert.match(line, /الحرم المكي/);
     assert.match(line, /2026-12-01/);
+  });
+
+  it("shows refund deadline, supplier terms, and notes", () => {
+    const rooms = hotelRoomItems({
+      providerKey: "hotelbeds",
+      providerOfferRef: "hb-9",
+      description: "صفوة",
+      costAmountMinor: 100_000,
+      sellAmountMinor: 120_000,
+      currency: "KWD",
+      raw: {
+        name: "صفوة",
+        rateOptions: [
+          {
+            rateKey: "rk-1",
+            roomName: "غرفة مزدوجة",
+            boardName: "إفطار",
+            net: 100,
+            freeCancellation: true,
+            cancellationPolicies: [{ amount: 40, from: "2026-11-18T23:59:00+03:00", currency: "KWD" }],
+            rateComments: "لا يُسمح بالأطفال في هذه الغرفة.",
+            promotions: [{ name: "عرض الإقامة", remark: "خصم الإقامة الطويلة" }],
+            paymentType: "AT_WEB",
+            taxes: {
+              allIncluded: false,
+              items: [{ type: "رسوم المنتجع", amount: 5, currency: "KWD", included: false }],
+            },
+          },
+          {
+            rateKey: "rk-2",
+            roomName: "جناح",
+            boardName: "غرفة فقط",
+            net: 80,
+            freeCancellation: false,
+          },
+        ],
+      },
+    });
+    const refundable = rooms.find((room) => room.snapshot.roomName === "غرفة مزدوجة");
+    const fixed = rooms.find((room) => room.snapshot.roomName === "جناح");
+    assert.equal(refundLabel(refundable!), "مستردة حتى 18 نوفمبر 2026");
+    assert.equal(refundLabel(fixed!), "غير مستردة");
+    const terms = roomTermsText(rooms);
+    assert.match(terms, /مستردة حتى 18 نوفمبر 2026/);
+    assert.match(terms, /بعد 18 نوفمبر 2026 تُخصم 40 KWD/);
+    assert.match(terms, /الشروط: لا يُسمح بالأطفال/);
+    assert.match(terms, /ملاحظات: خصم الإقامة الطويلة/);
+    assert.match(terms, /غير مستردة/);
+    assert.match(terms, /لا توجد شروط إضافية من المورّد/);
+    assert.match(terms, /رسوم غير مشمولة: رسوم المنتجع 5 KWD/);
+    assert.match(terms, /الدفع مقدماً/);
+    assert.match(holdCustomerMessage([refundable!]), /مستردة حتى 18 نوفمبر 2026/);
   });
 });

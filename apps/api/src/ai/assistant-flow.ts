@@ -82,6 +82,14 @@ type RateLike = {
   sellingRate?: number;
   currency?: string;
   freeCancellation?: boolean;
+  paymentType?: string;
+  rateComments?: string;
+  cancellationPolicies?: Array<{ amount?: number; from?: string; currency?: string }>;
+  promotions?: Array<{ name?: string; remark?: string }>;
+  taxes?: {
+    allIncluded?: boolean;
+    items?: Array<{ type?: string; amount?: number; currency?: string; included?: boolean }>;
+  };
 };
 
 type OfferLike = {
@@ -170,6 +178,106 @@ export type RoomSelection = {
   truncated: boolean;
 };
 
+const ARABIC_MONTHS = [
+  "يناير",
+  "فبراير",
+  "مارس",
+  "أبريل",
+  "مايو",
+  "يونيو",
+  "يوليو",
+  "أغسطس",
+  "سبتمبر",
+  "أكتوبر",
+  "نوفمبر",
+  "ديسمبر",
+];
+
+function policyDate(value?: string): string {
+  const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(value || "").trim());
+  if (!match) return "";
+  const month = ARABIC_MONTHS[Number(match[2]) - 1];
+  return month ? `${Number(match[3])} ${month} ${match[1]}` : "";
+}
+
+function clipNote(value: string, max: number): string {
+  const clean = value.replace(/\s+/g, " ").trim();
+  if (clean.length <= max) return clean;
+  return `${clean.slice(0, max - 1)}…`;
+}
+
+function paidPolicy(rate: RateLike) {
+  return (rate.cancellationPolicies || []).find((policy) => Number(policy.amount) > 0);
+}
+
+function extraCharges(rate: RateLike): string {
+  const items = (rate.taxes?.items || []).filter(
+    (item) => item.included === false && Number(item.amount) > 0,
+  );
+  if (items.length) {
+    return items
+      .map((item) => `${item.type || "رسوم"} ${item.amount} ${item.currency || ""}`.trim())
+      .join(" · ");
+  }
+  return rate.taxes?.allIncluded ? "الرسوم مشمولة في السعر" : "";
+}
+
+function paymentLine(value?: string): string {
+  const key = String(value || "").toUpperCase();
+  if (key === "AT_HOTEL") return "الدفع في الفندق";
+  if (key === "AT_WEB") return "الدفع مقدماً";
+  return "";
+}
+
+/** What the customer can recover, from the supplier policy already stored on the rate. */
+export function refundLabel(item: HoldItem): string {
+  const free = item.snapshot.freeCancellation === true;
+  const from = policyDate(String(item.snapshot.cancelFrom || ""));
+  if (free && from) return `مستردة حتى ${from}`;
+  if (free) return "مستردة";
+  return "غير مستردة";
+}
+
+export function roomTermsText(items: HoldItem[]): string {
+  const blocks = items.map((item) => {
+    const name = String(item.snapshot.roomName || "الغرفة");
+    const lines = [`🏨 *${name}*`, `الاسترجاع: ${refundLabel(item)}`];
+    const amount = Number(item.snapshot.cancelAmount);
+    const from = policyDate(String(item.snapshot.cancelFrom || ""));
+    if (Number.isFinite(amount) && amount > 0 && from) {
+      const currency = String(item.snapshot.cancelCurrency || item.currency || "");
+      lines.push(`بعد ${from} تُخصم ${amount} ${currency}`.trim());
+    }
+    const terms = String(item.snapshot.rateNote || "").trim();
+    lines.push(terms ? `الشروط: ${terms}` : "الشروط: لا توجد شروط إضافية من المورّد.");
+    const extras = String(item.snapshot.extras || "").trim();
+    if (extras) lines.push(`ملاحظات: ${extras}`);
+    const charges = String(item.snapshot.taxNote || "").trim();
+    if (charges) lines.push(charges.startsWith("الرسوم") ? charges : `رسوم غير مشمولة: ${charges}`);
+    const payment = String(item.snapshot.paymentNote || "").trim();
+    if (payment) lines.push(payment);
+    return lines.join("\n");
+  });
+  if (!blocks.length) return "";
+  return ["شروط الغرف والاسترجاع كما وصلت من المورّد:", ...blocks].join("\n\n");
+}
+
+export function roomTermsPages(items: HoldItem[], max = 3500): string[] {
+  const text = roomTermsText(items);
+  if (!text) return [];
+  if (text.length <= max) return [text];
+  const pages: string[] = [];
+  let rest = text;
+  while (rest.length > max) {
+    const cut = rest.lastIndexOf("\n\n", max);
+    const at = cut > 200 ? cut : max;
+    pages.push(rest.slice(0, at).trim());
+    rest = rest.slice(at).trim();
+  }
+  if (rest) pages.push(rest);
+  return pages;
+}
+
 export const ROOM_LIST_BODY =
   "اضغط على الغرفة لتسجيل طلب الحجز. التأكيد يتم من الموظف فقط.";
 
@@ -245,6 +353,12 @@ function collectHotelRooms(offer: OfferLike): HoldItem[] {
     const major = Number(rate.sellingRate || rate.net);
     const cost = Math.round(major * factor);
     const sell = scaledSell(cost, offerCost, offerSell);
+    const penalty = paidPolicy(rate);
+    const extras = (rate.promotions || [])
+      .map((promo) => promo.remark || promo.name || "")
+      .map((part) => part.trim())
+      .filter(Boolean)
+      .join(" · ");
     items.push({
       pickId: `room:${items.length}`,
       serviceType: "hotel",
@@ -265,6 +379,13 @@ function collectHotelRooms(offer: OfferLike): HoldItem[] {
         checkInDate: raw.checkInDate || "",
         checkOutDate: raw.checkOutDate || "",
         freeCancellation: Boolean(rate.freeCancellation),
+        cancelFrom: penalty?.from || "",
+        cancelAmount: Number(penalty?.amount) > 0 ? Number(penalty?.amount) : 0,
+        cancelCurrency: penalty?.currency || rate.currency || offer.currency,
+        rateNote: clipNote(String(rate.rateComments || ""), 400),
+        extras: clipNote(extras, 240),
+        taxNote: clipNote(extraCharges(rate), 240),
+        paymentNote: paymentLine(rate.paymentType),
       },
     });
   }
@@ -311,9 +432,9 @@ export function choiceRows(items: HoldItem[]) {
         ? `${item.snapshot.carrier || ""} ${item.snapshot.flightNumber}`.trim()
         : item.description,
     description: [
+      item.serviceType === "hotel" ? refundLabel(item) : "",
       item.snapshot.boardName ? String(item.snapshot.boardName) : "",
       moneyLabel(item.sellAmountMinor, item.currency),
-      item.snapshot.freeCancellation ? "إلغاء مجاني" : "",
     ]
       .filter(Boolean)
       .join(" · "),
@@ -478,9 +599,13 @@ export function holdCustomerMessage(items: HoldItem[]): string {
   const lines = items.map(
     (item) => `• ${item.description} — ${moneyLabel(item.sellAmountMinor, item.currency)}`,
   );
+  const terms = roomTermsText(items.filter((item) => item.serviceType === "hotel"));
   return [
     "تم تسجيل طلب الحجز وهو بانتظار تأكيد الموظف.",
     ...lines,
+    terms,
     "لن يُؤكَّد الحجز ولن يُصدر قبل مراجعة الفريق.",
-  ].join("\n");
+  ]
+    .filter(Boolean)
+    .join("\n");
 }

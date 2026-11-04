@@ -44,6 +44,7 @@ import {
   choiceRows,
   hotelRoomSelection,
   roomChoiceBody,
+  roomTermsPages,
   nextPhotoSlice,
   readAssistantState,
   transportItems,
@@ -163,6 +164,7 @@ export type TravelAiTurnResult = {
     body: string;
     button: string;
     rows: Array<{ id: string; title: string; description?: string }>;
+    notes?: string[];
   }>;
 };
 
@@ -491,6 +493,14 @@ export class TravelAiService {
           body: roomChoiceBody(assistant.roomsTruncated === true),
           button: "اختر الغرفة",
           rows: choiceRows(assistant.rooms),
+          notes: roomTermsPages(
+            assistant.rooms.slice(0, 10),
+            3500,
+          ).map((page, index, pages) =>
+            assistant.roomsTruncated && index === pages.length - 1
+              ? `${page}\n\nلبقية الأنواع اكتب اسم الغرفة، وتظهر شروطها مع طلب الحجز.`
+              : page,
+          ),
         });
       }
       if (pending.has("flights") && assistant.flights.length) {

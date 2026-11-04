@@ -7,6 +7,7 @@ import {
   hotelPickDescription,
   hotelPickListBody,
   hotelPickRows,
+  HOTEL_MORE_BUTTON_BODY,
   hotelResultPage,
   isHotelMoreRequest,
   visibleHotelPicks,
@@ -89,10 +90,10 @@ describe("visible hotel picks", () => {
     assert.match(hotelPickListBody("short"), /المزيد/);
     assert.doesNotMatch(hotelPickListBody(null), /10/);
     const page = hotelResultPage({ hotels, offset: 0 });
-    assert.equal(page.picks.length, 9);
+    assert.equal(page.picks.length, 10);
     assert.equal(page.hasMore, true);
-    const next = hotelResultPage({ hotels, offset: 9 });
-    assert.equal(next.picks.length, 3);
+    const next = hotelResultPage({ hotels, offset: 10 });
+    assert.equal(next.picks.length, 2);
     assert.equal(next.hasMore, false);
     assert.equal(distanceAnchor("القاهرة"), "مركز القاهرة");
     assert.equal(distanceAnchor("مكة"), "الحرم المكي");
@@ -155,12 +156,12 @@ describe("visible hotel picks", () => {
     });
     assert.match(full.body, /يبعد/);
     assert.match(full.body, /عن الحرم المكي/);
-    assert.match(full.body, /🏨 \*فندق 9\* ★4/);
-    const rows = hotelPickRows(page.picks, true);
+    assert.match(full.body, /🏨 \*فندق 10\* ★4/);
+    const rows = hotelPickRows(page.picks);
     assert.equal(rows.length, 10);
-    assert.equal(rows[9]?.id, "hotels:more");
-    assert.equal(rows[9]?.title, "المزيد");
-    assert.ok(rows.slice(0, 9).every((row) => row.id.startsWith("hotel:")));
+    assert.ok(rows.every((row) => row.id.startsWith("hotel:")));
+    assert.equal(rows.some((row) => row.id === "hotels:more"), false);
+    assert.equal(HOTEL_MORE_BUTTON_BODY.includes("المزيد"), false);
     const shortCard = hotelPickCard({
       stay: { location: "دبي", checkInDate: "2026-12-01", checkOutDate: "2026-12-02", adults: 1 },
       picks: next.picks,

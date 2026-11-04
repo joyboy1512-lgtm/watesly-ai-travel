@@ -28,8 +28,9 @@ import {
 import { mergeOrgAiSettings, readOrgAiSettings, type OrgAiSettings } from "./org-ai-settings";
 import { hotelCatalogEntry, serializeHotelDetailsForAi, serializeSearchResult } from "./tool-result-serializers";
 import {
+  hotelPickCard,
   hotelPickCustomerText,
-  visibleHotelPicks,
+  hotelResultPage,
   type HotelPick,
   type HotelPickLimit,
 } from "./hotel-pick-list";
@@ -147,6 +148,14 @@ export type TravelAiTurnResult = {
   remainingUsd?: number | null;
   hotelPicks?: HotelPick[];
   hotelPicksLimit?: HotelPickLimit;
+  hotelCard?: {
+    header: string;
+    body: string;
+    footer?: string;
+    button: string;
+    picks: HotelPick[];
+    hasMore: boolean;
+  };
   hotelPhotos?: HotelPhotoSet;
   morePhotos?: boolean;
   choiceLists?: Array<{
@@ -516,6 +525,7 @@ export class TravelAiService {
 
     let hotelPicks: HotelPick[] | undefined;
     let hotelPicksLimit: HotelPickLimit | undefined;
+    let hotelCard: TravelAiTurnResult["hotelCard"];
     if (
       !handoff &&
       toolsUsed.includes("search_hotels") &&
@@ -526,14 +536,28 @@ export class TravelAiService {
         select: { metadata: true },
       });
       const saved = readHotelSearchContext(fresh?.metadata);
-      const shown = visibleHotelPicks({
+      const page = hotelResultPage({
         hotels: saved.hotels,
         offset: saved.lastShownOffset,
-        shownCount: saved.lastShownCount,
       });
-      if (shown.picks.length) {
-        hotelPicks = shown.picks;
-        hotelPicksLimit = shown.limit;
+      if (page.picks.length) {
+        hotelPicks = page.picks;
+        hotelPicksLimit = page.hasMore ? "whatsapp" : null;
+        hotelCard = {
+          ...hotelPickCard({
+            stay: saved,
+            picks: page.picks,
+            hasMore: page.hasMore,
+          }),
+          picks: page.picks,
+          hasMore: page.hasMore,
+        };
+        if (
+          saved.lastShownOffset !== page.offset ||
+          saved.lastShownCount !== page.picks.length
+        ) {
+          await this.writeHotelWindow(thread.id, fresh?.metadata, page.offset, page.picks.length);
+        }
       }
     }
 
@@ -542,6 +566,7 @@ export class TravelAiService {
       message: text,
       hotelPicks,
       hotelPicksLimit,
+      hotelCard,
       hotelPhotos,
       morePhotos,
       choiceLists,
@@ -556,6 +581,63 @@ export class TravelAiService {
       remainingUsd:
         budget.limit == null ? null : Math.max(0, budget.limit - spentAfter),
     };
+  }
+
+  /** Next 10 hotels from the saved search, without another supplier search. */
+  async advanceHotelPage(input: {
+    organizationId: string;
+    conversationId: string;
+  }): Promise<
+    | { exhausted: true }
+    | {
+        exhausted: false;
+        card: NonNullable<TravelAiTurnResult["hotelCard"]>;
+      }
+    | null
+  > {
+    const thread = await this.findThread({
+      organizationId: input.organizationId,
+      channel: "whatsapp",
+      conversationId: input.conversationId,
+    });
+    if (!thread) return null;
+    const saved = readHotelSearchContext(thread.metadata);
+    const hotels = saved.hotels || [];
+    if (!hotels.length) return null;
+    const offset = Math.max(0, (saved.lastShownOffset || 0) + (saved.lastShownCount || 0));
+    const page = hotelResultPage({ hotels, offset });
+    if (!page.picks.length) return { exhausted: true };
+    await this.writeHotelWindow(thread.id, thread.metadata, page.offset, page.picks.length);
+    return {
+      exhausted: false,
+      card: {
+        ...hotelPickCard({ stay: saved, picks: page.picks, hasMore: page.hasMore }),
+        picks: page.picks,
+        hasMore: page.hasMore,
+      },
+    };
+  }
+
+  private async writeHotelWindow(
+    threadId: string,
+    metadata: unknown,
+    offset: number,
+    count: number,
+  ) {
+    const meta =
+      metadata && typeof metadata === "object"
+        ? { ...(metadata as Record<string, unknown>) }
+        : {};
+    const saved = readHotelSearchContext(meta);
+    meta.lastHotelSearch = {
+      ...saved,
+      lastShownOffset: offset,
+      lastShownCount: count,
+    };
+    await this.prisma.aiThread.update({
+      where: { id: threadId },
+      data: { metadata: asJson(meta) },
+    });
   }
 
   async getThread(input: {

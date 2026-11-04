@@ -463,7 +463,7 @@ export function hotelFollowUpText(state: AssistantState): string {
   const depart = trip.departDate || trip.checkInDate || "";
   const ret = trip.returnDate || trip.checkOutDate || "";
   const adults = trip.adults || confirmedTravelers(state).length || 1;
-  return `أريد فندقاً في ${place} من ${depart} إلى ${ret} لـ ${adults} بالغ. اسأل الأقرب أو الأرخص إذا لم أحدد.`;
+  return `أريد فندقاً في ${place} من ${depart} إلى ${ret} لـ ${adults} بالغ. ابحث بالأرخص مباشرة ولا تسأل الأقرب أم الأرخص.`;
 }
 
 export function transferFollowUpText(state: AssistantState): string {

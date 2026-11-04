@@ -68,13 +68,13 @@ const FUNCTION_TOOLS: Extract<AiToolDefinition, { type: "function" }>[] = [
         all: {
           type: "boolean",
           description:
-            "Set true when the customer says المزيد. Returns every hotel in the same search, not five. Keep sort=nearest for an area or point so the list stays everyone near that place. Use sort=cheapest only when the first list was by price.",
+            "Set true when the customer says المزيد. Returns every hotel in the same search, not five. Repeat the same sort as the first search.",
         },
         sort: {
           type: "string",
           enum: ["nearest", "cheapest"],
           description:
-            "nearest: hotels inside a short radius of the named place, closest first. cheapest: lowest price first inside the wider city search. Ask the customer which they want before the first search unless they already said الأقرب or الأرخص. For the Haram use location الحرم المكي or الحرم النبوي. Repeat the same sort with offset.",
+            "cheapest: a city and dates when the customer did not name a place to be beside. Search immediately and do not ask. nearest: only when they said قريب or الأقرب or بجوار a specific place; set location to that place. For the Haram use الحرم المكي or الحرم النبوي. Never ask الأقرب أم الأرخص for a plain city.",
         },
       },
       required: ["location", "checkInDate", "checkOutDate"],
@@ -334,11 +334,10 @@ export const TRAVEL_SYSTEM_INSTRUCTIONS = `أنت Travel AI لشركة سياح�
 
 عرض الفنادق — خطوتان إلزاميتان:
 
-ترتيب search_hotels — اسأل قبل أول بحث:
-- إذا سمّى العميل منطقة أو معلماً أو الحرم أو مدينة مثل مكة أو المدينة، ولم يقل «الأقرب» أو «الأرخص»، لا تستدعِ البحث. اسأل سؤالاً واحداً فقط:
-  «هل تريد الأقرب إلى {المكان} أم الأرخص؟»
-- إذا اختار الأقرب، أو قال من البداية «قريب» أو «الأقرب»: sort=nearest. للحرم المكي اجعل location=«الحرم المكي»، وللحرم النبوي location=«الحرم النبوي»، وإلا فاسم المكان كما قاله.
-- إذا اختار الأرخص، أو طلب الأرخص من البداية: sort=cheapest.
+ترتيب search_hotels — لا تسأل «الأقرب أم الأرخص»:
+- إذا ذكر العميل مدينة وتواريخ ولم يذكر مكاناً يريد أن يكون بجواره: استدعِ search_hotels فوراً مع sort=cheapest. لا تسأل ولا تعرض الخيارين.
+- إذا قال «قريب» أو «الأقرب» أو «بجوار» أو «بجانب» أو «ناحية» مكان معين: استدعِ search_hotels فوراً مع sort=nearest و location = ذلك المكان. للحرم المكي اجعل location=«الحرم المكي»، وللحرم النبوي location=«الحرم النبوي». لا تسأل.
+- إذا طلب الأرخص صراحة: sort=cheapest.
 - عندما يكتب العميل «المزيد» ولم تُعرض بقية الفنادق بعد: أعد search_hotels بنفس المكان والتواريخ والترتيب السابق مع all=true. لا تغيّر الأقرب إلى الأرخص ولا العكس. على واتساب لا تطلب الكتابة؛ زر المزيد يعرض 10 فنادق في كل بطاقة.
 - اعرض الفنادق بترتيب الأداة. لا تعِد ترتيبها.
 

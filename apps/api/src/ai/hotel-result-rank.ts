@@ -139,14 +139,29 @@ export function hotelsWithinRadius<T extends { raw?: unknown }>(
   });
 }
 
+function normalizePlace(value: string): string {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[أإآ]/g, "ا")
+    .replace(/ة/g, "ه")
+    .replace(/ى/g, "ي");
+}
+
+const BARE_CITY_KEYS = new Set([...BARE_CITIES].map((name) => normalizePlace(name)));
+
 export function isBareCityQuery(location: string): boolean {
-  const raw = location.trim().toLowerCase();
-  return raw.length > 0 && BARE_CITIES.has(raw);
+  const raw = normalizePlace(location)
+    .replace(/^(مدينه|city of)\s+/, "")
+    .replace(/\s+المكرمه$/, "")
+    .trim();
+  return raw.length > 0 && BARE_CITY_KEYS.has(raw);
 }
 
 /**
- * Area, neighborhood, landmark, or an explicit nearest request ranks by
- * distance. A city name alone, or an explicit cheapest request, stays on price.
+ * A city with dates stays on price. Distance is only for a named place the
+ * customer wants to be near, or an area that is not a bare city. A bare city
+ * stays on price even if the model asks for nearest.
  */
 export function resolveHotelSearchRank(
   explicit: unknown,
@@ -155,16 +170,16 @@ export function resolveHotelSearchRank(
   const asked = String(explicit ?? "")
     .trim()
     .toLowerCase();
-  if (asked === "nearest" || asked === "closest" || asked === "distance") {
-    return "nearest";
-  }
+  const loc = location.trim();
   if (asked === "cheapest" || asked === "price" || asked === "price_asc") {
     return "cheapest";
   }
-  const loc = location.trim();
+  if (isBareCityQuery(loc)) return "cheapest";
+  if (asked === "nearest" || asked === "closest" || asked === "distance") {
+    return "nearest";
+  }
   if (!loc) return "cheapest";
   if (AREA_HINT.test(loc)) return "nearest";
-  if (isBareCityQuery(loc)) return "cheapest";
   return "nearest";
 }
 

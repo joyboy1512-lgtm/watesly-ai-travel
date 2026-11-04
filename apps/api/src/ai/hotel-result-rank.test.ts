@@ -30,6 +30,9 @@ describe("resolveHotelSearchRank", () => {
     assert.equal(resolveHotelSearchRank("", "Dubai"), "cheapest");
     assert.equal(resolveHotelSearchRank(undefined, "CAI"), "cheapest");
     assert.equal(resolveHotelSearchRank(undefined, "مكة"), "cheapest");
+    assert.equal(resolveHotelSearchRank(undefined, "مكة المكرمة"), "cheapest");
+    assert.equal(resolveHotelSearchRank(undefined, "مدينة القاهرة"), "cheapest");
+    assert.equal(resolveHotelSearchRank("nearest", "مكة المكرمة"), "cheapest");
   });
 
   it("ranks a named area by distance", () => {
@@ -41,8 +44,10 @@ describe("resolveHotelSearchRank", () => {
     );
   });
 
-  it("lets an explicit sort win", () => {
-    assert.equal(resolveHotelSearchRank("nearest", "دبي"), "nearest");
+  it("keeps a city on price even when nearest is requested without a place", () => {
+    assert.equal(resolveHotelSearchRank("nearest", "دبي"), "cheapest");
+    assert.equal(resolveHotelSearchRank("nearest", "مكة"), "cheapest");
+    assert.equal(resolveHotelSearchRank("nearest", "برج خليفة"), "nearest");
     assert.equal(resolveHotelSearchRank("cheapest", "السالمية"), "cheapest");
   });
 });

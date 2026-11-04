@@ -6,6 +6,7 @@ import {
   hotelPickDescription,
   hotelPickListBody,
   hotelPickRows,
+  HOTEL_MORE_BUTTON_BODY,
   hotelResultPage,
   isHotelMoreRequest,
   visibleHotelPicks,
@@ -88,10 +89,10 @@ describe("visible hotel picks", () => {
     assert.match(hotelPickListBody("short"), /المزيد/);
     assert.doesNotMatch(hotelPickListBody(null), /10/);
     const page = hotelResultPage({ hotels, offset: 0 });
-    assert.equal(page.picks.length, 9);
+    assert.equal(page.picks.length, 10);
     assert.equal(page.hasMore, true);
-    const next = hotelResultPage({ hotels, offset: 9 });
-    assert.equal(next.picks.length, 3);
+    const next = hotelResultPage({ hotels, offset: 10 });
+    assert.equal(next.picks.length, 2);
     assert.equal(next.hasMore, false);
     const card = hotelPickCard({
       stay: {
@@ -128,10 +129,11 @@ describe("visible hotel picks", () => {
     });
     assert.match(english.body, /\u200E🏨 \*Sol Pyramids Inn\*/);
     assert.match(english.body, /\u200F💰 السعر يبدأ من \u2066\*KWD 120\.49\*/);
-    const rows = hotelPickRows(page.picks, true);
+    const rows = hotelPickRows(page.picks);
     assert.equal(rows.length, 10);
-    assert.equal(rows[9]?.id, "hotels:more");
-    assert.equal(rows[9]?.title, "المزيد");
+    assert.ok(rows.every((row) => row.id.startsWith("hotel:")));
+    assert.equal(HOTEL_MORE_BUTTON_BODY.includes("المزيد"), false);
+    assert.equal(HOTEL_MORE_BUTTON_BODY.trim(), HOTEL_MORE_BUTTON_BODY);
     const shortCard = hotelPickCard({
       stay: { location: "دبي", checkInDate: "2026-12-01", checkOutDate: "2026-12-02", adults: 1 },
       picks: next.picks,
@@ -140,7 +142,7 @@ describe("visible hotel picks", () => {
     assert.match(shortCard.body, /الدخول: 1 ديسمبر 2026/);
     assert.match(shortCard.body, /المغادرة: 2 ديسمبر 2026/);
     assert.match(shortCard.body, /👥 النزلاء: بالغ واحد/);
-    assert.match(shortCard.body, /🏨 \*فندق 10\*/);
+    assert.match(shortCard.body, /🏨 \*فندق 11\*/);
     assert.match(shortCard.body, /للإقامة ليلة واحدة/);
     assert.doesNotMatch(shortCard.body, /اكتب/);
     assert.equal(shortCard.footer, undefined);

@@ -2,6 +2,7 @@ import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import {
   buildCatalogCtaPayload,
+  buildInteractiveButtonsPayload,
   buildInteractiveListPayload,
   buildMultiProductPayload,
   buildSingleProductPayload,
@@ -151,5 +152,15 @@ describe("WhatsApp commerce payloads", () => {
     assert.equal(messages.length, 1);
     assert.match(messages[0]!.text || "", /طلب كتالوج/);
     assert.match(messages[0]!.text || "", /أريد هذا العرض/);
+  });
+
+  it("keeps an invisible button body and the button title", () => {
+    const payload = buildInteractiveButtonsPayload({
+      to: "96590053224",
+      body: "\u2060",
+      buttons: [{ id: "hotels:more", title: "المزيد" }],
+    });
+    assert.equal(payload.interactive.body.text, "\u2060");
+    assert.equal(payload.interactive.action.buttons[0]?.reply.title, "المزيد");
   });
 });

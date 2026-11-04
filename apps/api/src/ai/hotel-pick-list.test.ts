@@ -103,17 +103,24 @@ describe("visible hotel picks", () => {
       picks: page.picks.slice(0, 2),
       hasMore: true,
     });
-    assert.match(card.body, /^مكة\nمن 1 ديسمبر 2026 إلى 4 ديسمبر 2026\nبالغان وطفل واحد\n\n1\. /);
-    assert.match(card.body, /واتساب/);
+    assert.match(card.body, /📍 \*مكة\*/);
+    assert.match(card.body, /📅 من 1 ديسمبر 2026 إلى 4 ديسمبر 2026/);
+    assert.match(card.body, /👥 بالغان وطفل واحد/);
+    assert.match(card.body, /🏨 \*فندق 1\* ★4/);
+    assert.match(card.body, /💰 السعر يبدأ من \*KWD 20\.00\*/);
+    assert.match(card.body, /للإقامة 3 ليالٍ/);
+    assert.doesNotMatch(card.body, /1\. فندق/);
     assert.equal(card.button, "اختر الفندق");
     assert.ok((card.footer || "").length <= 60);
-    assert.equal(card.footer, "اضغط زر المزيد للفنادق التالية");
+    assert.match(card.footer || "", /المزيد/);
     const shortCard = hotelPickCard({
       stay: { location: "دبي", checkInDate: "2026-12-01", checkOutDate: "2026-12-02", adults: 1 },
       picks: next.picks,
       hasMore: false,
     });
-    assert.match(shortCard.body, /بالغ واحد/);
+    assert.match(shortCard.body, /👥 بالغ واحد/);
+    assert.match(shortCard.body, /🏨 \*فندق 11\*/);
+    assert.match(shortCard.body, /للإقامة ليلة واحدة/);
     assert.doesNotMatch(shortCard.body, /اكتب/);
     assert.equal(shortCard.footer, undefined);
     assert.equal(isHotelMoreRequest("المزيد"), true);

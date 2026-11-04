@@ -74,6 +74,15 @@ describe("WhatsApp commerce payloads", () => {
     assert.equal(Array.from(rows[0]!.description || "").length, 72);
     assert.equal(Array.from(payload.interactive.action.button).length, 20);
     assert.equal(rows[0]!.id, "hotel:hb-1");
+    const lined = buildInteractiveListPayload({
+      to: "96590053224",
+      body: "مكة\nمن 1 ديسمبر إلى 4 ديسمبر\nبالغان\n\n1. فندق الصفوة",
+      button: "اختر الفندق",
+      sectionTitle: "النتائج",
+      rows: [{ id: "hotel:hb-1", title: "فندق الصفوة" }],
+    });
+    assert.match(lined.interactive.body.text, /مكة\nمن 1 ديسمبر/);
+    assert.match(lined.interactive.body.text, /\n1\. فندق الصفوة/);
   });
 
   it("reads a hotel tap as the row title and keeps the hotel id", () => {

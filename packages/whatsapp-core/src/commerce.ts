@@ -120,6 +120,18 @@ function clipChars(value: string, max: number): string {
   return chars.length <= max ? chars.join("") : chars.slice(0, max).join("");
 }
 
+/** Keeps line breaks so a hotel card can list the stay, then each hotel. */
+function clipMultiline(value: string, max: number): string {
+  const compact = value
+    .replace(/\r\n/g, "\n")
+    .replace(/[^\S\n]+/g, " ")
+    .replace(/ *\n */g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+  const chars = Array.from(compact);
+  return chars.length <= max ? chars.join("") : chars.slice(0, max).join("");
+}
+
 export type InteractiveListRow = {
   id: string;
   title: string;
@@ -157,7 +169,7 @@ export function buildInteractiveListPayload(input: {
       ...(input.header
         ? { header: { type: "text" as const, text: clipChars(input.header, 60) } }
         : {}),
-      body: { text: clipChars(input.body, 1024) || "اختر" },
+      body: { text: clipMultiline(input.body, 1024) || "اختر" },
       ...(input.footer
         ? { footer: { text: clipChars(input.footer, 60) } }
         : {}),
@@ -243,7 +255,7 @@ export function buildInteractiveButtonsPayload(input: {
     type: "interactive" as const,
     interactive: {
       type: "button" as const,
-      body: { text: clipChars(input.body, 1024) || "اختر" },
+      body: { text: clipMultiline(input.body, 1024) || "اختر" },
       action: { buttons },
     },
   };

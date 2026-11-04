@@ -33,9 +33,9 @@ import {
 import { formatMoneyMinor } from "../common/money";
 import {
   hotelPickDescription,
-  hotelPickListBody,
+  HOTELS_MORE_ID,
+  isHotelMoreRequest,
   type HotelPick,
-  type HotelPickLimit,
 } from "../ai/hotel-pick-list";
 import type { HotelPhotoSet } from "../ai/hotel-photos";
 
@@ -127,14 +127,20 @@ export class BotPipelineService {
         contactId: input.contactId,
         conversationId: input.conversationId,
       });
-      await this.replyToConversation({
-        organizationId: input.organizationId,
-        conversationId: input.conversationId,
-        body: aiResult.message,
-        skipWindowCheck: true,
-      });
       const accountChannel =
         conversation.whatsappAccount?.channelType || "whatsapp";
+      const hotelCard =
+        accountChannel === "whatsapp" && !aiResult.handoff && aiResult.hotelCard?.picks.length
+          ? aiResult.hotelCard
+          : undefined;
+      if (!hotelCard) {
+        await this.replyToConversation({
+          organizationId: input.organizationId,
+          conversationId: input.conversationId,
+          body: aiResult.message,
+          skipWindowCheck: true,
+        });
+      }
       if (
         accountChannel === "whatsapp" &&
         !aiResult.handoff &&
@@ -148,19 +154,22 @@ export class BotPipelineService {
           console.error("[pipeline] hotel photos failed", err);
         });
       }
-      if (
-        accountChannel === "whatsapp" &&
-        !aiResult.handoff &&
-        aiResult.hotelPicks?.length
-      ) {
+      if (hotelCard) {
         await this.replyWithHotelPicks({
           organizationId: input.organizationId,
           conversationId: input.conversationId,
-          picks: aiResult.hotelPicks,
-          limit: aiResult.hotelPicksLimit ?? null,
+          card: hotelCard,
         }).catch((err) => {
           console.error("[pipeline] hotel pick list failed", err);
         });
+        if (hotelCard.hasMore) {
+          await this.replyWithChoiceButtons({
+            organizationId: input.organizationId,
+            conversationId: input.conversationId,
+            body: "للفنادق التالية اضغط المزيد.",
+            buttons: [{ id: HOTELS_MORE_ID, title: "المزيد" }],
+          }).catch((err) => console.error("[pipeline] more hotels button failed", err));
+        }
       }
       if (accountChannel === "whatsapp" && !aiResult.handoff) {
         for (const list of aiResult.choiceLists || []) {
@@ -1204,8 +1213,44 @@ export class BotPipelineService {
       passport,
       passportFailed,
     });
-    if (!ui) return null;
-    return { stop: !ui.followUpText, ui, followUpText: ui.followUpText };
+    if (ui) return { stop: !ui.followUpText, ui, followUpText: ui.followUpText };
+    if (
+      !input.hotelPickId &&
+      !passport &&
+      !passportFailed &&
+      (input.replyId === HOTELS_MORE_ID || isHotelMoreRequest(input.text))
+    ) {
+      const page = await this.travelAi.advanceHotelPage({
+        organizationId: input.organizationId,
+        conversationId: input.conversationId,
+      });
+      if (page?.exhausted) {
+        await this.replyToConversation({
+          organizationId: input.organizationId,
+          conversationId: input.conversationId,
+          body: "هذه كل الفنادق المتاحة لهذه التواريخ.",
+          skipWindowCheck: true,
+        });
+        return { stop: true, ui: { replies: [] } };
+      }
+      if (page) {
+        await this.replyWithHotelPicks({
+          organizationId: input.organizationId,
+          conversationId: input.conversationId,
+          card: page.card,
+        });
+        if (page.card.hasMore) {
+          await this.replyWithChoiceButtons({
+            organizationId: input.organizationId,
+            conversationId: input.conversationId,
+            body: "للفنادق التالية اضغط المزيد.",
+            buttons: [{ id: HOTELS_MORE_ID, title: "المزيد" }],
+          });
+        }
+        return { stop: true, ui: { replies: [] } };
+      }
+    }
+    return null;
   }
 
   private async deliverAssistantUi(
@@ -1377,8 +1422,13 @@ export class BotPipelineService {
   private async replyWithHotelPicks(input: {
     organizationId: string;
     conversationId: string;
-    picks: HotelPick[];
-    limit: HotelPickLimit;
+    card: {
+      header: string;
+      body: string;
+      footer?: string;
+      button: string;
+      picks: HotelPick[];
+    };
   }) {
     const { conversation, account } = await this.resolveWhatsAppAccount(
       input.conversationId,
@@ -1386,8 +1436,7 @@ export class BotPipelineService {
     );
     if ((account?.channelType || "whatsapp") !== "whatsapp") return;
 
-    const body = hotelPickListBody(input.limit);
-    const rows = input.picks.map((pick) => ({
+    const rows = input.card.picks.map((pick) => ({
       id: hotelPickRowId(pick.id),
       title: pick.name,
       description: hotelPickDescription(pick) || undefined,
@@ -1396,10 +1445,10 @@ export class BotPipelineService {
       phoneNumberId: account?.phoneNumberId || "mock_phone",
       accessToken: account?.accessTokenEnc || "mock",
       to: channelPeerId(conversation.contact.waId),
-      header: "الفنادق",
-      body,
-      footer: "أو اكتب اسم الفندق",
-      button: "اختر الفندق",
+      header: input.card.header,
+      body: input.card.body,
+      footer: input.card.footer,
+      button: input.card.button,
       sectionTitle: "النتائج",
       rows,
     });
@@ -1411,8 +1460,8 @@ export class BotPipelineService {
     }
 
     const stored = [
-      body,
-      ...input.picks.map((pick, index) => `${index + 1}. ${pick.name}`),
+      input.card.body,
+      ...input.card.picks.map((pick, index) => `${index + 1}. ${pick.name}`),
     ].join("\n");
     await this.prisma.message.create({
       data: {

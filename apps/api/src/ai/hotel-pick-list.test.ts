@@ -1,9 +1,12 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
+  hotelPickCard,
   hotelPickCustomerText,
   hotelPickDescription,
   hotelPickListBody,
+  hotelResultPage,
+  isHotelMoreRequest,
   visibleHotelPicks,
 } from "./hotel-pick-list";
 
@@ -83,5 +86,37 @@ describe("visible hotel picks", () => {
     assert.match(hotelPickListBody("short"), /ليسهل الاختيار/);
     assert.match(hotelPickListBody("short"), /المزيد/);
     assert.doesNotMatch(hotelPickListBody(null), /10/);
+    const page = hotelResultPage({ hotels, offset: 0 });
+    assert.equal(page.picks.length, 10);
+    assert.equal(page.hasMore, true);
+    const next = hotelResultPage({ hotels, offset: 10 });
+    assert.equal(next.picks.length, 2);
+    assert.equal(next.hasMore, false);
+    const card = hotelPickCard({
+      stay: {
+        location: "مكة",
+        checkInDate: "2026-12-01",
+        checkOutDate: "2026-12-04",
+        adults: 2,
+        children: 1,
+      },
+      picks: page.picks.slice(0, 2),
+      hasMore: true,
+    });
+    assert.match(card.body, /^مكة\nمن 1 ديسمبر 2026 إلى 4 ديسمبر 2026\nبالغان وطفل واحد\n\n1\. /);
+    assert.match(card.body, /واتساب/);
+    assert.equal(card.button, "اختر الفندق");
+    assert.ok((card.footer || "").length <= 60);
+    assert.equal(card.footer, "اضغط زر المزيد للفنادق التالية");
+    const shortCard = hotelPickCard({
+      stay: { location: "دبي", checkInDate: "2026-12-01", checkOutDate: "2026-12-02", adults: 1 },
+      picks: next.picks,
+      hasMore: false,
+    });
+    assert.match(shortCard.body, /بالغ واحد/);
+    assert.doesNotMatch(shortCard.body, /اكتب/);
+    assert.equal(shortCard.footer, undefined);
+    assert.equal(isHotelMoreRequest("المزيد"), true);
+    assert.equal(isHotelMoreRequest("أريد فندقاً"), false);
   });
 });

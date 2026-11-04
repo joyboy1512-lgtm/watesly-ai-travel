@@ -1,5 +1,6 @@
 export const WHATSAPP_HOTEL_PICK_ROWS = 10;
 export const HOTELS_MORE_ID = "hotels:more";
+export const HOTELS_CHOOSE_ID = "hotels:choose";
 
 export type HotelPick = {
   id: string;
@@ -162,9 +163,22 @@ const LRM = "\u200E";
 const RLM = "\u200F";
 const LRI = "\u2066";
 const PDI = "\u2069";
+const LRO = "\u202D";
+const PDF = "\u202C";
+const PAD = "\u2800";
+const HOTEL_LINE_WIDTH = 32;
 
 function alignLine(text: string, dir: "ltr" | "rtl"): string {
   return dir === "ltr" ? `${LRM}${text}` : `${RLM}${text}`;
+}
+
+/** English hotel names start at the left edge. Arabic names stay on the right. */
+function hotelNameLine(name: string, stars: string): string {
+  const text = `🏨 ${boldLabel(name)}${stars}`;
+  if (lineDirection(name) === "rtl") return `${RLM}${text}`;
+  const gap = HOTEL_LINE_WIDTH - Array.from(text).length;
+  const pad = gap > 0 ? PAD.repeat(gap) : "";
+  return `${LRO}${text}${pad}${PDF}`;
 }
 
 function isolateLatin(value: string): string {
@@ -198,10 +212,21 @@ function boldLabel(value: string): string {
   return clean ? `*${clean}*` : "";
 }
 
-function hotelBlock(pick: HotelPick, nights: number | null, includeDistance: boolean): string {
+function distanceLine(label: string, place: string): string {
+  const measure = `${LRI}${label}${PDI}`;
+  const spot = place.trim();
+  const text = spot ? `📍 يبعد ${measure} عن ${isolateLatin(spot)}` : `📍 ${measure}`;
+  return `${RLM}${text}`;
+}
+
+function hotelBlock(
+  pick: HotelPick,
+  nights: number | null,
+  includeDistance: boolean,
+  place: string,
+): string {
   const stars = pick.stars ? ` ★${pick.stars}` : "";
-  const name = `🏨 ${boldLabel(pick.name)}${stars}`;
-  const lines = [alignLine(name, lineDirection(pick.name))];
+  const lines = [hotelNameLine(pick.name, stars)];
   if (pick.priceFrom != null && Number.isFinite(pick.priceFrom)) {
     const amount = pick.priceFrom.toFixed(2);
     const money = pick.currency ? `${pick.currency} ${amount}` : amount;
@@ -209,10 +234,16 @@ function hotelBlock(pick: HotelPick, nights: number | null, includeDistance: boo
   }
   if (nights) lines.push(alignLine(nightsLine(nights), "rtl"));
   if (includeDistance && pick.distanceToCenterLabel) {
-    const distance = `📍 ${pick.distanceToCenterLabel}`;
-    lines.push(alignLine(distance, lineDirection(distance)));
+    lines.push(distanceLine(pick.distanceToCenterLabel, place));
   }
   return lines.join("\n");
+}
+
+/** اختر الفندق on top, المزيد directly under it, both on the same message. */
+export function hotelCardButtons(hasMore: boolean): Array<{ id: string; title: string }> {
+  const buttons = [{ id: HOTELS_CHOOSE_ID, title: "اختر الفندق" }];
+  if (hasMore) buttons.push({ id: HOTELS_MORE_ID, title: "المزيد" });
+  return buttons;
 }
 
 export function hotelPickCard(input: {
@@ -232,7 +263,7 @@ export function hotelPickCard(input: {
   intro.push(alignLine(`👥 النزلاء: ${partyLabel(stay.adults, stay.children)}`, "rtl"));
 
   const compose = (includeDistance: boolean) =>
-    [intro.join("\n"), ...input.picks.map((pick) => hotelBlock(pick, nights, includeDistance))]
+    [intro.join("\n"), ...input.picks.map((pick) => hotelBlock(pick, nights, includeDistance, location))]
       .filter(Boolean)
       .join("\n\n");
   let body = compose(true);
@@ -244,9 +275,6 @@ export function hotelPickCard(input: {
     button: "اختر الفندق",
   };
 }
-
-/** Invisible body so the المزيد button has no label above it. Word joiner survives trim. */
-export const HOTEL_MORE_BUTTON_BODY = "\u2060";
 
 export function hotelPickRows(
   picks: HotelPick[],

@@ -163,4 +163,21 @@ describe("WhatsApp commerce payloads", () => {
     assert.equal(payload.interactive.body.text, "\u2060");
     assert.equal(payload.interactive.action.buttons[0]?.reply.title, "المزيد");
   });
+
+  it("stacks the hotel choice and more buttons on one card", () => {
+    const payload = buildInteractiveButtonsPayload({
+      to: "96590053224",
+      header: "الفنادق",
+      body: "\u202D🏨 *Sol Pyramids Inn* ★4\u202C\n\u200F💰 السعر يبدأ من",
+      buttons: [
+        { id: "hotels:choose", title: "اختر الفندق" },
+        { id: "hotels:more", title: "المزيد" },
+      ],
+    });
+    assert.equal(payload.interactive.header?.text, "الفنادق");
+    assert.equal(payload.interactive.action.buttons[0]?.reply.title, "اختر الفندق");
+    assert.equal(payload.interactive.action.buttons[1]?.reply.title, "المزيد");
+    assert.match(payload.interactive.body.text, /\u202D🏨/);
+    assert.match(payload.interactive.body.text, /\u200F💰/);
+  });
 });

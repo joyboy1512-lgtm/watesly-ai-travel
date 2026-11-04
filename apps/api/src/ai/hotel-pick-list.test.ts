@@ -1,12 +1,12 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
+  hotelCardButtons,
   hotelPickCard,
   hotelPickCustomerText,
   hotelPickDescription,
   hotelPickListBody,
   hotelPickRows,
-  HOTEL_MORE_BUTTON_BODY,
   hotelResultPage,
   isHotelMoreRequest,
   visibleHotelPicks,
@@ -122,18 +122,32 @@ describe("visible hotel picks", () => {
     assert.doesNotMatch(card.body, /اضغط المزيد/);
     assert.match(card.body, /\u200F🏨 \*فندق 1\*/);
     assert.match(card.body, /\u200F💰 السعر يبدأ من/);
+    assert.match(card.body, /يبعد/);
+    assert.match(card.body, /عن مكة/);
     const english = hotelPickCard({
       stay: { location: "القاهرة", checkInDate: "2026-11-20", checkOutDate: "2026-11-23", adults: 2 },
-      picks: [{ id: "sol", name: "Sol Pyramids Inn", stars: 4, priceFrom: 120.49, currency: "KWD" }],
+      picks: [{
+        id: "sol",
+        name: "Sol Pyramids Inn",
+        stars: 4,
+        priceFrom: 120.49,
+        currency: "KWD",
+        distanceToCenterLabel: "6.5 كم",
+      }],
       hasMore: true,
     });
-    assert.match(english.body, /\u200E🏨 \*Sol Pyramids Inn\*/);
+    assert.match(english.body, /\u202D🏨 \*Sol Pyramids Inn\*/);
+    assert.match(english.body, /\u2800/);
     assert.match(english.body, /\u200F💰 السعر يبدأ من \u2066\*KWD 120\.49\*/);
+    assert.match(english.body, /يبعد/);
+    assert.match(english.body, /6\.5 كم/);
+    assert.match(english.body, /عن القاهرة/);
+    const buttons = hotelCardButtons(true);
+    assert.deepEqual(buttons.map((button) => button.title), ["اختر الفندق", "المزيد"]);
+    assert.deepEqual(hotelCardButtons(false).map((button) => button.title), ["اختر الفندق"]);
     const rows = hotelPickRows(page.picks);
     assert.equal(rows.length, 10);
     assert.ok(rows.every((row) => row.id.startsWith("hotel:")));
-    assert.equal(HOTEL_MORE_BUTTON_BODY.includes("المزيد"), false);
-    assert.equal(HOTEL_MORE_BUTTON_BODY.trim(), HOTEL_MORE_BUTTON_BODY);
     const shortCard = hotelPickCard({
       stay: { location: "دبي", checkInDate: "2026-12-01", checkOutDate: "2026-12-02", adults: 1 },
       picks: next.picks,

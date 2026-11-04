@@ -168,25 +168,20 @@ export class BotPipelineService {
           await this.replyWithChoiceList({
             organizationId: input.organizationId,
             conversationId: input.conversationId,
-            ...list,
+            header: list.header,
+            body: list.body,
+            button: list.button,
+            rows: list.rows,
+            sectionTitle: list.sectionTitle,
           }).catch((err) => console.error("[pipeline] choice list failed", err));
-          for (const note of list.notes || []) {
-            if (!note.trim()) continue;
-            await this.replyToConversation({
+          if (list.buttons?.length) {
+            await this.replyWithChoiceButtons({
               organizationId: input.organizationId,
               conversationId: input.conversationId,
-              body: note,
-              skipWindowCheck: true,
-            }).catch((err) => console.error("[pipeline] room terms failed", err));
+              body: "\u2060",
+              buttons: list.buttons,
+            }).catch((err) => console.error("[pipeline] room actions failed", err));
           }
-        }
-        if (aiResult.choiceLists?.some((list) => list.header === "الغرف")) {
-          await this.replyWithChoiceButtons({
-            organizationId: input.organizationId,
-            conversationId: input.conversationId,
-            body: "يمكن إرسال صور الفندق هنا بلا رابط خارجي.",
-            buttons: [{ id: "photo:hotel", title: "صور الفندق" }],
-          }).catch((err) => console.error("[pipeline] photo button failed", err));
         }
         if (aiResult.morePhotos) {
           await this.replyWithChoiceButtons({
@@ -1290,6 +1285,7 @@ export class BotPipelineService {
     body: string;
     button: string;
     rows: Array<{ id: string; title: string; description?: string }>;
+    sectionTitle?: string;
   }) {
     const { conversation, account } = await this.resolveWhatsAppAccount(
       input.conversationId,
@@ -1303,7 +1299,7 @@ export class BotPipelineService {
       header: input.header,
       body: input.body,
       button: input.button,
-      sectionTitle: input.header,
+      sectionTitle: input.sectionTitle || input.header,
       rows: input.rows,
     });
     if (send.status === "failed") return;

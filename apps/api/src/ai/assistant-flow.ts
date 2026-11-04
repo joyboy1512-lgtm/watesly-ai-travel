@@ -65,11 +65,14 @@ export type AssistantState = {
   holdBookingId?: string;
   /** Distinct room types existed beyond the tappable list. */
   roomsTruncated?: boolean;
+  /** First room index shown on the current WhatsApp card. */
+  roomOffset: number;
   pendingLists: Array<"rooms" | "flights" | "transfers">;
 };
 
 export type AssistantAction =
   | { kind: "room" | "flight" | "transfer"; index: number }
+  | { kind: "rooms-more" | "rooms-prev" | "rooms-terms" }
   | { kind: "photo"; more: boolean }
   | { kind: "traveler-ok" | "traveler-fix" | "traveler-another" | "traveler-confirm" }
   | { kind: "trip-hotel" | "trip-flight-only" | "trip-transfer" | "trip-no-transfer" };
@@ -115,6 +118,7 @@ export function emptyAssistantState(): AssistantState {
     awaitingPassport: false,
     awaitingNameFix: false,
     roomsTruncated: false,
+    roomOffset: 0,
     pendingLists: [],
   };
 }
@@ -134,6 +138,7 @@ export function readAssistantState(metadata: unknown): AssistantState {
     selected: Array.isArray(raw.selected) ? raw.selected : [],
     travelers: Array.isArray(raw.travelers) ? raw.travelers : [],
     roomsTruncated: raw.roomsTruncated === true,
+    roomOffset: Number.isFinite(Number(raw.roomOffset)) ? Math.max(0, Number(raw.roomOffset)) : 0,
     pendingLists: Array.isArray(raw.pendingLists) ? raw.pendingLists : [],
   };
 }
@@ -147,6 +152,9 @@ export function parseAssistantAction(id?: string): AssistantAction | null {
       index: Number(indexed[2]),
     };
   }
+  if (raw === ROOMS_MORE_ID) return { kind: "rooms-more" };
+  if (raw === ROOMS_PREV_ID) return { kind: "rooms-prev" };
+  if (raw === ROOMS_TERMS_ID) return { kind: "rooms-terms" };
   if (raw === "photo:more") return { kind: "photo", more: true };
   if (raw === "photo:hotel") return { kind: "photo", more: false };
   if (raw === "traveler:ok") return { kind: "traveler-ok" };
@@ -278,14 +286,140 @@ export function roomTermsPages(items: HoldItem[], max = 3500): string[] {
   return pages;
 }
 
-export const ROOM_LIST_BODY =
-  "اضغط على الغرفة لتسجيل طلب الحجز. التأكيد يتم من الموظف فقط.";
+export const ROOM_PAGE_SIZE = 10;
+export const ROOMS_MORE_ID = "rooms:more";
+export const ROOMS_PREV_ID = "rooms:prev";
+export const ROOMS_TERMS_ID = "rooms:terms";
+export const ROOM_ACTION_BODY = "\u2060";
 
-export const ROOM_LIST_LIMIT_BODY =
-  "واتساب لا يقبل أكثر من 10 خيارات في القائمة، فهذه أرخص 10 أنواع مختلفة. نفس الغرفة مع نفس الإقامة تظهر مرة واحدة بالسعر الأقل. لنوع آخر اكتب اسم الغرفة. التأكيد يتم من الموظف فقط.";
+const LRI = "\u2066";
+const PDI = "\u2069";
+const RLM = "\u200F";
+const ROOM_BODY_LIMIT = 1024;
 
-export function roomChoiceBody(truncated: boolean): string {
-  return truncated ? ROOM_LIST_LIMIT_BODY : ROOM_LIST_BODY;
+function isolateLatin(value: string): string {
+  return `${LRI}${value}${PDI}`;
+}
+
+function refundDetail(item: HoldItem): string {
+  const amount = Number(item.snapshot.cancelAmount);
+  const from = policyDate(String(item.snapshot.cancelFrom || ""));
+  if (!Number.isFinite(amount) || amount <= 0 || !from) return "";
+  const currency = String(item.snapshot.cancelCurrency || item.currency || "");
+  return `${RLM}بعد ${from} يُخصم ${isolateLatin(`${amount} ${currency}`.trim())}`;
+}
+
+function clipName(name: string, max: number): string {
+  const chars = Array.from(name);
+  if (chars.length <= max) return name;
+  return `${chars.slice(0, Math.max(1, max - 1)).join("")}…`;
+}
+
+function roomBlock(item: HoldItem, index: number, detailed: boolean, nameMax = 80): string {
+  const name = clipName(String(item.snapshot.roomName || "الغرفة"), nameMax);
+  const board = String(item.snapshot.boardName || "غرفة");
+  const lines = [
+    `${RLM}${index}. *${name}*`,
+    `${RLM}الإقامة: ${board}`,
+    `${RLM}السعر: ${isolateLatin(moneyLabel(item.sellAmountMinor, item.currency))}`,
+    `${RLM}الاسترجاع: ${refundLabel(item)}`,
+  ];
+  if (detailed) {
+    const detail = refundDetail(item);
+    if (detail) lines.push(detail);
+  }
+  return lines.join("\n");
+}
+
+export function roomResultBody(items: HoldItem[], startIndex = 1): string {
+  const attempts: Array<[boolean, number, string]> = [];
+  for (const nameMax of [80, 36, 24, 16]) {
+    for (const detailed of [true, false]) {
+      for (const separator of ["\n\n", "\n"]) {
+        attempts.push([detailed, nameMax, separator]);
+      }
+    }
+  }
+  for (const [detailed, nameMax, separator] of attempts) {
+    const text = items
+      .map((item, index) => roomBlock(item, startIndex + index, detailed, nameMax))
+      .join(separator);
+    if (Array.from(text).length <= ROOM_BODY_LIMIT) return text;
+  }
+  return items
+    .map((item, index) => roomBlock(item, startIndex + index, false, 12))
+    .join("\n");
+}
+
+export function roomPage(rooms: HoldItem[], offset = 0) {
+  const start = Math.max(0, offset);
+  const aligned = Math.floor(start / ROOM_PAGE_SIZE) * ROOM_PAGE_SIZE;
+  const slice = rooms.slice(aligned, aligned + ROOM_PAGE_SIZE);
+  return {
+    rooms: slice,
+    offset: aligned,
+    hasMore: aligned + ROOM_PAGE_SIZE < rooms.length,
+    nextOffset: aligned + ROOM_PAGE_SIZE,
+  };
+}
+
+export function isRoomMoreRequest(text: string): boolean {
+  const normalized = text.trim().replace(/[!.؟?]/g, "").replace(/\s+/g, " ");
+  return normalized === "المزيد من الغرف" || normalized === "غرف اكثر" || normalized === "غرف أكثر";
+}
+
+export function isRoomTermsRequest(text: string): boolean {
+  const normalized = text.trim().replace(/[!.؟?]/g, "").replace(/\s+/g, " ");
+  return (
+    normalized === "قراءة الشروط" ||
+    normalized === "قراءه الشروط" ||
+    normalized === "شروط الغرف" ||
+    normalized === "شروط الغرفة"
+  );
+}
+
+export function isRoomPrevRequest(text: string): boolean {
+  const normalized = text.trim().replace(/[!.؟?]/g, "").replace(/\s+/g, " ");
+  return normalized === "الغرف السابقة";
+}
+
+export type RoomChoiceCard = {
+  header: string;
+  sectionTitle: string;
+  body: string;
+  button: string;
+  rows: Array<{ id: string; title: string; description?: string }>;
+  hasMore: boolean;
+  buttons: Array<{ id: string; title: string }>;
+};
+
+export function roomChoiceCard(
+  rooms: HoldItem[],
+  offset = 0,
+  hotelName?: string,
+): RoomChoiceCard | null {
+  const page = roomPage(rooms, offset);
+  if (!page.rooms.length) return null;
+  const buttons: Array<{ id: string; title: string }> = [
+    { id: ROOMS_TERMS_ID, title: "قراءة الشروط" },
+  ];
+  if (page.hasMore) buttons.push({ id: ROOMS_MORE_ID, title: "المزيد من الغرف" });
+  else if (page.offset > 0) buttons.push({ id: ROOMS_PREV_ID, title: "الغرف السابقة" });
+  if (page.hasMore && page.offset > 0) {
+    buttons.push({ id: ROOMS_PREV_ID, title: "الغرف السابقة" });
+  } else {
+    buttons.push({ id: "photo:hotel", title: "صور الفندق" });
+  }
+  const name = String(hotelName || "").trim();
+  return {
+    header: Array.from(name).slice(0, 60).join("") || "الغرف",
+    sectionTitle: "الغرف",
+    body: roomResultBody(page.rooms, page.offset + 1),
+    button: "اختر الغرفة",
+    rows: choiceRows(page.rooms),
+    hasMore: page.hasMore,
+    buttons: buttons.slice(0, 3),
+  };
 }
 
 export function hotelRoomSelection(offer: OfferLike, limit = 10): RoomSelection {
@@ -432,7 +566,6 @@ export function choiceRows(items: HoldItem[]) {
         ? `${item.snapshot.carrier || ""} ${item.snapshot.flightNumber}`.trim()
         : item.description,
     description: [
-      item.serviceType === "hotel" ? refundLabel(item) : "",
       item.snapshot.boardName ? String(item.snapshot.boardName) : "",
       moneyLabel(item.sellAmountMinor, item.currency),
     ]

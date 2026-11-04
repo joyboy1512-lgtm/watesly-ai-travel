@@ -11,7 +11,7 @@ import {
   hotelRoomSelection,
   refundLabel,
   roomByTypedName,
-  roomChoiceBody,
+  roomChoiceCard,
   roomTermsText,
   nextPhotoSlice,
   parseAssistantAction,
@@ -63,7 +63,15 @@ describe("assistant booking flow", () => {
       },
     });
     assert.equal(few.truncated, false);
-    assert.doesNotMatch(roomChoiceBody(false), /واتساب/);
+    const fewCard = roomChoiceCard(few.all, 0, "صفوة");
+    assert.equal(fewCard?.button, "اختر الغرفة");
+    assert.equal(fewCard?.rows.length, 2);
+    assert.equal(fewCard?.hasMore, false);
+    assert.equal((fewCard?.body.match(/الإقامة:/g) || []).length, 2);
+    assert.equal((fewCard?.body.match(/السعر:/g) || []).length, 2);
+    assert.match(fewCard?.body || "", /الاسترجاع:/);
+    assert.ok((fewCard?.buttons || []).some((button) => button.title === "قراءة الشروط"));
+    assert.ok(!(fewCard?.buttons || []).some((button) => button.id === "rooms:more"));
     const many = hotelRoomSelection({
       providerKey: "hotelbeds",
       providerOfferRef: "hb-9",
@@ -84,13 +92,41 @@ describe("assistant booking flow", () => {
     assert.equal(many.items.length, 10);
     assert.equal(many.all.length, 12);
     assert.equal(many.items[0]?.snapshot.roomName, "غرفة 1");
+    const first = roomChoiceCard(many.all, 0, "صفوة");
+    assert.equal(first?.rows.length, 10);
+    assert.equal(first?.hasMore, true);
+    assert.equal((first?.body.match(/السعر:/g) || []).length, 10);
+    assert.ok(Array.from(first?.body || "").length <= 1024);
+    const longNames = roomChoiceCard(
+      Array.from({ length: 10 }, (_, index) => ({
+        ...many.all[0]!,
+        pickId: `room:${index}`,
+        snapshot: {
+          ...many.all[0]!.snapshot,
+          roomName: `Deluxe Ocean View Room With Balcony ${index}`,
+          boardName: "Half Board",
+        },
+      })),
+      0,
+      "Sol Pyramids Inn",
+    );
+    assert.equal((longNames?.body.match(/السعر:/g) || []).length, 10);
+    assert.ok(Array.from(longNames?.body || "").length <= 1024);
+    assert.ok((first?.buttons || []).some((button) => button.title === "المزيد من الغرف"));
+    assert.equal(first?.rows[0]?.id, "room:0");
+    assert.equal(first?.rows[9]?.id, "room:9");
+    const second = roomChoiceCard(many.all, 10, "صفوة");
+    assert.equal(second?.rows.length, 2);
+    assert.equal(second?.rows[0]?.id, "room:10");
+    assert.equal(second?.rows[1]?.id, "room:11");
+    assert.equal(second?.hasMore, false);
+    assert.ok((second?.buttons || []).some((button) => button.title === "الغرف السابقة"));
+    assert.match(second?.body || "", /^[\u200F]*11\./);
     const hidden = many.all[11]!;
     assert.equal(roomByTypedName(many.all.slice(10), "غرفة 12")?.pickId, hidden.pickId);
     assert.equal(roomByTypedName(many.all, "غرفة 12")?.snapshot.roomName, "غرفة 12");
     assert.equal(roomByTypedName(many.all.slice(10), "كم سعر الغرفة 12 من فضلك لو سمحت"), null);
-    assert.match(roomChoiceBody(true), /واتساب/);
-    assert.match(roomChoiceBody(true), /أرخص 10/);
-    assert.match(roomChoiceBody(true), /من الموظف/);
+    assert.match(fewCard?.body || "", /الإقامة: إفطار\n\u200Fالسعر:/);
     assert.equal(ASSISTANT_CAN_ISSUE, false);
     assert.equal(ASSISTANT_HOLD_STATUS, "on_hold");
     assert.match(holdCustomerMessage(rooms.slice(0, 1)), /بانتظار تأكيد الموظف/);
@@ -200,6 +236,10 @@ describe("assistant booking flow", () => {
     assert.match(terms, /لا توجد شروط إضافية من المورّد/);
     assert.match(terms, /رسوم غير مشمولة: رسوم المنتجع 5 KWD/);
     assert.match(terms, /الدفع مقدماً/);
+    const card = roomChoiceCard(rooms, 0, "صفوة");
+    assert.match(card?.body || "", /الاسترجاع: مستردة حتى 18 نوفمبر 2026/);
+    assert.match(card?.body || "", /بعد 18 نوفمبر 2026 يُخصم/);
+    assert.doesNotMatch(card?.body || "", /لا يُسمح بالأطفال/);
     assert.match(holdCustomerMessage([refundable!]), /مستردة حتى 18 نوفمبر 2026/);
   });
 });

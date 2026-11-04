@@ -5,7 +5,6 @@ import { PrismaService } from "../prisma/prisma.service";
 import {
   ASSISTANT_HOLD_STATUS,
   applyNameFix,
-  choiceRows,
   confirmAllTravelers,
   confirmLatestTraveler,
   confirmedTravelers,
@@ -13,9 +12,17 @@ import {
   holdBlockReason,
   holdCustomerMessage,
   hotelFollowUpText,
+  isRoomMoreRequest,
+  isRoomPrevRequest,
+  isRoomTermsRequest,
   nextPhotoSlice,
   readAssistantState,
   roomByTypedName,
+  roomChoiceCard,
+  roomPage,
+  roomTermsPages,
+  ROOM_ACTION_BODY,
+  ROOM_PAGE_SIZE,
   selectItem,
   transferFollowUpText,
   travelerFromPassport,
@@ -33,6 +40,7 @@ export type AssistantUi = {
     header: string;
     body: string;
     button: string;
+    sectionTitle?: string;
     rows: Array<{ id: string; title: string; description?: string }>;
   };
   buttons?: { body: string; buttons: Array<{ id: string; title: string }> };
@@ -184,6 +192,12 @@ export class AssistantHoldService {
       };
     }
 
+    if (!input.action && input.text && state.rooms.length) {
+      if (isRoomTermsRequest(input.text)) input.action = { kind: "rooms-terms" };
+      else if (isRoomMoreRequest(input.text)) input.action = { kind: "rooms-more" };
+      else if (isRoomPrevRequest(input.text)) input.action = { kind: "rooms-prev" };
+    }
+
     if (!input.action && input.text && state.roomsTruncated) {
       const named = roomByTypedName(state.rooms.slice(10), input.text);
       const index = named
@@ -193,6 +207,14 @@ export class AssistantHoldService {
     }
 
     if (!input.action) return null;
+
+    if (
+      input.action.kind === "rooms-terms" ||
+      input.action.kind === "rooms-more" ||
+      input.action.kind === "rooms-prev"
+    ) {
+      return this.roomBrowse(thread.id, state, input.action.kind);
+    }
 
     if (input.action.kind === "photo") {
       return this.photos(thread.id, state, input.action.more);
@@ -293,6 +315,46 @@ export class AssistantHoldService {
       return this.finishHold(input, thread.id, state);
     }
     return this.finishHold(input, thread.id, state);
+  }
+
+  private async roomBrowse(
+    threadId: string,
+    state: AssistantState,
+    kind: "rooms-terms" | "rooms-more" | "rooms-prev",
+  ): Promise<AssistantUi> {
+    if (!state.rooms.length) return { replies: ["اختر الفندق أولاً."] };
+    const current = roomPage(state.rooms, state.roomOffset || 0);
+    if (kind === "rooms-terms") {
+      const pages = roomTermsPages(current.rooms);
+      const replies = pages.length ? [...pages] : ["لا توجد شروط إضافية من المورّد لهذه الغرف."];
+      if (current.hasMore) {
+        const last = replies.length - 1;
+        replies[last] = `${replies[last]}\n\nلشروط الغرف التالية اضغط المزيد من الغرف ثم قراءة الشروط.`;
+      }
+      return { replies };
+    }
+    if (kind === "rooms-more" && !current.hasMore) {
+      return { replies: ["هذه كل الغرف المتاحة لهذا الفندق."] };
+    }
+    if (kind === "rooms-prev" && current.offset === 0) {
+      return { replies: ["هذه أول الغرف."] };
+    }
+    const offset = kind === "rooms-more" ? current.nextOffset : Math.max(0, current.offset - ROOM_PAGE_SIZE);
+    const next = roomPage(state.rooms, offset);
+    await this.writeState(threadId, { ...state, roomOffset: next.offset });
+    const card = roomChoiceCard(state.rooms, next.offset, state.photos?.name);
+    if (!card) return { replies: ["لا توجد غرف أخرى."] };
+    return {
+      replies: [],
+      list: {
+        header: card.header,
+        body: card.body,
+        button: card.button,
+        sectionTitle: card.sectionTitle,
+        rows: card.rows,
+      },
+      buttons: { body: ROOM_ACTION_BODY, buttons: card.buttons },
+    };
   }
 
   private async photos(threadId: string, state: AssistantState, more: boolean): Promise<AssistantUi> {

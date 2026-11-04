@@ -257,7 +257,7 @@ export function hotelPickRows(
     title: pick.name,
     description: hotelPickDescription(pick) || undefined,
   }));
-  if (hasMore) rows.push({ id: HOTELS_MORE_ID, title: "المزيد" });
+  if (hasMore) rows.push({ id: HOTELS_MORE_ID, title: "المزيد", description: undefined });
   return rows;
 }
 

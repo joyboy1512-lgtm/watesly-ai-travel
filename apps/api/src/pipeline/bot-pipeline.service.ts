@@ -170,6 +170,15 @@ export class BotPipelineService {
             conversationId: input.conversationId,
             ...list,
           }).catch((err) => console.error("[pipeline] choice list failed", err));
+          for (const note of list.notes || []) {
+            if (!note.trim()) continue;
+            await this.replyToConversation({
+              organizationId: input.organizationId,
+              conversationId: input.conversationId,
+              body: note,
+              skipWindowCheck: true,
+            }).catch((err) => console.error("[pipeline] room terms failed", err));
+          }
         }
         if (aiResult.choiceLists?.some((list) => list.header === "الغرف")) {
           await this.replyWithChoiceButtons({

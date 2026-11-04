@@ -245,8 +245,8 @@ export function hotelPickCard(input: {
   };
 }
 
-/** Short label above the المزيد button. No extra instruction sentence. */
-export const HOTEL_MORE_BUTTON_BODY = "المزيد";
+/** Invisible body so the المزيد button has no label above it. Word joiner survives trim. */
+export const HOTEL_MORE_BUTTON_BODY = "\u2060";
 
 export function hotelPickRows(
   picks: HotelPick[],

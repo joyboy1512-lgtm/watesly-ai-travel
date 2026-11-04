@@ -1347,7 +1347,10 @@ export class BotPipelineService {
       body: input.body,
       buttons: input.buttons,
     });
-    if (send.status === "failed") return;
+    if (send.status === "failed") {
+      console.error("[pipeline] choice buttons failed", send.raw);
+      return;
+    }
     await this.prisma.message.create({
       data: {
         organizationId: input.organizationId,

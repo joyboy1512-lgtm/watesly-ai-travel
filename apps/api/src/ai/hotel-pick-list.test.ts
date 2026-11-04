@@ -132,7 +132,8 @@ describe("visible hotel picks", () => {
     const rows = hotelPickRows(page.picks);
     assert.equal(rows.length, 10);
     assert.ok(rows.every((row) => row.id.startsWith("hotel:")));
-    assert.equal(HOTEL_MORE_BUTTON_BODY.includes("للفنادق"), false);
+    assert.equal(HOTEL_MORE_BUTTON_BODY.includes("المزيد"), false);
+    assert.equal(HOTEL_MORE_BUTTON_BODY.trim(), HOTEL_MORE_BUTTON_BODY);
     const shortCard = hotelPickCard({
       stay: { location: "دبي", checkInDate: "2026-12-01", checkOutDate: "2026-12-02", adults: 1 },
       picks: next.picks,

@@ -583,34 +583,6 @@ export class TravelAiService {
     };
   }
 
-  /** Hotels on the card the customer is looking at, without moving the page. */
-  async currentHotelPage(input: {
-    organizationId: string;
-    conversationId: string;
-  }): Promise<{ card: NonNullable<TravelAiTurnResult["hotelCard"]> } | null> {
-    const thread = await this.findThread({
-      organizationId: input.organizationId,
-      channel: "whatsapp",
-      conversationId: input.conversationId,
-    });
-    if (!thread) return null;
-    const saved = readHotelSearchContext(thread.metadata);
-    const hotels = saved.hotels || [];
-    if (!hotels.length) return null;
-    const page = hotelResultPage({ hotels, offset: saved.lastShownOffset || 0 });
-    const picks = saved.lastShownCount
-      ? page.picks.slice(0, saved.lastShownCount)
-      : page.picks;
-    if (!picks.length) return null;
-    return {
-      card: {
-        ...hotelPickCard({ stay: saved, picks, hasMore: page.hasMore }),
-        picks,
-        hasMore: page.hasMore,
-      },
-    };
-  }
-
   /** Next 10 hotels from the saved search, without another supplier search. */
   async advanceHotelPage(input: {
     organizationId: string;

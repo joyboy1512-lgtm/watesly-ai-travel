@@ -1,6 +1,5 @@
 export const WHATSAPP_HOTEL_PICK_ROWS = 10;
 export const HOTELS_MORE_ID = "hotels:more";
-export const HOTELS_CHOOSE_ID = "hotels:choose";
 
 export type HotelPick = {
   id: string;
@@ -163,22 +162,14 @@ const LRM = "\u200E";
 const RLM = "\u200F";
 const LRI = "\u2066";
 const PDI = "\u2069";
-const LRO = "\u202D";
-const PDF = "\u202C";
-const PAD = "\u2800";
-const HOTEL_LINE_WIDTH = 32;
 
 function alignLine(text: string, dir: "ltr" | "rtl"): string {
   return dir === "ltr" ? `${LRM}${text}` : `${RLM}${text}`;
 }
 
-/** English hotel names start at the left edge. Arabic names stay on the right. */
+/** Name and stars stay on one line. English names read left to right. */
 function hotelNameLine(name: string, stars: string): string {
-  const text = `🏨 ${boldLabel(name)}${stars}`;
-  if (lineDirection(name) === "rtl") return `${RLM}${text}`;
-  const gap = HOTEL_LINE_WIDTH - Array.from(text).length;
-  const pad = gap > 0 ? PAD.repeat(gap) : "";
-  return `${LRO}${text}${pad}${PDF}`;
+  return alignLine(`🏨 ${boldLabel(name)}${stars}`, lineDirection(name));
 }
 
 function isolateLatin(value: string): string {
@@ -239,13 +230,6 @@ function hotelBlock(
   return lines.join("\n");
 }
 
-/** اختر الفندق on top, المزيد directly under it, both on the same message. */
-export function hotelCardButtons(hasMore: boolean): Array<{ id: string; title: string }> {
-  const buttons = [{ id: HOTELS_CHOOSE_ID, title: "اختر الفندق" }];
-  if (hasMore) buttons.push({ id: HOTELS_MORE_ID, title: "المزيد" });
-  return buttons;
-}
-
 export function hotelPickCard(input: {
   stay?: HotelStaySummary;
   picks: HotelPick[];
@@ -262,8 +246,13 @@ export function hotelPickCard(input: {
   if (checkOut) intro.push(alignLine(`📅 المغادرة: ${checkOut}`, "rtl"));
   intro.push(alignLine(`👥 النزلاء: ${partyLabel(stay.adults, stay.children)}`, "rtl"));
 
-  const compose = (includeDistance: boolean) =>
-    [intro.join("\n"), ...input.picks.map((pick) => hotelBlock(pick, nights, includeDistance, location))]
+  const compose = (keepNights: boolean) =>
+    [
+      intro.join("\n"),
+      ...input.picks.map((pick) =>
+        hotelBlock(pick, keepNights ? nights : null, true, location),
+      ),
+    ]
       .filter(Boolean)
       .join("\n\n");
   let body = compose(true);

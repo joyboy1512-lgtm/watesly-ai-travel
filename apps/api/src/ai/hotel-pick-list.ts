@@ -203,12 +203,12 @@ export function hotelPickCard(input: {
   const nights = nightsBetween(stay.checkInDate, stay.checkOutDate);
   const intro: string[] = [];
   const location = String(stay.location || "").trim();
-  if (location) intro.push(`📍 ${boldLabel(location)}`);
+  if (location) intro.push(`📍 الوجهة: ${boldLabel(location)}`);
   const checkIn = formatStayDate(stay.checkInDate);
   const checkOut = formatStayDate(stay.checkOutDate);
-  if (checkIn && checkOut) intro.push(`📅 من ${checkIn} إلى ${checkOut}`);
-  else if (checkIn) intro.push(`📅 الوصول ${checkIn}`);
-  intro.push(`👥 ${partyLabel(stay.adults, stay.children)}`);
+  if (checkIn) intro.push(`📅 الدخول: ${checkIn}`);
+  if (checkOut) intro.push(`📅 المغادرة: ${checkOut}`);
+  intro.push(`👥 النزلاء: ${partyLabel(stay.adults, stay.children)}`);
 
   const compose = (includeDistance: boolean) =>
     [intro.join("\n"), ...input.picks.map((pick) => hotelBlock(pick, nights, includeDistance))]

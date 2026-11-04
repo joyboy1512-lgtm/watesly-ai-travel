@@ -31,9 +31,7 @@ import {
 } from "../common/provider-runtime";
 import { formatMoneyMinor } from "../common/money";
 import {
-  hotelCardButtons,
   hotelPickRows,
-  HOTELS_CHOOSE_ID,
   HOTELS_MORE_ID,
   isHotelMoreRequest,
   type HotelPick,
@@ -1211,25 +1209,6 @@ export class BotPipelineService {
       !input.hotelPickId &&
       !passport &&
       !passportFailed &&
-      input.replyId === HOTELS_CHOOSE_ID
-    ) {
-      const page = await this.travelAi.currentHotelPage({
-        organizationId: input.organizationId,
-        conversationId: input.conversationId,
-      });
-      if (page) {
-        await this.replyWithHotelPicks({
-          organizationId: input.organizationId,
-          conversationId: input.conversationId,
-          card: { ...page.card, body: "اختر أحد الفنادق." },
-        });
-        return { stop: true, ui: { replies: [] } };
-      }
-    }
-    if (
-      !input.hotelPickId &&
-      !passport &&
-      !passportFailed &&
       (input.replyId === HOTELS_MORE_ID || isHotelMoreRequest(input.text))
     ) {
       const page = await this.travelAi.advanceHotelPage({
@@ -1339,15 +1318,23 @@ export class BotPipelineService {
     card: {
       header: string;
       body: string;
+      footer?: string;
+      button: string;
+      picks: HotelPick[];
       hasMore: boolean;
     };
   }) {
+    await this.replyWithHotelPicks({
+      organizationId: input.organizationId,
+      conversationId: input.conversationId,
+      card: input.card,
+    });
+    if (!input.card.hasMore) return;
     await this.replyWithChoiceButtons({
       organizationId: input.organizationId,
       conversationId: input.conversationId,
-      header: input.card.header,
-      body: input.card.body,
-      buttons: hotelCardButtons(input.card.hasMore),
+      body: "\u2060",
+      buttons: [{ id: HOTELS_MORE_ID, title: "المزيد" }],
     });
   }
 

@@ -1,7 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
-  hotelCardButtons,
   hotelPickCard,
   hotelPickCustomerText,
   hotelPickDescription,
@@ -136,15 +135,20 @@ describe("visible hotel picks", () => {
       }],
       hasMore: true,
     });
-    assert.match(english.body, /\u202D🏨 \*Sol Pyramids Inn\*/);
-    assert.match(english.body, /\u2800/);
+    assert.match(english.body, /\u200E🏨 \*Sol Pyramids Inn\* ★4/);
+    assert.doesNotMatch(english.body, /\u2800/);
     assert.match(english.body, /\u200F💰 السعر يبدأ من \u2066\*KWD 120\.49\*/);
     assert.match(english.body, /يبعد/);
     assert.match(english.body, /6\.5 كم/);
     assert.match(english.body, /عن القاهرة/);
-    const buttons = hotelCardButtons(true);
-    assert.deepEqual(buttons.map((button) => button.title), ["اختر الفندق", "المزيد"]);
-    assert.deepEqual(hotelCardButtons(false).map((button) => button.title), ["اختر الفندق"]);
+    const full = hotelPickCard({
+      stay: { location: "مكة", checkInDate: "2026-12-01", checkOutDate: "2026-12-04", adults: 2 },
+      picks: page.picks,
+      hasMore: true,
+    });
+    assert.match(full.body, /يبعد/);
+    assert.match(full.body, /عن مكة/);
+    assert.match(full.body, /🏨 \*فندق 10\* ★4/);
     const rows = hotelPickRows(page.picks);
     assert.equal(rows.length, 10);
     assert.ok(rows.every((row) => row.id.startsWith("hotel:")));

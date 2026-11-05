@@ -19,7 +19,7 @@ import { AuditService } from "../common/audit.service";
 import { TravelAiService } from "../ai/travel-ai.service";
 import { AssistantHoldService, type AssistantUi } from "../ai/assistant-hold.service";
 import { customerWantsHotelPhotos } from "../ai/hotel-photos";
-import { parseAssistantAction } from "../ai/assistant-flow";
+import { hotelIntroWithoutRooms, parseAssistantAction } from "../ai/assistant-flow";
 import {
   formatCommercePrice,
   normalizeMetaCommerce,
@@ -133,11 +133,13 @@ export class BotPipelineService {
         accountChannel === "whatsapp" && !aiResult.handoff && aiResult.hotelCard?.picks.length
           ? aiResult.hotelCard
           : undefined;
-      if (!hotelCard) {
+      const hasRoomCard = (aiResult.choiceLists || []).some((list) => list.button === "اختر الغرفة");
+      const customerText = hasRoomCard ? hotelIntroWithoutRooms(aiResult.message) : aiResult.message;
+      if (!hotelCard && customerText.trim()) {
         await this.replyToConversation({
           organizationId: input.organizationId,
           conversationId: input.conversationId,
-          body: aiResult.message,
+          body: customerText,
           skipWindowCheck: true,
         });
       }
@@ -168,25 +170,28 @@ export class BotPipelineService {
           await this.replyWithChoiceList({
             organizationId: input.organizationId,
             conversationId: input.conversationId,
-            ...list,
+            header: list.header,
+            body: list.body,
+            button: list.button,
+            rows: list.rows,
+            sectionTitle: list.sectionTitle,
           }).catch((err) => console.error("[pipeline] choice list failed", err));
-          for (const note of list.notes || []) {
-            if (!note.trim()) continue;
-            await this.replyToConversation({
+          if (list.more) {
+            await this.replyWithChoiceButtons({
               organizationId: input.organizationId,
               conversationId: input.conversationId,
-              body: note,
-              skipWindowCheck: true,
-            }).catch((err) => console.error("[pipeline] room terms failed", err));
+              body: "\u2060",
+              buttons: [list.more],
+            }).catch((err) => console.error("[pipeline] room more failed", err));
           }
-        }
-        if (aiResult.choiceLists?.some((list) => list.header === "الغرف")) {
-          await this.replyWithChoiceButtons({
-            organizationId: input.organizationId,
-            conversationId: input.conversationId,
-            body: "يمكن إرسال صور الفندق هنا بلا رابط خارجي.",
-            buttons: [{ id: "photo:hotel", title: "صور الفندق" }],
-          }).catch((err) => console.error("[pipeline] photo button failed", err));
+          if (list.buttons?.length) {
+            await this.replyWithChoiceButtons({
+              organizationId: input.organizationId,
+              conversationId: input.conversationId,
+              body: "\u2060",
+              buttons: list.buttons,
+            }).catch((err) => console.error("[pipeline] room actions failed", err));
+          }
         }
         if (aiResult.morePhotos) {
           await this.replyWithChoiceButtons({
@@ -1273,6 +1278,14 @@ export class BotPipelineService {
         ...ui.list,
       }).catch((err) => console.error("[pipeline] choice list failed", err));
     }
+    if (ui.more) {
+      await this.replyWithChoiceButtons({
+        organizationId: input.organizationId,
+        conversationId: input.conversationId,
+        body: "\u2060",
+        buttons: [ui.more],
+      }).catch((err) => console.error("[pipeline] room more failed", err));
+    }
     if (ui.buttons?.buttons.length) {
       await this.replyWithChoiceButtons({
         organizationId: input.organizationId,
@@ -1290,6 +1303,7 @@ export class BotPipelineService {
     body: string;
     button: string;
     rows: Array<{ id: string; title: string; description?: string }>;
+    sectionTitle?: string;
   }) {
     const { conversation, account } = await this.resolveWhatsAppAccount(
       input.conversationId,
@@ -1303,7 +1317,7 @@ export class BotPipelineService {
       header: input.header,
       body: input.body,
       button: input.button,
-      sectionTitle: input.header,
+      sectionTitle: input.sectionTitle || input.header,
       rows: input.rows,
     });
     if (send.status === "failed") return;

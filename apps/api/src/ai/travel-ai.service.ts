@@ -43,8 +43,7 @@ import {
 import {
   choiceRows,
   hotelRoomSelection,
-  roomChoiceBody,
-  roomTermsPages,
+  roomChoiceCard,
   nextPhotoSlice,
   readAssistantState,
   transportItems,
@@ -164,7 +163,10 @@ export type TravelAiTurnResult = {
     body: string;
     button: string;
     rows: Array<{ id: string; title: string; description?: string }>;
-    notes?: string[];
+    sectionTitle?: string;
+    buttons?: Array<{ id: string; title: string }>;
+    more?: { id: string; title: string };
+    hasMore?: boolean;
   }>;
 };
 
@@ -488,20 +490,12 @@ export class TravelAiService {
       }
       const pending = new Set(assistant.pendingLists);
       if (pending.has("rooms") && assistant.rooms.length) {
-        choiceLists.push({
-          header: "الغرف",
-          body: roomChoiceBody(assistant.roomsTruncated === true),
-          button: "اختر الغرفة",
-          rows: choiceRows(assistant.rooms),
-          notes: roomTermsPages(
-            assistant.rooms.slice(0, 10),
-            3500,
-          ).map((page, index, pages) =>
-            assistant.roomsTruncated && index === pages.length - 1
-              ? `${page}\n\nلبقية الأنواع اكتب اسم الغرفة، وتظهر شروطها مع طلب الحجز.`
-              : page,
-          ),
-        });
+        const card = roomChoiceCard(
+          assistant.rooms,
+          assistant.roomOffset || 0,
+          assistant.photos?.name,
+        );
+        if (card) choiceLists.push(card);
       }
       if (pending.has("flights") && assistant.flights.length) {
         choiceLists.push({
@@ -1723,6 +1717,7 @@ export class TravelAiService {
     };
     assistant.rooms = rooms;
     assistant.roomsTruncated = roomsTruncated;
+    assistant.roomOffset = 0;
     if (rooms.length && !assistant.pendingLists.includes("rooms")) {
       assistant.pendingLists.push("rooms");
     }

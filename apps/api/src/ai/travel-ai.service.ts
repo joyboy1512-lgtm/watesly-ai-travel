@@ -165,6 +165,7 @@ export type TravelAiTurnResult = {
     rows: Array<{ id: string; title: string; description?: string }>;
     sectionTitle?: string;
     buttons?: Array<{ id: string; title: string }>;
+    more?: { id: string; title: string };
     hasMore?: boolean;
   }>;
 };

@@ -12,6 +12,7 @@ import {
   refundLabel,
   roomByTypedName,
   roomChoiceCard,
+  roomSpecText,
   roomTermsText,
   hotelIntroWithoutRooms,
   nextPhotoSlice,
@@ -97,7 +98,10 @@ describe("assistant booking flow", () => {
     const first = roomChoiceCard(many.all, 0, "صفوة");
     assert.equal(first?.rows.length, 10);
     assert.equal(first?.hasMore, true);
-    assert.equal((first?.body.match(/السعر:/g) || []).length, 10);
+    assert.ok((first?.body.match(/السعر:/g) || []).length === 10);
+    assert.equal(first?.button, "اختر الغرف");
+    assert.equal(first?.more?.title, "المزيد");
+    assert.ok(!(first?.buttons || []).some((button) => button.id === "rooms:more"));
     assert.ok(Array.from(first?.body || "").length <= 1024);
     const longNames = roomChoiceCard(
       Array.from({ length: 10 }, (_, index) => ({
@@ -114,7 +118,7 @@ describe("assistant booking flow", () => {
     );
     assert.equal((longNames?.body.match(/السعر:/g) || []).length, 10);
     assert.ok(Array.from(longNames?.body || "").length <= 1024);
-    assert.ok((first?.buttons || []).some((button) => button.title === "المزيد من الغرف"));
+    assert.ok((first?.buttons || []).every((button) => button.title !== "المزيد من الغرف"));
     assert.equal(first?.rows[0]?.id, "room:0");
     assert.equal(first?.rows[9]?.id, "room:9");
     const second = roomChoiceCard(many.all, 10, "صفوة");
@@ -122,6 +126,8 @@ describe("assistant booking flow", () => {
     assert.equal(second?.rows[0]?.id, "room:10");
     assert.equal(second?.rows[1]?.id, "room:11");
     assert.equal(second?.hasMore, false);
+    assert.equal(second?.more, undefined);
+    assert.equal(second?.button, "اختر الغرف");
     assert.ok((second?.buttons || []).some((button) => button.title === "الغرف السابقة"));
     assert.match(second?.body || "", /^[\u200F]*11\./);
     const hidden = many.all[11]!;
@@ -257,7 +263,13 @@ describe("assistant booking flow", () => {
       currency: "KWD",
       raw: {
         name: "صفوة",
-        rooms: [{ name: "مزدوجة", facilities: ["واي فاي", "تكييف"] }],
+        rooms: [{
+          name: "مزدوجة",
+          sizeSqm: 28,
+          description: "غرفة مطلة على الحديقة.",
+          occupancy: { maxAdults: 2, maxChildren: 1 },
+          facilities: ["واي فاي", "تكييف", "حجم الغرفة 28 م²", "تلفزيون"],
+        }],
         rateOptions: [
           { roomName: "مزدوجة", boardName: "غرفة فقط", net: 40, freeCancellation: false },
           {
@@ -271,6 +283,14 @@ describe("assistant booking flow", () => {
       },
     });
     assert.equal(both.length, 2);
-    assert.match(roomTermsText(both), /التجهيزات: واي فاي · تكييف/);
+    assert.match(roomTermsText(both), /التجهيزات: واي فاي · تكييف · تلفزيون/);
+    const spec = roomSpecText(both[0]!);
+    assert.match(spec, /المساحة: 28 م²/);
+    assert.match(spec, /الإشغال: حتى 2 بالغين · طفل واحد/);
+    assert.match(spec, /الوصف: غرفة مطلة على الحديقة/);
+    assert.match(spec, /الخدمات وما في الغرفة:/);
+    assert.match(spec, /• واي فاي/);
+    assert.match(spec, /• تلفزيون/);
+    assert.doesNotMatch(spec, /حجم الغرفة/);
   });
 });

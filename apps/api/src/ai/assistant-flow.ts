@@ -215,19 +215,92 @@ function clipNote(value: string, max: number): string {
   return `${clean.slice(0, max - 1)}…`;
 }
 
-function roomAmenities(
-  rooms: Array<{ code?: string; name?: string; facilities?: string[] }> | undefined,
+function matchedRoom(
+  rooms: Array<{
+    code?: string;
+    name?: string;
+    facilities?: string[];
+    description?: string;
+    sizeSqm?: number;
+    occupancy?: { minPax?: number; maxPax?: number; maxAdults?: number; maxChildren?: number };
+  }> | undefined,
   rate: RateLike,
-): string {
-  const match = (rooms || []).find((room) => {
+) {
+  return (rooms || []).find((room) => {
     if (rate.roomCode && room.code && room.code === rate.roomCode) return true;
     return Boolean(rate.roomName && room.name && room.name === rate.roomName);
   });
-  return (match?.facilities || [])
-    .map((item) => item.trim())
-    .filter(Boolean)
-    .slice(0, 12)
-    .join(" · ");
+}
+
+function sizeLabelFrom(sizeSqm?: number, facilities: string[] = []): string {
+  if (Number(sizeSqm) > 0) return `${Number(sizeSqm)} م²`;
+  for (const label of facilities) {
+    const metric = label.match(/(\d+(?:\.\d+)?)\s*(?:م²|m²|sqm)/i);
+    if (metric) return `${metric[1]} م²`;
+    if (/متر|حجم الغرفة/i.test(label)) {
+      const digits = label.match(/(\d+(?:\.\d+)?)/);
+      if (digits) return `${digits[1]} م²`;
+    }
+  }
+  return "";
+}
+
+function occupancyLabel(occupancy?: {
+  minPax?: number;
+  maxPax?: number;
+  maxAdults?: number;
+  maxChildren?: number;
+}): string {
+  if (!occupancy) return "";
+  const parts: string[] = [];
+  if (Number(occupancy.maxAdults) > 0) parts.push(`حتى ${occupancy.maxAdults} بالغين`);
+  else if (Number(occupancy.maxPax) > 0) parts.push(`حتى ${occupancy.maxPax} أشخاص`);
+  if (Number(occupancy.maxChildren) > 0) {
+    const children = Number(occupancy.maxChildren);
+    parts.push(children === 1 ? "طفل واحد" : `${children} أطفال`);
+  }
+  return parts.join(" · ");
+}
+
+function roomProfile(
+  rooms: Parameters<typeof matchedRoom>[0],
+  rate: RateLike,
+): { sizeLabel: string; occupancyNote: string; description: string; amenities: string } {
+  const room = matchedRoom(rooms, rate);
+  const facilities = (room?.facilities || []).map((item) => item.trim()).filter(Boolean);
+  const amenities = facilities.filter((label) => !/م²|m²|sqm|متر مربع|حجم الغرفة/i.test(label));
+  return {
+    sizeLabel: sizeLabelFrom(room?.sizeSqm, facilities),
+    occupancyNote: occupancyLabel(room?.occupancy),
+    description: String(room?.description || "").replace(/\s+/g, " ").trim(),
+    amenities: amenities.slice(0, 20).join(" · "),
+  };
+}
+
+export function roomSpecText(item: HoldItem): string {
+  const name = String(item.snapshot.roomName || "الغرفة");
+  const lines = [`*${name}*`];
+  const board = String(item.snapshot.boardName || "").trim();
+  if (board) lines.push(`الإقامة: ${board}`);
+  lines.push(`السعر: ${moneyLabel(item.sellAmountMinor, item.currency)}`);
+  const size = String(item.snapshot.sizeLabel || "").trim();
+  lines.push(size ? `المساحة: ${size}` : "المساحة: لم يذكرها المورّد.");
+  const occupancy = String(item.snapshot.occupancyNote || "").trim();
+  if (occupancy) lines.push(`الإشغال: ${occupancy}`);
+  const description = String(item.snapshot.roomDescription || "").trim();
+  if (description) lines.push(`الوصف: ${description}`);
+  const amenities = String(item.snapshot.amenities || "")
+    .split(" · ")
+    .map((part) => part.trim())
+    .filter(Boolean);
+  if (amenities.length) {
+    lines.push("الخدمات وما في الغرفة:");
+    lines.push(...amenities.map((part) => `• ${part}`));
+  } else {
+    lines.push("الخدمات: لم يرسل المورّد قائمة بما في الغرفة.");
+  }
+  lines.push(`الاسترجاع: ${refundLabel(item)}`);
+  return lines.join("\n");
 }
 
 export function hotelIntroWithoutRooms(message: string): string {
@@ -422,6 +495,8 @@ export type RoomChoiceCard = {
   rows: Array<{ id: string; title: string; description?: string }>;
   hasMore: boolean;
   buttons: Array<{ id: string; title: string }>;
+  /** Separate المزيد bubble, same pattern as the hotel card. */
+  more?: { id: string; title: string };
 };
 
 export function roomChoiceCard(
@@ -434,22 +509,22 @@ export function roomChoiceCard(
   const buttons: Array<{ id: string; title: string }> = [
     { id: ROOMS_TERMS_ID, title: "قراءة الشروط" },
   ];
-  if (page.hasMore) buttons.push({ id: ROOMS_MORE_ID, title: "المزيد من الغرف" });
-  else if (page.offset > 0) buttons.push({ id: ROOMS_PREV_ID, title: "الغرف السابقة" });
-  if (page.hasMore && page.offset > 0) {
-    buttons.push({ id: ROOMS_PREV_ID, title: "الغرف السابقة" });
-  } else {
+  if (page.offset > 0 && !page.hasMore) buttons.push({ id: ROOMS_PREV_ID, title: "الغرف السابقة" });
+  if (!(page.hasMore && page.offset > 0)) {
     buttons.push({ id: "photo:hotel", title: "صور الفندق" });
+  } else {
+    buttons.push({ id: ROOMS_PREV_ID, title: "الغرف السابقة" });
   }
   const name = String(hotelName || "").trim();
   return {
     header: Array.from(name).slice(0, 60).join("") || "الغرف",
     sectionTitle: "الغرف",
     body: roomResultBody(page.rooms, page.offset + 1),
-    button: "اختر الغرفة",
+    button: rooms.length > ROOM_PAGE_SIZE ? "اختر الغرف" : "اختر الغرفة",
     rows: choiceRows(page.rooms),
     hasMore: page.hasMore,
     buttons: buttons.slice(0, 3),
+    more: page.hasMore ? { id: ROOMS_MORE_ID, title: "المزيد" } : undefined,
   };
 }
 
@@ -502,7 +577,14 @@ function collectHotelRooms(offer: OfferLike): HoldItem[] {
     checkInDate?: string;
     checkOutDate?: string;
     rateOptions?: RateLike[];
-    rooms?: Array<{ code?: string; name?: string; facilities?: string[] }>;
+    rooms?: Array<{
+      code?: string;
+      name?: string;
+      facilities?: string[];
+      description?: string;
+      sizeSqm?: number;
+      occupancy?: { minPax?: number; maxPax?: number; maxAdults?: number; maxChildren?: number };
+    }>;
   };
   const factor = currencyMinorFactor(offer.currency);
   const offerCost = offer.costAmountMinor;
@@ -525,6 +607,7 @@ function collectHotelRooms(offer: OfferLike): HoldItem[] {
       .map((part) => part.trim())
       .filter(Boolean)
       .join(" · ");
+    const profile = roomProfile(raw.rooms, rate);
     items.push({
       pickId: `room:${items.length}`,
       serviceType: "hotel",
@@ -550,7 +633,10 @@ function collectHotelRooms(offer: OfferLike): HoldItem[] {
         cancelCurrency: penalty?.currency || rate.currency || offer.currency,
         rateNote: clipNote(String(rate.rateComments || ""), 400),
         extras: clipNote(extras, 240),
-        amenities: clipNote(roomAmenities(raw.rooms, rate), 240),
+        amenities: clipNote(profile.amenities, 900),
+        sizeLabel: profile.sizeLabel,
+        occupancyNote: profile.occupancyNote,
+        roomDescription: clipNote(profile.description, 700),
         taxNote: clipNote(extraCharges(rate), 240),
         paymentNote: paymentLine(rate.paymentType),
       },

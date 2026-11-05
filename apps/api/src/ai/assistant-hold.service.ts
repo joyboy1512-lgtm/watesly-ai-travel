@@ -20,6 +20,7 @@ import {
   roomByTypedName,
   roomChoiceCard,
   roomPage,
+  roomSpecText,
   roomTermsPages,
   ROOM_ACTION_BODY,
   ROOM_PAGE_SIZE,
@@ -44,6 +45,7 @@ export type AssistantUi = {
     rows: Array<{ id: string; title: string; description?: string }>;
   };
   buttons?: { body: string; buttons: Array<{ id: string; title: string }> };
+  more?: { id: string; title: string };
   photos?: { name: string; urls: string[] };
   followUpText?: string;
 };
@@ -299,10 +301,11 @@ export class AssistantHoldService {
       };
     }
     if (input.action.kind === "room") {
+      const spec = roomSpecText(item);
       const hasFlight = state.selected.some((row) => row.serviceType === "flight");
       if (hasFlight) {
         return {
-          replies: [`تم اختيار الغرفة: ${price}`, "هل نضيف توصيل المطار إلى الفندق؟"],
+          replies: [spec, "هل نضيف توصيل المطار إلى الفندق؟"],
           buttons: {
             body: "التوصيل اختياري",
             buttons: [
@@ -312,7 +315,8 @@ export class AssistantHoldService {
           },
         };
       }
-      return this.finishHold(input, thread.id, state);
+      const held = await this.finishHold(input, thread.id, state);
+      return { ...held, replies: [spec, ...held.replies] };
     }
     return this.finishHold(input, thread.id, state);
   }
@@ -329,7 +333,7 @@ export class AssistantHoldService {
       const replies = pages.length ? [...pages] : ["لا توجد شروط إضافية من المورّد لهذه الغرف."];
       if (current.hasMore) {
         const last = replies.length - 1;
-        replies[last] = `${replies[last]}\n\nلشروط الغرف التالية اضغط المزيد من الغرف ثم قراءة الشروط.`;
+        replies[last] = `${replies[last]}\n\nلشروط الغرف التالية اضغط المزيد ثم قراءة الشروط.`;
       }
       return { replies };
     }
@@ -354,6 +358,7 @@ export class AssistantHoldService {
         rows: card.rows,
       },
       buttons: { body: ROOM_ACTION_BODY, buttons: card.buttons },
+      more: card.more,
     };
   }
 

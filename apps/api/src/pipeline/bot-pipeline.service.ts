@@ -176,6 +176,14 @@ export class BotPipelineService {
             rows: list.rows,
             sectionTitle: list.sectionTitle,
           }).catch((err) => console.error("[pipeline] choice list failed", err));
+          if (list.more) {
+            await this.replyWithChoiceButtons({
+              organizationId: input.organizationId,
+              conversationId: input.conversationId,
+              body: "\u2060",
+              buttons: [list.more],
+            }).catch((err) => console.error("[pipeline] room more failed", err));
+          }
           if (list.buttons?.length) {
             await this.replyWithChoiceButtons({
               organizationId: input.organizationId,
@@ -1269,6 +1277,14 @@ export class BotPipelineService {
         conversationId: input.conversationId,
         ...ui.list,
       }).catch((err) => console.error("[pipeline] choice list failed", err));
+    }
+    if (ui.more) {
+      await this.replyWithChoiceButtons({
+        organizationId: input.organizationId,
+        conversationId: input.conversationId,
+        body: "\u2060",
+        buttons: [ui.more],
+      }).catch((err) => console.error("[pipeline] room more failed", err));
     }
     if (ui.buttons?.buttons.length) {
       await this.replyWithChoiceButtons({

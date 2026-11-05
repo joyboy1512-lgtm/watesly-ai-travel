@@ -19,7 +19,7 @@ import { AuditService } from "../common/audit.service";
 import { TravelAiService } from "../ai/travel-ai.service";
 import { AssistantHoldService, type AssistantUi } from "../ai/assistant-hold.service";
 import { customerWantsHotelPhotos } from "../ai/hotel-photos";
-import { parseAssistantAction } from "../ai/assistant-flow";
+import { hotelIntroWithoutRooms, parseAssistantAction } from "../ai/assistant-flow";
 import {
   formatCommercePrice,
   normalizeMetaCommerce,
@@ -133,11 +133,13 @@ export class BotPipelineService {
         accountChannel === "whatsapp" && !aiResult.handoff && aiResult.hotelCard?.picks.length
           ? aiResult.hotelCard
           : undefined;
-      if (!hotelCard) {
+      const hasRoomCard = (aiResult.choiceLists || []).some((list) => list.button === "اختر الغرفة");
+      const customerText = hasRoomCard ? hotelIntroWithoutRooms(aiResult.message) : aiResult.message;
+      if (!hotelCard && customerText.trim()) {
         await this.replyToConversation({
           organizationId: input.organizationId,
           conversationId: input.conversationId,
-          body: aiResult.message,
+          body: customerText,
           skipWindowCheck: true,
         });
       }

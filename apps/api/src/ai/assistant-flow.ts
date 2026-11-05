@@ -79,6 +79,7 @@ export type AssistantAction =
 
 type RateLike = {
   rateKey?: string;
+  roomCode?: string;
   roomName?: string;
   boardName?: string;
   net?: number;
@@ -214,6 +215,34 @@ function clipNote(value: string, max: number): string {
   return `${clean.slice(0, max - 1)}…`;
 }
 
+function roomAmenities(
+  rooms: Array<{ code?: string; name?: string; facilities?: string[] }> | undefined,
+  rate: RateLike,
+): string {
+  const match = (rooms || []).find((room) => {
+    if (rate.roomCode && room.code && room.code === rate.roomCode) return true;
+    return Boolean(rate.roomName && room.name && room.name === rate.roomName);
+  });
+  return (match?.facilities || [])
+    .map((item) => item.trim())
+    .filter(Boolean)
+    .slice(0, 12)
+    .join(" · ");
+}
+
+export function hotelIntroWithoutRooms(message: string): string {
+  const text = String(message || "").replace(/\r\n/g, "\n");
+  const markers = ["\n🛏 الغرف", "\n🛏الغرف", "\nالغرف والأسعار", "\nالغرف والاسعار"];
+  let cut = -1;
+  for (const marker of markers) {
+    const at = text.indexOf(marker);
+    if (at >= 0 && (cut < 0 || at < cut)) cut = at;
+  }
+  if (text.startsWith("🛏 الغرف") || text.startsWith("الغرف والأسعار")) cut = 0;
+  if (cut < 0) return text.trim();
+  return text.slice(0, cut).trim();
+}
+
 function paidPolicy(rate: RateLike) {
   return (rate.cancellationPolicies || []).find((policy) => Number(policy.amount) > 0);
 }
@@ -260,6 +289,8 @@ export function roomTermsText(items: HoldItem[]): string {
     lines.push(terms ? `الشروط: ${terms}` : "الشروط: لا توجد شروط إضافية من المورّد.");
     const extras = String(item.snapshot.extras || "").trim();
     if (extras) lines.push(`ملاحظات: ${extras}`);
+    const amenities = String(item.snapshot.amenities || "").trim();
+    if (amenities) lines.push(`التجهيزات: ${amenities}`);
     const charges = String(item.snapshot.taxNote || "").trim();
     if (charges) lines.push(charges.startsWith("الرسوم") ? charges : `رسوم غير مشمولة: ${charges}`);
     const payment = String(item.snapshot.paymentNote || "").trim();
@@ -471,6 +502,7 @@ function collectHotelRooms(offer: OfferLike): HoldItem[] {
     checkInDate?: string;
     checkOutDate?: string;
     rateOptions?: RateLike[];
+    rooms?: Array<{ code?: string; name?: string; facilities?: string[] }>;
   };
   const factor = currencyMinorFactor(offer.currency);
   const offerCost = offer.costAmountMinor;
@@ -481,7 +513,7 @@ function collectHotelRooms(offer: OfferLike): HoldItem[] {
   const seen = new Set<string>();
   const items: HoldItem[] = [];
   for (const rate of rates) {
-    const key = `${rate.roomName}|${rate.boardName || ""}`;
+    const key = `${rate.roomName}|${rate.boardName || ""}|${rate.freeCancellation ? "free" : "paid"}`;
     if (seen.has(key)) continue;
     seen.add(key);
     const major = Number(rate.sellingRate || rate.net);
@@ -518,6 +550,7 @@ function collectHotelRooms(offer: OfferLike): HoldItem[] {
         cancelCurrency: penalty?.currency || rate.currency || offer.currency,
         rateNote: clipNote(String(rate.rateComments || ""), 400),
         extras: clipNote(extras, 240),
+        amenities: clipNote(roomAmenities(raw.rooms, rate), 240),
         taxNote: clipNote(extraCharges(rate), 240),
         paymentNote: paymentLine(rate.paymentType),
       },
@@ -566,6 +599,7 @@ export function choiceRows(items: HoldItem[]) {
         ? `${item.snapshot.carrier || ""} ${item.snapshot.flightNumber}`.trim()
         : item.description,
     description: [
+      item.serviceType === "hotel" ? refundLabel(item) : "",
       item.snapshot.boardName ? String(item.snapshot.boardName) : "",
       moneyLabel(item.sellAmountMinor, item.currency),
     ]

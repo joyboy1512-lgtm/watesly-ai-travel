@@ -13,6 +13,7 @@ import {
   roomByTypedName,
   roomChoiceCard,
   roomTermsText,
+  hotelIntroWithoutRooms,
   nextPhotoSlice,
   parseAssistantAction,
   selectItem,
@@ -44,10 +45,11 @@ describe("assistant booking flow", () => {
         ],
       },
     });
-    assert.equal(rooms.length, 2);
+    assert.equal(rooms.length, 3);
     assert.equal(rooms[0]?.pickId, "room:0");
     assert.equal(rooms[0]?.sellAmountMinor, 120_000);
-    assert.equal(rooms[1]?.sellAmountMinor, 180_000);
+    assert.equal(rooms[1]?.sellAmountMinor, 132_000);
+    assert.equal(rooms[2]?.sellAmountMinor, 180_000);
     const few = hotelRoomSelection({
       providerKey: "hotelbeds",
       providerOfferRef: "hb-9",
@@ -241,5 +243,34 @@ describe("assistant booking flow", () => {
     assert.match(card?.body || "", /بعد 18 نوفمبر 2026 يُخصم/);
     assert.doesNotMatch(card?.body || "", /لا يُسمح بالأطفال/);
     assert.match(holdCustomerMessage([refundable!]), /مستردة حتى 18 نوفمبر 2026/);
+    const intro = hotelIntroWithoutRooms(
+      "🏨 *Royal Falcon*\n📍 شارع صلاح الدين\n\n🛏 الغرف والأسعار:\n• *Double standard*\n🍽 غرفة فقط: *47 KWD*",
+    );
+    assert.equal(intro, "🏨 *Royal Falcon*\n📍 شارع صلاح الدين");
+    assert.equal(hotelIntroWithoutRooms("🏨 *فندق*\n✨ مسبح"), "🏨 *فندق*\n✨ مسبح");
+    const both = hotelRoomItems({
+      providerKey: "hotelbeds",
+      providerOfferRef: "hb-9",
+      description: "صفوة",
+      costAmountMinor: 100_000,
+      sellAmountMinor: 120_000,
+      currency: "KWD",
+      raw: {
+        name: "صفوة",
+        rooms: [{ name: "مزدوجة", facilities: ["واي فاي", "تكييف"] }],
+        rateOptions: [
+          { roomName: "مزدوجة", boardName: "غرفة فقط", net: 40, freeCancellation: false },
+          {
+            roomName: "مزدوجة",
+            boardName: "غرفة فقط",
+            net: 60,
+            freeCancellation: true,
+            cancellationPolicies: [{ amount: 20, from: "2026-11-12T00:00:00+03:00", currency: "KWD" }],
+          },
+        ],
+      },
+    });
+    assert.equal(both.length, 2);
+    assert.match(roomTermsText(both), /التجهيزات: واي فاي · تكييف/);
   });
 });

@@ -19,7 +19,6 @@ function sellMajor(row: { costAmountMinor: number; sellAmountMinor?: number; cur
 }
 import type {
   HotelPropertyDetails,
-  HotelRateOption,
 } from "@watesly-travel/shared";
 import type { TransferServiceDetails } from "@watesly-travel/shared";
 import { pickHotelPhotoUrls } from "./hotel-photos";
@@ -43,14 +42,6 @@ export function toolResultLimits() {
 function formatMoney(value?: number): string | undefined {
   if (value == null || !Number.isFinite(value)) return undefined;
   return Number.isInteger(value) ? String(value) : value.toFixed(2);
-}
-
-function slicePolicies(rate: HotelRateOption) {
-  return (rate.cancellationPolicies || []).slice(0, 2).map((p) => ({
-    from: p.from,
-    amount: p.amount,
-    currency: p.currency,
-  }));
 }
 
 /** Short list row: name + starting price only. Full rooms/services come from get_hotel_details. */
@@ -96,51 +87,9 @@ export function hotelCatalogEntry(row: HotelOffer) {
   };
 }
 
-function serializeRateDetail(rate: HotelRateOption) {
-  return {
-    roomName: rate.roomName,
-    roomCode: rate.roomCode,
-    boardCode: rate.boardCode,
-    boardName: rate.boardName,
-    sellingRate: rate.sellingRate ?? rate.net,
-    currency: rate.currency,
-    rateType: rate.rateType,
-    paymentType: rate.paymentType,
-    freeCancellation: rate.freeCancellation,
-    allotment: rate.allotment,
-    promotions: (rate.promotions || [])
-      .map((p) => p.name || p.remark)
-      .filter(Boolean),
-    cancellationPolicies: slicePolicies(rate),
-    rateComments: rate.rateComments?.slice(0, 800),
-  };
-}
-
 export function serializeHotelDetailsForAi(row: HotelOffer): string {
   const limits = toolResultLimits();
   const raw = row.raw as HotelPropertyDetails | undefined;
-  const rates = (raw?.rateOptions || [])
-    .slice(0, limits.detailMaxRates)
-    .map(serializeRateDetail);
-
-  const rooms = (raw?.rooms || []).map((room) => ({
-    code: room.code,
-    name: room.name,
-    facilities: room.facilities?.slice(0, 16),
-    rateCount: room.rates?.length || 0,
-    rates: (room.rates || []).slice(0, limits.detailMaxRates).map((rate) => ({
-      rateKey: rate.rateKey,
-      boardCode: rate.boardCode,
-      boardName: rate.boardName,
-      sellingRate: rate.sellingRate ?? rate.net,
-      currency: rate.currency,
-      rateType: rate.rateType,
-      paymentType: rate.paymentType,
-      freeCancellation: rate.freeCancellation,
-      rateComments: rate.rateComments?.slice(0, 400),
-    })),
-  }));
-
   const photoCount = pickHotelPhotoUrls(raw?.images).length;
   const payload = {
     liveMode: true,
@@ -184,15 +133,14 @@ export function serializeHotelDetailsForAi(row: HotelOffer): string {
       photoCount > 0
         ? "إذا طلب العميل صوراً قل إن الصور تصل داخل المحادثة. ممنوع أي رابط، وممنوع الإحالة إلى موقع الفندق أو أي موقع حجز."
         : "لا توجد صور محفوظة. لا تخترع رابطاً ولا تحل العميل إلى موقع الفندق أو أي موقع حجز.",
-    rateCountTotal: raw?.rateOptions?.length || rates.length,
-    ratesShown: rates.length,
-    rates,
-    rooms,
+    rateCountTotal: raw?.rateOptions?.length || 0,
+    roomListNote:
+      "أنواع الغرف وأسعارها وشروط الاسترجاع تُعرض في بطاقة مستقلة بعد هذه الرسالة. لا تذكر غرفة ولا سعراً ولا نوع إقامة ولا استرجاعاً في نصك.",
     promotions: raw?.promotions,
     expiresAt: row.expiresAt,
     presentAs: "hotel_card",
     formatHint:
-      "اعرض بطاقة منسّقة: الاسم، النجوم، العنوان، وصف قصير، المسافات، أهم الخدمات، ثم الغرف والأسعار. لا تسرد كل الحقول الخام.",
+      "اكتب الاسم والنجوم والعنوان ووصفاً قصيراً والمسافات وأهم خدمات الفندق فقط. ممنوع سرد الغرف أو الأسعار أو الإقامة أو الاسترجاع؛ البطاقة التالية تعرضها.",
   };
 
   return boundedJson(payload, limits.detailMaxJsonChars);

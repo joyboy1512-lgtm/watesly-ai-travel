@@ -18,7 +18,7 @@ import { PrismaService } from "../prisma/prisma.service";
 import { AuditService } from "../common/audit.service";
 import { TravelAiService } from "../ai/travel-ai.service";
 import { AssistantHoldService, type AssistantUi } from "../ai/assistant-hold.service";
-import { customerWantsHotelPhotos } from "../ai/hotel-photos";
+import { customerWantsHotelPhotos, isPhotoMoreRequest } from "../ai/hotel-photos";
 import { hotelIntroWithoutRooms, parseAssistantAction } from "../ai/assistant-flow";
 import {
   formatCommercePrice,
@@ -133,7 +133,9 @@ export class BotPipelineService {
         accountChannel === "whatsapp" && !aiResult.handoff && aiResult.hotelCard?.picks.length
           ? aiResult.hotelCard
           : undefined;
-      const hasRoomCard = (aiResult.choiceLists || []).some((list) => list.button === "اختر الغرفة");
+      const hasRoomCard = (aiResult.choiceLists || []).some(
+        (list) => list.button === "اختر الغرفة" || list.button === "اختر الغرف",
+      );
       const customerText = hasRoomCard ? hotelIntroWithoutRooms(aiResult.message) : aiResult.message;
       if (!hotelCard && customerText.trim()) {
         await this.replyToConversation({
@@ -1208,7 +1210,7 @@ export class BotPipelineService {
       customerWantsHotelPhotos(input.text) &&
       (await this.holds.hasGallery(input.organizationId, input.conversationId))
     ) {
-      action = { kind: "photo", more: /المزيد/.test(input.text) };
+      action = { kind: "photo", more: isPhotoMoreRequest(input.text) };
     }
     const ui = await this.holds.apply({
       organizationId: input.organizationId,

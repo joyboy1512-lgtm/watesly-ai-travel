@@ -15,7 +15,6 @@ import {
   roomSpecText,
   roomTermsText,
   hotelIntroWithoutRooms,
-  nextPhotoSlice,
   parseAssistantAction,
   selectItem,
   travelerFromPassport,
@@ -23,6 +22,7 @@ import {
   tripMemoryLine,
   emptyAssistantState,
 } from "./assistant-flow";
+import { advanceHotelPhotos } from "./hotel-photos";
 
 describe("assistant booking flow", () => {
   it("prices each room from the shop total and keeps the hold unconfirmed", () => {
@@ -177,14 +177,17 @@ describe("assistant booking flow", () => {
     assert.equal(state.travelers[0]?.confirmed, false);
   });
 
-  it("pages photos and keeps the saved trip when the date changes", () => {
-    const slice = nextPhotoSlice({
+  it("pages photos and keeps the saved trip when the date changes", async () => {
+    const photos = {
       hotelId: "hb-1",
       name: "صفوة",
       urls: ["a", "b", "c", "d", "e"],
       shown: 4,
-    }, true);
-    assert.deepEqual(slice.urls, ["e"]);
+    };
+    const again = await advanceHotelPhotos({ photos, more: false });
+    const more = await advanceHotelPhotos({ photos, more: true });
+    assert.deepEqual(again.page, ["e"]);
+    assert.deepEqual(more.page, ["e"]);
     assert.equal(parseAssistantAction("photo:more")?.kind, "photo");
     assert.equal(parseAssistantAction("hotel:hb-1"), null);
     const line = tripMemoryLine({

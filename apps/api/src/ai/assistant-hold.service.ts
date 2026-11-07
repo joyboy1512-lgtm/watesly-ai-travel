@@ -2,6 +2,7 @@ import { Injectable } from "@nestjs/common";
 import { Prisma } from "@watesly-travel/database";
 import type { PassportScanFields } from "@watesly-travel/ai-core";
 import { PrismaService } from "../prisma/prisma.service";
+import { advanceHotelPhotos } from "./hotel-photos";
 import {
   ASSISTANT_HOLD_STATUS,
   applyNameFix,
@@ -15,7 +16,6 @@ import {
   isRoomMoreRequest,
   isRoomPrevRequest,
   isRoomTermsRequest,
-  nextPhotoSlice,
   readAssistantState,
   roomByTypedName,
   roomChoiceCard,
@@ -363,24 +363,29 @@ export class AssistantHoldService {
   }
 
   private async photos(threadId: string, state: AssistantState, more: boolean): Promise<AssistantUi> {
-    const slice = nextPhotoSlice(state.photos, more);
-    if (!state.photos?.urls.length) {
+    if (!state.photos?.name && !state.photos?.urls.length) {
       return { replies: ["اختر الفندق أولاً، ثم اطلب صوره."] };
     }
-    if (slice.exhausted || !slice.urls.length) {
-      return { replies: ["هذه كل صور الفندق المتوفرة لدينا."] };
-    }
-    await this.writeState(threadId, {
-      ...state,
-      photos: { ...state.photos, shown: slice.shown },
+    const advanced = await advanceHotelPhotos({
+      photos: state.photos,
+      more,
+      place: state.trip.destination || state.trip.location,
     });
-    const moreLeft = slice.shown < state.photos.urls.length;
+    if (!advanced.page.length || !advanced.photos) {
+      return { replies: ["هذه كل الصور المختلفة المتوفرة لهذا الفندق."] };
+    }
+    await this.writeState(threadId, { ...state, photos: advanced.photos });
+    const moreLeft = advanced.photos.shown < advanced.photos.urls.length;
+    const intro = advanced.addedOutside
+      ? `هذه صور إضافية مختلفة لـ ${advanced.photos.name}.`
+      : `هذه صور ${advanced.photos.name}.`;
     return {
-      replies: [`هذه صور ${slice.name}.`],
-      photos: { name: slice.name, urls: slice.urls },
-      buttons: moreLeft
-        ? { body: "المزيد من صور الفندق", buttons: [{ id: "photo:more", title: "صور أكثر" }] }
-        : undefined,
+      replies: [intro],
+      photos: { name: advanced.photos.name, urls: advanced.page },
+      buttons: {
+        body: moreLeft ? "المزيد من صور الفندق" : "صور مختلفة إن وُجدت",
+        buttons: [{ id: "photo:more", title: "صور أكثر" }],
+      },
     };
   }
 

@@ -35,7 +35,10 @@ import {
   type HotelPickLimit,
 } from "./hotel-pick-list";
 import {
+  advanceHotelPhotos,
   customerWantsHotelPhotos,
+  isPhotoMoreRequest,
+  mergeHotelPhotos,
   pickHotelPhotoUrls,
   stripExternalLinks,
   type HotelPhotoSet,
@@ -44,7 +47,6 @@ import {
   choiceRows,
   hotelRoomSelection,
   roomChoiceCard,
-  nextPhotoSlice,
   readAssistantState,
   transportItems,
   tripMemoryLine,
@@ -459,20 +461,21 @@ export class TravelAiService {
         select: { metadata: true },
       });
       let assistant = readAssistantState(fresh?.metadata);
-      if (customerWantsHotelPhotos(spoken)) {
-        const slice = nextPhotoSlice(assistant.photos, /المزيد/.test(spoken));
-        if (slice.urls.length && assistant.photos) {
+      if (customerWantsHotelPhotos(spoken) && assistant.photos) {
+        const advanced = await advanceHotelPhotos({
+          photos: assistant.photos,
+          more: isPhotoMoreRequest(spoken) || assistant.photos.shown > 0,
+          place: assistant.trip.destination || assistant.trip.location,
+        });
+        if (advanced.page.length && advanced.photos) {
           hotelPhotos = {
-            hotelId: assistant.photos.hotelId,
-            name: slice.name,
-            urls: slice.urls,
+            hotelId: advanced.photos.hotelId,
+            name: advanced.photos.name,
+            urls: advanced.page,
           };
-          morePhotos = slice.shown < assistant.photos.urls.length;
-          assistant = {
-            ...assistant,
-            photos: { ...assistant.photos, shown: slice.shown },
-          };
-          const cleaned = stripExternalLinks(text) || `هذه صور ${slice.name}.`;
+          morePhotos = true;
+          assistant = { ...assistant, photos: advanced.photos };
+          const cleaned = stripExternalLinks(text) || `هذه صور ${advanced.photos.name}.`;
           if (cleaned !== text) {
             text = cleaned;
             if (lastId) {
@@ -1667,7 +1670,7 @@ export class TravelAiService {
     });
     const detailed = priced || match;
     const rawDetails = detailed.raw as HotelPropertyDetails | undefined;
-    const photoUrls = pickHotelPhotoUrls(rawDetails?.images, 16);
+    const photoUrls = pickHotelPhotoUrls(rawDetails?.images, 24);
     const photos: HotelPhotoSet = {
       hotelId: detailed.providerOfferRef,
       name: rawDetails?.name || hotelName || detailed.description,
@@ -1707,13 +1710,12 @@ export class TravelAiService {
       existing?.metadata && typeof existing.metadata === "object"
         ? { ...(existing.metadata as Record<string, unknown>) }
         : {};
-    meta.lastHotelPhotos = photos;
     const assistant = readAssistantState(meta);
-    assistant.photos = {
-      hotelId: photos.hotelId,
-      name: photos.name || "الفندق",
-      urls: photos.urls,
-      shown: 0,
+    assistant.photos = mergeHotelPhotos(assistant.photos, photos);
+    meta.lastHotelPhotos = {
+      hotelId: assistant.photos.hotelId,
+      name: assistant.photos.name,
+      urls: assistant.photos.urls,
     };
     assistant.rooms = rooms;
     assistant.roomsTruncated = roomsTruncated;

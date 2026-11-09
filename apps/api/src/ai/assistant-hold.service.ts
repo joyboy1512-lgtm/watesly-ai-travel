@@ -375,16 +375,12 @@ export class AssistantHoldService {
       return { replies: ["هذه كل الصور المختلفة المتوفرة لهذا الفندق."] };
     }
     await this.writeState(threadId, { ...state, photos: advanced.photos });
-    const moreLeft = advanced.photos.shown < advanced.photos.urls.length;
-    const intro = advanced.addedOutside
-      ? `هذه صور إضافية مختلفة لـ ${advanced.photos.name}.`
-      : `هذه صور ${advanced.photos.name}.`;
     return {
-      replies: [intro],
+      replies: [],
       photos: { name: advanced.photos.name, urls: advanced.page },
       buttons: {
-        body: moreLeft ? "المزيد من صور الفندق" : "صور مختلفة إن وُجدت",
-        buttons: [{ id: "photo:more", title: "صور أكثر" }],
+        body: "\u2060",
+        buttons: [{ id: "photo:more", title: "المزيد من الصور" }],
       },
     };
   }

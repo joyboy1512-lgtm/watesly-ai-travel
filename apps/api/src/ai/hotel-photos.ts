@@ -2,7 +2,7 @@ export const HOTEL_PHOTO_LIMIT = 4;
 
 const PRICE_FREE_PHOTO_HOSTS = new Set(["photos.hotelbeds.com"]);
 const EXTRA_PHOTO_HOSTS = new Set(["upload.wikimedia.org", "thumb.wikimedia.org"]);
-const PHOTO_PAGE = 3;
+const PHOTO_PAGE = 6;
 const PHOTO_STORE_LIMIT = 40;
 
 export type HotelPhotoSet = {
@@ -273,11 +273,13 @@ export async function advanceHotelPhotos(input: {
   let urls = photos.urls;
   let addedOutside = false;
   let page = urls.slice(start, start + PHOTO_PAGE);
-  if (page.length === 0 && (paging || urls.length === 0)) {
+  const needsMorePhotos = page.length < PHOTO_PAGE && (start === 0 || page.length === 0);
+  if (needsMorePhotos) {
     const extra = await findExternalHotelPhotos({
       name: photos.name,
       place: input.place,
       already: urls,
+      limit: PHOTO_PAGE - page.length,
       fetchImpl: input.fetchImpl,
     });
     if (extra.length) {

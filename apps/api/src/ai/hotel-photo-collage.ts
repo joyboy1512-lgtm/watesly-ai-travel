@@ -106,6 +106,23 @@ async function downloadHotelPhoto(url: string, fetchImpl: typeof fetch): Promise
   }
 }
 
+/** Download one hotel image and make a JPEG small enough for WhatsApp to deliver immediately. */
+export async function prepareWhatsAppPhoto(url: string, fetchImpl: typeof fetch = fetch): Promise<Buffer | null> {
+  const raw = await downloadHotelPhoto(url, fetchImpl);
+  if (!raw) return null;
+  try {
+    const jpeg = await sharp(raw, { failOn: "none" })
+      .rotate()
+      .resize({ width: 1600, height: 1600, fit: "inside", withoutEnlargement: true })
+      .jpeg({ quality: 80 })
+      .toBuffer();
+    if (jpeg.length < 32 || jpeg.length > 5_000_000) return null;
+    return jpeg;
+  } catch {
+    return null;
+  }
+}
+
 /** Download up to three allowed hotel images and compose the WhatsApp card. */
 export async function buildHotelPhotoCard(
   urls: string[],

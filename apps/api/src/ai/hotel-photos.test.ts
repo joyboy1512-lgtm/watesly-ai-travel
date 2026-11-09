@@ -116,4 +116,34 @@ describe("hotel photos", () => {
     assert.equal(advanced.addedOutside, true);
     assert.deepEqual(advanced.photos?.urls, [supplier, fresh]);
   });
+
+  it("fills the first photo call up to six different images", async () => {
+    const supplier = [
+      gallery("pool"),
+      gallery("lobby"),
+    ];
+    const pages: Record<string, { title: string; index: number; imageinfo: Array<{ url: string; mime: string }> }> = {};
+    for (let index = 1; index <= 4; index += 1) {
+      pages[String(index)] = {
+        title: `File:Burj Al Arab view ${index}.jpg`,
+        index,
+        imageinfo: [{
+          url: `https://upload.wikimedia.org/wikipedia/commons/a/a${index}/Burj_Al_Arab_view_${index}.jpg`,
+          mime: "image/jpeg",
+        }],
+      };
+    }
+    const advanced = await advanceHotelPhotos({
+      photos: { hotelId: "hb-9", name: "Burj Al Arab", urls: supplier, shown: 0 },
+      more: false,
+      fetchImpl: (async () =>
+        new Response(JSON.stringify({ query: { pages } }), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        })) as typeof fetch,
+    });
+    assert.equal(advanced.page.length, 6);
+    assert.equal(advanced.addedOutside, true);
+    assert.deepEqual(advanced.page.slice(0, 2), supplier);
+  });
 });

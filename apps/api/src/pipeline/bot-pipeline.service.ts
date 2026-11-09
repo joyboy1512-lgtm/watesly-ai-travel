@@ -137,7 +137,9 @@ export class BotPipelineService {
         (list) => list.button === "اختر الغرفة" || list.button === "اختر الغرف",
       );
       const customerText = hasRoomCard ? hotelIntroWithoutRooms(aiResult.message) : aiResult.message;
-      if (!hotelCard && customerText.trim()) {
+      const photoReply =
+        accountChannel === "whatsapp" && !aiResult.handoff && Boolean(aiResult.hotelPhotos?.urls.length);
+      if (!hotelCard && customerText.trim() && !photoReply) {
         await this.replyToConversation({
           organizationId: input.organizationId,
           conversationId: input.conversationId,
@@ -145,11 +147,7 @@ export class BotPipelineService {
           skipWindowCheck: true,
         });
       }
-      if (
-        accountChannel === "whatsapp" &&
-        !aiResult.handoff &&
-        aiResult.hotelPhotos?.urls.length
-      ) {
+      if (photoReply && aiResult.hotelPhotos) {
         await this.replyWithHotelPhotos({
           organizationId: input.organizationId,
           conversationId: input.conversationId,
@@ -157,6 +155,14 @@ export class BotPipelineService {
         }).catch((err) => {
           console.error("[pipeline] hotel photos failed", err);
         });
+        if (aiResult.morePhotos) {
+          await this.replyWithChoiceButtons({
+            organizationId: input.organizationId,
+            conversationId: input.conversationId,
+            body: "\u2060",
+            buttons: [{ id: "photo:more", title: "المزيد من الصور" }],
+          }).catch((err) => console.error("[pipeline] more photos failed", err));
+        }
       }
       if (hotelCard) {
         await this.replyWithHotelCard({
@@ -194,14 +200,6 @@ export class BotPipelineService {
               buttons: list.buttons,
             }).catch((err) => console.error("[pipeline] room actions failed", err));
           }
-        }
-        if (aiResult.morePhotos) {
-          await this.replyWithChoiceButtons({
-            organizationId: input.organizationId,
-            conversationId: input.conversationId,
-            body: "المزيد من صور الفندق",
-            buttons: [{ id: "photo:more", title: "صور أكثر" }],
-          }).catch((err) => console.error("[pipeline] more photos failed", err));
         }
       }
       await this.syncInquiryFromInbound(input).catch((err) => {
@@ -1414,9 +1412,8 @@ export class BotPipelineService {
     );
     if ((account?.channelType || "whatsapp") !== "whatsapp") return;
     const channel = "whatsapp";
-    const caption = input.photos.name.slice(0, 200);
     let sent = 0;
-    for (const [index, link] of input.photos.urls.entries()) {
+    for (const link of input.photos.urls) {
       const send = await sendChannelMedia({
         channelType: channel,
         phoneNumberId: account?.phoneNumberId || "mock_phone",
@@ -1424,7 +1421,6 @@ export class BotPipelineService {
         to: conversation.contact.waId,
         type: "image",
         link,
-        caption: index === 0 ? caption : undefined,
       });
       if (send.status === "failed") {
         console.error(
@@ -1442,7 +1438,7 @@ export class BotPipelineService {
           direction: "outbound",
           channel,
           type: "image",
-          body: index === 0 ? caption : "صورة الفندق",
+          body: "صورة الفندق",
           providerMessageId: send.providerMessageId || null,
           status: send.status,
           rawPayload: send.raw ? asJson(send.raw) : undefined,

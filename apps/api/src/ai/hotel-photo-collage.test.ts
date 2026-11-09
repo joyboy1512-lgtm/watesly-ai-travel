@@ -8,6 +8,7 @@ import {
   buildHotelPhotoCard,
   composeHotelPhotoCollage,
   hotelCollageLayout,
+  prepareWhatsAppPhoto,
 } from "./hotel-photo-collage";
 
 async function solid(color: { r: number; g: number; b: number }): Promise<Buffer> {
@@ -72,6 +73,23 @@ describe("hotel photo collage", () => {
     const right = layout.slots[1]!;
     const mid = pixel(data, info, right.left + 20, right.top + Math.floor(right.height / 2));
     assert.ok(mid[2]! > 160 && mid[0]! < 80);
+  });
+
+  it("prepares a jpeg WhatsApp can deliver without fetching a link", async () => {
+    const png = await solid({ r: 20, g: 80, b: 180 });
+    const jpeg = await prepareWhatsAppPhoto(
+      "https://photos.hotelbeds.com/giata/bigger/pool.jpg",
+      (async () => new Response(png, { status: 200, headers: { "content-type": "image/png" } })) as typeof fetch,
+    );
+    assert.ok(jpeg);
+    assert.equal(jpeg![0], 0xff);
+    assert.equal(jpeg![1], 0xd8);
+    assert.equal(
+      await prepareWhatsAppPhoto("https://www.booking.com/hotel.jpg", (async () => {
+        throw new Error("should not fetch");
+      }) as typeof fetch),
+      null,
+    );
   });
 
   it("does not invent a card from a single photo or a booking page", async () => {

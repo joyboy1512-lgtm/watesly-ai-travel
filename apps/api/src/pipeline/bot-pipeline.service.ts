@@ -4,6 +4,7 @@ import { createAiProvider, extractPassportFromImage } from "@watesly-travel/ai-c
 import {
   sendChannelMedia,
   sendChannelText,
+  sendWhatsAppImageBuffer,
   channelPeerId,
   sendWhatsAppCatalogCta,
   sendWhatsAppInteractiveButtons,
@@ -38,6 +39,7 @@ import {
   type HotelPick,
 } from "../ai/hotel-pick-list";
 import type { HotelPhotoSet } from "../ai/hotel-photos";
+import { prepareWhatsAppPhoto } from "../ai/hotel-photo-collage";
 
 const FLIGHT_PROVIDER_KEYS = [
   "duffel",
@@ -1412,15 +1414,15 @@ export class BotPipelineService {
     );
     if ((account?.channelType || "whatsapp") !== "whatsapp") return;
     const channel = "whatsapp";
+    const prepared = await Promise.all(input.photos.urls.map((url) => prepareWhatsAppPhoto(url)));
     let sent = 0;
-    for (const link of input.photos.urls) {
-      const send = await sendChannelMedia({
-        channelType: channel,
+    for (const bytes of prepared) {
+      if (!bytes) continue;
+      const send = await sendWhatsAppImageBuffer({
         phoneNumberId: account?.phoneNumberId || "mock_phone",
         accessToken: account?.accessTokenEnc || "mock",
-        to: conversation.contact.waId,
-        type: "image",
-        link,
+        to: channelPeerId(conversation.contact.waId),
+        bytes,
       });
       if (send.status === "failed") {
         console.error(
@@ -1453,6 +1455,9 @@ export class BotPipelineService {
         ...(account ? { whatsappAccountId: account.id } : {}),
       },
     });
+    // A button is delivered faster than an image WhatsApp still has to fetch.
+    // The files are already uploaded; this pause lets the album close first.
+    await new Promise((resolve) => setTimeout(resolve, 4000));
   }
 
   private async replyWithHotelPicks(input: {

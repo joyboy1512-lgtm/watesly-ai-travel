@@ -473,6 +473,75 @@ export async function sendWhatsAppMedia(
   };
 }
 
+/** Upload one composed image, then send it. A collage has no public URL of its own. */
+export async function sendWhatsAppImageBuffer(input: {
+  phoneNumberId: string;
+  accessToken: string;
+  to: string;
+  bytes: Buffer;
+  caption?: string;
+}): Promise<SendResult> {
+  const caption = input.caption?.trim() || undefined;
+  if (!input.accessToken || input.accessToken.startsWith("mock")) {
+    return {
+      providerMessageId: `mock_${Date.now()}`,
+      status: "sent",
+      mock: true,
+      raw: { collage: true, bytes: input.bytes.length, caption },
+    };
+  }
+
+  const graphVersion = process.env.WHATSAPP_GRAPH_API_VERSION || "v21.0";
+  const base = process.env.WHATSAPP_GRAPH_API_BASE || "https://graph.facebook.com";
+  const form = new FormData();
+  form.append("messaging_product", "whatsapp");
+  form.append("type", "image/jpeg");
+  form.append(
+    "file",
+    new Blob([new Uint8Array(input.bytes)], { type: "image/jpeg" }),
+    "hotel-photos.jpg",
+  );
+  const uploaded = await fetch(`${base}/${graphVersion}/${input.phoneNumberId}/media`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${input.accessToken}` },
+    body: form,
+  });
+  const uploadRaw = (await uploaded.json().catch(() => ({}))) as {
+    id?: string;
+    error?: { message?: string };
+  };
+  if (!uploaded.ok || !uploadRaw.id) {
+    return { providerMessageId: "", status: "failed", mock: false, raw: uploadRaw };
+  }
+
+  const response = await fetch(`${base}/${graphVersion}/${input.phoneNumberId}/messages`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${input.accessToken}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      messaging_product: "whatsapp",
+      to: input.to,
+      type: "image",
+      image: { id: uploadRaw.id, ...(caption ? { caption } : {}) },
+    }),
+  });
+  const raw = (await response.json().catch(() => ({}))) as {
+    messages?: Array<{ id?: string }>;
+    error?: { message?: string };
+  };
+  if (!response.ok) {
+    return { providerMessageId: "", status: "failed", mock: false, raw };
+  }
+  return {
+    providerMessageId: raw.messages?.[0]?.id || `wa_${Date.now()}`,
+    status: "sent",
+    mock: false,
+    raw,
+  };
+}
+
 export {
   buildCatalogCtaPayload,
   buildInteractiveButtonsPayload,

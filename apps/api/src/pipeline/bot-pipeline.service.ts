@@ -4,6 +4,7 @@ import { createAiProvider, extractPassportFromImage } from "@watesly-travel/ai-c
 import {
   sendChannelMedia,
   sendChannelText,
+  sendWhatsAppImageBuffer,
   channelPeerId,
   sendWhatsAppCatalogCta,
   sendWhatsAppInteractiveButtons,
@@ -38,6 +39,7 @@ import {
   type HotelPick,
 } from "../ai/hotel-pick-list";
 import type { HotelPhotoSet } from "../ai/hotel-photos";
+import { buildHotelPhotoCard } from "../ai/hotel-photo-collage";
 
 const FLIGHT_PROVIDER_KEYS = [
   "duffel",
@@ -1415,6 +1417,46 @@ export class BotPipelineService {
     if ((account?.channelType || "whatsapp") !== "whatsapp") return;
     const channel = "whatsapp";
     const caption = input.photos.name.slice(0, 200);
+    const card = await buildHotelPhotoCard(input.photos.urls).catch((err) => {
+      console.error("[pipeline] hotel photo card failed", err);
+      return null;
+    });
+    if (card) {
+      const send = await sendWhatsAppImageBuffer({
+        phoneNumberId: account?.phoneNumberId || "mock_phone",
+        accessToken: account?.accessTokenEnc || "mock",
+        to: channelPeerId(conversation.contact.waId),
+        bytes: card,
+        caption,
+      });
+      if (send.status !== "failed") {
+        await this.prisma.message.create({
+          data: {
+            organizationId: input.organizationId,
+            conversationId: input.conversationId,
+            direction: "outbound",
+            channel,
+            type: "image",
+            body: caption,
+            providerMessageId: send.providerMessageId || null,
+            status: send.status,
+            rawPayload: send.raw ? asJson(send.raw) : undefined,
+          },
+        });
+        await this.prisma.conversation.update({
+          where: { id: input.conversationId },
+          data: {
+            lastMessageAt: new Date(),
+            ...(account ? { whatsappAccountId: account.id } : {}),
+          },
+        });
+        return;
+      }
+      console.error(
+        "[pipeline] hotel photo card rejected",
+        (send.raw as { error?: { message?: string } } | undefined)?.error?.message || "failed",
+      );
+    }
     let sent = 0;
     for (const [index, link] of input.photos.urls.entries()) {
       const send = await sendChannelMedia({

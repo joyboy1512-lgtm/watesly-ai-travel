@@ -2,7 +2,7 @@ export const HOTEL_PHOTO_LIMIT = 4;
 
 const PRICE_FREE_PHOTO_HOSTS = new Set(["photos.hotelbeds.com"]);
 const EXTRA_PHOTO_HOSTS = new Set(["upload.wikimedia.org", "thumb.wikimedia.org"]);
-const PHOTO_PAGE = 4;
+const PHOTO_PAGE = 3;
 const PHOTO_STORE_LIMIT = 40;
 
 export type HotelPhotoSet = {
